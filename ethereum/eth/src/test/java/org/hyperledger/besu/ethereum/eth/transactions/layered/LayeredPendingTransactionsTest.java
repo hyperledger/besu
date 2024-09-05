@@ -20,8 +20,10 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.DROPPED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.MOVE;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.NEW;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.DROPPED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.REPLACED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOB_PRICE_BELOW_CURRENT_MIN;
@@ -207,14 +209,14 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
         createRemotePendingTransaction(transaction0), Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(1);
 
-    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
         .isEqualTo(1);
 
     pendingTransactions.addTransaction(
         createRemotePendingTransaction(transaction1), Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(2);
 
-    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
         .isEqualTo(2);
   }
 
@@ -270,10 +272,46 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             getRemovedCount(
                 REMOTE, NO_PRIORITY, DROPPED.label(), smallLayers.evictedCollector.name()))
         .isEqualTo(1);
+    // before get evicted definitively, the tx moves to the lower layers, where it does not fix,
+    // until is discarded
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, MOVE, smallLayers.readyTransactions.name()))
+        .isEqualTo(1);
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, MOVE, smallLayers.sparseTransactions.name()))
+        .isEqualTo(1);
     assertThat(smallLayers.evictedCollector.getEvictedTransactions())
         .map(PendingTransaction::getTransaction)
         .contains(firstTxs.get(0));
     verify(droppedListener).onTransactionDropped(firstTxs.get(0));
+  }
+
+  @Test
+  public void txsMovingToNextLayerWhenFirstIsFull() {
+    final List<Transaction> txs = new ArrayList<>(MAX_TRANSACTIONS + 1);
+
+    pendingTransactions.subscribeDroppedTransactions(droppedListener);
+
+    for (int i = 0; i < MAX_TRANSACTIONS + 1; i++) {
+      final Account sender = mock(Account.class);
+      when(sender.getNonce()).thenReturn((long) i);
+      final var tx =
+          createTransaction(
+              i, DEFAULT_BASE_FEE.add(i), SIGNATURE_ALGORITHM.get().generateKeyPair());
+      pendingTransactions.addTransaction(createRemotePendingTransaction(tx), Optional.of(sender));
+      txs.add(tx);
+      assertTransactionPending(pendingTransactions, tx);
+    }
+
+    assertThat(pendingTransactions.size()).isEqualTo(MAX_TRANSACTIONS + 1);
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
+        .isEqualTo(MAX_TRANSACTIONS + 1);
+
+    // one tx moved to the ready layer since the prioritized was full
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, MOVE, layers.readyTransactions.name()))
+        .isEqualTo(1);
+
+    // first tx is the lowest value one so it is the first to be moved to ready
+    assertThat(layers.readyTransactions.contains(txs.get(0))).isTrue();
+    verifyNoInteractions(droppedListener);
   }
 
   @Test
@@ -574,7 +612,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertTransactionPending(pendingTransactions, transaction1b);
     assertTransactionPending(pendingTransactions, transaction2);
     assertThat(pendingTransactions.size()).isEqualTo(2);
-    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
         .isEqualTo(3);
     assertThat(
             getRemovedCount(
@@ -612,7 +650,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertTransactionPending(pendingTransactions, independentTx);
 
     assertThat(pendingTransactions.size()).isEqualTo(2);
-    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
         .isEqualTo(replacedTxCount + 2);
     assertThat(
             getRemovedCount(
@@ -660,9 +698,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final int localDuplicateCount = replacedTxCount - remoteDuplicateCount;
     assertThat(pendingTransactions.size()).isEqualTo(2);
-    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
         .isEqualTo(remoteDuplicateCount + 1);
-    assertThat(getAddedCount(LOCAL, NO_PRIORITY, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(LOCAL, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
         .isEqualTo(localDuplicateCount + 1);
     assertThat(
             getRemovedCount(
@@ -814,18 +852,20 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.addTransaction(
         createLocalPendingTransaction(transaction0), Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(1);
-    assertThat(getAddedCount(LOCAL, NO_PRIORITY, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(LOCAL, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
         .isEqualTo(1);
-    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name())).isZero();
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
+        .isZero();
 
     assertThat(
             pendingTransactions.addTransaction(
                 createRemotePendingTransaction(transaction0), Optional.empty()))
         .isEqualTo(ALREADY_KNOWN);
     assertThat(pendingTransactions.size()).isEqualTo(1);
-    assertThat(getAddedCount(LOCAL, NO_PRIORITY, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(LOCAL, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
         .isEqualTo(1);
-    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name())).isZero();
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
+        .isZero();
   }
 
   @Test
@@ -833,8 +873,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.addTransaction(
         createRemotePendingTransaction(transaction0), Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(1);
-    assertThat(getAddedCount(LOCAL, NO_PRIORITY, layers.prioritizedTransactions.name())).isZero();
-    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(LOCAL, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
+        .isZero();
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
         .isEqualTo(1);
 
     assertThat(
@@ -842,8 +883,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
                 createLocalPendingTransaction(transaction0), Optional.empty()))
         .isEqualTo(ALREADY_KNOWN);
     assertThat(pendingTransactions.size()).isEqualTo(1);
-    assertThat(getAddedCount(LOCAL, NO_PRIORITY, layers.prioritizedTransactions.name())).isZero();
-    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(LOCAL, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
+        .isZero();
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, NEW, layers.prioritizedTransactions.name()))
         .isEqualTo(1);
   }
 

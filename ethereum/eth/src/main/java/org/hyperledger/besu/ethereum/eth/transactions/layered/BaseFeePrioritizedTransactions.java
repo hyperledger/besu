@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.BELOW_BASE_FEE;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.MOVE;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.DEMOTED;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -104,7 +105,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
     while (itTxsBySender.hasNext()) {
       final var senderTxs = itTxsBySender.next().getValue();
 
-      Optional<Long> maybeFirstUnderpricedNonce = Optional.empty();
+      Optional<Long> maybeFirstDemotedNonce = Optional.empty();
 
       for (final var e : senderTxs.entrySet()) {
         final PendingTransaction tx = e.getValue();
@@ -114,26 +115,28 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         } else {
           // otherwise sender txs starting from this nonce need to be demoted to next layer,
           // and we can go to next sender
-          maybeFirstUnderpricedNonce = Optional.of(e.getKey());
+          maybeFirstDemotedNonce = Optional.of(e.getKey());
           break;
         }
       }
 
-      maybeFirstUnderpricedNonce.ifPresent(
+      maybeFirstDemotedNonce.ifPresent(
           nonce -> {
-            // demote all txs after the first underpriced to the next layer, because none of them is
+            // demote all txs after the first demoted to the next layer, because none of them is
             // executable now, and we can avoid sorting them until they are candidate for execution
             // again
             final var demoteTxs = senderTxs.tailMap(nonce, true);
             while (!demoteTxs.isEmpty()) {
               final PendingTransaction demoteTx = demoteTxs.pollLastEntry().getValue();
               LOG.atTrace()
-                  .setMessage("Demoting tx {} with max gas price below next block base fee {}")
+                  .setMessage(
+                      "Demoting tx {} since it does not respect anymore the requisites to stay in this layer."
+                          + " Next block base fee {}")
                   .addArgument(demoteTx::toTraceLog)
                   .addArgument(newNextBlockBaseFee::toHumanReadableString)
                   .log();
-              processEvict(senderTxs, demoteTx, BELOW_BASE_FEE);
-              addToNextLayer(senderTxs, demoteTx, 0);
+              processEvict(senderTxs, demoteTx, DEMOTED);
+              addToNextLayer(senderTxs, demoteTx, 0, MOVE);
             }
           });
 
