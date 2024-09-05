@@ -45,6 +45,8 @@ public class ExtStaticCallOperationTest {
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final MutableAccount account = mock(MutableAccount.class);
   private static final EVM EOF_EVM = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  public static final Code LEGACY_CODE =
+      EOF_EVM.getCodeUncached(Bytes.of(ExtStaticCallOperation.OPCODE, 1));
   public static final Code SIMPLE_EOF =
       EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"));
   public static final Code INVALID_EOF =
@@ -119,6 +121,7 @@ public class ExtStaticCallOperationTest {
     final var messageFrame =
         new TestMessageFrameBuilder()
             .initialGas(parentGas)
+            .code(SIMPLE_EOF)
             .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
@@ -154,6 +157,7 @@ public class ExtStaticCallOperationTest {
     final var messageFrame =
         new TestMessageFrameBuilder()
             .initialGas(400000)
+            .code(SIMPLE_EOF)
             .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
@@ -182,5 +186,35 @@ public class ExtStaticCallOperationTest {
     MessageFrame parentFrame = messageFrame.getMessageFrameStack().getLast();
     assertThat(parentFrame.getStackItem(0))
         .isEqualTo(AbstractExtCallOperation.EOF1_EXCEPTION_STACK_ITEM);
+  }
+
+  @Test
+  void legacyTest() {
+    final ExtStaticCallOperation operation =
+        new ExtStaticCallOperation(new PragueEOFGasCalculator());
+
+    final var messageFrame =
+        new TestMessageFrameBuilder()
+            .initialGas(400000)
+            .code(LEGACY_CODE)
+            .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
+            .pushStackItem(Bytes.EMPTY)
+            .pushStackItem(Bytes.EMPTY)
+            .pushStackItem(Bytes.EMPTY)
+            .pushStackItem(CONTRACT_ADDRESS)
+            .worldUpdater(worldUpdater)
+            .build();
+    messageFrame.warmUpAddress(CONTRACT_ADDRESS);
+    when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(account.getCodeHash()).thenReturn(SIMPLE_EOF.getCodeHash());
+    when(account.getCode()).thenReturn(SIMPLE_EOF.getBytes());
+    when(worldUpdater.get(any())).thenReturn(account);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
+
+    var result = operation.execute(messageFrame, EOF_EVM);
+
+    assertThat(result.getGasCost()).isZero();
+    assertThat(result.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_OPERATION);
   }
 }

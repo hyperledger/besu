@@ -75,7 +75,6 @@ public interface BesuComponent {
    *
    * @return BesuPluginContextImpl
    */
-  @Named("besuPluginContext")
   BesuPluginContextImpl getBesuPluginContext();
 
   /**

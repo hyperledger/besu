@@ -385,7 +385,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
             penalizedTransactions.forEach(
                 penalizedTx -> {
                   synchronized (this) {
-                    prioritizedTransactions.internalPenalize(penalizedTx);
+                    prioritizedTransactions.penalize(penalizedTx);
                   }
                 }));
   }
