@@ -110,7 +110,6 @@ public class AcceptanceTestBaseJunit5 {
     permissioningTransactions = new PermissioningTransactions();
     contractTransactions = new ContractTransactions();
     minerTransactions = new MinerTransactions();
-
     blockchain = new Blockchain(ethTransactions);
     clique = new CliqueConditions(ethTransactions, cliqueTransactions);
     eth = new EthConditions(ethTransactions);
