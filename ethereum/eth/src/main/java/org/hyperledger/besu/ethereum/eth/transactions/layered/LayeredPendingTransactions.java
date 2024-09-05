@@ -42,7 +42,6 @@ import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -316,7 +315,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   @Override
   public void selectTransactions(final PendingTransactions.TransactionSelector selector) {
-    final List<PendingTransaction> penalizedTransactions = new ArrayList<>();
     final Set<Address> skipSenders = new HashSet<>();
 
     final Map<Byte, List<SenderPendingTransactions>> candidateTxsByScore;
@@ -356,7 +354,12 @@ public class LayeredPendingTransactions implements PendingTransactions {
             }
 
             if (selectionResult.penalize()) {
-              penalizedTransactions.add(candidatePendingTx);
+              ethScheduler.scheduleTxWorkerTask(
+                  () -> {
+                    synchronized (this) {
+                      prioritizedTransactions.penalize(candidatePendingTx);
+                    }
+                  });
               LOG.atTrace()
                   .setMessage("Transaction {} penalized")
                   .addArgument(candidatePendingTx::toTraceLog)
@@ -379,15 +382,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
         }
       }
     }
-
-    ethScheduler.scheduleTxWorkerTask(
-        () ->
-            penalizedTransactions.forEach(
-                penalizedTx -> {
-                  synchronized (this) {
-                    prioritizedTransactions.penalize(penalizedTx);
-                  }
-                }));
   }
 
   @Override

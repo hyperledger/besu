@@ -418,6 +418,24 @@ public class TransactionPoolOptionsTest
         "WRONG_TYPE=1");
   }
 
+  @Test
+  public void minScoreWorks() {
+    final byte minScore = -10;
+    internalTestSuccess(
+        config -> assertThat(config.getMinScore()).isEqualTo(minScore),
+        "--tx-pool-min-score",
+        Byte.toString(minScore));
+  }
+
+  @Test
+  public void minScoreNonByteValueReturnError() {
+    final var overflowMinScore = Integer.toString(-300);
+    internalTestFailure(
+        "Invalid value for option '--tx-pool-min-score': '" + overflowMinScore + "' is not a byte",
+        "--tx-pool-min-score",
+        overflowMinScore);
+  }
+
   @Override
   protected TransactionPoolConfiguration createDefaultDomainObject() {
     return TransactionPoolConfiguration.DEFAULT;
