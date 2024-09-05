@@ -102,6 +102,11 @@ public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Ac
   }
 
   @Override
+  public boolean isEmpty() {
+    return getDelegatedNonce() == 0 && getDelegatedBalance().isZero() && !hasCode();
+  }
+
+  @Override
   public boolean hasCode() {
     return !getCode().isEmpty();
   }

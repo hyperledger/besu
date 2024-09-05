@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.account;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Optional;
@@ -54,6 +55,24 @@ class BaseDelegatedCodeAccount {
   }
 
   /**
+   * Returns the balance of the delegated account.
+   *
+   * @return the balance of the delegated account.
+   */
+  protected Wei getDelegatedBalance() {
+    return getDelegatedAccount().map(Account::getBalance).orElse(Wei.ZERO);
+  }
+
+  /**
+   * Returns the nonce of the delegated account.
+   *
+   * @return the nonce of the delegated account.
+   */
+  protected long getDelegatedNonce() {
+    return getDelegatedAccount().map(Account::getNonce).orElse(Account.DEFAULT_NONCE);
+  }
+
+  /**
    * Returns the address of the delegated code.
    *
    * @return the address of the delegated code.
@@ -62,10 +81,12 @@ class BaseDelegatedCodeAccount {
     return Optional.of(delegatedCodeAddress);
   }
 
+  private Optional<Account> getDelegatedAccount() {
+    return Optional.ofNullable(worldUpdater.getAccount(delegatedCodeAddress));
+  }
+
   private Bytes resolveDelegatedCode() {
 
-    return Optional.ofNullable(worldUpdater.getAccount(delegatedCodeAddress))
-        .map(Account::getUnprocessedCode)
-        .orElse(Bytes.EMPTY);
+    return getDelegatedAccount().map(Account::getUnprocessedCode).orElse(Bytes.EMPTY);
   }
 }
