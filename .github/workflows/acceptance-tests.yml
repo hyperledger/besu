@@ -43,7 +43,7 @@ jobs:
           cache-disabled: true
       - name: List unit tests
         run: ./gradlew acceptanceTestNotPrivacy --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: List privacy permissioning
+      - name: List permissioning tests
         run: ./gradlew acceptanceTestPermissioning --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Extract current test list
         run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo ' acceptanceTest'" | tee tmp/currentTests.list
@@ -80,7 +80,7 @@ jobs:
           path: '*.txt'
       - name: run acceptance tests
         run: ./gradlew acceptanceTestNotPrivacy `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: run acceptance-privacy tests
+      - name: run acceptance permissioning tests
         run: ./gradlew acceptanceTestPermissioning `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Remove downloaded test results
         run: rm -rf tmp/junit-xml-reports-downloaded
