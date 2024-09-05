@@ -7,6 +7,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Update Java and Gradle dependecies [#7571](https://github.com/hyperledger/besu/pull/7571)
 
 ### Bug fixes
 - Layered txpool: do not send notifications when moving tx between layers [#7539](https://github.com/hyperledger/besu/pull/7539)
