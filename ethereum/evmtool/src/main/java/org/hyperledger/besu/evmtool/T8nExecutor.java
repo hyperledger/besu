@@ -256,7 +256,7 @@ public class T8nExecutor {
                         authorizationNonce,
                         authorizationSignature));
               }
-              builder.setCodeTransactionPayloads(authorizations);
+              builder.codeDelegations(authorizations);
             }
 
             if (txNode.has("blobVersionedHashes")) {

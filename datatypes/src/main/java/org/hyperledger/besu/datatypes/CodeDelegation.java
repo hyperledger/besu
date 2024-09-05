@@ -20,13 +20,10 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 /**
- * SetCodeAuthorization is a data structure that represents the authorization to set code on a EOA
- * account.
+ * CodeDelegation is a data structure that represents the authorization to delegate code of an EOA
+ * account to another account.
  */
 public interface CodeDelegation {
-  /** The cost of delegating code on an empty account. */
-  long PER_EMPTY_ACCOUNT_COST = 25_000L;
-
   /** The cost of delegating code on an existing account. */
   long PER_AUTH_BASE_COST = 2_500L;
 

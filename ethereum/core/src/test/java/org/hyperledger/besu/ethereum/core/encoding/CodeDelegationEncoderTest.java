@@ -42,7 +42,7 @@ class CodeDelegationEncoderTest {
   }
 
   @Test
-  void shouldEncodeSingleSetCodeWithNonce() {
+  void shouldEncodeSingleCodeDelegationWithNonce() {
     // "0xd80194633688abc3ccf8b0c03088d2d1c6ae4958c2fa56c105"
 
     final CodeDelegation authorization =
@@ -59,7 +59,7 @@ class CodeDelegationEncoderTest {
                         "3b1dbace38ceb862a65bf2eac0637693b5c3493bcb2a022dd614c0a74cce0b99", 16),
                     (byte) 0));
 
-    CodeDelegationEncoder.encodeSingleSetCode(authorization, output);
+    CodeDelegationEncoder.encodeSingleCodeDelegation(authorization, output);
 
     assertThat(output.encoded())
         .isEqualTo(
@@ -68,7 +68,7 @@ class CodeDelegationEncoderTest {
   }
 
   @Test
-  void shouldEncodeSingleSetCodeWithoutNonce() {
+  void shouldEncodeSingleCodeDelegationWithoutNonce() {
     // "0xd70194633688abc3ccf8b0c03088d2d1c6ae4958c2fa56c5"
 
     final CodeDelegation authorization =
@@ -85,7 +85,7 @@ class CodeDelegationEncoderTest {
                         "25b58a1ff8ad00bddbbfa1d5c2411961cbb6d08dcdc8ae88303db3c6cf983031", 16),
                     (byte) 1));
 
-    CodeDelegationEncoder.encodeSingleSetCode(authorization, output);
+    CodeDelegationEncoder.encodeSingleCodeDelegation(authorization, output);
 
     assertThat(output.encoded())
         .isEqualTo(
@@ -94,7 +94,7 @@ class CodeDelegationEncoderTest {
   }
 
   @Test
-  void shouldEncodeSingleSetCodeWithoutNonceAndChainIdZero() {
+  void shouldEncodeSingleCodeDelegationWithoutNonceAndChainIdZero() {
     // "d70094633688abc3ccf8b0c03088d2d1c6ae4958c2fa56c5"
 
     final CodeDelegation authorization =
@@ -111,7 +111,7 @@ class CodeDelegationEncoderTest {
                         "3c8a25b2becd6e666f69803d1ae3322f2e137b7745c2c7f19da80f993ffde4df", 16),
                     (byte) 1));
 
-    CodeDelegationEncoder.encodeSingleSetCode(authorization, output);
+    CodeDelegationEncoder.encodeSingleCodeDelegation(authorization, output);
 
     assertThat(output.encoded())
         .isEqualTo(

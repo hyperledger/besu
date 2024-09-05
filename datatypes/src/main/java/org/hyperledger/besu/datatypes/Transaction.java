@@ -236,9 +236,9 @@ public interface Transaction {
   int getSize();
 
   /**
-   * Returns the set code transaction payload if this transaction is a 7702 transaction.
+   * Returns the code delegations if this transaction is a 7702 transaction.
    *
-   * @return the set code transaction payloads
+   * @return the code delegations
    */
   Optional<List<CodeDelegation>> getCodeDelegationList();
 

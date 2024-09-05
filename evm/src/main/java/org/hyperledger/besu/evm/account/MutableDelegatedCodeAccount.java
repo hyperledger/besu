@@ -104,6 +104,11 @@ public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
   }
 
   @Override
+  public boolean hasCode() {
+    return !getCode().isEmpty();
+  }
+
+  @Override
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
     return wrappedAccount.storageEntriesFrom(startKeyHash, limit);

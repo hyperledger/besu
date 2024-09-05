@@ -31,21 +31,22 @@ public class CodeDelegationEncoder {
     // private constructor
   }
 
-  public static void encodeSetCodeInner(
+  public static void encodeCodeDelegationInner(
       final List<CodeDelegation> payloads, final RLPOutput rlpOutput) {
     rlpOutput.startList();
-    payloads.forEach(payload -> encodeSingleSetCode(payload, rlpOutput));
+    payloads.forEach(payload -> encodeSingleCodeDelegation(payload, rlpOutput));
     rlpOutput.endList();
   }
 
-  public static void encodeSingleSetCodeWithoutSignature(
+  public static void encodeSingleCodeDelegationWithoutSignature(
       final CodeDelegation payload, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     encodeAuthorizationDetails(payload, rlpOutput);
     rlpOutput.endList();
   }
 
-  public static void encodeSingleSetCode(final CodeDelegation payload, final RLPOutput rlpOutput) {
+  public static void encodeSingleCodeDelegation(
+      final CodeDelegation payload, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     encodeAuthorizationDetails(payload, rlpOutput);
     rlpOutput.writeIntScalar(payload.signature().getRecId());
@@ -72,13 +73,13 @@ public class CodeDelegationEncoder {
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
     writeAccessList(out, transaction.getAccessList());
-    encodeSetCodeInner(
+    encodeCodeDelegationInner(
         transaction
             .getCodeDelegationList()
             .orElseThrow(
                 () ->
                     new IllegalStateException(
-                        "Developer error: the transaction should be guaranteed to have a set code payload here")),
+                        "Developer error: the transaction should be guaranteed to have a code delegation authorizations here")),
         out);
     writeSignatureAndRecoveryId(transaction, out);
     out.endList();

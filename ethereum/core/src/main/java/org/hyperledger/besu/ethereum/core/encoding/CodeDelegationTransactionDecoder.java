@@ -63,8 +63,7 @@ public class CodeDelegationTransactionDecoder {
                       accessListEntryRLPInput.leaveList();
                       return accessListEntry;
                     }))
-            .setCodeTransactionPayloads(
-                input.readList(CodeDelegationTransactionDecoder::decodeInnerPayload));
+            .codeDelegations(input.readList(CodeDelegationTransactionDecoder::decodeInnerPayload));
 
     final byte recId = (byte) input.readUnsignedByteScalar();
     final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();

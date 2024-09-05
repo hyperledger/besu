@@ -26,8 +26,7 @@ import org.hyperledger.besu.datatypes.CodeDelegation;
  * </UL>
  */
 public class PragueGasCalculator extends CancunGasCalculator {
-  static final long EXISTING_ACCOUNT_GAS_REFUND =
-      CodeDelegation.PER_EMPTY_ACCOUNT_COST - CodeDelegation.PER_AUTH_BASE_COST;
+  final long existingAccountGasRefund;
 
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
@@ -41,16 +40,17 @@ public class PragueGasCalculator extends CancunGasCalculator {
    */
   protected PragueGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
+    this.existingAccountGasRefund = newAccountGasCost() - CodeDelegation.PER_AUTH_BASE_COST;
   }
 
   @Override
   public long delegateCodeGasCost(final int delegateCodeListLength) {
-    return CodeDelegation.PER_EMPTY_ACCOUNT_COST * delegateCodeListLength;
+    return newAccountGasCost() * delegateCodeListLength;
   }
 
   @Override
   public long calculateDelegateCodeGasRefund(final long alreadyExistingAccounts) {
-    return EXISTING_ACCOUNT_GAS_REFUND * alreadyExistingAccounts;
+    return existingAccountGasRefund * alreadyExistingAccounts;
   }
 
   @Override

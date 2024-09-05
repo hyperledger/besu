@@ -218,10 +218,10 @@ public class Transaction
             maxFeePerBlobGas.isPresent(), "Must specify max fee per blob gas for blob transaction");
       }
 
-      if (transactionType.requiresSetCode()) {
+      if (transactionType.requiresCodeDelegation()) {
         checkArgument(
             maybeCodeDelegationList.isPresent(),
-            "Must specify set code transaction payload for set code transaction");
+            "Must specify code delegation authorizations for code delegation transaction");
       }
     }
 
@@ -760,7 +760,7 @@ public class Transaction
                               "Developer error: the transaction should be guaranteed to have an access list here")),
                   chainId);
           case DELEGATE_CODE ->
-              setCodePreimage(
+              codeDelegationPreimage(
                   nonce,
                   maxPriorityFeePerGas,
                   maxFeePerGas,
@@ -773,7 +773,7 @@ public class Transaction
                   codeDelegationList.orElseThrow(
                       () ->
                           new IllegalStateException(
-                              "Developer error: the transaction should be guaranteed to have a set code payload here")));
+                              "Developer error: the transaction should be guaranteed to have a code delegations here")));
         };
     return keccak256(preimage);
   }
@@ -911,7 +911,7 @@ public class Transaction
     return Bytes.concatenate(Bytes.of(TransactionType.ACCESS_LIST.getSerializedType()), encode);
   }
 
-  private static Bytes setCodePreimage(
+  private static Bytes codeDelegationPreimage(
       final long nonce,
       final Wei maxPriorityFeePerGas,
       final Wei maxFeePerGas,
@@ -937,7 +937,7 @@ public class Transaction
                   chainId,
                   accessList,
                   rlpOutput);
-              CodeDelegationEncoder.encodeSetCodeInner(authorizationList, rlpOutput);
+              CodeDelegationEncoder.encodeCodeDelegationInner(authorizationList, rlpOutput);
               rlpOutput.endList();
             });
     return Bytes.concatenate(Bytes.of(TransactionType.DELEGATE_CODE.getSerializedType()), encoded);
@@ -1179,7 +1179,7 @@ public class Transaction
     protected Optional<BigInteger> v = Optional.empty();
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
-    protected Optional<List<CodeDelegation>> setCodeTransactionPayloads = Optional.empty();
+    protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;
@@ -1198,7 +1198,7 @@ public class Transaction
       this.chainId = toCopy.chainId;
       this.versionedHashes = toCopy.versionedHashes.orElse(null);
       this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
-      this.setCodeTransactionPayloads = toCopy.maybeCodeDelegationList;
+      this.codeDelegationAuthorizations = toCopy.maybeCodeDelegationList;
       return this;
     }
 
@@ -1292,7 +1292,7 @@ public class Transaction
         transactionType = TransactionType.EIP1559;
       } else if (accessList.isPresent()) {
         transactionType = TransactionType.ACCESS_LIST;
-      } else if (setCodeTransactionPayloads.isPresent()) {
+      } else if (codeDelegationAuthorizations.isPresent()) {
         transactionType = TransactionType.DELEGATE_CODE;
       } else {
         transactionType = TransactionType.FRONTIER;
@@ -1324,7 +1324,7 @@ public class Transaction
           chainId,
           Optional.ofNullable(versionedHashes),
           Optional.ofNullable(blobsWithCommitments),
-          setCodeTransactionPayloads);
+          codeDelegationAuthorizations);
     }
 
     public Transaction signAndBuild(final KeyPair keys) {
@@ -1351,7 +1351,7 @@ public class Transaction
                   payload,
                   accessList,
                   versionedHashes,
-                  setCodeTransactionPayloads,
+                  codeDelegationAuthorizations,
                   chainId),
               keys);
     }
@@ -1376,9 +1376,8 @@ public class Transaction
       return this;
     }
 
-    public Builder setCodeTransactionPayloads(
-        final List<CodeDelegation> setCodeTransactionEntries) {
-      this.setCodeTransactionPayloads = Optional.ofNullable(setCodeTransactionEntries);
+    public Builder codeDelegations(final List<CodeDelegation> codeDelegations) {
+      this.codeDelegationAuthorizations = Optional.ofNullable(codeDelegations);
       return this;
     }
   }

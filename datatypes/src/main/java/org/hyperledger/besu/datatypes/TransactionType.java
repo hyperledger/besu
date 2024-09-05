@@ -146,7 +146,7 @@ public enum TransactionType {
    *
    * @return the boolean
    */
-  public boolean requiresSetCode() {
+  public boolean requiresCodeDelegation() {
     return this.equals(DELEGATE_CODE);
   }
 }

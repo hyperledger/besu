@@ -28,9 +28,6 @@ class BaseDelegatedCodeAccount {
   /** The address of the account that has delegated code to be loaded into it. */
   protected final Address delegatedCodeAddress;
 
-  private Bytes delegatedCode;
-  private Hash codeHash;
-
   protected BaseDelegatedCodeAccount(
       final WorldUpdater worldUpdater, final Address delegatedCodeAddress) {
     this.worldUpdater = worldUpdater;
@@ -43,13 +40,7 @@ class BaseDelegatedCodeAccount {
    * @return the delegated code.
    */
   protected Bytes getCode() {
-    if (delegatedCode != null) {
-      return delegatedCode;
-    }
-
-    delegatedCode = resolveDelegatedCode();
-
-    return delegatedCode;
+    return resolveDelegatedCode();
   }
 
   /**
@@ -58,18 +49,8 @@ class BaseDelegatedCodeAccount {
    * @return the hash of the delegated code.
    */
   protected Hash getCodeHash() {
-    if (codeHash != null) {
-      return codeHash;
-    }
-
     final Bytes code = getCode();
-    if (code != null && !code.isEmpty()) {
-      codeHash = Hash.hash(code);
-    } else {
-      codeHash = Hash.EMPTY;
-    }
-
-    return codeHash;
+    return (code == null || code.isEmpty()) ? Hash.EMPTY : Hash.hash(code);
   }
 
   /**

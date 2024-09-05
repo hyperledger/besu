@@ -375,17 +375,17 @@ public class MainnetTransactionProcessor {
               transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
-      final long setCodeGas =
+      final long codeDelegationGas =
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
       final long gasAvailable =
-          transaction.getGasLimit() - intrinsicGas - accessListGas - setCodeGas;
+          transaction.getGasLimit() - intrinsicGas - accessListGas - codeDelegationGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - setCode)",
+          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - codeDelegation)",
           gasAvailable,
           transaction.getGasLimit(),
           intrinsicGas,
           accessListGas,
-          setCodeGas);
+          codeDelegationGas);
 
       final WorldUpdater worldUpdater = evmWorldUpdater.updater();
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =

@@ -65,7 +65,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
   }
 
   /**
-   * Create access list entry.
+   * Create code delegation.
    *
    * @param chainId can be either the current chain id or zero
    * @param address the address from which the code will be set into the EOA account
@@ -73,10 +73,10 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
    * @param v the recovery id
    * @param r the r value of the signature
    * @param s the s value of the signature
-   * @return SetCodeTransactionEntry
+   * @return CodeDelegation
    */
   @JsonCreator
-  public static org.hyperledger.besu.datatypes.CodeDelegation createSetCodeAuthorizationEntry(
+  public static org.hyperledger.besu.datatypes.CodeDelegation createCodeDelegation(
       @JsonProperty("chainId") final BigInteger chainId,
       @JsonProperty("address") final Address address,
       @JsonProperty("nonce") final long nonce,
@@ -140,7 +140,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
 
   private Optional<Address> computeAuthority() {
     BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    CodeDelegationEncoder.encodeSingleSetCodeWithoutSignature(this, rlpOutput);
+    CodeDelegationEncoder.encodeSingleCodeDelegationWithoutSignature(this, rlpOutput);
 
     final Hash hash = Hash.hash(Bytes.concatenate(MAGIC, rlpOutput.encoded()));
 
@@ -159,15 +159,15 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
   }
 
   /**
-   * Create set code authorization with a builder.
+   * Create a code delegation authorization with a builder.
    *
-   * @return SetCodeAuthorization.Builder
+   * @return CodeDelegation.Builder
    */
   public static Builder builder() {
     return new Builder();
   }
 
-  /** Builder for SetCodeAuthorization. */
+  /** Builder for CodeDelegation authorizations. */
   public static class Builder {
     private BigInteger chainId = BigInteger.ZERO;
     private Address address;
@@ -225,16 +225,14 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
      * Sign the authorization with the given key pair and return the authorization.
      *
      * @param keyPair the key pair
-     * @return SetCodeAuthorization
+     * @return CodeDelegation
      */
     public org.hyperledger.besu.datatypes.CodeDelegation signAndBuild(final KeyPair keyPair) {
       final BytesValueRLPOutput output = new BytesValueRLPOutput();
       output.startList();
       output.writeBigIntegerScalar(chainId);
       output.writeBytes(address);
-      output.startList();
       output.writeLongScalar(nonce);
-      output.endList();
       output.endList();
 
       signature(
@@ -247,7 +245,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
     /**
      * Build the authorization.
      *
-     * @return SetCodeAuthorization
+     * @return CodeDelegation
      */
     public org.hyperledger.besu.datatypes.CodeDelegation build() {
       if (address == null) {
