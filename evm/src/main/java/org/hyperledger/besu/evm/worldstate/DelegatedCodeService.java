@@ -90,7 +90,8 @@ public class DelegatedCodeService {
   }
 
   private boolean hasDelegatedCode(final Bytes code) {
-    return code.size() == DELEGATED_CODE_SIZE
+    return code != null
+        && code.size() == DELEGATED_CODE_SIZE
         && code.slice(0, DELEGATED_CODE_PREFIX.size()).equals(DELEGATED_CODE_PREFIX);
   }
 }
