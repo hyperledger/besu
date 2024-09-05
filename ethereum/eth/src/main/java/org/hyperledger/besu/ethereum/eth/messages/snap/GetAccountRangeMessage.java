@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages.snap;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -51,6 +52,7 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
     return create(worldStateRootHash, startKeyHash, endKeyHash, SIZE_REQUEST);
   }
 
+  @VisibleForTesting
   public static GetAccountRangeMessage create(
       final Hash worldStateRootHash,
       final Bytes32 startKeyHash,

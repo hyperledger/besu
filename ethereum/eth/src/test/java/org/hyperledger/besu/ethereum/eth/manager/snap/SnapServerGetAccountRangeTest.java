@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -59,7 +60,8 @@ public class SnapServerGetAccountRangeTest {
   public void setupTest() {
     WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(
-            protocolContext.getWorldStateArchive().getWorldStateStorage());
+            ((DiffBasedWorldStateProvider) protocolContext.getWorldStateArchive())
+                .getWorldStateKeyValueStorage());
 
     SnapSyncConfiguration snapSyncConfiguration =
         ImmutableSnapSyncConfiguration.builder().isSnapServerEnabled(true).build();

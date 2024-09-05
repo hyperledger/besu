@@ -97,7 +97,6 @@ public class ForestWorldStateArchive implements WorldStateArchive {
     return worldStateKeyValueStorage.getNodeData(hash);
   }
 
-  @Override
   public ForestWorldStateKeyValueStorage getWorldStateStorage() {
     return worldStateKeyValueStorage;
   }
