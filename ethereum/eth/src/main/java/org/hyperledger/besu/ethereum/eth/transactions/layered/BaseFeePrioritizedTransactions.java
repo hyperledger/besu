@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.AddReason.MOVE;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.BELOW_BASE_FEE;
 
 import org.hyperledger.besu.datatypes.Wei;
@@ -133,7 +134,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
                   .addArgument(newNextBlockBaseFee::toHumanReadableString)
                   .log();
               processEvict(senderTxs, demoteTx, BELOW_BASE_FEE);
-              addToNextLayer(senderTxs, demoteTx, 0);
+              addToNextLayer(senderTxs, demoteTx, 0, MOVE);
             }
           });
 
