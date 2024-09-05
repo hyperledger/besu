@@ -106,10 +106,12 @@ public class EngineGetBlobsV1Test {
   @Test
   public void shouldReturnBlobsAndProofsForKnownVersionedHashesFromMap() {
     final Transaction blobTransaction = createBlobTransaction();
-    method.onTransactionAdded(blobTransaction);
 
     final BlobsWithCommitments blobsWithCommitments =
         blobTransaction.getBlobsWithCommitments().get();
+
+    mockTransactionPoolMethod(blobsWithCommitments);
+
     VersionedHash[] versionedHashes =
         blobsWithCommitments.getVersionedHashes().toArray(new VersionedHash[0]);
 
@@ -128,48 +130,21 @@ public class EngineGetBlobsV1Test {
   }
 
   @Test
-  public void shouldReturnBlobsAndProofsForKnownVersionedHashesFromCache() {
-    final Transaction blobTransaction = createBlobTransaction();
-
-    final BlobsWithCommitments blobsWithCommitments =
-        blobTransaction.getBlobsWithCommitments().get();
-    List<VersionedHash> versionedHashesList =
-        blobsWithCommitments.getVersionedHashes().stream().toList();
-
-    // set the blockCache up to respond with the right data
-    for (int i = 0; i < versionedHashesList.size(); i++) {
-      when(blobCache.get(blobTransaction.getVersionedHashes().get().get(i)))
-          .thenReturn(blobTransaction.getBlobsWithCommitments().get().getBlobQuads().get(i));
-    }
-
-    final JsonRpcResponse jsonRpcResponse = resp(versionedHashesList.toArray(new VersionedHash[0]));
-
-    final List<BlobAndProofV1> blobAndProofV1s = fromSuccessResp(jsonRpcResponse);
-
-    assertThat(blobAndProofV1s.size()).isEqualTo(versionedHashesList.size());
-    // for loop to check each blob and proof
-    for (int i = 0; i < versionedHashesList.size(); i++) {
-      assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getBlob()))
-          .isEqualTo(blobsWithCommitments.getBlobQuads().get(i).blob().getData());
-      assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getProof()))
-          .isEqualTo(blobsWithCommitments.getBlobQuads().get(i).kzgProof().getData());
-    }
-  }
-
-  @Test
   public void shouldReturnNullForBlobsAndProofsForUnknownVersionedHashes() {
     final Transaction blobTransaction = createBlobTransaction();
-    method.onTransactionAdded(blobTransaction);
 
     final BlobsWithCommitments blobsWithCommitments =
         blobTransaction.getBlobsWithCommitments().get();
+
+    mockTransactionPoolMethod(blobsWithCommitments);
+
     List<VersionedHash> versionedHashesList =
         blobsWithCommitments.getVersionedHashes().stream().toList();
 
-    final VersionedHash[] hashesListArray = versionedHashesList.toArray(new VersionedHash[0]);
-    hashesListArray[1] = VERSIONED_HASH_ZERO;
+    final VersionedHash[] hashes = versionedHashesList.toArray(new VersionedHash[0]);
+    hashes[1] = VERSIONED_HASH_ZERO;
 
-    final JsonRpcResponse jsonRpcResponse = resp(hashesListArray);
+    final JsonRpcResponse jsonRpcResponse = resp(hashes);
 
     final List<BlobAndProofV1> blobAndProofV1s = fromSuccessResp(jsonRpcResponse);
 
@@ -190,10 +165,12 @@ public class EngineGetBlobsV1Test {
   @Test
   public void shouldReturnOnlyNullsForBlobsAndProofsIfAllVersionedHashesUnknown() {
     final Transaction blobTransaction = createBlobTransaction();
-    method.onTransactionAdded(blobTransaction);
 
     final BlobsWithCommitments blobsWithCommitments =
         blobTransaction.getBlobsWithCommitments().get();
+
+    mockTransactionPoolMethod(blobsWithCommitments);
+
     List<VersionedHash> versionedHashesList =
         blobsWithCommitments.getVersionedHashes().stream().toList();
 
@@ -250,6 +227,14 @@ public class EngineGetBlobsV1Test {
             .blobsWithCommitments(Optional.of(bwc))
             .createTransaction(KEYS1);
     return fullOfBlobs;
+  }
+
+  private void mockTransactionPoolMethod(final BlobsWithCommitments blobsWithCommitments) {
+    blobsWithCommitments
+            .getBlobQuads()
+            .forEach(
+                    blobQuad ->
+                            when(transactionPool.getBlobQuad(blobQuad.versionedHash())).thenReturn(blobQuad));
   }
 
   private JsonRpcResponse resp(final VersionedHash[] versionedHashes) {

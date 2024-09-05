@@ -20,8 +20,10 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
@@ -55,6 +57,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.Map;
@@ -104,6 +107,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
   private final EthScheduler.OrderedProcessor<BlockAddedEvent> blockAddedEventOrderedProcessor;
+  private final Map<VersionedHash, BlobsWithCommitments.BlobQuad> blobMap = new HashMap<>();
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -125,6 +129,8 @@ public class TransactionPool implements BlockAddedObserver {
         ethContext.getScheduler().createOrderedProcessor(this::processBlockAddedEvent);
     this.blobCache = blobCache;
     initLogForReplay();
+    subscribePendingTransactions(this::mapBlobsOnTransactionAdded);
+    subscribeDroppedTransactions(this::unmapBlobsOnTransactionDropped);
   }
 
   private void initLogForReplay() {
@@ -645,6 +651,38 @@ public class TransactionPool implements BlockAddedObserver {
               });
     }
     return CompletableFuture.completedFuture(null);
+  }
+
+  private void mapBlobsOnTransactionAdded(
+      final org.hyperledger.besu.datatypes.Transaction transaction) {
+    final Optional<BlobsWithCommitments> maybeBlobsWithCommitments =
+        transaction.getBlobsWithCommitments();
+    if (maybeBlobsWithCommitments.isEmpty()) {
+      return;
+    }
+    final List<BlobsWithCommitments.BlobQuad> blobQuads =
+        maybeBlobsWithCommitments.get().getBlobQuads();
+    blobQuads.forEach(bq -> blobMap.put(bq.versionedHash(), bq));
+  }
+
+  private void unmapBlobsOnTransactionDropped(
+      final org.hyperledger.besu.datatypes.Transaction transaction) {
+    final Optional<BlobsWithCommitments> maybeBlobsWithCommitments =
+        transaction.getBlobsWithCommitments();
+    if (maybeBlobsWithCommitments.isEmpty()) {
+      return;
+    }
+    final List<BlobsWithCommitments.BlobQuad> blobQuads =
+        maybeBlobsWithCommitments.get().getBlobQuads();
+    blobQuads.forEach(bq -> blobMap.remove(bq.versionedHash()));
+  }
+
+  public BlobsWithCommitments.BlobQuad getBlobQuad(final VersionedHash vh) {
+    BlobsWithCommitments.BlobQuad blobQuad = blobMap.get(vh);
+    if (blobQuad == null) {
+      blobQuad = blobCache.get(vh);
+    }
+    return blobQuad;
   }
 
   public boolean isEnabled() {

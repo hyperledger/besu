@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
-import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -27,14 +26,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV1;
-import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -64,8 +59,7 @@ import io.vertx.core.Vertx;
  */
 public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
 
-  private final Map<VersionedHash, BlobsWithCommitments.BlobQuad> blobMap = new HashMap<>();
-  private final BlobCache blobCache;
+  private final TransactionPool transactionPool;
 
   public EngineGetBlobsV1(
       final Vertx vertx,
@@ -73,9 +67,7 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
       final EngineCallListener engineCallListener,
       final TransactionPool transactionPool) {
     super(vertx, protocolContext, engineCallListener);
-    this.blobCache = transactionPool.getBlobCache();
-    transactionPool.subscribePendingTransactions(this::onTransactionAdded);
-    transactionPool.subscribeDroppedTransactions(this::onTransactionDropped);
+    this.transactionPool = transactionPool;
   }
 
   @Override
@@ -101,14 +93,14 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST);
     }
 
-    final List<BlobAndProofV1> result = getResult(versionedHashes);
+    final List<BlobAndProofV1> result = getBlobV1Result(versionedHashes);
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
-  private @Nonnull List<BlobAndProofV1> getResult(final VersionedHash[] versionedHashes) {
+  private @Nonnull List<BlobAndProofV1> getBlobV1Result(final VersionedHash[] versionedHashes) {
     return Arrays.stream(versionedHashes)
-        .map(this::getBlobQuad)
+        .map(transactionPool::getBlobQuad)
         .map(this::getBlobAndProofV1)
         .toList();
   }
@@ -119,37 +111,5 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
     }
     return new BlobAndProofV1(
         bq.blob().getData().toHexString(), bq.kzgProof().getData().toHexString());
-  }
-
-  private BlobsWithCommitments.BlobQuad getBlobQuad(final VersionedHash vh) {
-
-    BlobsWithCommitments.BlobQuad blobQuad = blobMap.get(vh);
-    if (blobQuad == null) {
-      blobQuad = blobCache.get(vh);
-    }
-
-    return blobQuad;
-  }
-
-  public void onTransactionAdded(final Transaction transaction) {
-    final Optional<BlobsWithCommitments> maybeBlobsWithCommitments =
-        transaction.getBlobsWithCommitments();
-    if (maybeBlobsWithCommitments.isEmpty()) {
-      return;
-    }
-    final List<BlobsWithCommitments.BlobQuad> blobQuads =
-        maybeBlobsWithCommitments.get().getBlobQuads();
-    blobQuads.forEach(bq -> blobMap.put(bq.versionedHash(), bq));
-  }
-
-  public void onTransactionDropped(final Transaction transaction) {
-    final Optional<BlobsWithCommitments> maybeBlobsWithCommitments =
-        transaction.getBlobsWithCommitments();
-    if (maybeBlobsWithCommitments.isEmpty()) {
-      return;
-    }
-    final List<BlobsWithCommitments.BlobQuad> blobQuads =
-        maybeBlobsWithCommitments.get().getBlobQuads();
-    blobQuads.forEach(bq -> blobMap.remove(bq.versionedHash()));
   }
 }
