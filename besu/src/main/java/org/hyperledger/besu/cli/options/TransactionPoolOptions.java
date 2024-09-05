@@ -202,7 +202,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         names = {TX_POOL_MIN_SCORE},
         paramLabel = "<Byte>",
         description =
-            "Keep a pending transaction in the txpool until its score is greater than or equal to this value."
+            "Remove a pending transaction from the txpool if its score is lower than this value."
                 + "Accepts values between -128 and 127 (default: ${DEFAULT-VALUE})",
         arity = "1")
     Byte minScore = TransactionPoolConfiguration.DEFAULT_TX_POOL_MIN_SCORE;
