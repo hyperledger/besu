@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.DROPPED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.AddReason.NEW;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.NEW;
 
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;

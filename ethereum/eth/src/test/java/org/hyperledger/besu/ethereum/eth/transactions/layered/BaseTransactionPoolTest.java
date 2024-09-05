@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
-import org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.AddReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;

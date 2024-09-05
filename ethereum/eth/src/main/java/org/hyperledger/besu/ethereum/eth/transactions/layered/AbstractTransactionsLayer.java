@@ -19,11 +19,12 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TRY_NEXT_LAYER;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.AddReason.MOVE;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CONFIRMED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CROSS_LAYER_REPLACED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.EVICTED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.MOVE;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.EVICTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.CONFIRMED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.CROSS_LAYER_REPLACED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.REPLACED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.RemovedFrom.POOL;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -292,7 +293,8 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
         if (remainingPromotionsPerType[txType.ordinal()] > 0) {
           senderTxs.pollFirstEntry();
-          processRemove(senderTxs, candidateTx.getTransaction(), RemovalReason.PROMOTED);
+          processRemove(
+              senderTxs, candidateTx.getTransaction(), RemovalReason.LayerMoveReason.PROMOTED);
           metrics.incrementRemoved(candidateTx, "promoted", name());
 
           if (senderTxs.isEmpty()) {
@@ -419,6 +421,9 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       decreaseCounters(removedTx);
       metrics.incrementRemoved(removedTx, removalReason.label(), name());
       internalRemove(senderTxs, removedTx, removalReason);
+      if (removalReason.removedFrom().equals(POOL)) {
+        notifyTransactionDropped(removedTx);
+      }
     }
     return removedTx;
   }

@@ -11,6 +11,7 @@
 
 ### Bug fixes
 - Layered txpool: do not send notifications when moving tx between layers [#7539](https://github.com/hyperledger/besu/pull/7539)
+- Layered txpool: fix for unsent drop notifications on remove [#7538](https://github.com/hyperledger/besu/pull/7538)
 
 ## 24.9.0
 
