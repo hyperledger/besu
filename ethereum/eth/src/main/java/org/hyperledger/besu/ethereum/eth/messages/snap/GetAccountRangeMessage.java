@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages.snap;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -25,6 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
