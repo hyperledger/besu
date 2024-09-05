@@ -52,25 +52,30 @@ public interface RemovalReason {
   /** The reason why the tx has been removed from the pool */
   enum PoolRemovalReason implements RemovalReason {
     /** Tx removed since it is confirmed on chain, as part of an imported block. */
-    CONFIRMED(),
+    CONFIRMED,
     /** Tx removed since it has been replaced by another one added in the same layer. */
-    REPLACED(),
+    REPLACED,
     /** Tx removed since it has been replaced by another one added in another layer. */
-    CROSS_LAYER_REPLACED(),
+    CROSS_LAYER_REPLACED,
     /** Tx removed when the pool is full, to make space for new incoming txs. */
-    DROPPED(),
+    DROPPED,
     /**
      * Tx removed since found invalid after it was added to the pool, for example during txs
      * selection for a new block proposal.
      */
-    INVALIDATED(),
+    INVALIDATED,
     /**
      * Special case, when for a sender, discrepancies are found between the world state view and the
      * pool view, then all the txs for this sender are removed and added again. Discrepancies, are
      * rare, and can happen during a short windows when a new block is being imported and the world
      * state being updated.
      */
-    RECONCILED();
+    RECONCILED,
+    /**
+     * When a pending tx is penalized its score is decreased, if at some point its score is lower
+     * than the configured minimum then the pending tx is removed from the pool.
+     */
+    BELOW_MIN_SCORE;
 
     private final String label;
 
@@ -95,22 +100,22 @@ public interface RemovalReason {
      * When the current layer is full, and this tx needs to be moved to the lower layer, in order to
      * free space.
      */
-    EVICTED(),
+    EVICTED,
     /**
      * Specific to sequential layers, when a tx is removed because found invalid, then if the sender
      * has other txs with higher nonce, then a gap is created, and since sequential layers do not
      * permit gaps, txs following the invalid one need to be moved to lower layers.
      */
-    FOLLOW_INVALIDATED(),
+    FOLLOW_INVALIDATED,
     /**
      * When a tx is moved to the upper layer, since it satisfies all the requirement to be promoted.
      */
-    PROMOTED(),
+    PROMOTED,
     /**
      * When a tx is moved to the lower layer, since it, or a preceding one from the same sender,
      * does not respect anymore the requisites to stay in this layer.
      */
-    DEMOTED();
+    DEMOTED;
 
     private final String label;
 
