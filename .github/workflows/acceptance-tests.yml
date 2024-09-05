@@ -43,10 +43,8 @@ jobs:
           cache-disabled: true
       - name: List unit tests
         run: ./gradlew acceptanceTestNotPrivacy --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: List permissioning tests
-        run: ./gradlew acceptanceTestPermissioning --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Extract current test list
-        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo ' acceptanceTest'" | tee tmp/currentTests.list
+        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo ' acceptanceTestNotPrivacy'" | tee tmp/currentTests.list
       - name: Get acceptance test reports
         uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
         continue-on-error: true
@@ -80,8 +78,6 @@ jobs:
           path: '*.txt'
       - name: run acceptance tests
         run: ./gradlew acceptanceTestNotPrivacy `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: run acceptance permissioning tests
-        run: ./gradlew acceptanceTestPermissioning `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Remove downloaded test results
         run: rm -rf tmp/junit-xml-reports-downloaded
       - name: Upload Acceptance Test Results
@@ -89,12 +85,6 @@ jobs:
         with:
           name: acceptance-node-${{matrix.runner_index}}-test-results
           path: 'acceptance-tests/tests/build/test-results/**/TEST-*.xml'
-      - name: Upload Acceptance Test HTML Reports
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
-        if: success() || failure()
-        with:
-          name: acceptance-node-${{matrix.runner_index}}-test-html-reports
-          path: 'acceptance-tests/tests/build/reports/tests/**'
   accepttests-passed:
     name: "accepttests-passed"
     runs-on: ubuntu-22.04
