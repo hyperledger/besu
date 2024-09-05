@@ -84,7 +84,6 @@ public class EngineGetBlobsV1Test {
   @Mock private EngineCallListener engineCallListener;
   @Mock private MutableBlockchain blockchain;
   @Mock private TransactionPool transactionPool;
-  @Mock private BlobCache blobCache;
 
   private EngineGetBlobsV1 method;
 
