@@ -7,6 +7,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Add `engine_getBlobsV1` method to the Engine API [#7553](https://github.com/hyperledger/besu/pull/7553)
 
 ### Bug fixes
 
@@ -26,7 +27,6 @@
 - Performance optimzation for ECMUL (2 of 2) [#7543](https://github.com/hyperledger/besu/pull/7543)
 - Include current chain head block when computing `eth_maxPriorityFeePerGas` [#7485](https://github.com/hyperledger/besu/pull/7485)
 - Remove (old) documentation updates from the changelog [#7562](https://github.com/hyperledger/besu/pull/7562)
-- Add `engine_getBlobsV1` method to the Engine API [#7553](https://github.com/hyperledger/besu/pull/7553)
 
 ### Bug fixes
 - Fix tracing in precompiled contracts when halting for out of gas [#7318](https://github.com/hyperledger/besu/issues/7318)
