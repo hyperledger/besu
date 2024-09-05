@@ -22,10 +22,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -55,7 +55,13 @@ public interface TransactionsLayer {
    */
   TransactionAddedResult add(PendingTransaction pendingTransaction, int gap, AddReason addReason);
 
-  void remove(PendingTransaction pendingTransaction, RemovalReason reason);
+  /**
+   * Remove the pending tx from the pool
+   *
+   * @param pendingTransaction the pending tx
+   * @param reason the reason it is removed from the pool
+   */
+  void remove(PendingTransaction pendingTransaction, PoolRemovalReason reason);
 
   /**
    * Penalize a pending transaction. Penalization could be applied to notify the txpool that this
@@ -119,70 +125,4 @@ public interface TransactionsLayer {
   String logStats();
 
   String logSender(Address sender);
-
-  /** Describe why we are trying to add a tx to a layer. */
-  enum AddReason {
-    /** When adding a tx, that is not present in the pool. */
-    NEW(true, true),
-    /** When adding a tx as result of an internal move between layers. */
-    MOVE(false, false),
-    /** When adding a tx as result of a promotion from a lower layer. */
-    PROMOTED(false, false);
-
-    private final boolean sendNotification;
-    private final boolean makeCopy;
-    private final String label;
-
-    AddReason(final boolean sendNotification, final boolean makeCopy) {
-      this.sendNotification = sendNotification;
-      this.makeCopy = makeCopy;
-      this.label = name().toLowerCase(Locale.ROOT);
-    }
-
-    /**
-     * Should we send add notification for this reason?
-     *
-     * @return true if notification should be sent
-     */
-    public boolean sendNotification() {
-      return sendNotification;
-    }
-
-    /**
-     * Should the layer make a copy of the pending tx before adding it, to avoid keeping reference
-     * to potentially large underlying byte buffers?
-     *
-     * @return true is a copy is necessary
-     */
-    public boolean makeCopy() {
-      return makeCopy;
-    }
-
-    public String label() {
-      return label;
-    }
-  }
-
-  enum RemovalReason {
-    CONFIRMED,
-    CROSS_LAYER_REPLACED,
-    EVICTED,
-    DROPPED,
-    FOLLOW_INVALIDATED,
-    INVALIDATED,
-    PROMOTED,
-    REPLACED,
-    RECONCILED,
-    BELOW_BASE_FEE;
-
-    private final String label;
-
-    RemovalReason() {
-      this.label = name().toLowerCase(Locale.ROOT);
-    }
-
-    public String label() {
-      return label;
-    }
-  }
 }
