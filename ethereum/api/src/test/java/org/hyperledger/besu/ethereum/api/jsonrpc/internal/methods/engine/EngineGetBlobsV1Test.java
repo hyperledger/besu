@@ -93,7 +93,6 @@ public class EngineGetBlobsV1Test {
   @BeforeEach
   public void before() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
-    when(transactionPool.getBlobCache()).thenReturn(blobCache);
     this.method =
         spy(new EngineGetBlobsV1(vertx, protocolContext, engineCallListener, transactionPool));
   }
@@ -231,10 +230,10 @@ public class EngineGetBlobsV1Test {
 
   private void mockTransactionPoolMethod(final BlobsWithCommitments blobsWithCommitments) {
     blobsWithCommitments
-            .getBlobQuads()
-            .forEach(
-                    blobQuad ->
-                            when(transactionPool.getBlobQuad(blobQuad.versionedHash())).thenReturn(blobQuad));
+        .getBlobQuads()
+        .forEach(
+            blobQuad ->
+                when(transactionPool.getBlobQuad(blobQuad.versionedHash())).thenReturn(blobQuad));
   }
 
   private JsonRpcResponse resp(final VersionedHash[] versionedHashes) {

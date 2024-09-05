@@ -92,7 +92,7 @@ public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private final Supplier<PendingTransactions> pendingTransactionsSupplier;
-  private final BlobCache blobCache;
+  private final BlobCache cacheForBlobsOfTransactionsAddedToABlock;
   private volatile PendingTransactions pendingTransactions = new DisabledPendingTransactions();
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -107,7 +107,8 @@ public class TransactionPool implements BlockAddedObserver {
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
   private final EthScheduler.OrderedProcessor<BlockAddedEvent> blockAddedEventOrderedProcessor;
-  private final Map<VersionedHash, BlobsWithCommitments.BlobQuad> blobMap = new HashMap<>();
+  private final Map<VersionedHash, BlobsWithCommitments.BlobQuad> mapOfBlobsInTransactionPool =
+      new HashMap<>();
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -127,7 +128,7 @@ public class TransactionPool implements BlockAddedObserver {
     this.configuration = configuration;
     this.blockAddedEventOrderedProcessor =
         ethContext.getScheduler().createOrderedProcessor(this::processBlockAddedEvent);
-    this.blobCache = blobCache;
+    this.cacheForBlobsOfTransactionsAddedToABlock = blobCache;
     initLogForReplay();
     subscribePendingTransactions(this::mapBlobsOnTransactionAdded);
     subscribeDroppedTransactions(this::unmapBlobsOnTransactionDropped);
@@ -174,10 +175,6 @@ public class TransactionPool implements BlockAddedObserver {
   void handleConnect(final EthPeer peer) {
     transactionBroadcaster.relayTransactionPoolTo(
         peer, pendingTransactions.getPendingTransactions());
-  }
-
-  public BlobCache getBlobCache() {
-    return blobCache;
   }
 
   public ValidationResult<TransactionInvalidReason> addTransactionViaApi(
@@ -662,7 +659,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
     final List<BlobsWithCommitments.BlobQuad> blobQuads =
         maybeBlobsWithCommitments.get().getBlobQuads();
-    blobQuads.forEach(bq -> blobMap.put(bq.versionedHash(), bq));
+    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.versionedHash(), bq));
   }
 
   private void unmapBlobsOnTransactionDropped(
@@ -674,13 +671,13 @@ public class TransactionPool implements BlockAddedObserver {
     }
     final List<BlobsWithCommitments.BlobQuad> blobQuads =
         maybeBlobsWithCommitments.get().getBlobQuads();
-    blobQuads.forEach(bq -> blobMap.remove(bq.versionedHash()));
+    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.versionedHash()));
   }
 
   public BlobsWithCommitments.BlobQuad getBlobQuad(final VersionedHash vh) {
-    BlobsWithCommitments.BlobQuad blobQuad = blobMap.get(vh);
+    BlobsWithCommitments.BlobQuad blobQuad = mapOfBlobsInTransactionPool.get(vh);
     if (blobQuad == null) {
-      blobQuad = blobCache.get(vh);
+      blobQuad = cacheForBlobsOfTransactionsAddedToABlock.get(vh);
     }
     return blobQuad;
   }
