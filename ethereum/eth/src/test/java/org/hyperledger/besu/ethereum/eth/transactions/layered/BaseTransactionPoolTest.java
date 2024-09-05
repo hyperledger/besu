@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.AddReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
@@ -258,9 +259,10 @@ public class BaseTransactionPoolTest {
     }
   }
 
-  protected long getAddedCount(final String source, final String priority, final String layer) {
+  protected long getAddedCount(
+      final String source, final String priority, final AddReason addReason, final String layer) {
     return metricsSystem.getCounterValue(
-        TransactionPoolMetrics.ADDED_COUNTER_NAME, source, priority, layer);
+        TransactionPoolMetrics.ADDED_COUNTER_NAME, source, priority, addReason.label(), layer);
   }
 
   protected long getRemovedCount(

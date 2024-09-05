@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.reducing;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.AddReason.NEW;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.RECONCILED;
 
@@ -100,7 +101,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
 
     try {
-      return prioritizedTransactions.add(pendingTransaction, (int) nonceDistance);
+      return prioritizedTransactions.add(pendingTransaction, (int) nonceDistance, NEW);
     } catch (final Throwable throwable) {
       return reconcileAndRetryAdd(
           pendingTransaction, stateSenderNonce, (int) nonceDistance, throwable);
@@ -123,7 +124,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .log();
     reconcileSender(pendingTransaction.getSender(), stateSenderNonce);
     try {
-      return prioritizedTransactions.add(pendingTransaction, nonceDistance);
+      return prioritizedTransactions.add(pendingTransaction, nonceDistance, NEW);
     } catch (final Throwable throwable2) {
       // the error should have been solved by the reconcile, logging at higher level now
       LOG.atWarn()
@@ -210,7 +211,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final long lowestNonce = reAddTxs.getFirst().getNonce();
       final int newNonceDistance = (int) Math.max(0, lowestNonce - stateSenderNonce);
 
-      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance));
+      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance, NEW));
     }
 
     LOG.atDebug()
