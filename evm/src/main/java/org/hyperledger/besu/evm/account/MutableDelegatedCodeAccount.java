@@ -17,33 +17,35 @@ package org.hyperledger.besu.evm.account;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** Wraps a mutable EOA account and includes authorized code to be run on behalf of it. */
-public class MutableAuthorizedCodeAccount implements MutableAccount {
+/** Wraps an EOA account and includes delegated code to be run on behalf of it. */
+public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
+    implements MutableAccount {
 
   private final MutableAccount wrappedAccount;
-  private final Bytes authorizedCode;
-
-  /** The hash of the authorized code. */
-  protected Hash codeHash = null;
 
   /**
    * Creates a new MutableAuthorizedCodeAccount.
    *
-   * @param wrappedAccount the account that has authorized code to be loaded into it.
-   * @param authorizedCode the authorized code.
+   * @param worldUpdater the world updater.
+   * @param wrappedAccount the account that has delegated code to be loaded into it.
+   * @param codeDelegationAddress the address of the delegated code.
    */
-  public MutableAuthorizedCodeAccount(
-      final MutableAccount wrappedAccount, final Bytes authorizedCode) {
+  public MutableDelegatedCodeAccount(
+      final WorldUpdater worldUpdater,
+      final MutableAccount wrappedAccount,
+      final Address codeDelegationAddress) {
+    super(worldUpdater, codeDelegationAddress);
     this.wrappedAccount = wrappedAccount;
-    this.authorizedCode = authorizedCode;
   }
 
   @Override
@@ -54,6 +56,11 @@ public class MutableAuthorizedCodeAccount implements MutableAccount {
   @Override
   public boolean isStorageEmpty() {
     return wrappedAccount.isStorageEmpty();
+  }
+
+  @Override
+  public Optional<Address> delegatedCodeAddress() {
+    return super.delegatedCodeAddress();
   }
 
   @Override
@@ -73,16 +80,17 @@ public class MutableAuthorizedCodeAccount implements MutableAccount {
 
   @Override
   public Bytes getCode() {
-    return authorizedCode;
+    return super.getCode();
+  }
+
+  @Override
+  public Bytes getUnprocessedCode() {
+    return wrappedAccount.getCode();
   }
 
   @Override
   public Hash getCodeHash() {
-    if (codeHash == null) {
-      codeHash = authorizedCode.equals(Bytes.EMPTY) ? Hash.EMPTY : Hash.hash(authorizedCode);
-    }
-
-    return codeHash;
+    return super.getCodeHash();
   }
 
   @Override
@@ -93,6 +101,16 @@ public class MutableAuthorizedCodeAccount implements MutableAccount {
   @Override
   public UInt256 getOriginalStorageValue(final UInt256 key) {
     return wrappedAccount.getOriginalStorageValue(key);
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return getDelegatedNonce() == 0 && getDelegatedBalance().isZero() && !hasCode();
+  }
+
+  @Override
+  public boolean hasCode() {
+    return !getCode().isEmpty();
   }
 
   @Override
@@ -113,7 +131,7 @@ public class MutableAuthorizedCodeAccount implements MutableAccount {
 
   @Override
   public void setCode(final Bytes code) {
-    throw new RuntimeException("Cannot set code on an AuthorizedCodeAccount");
+    wrappedAccount.setCode(code);
   }
 
   @Override
@@ -134,5 +152,10 @@ public class MutableAuthorizedCodeAccount implements MutableAccount {
   @Override
   public void becomeImmutable() {
     wrappedAccount.becomeImmutable();
+  }
+
+  @Override
+  public boolean hasDelegatedCode() {
+    return true;
   }
 }
