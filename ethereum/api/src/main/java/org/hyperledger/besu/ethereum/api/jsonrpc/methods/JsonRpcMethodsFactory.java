@@ -119,7 +119,8 @@ public class JsonRpcMethodsFactory {
                   ethPeers,
                   consensusEngineServer,
                   clientVersion,
-                  commit),
+                  commit,
+                  transactionPool),
               new EthJsonRpcMethods(
                   blockchainQueries,
                   synchronizer,

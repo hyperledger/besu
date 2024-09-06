@@ -181,7 +181,8 @@ public abstract class AbstractIsolationTests {
             mock(TransactionBroadcaster.class),
             ethContext,
             txPoolMetrics,
-            poolConfiguration);
+            poolConfiguration,
+            new BlobCache());
     transactionPool.setEnabled();
   }
 

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineE
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV3;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetBlobsV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetClientVersionV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByRangeV1;
@@ -39,6 +40,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineQ
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.ArrayList;
@@ -60,6 +62,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final Vertx consensusEngineServer;
   private final String clientVersion;
   private final String commit;
+  private final TransactionPool transactionPool;
 
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
@@ -68,7 +71,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final EthPeers ethPeers,
       final Vertx consensusEngineServer,
       final String clientVersion,
-      final String commit) {
+      final String commit,
+      final TransactionPool transactionPool) {
     this.mergeCoordinator =
         Optional.ofNullable(miningCoordinator)
             .filter(mc -> mc.isCompatibleWithEngineApi())
@@ -79,6 +83,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.consensusEngineServer = consensusEngineServer;
     this.clientVersion = clientVersion;
     this.commit = commit;
+    this.transactionPool = transactionPool;
   }
 
   @Override
@@ -156,7 +161,9 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
               new EnginePreparePayloadDebug(
                   consensusEngineServer, protocolContext, engineQosTimer, mergeCoordinator.get()),
               new EngineGetClientVersionV1(
-                  consensusEngineServer, protocolContext, engineQosTimer, clientVersion, commit)));
+                  consensusEngineServer, protocolContext, engineQosTimer, clientVersion, commit),
+              new EngineGetBlobsV1(
+                  consensusEngineServer, protocolContext, engineQosTimer, transactionPool)));
 
       if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("cancun"))) {
         executionEngineApisSupported.add(
