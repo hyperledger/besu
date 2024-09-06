@@ -87,8 +87,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
    * @return The blockhead which is to be added to the block being proposed.
    */
   @Override
-  protected BlockHeader createFinalBlockHeader(
-      final SealableBlockHeader sealableBlockHeader, final Optional<BlockHeader> parentHeader) {
+  protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
 
@@ -98,8 +97,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
             .mixHash(Hash.ZERO)
             .blockHeaderFunctions(blockHeaderFunctions);
 
-    final Optional<ValidatorVote> vote =
-        determineCliqueVote(sealableBlockHeader, parentHeader.get());
+    final Optional<ValidatorVote> vote = determineCliqueVote(sealableBlockHeader);
     final BlockHeaderBuilder builderIncludingProposedVotes =
         CliqueBlockInterface.createHeaderBuilderWithVoteHeaders(builder, vote);
     final CliqueExtraData sealedExtraData =
@@ -110,7 +108,9 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
   }
 
   private Optional<ValidatorVote> determineCliqueVote(
-      final SealableBlockHeader sealableBlockHeader, final BlockHeader parentHeader) {
+      final SealableBlockHeader sealableBlockHeader) {
+    BlockHeader parentHeader =
+        protocolContext.getBlockchain().getBlockHeader(sealableBlockHeader.getParentHash()).get();
     if (epochManager.isEpochBlock(sealableBlockHeader.getNumber())) {
       return Optional.empty();
     } else {

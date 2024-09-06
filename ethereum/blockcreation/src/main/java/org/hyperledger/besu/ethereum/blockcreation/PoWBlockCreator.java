@@ -59,8 +59,7 @@ public class PoWBlockCreator extends AbstractBlockCreator {
   }
 
   @Override
-  protected BlockHeader createFinalBlockHeader(
-      final SealableBlockHeader sealableBlockHeader, final Optional<BlockHeader> parentHeader) {
+  protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
     final PoWSolverInputs workDefinition = generateNonceSolverInputs(sealableBlockHeader);
     final PoWSolution solution;
     try {

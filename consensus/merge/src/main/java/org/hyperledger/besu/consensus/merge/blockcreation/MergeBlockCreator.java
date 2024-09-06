@@ -103,8 +103,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
   }
 
   @Override
-  protected BlockHeader createFinalBlockHeader(
-      final SealableBlockHeader sealableBlockHeader, final Optional<BlockHeader> parentHeader) {
+  protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
     return BlockHeaderBuilder.create()
         .difficulty(Difficulty.ZERO)
         .populateFrom(sealableBlockHeader)
