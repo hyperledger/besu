@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
-import org.hyperledger.besu.datatypes.SetCodeAuthorization;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -94,7 +94,7 @@ public class TransactionCompleteResult implements TransactionResult {
   private final List<VersionedHash> versionedHashes;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final List<SetCodeAuthorization> authorizationList;
+  private final List<CodeDelegation> authorizationList;
 
   public TransactionCompleteResult(final TransactionWithMetadata tx) {
     final Transaction transaction = tx.getTransaction();
@@ -131,7 +131,7 @@ public class TransactionCompleteResult implements TransactionResult {
       this.v =
           (transactionType == TransactionType.ACCESS_LIST
                       || transactionType == TransactionType.EIP1559)
-                  || transactionType == TransactionType.SET_CODE
+                  || transactionType == TransactionType.DELEGATE_CODE
               ? Quantity.create(transaction.getYParity())
               : null;
     }
@@ -139,7 +139,7 @@ public class TransactionCompleteResult implements TransactionResult {
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
     this.versionedHashes = transaction.getVersionedHashes().orElse(null);
-    this.authorizationList = transaction.getAuthorizationList().orElse(null);
+    this.authorizationList = transaction.getCodeDelegationList().orElse(null);
   }
 
   @JsonGetter(value = "accessList")
@@ -255,7 +255,7 @@ public class TransactionCompleteResult implements TransactionResult {
   }
 
   @JsonGetter(value = "authorizationList")
-  public List<SetCodeAuthorization> getAuthorizationList() {
+  public List<CodeDelegation> getAuthorizationList() {
     return authorizationList;
   }
 }
