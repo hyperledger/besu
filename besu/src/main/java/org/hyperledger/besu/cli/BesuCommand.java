@@ -85,7 +85,6 @@ import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
-import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -868,13 +867,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuController besuController;
   private BesuConfigurationImpl pluginCommonConfiguration;
 
-  private BesuComponent besuComponent;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
-      Suppliers.memoize(
-          () ->
-              besuComponent == null || besuComponent.getObservableMetricsSystem() == null
-                  ? MetricsSystemFactory.create(metricsConfiguration())
-                  : besuComponent.getObservableMetricsSystem());
+      Suppliers.memoize(() -> MetricsSystemFactory.create(metricsConfiguration()));
+
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
@@ -882,7 +877,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   /**
    * Besu command constructor.
    *
-   * @param besuComponent BesuComponent which acts as our application context
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
@@ -890,18 +884,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param controllerBuilder instance of BesuController.Builder
    * @param besuPluginContext instance of BesuPluginContextImpl
    * @param environment Environment variables map
+   * @param commandLogger instance of Logger for outputting to the CLI
    */
   public BesuCommand(
-      final BesuComponent besuComponent,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilder,
       final BesuPluginContextImpl besuPluginContext,
-      final Map<String, String> environment) {
+      final Map<String, String> environment,
+      final Logger commandLogger) {
     this(
-        besuComponent,
         rlpBlockImporter,
         jsonBlockImporterFactory,
         rlpBlockExporterFactory,
@@ -917,13 +911,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new TransactionSelectionServiceImpl(),
         new TransactionPoolValidatorServiceImpl(),
         new TransactionSimulationServiceImpl(),
-        new BlockchainServiceImpl());
+        new BlockchainServiceImpl(),
+        commandLogger);
   }
 
   /**
    * Overloaded Besu command constructor visible for testing.
    *
-   * @param besuComponent BesuComponent which acts as our application context
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
@@ -940,10 +934,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param transactionValidatorServiceImpl instance of TransactionValidatorServiceImpl
    * @param transactionSimulationServiceImpl instance of TransactionSimulationServiceImpl
    * @param blockchainServiceImpl instance of BlockchainServiceImpl
+   * @param commandLogger instance of Logger for outputting to the CLI
    */
   @VisibleForTesting
   protected BesuCommand(
-      final BesuComponent besuComponent,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -959,9 +953,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
       final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl,
       final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
-      final BlockchainServiceImpl blockchainServiceImpl) {
-    this.besuComponent = besuComponent;
-    this.logger = besuComponent.getBesuCommandLogger();
+      final BlockchainServiceImpl blockchainServiceImpl,
+      final Logger commandLogger) {
+
+    this.logger = commandLogger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;
@@ -973,8 +968,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.securityModuleService = securityModuleService;
     this.permissioningService = permissioningService;
     this.privacyPluginService = privacyPluginService;
-    this.pluginCommonConfiguration = new BesuConfigurationImpl();
-    besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
+    if (besuPluginContext.getService(BesuConfigurationImpl.class).isPresent()) {
+      this.pluginCommonConfiguration =
+          besuPluginContext.getService(BesuConfigurationImpl.class).get();
+    } else {
+      this.pluginCommonConfiguration = new BesuConfigurationImpl();
+      besuPluginContext.addService(BesuConfiguration.class, this.pluginCommonConfiguration);
+    }
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
     this.transactionSelectionServiceImpl = transactionSelectionServiceImpl;
     this.transactionValidatorServiceImpl = transactionValidatorServiceImpl;
@@ -1828,9 +1828,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public BesuController buildController() {
     try {
-      return this.besuComponent == null
-          ? getControllerBuilder().build()
-          : getControllerBuilder().besuComponent(this.besuComponent).build();
+      return setupControllerBuilder().build();
     } catch (final Exception e) {
       throw new ExecutionException(this.commandLine, e.getMessage(), e);
     }
@@ -1841,7 +1839,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    *
    * @return instance of BesuControllerBuilder
    */
-  public BesuControllerBuilder getControllerBuilder() {
+  public BesuControllerBuilder setupControllerBuilder() {
     pluginCommonConfiguration
         .init(dataDir(), dataDir().resolve(DATABASE_PATH), getDataStorageConfiguration())
         .withMiningParameters(miningParametersSupplier.get())
@@ -2807,7 +2805,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
     builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());
 
-    builder.setPluginContext(besuComponent.getBesuPluginContext());
+    builder.setPluginContext(this.besuPluginContext);
 
     return builder.build();
   }
