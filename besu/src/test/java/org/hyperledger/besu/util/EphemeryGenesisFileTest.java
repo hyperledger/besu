@@ -16,6 +16,7 @@ package org.hyperledger.besu.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
 import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -119,7 +120,7 @@ public class EphemeryGenesisFileTest {
     long expectedGenesisTimestamp =
         GENESIS_TEST_TIMESTAMP + (PERIOD_SINCE_GENESIS * PERIOD_IN_SECONDS);
 
-    //    EPHEMERY.setNetworkId(expectedChainId);
+    EPHEMERY.setNetworkId(expectedChainId);
 
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     override.put("chainId", String.valueOf(expectedChainId));

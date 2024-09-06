@@ -53,13 +53,11 @@ public class EphemeryGenesisFile {
               .orElseThrow(() -> new IllegalStateException("ChainId not present"))
               .add(BigInteger.valueOf(periodsSinceGenesis));
 
-      EPHEMERY.setNetworkId(updatedChainId);
       if (currentTimestamp > (genesisTimestamp + PERIOD_IN_SECONDS)) {
         overrides.put("chainId", String.valueOf(updatedChainId));
         overrides.put("timestamp", String.valueOf(updatedTimestamp));
         genesisConfigFile = genesisConfigFile.withOverrides(overrides);
       }
-      System.out.println("overrides" + overrides);
       return genesisConfigFile.withOverrides(overrides);
     } catch (IOException e) {
       throw new RuntimeException("Error updating genesis file: " + e.getMessage(), e);
