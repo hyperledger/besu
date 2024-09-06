@@ -75,7 +75,6 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
   @AfterEach
   void tearDown() {
     besuNode.close();
-    cluster.close();
   }
 
   /**
@@ -141,7 +140,6 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
    * the transaction sponsor's * balance should be 180000 ETH minus the transaction costs.
    */
   @Test
-  @Disabled
   public void shouldCheckNonceAfterNonceIncreaseOfSender() throws IOException {
     final long GAS_LIMIT = 1000000L;
     cluster.verify(authorizer.balanceEquals(Amount.ether(90000)));
