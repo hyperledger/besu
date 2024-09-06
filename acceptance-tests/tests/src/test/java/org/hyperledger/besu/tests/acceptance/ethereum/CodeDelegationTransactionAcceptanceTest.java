@@ -40,7 +40,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
-@Disabled
 public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase {
   private static final String GENESIS_FILE = "/dev/dev_prague.json";
   private static final SECP256K1 secp256k1 = new SECP256K1();
@@ -87,6 +86,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
    * balance should be 180000 ETH minus the transaction costs.
    */
   @Test
+  @Disabled
   public void shouldTransferAllEthOfAuthorizerToSponsor() throws IOException {
 
     // 7702 transaction
