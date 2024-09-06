@@ -15,12 +15,8 @@
 package org.hyperledger.besu.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 
@@ -30,15 +26,12 @@ import java.util.Optional;
 import java.util.TreeMap;
 
 import io.vertx.core.json.JsonObject;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class EphemeryGenesisFileTest {
-  private EphemeryGenesisFile ephemeryGenesisFile;
   private static final int GENESIS_CONFIG_TEST_CHAINID = 39438135;
   private static final long GENESIS_TEST_TIMESTAMP = 1720119600;
   private static final long CURRENT_TIMESTAMP = 1712041200;
@@ -59,11 +52,6 @@ public class EphemeryGenesisFileTest {
       new JsonObject()
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
 
-  @BeforeEach
-  void setUp() {
-    ephemeryGenesisFile = new EphemeryGenesisFile();
-  }
-
   @Test
   public void testEphemeryWhenChainIdIsAbsent() {
     final GenesisConfigFile config =
@@ -81,7 +69,7 @@ public class EphemeryGenesisFileTest {
 
   @Test
   public void testEphemeryWhenGenesisJsonIsInvalid() {
-    Assertions.assertThatThrownBy(INVALID_GENESIS_JSON::getDifficulty)
+    assertThatThrownBy(INVALID_GENESIS_JSON::getDifficulty)
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Invalid genesis block configuration");
   }
@@ -131,7 +119,7 @@ public class EphemeryGenesisFileTest {
     long expectedGenesisTimestamp =
         GENESIS_TEST_TIMESTAMP + (PERIOD_SINCE_GENESIS * PERIOD_IN_SECONDS);
 
-    EPHEMERY.setNetworkId(expectedChainId);
+    //    EPHEMERY.setNetworkId(expectedChainId);
 
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     override.put("chainId", String.valueOf(expectedChainId));
@@ -143,19 +131,5 @@ public class EphemeryGenesisFileTest {
 
     assertThat(override.get("timestamp")).isEqualTo(String.valueOf(expectedGenesisTimestamp));
     assertThat(override.get("chainId")).isEqualTo(expectedChainId.toString());
-  }
-
-  @Test
-  public void testEphemeryThrowIOException() {
-    EphemeryGenesisFile spyEphemeryGenesisFile = spy(ephemeryGenesisFile);
-
-    doThrow(new RuntimeException("Unable to update ephemery genesis file."))
-        .when(spyEphemeryGenesisFile)
-        .updateGenesis();
-
-    assertThatThrownBy(spyEphemeryGenesisFile::updateGenesis)
-        .isInstanceOf(RuntimeException.class)
-        .hasMessage("Unable to update ephemery genesis file.");
-    verify(spyEphemeryGenesisFile).updateGenesis();
   }
 }

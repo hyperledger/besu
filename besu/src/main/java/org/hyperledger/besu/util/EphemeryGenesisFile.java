@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -34,13 +33,14 @@ public class EphemeryGenesisFile {
   private static final int PERIOD = 28;
   private static final long PERIOD_IN_SECONDS = (PERIOD * 24 * 60 * 60);
 
-  public void updateGenesis() {
+  public static GenesisConfigFile updateGenesis(final Map<String, String> overrides)
+      throws RuntimeException {
+    GenesisConfigFile genesisConfigFile;
     try {
       if (EPHEMERY.getGenesisFile() == null) {
         throw new IOException("Genesis file or config options are null");
       }
-      GenesisConfigFile genesisConfigFile =
-          GenesisConfigFile.fromResource(EPHEMERY.getGenesisFile());
+      genesisConfigFile = GenesisConfigFile.fromResource(EPHEMERY.getGenesisFile());
       long genesisTimestamp = genesisConfigFile.getTimestamp();
       Optional<BigInteger> genesisChainId = genesisConfigFile.getConfigOptions().getChainId();
       long currentTimestamp = Instant.now().getEpochSecond();
@@ -53,13 +53,14 @@ public class EphemeryGenesisFile {
               .orElseThrow(() -> new IllegalStateException("ChainId not present"))
               .add(BigInteger.valueOf(periodsSinceGenesis));
 
+      EPHEMERY.setNetworkId(updatedChainId);
       if (currentTimestamp > (genesisTimestamp + PERIOD_IN_SECONDS)) {
-        EPHEMERY.setNetworkId(updatedChainId);
-        Map<String, String> overrides = new HashMap<>();
         overrides.put("chainId", String.valueOf(updatedChainId));
         overrides.put("timestamp", String.valueOf(updatedTimestamp));
-        genesisConfigFile.withOverrides(overrides);
+        genesisConfigFile = genesisConfigFile.withOverrides(overrides);
       }
+      System.out.println("overrides" + overrides);
+      return genesisConfigFile.withOverrides(overrides);
     } catch (IOException e) {
       throw new RuntimeException("Error updating genesis file: " + e.getMessage(), e);
     }

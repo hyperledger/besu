@@ -340,7 +340,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private int maxPeers;
   private int maxRemoteInitiatedPeers;
-  private EphemeryGenesisFile ephemeryGenesisFile;
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
@@ -1654,15 +1653,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private GenesisConfigFile readGenesisConfigFile() {
-    final GenesisConfigFile effectiveGenesisFile =
-        genesisFile != null
-            ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
-            : GenesisConfigFile.fromResource(
-                Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
-    if (network.equals(EPHEMERY)) {
-      ephemeryGenesisFile = new EphemeryGenesisFile();
-      ephemeryGenesisFile.updateGenesis();
-    }
+    GenesisConfigFile effectiveGenesisFile;
+    effectiveGenesisFile =
+        network.equals(EPHEMERY)
+            ? EphemeryGenesisFile.updateGenesis(genesisConfigOverrides)
+            : genesisFile != null
+                ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
+                : GenesisConfigFile.fromResource(
+                    Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
