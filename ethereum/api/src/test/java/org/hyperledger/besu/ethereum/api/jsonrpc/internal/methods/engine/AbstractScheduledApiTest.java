@@ -14,7 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.mockito.ArgumentMatchers.argThat;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.EXPERIMENTAL_EIPS;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.LONDON;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PARIS;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
@@ -67,22 +72,22 @@ public class AbstractScheduledApiTest {
   @BeforeEach
   public void before() {
     lenient()
-        .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(londonHardfork))))
-        .thenReturn(Optional.of(londonHardfork));
+        .when(protocolSchedule.milestoneFor((LONDON)))
+        .thenReturn(Optional.of(londonHardfork.milestone()));
     lenient()
-        .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(parisHardfork))))
-        .thenReturn(Optional.of(parisHardfork));
+        .when(protocolSchedule.milestoneFor(PARIS))
+        .thenReturn(Optional.of(parisHardfork.milestone()));
     lenient()
-        .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(cancunHardfork))))
-        .thenReturn(Optional.of(cancunHardfork));
+        .when(protocolSchedule.milestoneFor(CANCUN))
+        .thenReturn(Optional.of(cancunHardfork.milestone()));
     lenient()
-        .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(pragueHardfork))))
-        .thenReturn(Optional.of(pragueHardfork));
+        .when(protocolSchedule.milestoneFor(PRAGUE))
+        .thenReturn(Optional.of(pragueHardfork.milestone()));
     lenient()
-        .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(shanghaiHardfork))))
-        .thenReturn(Optional.of(shanghaiHardfork));
+        .when(protocolSchedule.milestoneFor(SHANGHAI))
+        .thenReturn(Optional.of(shanghaiHardfork.milestone()));
     lenient()
-        .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(experimentalHardfork))))
-        .thenReturn(Optional.of(experimentalHardfork));
+        .when(protocolSchedule.milestoneFor(EXPERIMENTAL_EIPS))
+        .thenReturn(Optional.of(experimentalHardfork.milestone()));
   }
 }

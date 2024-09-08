@@ -44,11 +44,20 @@ public class NewBlockMessage extends AbstractMessageData {
     return MESSAGE_CODE;
   }
 
-  public static NewBlockMessage create(final Block block, final Difficulty totalDifficulty) {
+  public static NewBlockMessage create(
+      final Block block, final Difficulty totalDifficulty, final int maxMessageSize)
+      throws IllegalArgumentException {
     final NewBlockMessageData msgData = new NewBlockMessageData(block, totalDifficulty);
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     msgData.writeTo(out);
-    return new NewBlockMessage(out.encoded());
+    final Bytes data = out.encoded();
+    if (data.size() > maxMessageSize) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Block message size %d bytes is larger than allowed message size %d bytes",
+              data.size(), maxMessageSize));
+    }
+    return new NewBlockMessage(data);
   }
 
   public static NewBlockMessage readFrom(final MessageData message) {

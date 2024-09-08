@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -239,6 +240,13 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public String listMilestones() {
     return transitionUtils.dispatchFunctionAccordingToMergeState(ProtocolSchedule::listMilestones);
+  }
+
+  @Override
+  public Optional<Long> milestoneFor(final HardforkId hardforkId) {
+    return mergeContext.isPostMerge()
+        ? transitionUtils.getPostMergeObject().milestoneFor(hardforkId)
+        : transitionUtils.getPreMergeObject().milestoneFor(hardforkId);
   }
 
   /**

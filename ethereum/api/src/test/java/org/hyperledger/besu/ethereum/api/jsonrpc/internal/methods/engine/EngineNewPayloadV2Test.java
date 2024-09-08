@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.UNSUPPORTED_FORK;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -149,8 +151,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     var resp =
         resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
-    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("non-null BlobGasUsed pre-cancun");
+    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_BLOB_GAS_USED_PARAMS.getCode());
+    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas used field");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -168,7 +170,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("non-null ExcessBlobGas pre-cancun");
+    assertThat(jsonRpcError.getData()).isEqualTo("Missing excess blob gas field");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -189,6 +191,24 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
                 null));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterCancunMilestone() {
+    // Cancun starte at timestamp 30
+    final long blockTimestamp = 31L;
+    BlockHeader blockHeader =
+        createBlockHeaderFixture(
+                Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty())
+            .timestamp(blockTimestamp)
+            .buildHeader();
+
+    var resp =
+        resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
+
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 

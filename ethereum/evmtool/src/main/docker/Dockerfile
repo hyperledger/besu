@@ -24,7 +24,7 @@ WORKDIR /opt/besu-evmtool
 COPY --chown=besu:besu besu-evmtool /opt/besu-evmtool/
 
 ENV PATH="/opt/besu-evmtool/bin:${PATH}"
-ENTRYPOINT ["evm"]
+ENTRYPOINT ["evmtool"]
 
 # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE

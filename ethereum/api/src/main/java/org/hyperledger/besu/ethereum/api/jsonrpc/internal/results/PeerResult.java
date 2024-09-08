@@ -45,7 +45,11 @@ public interface PeerResult {
                 .map(Capability::toString)
                 .map(TextNode::new)
                 .collect(Collectors.toList()))
-        .network(new NetworkResult(connection.getLocalAddress(), connection.getRemoteAddress()))
+        .network(
+            new NetworkResult(
+                connection.getLocalAddress(),
+                connection.getRemoteAddress(),
+                connection.inboundInitiated()))
         .port(Quantity.create(peerInfo.getPort()))
         .id(peerInfo.getNodeId().toString())
         .protocols(Map.of(peer.getProtocolName(), ProtocolsResult.fromEthPeer(peer)))

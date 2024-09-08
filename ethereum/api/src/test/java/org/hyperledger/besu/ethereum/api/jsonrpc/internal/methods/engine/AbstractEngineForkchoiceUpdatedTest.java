@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
@@ -92,6 +93,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   private static final Vertx vertx = Vertx.vertx();
   private static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
+  protected static final long CANCUN_MILESTONE = 1_000_000L;
 
   private static final EngineForkchoiceUpdatedParameter mockFcuParam =
       new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash);
@@ -100,14 +102,14 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
       new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
 
   @Mock private ProtocolSpec protocolSpec;
-  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock protected ProtocolSchedule protocolSchedule;
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;
 
   @Mock protected MergeMiningCoordinator mergeCoordinator;
 
-  @Mock private MutableBlockchain blockchain;
+  @Mock protected MutableBlockchain blockchain;
 
   @Mock private EngineCallListener engineCallListener;
 
@@ -118,6 +120,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
+    when(protocolSchedule.milestoneFor(CANCUN)).thenReturn(Optional.of(CANCUN_MILESTONE));
     this.method =
         methodFactory.create(
             vertx, protocolSchedule, protocolContext, mergeCoordinator, engineCallListener);
@@ -237,7 +240,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(defaultPayloadTimestamp()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             null,
@@ -426,7 +429,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(defaultPayloadTimestamp()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             null,
@@ -488,7 +491,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(mockHeader.getTimestamp() + 1),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             emptyList(),
@@ -513,7 +516,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(mockHeader.getTimestamp() + 1),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             null,
@@ -557,7 +560,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(mockHeader.getTimestamp() + 1),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             null,
@@ -593,7 +596,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(mockHeader.getTimestamp() + 1),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             withdrawalParameters,
@@ -642,7 +645,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(mockHeader.getTimestamp() + 1),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             null,
@@ -674,7 +677,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
-  private void setupValidForkchoiceUpdate(final BlockHeader mockHeader) {
+  protected void setupValidForkchoiceUpdate(final BlockHeader mockHeader) {
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
@@ -735,10 +738,10 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   }
 
   protected RpcErrorType expectedInvalidPayloadError() {
-    return RpcErrorType.INVALID_PARAMS;
+    return RpcErrorType.INVALID_WITHDRAWALS_PARAMS;
   }
 
-  private JsonRpcResponse resp(
+  protected JsonRpcResponse resp(
       final EngineForkchoiceUpdatedParameter forkchoiceParam,
       final Optional<EnginePayloadAttributesParameter> payloadParam) {
     return method.response(
@@ -771,5 +774,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     var errorResp = (JsonRpcErrorResponse) resp;
     assertThat(errorResp.getErrorType()).isEqualTo(jsonRpcError);
     assertThat(errorResp.getError().getMessage()).isEqualTo(jsonRpcError.getMessage());
+  }
+
+  protected long defaultPayloadTimestamp() {
+    return 1;
   }
 }

@@ -232,9 +232,6 @@ public abstract class CommandTestAbstract {
   @Mock
   protected Logger mockLogger;
 
-  @Mock(lenient = true)
-  protected BesuComponent mockBesuComponent;
-
   @Captor protected ArgumentCaptor<Collection<Bytes>> bytesCollectionCollector;
   @Captor protected ArgumentCaptor<Path> pathArgumentCaptor;
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
@@ -387,8 +384,6 @@ public abstract class CommandTestAbstract {
     lenient()
         .when(mockBesuPluginContext.getService(TransactionSelectionService.class))
         .thenReturn(Optional.of(txSelectionService));
-
-    when(mockBesuComponent.getBesuCommandLogger()).thenReturn(mockLogger);
   }
 
   @BeforeEach
@@ -473,7 +468,6 @@ public abstract class CommandTestAbstract {
     switch (testType) {
       case REQUIRED_OPTION:
         return new TestBesuCommandWithRequiredOption(
-            mockBesuComponent,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -483,10 +477,10 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            privacyPluginService);
+            privacyPluginService,
+            mockLogger);
       case PORT_CHECK:
         return new TestBesuCommand(
-            mockBesuComponent,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -496,10 +490,10 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            privacyPluginService);
+            privacyPluginService,
+            mockLogger);
       default:
         return new TestBesuCommandWithoutPortCheck(
-            mockBesuComponent,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -509,7 +503,8 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            privacyPluginService);
+            privacyPluginService,
+            mockLogger);
     }
   }
 
@@ -539,7 +534,6 @@ public abstract class CommandTestAbstract {
     private Vertx vertx;
 
     TestBesuCommand(
-        final BesuComponent besuComponent,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -549,9 +543,9 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PrivacyPluginServiceImpl privacyPluginService) {
+        final PrivacyPluginServiceImpl privacyPluginService,
+        final Logger commandLogger) {
       super(
-          besuComponent,
           mockBlockImporter,
           jsonBlockImporterFactory,
           rlpBlockExporterFactory,
@@ -567,7 +561,8 @@ public abstract class CommandTestAbstract {
           new TransactionSelectionServiceImpl(),
           new TransactionPoolValidatorServiceImpl(),
           new TransactionSimulationServiceImpl(),
-          new BlockchainServiceImpl());
+          new BlockchainServiceImpl(),
+          commandLogger);
     }
 
     @Override
@@ -638,7 +633,6 @@ public abstract class CommandTestAbstract {
     private final Boolean acceptTermsAndConditions = false;
 
     TestBesuCommandWithRequiredOption(
-        final BesuComponent besuComponent,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -648,9 +642,9 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PrivacyPluginServiceImpl privacyPluginService) {
+        final PrivacyPluginServiceImpl privacyPluginService,
+        final Logger commandLogger) {
       super(
-          besuComponent,
           mockBlockImporter,
           jsonBlockImporterFactory,
           rlpBlockExporterFactory,
@@ -660,7 +654,8 @@ public abstract class CommandTestAbstract {
           environment,
           storageService,
           securityModuleService,
-          privacyPluginService);
+          privacyPluginService,
+          commandLogger);
     }
 
     public Boolean getAcceptTermsAndConditions() {
@@ -672,7 +667,6 @@ public abstract class CommandTestAbstract {
   public static class TestBesuCommandWithoutPortCheck extends TestBesuCommand {
 
     TestBesuCommandWithoutPortCheck(
-        final BesuComponent context,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -682,9 +676,9 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PrivacyPluginServiceImpl privacyPluginService) {
+        final PrivacyPluginServiceImpl privacyPluginService,
+        final Logger commandLogger) {
       super(
-          context,
           mockBlockImporter,
           jsonBlockImporterFactory,
           rlpBlockExporterFactory,
@@ -694,7 +688,8 @@ public abstract class CommandTestAbstract {
           environment,
           storageService,
           securityModuleService,
-          privacyPluginService);
+          privacyPluginService,
+          commandLogger);
     }
 
     @Override

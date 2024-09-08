@@ -76,8 +76,8 @@ public class RocksDBKeyValueStorageFactoryTest {
       // Side effect is creation of the Metadata version file
       final BaseVersionedStorageFormat expectedVersion =
           dataStorageFormat == BONSAI
-              ? BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES
-              : BaseVersionedStorageFormat.FOREST_WITH_VARIABLES;
+              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
+              : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
           .isEqualTo(expectedVersion);
     }
@@ -90,7 +90,6 @@ public class RocksDBKeyValueStorageFactoryTest {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     mockCommonConfiguration(tempDataDir, tempDatabaseDir, dataStorageFormat);
-    when(dataStorageConfiguration.getReceiptCompactionEnabled()).thenReturn(true);
 
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
@@ -129,7 +128,7 @@ public class RocksDBKeyValueStorageFactoryTest {
   }
 
   @Test
-  public void shouldDetectCorrectMetadataV1() throws Exception {
+  public void shouldDetectCorrectMetadataV1AndUpgrade() throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     Files.createDirectories(tempDataDir);
@@ -143,7 +142,7 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES);
+          .isEqualTo(BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION);
       assertThat(storageFactory.isSegmentIsolationSupported()).isTrue();
     }
   }
@@ -240,7 +239,7 @@ public class RocksDBKeyValueStorageFactoryTest {
             () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
     try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(BaseVersionedStorageFormat.FOREST_WITH_VARIABLES);
+          .isEqualTo(BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
       assertThatCode(storageFactory::isSegmentIsolationSupported).doesNotThrowAnyException();
     }
   }
@@ -299,7 +298,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     // created correctly
     try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
       assertThat(DatabaseMetadata.lookUpFrom(tempRealDataDir).getVersionedStorageFormat())
-          .isEqualTo(BaseVersionedStorageFormat.FOREST_WITH_VARIABLES);
+          .isEqualTo(BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
     }
   }
 

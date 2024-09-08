@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -40,14 +40,11 @@ public abstract class AdminModifyPeer implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 1) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
     try {
       final String enodeString = requestContext.getRequiredParameter(0, String.class);
       return performOperation(requestContext.getRequest().getId(), enodeString);
-    } catch (final InvalidJsonRpcParameters e) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     } catch (final IllegalArgumentException e) {
       if (e.getMessage()
           .endsWith(
@@ -69,6 +66,9 @@ public abstract class AdminModifyPeer implements JsonRpcMethod {
     } catch (final P2PDisabledException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), RpcErrorType.P2P_DISABLED);
+    } catch (JsonRpcParameterException e) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_ENODE_PARAMS);
     }
   }
 

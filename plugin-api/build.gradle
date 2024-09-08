@@ -22,6 +22,7 @@ jar {
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash,
       'Automatic-Module-Name': 'org.hyperledger.besu.plugin.api'
       )
   }
@@ -70,7 +71,7 @@ Calculated : ${currentHash}
 tasks.register('checkAPIChanges', FileStateChecker) {
   description = "Checks that the API for the Plugin-API project does not change without deliberate thought"
   files = sourceSets.main.allJava.files
-  knownHash = 'I851CCOs00yYpW10qIGIak1bKbYhKFQkV2wyCYELHKY='
+  knownHash = 'V/bdVbzJLjdwch266dHHuxIGwiCRhS4w3jDwHt4TWqg='
 }
 check.dependsOn('checkAPIChanges')
 

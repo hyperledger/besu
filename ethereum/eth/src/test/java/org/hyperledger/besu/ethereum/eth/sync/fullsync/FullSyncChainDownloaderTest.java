@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -121,7 +122,8 @@ public class FullSyncChainDownloaderTest {
         ethContext,
         syncState,
         metricsSystem,
-        SyncTerminationCondition.never());
+        SyncTerminationCondition.never(),
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   private ChainDownloader downloader() {

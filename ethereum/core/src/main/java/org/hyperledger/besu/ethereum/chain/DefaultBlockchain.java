@@ -299,7 +299,10 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Block getChainHeadBlock() {
-    return new Block(chainHeader, blockchainStorage.getBlockBody(chainHeader.getHash()).get());
+    return new Block(
+        chainHeader,
+        getBlockBody(chainHeader.getHash())
+            .orElseGet(() -> getBlockBodySafe(chainHeader.getHash()).get()));
   }
 
   @Override
@@ -335,6 +338,11 @@ public class DefaultBlockchain implements MutableBlockchain {
                 Optional.ofNullable(cache.getIfPresent(blockHeaderHash))
                     .or(() -> blockchainStorage.getBlockBody(blockHeaderHash)))
         .orElseGet(() -> blockchainStorage.getBlockBody(blockHeaderHash));
+  }
+
+  @Override
+  public synchronized Optional<BlockBody> getBlockBodySafe(final Hash blockHeaderHash) {
+    return getBlockBody(blockHeaderHash);
   }
 
   @Override

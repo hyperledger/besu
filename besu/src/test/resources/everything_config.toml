@@ -195,6 +195,7 @@ tx-pool-retention-hours=999
 tx-pool-max-size=1234
 tx-pool-limit-by-account-percentage=0.017
 tx-pool-min-gas-price=1000
+tx-pool-min-score=100
 
 # Revert Reason
 revert-reason-enabled=false
@@ -242,3 +243,7 @@ Xp2p-tls-clienthello-sni=false
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000
+
+# plugins
+Xplugins-external-enabled=true
+plugins=["none"]
