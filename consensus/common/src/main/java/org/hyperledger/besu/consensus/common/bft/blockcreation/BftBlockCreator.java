@@ -53,7 +53,6 @@ public class BftBlockCreator extends AbstractBlockCreator {
    * @param transactionPool the pending transactions
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
-   * @param parentHeader the parent header
    * @param bftExtraDataCodec the bft extra data codec
    * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
@@ -65,7 +64,6 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final BlockHeader parentHeader,
       final BftExtraDataCodec bftExtraDataCodec,
       final EthScheduler ethScheduler) {
     super(
@@ -75,21 +73,20 @@ public class BftBlockCreator extends AbstractBlockCreator {
         transactionPool,
         protocolContext,
         protocolSchedule,
-        parentHeader,
         ethScheduler);
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   @Override
-  public BlockCreationResult createBlock(final long timestamp) {
+  public BlockCreationResult createBlock(final long timestamp, final BlockHeader parentHeader) {
     ProtocolSpec protocolSpec =
         ((BftProtocolSchedule) protocolSchedule)
             .getByBlockNumberOrTimestamp(parentHeader.getNumber() + 1, timestamp);
 
     if (protocolSpec.getWithdrawalsValidator() instanceof WithdrawalsValidator.AllowedWithdrawals) {
-      return createEmptyWithdrawalsBlock(timestamp);
+      return createEmptyWithdrawalsBlock(timestamp, parentHeader);
     } else {
-      return createBlock(Optional.empty(), Optional.empty(), timestamp);
+      return createBlock(Optional.empty(), Optional.empty(), timestamp, parentHeader);
     }
   }
 
@@ -100,9 +97,14 @@ public class BftBlockCreator extends AbstractBlockCreator {
   }
 
   @Override
-  public BlockCreationResult createEmptyWithdrawalsBlock(final long timestamp) {
+  public BlockCreationResult createEmptyWithdrawalsBlock(
+      final long timestamp, final BlockHeader parentHeader) {
     return createBlock(
-        Optional.empty(), Optional.empty(), Optional.of(Collections.emptyList()), timestamp);
+        Optional.empty(),
+        Optional.empty(),
+        Optional.of(Collections.emptyList()),
+        timestamp,
+        parentHeader);
   }
 
   @Override
