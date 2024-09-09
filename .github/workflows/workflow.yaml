@@ -25,19 +25,8 @@ jobs:
           java-version: 21
           distribution: temurin
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/versions.gradle') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/versions.gradle') }}
-            ${{ runner.os }}-gradle-
-
       - name: Spotless
-        run: ./gradlew clean spotlessCheck
+        run: ./gradlew spotlessCheck
 
       - name: Test & Build
         run: ./gradlew build
@@ -71,7 +60,7 @@ jobs:
           distribution: temurin
 
       - name: Publish Java artifacts
-        run: ./gradlew publish -x checkLicense
+        run: ./gradlew publish
         env:
           CLOUDSMITH_USER: ${{ secrets.CLOUDSMITH_USER }}
           CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -80,7 +69,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y python3 python3-pip python3-venv
-          ./gradlew cloudsmithUpload -x checkLicense
+          ./gradlew cloudsmithUpload
         env:
           CLOUDSMITH_USER: ${{ secrets.CLOUDSMITH_USER }}
           CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -107,4 +96,4 @@ jobs:
 
       - name: Build and Publish Docker Image
         run: |
-          ./gradlew -Pdocker-platform=linux/amd64,linux/arm64 distDocker -x checkLicense
+          ./gradlew -Pdocker-platform=linux/amd64,linux/arm64 distDocker
