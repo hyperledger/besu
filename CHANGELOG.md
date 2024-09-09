@@ -40,7 +40,7 @@
 - Correctly drops messages that exceeds local message size limit [#5455](https://github.com/hyperledger/besu/pull/7507)
 - **DebugMetrics**: Fixed a `ClassCastException` occurring in `DebugMetrics` when handling nested metric structures. Previously, `Double` values within these structures were incorrectly cast to `Map` objects, leading to errors. This update allows for proper handling of both direct values and nested structures at the same level. Issue# [#7383](https://github.com/hyperledger/besu/pull/7383)
 - `evmtool` was not respecting the `--genesis` setting, resulting in unexpected trace results. [#7433](https://github.com/hyperledger/besu/pull/7433)
-- The genesis config override `contractSizeLimit`q was not wired into code size limits [#7557](https://github.com/hyperledger/besu/pull/7557)
+- The genesis config override `contractSizeLimit` was not wired into code size limits [#7557](https://github.com/hyperledger/besu/pull/7557)
 - Fix incorrect key filtering in LayeredKeyValueStorage stream [#7535](https://github.com/hyperledger/besu/pull/7557)
 
 ## 24.8.0
