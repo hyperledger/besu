@@ -45,7 +45,11 @@ public class RoundTimer {
     this.queue = queue;
     this.bftExecutors = bftExecutors;
     this.currentTimerTask = Optional.empty();
-    this.baseExpiryMillis = baseExpirySeconds * 1000;
+    if (BlockTimer.getExperimentalDevBlockPeriodMillis() > 0) {
+      this.baseExpiryMillis = BlockTimer.getExperimentalDevBlockPeriodMillis();
+    } else {
+      this.baseExpiryMillis = baseExpirySeconds * 1000;
+    }
   }
 
   /** Cancels the current running round timer if there is one */

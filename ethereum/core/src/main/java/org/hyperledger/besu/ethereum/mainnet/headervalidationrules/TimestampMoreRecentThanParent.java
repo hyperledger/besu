@@ -27,6 +27,12 @@ public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidat
 
   private static final Logger LOG = LoggerFactory.getLogger(TimestampMoreRecentThanParent.class);
   private final long minimumSecondsSinceParent;
+  private static final boolean usingExperimentalShortBFTBlockPeriod;
+
+  static {
+    usingExperimentalShortBFTBlockPeriod =
+        System.getenv("BESU_X_DEV_BFT_PERIOD_MS") == null ? false : true;
+  }
 
   public TimestampMoreRecentThanParent(final long minimumSecondsSinceParent) {
     checkArgument(minimumSecondsSinceParent >= 0, "minimumSecondsSinceParent must be positive");
@@ -45,7 +51,7 @@ public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidat
   private boolean validateHeaderSufficientlyAheadOfParent(
       final long timestamp, final long parentTimestamp) {
     final long secondsSinceParent = timestamp - parentTimestamp;
-    if (secondsSinceParent < minimumSecondsSinceParent) {
+    if (!usingExperimentalShortBFTBlockPeriod && secondsSinceParent < minimumSecondsSinceParent) {
       LOG.info(
           "Invalid block header: timestamp {} is only {} seconds newer than parent timestamp {}. Minimum {} seconds",
           timestamp,

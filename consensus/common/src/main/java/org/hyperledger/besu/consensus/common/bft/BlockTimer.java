@@ -33,6 +33,24 @@ public class BlockTimer {
   private final BftEventQueue queue;
   private final Clock clock;
 
+  private static long experimentalDevBlockPeriodMillis = -1;
+
+  static {
+    if (System.getenv("BESU_X_DEV_BFT_PERIOD_MS") != null
+        && !System.getenv("BESU_X_DEV_BFT_PERIOD_MS").equals("")) {
+      try {
+        experimentalDevBlockPeriodMillis =
+            Integer.parseInt(System.getenv("BESU_X_DEV_BFT_PERIOD_MS"));
+      } catch (NullPointerException e) {
+        // Ignore - default to off
+      }
+    }
+  }
+
+  protected static long getExperimentalDevBlockPeriodMillis() {
+    return experimentalDevBlockPeriodMillis;
+  }
+
   /**
    * Construct a BlockTimer with primed executor service ready to start timers
    *
@@ -79,12 +97,19 @@ public class BlockTimer {
     cancelTimer();
 
     final long now = clock.millis();
+    final long expiryTime;
 
-    // absolute time when the timer is supposed to expire
-    final int blockPeriodSeconds =
-        forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
-    final long minimumTimeBetweenBlocksMillis = blockPeriodSeconds * 1000L;
-    final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
+    if (getExperimentalDevBlockPeriodMillis() > 0) {
+      // Experimental development mode for setting < 1 second block periods e.g. for CI/CD pipelines
+      // running tests against Besu
+      expiryTime = clock.millis() + getExperimentalDevBlockPeriodMillis();
+    } else {
+      // absolute time when the timer is supposed to expire
+      final int blockPeriodSeconds =
+          forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
+      final long minimumTimeBetweenBlocksMillis = blockPeriodSeconds * 1000L;
+      expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
+    }
 
     if (expiryTime > now) {
       final long delay = expiryTime - now;
