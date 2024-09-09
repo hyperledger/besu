@@ -285,7 +285,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               .doCallRealMethod()
               .when(beingSpiedOn)
               .createBlock(
-                  any(), any(Bytes32.class), anyLong(), eq(Optional.empty()), eq(Optional.empty()));
+                  any(),
+                  any(Bytes32.class),
+                  anyLong(),
+                  eq(Optional.empty()),
+                  eq(Optional.empty()),
+                  any());
           return beingSpiedOn;
         };
 

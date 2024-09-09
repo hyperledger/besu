@@ -78,10 +78,11 @@ public class TestMineBlocks implements JsonRpcMethod {
             protocolContext,
             protocolSchedule,
             context.getEthHashSolver(),
-            blockchain.getChainHeadHeader(),
             context.getEthScheduler());
     final Block block =
-        blockCreator.createBlock(retesethClock.instant().getEpochSecond()).getBlock();
+        blockCreator
+            .createBlock(retesethClock.instant().getEpochSecond(), blockchain.getChainHeadHeader())
+            .getBlock();
 
     // advance clock so next mine won't hit the same timestamp
     retesethClock.advanceSeconds(1);
