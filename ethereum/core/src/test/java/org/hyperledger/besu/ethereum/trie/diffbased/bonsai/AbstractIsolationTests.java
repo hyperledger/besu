@@ -181,7 +181,8 @@ public abstract class AbstractIsolationTests {
             mock(TransactionBroadcaster.class),
             ethContext,
             txPoolMetrics,
-            poolConfiguration);
+            poolConfiguration,
+            new BlobCache());
     transactionPool.setEnabled();
   }
 
@@ -259,7 +260,6 @@ public abstract class AbstractIsolationTests {
         final TransactionPool transactionPool,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final BlockHeader parentHeader,
         final EthScheduler ethScheduler) {
       super(
           miningParameters,
@@ -268,12 +268,10 @@ public abstract class AbstractIsolationTests {
           transactionPool,
           protocolContext,
           protocolSchedule,
-          parentHeader,
           ethScheduler);
     }
 
     static TestBlockCreator forHeader(
-        final BlockHeader parentHeader,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
         final TransactionPool transactionPool,
@@ -298,7 +296,6 @@ public abstract class AbstractIsolationTests {
           transactionPool,
           protocolContext,
           protocolSchedule,
-          parentHeader,
           ethScheduler);
     }
 
@@ -331,8 +328,8 @@ public abstract class AbstractIsolationTests {
   protected Block forTransactions(
       final List<Transaction> transactions, final BlockHeader forHeader) {
     return TestBlockCreator.forHeader(
-            forHeader, protocolContext, protocolSchedule, transactionPool, ethScheduler)
-        .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis())
+            protocolContext, protocolSchedule, transactionPool, ethScheduler)
+        .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis(), forHeader)
         .getBlock();
   }
 
