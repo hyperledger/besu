@@ -103,7 +103,7 @@ public class GenesisConfigFile {
    * @return the genesis config file
    */
   public static GenesisConfigFile fromConfig(final ObjectNode config) {
-    return new GenesisConfigFile(new GenesisReader.FromObjectNode(config));
+    return new GenesisConfigFile(GenesisFileValidator.validateAndCreateGenesisReader(config));
   }
 
   /**
