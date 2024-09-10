@@ -772,17 +772,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   private long getFinalizedBlockNumber() {
-    return this.getFinalized()
-        .flatMap(this::getBlockHeader)
-        .map(BlockHeader::getNumber)
-        .orElse(0L);
+    return this.getFinalized().flatMap(this::getBlockHeader).map(BlockHeader::getNumber).orElse(0L);
   }
 
   private long getSafeBlockNumber() {
-    return this.getSafeBlock()
-        .flatMap(this::getBlockHeader)
-        .map(BlockHeader::getNumber)
-        .orElse(0L);
+    return this.getSafeBlock().flatMap(this::getBlockHeader).map(BlockHeader::getNumber).orElse(0L);
   }
 
   private void updateCacheForNewCanonicalHead(final Block block, final Difficulty uInt256) {
