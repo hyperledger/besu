@@ -781,7 +781,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private long getSafeBlockNumber() {
     return this.getSafeBlock()
         .flatMap(this::getBlockHeader)
-        .flatMap(blockHeader -> Optional.of(blockHeader.getNumber()))
+        .map(BlockHeader::getNumber)
         .orElse(0L);
   }
 
