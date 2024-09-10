@@ -122,6 +122,18 @@ public class DefaultBlockchain implements MutableBlockchain {
         "The current height of the canonical chain",
         this::getChainHeadBlockNumber);
 
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.ETHEREUM,
+        "blockchain_finalized_block",
+        "The current finalized block number",
+        this::getFinalizedBlockNumber);
+
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.ETHEREUM,
+        "blockchain_safe_block",
+        "The current safe block number",
+        this::getSafeBlockNumber);
+
     metricsSystem.createGauge(
         BesuMetricCategory.BLOCKCHAIN,
         "difficulty_total",
@@ -757,6 +769,20 @@ public class DefaultBlockchain implements MutableBlockchain {
     final var updater = blockchainStorage.updater();
     updater.setSafeBlock(blockHash);
     updater.commit();
+  }
+
+  private long getFinalizedBlockNumber() {
+    return this.getFinalized()
+        .flatMap(this::getBlockHeader)
+        .flatMap(blockHeader -> Optional.of(blockHeader.getNumber()))
+        .orElse(0L);
+  }
+
+  private long getSafeBlockNumber() {
+    return this.getSafeBlock()
+        .flatMap(this::getBlockHeader)
+        .flatMap(blockHeader -> Optional.of(blockHeader.getNumber()))
+        .orElse(0L);
   }
 
   private void updateCacheForNewCanonicalHead(final Block block, final Difficulty uInt256) {
