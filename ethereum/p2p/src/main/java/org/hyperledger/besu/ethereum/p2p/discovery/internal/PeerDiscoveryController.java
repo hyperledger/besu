@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -43,6 +44,7 @@ import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -321,7 +323,6 @@ public class PeerDiscoveryController {
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
-          peer.setLastSeen(System.currentTimeMillis());
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           if (!PeerDiscoveryStatus.BONDED.equals(peer.getStatus())
               && (bondingPeers.getIfPresent(sender.getId()) == null)) {
@@ -338,7 +339,7 @@ public class PeerDiscoveryController {
                     requestENR(peer);
                   }
                   bondingPeers.invalidate(peerId);
-                  addToPeerTable(peer);
+                  checkBeforeAddingToPeerTable(peer);
                   recursivePeerRefreshState.onBondingComplete(peer);
                   Optional.ofNullable(cachedEnrRequests.getIfPresent(peerId))
                       .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
@@ -405,38 +406,54 @@ public class PeerDiscoveryController {
         .collect(Collectors.toList());
   }
 
-  private boolean addToPeerTable(final DiscoveryPeer peer) {
-    final PeerTable.AddResult result = peerTable.tryAdd(peer);
-    if (result.getOutcome() != PeerTable.AddResult.AddOutcome.INVALID) {
-
-      // Reset the last seen timestamp.
-      final long now = System.currentTimeMillis();
-      if (peer.getFirstDiscovered() == 0) {
-        peer.setFirstDiscovered(now);
-      }
-      peer.setLastSeen(now);
-
-      if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
-        peer.setStatus(PeerDiscoveryStatus.BONDED);
-        connectOnRlpxLayer(peer);
-      }
-
-      if (result.getOutcome() == PeerTable.AddResult.AddOutcome.ALREADY_EXISTED) {
-        // Bump peer.
-        peerTable.tryEvict(peer);
-        peerTable.tryAdd(peer);
-      } else if (result.getOutcome() == PeerTable.AddResult.AddOutcome.BUCKET_FULL) {
-        peerTable.tryEvict(result.getEvictionCandidate());
-        peerTable.tryAdd(peer);
-      }
-
-      return true;
+  private void checkBeforeAddingToPeerTable(final DiscoveryPeer peer) {
+    if (peerTable.isIpAddressInvalid(peer.getEndpoint())) {
+      return;
     }
-    return false;
+
+    if (peer.getFirstDiscovered() == 0) {
+      connectOnRlpxLayer(peer).whenComplete(this::handleRlpxConnectionResult);
+    } else {
+      addToPeerTable(peer);
+    }
   }
 
-  void connectOnRlpxLayer(final DiscoveryPeer peer) {
-    rlpxAgent.connect(peer);
+  public void addToPeerTable(final DiscoveryPeer peer) {
+    final PeerTable.AddResult result = peerTable.tryAdd(peer);
+
+    if (result.getOutcome() == PeerTable.AddResult.AddOutcome.ALREADY_EXISTED) {
+      // Bump peer.
+      peerTable.tryEvict(peer);
+      peerTable.tryAdd(peer);
+    } else if (result.getOutcome() == PeerTable.AddResult.AddOutcome.BUCKET_FULL) {
+      peerTable.tryEvict(result.getEvictionCandidate());
+      peerTable.tryAdd(peer);
+    }
+  }
+
+  private void handleRlpxConnectionResult(final DiscoveryPeer peer, final Throwable throwable) {
+    if (throwable == null || !(throwable.getCause() instanceof TimeoutException)) {
+      addToPeerTable(peer);
+      peer.setFirstDiscovered(System.currentTimeMillis());
+    } else {
+      LOG.debug("Handshake timed out with peer {}", peer.getLoggableId(), throwable);
+      peerTable.invalidateIP(peer.getEndpoint());
+    }
+  }
+
+  CompletableFuture<DiscoveryPeer> connectOnRlpxLayer(final DiscoveryPeer peer) {
+    final CompletableFuture<PeerConnection> connectionFuture = rlpxAgent.connect(peer);
+    return connectionFuture.handle(
+        (peerConnection, throwable) -> {
+          if (throwable != null) {
+            try {
+              throw throwable;
+            } catch (Throwable e) {
+              throw new RuntimeException(e);
+            }
+          }
+          return peer;
+        });
   }
 
   private Optional<PeerInteractionState> matchInteraction(final Packet packet) {
@@ -719,7 +736,7 @@ public class PeerDiscoveryController {
 
   // Load the peer first from the table, then from bonding cache or use the instance that comes in.
   private DiscoveryPeer resolvePeer(final DiscoveryPeer peer) {
-    if (peerTable.ipAddressIsInvalid(peer.getEndpoint())) {
+    if (peerTable.isIpAddressInvalid(peer.getEndpoint())) {
       return null;
     }
     final Optional<DiscoveryPeer> maybeKnownPeer =

@@ -196,7 +196,7 @@ public class PeerTableTest {
     final PeerTable.AddResult addResult1 = table.tryAdd(peer1);
     assertThat(addResult1.getOutcome()).isEqualTo(PeerTable.AddResult.added().getOutcome());
 
-    assertThat(table.ipAddressIsInvalid(peer2.getEndpoint())).isEqualTo(true);
+    assertThat(table.isIpAddressInvalid(peer2.getEndpoint())).isEqualTo(true);
   }
 
   @Test
@@ -210,7 +210,7 @@ public class PeerTableTest {
     final PeerTable.AddResult addResult1 = table.tryAdd(peer1);
     assertThat(addResult1.getOutcome()).isEqualTo(PeerTable.AddResult.added().getOutcome());
 
-    assertThat(table.ipAddressIsInvalid(peer2.getEndpoint())).isEqualTo(false);
+    assertThat(table.isIpAddressInvalid(peer2.getEndpoint())).isEqualTo(false);
   }
 
   @Test
