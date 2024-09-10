@@ -191,16 +191,9 @@ public class GenesisFileConverter {
     }
 
     static Bytes fixCliqueExtraData(final Bytes extraData) {
-        System.out.println("========== fixCliqueExtraData ==========");
-        System.out.println("Input extraData: " + extraData.toHexString());
-        System.out.println("Input extraData length: " + extraData.size() + " bytes");
-
         // Ensure minimum length of 32 bytes for vanity data
         if (extraData.size() < 32) {
-            Bytes result = Bytes.concatenate(extraData, Bytes.wrap(new byte[194 - extraData.size()]));
-            System.out.println("Short input, padded result: " + result.toHexString());
-            System.out.println("Padded result length: " + result.size() + " bytes");
-            return result;
+            return Bytes.concatenate(extraData, Bytes.wrap(new byte[194 - extraData.size()]));
         }
 
         // Determine if we're dealing with Geth-style (32 bytes) or our test-style (30 bytes) vanity data
@@ -208,13 +201,9 @@ public class GenesisFileConverter {
 
         // Preserve the original vanity data
         Bytes vanityData = extraData.slice(0, vanityLength);
-        System.out.println("Vanity data: " + vanityData.toHexString());
-        System.out.println("Vanity data length: " + vanityData.size() + " bytes");
 
         // Extract validator addresses (all bytes after vanity data)
         Bytes validatorData = extraData.size() > vanityLength ? extraData.slice(vanityLength) : Bytes.EMPTY;
-        System.out.println("Validator data: " + validatorData.toHexString());
-        System.out.println("Validator data length: " + validatorData.size() + " bytes");
 
         // RLP encode the validator addresses
         Bytes rlpEncodedValidators = RLP.encode(writer -> writer.writeValue(validatorData));
@@ -222,21 +211,13 @@ public class GenesisFileConverter {
         // Combine and ensure total length is 194 bytes
         Bytes combined = Bytes.concatenate(vanityData, rlpEncodedValidators);
 
-        System.out.println("Combined data before padding: " + combined.toHexString());
-        System.out.println("Combined data length before padding: " + combined.size() + " bytes");
-
         if (combined.size() < 194) {
             int paddingSize = 194 - combined.size();
-            System.out.println("Padding size: " + paddingSize + " bytes");
             combined = Bytes.concatenate(combined, Bytes.wrap(new byte[paddingSize]));
         } else if (combined.size() > 194) {
-            System.out.println("Trimming combined data to 194 bytes");
             combined = combined.slice(0, 194);
         }
 
-        System.out.println("Final result: " + combined.toHexString());
-        System.out.println("Final result length: " + combined.size() + " bytes");
-        System.out.println("========== End of fixCliqueExtraData ==========");
         return combined;
     }
 
