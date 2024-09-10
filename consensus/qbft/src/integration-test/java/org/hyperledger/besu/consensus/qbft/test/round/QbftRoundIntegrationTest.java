@@ -92,6 +92,7 @@ public class QbftRoundIntegrationTest {
   private MessageFactory throwingMessageFactory;
   private QbftMessageTransmitter transmitter;
   @Mock private StubValidatorMulticaster multicaster;
+  @Mock private BlockHeader parentHeader;
 
   private Block proposedBlock;
 
@@ -148,7 +149,8 @@ public class QbftRoundIntegrationTest {
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
 
     round.handleProposalMessage(
         peerMessageFactory.createProposal(
@@ -176,7 +178,8 @@ public class QbftRoundIntegrationTest {
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
 
     // inject a block first, then a prepare on it.
     round.handleProposalMessage(

@@ -54,7 +54,6 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param nodeKey the node key
-   * @param parentHeader the parent header
    * @param epochManager the epoch manager
    * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
@@ -65,7 +64,6 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final NodeKey nodeKey,
-      final BlockHeader parentHeader,
       final EpochManager epochManager,
       final EthScheduler ethScheduler) {
     super(
@@ -75,7 +73,6 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
         transactionPool,
         protocolContext,
         protocolSchedule,
-        parentHeader,
         ethScheduler);
     this.nodeKey = nodeKey;
     this.epochManager = epochManager;
@@ -112,6 +109,8 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
 
   private Optional<ValidatorVote> determineCliqueVote(
       final SealableBlockHeader sealableBlockHeader) {
+    BlockHeader parentHeader =
+        protocolContext.getBlockchain().getBlockHeader(sealableBlockHeader.getParentHash()).get();
     if (epochManager.isEpochBlock(sealableBlockHeader.getNumber())) {
       return Optional.empty();
     } else {
