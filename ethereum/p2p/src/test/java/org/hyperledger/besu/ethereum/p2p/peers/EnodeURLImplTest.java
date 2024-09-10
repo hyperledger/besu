@@ -497,10 +497,11 @@ public class EnodeURLImplTest {
 
   @Test
   @DisabledOnOs(
-      value = OS.MAC,
+      value = {OS.MAC, OS.LINUX},
       disabledReason = "canonical lookup may not match dns lookup for local machine")
   public void toURI_WithHostnameShouldWorkWhenDnsEnabledAndUpdateEnabled()
       throws UnknownHostException {
+
     final String enodeURLString =
         "enode://"
             + VALID_NODE_ID

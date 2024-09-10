@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
@@ -62,6 +63,7 @@ public class FastSyncChainDownloaderTest {
   protected EthContext ethContext;
   protected ProtocolContext protocolContext;
   private SyncState syncState;
+  private PeerTaskExecutor peerTaskExecutor;
 
   protected MutableBlockchain localBlockchain;
   private BlockchainSetupUtil otherBlockchainSetup;
@@ -93,6 +95,7 @@ public class FastSyncChainDownloaderTest {
 
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
+    peerTaskExecutor = new PeerTaskExecutor(null, null);
   }
 
   @AfterEach
@@ -113,7 +116,8 @@ public class FastSyncChainDownloaderTest {
         syncState,
         new NoOpMetricsSystem(),
         new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()),
-        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
+        peerTaskExecutor);
   }
 
   @ParameterizedTest

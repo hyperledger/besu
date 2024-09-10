@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -64,7 +65,8 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SyncState syncState,
       final Clock clock,
-      final SyncDurationMetrics syncDurationMetrics) {
+      final SyncDurationMetrics syncDurationMetrics,
+      final PeerTaskExecutor peerTaskExecutor) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -112,7 +114,8 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
               ethContext,
               syncState,
               pivotBlockSelector,
-              metricsSystem);
+              metricsSystem,
+              peerTaskExecutor);
     } else {
       if (!syncState.isResyncNeeded()) {
         LOG.info(
@@ -129,7 +132,8 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
               ethContext,
               syncState,
               pivotBlockSelector,
-              metricsSystem);
+              metricsSystem,
+              peerTaskExecutor);
     }
 
     final SnapSyncProcessState snapSyncState =

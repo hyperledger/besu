@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -77,6 +78,7 @@ public class FastSyncActionsTest {
   private BlockchainSetupUtil blockchainSetupUtil;
   private SyncState syncState;
   private MetricsSystem metricsSystem;
+  private PeerTaskExecutor peerTaskExecutor;
 
   static class FastSyncActionsTestArguments implements ArgumentsProvider {
     @Override
@@ -103,10 +105,12 @@ public class FastSyncActionsTest {
     ethPeers = ethContext.getEthPeers();
     syncState = new SyncState(blockchain, ethPeers);
     metricsSystem = new NoOpMetricsSystem();
+    peerTaskExecutor = new PeerTaskExecutor(null, null);
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
-            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
+            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem),
+            peerTaskExecutor);
   }
 
   @ParameterizedTest
@@ -159,7 +163,8 @@ public class FastSyncActionsTest {
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
-            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
+            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem),
+            peerTaskExecutor);
 
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
 
@@ -180,7 +185,8 @@ public class FastSyncActionsTest {
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
-            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
+            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem),
+            peerTaskExecutor);
 
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(1000), 5500);
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(2000), 4000);
@@ -203,7 +209,8 @@ public class FastSyncActionsTest {
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
-            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
+            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem),
+            peerTaskExecutor);
 
     final CompletableFuture<FastSyncState> result =
         fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE);
@@ -234,7 +241,8 @@ public class FastSyncActionsTest {
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
-            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
+            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem),
+            peerTaskExecutor);
     final long minPivotHeight = syncConfig.getSyncPivotDistance() + 1L;
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
@@ -285,7 +293,8 @@ public class FastSyncActionsTest {
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
-            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
+            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem),
+            peerTaskExecutor);
     final long minPivotHeight = syncConfig.getSyncPivotDistance() + 1L;
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
@@ -357,7 +366,8 @@ public class FastSyncActionsTest {
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
-            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
+            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem),
+            peerTaskExecutor);
     final long minPivotHeight = syncConfig.getSyncPivotDistance() + 1L;
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
@@ -409,7 +419,8 @@ public class FastSyncActionsTest {
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
-            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
+            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem),
+            peerTaskExecutor);
     final long pivotDistance = syncConfig.getSyncPivotDistance();
 
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
@@ -472,7 +483,8 @@ public class FastSyncActionsTest {
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
-            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
+            new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem),
+            peerTaskExecutor);
 
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
     final CompletableFuture<FastSyncState> result =
@@ -511,7 +523,8 @@ public class FastSyncActionsTest {
                 metricsSystem,
                 genesisConfig,
                 () -> finalizedEvent,
-                () -> {}));
+                () -> {}),
+            peerTaskExecutor);
 
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
     final CompletableFuture<FastSyncState> result =
@@ -526,7 +539,9 @@ public class FastSyncActionsTest {
   }
 
   private FastSyncActions createFastSyncActions(
-      final SynchronizerConfiguration syncConfig, final PivotBlockSelector pivotBlockSelector) {
+      final SynchronizerConfiguration syncConfig,
+      final PivotBlockSelector pivotBlockSelector,
+      final PeerTaskExecutor peerTaskExecutor) {
     final ProtocolSchedule protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     final ProtocolContext protocolContext = blockchainSetupUtil.getProtocolContext();
     final EthContext ethContext = ethProtocolManager.ethContext();
@@ -538,7 +553,8 @@ public class FastSyncActionsTest {
         ethContext,
         new SyncState(blockchain, ethContext.getEthPeers(), true, Optional.empty()),
         pivotBlockSelector,
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        peerTaskExecutor);
   }
 
   @Test

@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
@@ -88,7 +89,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       final Clock clock,
       final MetricsSystem metricsSystem,
       final SyncTerminationCondition terminationCondition,
-      final PivotBlockSelector pivotBlockSelector) {
+      final PivotBlockSelector pivotBlockSelector,
+      final PeerTaskExecutor peerTaskExecutor) {
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
     this.protocolContext = protocolContext;
@@ -150,7 +152,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   worldStateStorageCoordinator,
                   syncState,
                   clock,
-                  syncDurationMetrics);
+                  syncDurationMetrics,
+                  peerTaskExecutor);
     } else if (syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
       this.fastSyncFactory =
           () ->
@@ -166,7 +169,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   worldStateStorageCoordinator,
                   syncState,
                   clock,
-                  syncDurationMetrics);
+                  syncDurationMetrics,
+                  peerTaskExecutor);
     } else {
       this.fastSyncFactory =
           () ->
@@ -182,7 +186,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   worldStateStorageCoordinator,
                   syncState,
                   clock,
-                  syncDurationMetrics);
+                  syncDurationMetrics,
+                  peerTaskExecutor);
     }
 
     // create a non-resync fast sync downloader:

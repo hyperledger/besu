@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerManager;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -241,6 +242,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final EthContext ethContext,
       final EthMessages ethMessages,
       final EthScheduler scheduler,
+      final PeerManager peerManager,
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
       final ForkIdManager forkIdManager) {
@@ -255,6 +257,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
             ethContext,
             ethMessages,
             scheduler,
+            peerManager,
             peerValidators,
             mergePeerFilter,
             forkIdManager);

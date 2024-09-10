@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -39,7 +40,8 @@ public class CheckpointSyncChainDownloader extends FastSyncChainDownloader {
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState,
-      final SyncDurationMetrics syncDurationMetrics) {
+      final SyncDurationMetrics syncDurationMetrics,
+      final PeerTaskExecutor peerTaskExecutor) {
 
     final SyncTargetManager syncTargetManager =
         new SyncTargetManager(
@@ -55,7 +57,13 @@ public class CheckpointSyncChainDownloader extends FastSyncChainDownloader {
         syncState,
         syncTargetManager,
         new CheckpointSyncDownloadPipelineFactory(
-            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem),
+            config,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            fastSyncState,
+            metricsSystem,
+            peerTaskExecutor),
         ethContext.getScheduler(),
         metricsSystem,
         syncDurationMetrics);

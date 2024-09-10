@@ -19,6 +19,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
@@ -51,6 +52,7 @@ public class FastSyncActions {
   protected final SyncState syncState;
   protected final PivotBlockSelector pivotBlockSelector;
   protected final MetricsSystem metricsSystem;
+  protected final PeerTaskExecutor peerTaskExecutor;
   protected final Counter pivotBlockSelectionCounter;
   protected final AtomicLong pivotBlockGauge = new AtomicLong(0);
 
@@ -62,7 +64,8 @@ public class FastSyncActions {
       final EthContext ethContext,
       final SyncState syncState,
       final PivotBlockSelector pivotBlockSelector,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final PeerTaskExecutor peerTaskExecutor) {
     this.syncConfig = syncConfig;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolSchedule = protocolSchedule;
@@ -71,6 +74,7 @@ public class FastSyncActions {
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
     this.metricsSystem = metricsSystem;
+    this.peerTaskExecutor = peerTaskExecutor;
 
     pivotBlockSelectionCounter =
         metricsSystem.createCounter(
@@ -167,7 +171,8 @@ public class FastSyncActions {
         syncState,
         metricsSystem,
         currentState,
-        syncDurationMetrics);
+        syncDurationMetrics,
+        peerTaskExecutor);
   }
 
   private CompletableFuture<FastSyncState> downloadPivotBlockHeader(final Hash hash) {

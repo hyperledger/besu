@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
@@ -62,6 +63,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   protected final FastSyncValidationPolicy attachedValidationPolicy;
   protected final FastSyncValidationPolicy detachedValidationPolicy;
   protected final FastSyncValidationPolicy ommerValidationPolicy;
+  protected final PeerTaskExecutor peerTaskExecutor;
 
   public FastSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
@@ -69,13 +71,15 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final FastSyncState fastSyncState,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final PeerTaskExecutor peerTaskExecutor) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.fastSyncState = fastSyncState;
     this.metricsSystem = metricsSystem;
+    this.peerTaskExecutor = peerTaskExecutor;
     final LabelledMetric<Counter> fastSyncValidationCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.SYNCHRONIZER,

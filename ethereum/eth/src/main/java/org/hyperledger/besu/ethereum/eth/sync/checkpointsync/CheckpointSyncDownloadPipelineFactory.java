@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
@@ -41,8 +42,16 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final FastSyncState fastSyncState,
-      final MetricsSystem metricsSystem) {
-    super(syncConfig, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final PeerTaskExecutor peerTaskExecutor) {
+    super(
+        syncConfig,
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        fastSyncState,
+        metricsSystem,
+        peerTaskExecutor);
   }
 
   @Override
@@ -76,7 +85,8 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
             checkPointSource, checkpoint, protocolContext.getBlockchain());
 
     final CheckpointDownloadBlockStep checkPointDownloadBlockStep =
-        new CheckpointDownloadBlockStep(protocolSchedule, ethContext, checkpoint, metricsSystem);
+        new CheckpointDownloadBlockStep(
+            protocolSchedule, ethContext, checkpoint, metricsSystem, peerTaskExecutor);
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
