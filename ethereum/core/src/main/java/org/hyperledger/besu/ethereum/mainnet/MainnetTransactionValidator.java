@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.worldstate.DelegatedCodeService;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -305,7 +306,8 @@ public class MainnetTransactionValidator implements TransactionValidator {
   }
 
   private static boolean canSendTransaction(final Account sender, final Hash codeHash) {
-    return codeHash.equals(Hash.EMPTY) || sender.hasDelegatedCode();
+    return codeHash.equals(Hash.EMPTY)
+        || DelegatedCodeService.hasDelegatedCode(sender.getUnprocessedCode());
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransactionSignature(
