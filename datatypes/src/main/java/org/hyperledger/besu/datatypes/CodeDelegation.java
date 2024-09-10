@@ -20,10 +20,13 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 /**
- * SetCodeAuthorization is a data structure that represents the authorization to set code on a EOA
- * account.
+ * CodeDelegation is a data structure that represents the authorization to delegate code of an EOA
+ * account to another account.
  */
-public interface SetCodeAuthorization {
+public interface CodeDelegation {
+  /** The cost of delegating code on an existing account. */
+  long PER_AUTH_BASE_COST = 2_500L;
+
   /**
    * Return the chain id.
    *
@@ -53,11 +56,11 @@ public interface SetCodeAuthorization {
   Optional<Address> authorizer();
 
   /**
-   * Return a valid nonce or empty otherwise. A nonce is valid if the size of the list is exactly 1
+   * Return the nonce
    *
-   * @return all the optional nonce
+   * @return the nonce
    */
-  Optional<Long> nonce();
+  long nonce();
 
   /**
    * Return the recovery id.

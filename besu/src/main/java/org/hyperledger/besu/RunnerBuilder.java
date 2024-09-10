@@ -805,7 +805,7 @@ public class RunnerBuilder {
     if (miningParameters.isStratumMiningEnabled()) {
       if (!(miningCoordinator instanceof PoWMiningCoordinator powMiningCoordinator)) {
         throw new IllegalArgumentException(
-            "Stratum server requires an PoWMiningCoordinator not "
+            "Stratum mining requires the network option(--network) to be set to CLASSIC. Stratum server requires a PoWMiningCoordinator not "
                 + ((miningCoordinator == null) ? "null" : miningCoordinator.getClass().getName()));
       }
       stratumServer =

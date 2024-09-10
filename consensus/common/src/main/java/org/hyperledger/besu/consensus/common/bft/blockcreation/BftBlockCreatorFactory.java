@@ -106,11 +106,10 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   /**
    * Create block creator.
    *
-   * @param parentHeader the parent header
    * @param round the round
    * @return the block creator
    */
-  public BlockCreator create(final BlockHeader parentHeader, final int round) {
+  public BlockCreator create(final int round) {
     return new BftBlockCreator(
         miningParameters,
         forksSchedule,
@@ -119,7 +118,6 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
         transactionPool,
         protocolContext,
         protocolSchedule,
-        parentHeader,
         bftExtraDataCodec,
         ethScheduler);
   }

@@ -118,7 +118,8 @@ public class TransactionPoolFactory {
                 newPooledTransactionHashesMessageSender),
             ethContext,
             metrics,
-            transactionPoolConfiguration);
+            transactionPoolConfiguration,
+            blobCache);
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(

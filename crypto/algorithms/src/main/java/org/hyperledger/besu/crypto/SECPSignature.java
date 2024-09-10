@@ -54,7 +54,7 @@ public class SECPSignature {
    * @param s the s
    * @param recId the rec id
    */
-  SECPSignature(final BigInteger r, final BigInteger s, final byte recId) {
+  public SECPSignature(final BigInteger r, final BigInteger s, final byte recId) {
     this.r = r;
     this.s = s;
     this.recId = recId;

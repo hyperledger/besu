@@ -413,9 +413,27 @@ public class TransactionPoolOptionsTest
   @Test
   public void maxPrioritizedTxsPerTypeWrongTxType() {
     internalTestFailure(
-        "Invalid value for option '--tx-pool-max-prioritized-by-type' (MAP<TYPE,INTEGER>): expected one of [FRONTIER, ACCESS_LIST, EIP1559, BLOB, SET_CODE] (case-insensitive) but was 'WRONG_TYPE'",
+        "Invalid value for option '--tx-pool-max-prioritized-by-type' (MAP<TYPE,INTEGER>): expected one of [FRONTIER, ACCESS_LIST, EIP1559, BLOB, DELEGATE_CODE] (case-insensitive) but was 'WRONG_TYPE'",
         "--tx-pool-max-prioritized-by-type",
         "WRONG_TYPE=1");
+  }
+
+  @Test
+  public void minScoreWorks() {
+    final byte minScore = -10;
+    internalTestSuccess(
+        config -> assertThat(config.getMinScore()).isEqualTo(minScore),
+        "--tx-pool-min-score",
+        Byte.toString(minScore));
+  }
+
+  @Test
+  public void minScoreNonByteValueReturnError() {
+    final var overflowMinScore = Integer.toString(-300);
+    internalTestFailure(
+        "Invalid value for option '--tx-pool-min-score': '" + overflowMinScore + "' is not a byte",
+        "--tx-pool-min-score",
+        overflowMinScore);
   }
 
   @Override

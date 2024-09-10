@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
-import org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.AddReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
@@ -129,7 +128,7 @@ public class BaseTransactionPoolTest {
     final TransactionType txType = TransactionType.values()[randomizeTxType.nextInt(4)];
 
     return switch (txType) {
-      case FRONTIER, ACCESS_LIST, EIP1559, SET_CODE ->
+      case FRONTIER, ACCESS_LIST, EIP1559, DELEGATE_CODE ->
           createTransaction(txType, nonce, maxGasPrice, payloadSize, keys);
       case BLOB ->
           createTransaction(
