@@ -175,29 +175,61 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
         besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
     testHelper.buildNewBlock();
 
-    Optional<TransactionReceipt> maybeTransactionReceipt =
+    final Optional<TransactionReceipt> maybeFirstTransactionReceipt =
         besuNode.execute(ethTransactions.getTransactionReceipt(txHash));
-    assertThat(maybeTransactionReceipt).isPresent();
+    assertThat(maybeFirstTransactionReceipt).isPresent();
 
     final String gasPriceWithout0x =
-        maybeTransactionReceipt.get().getEffectiveGasPrice().substring(2);
+        maybeFirstTransactionReceipt.get().getEffectiveGasPrice().substring(2);
     final BigInteger gasPrice = new BigInteger(gasPriceWithout0x, 16);
-    final BigInteger txCost = maybeTransactionReceipt.get().getGasUsed().multiply(gasPrice);
+    final BigInteger txCost = maybeFirstTransactionReceipt.get().getGasUsed().multiply(gasPrice);
 
-    final BigInteger authorizerBalance = besuNode.execute(ethTransactions.getBalance(authorizer));
+    final BigInteger authorizerBalanceAfterFirstTx =
+        besuNode.execute(ethTransactions.getBalance(authorizer));
 
     // The remaining balance of the authorizer should the gas limit multiplied by the gas price
     // minus the transaction cost.
     // The following executes this calculation in reverse.
-    assertThat(GAS_LIMIT).isEqualTo(authorizerBalance.add(txCost).divide(gasPrice).longValue());
+    assertThat(GAS_LIMIT)
+        .isEqualTo(authorizerBalanceAfterFirstTx.add(txCost).divide(gasPrice).longValue());
 
     // The other accounts balance should be the initial 9000 ETH balance from the authorizer minus
     // the remaining balance of the authorizer and minus the transaction cost
-    cluster.verify(
-        otherAccount.balanceEquals(
-            Amount.wei(
-                new BigInteger("90000000000000000000000")
-                    .subtract(authorizerBalance)
-                    .subtract(txCost))));
+    final BigInteger otherAccountBalanceAfterFirstTx =
+        new BigInteger("90000000000000000000000")
+            .subtract(authorizerBalanceAfterFirstTx)
+            .subtract(txCost);
+
+    cluster.verify(otherAccount.balanceEquals(Amount.wei(otherAccountBalanceAfterFirstTx)));
+
+    final Transaction txSendEthToOtherAccount =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(2)
+            .maxPriorityFeePerGas(Wei.of(10))
+            .maxFeePerGas(Wei.of(100))
+            .gasLimit(21000)
+            .to(Address.fromHexStringStrict(otherAccount.getAddress()))
+            .value(Wei.ONE)
+            .payload(Bytes.EMPTY)
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(AUTHORIZER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    final String txSendEthToOtherAccountHash =
+        besuNode.execute(
+            ethTransactions.sendRawTransaction(txSendEthToOtherAccount.encoded().toHexString()));
+    testHelper.buildNewBlock();
+
+    final Optional<TransactionReceipt> maybeSecondTransactionReceipt =
+        besuNode.execute(ethTransactions.getTransactionReceipt(txSendEthToOtherAccountHash));
+    assertThat(maybeSecondTransactionReceipt).isPresent();
+
+    // the balance of the other account should be the previous balance plus the value of the 1 Wei
+    final BigInteger otherAccountBalanceAfterSecondTx =
+        besuNode.execute(ethTransactions.getBalance(otherAccount));
+    assertThat(otherAccountBalanceAfterFirstTx.add(BigInteger.ONE))
+        .isEqualTo(otherAccountBalanceAfterSecondTx);
   }
 }
