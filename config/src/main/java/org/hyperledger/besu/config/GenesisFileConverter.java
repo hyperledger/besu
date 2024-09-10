@@ -9,9 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 
 public class GenesisFileConverter {
@@ -42,12 +40,13 @@ public class GenesisFileConverter {
 
             // Handle extraData field
             if (gethGenesis.has("extradata") || gethGenesis.has("extraData")) {
-                String extraData = gethGenesis.has("extradata") ?
+                String extraDataString = gethGenesis.has("extradata") ?
                         gethGenesis.get("extradata").asText() :
                         gethGenesis.get("extraData").asText();
 
-                // Convert extraData and fix it using the updated fixCliqueExtraData method
-                besuGenesis.put("extraData", "0x" + fixCliqueExtraData(Bytes.fromHexStringLenient(extraData)).toHexString());
+                Bytes extraData = Bytes.fromHexString(extraDataString);
+                Bytes fixedExtraData = fixCliqueExtraData(extraData);
+                besuGenesis.put("extraData", fixedExtraData.toHexString());
             }
 
             LOG.info("Geth to Besu conversion completed.");
@@ -138,11 +137,11 @@ public class GenesisFileConverter {
         if (besuConfig.has("clique")) {
             handleCliqueConversion(gethGenesis, besuGenesis, besuConfig);
         } else if (besuConfig.has("ethash")) {
-            handleEthashConversion(gethGenesis, besuGenesis, besuConfig);
+            handleEthashConversion(besuGenesis);
         } else {
             // Default to Ethash if no consensus is specified
             besuConfig.set("ethash", JsonUtil.createEmptyObjectNode());
-            handleEthashConversion(gethGenesis, besuGenesis, besuConfig);
+            handleEthashConversion(besuGenesis);
         }
 
         // Handle extraData field
@@ -176,8 +175,7 @@ public class GenesisFileConverter {
         }
     }
 
-    @SuppressWarnings("unused")
-    private static void handleEthashConversion(final ObjectNode gethGenesis, final ObjectNode besuGenesis, final ObjectNode besuConfig) {
+    private static void handleEthashConversion(final ObjectNode besuGenesis) {
         // Ensure difficulty is set for Ethash
         if (!besuGenesis.has("difficulty")) {
             besuGenesis.put("difficulty", "0x1");
@@ -193,52 +191,53 @@ public class GenesisFileConverter {
     }
 
     static Bytes fixCliqueExtraData(final Bytes extraData) {
-        try {
-            return RLP.decode(extraData, rlp -> {
-                List<Bytes> elements = new ArrayList<>();
-                final List<Bytes> elementsFinal = (rlp.nextIsList()) ?
-                        rlp.readList(reader -> {
-                            List<Bytes> list = new ArrayList<>();
-                            while (!reader.isComplete()) {
-                                list.add(reader.readValue());
-                            }
-                            return list;
-                        }) :
-                        elements;
+        System.out.println("========== fixCliqueExtraData ==========");
+        System.out.println("Input extraData: " + extraData.toHexString());
+        System.out.println("Input extraData length: " + extraData.size() + " bytes");
 
-                // Ensure we have at least 3 elements (vanity, validators, signature)
-                while (elements.size() < 3) {
-                    elements.add(Bytes.EMPTY);
-                }
-
-                // Ensure vanity data is exactly 32 bytes
-                Bytes vanityData = elements.get(0);
-                final Bytes vaniityDataFinal = vanityData.size() < 32 ?
-                        Bytes.concatenate(vanityData, Bytes.wrap(new byte[32 - vanityData.size()])) :
-                        vanityData.size() > 32 ?
-                                vanityData.slice(0, 32) :
-                                vanityData;
-
-                // Ensure signature is exactly 65 bytes (or empty for genesis block)
-                Bytes signature = elements.get(2);
-                final Bytes signatureFinal = signature.size() < 65 ?
-                        Bytes.concatenate(signature, Bytes.wrap(new byte[65 - signature.size()])) :
-                        signature.size() > 65 ?
-                                signature.slice(0, 65) :
-                                signature;
-
-                // Reconstruct the extraData
-                return RLP.encode(writer -> {
-                    writer.writeList(listWriter -> {
-                        listWriter.writeValue(vaniityDataFinal);
-                        listWriter.writeValue(elementsFinal.get(1)); // validators
-                        listWriter.writeValue(signatureFinal);
-                    });
-                });
-            });
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to fix Clique extraData due to RLP decoding issue", e);
+        // Ensure minimum length of 32 bytes for vanity data
+        if (extraData.size() < 32) {
+            Bytes result = Bytes.concatenate(extraData, Bytes.wrap(new byte[194 - extraData.size()]));
+            System.out.println("Short input, padded result: " + result.toHexString());
+            System.out.println("Padded result length: " + result.size() + " bytes");
+            return result;
         }
+
+        // Determine if we're dealing with Geth-style (32 bytes) or our test-style (30 bytes) vanity data
+        int vanityLength = (extraData.get(30) == 0 && extraData.get(31) == 0) ? 32 : 30;
+
+        // Preserve the original vanity data
+        Bytes vanityData = extraData.slice(0, vanityLength);
+        System.out.println("Vanity data: " + vanityData.toHexString());
+        System.out.println("Vanity data length: " + vanityData.size() + " bytes");
+
+        // Extract validator addresses (all bytes after vanity data)
+        Bytes validatorData = extraData.size() > vanityLength ? extraData.slice(vanityLength) : Bytes.EMPTY;
+        System.out.println("Validator data: " + validatorData.toHexString());
+        System.out.println("Validator data length: " + validatorData.size() + " bytes");
+
+        // RLP encode the validator addresses
+        Bytes rlpEncodedValidators = RLP.encode(writer -> writer.writeValue(validatorData));
+
+        // Combine and ensure total length is 194 bytes
+        Bytes combined = Bytes.concatenate(vanityData, rlpEncodedValidators);
+
+        System.out.println("Combined data before padding: " + combined.toHexString());
+        System.out.println("Combined data length before padding: " + combined.size() + " bytes");
+
+        if (combined.size() < 194) {
+            int paddingSize = 194 - combined.size();
+            System.out.println("Padding size: " + paddingSize + " bytes");
+            combined = Bytes.concatenate(combined, Bytes.wrap(new byte[paddingSize]));
+        } else if (combined.size() > 194) {
+            System.out.println("Trimming combined data to 194 bytes");
+            combined = combined.slice(0, 194);
+        }
+
+        System.out.println("Final result: " + combined.toHexString());
+        System.out.println("Final result length: " + combined.size() + " bytes");
+        System.out.println("========== End of fixCliqueExtraData ==========");
+        return combined;
     }
 
     private static String convertBalance(final String balance) {

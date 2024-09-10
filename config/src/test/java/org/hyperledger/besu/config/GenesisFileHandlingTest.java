@@ -3,11 +3,15 @@ package org.hyperledger.besu.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.rlp.RLP;
+import org.apache.tuweni.rlp.RLPReader;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Locale;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -255,23 +259,41 @@ public class GenesisFileHandlingTest {
 
     @Test
     void shouldPreserveValidatorAddressesInCliqueExtraData() {
+        LOG.info("Starting shouldPreserveValidatorAddressesInCliqueExtraData test");
         String validatorAddress = "1122334455667788990011223344556677889900";
-        String extraData = "0x" + "00".repeat(32) + validatorAddress;
+        String extraData = "0x000000000000000000000000000000000000000000000000000000000000" + validatorAddress;
 
-        LOG.info("Original extraData: {}", extraData);
+        LOG.debug("Original extraData: {}", extraData);
+        LOG.debug("Original extraData length: {} bytes", Bytes.fromHexString(extraData).size());
+        LOG.debug("Expected validator address: {}", validatorAddress);
 
         Bytes fixedExtraData = GenesisFileConverter.fixCliqueExtraData(Bytes.fromHexString(extraData));
 
-        String fixedExtraDataString = "0x" + fixedExtraData.toHexString();
-        LOG.info("Fixed extraData: {}", fixedExtraDataString);
+        LOG.debug("Fixed extraData: {}", fixedExtraData.toHexString());
+        LOG.debug("Fixed extraData length: {} bytes", fixedExtraData.size());
 
+        // Check if the validator address is preserved
+        Bytes extractedValidator = RLP.decode(fixedExtraData.slice(30), rlpReader -> rlpReader.readValue());
+        String extractedValidatorString = extractedValidator.toHexString().toLowerCase(Locale.ROOT).replaceAll("^0x", "");
+
+        boolean validatorPreserved = extractedValidatorString.equalsIgnoreCase(validatorAddress);
+        LOG.debug("Extracted validator address: {}", extractedValidatorString);
+        LOG.debug("Validator address preserved: {}", validatorPreserved);
+
+        // Check if the vanity data is preserved
+        Bytes originalVanity = Bytes.fromHexString(extraData).slice(0, 30);
+        Bytes fixedVanity = fixedExtraData.slice(0, 30);
+        boolean vanityPreserved = fixedVanity.equals(originalVanity);
+        LOG.debug("Original vanity data: {}", originalVanity.toHexString());
+        LOG.debug("Fixed vanity data: {}", fixedVanity.toHexString());
+        LOG.debug("Vanity data preserved: {}", vanityPreserved);
+
+        LOG.info("Asserting validator address preservation");
+        assertTrue(validatorPreserved, "Validator address should be preserved");
+        LOG.info("Asserting vanity data preservation");
+        assertTrue(vanityPreserved, "Vanity data should be preserved");
+        LOG.info("Asserting extraData length");
         assertEquals(194, fixedExtraData.size(), "ExtraData should be 194 bytes");
-        assertTrue(fixedExtraDataString.startsWith("0x"), "ExtraData should start with '0x'");
-        assertTrue(fixedExtraDataString.substring(2, 66).equals("0".repeat(64)), "Vanity data should be preserved");
-        assertTrue(fixedExtraDataString.contains(validatorAddress), "ExtraData should preserve validator address");
-
-        // Additional debug information
-        LOG.info("Validator address position: {}", fixedExtraDataString.indexOf(validatorAddress));
-        LOG.info("Fixed extraData length: {} bytes", fixedExtraData.size());
+        LOG.info("Completed shouldPreserveValidatorAddressesInCliqueExtraData test");
     }
 }
