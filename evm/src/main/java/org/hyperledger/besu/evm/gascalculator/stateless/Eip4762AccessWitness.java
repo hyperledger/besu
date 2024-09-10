@@ -14,13 +14,10 @@
  */
 package org.hyperledger.besu.evm.gascalculator.stateless;
 
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.BALANCE_LEAF_KEY;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_KECCAK_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.BASIC_DATA_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_HASH_LEAF_KEY;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_OFFSET;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_SIZE_LEAF_KEY;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.NONCE_LEAF_KEY;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERKLE_NODE_WIDTH;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERSION_LEAF_KEY;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -70,31 +67,17 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
   public long touchAndChargeProofOfAbsence(final Address address) {
     long gas = 0;
     gas =
-        clampedAdd(gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, VERSION_LEAF_KEY));
-    gas =
-        clampedAdd(gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, BALANCE_LEAF_KEY));
-    gas = clampedAdd(gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, NONCE_LEAF_KEY));
+        clampedAdd(
+            gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
     gas =
         clampedAdd(
-            gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, CODE_KECCAK_LEAF_KEY));
-    gas =
-        clampedAdd(
-            gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, CODE_SIZE_LEAF_KEY));
+            gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY));
     return gas;
   }
 
   @Override
   public long touchAndChargeMessageCall(final Address address) {
-
-    long gas = 0;
-
-    gas =
-        clampedAdd(gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, VERSION_LEAF_KEY));
-    gas =
-        clampedAdd(
-            gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, CODE_SIZE_LEAF_KEY));
-
-    return gas;
+    return touchAddressOnReadAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY);
   }
 
   @Override
@@ -103,9 +86,11 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
     long gas = 0;
 
     gas =
-        clampedAdd(gas, touchAddressOnWriteAndComputeGas(caller, zeroTreeIndex, BALANCE_LEAF_KEY));
+        clampedAdd(
+            gas, touchAddressOnWriteAndComputeGas(caller, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
     gas =
-        clampedAdd(gas, touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, BALANCE_LEAF_KEY));
+        clampedAdd(
+            gas, touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
 
     return gas;
   }
@@ -117,13 +102,13 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
     long gas = 0;
 
     gas =
-        clampedAdd(gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, VERSION_LEAF_KEY));
-    gas = clampedAdd(gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, NONCE_LEAF_KEY));
+        clampedAdd(
+            gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
 
     if (createSendsValue) {
       gas =
           clampedAdd(
-              gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, BALANCE_LEAF_KEY));
+              gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
     }
     return gas;
   }
@@ -134,16 +119,11 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
     long gas = 0;
 
     gas =
-        clampedAdd(gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, VERSION_LEAF_KEY));
-    gas =
-        clampedAdd(gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, BALANCE_LEAF_KEY));
-    gas = clampedAdd(gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, NONCE_LEAF_KEY));
+        clampedAdd(
+            gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
     gas =
         clampedAdd(
-            gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, CODE_KECCAK_LEAF_KEY));
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, CODE_SIZE_LEAF_KEY));
+            gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY));
 
     return gas;
   }
@@ -154,15 +134,14 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
 
     long gas = 0;
 
-    gas = clampedAdd(gas, touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, VERSION_LEAF_KEY));
-    gas =
-        clampedAdd(gas, touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, BALANCE_LEAF_KEY));
-    gas = clampedAdd(gas, touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, NONCE_LEAF_KEY));
     gas =
         clampedAdd(
-            gas, touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, CODE_KECCAK_LEAF_KEY));
+            gas, touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
     gas =
-        clampedAdd(gas, touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, CODE_SIZE_LEAF_KEY));
+        clampedAdd(
+            gas, touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+    gas =
+        clampedAdd(gas, touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, CODE_HASH_LEAF_KEY));
 
     // modifying this after update on EIP-4762 to not charge simple transfers
 
@@ -175,21 +154,16 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
 
     long gas = 0;
 
-    gas = clampedAdd(gas, touchAddressOnReadAndComputeGas(target, zeroTreeIndex, VERSION_LEAF_KEY));
-    gas = clampedAdd(gas, touchAddressOnReadAndComputeGas(target, zeroTreeIndex, NONCE_LEAF_KEY));
-    gas =
-        clampedAdd(gas, touchAddressOnReadAndComputeGas(target, zeroTreeIndex, CODE_SIZE_LEAF_KEY));
     gas =
         clampedAdd(
-            gas, touchAddressOnReadAndComputeGas(target, zeroTreeIndex, CODE_KECCAK_LEAF_KEY));
+            gas, touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+    gas =
+        clampedAdd(gas, touchAddressOnReadAndComputeGas(target, zeroTreeIndex, CODE_HASH_LEAF_KEY));
 
     if (sendsValue) {
       gas =
           clampedAdd(
-              gas, touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, BALANCE_LEAF_KEY));
-    } else {
-      gas =
-          clampedAdd(gas, touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BALANCE_LEAF_KEY));
+              gas, touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
     }
     // modifying this after update on EIP-4762 to not charge simple transfers
 

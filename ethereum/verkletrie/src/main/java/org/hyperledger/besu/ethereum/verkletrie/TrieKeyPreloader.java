@@ -22,9 +22,9 @@ import org.hyperledger.besu.ethereum.trie.verkle.hasher.Hasher;
 import org.hyperledger.besu.ethereum.trie.verkle.hasher.PedersenHasher;
 import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -40,22 +40,16 @@ public class TrieKeyPreloader {
   public TrieKeyPreloader() {
     this.hasher = new PedersenHasher();
     trieKeyAdapter = new TrieKeyBatchAdapter(hasher);
-    trieKeyAdapter.versionKey(
-        Address.ZERO); // TODO REMOVE is just to preload the native library for performance check
   }
 
   public List<Bytes32> generateAccountKeyIds() {
-    final List<Bytes32> keys = new ArrayList<>();
-    keys.add(Parameters.VERSION_LEAF_KEY);
-    keys.add(Parameters.BALANCE_LEAF_KEY);
-    keys.add(Parameters.NONCE_LEAF_KEY);
-    keys.add(Parameters.CODE_KECCAK_LEAF_KEY);
-    return keys;
+    return List.of(Parameters.BASIC_DATA_LEAF_KEY);
   }
 
   public List<Bytes32> generateCodeChunkKeyIds(final Bytes code) {
-    return new ArrayList<>(
-        IntStream.range(0, trieKeyAdapter.getNbChunk(code)).mapToObj(UInt256::valueOf).toList());
+    return IntStream.range(0, trieKeyAdapter.getNbChunk(code))
+        .mapToObj(UInt256::valueOf)
+        .collect(Collectors.toUnmodifiableList());
   }
 
   public List<Bytes32> generateStorageKeyIds(final Set<StorageSlotKey> storageSlotKeys) {
