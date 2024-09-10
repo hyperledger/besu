@@ -132,42 +132,59 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     if (transactionType == TransactionType.DELEGATE_CODE) {
-      if (isDelegateCodeEmpty(transaction)) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.EMPTY_CODE_DELEGATION,
-            "transaction code delegation transactions must have a non-empty code delegation list");
-      }
-
-      final BigInteger halfCurveOrder = SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
-      final Optional<ValidationResult<TransactionInvalidReason>> validationResult =
-          transaction
-              .getCodeDelegationList()
-              .map(
-                  codeDelegations -> {
-                    for (CodeDelegation codeDelegation : codeDelegations) {
-                      if (codeDelegation.signature().getS().compareTo(halfCurveOrder) > 0) {
-                        return ValidationResult.invalid(
-                            TransactionInvalidReason.INVALID_SIGNATURE,
-                            "Invalid signature for code delegation. S value must be less or equal than the half curve order.");
-                      }
-
-                      if (codeDelegation.signature().getRecId() != 0
-                          && codeDelegation.signature().getRecId() != 1) {
-                        return ValidationResult.invalid(
-                            TransactionInvalidReason.INVALID_SIGNATURE,
-                            "Invalid signature for code delegation. RecId value must be 0 or 1.");
-                      }
-                    }
-
-                    return ValidationResult.valid();
-                  });
-
-      if (validationResult.isPresent() && !validationResult.get().isValid()) {
-        return validationResult.get();
+      ValidationResult<TransactionInvalidReason> codeDelegationValidation =
+          validateCodeDelegation(transaction);
+      if (!codeDelegationValidation.isValid()) {
+        return codeDelegationValidation;
       }
     }
 
     return validateCostAndFee(transaction, baseFee, blobFee, transactionValidationParams);
+  }
+
+  private static ValidationResult<TransactionInvalidReason> validateCodeDelegation(
+      final Transaction transaction) {
+    if (isDelegateCodeEmpty(transaction)) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.EMPTY_CODE_DELEGATION,
+          "transaction code delegation transactions must have a non-empty code delegation list");
+    }
+
+    if (transaction.getTo().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          "transaction code delegation transactions must have a to address");
+    }
+
+    final BigInteger halfCurveOrder = SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
+    final Optional<ValidationResult<TransactionInvalidReason>> validationResult =
+        transaction
+            .getCodeDelegationList()
+            .map(
+                codeDelegations -> {
+                  for (CodeDelegation codeDelegation : codeDelegations) {
+                    if (codeDelegation.signature().getS().compareTo(halfCurveOrder) > 0) {
+                      return ValidationResult.invalid(
+                          TransactionInvalidReason.INVALID_SIGNATURE,
+                          "Invalid signature for code delegation. S value must be less or equal than the half curve order.");
+                    }
+
+                    if (codeDelegation.signature().getRecId() != 0
+                        && codeDelegation.signature().getRecId() != 1) {
+                      return ValidationResult.invalid(
+                          TransactionInvalidReason.INVALID_SIGNATURE,
+                          "Invalid signature for code delegation. RecId value must be 0 or 1.");
+                    }
+                  }
+
+                  return ValidationResult.valid();
+                });
+
+    if (validationResult.isPresent() && !validationResult.get().isValid()) {
+      return validationResult.get();
+    }
+
+    return ValidationResult.valid();
   }
 
   private static boolean isDelegateCodeEmpty(final Transaction transaction) {
