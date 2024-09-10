@@ -529,7 +529,6 @@ public class PeerDiscoveryController {
       return;
     }
 
-    peer.setFirstDiscovered(System.currentTimeMillis());
     peer.setStatus(PeerDiscoveryStatus.BONDING);
     bondingPeers.put(peer.getId(), peer);
 
