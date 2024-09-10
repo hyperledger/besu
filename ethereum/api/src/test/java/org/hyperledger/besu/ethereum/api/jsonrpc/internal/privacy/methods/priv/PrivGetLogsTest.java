@@ -87,7 +87,7 @@ public class PrivGetLogsTest {
 
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Missing required json rpc parameter at index 0");
+        .hasMessageContaining("Invalid privacy group ID parameter (index 0)");
   }
 
   @Test
@@ -96,7 +96,7 @@ public class PrivGetLogsTest {
 
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Missing required json rpc parameter at index 1");
+        .hasMessageContaining("Invalid filter parameter (index 1)");
   }
 
   @Test
@@ -116,7 +116,7 @@ public class PrivGetLogsTest {
     final JsonRpcRequestContext request = privGetLogRequest(PRIVACY_GROUP_ID, invalidFilter);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(null, RpcErrorType.INVALID_FILTER_PARAMS);
 
     final JsonRpcResponse response = method.response(request);
 

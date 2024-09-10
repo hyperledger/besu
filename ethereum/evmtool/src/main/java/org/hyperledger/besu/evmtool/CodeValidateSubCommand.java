@@ -35,10 +35,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.web3j.utils.Strings;
 import picocli.CommandLine;
 import picocli.CommandLine.ParentCommand;
 
@@ -62,7 +63,7 @@ public class CodeValidateSubCommand implements Runnable {
 
   @ParentCommand EvmToolCommand parentCommand;
 
-  private final EVM evm;
+  private final Supplier<EVM> evm;
 
   @CommandLine.Option(
       names = {"--file"},
@@ -82,12 +83,18 @@ public class CodeValidateSubCommand implements Runnable {
 
   CodeValidateSubCommand(final EvmToolCommand parentCommand) {
     this.parentCommand = parentCommand;
-    String fork = EvmSpecVersion.PRAGUE.getName();
-    if (parentCommand != null && parentCommand.hasFork()) {
-      fork = parentCommand.getFork();
-    }
-    ProtocolSpec protocolSpec = ReferenceTestProtocolSchedules.create().geSpecByName(fork);
-    evm = protocolSpec.getEvm();
+    String fork =
+        parentCommand != null && parentCommand.hasFork()
+            ? parentCommand.getFork()
+            : EvmSpecVersion.PRAGUE.getName();
+
+    evm =
+        Suppliers.memoize(
+            () -> {
+              ProtocolSpec protocolSpec =
+                  ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork);
+              return protocolSpec.getEvm();
+            });
   }
 
   @Override
@@ -107,7 +114,10 @@ public class CodeValidateSubCommand implements Runnable {
       }
     } else {
       for (String code : cliCode) {
-        parentCommand.out.print(considerCode(code));
+        String validation = considerCode(code);
+        if (!Strings.isBlank(validation)) {
+          parentCommand.out.println(validation);
+        }
       }
     }
     parentCommand.out.flush();
@@ -116,7 +126,14 @@ public class CodeValidateSubCommand implements Runnable {
   private void checkCodeFromBufferedReader(final BufferedReader in) {
     try {
       for (String code = in.readLine(); code != null; code = in.readLine()) {
-        parentCommand.out.print(considerCode(code));
+        try {
+          String validation = considerCode(code);
+          if (!Strings.isBlank(validation)) {
+            parentCommand.out.println(validation);
+          }
+        } catch (RuntimeException e) {
+          parentCommand.out.println("fail: " + e.getMessage());
+        }
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -138,35 +155,33 @@ public class CodeValidateSubCommand implements Runnable {
   public String considerCode(final String hexCode) {
     Bytes codeBytes;
     try {
-      codeBytes =
-          Bytes.fromHexString(
-              hexCode.replaceAll("(^|\n)#[^\n]*($|\n)", "").replaceAll("[^0-9A-Za-z]", ""));
+      String strippedString =
+          hexCode.replaceAll("(^|\n)#[^\n]*($|\n)", "").replaceAll("[^0-9A-Za-z]", "");
+      if (Strings.isEmpty(strippedString)) {
+        return "";
+      }
+      codeBytes = Bytes.fromHexString(strippedString);
     } catch (RuntimeException re) {
-      return "err: hex string -" + re + "\n";
+      return "err: hex string -" + re;
     }
     if (codeBytes.isEmpty()) {
-      return "";
+      return "err: empty container";
     }
 
-    EOFLayout layout = evm.parseEOF(codeBytes);
+    EOFLayout layout = evm.get().parseEOF(codeBytes);
     if (!layout.isValid()) {
-      return "err: layout - " + layout.invalidReason() + "\n";
+      return "err: layout - " + layout.invalidReason();
     }
 
-    Code code = evm.getCodeUncached(codeBytes);
+    Code code = evm.get().getCodeUncached(codeBytes);
     if (code instanceof CodeInvalid codeInvalid) {
       return "err: " + codeInvalid.getInvalidReason();
     } else if (EOFContainerMode.INITCODE.equals(
         ((CodeV1) code).getEofLayout().containerMode().get())) {
       return "err: code is valid initcode.  Runtime code expected";
     } else {
-      return "OK "
-          + IntStream.range(0, code.getCodeSectionCount())
-              .mapToObj(code::getCodeSection)
-              .map(cs -> code.getBytes().slice(cs.getEntryPoint(), cs.getLength()))
-              .map(Bytes::toUnprefixedHexString)
-              .collect(Collectors.joining(","))
-          + "\n";
+      return "OK %d/%d/%d"
+          .formatted(code.getCodeSectionCount(), code.getSubcontainerCount(), code.getDataSize());
     }
   }
 }

@@ -179,12 +179,4 @@ public interface WorldUpdater extends MutableWorldView {
   default void markTransactionBoundary() {
     // default is to ignore
   }
-
-  /**
-   * Sets the {@link AuthorizedCodeService} associated with this {@link WorldUpdater}.
-   *
-   * @param authorizedCodeService the {@link AuthorizedCodeService} to associate with this {@link
-   *     WorldUpdater}
-   */
-  void setAuthorizedCodeService(AuthorizedCodeService authorizedCodeService);
 }

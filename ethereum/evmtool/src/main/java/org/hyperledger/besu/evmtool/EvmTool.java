@@ -28,7 +28,7 @@ public final class EvmTool {
    * @param args The command line arguments.
    */
   public static void main(final String... args) {
-    LogConfigurator.setLevel("", "DEBUG");
+    LogConfigurator.setLevel("", "OFF");
     final EvmToolCommand evmToolCommand = new EvmToolCommand();
 
     evmToolCommand.execute(args);

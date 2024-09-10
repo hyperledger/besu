@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.stream.Collectors.toList;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
@@ -26,9 +27,11 @@ import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -38,7 +41,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateFo
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.List;
@@ -54,7 +56,7 @@ import org.slf4j.spi.LoggingEventBuilder;
 public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
   private final MergeMiningCoordinator mergeCoordinator;
-  protected final Long cancunTimestamp;
+  protected final Optional<Long> cancunMilestone;
 
   public AbstractEngineForkchoiceUpdated(
       final Vertx vertx,
@@ -65,9 +67,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     super(vertx, protocolSchedule, protocolContext, engineCallListener);
 
     this.mergeCoordinator = mergeCoordinator;
-    Optional<ScheduledProtocolSpec.Hardfork> cancun =
-        protocolSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
-    cancunTimestamp = cancun.map(ScheduledProtocolSpec.Hardfork::milestone).orElse(Long.MAX_VALUE);
+    cancunMilestone = protocolSchedule.milestoneFor(CANCUN);
   }
 
   protected ValidationResult<RpcErrorType> validateParameter(
@@ -82,10 +82,25 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
     final Object requestId = requestContext.getRequest().getId();
 
-    final EngineForkchoiceUpdatedParameter forkChoice =
-        requestContext.getRequiredParameter(0, EngineForkchoiceUpdatedParameter.class);
-    final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes =
-        requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
+    final EngineForkchoiceUpdatedParameter forkChoice;
+    try {
+      forkChoice = requestContext.getRequiredParameter(0, EngineForkchoiceUpdatedParameter.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid engine forkchoice updated parameter (index 0)",
+          RpcErrorType.INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS,
+          e);
+    }
+    final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes;
+    try {
+      maybePayloadAttributes =
+          requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid engine payload attributes parameter (index 1)",
+          RpcErrorType.INVALID_ENGINE_FORKCHOICE_UPDATED_PAYLOAD_ATTRIBUTES,
+          e);
+    }
 
     LOG.debug("Forkchoice parameters {}", forkChoice);
     mergeContext
@@ -172,7 +187,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       if (!getWithdrawalsValidator(
               protocolSchedule.get(), newHead, maybePayloadAttributes.get().getTimestamp())
           .validateWithdrawals(withdrawals)) {
-        return new JsonRpcErrorResponse(requestId, getInvalidParametersError());
+        return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_WITHDRAWALS_PARAMS);
       }
     }
 

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.stable;
 
+import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME;
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_OPTION_NAME;
 
 import org.hyperledger.besu.cli.converter.PluginInfoConverter;
@@ -28,6 +29,15 @@ import picocli.CommandLine;
 
 /** The Plugins Options options. */
 public class PluginsConfigurationOptions implements CLIOptions<PluginConfiguration> {
+
+  @CommandLine.Option(
+      names = {DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME},
+      description = "Enables external plugins (default: ${DEFAULT-VALUE})",
+      hidden = true,
+      defaultValue = "true",
+      arity = "1")
+  private Boolean externalPluginsEnabled = true;
+
   @CommandLine.Option(
       names = {DEFAULT_PLUGINS_OPTION_NAME},
       description = "Comma-separated list of plugin names",
@@ -42,7 +52,24 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
 
   @Override
   public PluginConfiguration toDomainObject() {
-    return new PluginConfiguration(plugins);
+    return new PluginConfiguration.Builder()
+        .externalPluginsEnabled(externalPluginsEnabled)
+        .requestedPlugins(plugins)
+        .build();
+  }
+
+  /**
+   * Validate that there are no inconsistencies in the specified options.
+   *
+   * @param commandLine the full commandLine to check all the options specified by the user
+   */
+  public void validate(final CommandLine commandLine) {
+    String errorMessage =
+        String.format(
+            "%s option can only be used when %s is true",
+            DEFAULT_PLUGINS_OPTION_NAME, DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME);
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine, errorMessage, externalPluginsEnabled, List.of(DEFAULT_PLUGINS_OPTION_NAME));
   }
 
   @Override
@@ -61,6 +88,13 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, DEFAULT_PLUGINS_OPTION_NAME, new PluginInfoConverter());
 
-    return new PluginConfiguration(plugins);
+    boolean externalPluginsEnabled =
+        CommandLineUtils.getOptionValueOrDefault(
+            commandLine, DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME, Boolean::parseBoolean);
+
+    return new PluginConfiguration.Builder()
+        .requestedPlugins(plugins)
+        .externalPluginsEnabled(externalPluginsEnabled)
+        .build();
   }
 }

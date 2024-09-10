@@ -206,7 +206,8 @@ class ContractCreationProcessorTest
         new ContractCreationProcessor(
             evm,
             true,
-            Collections.singletonList(MaxCodeSizeRule.from(EvmSpecVersion.SPURIOUS_DRAGON)),
+            Collections.singletonList(
+                MaxCodeSizeRule.from(EvmSpecVersion.SPURIOUS_DRAGON, EvmConfiguration.DEFAULT)),
             1,
             Collections.emptyList());
     final Bytes contractCode =
@@ -227,7 +228,8 @@ class ContractCreationProcessorTest
         new ContractCreationProcessor(
             evm,
             true,
-            Collections.singletonList(MaxCodeSizeRule.from(EvmSpecVersion.SPURIOUS_DRAGON)),
+            Collections.singletonList(
+                MaxCodeSizeRule.from(EvmSpecVersion.SPURIOUS_DRAGON, EvmConfiguration.DEFAULT)),
             1,
             Collections.emptyList());
     final Bytes contractCode =

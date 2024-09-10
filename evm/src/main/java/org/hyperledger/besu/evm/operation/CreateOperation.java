@@ -36,10 +36,9 @@ public class CreateOperation extends AbstractCreateOperation {
    * Instantiates a new Create operation.
    *
    * @param gasCalculator the gas calculator
-   * @param maxInitcodeSize Maximum init code size
    */
-  public CreateOperation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-    super(0xF0, "CREATE", 3, 1, gasCalculator, maxInitcodeSize, 0);
+  public CreateOperation(final GasCalculator gasCalculator) {
+    super(0xF0, "CREATE", 3, 1, gasCalculator, 0);
   }
 
   @Override
@@ -54,13 +53,10 @@ public class CreateOperation extends AbstractCreateOperation {
   }
 
   @Override
-  protected Address targetContractAddress(final MessageFrame frame, final Code initcode) {
+  protected Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
     final Account sender = frame.getWorldUpdater().get(frame.getRecipientAddress());
     // Decrement nonce by 1 to normalize the effect of transaction execution
-    final Address address =
-        Address.contractAddress(frame.getRecipientAddress(), sender.getNonce() - 1L);
-    frame.warmUpAddress(address);
-    return address;
+    return Address.contractAddress(frame.getRecipientAddress(), sender.getNonce() - 1L);
   }
 
   @Override

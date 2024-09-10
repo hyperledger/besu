@@ -39,10 +39,9 @@ public class Create2Operation extends AbstractCreateOperation {
    * Instantiates a new Create2 operation.
    *
    * @param gasCalculator the gas calculator
-   * @param maxInitcodeSize Maximum init code size
    */
-  public Create2Operation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-    super(0xF5, "CREATE2", 4, 1, gasCalculator, maxInitcodeSize, 0);
+  public Create2Operation(final GasCalculator gasCalculator) {
+    super(0xF5, "CREATE2", 4, 1, gasCalculator, 0);
   }
 
   @Override
@@ -58,13 +57,11 @@ public class Create2Operation extends AbstractCreateOperation {
   }
 
   @Override
-  public Address targetContractAddress(final MessageFrame frame, final Code initcode) {
+  public Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
     final Address sender = frame.getRecipientAddress();
     final Bytes32 salt = Bytes32.leftPad(frame.getStackItem(3));
     final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt, initcode.getCodeHash()));
-    final Address address = Address.extract(hash);
-    frame.warmUpAddress(address);
-    return address;
+    return Address.extract(hash);
   }
 
   @Override

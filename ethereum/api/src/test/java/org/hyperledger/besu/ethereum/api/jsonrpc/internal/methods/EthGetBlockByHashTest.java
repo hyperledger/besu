@@ -69,7 +69,7 @@ public class EthGetBlockByHashTest {
   public void exceptionWhenNoBoolSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams(ZERO_HASH)))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 1");
+        .hasMessage("Invalid return complete transaction parameter (index 1)");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
@@ -77,8 +77,7 @@ public class EthGetBlockByHashTest {
   public void exceptionWhenHashParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams("hash", "true")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage(
-            "Invalid json rpc parameter at index 0. Supplied value was: 'hash' of type: 'java.lang.String' - expected type: 'org.hyperledger.besu.datatypes.Hash'");
+        .hasMessage("Invalid block hash parameter (index 0)");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
@@ -86,8 +85,7 @@ public class EthGetBlockByHashTest {
   public void exceptionWhenBoolParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams(ZERO_HASH, "maybe")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage(
-            "Invalid json rpc parameter at index 1. Supplied value was: 'maybe' of type: 'java.lang.String' - expected type: 'java.lang.Boolean'");
+        .hasMessage("Invalid return complete transaction parameter (index 1)");
     verifyNoMoreInteractions(blockchainQueries);
   }
 

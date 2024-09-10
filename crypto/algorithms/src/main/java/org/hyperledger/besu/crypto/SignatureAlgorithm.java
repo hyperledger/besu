@@ -32,6 +32,13 @@ public interface SignatureAlgorithm {
   void disableNative();
 
   /**
+   * Attempt to enable the native library.
+   *
+   * @return true if the native library was enabled
+   */
+  boolean maybeEnableNative();
+
+  /**
    * Is native enabled.
    *
    * @return the boolean

@@ -263,7 +263,7 @@ public class Action {
       return this;
     }
 
-    Builder refundAddress(final String refundAddress) {
+    public Builder refundAddress(final String refundAddress) {
       this.refundAddress = refundAddress;
       return this;
     }

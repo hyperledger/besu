@@ -122,6 +122,18 @@ public class DefaultBlockchain implements MutableBlockchain {
         "The current height of the canonical chain",
         this::getChainHeadBlockNumber);
 
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.ETHEREUM,
+        "blockchain_finalized_block",
+        "The current finalized block number",
+        this::getFinalizedBlockNumber);
+
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.ETHEREUM,
+        "blockchain_safe_block",
+        "The current safe block number",
+        this::getSafeBlockNumber);
+
     metricsSystem.createGauge(
         BesuMetricCategory.BLOCKCHAIN,
         "difficulty_total",
@@ -299,7 +311,10 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Block getChainHeadBlock() {
-    return new Block(chainHeader, blockchainStorage.getBlockBody(chainHeader.getHash()).get());
+    return new Block(
+        chainHeader,
+        getBlockBody(chainHeader.getHash())
+            .orElseGet(() -> getBlockBodySafe(chainHeader.getHash()).get()));
   }
 
   @Override
@@ -335,6 +350,11 @@ public class DefaultBlockchain implements MutableBlockchain {
                 Optional.ofNullable(cache.getIfPresent(blockHeaderHash))
                     .or(() -> blockchainStorage.getBlockBody(blockHeaderHash)))
         .orElseGet(() -> blockchainStorage.getBlockBody(blockHeaderHash));
+  }
+
+  @Override
+  public synchronized Optional<BlockBody> getBlockBodySafe(final Hash blockHeaderHash) {
+    return getBlockBody(blockHeaderHash);
   }
 
   @Override
@@ -749,6 +769,14 @@ public class DefaultBlockchain implements MutableBlockchain {
     final var updater = blockchainStorage.updater();
     updater.setSafeBlock(blockHash);
     updater.commit();
+  }
+
+  private long getFinalizedBlockNumber() {
+    return this.getFinalized().flatMap(this::getBlockHeader).map(BlockHeader::getNumber).orElse(0L);
+  }
+
+  private long getSafeBlockNumber() {
+    return this.getSafeBlock().flatMap(this::getBlockHeader).map(BlockHeader::getNumber).orElse(0L);
   }
 
   private void updateCacheForNewCanonicalHead(final Block block, final Difficulty uInt256) {

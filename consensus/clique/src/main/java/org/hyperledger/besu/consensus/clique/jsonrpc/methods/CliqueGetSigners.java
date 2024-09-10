@@ -17,8 +17,10 @@ package org.hyperledger.besu.consensus.clique.jsonrpc.methods;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -67,8 +69,13 @@ public class CliqueGetSigners implements JsonRpcMethod {
   }
 
   private Optional<BlockHeader> determineBlockHeader(final JsonRpcRequestContext request) {
-    final Optional<BlockParameter> blockParameter =
-        request.getOptionalParameter(0, BlockParameter.class);
+    final Optional<BlockParameter> blockParameter;
+    try {
+      blockParameter = request.getOptionalParameter(0, BlockParameter.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
     final long latest = blockchainQueries.headBlockNumber();
     final long blockNumber = blockParameter.map(b -> b.getNumber().orElse(latest)).orElse(latest);
     return blockchainQueries.blockByNumber(blockNumber).map(BlockWithMetadata::getHeader);
