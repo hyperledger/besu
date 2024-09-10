@@ -120,10 +120,11 @@ public class GetReceiptsFromPeerTask
         // Contains receipts that we didn't request, so mustn't be the response we're looking for.
         return Optional.empty();
       }
-      blockHeaders.forEach(header -> {
-        receiptsByHeader.put(header, receiptsInBlock);
-        BodyValidation.receiptsRootCache.put(header, Boolean.TRUE);
-      });
+      blockHeaders.forEach(
+          header -> {
+            receiptsByHeader.put(header, receiptsInBlock);
+            BodyValidation.receiptsRootCache.put(header, Boolean.TRUE);
+          });
     }
     return Optional.of(receiptsByHeader);
   }
