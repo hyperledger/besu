@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ReplaceableDoubleSupplier;
@@ -68,6 +69,7 @@ public class TransactionPoolMetrics {
             "Count of transactions added to the transaction pool",
             "source",
             "priority",
+            "reason",
             "layer");
 
     removedCounter =
@@ -215,11 +217,13 @@ public class TransactionPoolMetrics {
             SKIPPED_MESSAGES_LOGGING_THRESHOLD));
   }
 
-  public void incrementAdded(final PendingTransaction pendingTransaction, final String layer) {
+  public void incrementAdded(
+      final PendingTransaction pendingTransaction, final AddReason addReason, final String layer) {
     addedCounter
         .labels(
             location(pendingTransaction.isReceivedFromLocalSource()),
             priority(pendingTransaction.hasPriority()),
+            addReason.label(),
             layer)
         .inc();
   }

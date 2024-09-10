@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class TxPoolOptionsTest extends CommandTestAbstract {
@@ -98,7 +97,6 @@ public class TxPoolOptionsTest extends CommandTestAbstract {
   }
 
   @Test
-  @Disabled // Failing in CI, but not locally
   public void txpoolForcePriceBumpToZeroWhenZeroBaseFeeMarket() throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_WITH_ZERO_BASE_FEE_MARKET);
     parseCommand("--genesis-file", genesisFile.toString());

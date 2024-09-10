@@ -61,7 +61,6 @@ class MergeBlockCreator extends AbstractBlockCreator {
         transactionPool,
         protocolContext,
         protocolSchedule,
-        parentHeader,
         ethScheduler);
   }
 
@@ -80,7 +79,8 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final Bytes32 random,
       final long timestamp,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot) {
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final BlockHeader parentHeader) {
 
     return createBlock(
         maybeTransactions,
@@ -89,14 +89,16 @@ class MergeBlockCreator extends AbstractBlockCreator {
         Optional.of(random),
         parentBeaconBlockRoot,
         timestamp,
-        false);
+        false,
+        parentHeader);
   }
 
   @Override
   public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
-      final long timestamp) {
+      final long timestamp,
+      final BlockHeader parentHeader) {
     throw new UnsupportedOperationException("random is required");
   }
 

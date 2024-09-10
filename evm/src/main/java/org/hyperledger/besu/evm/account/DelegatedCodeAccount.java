@@ -17,30 +17,33 @@ package org.hyperledger.besu.evm.account;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.NavigableMap;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** Wraps an EOA account and includes authorized code to be run on behalf of it. */
-public class AuthorizedCodeAccount implements Account {
-  private final Account wrappedAccount;
-  private final Bytes authorizedCode;
+/** Wraps an EOA account and includes delegated code to be run on behalf of it. */
+public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Account {
 
-  /** The hash of the authorized code. */
-  protected Hash codeHash = null;
+  private final Account wrappedAccount;
 
   /**
    * Creates a new AuthorizedCodeAccount.
    *
-   * @param wrappedAccount the account that has authorized code to be loaded into it.
-   * @param authorizedCode the authorized code.
+   * @param worldUpdater the world updater.
+   * @param wrappedAccount the account that has delegated code to be loaded into it.
+   * @param codeDelegationAddress the address of the delegated code.
    */
-  public AuthorizedCodeAccount(final Account wrappedAccount, final Bytes authorizedCode) {
+  public DelegatedCodeAccount(
+      final WorldUpdater worldUpdater,
+      final Account wrappedAccount,
+      final Address codeDelegationAddress) {
+    super(worldUpdater, codeDelegationAddress);
     this.wrappedAccount = wrappedAccount;
-    this.authorizedCode = authorizedCode;
   }
 
   @Override
@@ -51,6 +54,11 @@ public class AuthorizedCodeAccount implements Account {
   @Override
   public boolean isStorageEmpty() {
     return wrappedAccount.isStorageEmpty();
+  }
+
+  @Override
+  public Optional<Address> delegatedCodeAddress() {
+    return super.delegatedCodeAddress();
   }
 
   @Override
@@ -70,16 +78,17 @@ public class AuthorizedCodeAccount implements Account {
 
   @Override
   public Bytes getCode() {
-    return authorizedCode;
+    return super.getCode();
+  }
+
+  @Override
+  public Bytes getUnprocessedCode() {
+    return wrappedAccount.getCode();
   }
 
   @Override
   public Hash getCodeHash() {
-    if (codeHash == null) {
-      codeHash = authorizedCode.equals(Bytes.EMPTY) ? Hash.EMPTY : Hash.hash(authorizedCode);
-    }
-
-    return codeHash;
+    return super.getCodeHash();
   }
 
   @Override
@@ -93,8 +102,23 @@ public class AuthorizedCodeAccount implements Account {
   }
 
   @Override
+  public boolean isEmpty() {
+    return getDelegatedNonce() == 0 && getDelegatedBalance().isZero() && !hasCode();
+  }
+
+  @Override
+  public boolean hasCode() {
+    return !getCode().isEmpty();
+  }
+
+  @Override
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
     return wrappedAccount.storageEntriesFrom(startKeyHash, limit);
+  }
+
+  @Override
+  public boolean hasDelegatedCode() {
+    return true;
   }
 }
