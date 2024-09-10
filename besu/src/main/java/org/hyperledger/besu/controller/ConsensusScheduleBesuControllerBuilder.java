@@ -1,21 +1,17 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
- * except in compliance with
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the
- * License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
- *  the License for the
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.controller;
 
 import static org.hyperledger.besu.ethereum.core.BlockHeader.GENESIS_BLOCK_NUMBER;
@@ -27,7 +23,6 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.MigratingContext;
 import org.hyperledger.besu.consensus.common.MigratingMiningCoordinator;
 import org.hyperledger.besu.consensus.common.MigratingProtocolContext;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -53,16 +48,15 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.math.BigInteger;
 import java.nio.file.Path;
@@ -166,7 +160,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
         besuControllerBuilderSchedule.entrySet().stream()
             .map(e -> new ForkSpec<>(e.getKey(), e.getValue().createProtocolSchedule()))
             .collect(Collectors.toCollection(() -> new TreeSet<>(ForkSpec.COMPARATOR)));
-    final Optional<BigInteger> chainId = configOptionsSupplier.get().getChainId();
+    final Optional<BigInteger> chainId = genesisConfigOptions.getChainId();
     return combinedProtocolScheduleFactory.apply(protocolScheduleSpecs, chainId);
   }
 
@@ -175,14 +169,9 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory,
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
+      final ConsensusContextFactory consensusContextFactory) {
     return MigratingProtocolContext.init(
-        blockchain,
-        worldStateArchive,
-        protocolSchedule,
-        consensusContextFactory,
-        transactionSelectorFactory);
+        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory, badBlockManager);
   }
 
   @Override
@@ -215,10 +204,12 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MiningParameters miningParameters) {
     return besuControllerBuilderSchedule
         .get(0L)
-        .createAdditionalJsonRpcMethodFactory(protocolContext);
+        .createAdditionalJsonRpcMethodFactory(protocolContext, protocolSchedule, miningParameters);
   }
 
   @Override
@@ -251,7 +242,8 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final EthMessages ethMessages,
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators,
-      final Optional<MergePeerFilter> mergePeerFilter) {
+      final Optional<MergePeerFilter> mergePeerFilter,
+      final ForkIdManager forkIdManager) {
     return besuControllerBuilderSchedule
         .get(0L)
         .createEthProtocolManager(
@@ -264,7 +256,8 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
             ethMessages,
             scheduler,
             peerValidators,
-            mergePeerFilter);
+            mergePeerFilter,
+            forkIdManager);
   }
 
   @Override
@@ -337,15 +330,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   }
 
   @Override
-  public BesuControllerBuilder pkiBlockCreationConfiguration(
-      final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
-    besuControllerBuilderSchedule
-        .values()
-        .forEach(b -> b.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration));
-    return super.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration);
-  }
-
-  @Override
   public BesuControllerBuilder dataDirectory(final Path dataDirectory) {
     besuControllerBuilderSchedule.values().forEach(b -> b.dataDirectory(dataDirectory));
     return super.dataDirectory(dataDirectory);
@@ -375,26 +359,12 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   }
 
   @Override
-  public BesuControllerBuilder isPruningEnabled(final boolean isPruningEnabled) {
-    besuControllerBuilderSchedule.values().forEach(b -> b.isPruningEnabled(isPruningEnabled));
-    return super.isPruningEnabled(isPruningEnabled);
-  }
-
-  @Override
-  public BesuControllerBuilder pruningConfiguration(final PrunerConfiguration prunerConfiguration) {
+  public BesuControllerBuilder isParallelTxProcessingEnabled(
+      final boolean isParallelTxProcessingEnabled) {
     besuControllerBuilderSchedule
         .values()
-        .forEach(b -> b.pruningConfiguration(prunerConfiguration));
-    return super.pruningConfiguration(prunerConfiguration);
-  }
-
-  @Override
-  public BesuControllerBuilder genesisConfigOverrides(
-      final Map<String, String> genesisConfigOverrides) {
-    besuControllerBuilderSchedule
-        .values()
-        .forEach(b -> b.genesisConfigOverrides(genesisConfigOverrides));
-    return super.genesisConfigOverrides(genesisConfigOverrides);
+        .forEach(b -> b.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled));
+    return super.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled);
   }
 
   @Override

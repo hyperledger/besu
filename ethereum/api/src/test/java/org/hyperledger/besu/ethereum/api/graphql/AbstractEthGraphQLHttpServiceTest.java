@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -22,9 +23,11 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -34,8 +37,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.nio.file.Path;
 import java.util.Collections;
@@ -79,14 +82,13 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
   @BeforeEach
   public void setupTest() throws Exception {
-    final Synchronizer synchronizerMock = Mockito.mock(Synchronizer.class);
+    final Synchronizer synchronizerMock = mock(Synchronizer.class);
     final SyncStatus status = new DefaultSyncStatus(1, 2, 3, Optional.of(4L), Optional.of(5L));
     when(synchronizerMock.getSyncStatus()).thenReturn(Optional.of(status));
 
-    final PoWMiningCoordinator miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
-    when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(Wei.of(16));
+    final PoWMiningCoordinator miningCoordinatorMock = mock(PoWMiningCoordinator.class);
 
-    final TransactionPool transactionPoolMock = Mockito.mock(TransactionPool.class);
+    final TransactionPool transactionPoolMock = mock(TransactionPool.class);
 
     when(transactionPoolMock.addTransactionViaApi(ArgumentMatchers.any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
@@ -108,14 +110,16 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final MutableBlockchain blockchain = blockchainSetupUtil.getBlockchain();
     ProtocolContext context =
         new ProtocolContext(
-            blockchain, blockchainSetupUtil.getWorldArchive(), null, Optional.empty());
+            blockchain, blockchainSetupUtil.getWorldArchive(), null, new BadBlockManager());
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
+            blockchainSetupUtil.getProtocolSchedule(),
             context.getBlockchain(),
             context.getWorldStateArchive(),
             Optional.empty(),
             Optional.empty(),
-            ImmutableApiConfiguration.builder().gasPriceMinSupplier(() -> 0).build());
+            ImmutableApiConfiguration.builder().build(),
+            MiningParameters.newDefault().setMinTransactionGasPrice(Wei.ZERO));
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
@@ -146,7 +150,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                 synchronizerMock,
                 GraphQLContextType.GAS_CAP,
                 0L),
-            Mockito.mock(EthScheduler.class));
+            mock(EthScheduler.class));
     service.start().join();
 
     client = new OkHttpClient();

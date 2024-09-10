@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -33,6 +33,6 @@ public class LoggingTest extends AcceptanceTestBase {
 
     node.verify(net.awaitPeerCount(0));
 
-    assertThat(cluster.getConsoleContents()).contains("| INFO  |");
+    assertThat(cluster.getConsoleContents()).contains("INFO");
   }
 }

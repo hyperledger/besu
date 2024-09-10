@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -48,7 +48,7 @@ public class MinerSetMinGasPriceTest {
         new JsonRpcErrorResponse(
             request.getRequest().getId(),
             new JsonRpcError(
-                RpcErrorType.INVALID_PARAMS,
+                RpcErrorType.INVALID_MIN_GAS_PRICE_PARAMS,
                 "Illegal character '-' found at index 0 in hex binary representation"));
 
     final JsonRpcResponse actual = method.response(request);

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+
+import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
-import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -23,9 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
@@ -34,7 +34,7 @@ import io.vertx.core.Vertx;
 
 public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
 
-  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
+  private final Optional<Long> cancunMilestone;
 
   public EngineGetPayloadV3(
       final Vertx vertx,
@@ -50,7 +50,7 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
         mergeMiningCoordinator,
         blockResultFactory,
         engineCallListener);
-    this.cancun = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
+    cancunMilestone = schedule.milestoneFor(CANCUN);
   }
 
   @Override
@@ -60,28 +60,14 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
 
   @Override
   protected JsonRpcResponse createResponse(
-      final JsonRpcRequestContext request,
-      final PayloadIdentifier payloadId,
-      final BlockWithReceipts blockWithReceipts) {
+      final JsonRpcRequestContext request, final PayloadWrapper payload) {
 
     return new JsonRpcSuccessResponse(
-        request.getRequest().getId(),
-        blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
+        request.getRequest().getId(), blockResultFactory.payloadTransactionCompleteV3(payload));
   }
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
-    if (protocolSchedule.isPresent()) {
-      if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
-        return ValidationResult.valid();
-      } else {
-        return ValidationResult.invalid(
-            RpcErrorType.UNSUPPORTED_FORK,
-            "Cancun configured to start at timestamp: " + cancun.get().milestone());
-      }
-    } else {
-      return ValidationResult.invalid(
-          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for Cancun fork set");
-    }
+    return ForkSupportHelper.validateForkSupported(CANCUN, cancunMilestone, blockTimestamp);
   }
 }

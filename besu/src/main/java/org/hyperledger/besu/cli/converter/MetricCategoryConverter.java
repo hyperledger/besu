@@ -18,6 +18,7 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -27,6 +28,9 @@ import picocli.CommandLine;
 public class MetricCategoryConverter implements CommandLine.ITypeConverter<MetricCategory> {
 
   private final Map<String, MetricCategory> metricCategories = new HashMap<>();
+
+  /** Default Constructor. */
+  public MetricCategoryConverter() {}
 
   @Override
   public MetricCategory convert(final String value) {
@@ -54,7 +58,7 @@ public class MetricCategoryConverter implements CommandLine.ITypeConverter<Metri
    * @param metricCategory the metric category
    */
   public void addRegistryCategory(final MetricCategory metricCategory) {
-    metricCategories.put(metricCategory.getName().toUpperCase(), metricCategory);
+    metricCategories.put(metricCategory.getName().toUpperCase(Locale.ROOT), metricCategory);
   }
 
   /**

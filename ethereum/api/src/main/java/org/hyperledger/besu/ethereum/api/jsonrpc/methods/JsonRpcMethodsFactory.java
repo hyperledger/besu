@@ -54,7 +54,9 @@ import io.vertx.core.Vertx;
 public class JsonRpcMethodsFactory {
 
   public Map<String, JsonRpcMethod> methods(
+      final String clientNodeName,
       final String clientVersion,
+      final String commit,
       final BigInteger networkId,
       final GenesisConfigOptions genesisConfigOptions,
       final P2PNetwork p2pNetwork,
@@ -89,7 +91,7 @@ public class JsonRpcMethodsFactory {
       final List<JsonRpcMethods> availableApiGroups =
           List.of(
               new AdminJsonRpcMethods(
-                  clientVersion,
+                  clientNodeName,
                   networkId,
                   genesisConfigOptions,
                   p2pNetwork,
@@ -97,7 +99,8 @@ public class JsonRpcMethodsFactory {
                   namedPlugins,
                   natService,
                   ethPeers,
-                  enodeDnsConfiguration),
+                  enodeDnsConfiguration,
+                  protocolSchedule),
               new DebugJsonRpcMethods(
                   blockchainQueries,
                   protocolContext,
@@ -114,7 +117,10 @@ public class JsonRpcMethodsFactory {
                   protocolSchedule,
                   protocolContext,
                   ethPeers,
-                  consensusEngineServer),
+                  consensusEngineServer,
+                  clientVersion,
+                  commit,
+                  transactionPool),
               new EthJsonRpcMethods(
                   blockchainQueries,
                   synchronizer,
@@ -140,8 +146,9 @@ public class JsonRpcMethodsFactory {
                   filterManager),
               new PrivxJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
-              new Web3JsonRpcMethods(clientVersion),
-              new TraceJsonRpcMethods(blockchainQueries, protocolSchedule, apiConfiguration),
+              new Web3JsonRpcMethods(clientNodeName),
+              new TraceJsonRpcMethods(
+                  blockchainQueries, protocolSchedule, protocolContext, apiConfiguration),
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 

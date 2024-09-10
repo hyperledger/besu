@@ -11,11 +11,10 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm.precompile;
 
-import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
+import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -28,12 +27,12 @@ public class BLS12MapFp2ToG2PrecompiledContract extends AbstractBLS12Precompiled
   public BLS12MapFp2ToG2PrecompiledContract() {
     super(
         "BLS12_MAP_FIELD_TO_CURVE",
-        LibEthPairings.BLS12_MAP_FP2_TO_G2_OPERATION_RAW_VALUE,
+        LibGnarkEIP2537.BLS12_MAP_FP2_TO_G2_OPERATION_SHIM_VALUE,
         PARAMETER_LENGTH);
   }
 
   @Override
   public long gasRequirement(final Bytes input) {
-    return 110_000L;
+    return 75_000L;
   }
 }

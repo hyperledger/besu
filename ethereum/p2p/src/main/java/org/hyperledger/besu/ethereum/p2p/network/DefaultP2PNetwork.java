@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemon;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemonListener;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -69,17 +71,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Future;
+import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.devp2p.EthereumNodeRecord;
-import org.apache.tuweni.discovery.DNSDaemon;
-import org.apache.tuweni.discovery.DNSDaemonListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,7 +151,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final CountDownLatch shutdownLatch = new CountDownLatch(2);
   private final Duration shutdownTimeout = Duration.ofSeconds(15);
   private final Vertx vertx;
-  private DNSDaemon dnsDaemon;
+  private final AtomicReference<Optional<DNSDaemon>> dnsDaemonRef =
+      new AtomicReference<>(Optional.empty());
 
   /**
    * Creates a peer networking service for production purposes.
@@ -189,10 +194,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
     this.peerPermissions = peerPermissions;
     this.vertx = vertx;
 
-    // set the requirement here that the number of peers be greater than the lower bound
-    final int peerLowerBound = rlpxAgent.getPeerLowerBound();
-    LOG.debug("setting peerLowerBound {}", peerLowerBound);
-    peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= peerLowerBound);
+    final int maxPeers = rlpxAgent.getMaxPeers();
+    LOG.debug("setting maxPeers {}", maxPeers);
+    peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= maxPeers);
     subscribeDisconnect(reputationManager);
   }
 
@@ -228,15 +232,25 @@ public class DefaultP2PNetwork implements P2PNetwork {
                           LOG.info(
                               "Starting DNS discovery with DNS Server override {}", dnsServer));
 
-              dnsDaemon =
+              final DNSDaemon dnsDaemon =
                   new DNSDaemon(
                       disco,
                       createDaemonListener(),
                       0L,
+                      1000L, // start after 1 second
                       600000L,
-                      config.getDnsDiscoveryServerOverride().orElse(null),
-                      vertx);
-              dnsDaemon.start();
+                      config.getDnsDiscoveryServerOverride().orElse(null));
+
+              // Use Java 21 virtual thread to deploy verticle
+              final DeploymentOptions options =
+                  new DeploymentOptions()
+                      .setThreadingModel(ThreadingModel.VIRTUAL_THREAD)
+                      .setInstances(1)
+                      .setWorkerPoolSize(1);
+
+              final Future<String> deployId = vertx.deployVerticle(dnsDaemon, options);
+              deployId.toCompletionStage().toCompletableFuture().join();
+              dnsDaemonRef.set(Optional.of(dnsDaemon));
             });
 
     final int listeningPort = rlpxAgent.start().join();
@@ -283,7 +297,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
-    getDnsDaemon().ifPresent(DNSDaemon::close);
+    // since dnsDaemon is a vertx verticle, vertx.close will undeploy it.
+    // However, we can safely call stop as well.
+    dnsDaemonRef.get().ifPresent(DNSDaemon::stop);
 
     peerConnectionScheduler.shutdownNow();
     peerDiscoveryAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
@@ -340,7 +356,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @VisibleForTesting
   Optional<DNSDaemon> getDnsDaemon() {
-    return Optional.ofNullable(dnsDaemon);
+    return dnsDaemonRef.get();
   }
 
   @VisibleForTesting
@@ -426,7 +442,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
   public void subscribeConnectRequest(final ShouldConnectCallback callback) {
     rlpxAgent.subscribeConnectRequest(callback);
   }
-  ;
 
   @Override
   public void subscribeDisconnect(final DisconnectCallback callback) {
@@ -512,7 +527,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private boolean legacyForkIdEnabled = false;
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
-    private int peersLowerBound;
+    private int maxPeers;
     private PeerTable peerTable;
 
     public P2PNetwork build() {
@@ -593,7 +608,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .p2pTLSConfiguration(p2pTLSConfiguration)
           .allConnectionsSupplier(allConnectionsSupplier)
           .allActiveConnectionsSupplier(allActiveConnectionsSupplier)
-          .peersLowerBound(peersLowerBound)
+          .maxPeers(maxPeers)
           .peerTable(peerTable)
           .build();
     }
@@ -710,8 +725,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
 
-    public Builder peersLowerBound(final int peersLowerBound) {
-      this.peersLowerBound = peersLowerBound;
+    public Builder maxPeers(final int maxPeers) {
+      this.maxPeers = maxPeers;
       return this;
     }
   }

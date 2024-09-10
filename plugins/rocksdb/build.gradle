@@ -20,7 +20,8 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
       )
   }
 }
@@ -41,6 +42,7 @@ dependencies {
   implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
   implementation 'io.opentelemetry:opentelemetry-api'

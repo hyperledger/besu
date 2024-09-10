@@ -19,6 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -34,15 +35,15 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -76,7 +77,7 @@ public class FullSyncTargetManagerTest {
 
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     final ProtocolContext protocolContext =
-        new ProtocolContext(localBlockchain, localWorldState, null, Optional.empty());
+        new ProtocolContext(localBlockchain, localWorldState, null, new BadBlockManager());
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             protocolSchedule,
@@ -100,7 +101,9 @@ public class FullSyncTargetManagerTest {
 
   @AfterEach
   public void tearDown() {
-    ethProtocolManager.stop();
+    if (ethProtocolManager != null) {
+      ethProtocolManager.stop();
+    }
   }
 
   @ParameterizedTest
@@ -179,5 +182,12 @@ public class FullSyncTargetManagerTest {
         .isCompletedWithValue(
             new SyncTarget(bestPeer.getEthPeer(), localBlockchain.getChainHeadHeader()));
     assertThat(bestPeer.getPeerConnection().isDisconnected()).isFalse();
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

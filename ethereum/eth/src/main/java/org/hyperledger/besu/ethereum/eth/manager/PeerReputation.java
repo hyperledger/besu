@@ -37,8 +37,8 @@ public class PeerReputation implements Comparable<PeerReputation> {
   static final int DEFAULT_MAX_SCORE = 150;
   static final int DEFAULT_INITIAL_SCORE = 100;
   private static final Logger LOG = LoggerFactory.getLogger(PeerReputation.class);
-  private static final int TIMEOUT_THRESHOLD = 3;
-  private static final int USELESS_RESPONSE_THRESHOLD = 5;
+  public static final int TIMEOUT_THRESHOLD = 5;
+  public static final int USELESS_RESPONSE_THRESHOLD = 5;
 
   private final ConcurrentMap<Integer, AtomicInteger> timeoutCountByRequestType =
       new ConcurrentHashMap<>();
@@ -62,13 +62,15 @@ public class PeerReputation implements Comparable<PeerReputation> {
     this.score = initialScore;
   }
 
-  public Optional<DisconnectReason> recordRequestTimeout(final int requestCode) {
+  public Optional<DisconnectReason> recordRequestTimeout(
+      final int requestCode, final EthPeer peer) {
     final int newTimeoutCount = getOrCreateTimeoutCount(requestCode).incrementAndGet();
     if (newTimeoutCount >= TIMEOUT_THRESHOLD) {
       LOG.debug(
-          "Disconnection triggered by {} repeated timeouts for requestCode {}",
+          "Disconnection triggered by {} repeated timeouts for requestCode {} for peer {}",
           newTimeoutCount,
-          requestCode);
+          requestCode,
+          peer.getLoggableId());
       score -= LARGE_ADJUSTMENT;
       return Optional.of(DisconnectReason.TIMEOUT);
     } else {
@@ -89,15 +91,18 @@ public class PeerReputation implements Comparable<PeerReputation> {
     return timeoutCountByRequestType;
   }
 
-  public Optional<DisconnectReason> recordUselessResponse(final long timestamp) {
+  public Optional<DisconnectReason> recordUselessResponse(
+      final long timestamp, final EthPeer peer) {
     uselessResponseTimes.add(timestamp);
     while (shouldRemove(uselessResponseTimes.peek(), timestamp)) {
       uselessResponseTimes.poll();
     }
     if (uselessResponseTimes.size() >= USELESS_RESPONSE_THRESHOLD) {
       score -= LARGE_ADJUSTMENT;
-      LOG.debug("Disconnection triggered by exceeding useless response threshold");
-      return Optional.of(DisconnectReason.USELESS_PEER);
+      LOG.debug(
+          "Disconnection triggered by exceeding useless response threshold for peer {}",
+          peer.getLoggableId());
+      return Optional.of(DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
     } else {
       score -= SMALL_ADJUSTMENT;
       return Optional.empty();

@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -104,7 +103,7 @@ public class EthGetMinerDataByBlockNumberTest {
     JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request);
     assertThatThrownBy(() -> method.response(requestContext))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid block parameter (index 0)");
 
     verifyNoMoreInteractions(blockchainQueries);
   }
@@ -115,7 +114,7 @@ public class EthGetMinerDataByBlockNumberTest {
     JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request);
     assertThatThrownBy(() -> method.response(requestContext))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid json rpc parameter at index 0");
+        .hasMessageContaining("Invalid block parameter");
 
     verifyNoMoreInteractions(blockchainQueries);
   }

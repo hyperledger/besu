@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,13 +23,14 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class CheckpointSyncActions extends FastSyncActions {
   public CheckpointSyncActions(
       final SynchronizerConfiguration syncConfig,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
@@ -38,7 +39,7 @@ public class CheckpointSyncActions extends FastSyncActions {
       final MetricsSystem metricsSystem) {
     super(
         syncConfig,
-        worldStateStorage,
+        worldStateStorageCoordinator,
         protocolSchedule,
         protocolContext,
         ethContext,
@@ -48,15 +49,17 @@ public class CheckpointSyncActions extends FastSyncActions {
   }
 
   @Override
-  public ChainDownloader createChainDownloader(final FastSyncState currentState) {
+  public ChainDownloader createChainDownloader(
+      final FastSyncState currentState, final SyncDurationMetrics syncDurationMetrics) {
     return CheckpointSyncChainDownloader.create(
         syncConfig,
-        worldStateStorage,
+        worldStateStorageCoordinator,
         protocolSchedule,
         protocolContext,
         ethContext,
         syncState,
         metricsSystem,
-        currentState);
+        currentState,
+        syncDurationMetrics);
   }
 }

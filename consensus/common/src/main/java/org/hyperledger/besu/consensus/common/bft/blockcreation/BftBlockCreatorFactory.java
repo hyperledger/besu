@@ -52,16 +52,21 @@ import org.apache.tuweni.bytes.Bytes;
 public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   /** The Forks schedule. */
   protected final ForksSchedule<T> forksSchedule;
+
   /** The Mining parameters */
   protected final MiningParameters miningParameters;
 
   private final TransactionPool transactionPool;
+
   /** The Protocol context. */
   protected final ProtocolContext protocolContext;
+
   /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
+
   /** The Bft extra data codec. */
   protected final BftExtraDataCodec bftExtraDataCodec;
+
   /** The scheduler for asynchronous block creation tasks */
   protected final EthScheduler ethScheduler;
 
@@ -101,11 +106,10 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   /**
    * Create block creator.
    *
-   * @param parentHeader the parent header
    * @param round the round
    * @return the block creator
    */
-  public BlockCreator create(final BlockHeader parentHeader, final int round) {
+  public BlockCreator create(final int round) {
     return new BftBlockCreator(
         miningParameters,
         forksSchedule,
@@ -114,19 +118,8 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
         transactionPool,
         protocolContext,
         protocolSchedule,
-        parentHeader,
         bftExtraDataCodec,
         ethScheduler);
-  }
-
-  /**
-   * Sets extra data.
-   *
-   * @param extraData the extra data
-   */
-  public void setExtraData(final Bytes extraData) {
-
-    miningParameters.setExtraData(extraData.copy());
   }
 
   /**

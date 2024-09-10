@@ -29,13 +29,15 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -82,7 +84,9 @@ public class FullSyncDownloaderTest {
 
   @AfterEach
   public void tearDown() {
-    ethProtocolManager.stop();
+    if (ethProtocolManager != null) {
+      ethProtocolManager.stop();
+    }
   }
 
   private FullSyncDownloader downloader(final SynchronizerConfiguration syncConfig) {
@@ -93,7 +97,8 @@ public class FullSyncDownloaderTest {
         ethContext,
         syncState,
         metricsSystem,
-        SyncTerminationCondition.never());
+        SyncTerminationCondition.never(),
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   @ParameterizedTest
@@ -128,5 +133,12 @@ public class FullSyncDownloaderTest {
 
     assertThat(synchronizer.calculateTrailingPeerRequirements())
         .isEqualTo(TrailingPeerRequirements.UNRESTRICTED);
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

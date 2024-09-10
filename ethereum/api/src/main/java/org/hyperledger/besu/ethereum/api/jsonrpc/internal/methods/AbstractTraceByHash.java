@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -78,19 +78,18 @@ public abstract class AbstractTraceByHash implements JsonRpcMethod {
     return Tracer.processTracing(
             blockchainQueries,
             Optional.of(block.getHeader()),
-            mutableWorldState -> {
-              return blockTracerSupplier
-                  .get()
-                  .trace(
-                      mutableWorldState,
-                      block,
-                      new DebugOperationTracer(new TraceOptions(false, false, true)))
-                  .map(BlockTrace::getTransactionTraces)
-                  .orElse(Collections.emptyList())
-                  .stream()
-                  .filter(trxTrace -> trxTrace.getTransaction().getHash().equals(transactionHash))
-                  .findFirst();
-            })
+            mutableWorldState ->
+                blockTracerSupplier
+                    .get()
+                    .trace(
+                        mutableWorldState,
+                        block,
+                        new DebugOperationTracer(new TraceOptions(false, false, true), false))
+                    .map(BlockTrace::getTransactionTraces)
+                    .orElse(Collections.emptyList())
+                    .stream()
+                    .filter(trxTrace -> trxTrace.getTransaction().getHash().equals(transactionHash))
+                    .findFirst())
         .orElseThrow();
   }
 

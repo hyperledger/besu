@@ -15,8 +15,11 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -25,9 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -36,15 +36,15 @@ import java.util.function.Supplier;
 public class DebugStandardTraceBadBlockToFile extends DebugStandardTraceBlockToFile
     implements JsonRpcMethod {
 
-  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
 
   public DebugStandardTraceBadBlockToFile(
       final Supplier<TransactionTracer> transactionTracerSupplier,
       final BlockchainQueries blockchainQueries,
-      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final Path dataDir) {
     super(transactionTracerSupplier, blockchainQueries, dataDir);
-    this.protocolSchedule = protocolSchedule;
+    this.protocolContext = protocolContext;
   }
 
   @Override
@@ -54,14 +54,24 @@ public class DebugStandardTraceBadBlockToFile extends DebugStandardTraceBlockToF
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Hash blockHash = requestContext.getRequiredParameter(0, Hash.class);
-    final Optional<TransactionTraceParams> transactionTraceParams =
-        requestContext.getOptionalParameter(1, TransactionTraceParams.class);
+    final Hash blockHash;
+    try {
+      blockHash = requestContext.getRequiredParameter(0, Hash.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_HASH_PARAMS, e);
+    }
+    final Optional<TransactionTraceParams> transactionTraceParams;
+    try {
+      transactionTraceParams = requestContext.getOptionalParameter(1, TransactionTraceParams.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction trace parameters (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
+          e);
+    }
 
-    final Blockchain blockchain = blockchainQueries.get().getBlockchain();
-    final ProtocolSpec protocolSpec =
-        protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
-    final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
+    final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
 
     return badBlockManager
         .getBadBlock(blockHash)

@@ -16,6 +16,8 @@ node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 reorg-logging-threshold=0
 static-nodes-file="~/besudata/static-nodes.json"
+version-compatibility-protection=true
+
 profile="NONE"
 # Security Module plugin to use
 security-module="localfile"
@@ -27,6 +29,7 @@ nat-method="NONE"
 Xnat-kube-service-name="besu"
 Xnat-method-fallback-enabled=true
 discovery-enabled=false
+poa-discovery-retry-bootnodes=true
 bootnodes=[
   "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
   "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
@@ -49,10 +52,12 @@ engine-jwt-disabled=true
 engine-jwt-secret="/tmp/jwt.hex"
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
 discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org"
+net-restrict=["none"]
 
 # chain
 network="MAINNET"
 genesis-file="~/genesis.json"
+genesis-state-hash-cache-enabled=false
 sync-mode="fast"
 fast-sync-min-peers=5
 network-id=303
@@ -149,11 +154,6 @@ Xminer-remote-sealers-limit=1000
 Xminer-remote-sealers-hashrate-ttl=10
 Xpos-block-creation-max-time=5
 
-# Pruning
-pruning-enabled=true
-pruning-blocks-retained=1024
-pruning-block-confirmations=10
-
 # Permissioning
 permissions-nodes-config-file-enabled=false
 permissions-nodes-config-file="./permissions_config.toml"
@@ -173,10 +173,12 @@ privacy-multi-tenancy-enabled=true
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
 privacy-flexible-groups-enabled=false
+privacy-nonce-always-increments=false
 
 # Transaction Pool
 tx-pool="layered"
 tx-pool-price-bump=13
+tx-pool-blob-price-bump=100
 rpc-tx-feecap=2000000000000000000
 strict-tx-replay-protection-enabled=true
 tx-pool-no-local-priority=false
@@ -186,12 +188,14 @@ tx-pool-save-file="txpool.dump"
 ## Layered
 tx-pool-layer-max-capacity=12345678
 tx-pool-max-prioritized=9876
+tx-pool-max-prioritized-by-type=["BLOB=10","FRONTIER=100"]
 tx-pool-max-future-by-sender=321
 ## Legacy/Sequenced
 tx-pool-retention-hours=999
 tx-pool-max-size=1234
 tx-pool-limit-by-account-percentage=0.017
 tx-pool-min-gas-price=1000
+tx-pool-min-score=100
 
 # Revert Reason
 revert-reason-enabled=false
@@ -213,10 +217,15 @@ ethstats-cacert-file="./root.cert"
 # Data storage
 data-storage-format="BONSAI"
 bonsai-historical-block-limit=512
+bonsai-limit-trie-logs-enabled=true
+bonsai-trie-logs-pruning-window-size=100_000
+receipt-compaction-enabled=true
 
 # feature flags
 Xsecp256k1-native-enabled=false
 Xaltbn128-native-enabled=false
+Xsnapsync-server-enabled=true
+Xbonsai-full-flat-db-enabled=true
 
 # compatibility flags
 compatibility-eth64-forkid-enabled=false
@@ -234,3 +243,7 @@ Xp2p-tls-clienthello-sni=false
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000
+
+# plugins
+Xplugins-external-enabled=true
+plugins=["none"]

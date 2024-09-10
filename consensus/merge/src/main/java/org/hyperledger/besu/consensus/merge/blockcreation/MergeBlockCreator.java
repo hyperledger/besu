@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -54,7 +53,6 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final BlockHeader parentHeader,
-      final Optional<Address> depositContractAddress,
       final EthScheduler ethScheduler) {
     super(
         miningParameters,
@@ -63,8 +61,6 @@ class MergeBlockCreator extends AbstractBlockCreator {
         transactionPool,
         protocolContext,
         protocolSchedule,
-        parentHeader,
-        depositContractAddress,
         ethScheduler);
   }
 
@@ -83,7 +79,8 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final Bytes32 random,
       final long timestamp,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot) {
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final BlockHeader parentHeader) {
 
     return createBlock(
         maybeTransactions,
@@ -92,14 +89,16 @@ class MergeBlockCreator extends AbstractBlockCreator {
         Optional.of(random),
         parentBeaconBlockRoot,
         timestamp,
-        false);
+        false,
+        parentHeader);
   }
 
   @Override
   public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
-      final long timestamp) {
+      final long timestamp,
+      final BlockHeader parentHeader) {
     throw new UnsupportedOperationException("random is required");
   }
 

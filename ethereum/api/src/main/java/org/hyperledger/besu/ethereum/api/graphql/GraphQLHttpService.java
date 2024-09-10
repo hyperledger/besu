@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.graphql;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Streams.stream;
 import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.POST;
 
@@ -44,8 +43,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import com.google.common.net.MediaType;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
@@ -62,6 +59,7 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.jackson.JacksonCodec;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -70,6 +68,15 @@ import io.vertx.ext.web.handler.TimeoutHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class handles the HTTP service for GraphQL. It sets up the server, handles requests and
+ * responses, and manages the lifecycle of the server.
+ *
+ * <p>It is responsible for processing GraphQL requests, executing them using the provided GraphQL
+ * engine, and returning the results in the HTTP response.
+ *
+ * <p>It also handles errors and exceptions that may occur during the processing of a request.
+ */
 public class GraphQLHttpService {
 
   private static final Logger LOG = LoggerFactory.getLogger(GraphQLHttpService.class);
@@ -128,6 +135,15 @@ public class GraphQLHttpService {
     checkArgument(config.getHost() != null, "Required host is not configured.");
   }
 
+  /**
+   * Starts the GraphQL HTTP service.
+   *
+   * <p>This method initializes the HTTP server and sets up the necessary routes for handling
+   * GraphQL requests. It also validates the configuration and sets up the necessary handlers for
+   * different types of requests.
+   *
+   * @return a CompletableFuture that will be completed when the server is successfully started.
+   */
   public CompletableFuture<?> start() {
     LOG.info("Starting GraphQL HTTP service on {}:{}", config.getHost(), config.getPort());
     // Create the HTTP server and a router object.
@@ -143,7 +159,7 @@ public class GraphQLHttpService {
     final Router router = Router.router(vertx);
 
     // Verify Host header to avoid rebind attack.
-    router.route().handler(checkWhitelistHostHeader());
+    router.route().handler(checkAllowlistHostHeader());
 
     router
         .route()
@@ -199,7 +215,7 @@ public class GraphQLHttpService {
     return resultFuture;
   }
 
-  private Handler<RoutingContext> checkWhitelistHostHeader() {
+  private Handler<RoutingContext> checkAllowlistHostHeader() {
     return event -> {
       final Optional<String> hostHeader = getAndValidateHostHeader(event);
       if (config.getHostsAllowlist().contains("*")
@@ -218,25 +234,13 @@ public class GraphQLHttpService {
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    String hostname =
-        event.request().getHeader(HttpHeaders.HOST) != null
-            ? event.request().getHeader(HttpHeaders.HOST)
-            : event.request().host();
-    final Iterable<String> splitHostHeader = Splitter.on(':').split(hostname);
-    final long hostPieces = stream(splitHostHeader).count();
-    if (hostPieces > 1) {
-      // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
-      if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
-        return Optional.empty();
-      }
-    }
-    return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
+    final HostAndPort hostAndPort = event.request().authority();
+    return Optional.ofNullable(hostAndPort).map(HostAndPort::host);
   }
 
   private boolean hostIsInAllowlist(final String hostHeader) {
     if (config.getHostsAllowlist().stream()
-        .anyMatch(
-            allowlistEntry -> allowlistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
+        .anyMatch(allowlistEntry -> allowlistEntry.equalsIgnoreCase(hostHeader))) {
       return true;
     } else {
       LOG.trace("Host not in allowlist: '{}'", hostHeader);
@@ -244,6 +248,14 @@ public class GraphQLHttpService {
     }
   }
 
+  /**
+   * Stops the GraphQL HTTP service.
+   *
+   * <p>This method stops the HTTP server that was created and started by the start() method. If the
+   * server is not running, this method will do nothing.
+   *
+   * @return a CompletableFuture that will be completed when the server is successfully stopped.
+   */
   public CompletableFuture<?> stop() {
     if (httpServer == null) {
       return CompletableFuture.completedFuture(null);
@@ -262,6 +274,15 @@ public class GraphQLHttpService {
     return resultFuture;
   }
 
+  /**
+   * Returns the socket address of the GraphQL HTTP service.
+   *
+   * <p>This method returns the socket address that the HTTP server is bound to. If the server is
+   * not running, it returns an empty socket address.
+   *
+   * @return the socket address of the HTTP server, or an empty socket address if the server is not
+   *     running.
+   */
   public InetSocketAddress socketAddress() {
     if (httpServer == null) {
       return EMPTY_SOCKET_ADDRESS;
@@ -269,6 +290,14 @@ public class GraphQLHttpService {
     return new InetSocketAddress(config.getHost(), httpServer.actualPort());
   }
 
+  /**
+   * Returns the URL of the GraphQL HTTP service.
+   *
+   * <p>This method constructs and returns the URL that the HTTP server is bound to. If the server
+   * is not running, it returns an empty string.
+   *
+   * @return the URL of the HTTP server, or an empty string if the server is not running.
+   */
   @VisibleForTesting
   public String url() {
     if (httpServer == null) {

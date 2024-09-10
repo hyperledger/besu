@@ -15,13 +15,16 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static java.util.stream.Collectors.toUnmodifiableList;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -36,14 +39,17 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -83,19 +89,39 @@ public class EthFeeHistory implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
     final Object requestId = request.getRequest().getId();
 
-    final int blockCount = request.getRequiredParameter(0, UnsignedIntParameter.class).getValue();
-    if (isInvalidBlockCount(blockCount)) {
-      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS);
+    final int blockCount;
+    try {
+      blockCount = request.getRequiredParameter(0, UnsignedIntParameter.class).getValue();
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid block count parameter (index 0)", RpcErrorType.INVALID_BLOCK_COUNT_PARAMS, e);
     }
-    final BlockParameter highestBlock = request.getRequiredParameter(1, BlockParameter.class);
-    final Optional<List<Double>> maybeRewardPercentiles =
-        request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
+    if (isInvalidBlockCount(blockCount)) {
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_BLOCK_COUNT_PARAMS);
+    }
+    final BlockParameter highestBlock;
+    try {
+      highestBlock = request.getRequiredParameter(1, BlockParameter.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid highest block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
+
+    final Optional<List<Double>> maybeRewardPercentiles;
+    try {
+      maybeRewardPercentiles = request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid reward percentiles parameter (index 2)",
+          RpcErrorType.INVALID_REWARD_PERCENTILES_PARAMS,
+          e);
+    }
 
     final BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
     final long chainHeadBlockNumber = chainHeadHeader.getNumber();
     final long highestBlockNumber = highestBlock.getNumber().orElse(chainHeadBlockNumber);
     if (highestBlockNumber > chainHeadBlockNumber) {
-      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
     }
 
     final long firstBlock = Math.max(0, highestBlockNumber - (blockCount - 1));
@@ -104,15 +130,23 @@ public class EthFeeHistory implements JsonRpcMethod {
 
     final List<BlockHeader> blockHeaderRange = getBlockHeaders(firstBlock, lastBlock);
     final List<Wei> requestedBaseFees = getBaseFees(blockHeaderRange);
+    final List<Wei> requestedBlobBaseFees = getBlobBaseFees(blockHeaderRange);
     final Wei nextBaseFee =
         getNextBaseFee(highestBlockNumber, chainHeadHeader, requestedBaseFees, blockHeaderRange);
     final List<Double> gasUsedRatios = getGasUsedRatios(blockHeaderRange);
+    final List<Double> blobGasUsedRatios = getBlobGasUsedRatios(blockHeaderRange);
     final Optional<List<List<Wei>>> maybeRewards =
         maybeRewardPercentiles.map(rewards -> getRewards(rewards, blockHeaderRange));
     return new JsonRpcSuccessResponse(
         requestId,
         createFeeHistoryResult(
-            firstBlock, requestedBaseFees, nextBaseFee, gasUsedRatios, maybeRewards));
+            firstBlock,
+            requestedBaseFees,
+            requestedBlobBaseFees,
+            nextBaseFee,
+            gasUsedRatios,
+            blobGasUsedRatios,
+            maybeRewards));
   }
 
   private Wei getNextBaseFee(
@@ -326,10 +360,49 @@ public class EthFeeHistory implements JsonRpcMethod {
   }
 
   private List<Wei> getBaseFees(final List<BlockHeader> blockHeaders) {
-    // we return the base fees for the blocks requested and 1 more because we can always compute it
     return blockHeaders.stream()
         .map(blockHeader -> blockHeader.getBaseFee().orElse(Wei.ZERO))
         .toList();
+  }
+
+  private List<Wei> getBlobBaseFees(final List<BlockHeader> blockHeaders) {
+    if (blockHeaders.isEmpty()) {
+      return Collections.emptyList();
+    }
+    // Calculate the BlobFee for the requested range
+    List<Wei> baseFeesPerBlobGas =
+        blockHeaders.stream().map(this::getBlobGasFee).collect(Collectors.toList());
+
+    // Calculate the next blob base fee and add it to the list
+    Wei nextBlobBaseFee = getNextBlobFee(blockHeaders.get(blockHeaders.size() - 1));
+    baseFeesPerBlobGas.add(nextBlobBaseFee);
+
+    return baseFeesPerBlobGas;
+  }
+
+  private Wei getBlobGasFee(final BlockHeader header) {
+    return blockchain
+        .getBlockHeader(header.getParentHash())
+        .map(parent -> getBlobGasFee(protocolSchedule.getByBlockHeader(header), parent))
+        .orElse(Wei.ZERO);
+  }
+
+  private Wei getBlobGasFee(final ProtocolSpec spec, final BlockHeader parent) {
+    return spec.getFeeMarket().blobGasPricePerGas(calculateExcessBlobGasForParent(spec, parent));
+  }
+
+  private Wei getNextBlobFee(final BlockHeader header) {
+    // Attempt to retrieve the next header based on the current header's number.
+    long nextBlockNumber = header.getNumber() + 1;
+    return blockchain
+        .getBlockHeader(nextBlockNumber)
+        .map(nextHeader -> getBlobGasFee(protocolSchedule.getByBlockHeader(nextHeader), header))
+        // If the next header is not present, calculate the fee using the current time.
+        .orElseGet(
+            () ->
+                getBlobGasFee(
+                    protocolSchedule.getForNextBlockHeader(header, System.currentTimeMillis()),
+                    header));
   }
 
   private List<Double> getGasUsedRatios(final List<BlockHeader> blockHeaders) {
@@ -338,11 +411,27 @@ public class EthFeeHistory implements JsonRpcMethod {
         .toList();
   }
 
+  private List<Double> getBlobGasUsedRatios(final List<BlockHeader> blockHeaders) {
+    return blockHeaders.stream().map(this::calculateBlobGasUsedRatio).toList();
+  }
+
+  private double calculateBlobGasUsedRatio(final BlockHeader blockHeader) {
+    ProtocolSpec spec = protocolSchedule.getByBlockHeader(blockHeader);
+    long blobGasUsed = blockHeader.getBlobGasUsed().orElse(0L);
+    double currentBlobGasLimit = spec.getGasLimitCalculator().currentBlobGasLimit();
+    if (currentBlobGasLimit == 0) {
+      return 0;
+    }
+    return blobGasUsed / currentBlobGasLimit;
+  }
+
   private FeeHistory.FeeHistoryResult createFeeHistoryResult(
       final long oldestBlock,
       final List<Wei> explicitlyRequestedBaseFees,
+      final List<Wei> requestedBlobBaseFees,
       final Wei nextBaseFee,
       final List<Double> gasUsedRatios,
+      final List<Double> blobGasUsedRatio,
       final Optional<List<List<Wei>>> maybeRewards) {
     return FeeHistory.FeeHistoryResult.from(
         ImmutableFeeHistory.builder()
@@ -350,7 +439,9 @@ public class EthFeeHistory implements JsonRpcMethod {
             .baseFeePerGas(
                 Stream.concat(explicitlyRequestedBaseFees.stream(), Stream.of(nextBaseFee))
                     .collect(toUnmodifiableList()))
+            .baseFeePerBlobGas(requestedBlobBaseFees)
             .gasUsedRatio(gasUsedRatios)
+            .blobGasUsedRatio(blobGasUsedRatio)
             .reward(maybeRewards)
             .build());
   }

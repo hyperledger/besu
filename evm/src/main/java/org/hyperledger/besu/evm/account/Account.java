@@ -17,6 +17,10 @@ package org.hyperledger.besu.evm.account;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+
 /**
  * A world state account.
  *
@@ -28,8 +32,10 @@ public interface Account extends AccountState {
 
   /** The constant DEFAULT_NONCE. */
   long DEFAULT_NONCE = 0L;
+
   /** The constant MAX_NONCE. */
   long MAX_NONCE = -1; // per twos compliment rules -1 will be the unsigned max number
+
   /** The constant DEFAULT_BALANCE. */
   Wei DEFAULT_BALANCE = Wei.ZERO;
 
@@ -39,4 +45,39 @@ public interface Account extends AccountState {
    * @return the account address
    */
   Address getAddress();
+
+  /**
+   * Does this account have any storage slots that are set to non-zero values?
+   *
+   * @return true if the account has no storage values set to non-zero values. False if any storage
+   *     is set.
+   */
+  boolean isStorageEmpty();
+
+  /**
+   * Returns the address of the delegated code account if it has one.
+   *
+   * @return the address of the delegated code account if it has one otherwise empty.
+   */
+  default Optional<Address> delegatedCodeAddress() {
+    return Optional.empty();
+  }
+
+  /**
+   * Returns a boolean to indicate if the account has delegated code.
+   *
+   * @return true if the account has delegated code otherwise false.
+   */
+  default boolean hasDelegatedCode() {
+    return false;
+  }
+
+  /**
+   * Returns the code as it is stored in the trie even if it's a delegated code account.
+   *
+   * @return the code as it is stored in the trie.
+   */
+  default Bytes getUnprocessedCode() {
+    return getCode();
+  }
 }

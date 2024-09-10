@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,11 +18,14 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
@@ -43,7 +46,7 @@ public class DebugTraceCall extends AbstractTraceCall {
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionSimulator transactionSimulator) {
-    super(blockchainQueries, protocolSchedule, transactionSimulator);
+    super(blockchainQueries, protocolSchedule, transactionSimulator, true);
   }
 
   @Override
@@ -53,16 +56,28 @@ public class DebugTraceCall extends AbstractTraceCall {
 
   @Override
   protected TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext) {
-    return requestContext
-        .getOptionalParameter(2, TransactionTraceParams.class)
-        .map(TransactionTraceParams::traceOptions)
-        .orElse(TraceOptions.DEFAULT);
+    try {
+      return requestContext
+          .getOptionalParameter(2, TransactionTraceParams.class)
+          .map(TransactionTraceParams::traceOptions)
+          .orElse(TraceOptions.DEFAULT);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction trace parameter (index 2)",
+          RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
+          e);
+    }
   }
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    final Optional<BlockParameter> maybeBlockParameter =
-        request.getOptionalParameter(1, BlockParameter.class);
+    final Optional<BlockParameter> maybeBlockParameter;
+    try {
+      maybeBlockParameter = request.getOptionalParameter(1, BlockParameter.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
 
     return maybeBlockParameter.orElse(BlockParameter.LATEST);
   }
@@ -83,7 +98,7 @@ public class DebugTraceCall extends AbstractTraceCall {
 
               final TransactionTrace transactionTrace =
                   new TransactionTrace(
-                      result.getTransaction(), result.getResult(), tracer.getTraceFrames());
+                      result.transaction(), result.result(), tracer.getTraceFrames());
 
               return new DebugTraceTransactionResult(transactionTrace);
             });

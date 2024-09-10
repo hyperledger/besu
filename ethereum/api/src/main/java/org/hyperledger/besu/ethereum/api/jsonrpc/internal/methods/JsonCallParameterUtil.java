@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,19 +17,28 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 public class JsonCallParameterUtil {
 
   private JsonCallParameterUtil() {}
 
   public static JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
-    final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
+    final JsonCallParameter callParams;
+    try {
+      callParams = request.getRequiredParameter(0, JsonCallParameter.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid call parameters (index 0)", RpcErrorType.INVALID_CALL_PARAMS);
+    }
 
     if (callParams.getGasPrice() != null
         && (callParams.getMaxFeePerGas().isPresent()
             || callParams.getMaxPriorityFeePerGas().isPresent())) {
       throw new InvalidJsonRpcParameters(
-          "gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas");
+          "gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas",
+          RpcErrorType.INVALID_GAS_PRICE_PARAMS);
     }
     return callParams;
   }

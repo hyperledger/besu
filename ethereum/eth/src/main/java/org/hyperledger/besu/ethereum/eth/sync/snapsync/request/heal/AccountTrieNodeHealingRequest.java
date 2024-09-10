@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
@@ -24,16 +25,16 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -43,35 +44,42 @@ import org.apache.tuweni.bytes.Bytes32;
 /** Represents a healing request for an account trie node. */
 public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
-  private final HashSet<Bytes> inconsistentAccounts;
+  private final Set<Bytes> inconsistentAccounts;
 
   public AccountTrieNodeHealingRequest(
       final Hash hash,
       final Hash originalRootHash,
       final Bytes location,
-      final HashSet<Bytes> inconsistentAccounts) {
+      final Set<Bytes> inconsistentAccounts) {
     super(hash, originalRootHash, location);
     this.inconsistentAccounts = inconsistentAccounts;
   }
 
   @Override
   protected int doPersist(
-      final WorldStateStorage worldStateStorage,
-      final WorldStateStorage.Updater updater,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
+      final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
     if (isRoot()) {
       downloadState.setRootNodeData(data);
     }
-    updater.putAccountStateTrieNode(getLocation(), getNodeHash(), data);
+    applyForStrategy(
+        updater,
+        onBonsai -> {
+          onBonsai.putAccountStateTrieNode(getLocation(), getNodeHash(), data);
+        },
+        onForest -> {
+          onForest.putAccountStateTrieNode(getNodeHash(), data);
+        });
     return 1;
   }
 
   @Override
   public Optional<Bytes> getExistingData(
-      final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage) {
-    return worldStateStorage
+      final WorldStateStorageCoordinator worldStateStorageCoordinator) {
+    return worldStateStorageCoordinator
         .getAccountStateTrieNode(getLocation(), getNodeHash())
         .filter(data -> !getLocation().isEmpty());
   }
@@ -82,7 +90,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
         childHash, getRootHash(), location, getSubLocation(location));
   }
 
-  private HashSet<Bytes> getSubLocation(final Bytes location) {
+  private Set<Bytes> getSubLocation(final Bytes location) {
     final HashSet<Bytes> foundAccountsToHeal = new HashSet<>();
     for (Bytes account : inconsistentAccounts) {
       if (account.commonPrefixLength(location) == location.size()) {
@@ -93,11 +101,12 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
   }
 
   @Override
-  public Stream<SnapDataRequest> getRootStorageRequests(final WorldStateStorage worldStateStorage) {
+  public Stream<SnapDataRequest> getRootStorageRequests(
+      final WorldStateStorageCoordinator worldStateStorageCoordinator) {
     final List<SnapDataRequest> requests = new ArrayList<>();
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
-            worldStateStorage::getAccountStateTrieNode,
+            worldStateStorageCoordinator::getAccountStateTrieNode,
             Hash.hash(data),
             getLocation(),
             Function.identity(),
@@ -137,7 +146,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
   @Override
   protected Stream<SnapDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapWorldDownloadState downloadState,
       final Bytes location,
       final Bytes path,
@@ -151,11 +160,10 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
             Bytes32.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(getLocation(), path))));
 
     // update the flat db only for bonsai
-    if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.NO_FLATTENED)) {
-      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-          .putAccountInfoState(accountHash, value)
-          .commit();
-    }
+    worldStateStorageCoordinator.applyWhenFlatModeEnabled(
+        onBonsai -> {
+          onBonsai.updater().putAccountInfoState(accountHash, value).commit();
+        });
 
     // Add code, if appropriate
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
@@ -164,7 +172,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
     // Retrieve the storage root from the database, if available
     final Hash storageRootFoundInDb =
-        worldStateStorage
+        worldStateStorageCoordinator
             .getTrieNodeUnsafe(Bytes.concatenate(accountHash, Bytes.EMPTY))
             .map(Hash::hash)
             .orElse(Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH));

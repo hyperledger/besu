@@ -22,12 +22,15 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
       )
   }
 }
 
 dependencies {
+  api project(':datatypes')
+
   api 'org.slf4j:slf4j-api'
 
   implementation project(':config')
@@ -78,6 +81,7 @@ dependencies {
   implementation 'org.xerial.snappy:snappy-java'
   implementation 'tech.pegasys:jc-kzg-4844'
   implementation 'org.rocksdb:rocksdbjni'
+  implementation 'commons-net:commons-net'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-jul'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
@@ -101,6 +105,8 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.testcontainers:testcontainers'
   testImplementation 'tech.pegasys.discovery:discovery'
+  testImplementation 'com.google.dagger:dagger'
 
   annotationProcessor 'com.google.dagger:dagger-compiler'
+  testAnnotationProcessor 'com.google.dagger:dagger-compiler'
 }

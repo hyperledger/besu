@@ -22,6 +22,7 @@ jar {
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash,
       'Automatic-Module-Name': 'org.hyperledger.besu.plugin.api'
       )
   }
@@ -34,6 +35,7 @@ dependencies {
   api 'io.tmio:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation project(':evm')
+  compileOnly 'io.vertx:vertx-core'
 }
 
 configurations { testArtifacts }
@@ -69,7 +71,7 @@ Calculated : ${currentHash}
 tasks.register('checkAPIChanges', FileStateChecker) {
   description = "Checks that the API for the Plugin-API project does not change without deliberate thought"
   files = sourceSets.main.allJava.files
-  knownHash = 'ZsovOR0oPfomcLP4b+HjikWzM0Tx6sCwi68mf5qwZf4='
+  knownHash = 'V/bdVbzJLjdwch266dHHuxIGwiCRhS4w3jDwHt4TWqg='
 }
 check.dependsOn('checkAPIChanges')
 

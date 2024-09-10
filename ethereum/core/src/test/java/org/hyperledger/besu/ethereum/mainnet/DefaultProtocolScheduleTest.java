@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,10 +19,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -58,7 +60,11 @@ public class DefaultProtocolScheduleTest {
             ProtocolSpecAdapters.create(FIRST_TIMESTAMP_FORK, modifier),
             privacyParameters,
             isRevertReasonEnabled,
-            evmConfiguration);
+            evmConfiguration,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
   }
 
   @Test

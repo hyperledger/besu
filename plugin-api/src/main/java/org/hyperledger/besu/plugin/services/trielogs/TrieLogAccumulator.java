@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,7 +23,7 @@ import java.util.Map;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** Accumulator interface tor provding trie updates for creating TrieLogs. */
+/** Accumulator interface for providing trie updates for creating TrieLogs. */
 public interface TrieLogAccumulator {
 
   /**

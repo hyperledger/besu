@@ -22,6 +22,8 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.IBFT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.MINER;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.QBFT;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.ImmutableInProcessRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
@@ -30,8 +32,10 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.Gene
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class NodeConfigurationFactory {
 
@@ -44,8 +48,10 @@ public class NodeConfigurationFactory {
     return genesisConfigProvider.create(nodes);
   }
 
-  public JsonRpcConfiguration createJsonRpcWithCliqueEnabledConfig() {
-    return createJsonRpcWithRpcApiEnabledConfig(CLIQUE.name());
+  public JsonRpcConfiguration createJsonRpcWithCliqueEnabledConfig(final Set<String> extraRpcApis) {
+    final var enabledApis = new HashSet<>(extraRpcApis);
+    enabledApis.add(CLIQUE.name());
+    return createJsonRpcWithRpcApiEnabledConfig(enabledApis.toArray(String[]::new));
   }
 
   public JsonRpcConfiguration createJsonRpcWithIbft2EnabledConfig(final boolean minerEnabled) {
@@ -89,5 +95,15 @@ public class NodeConfigurationFactory {
     rpcApis.addAll(Arrays.asList(rpcApi));
     jsonRpcConfig.setRpcApis(rpcApis);
     return jsonRpcConfig;
+  }
+
+  public InProcessRpcConfiguration createInProcessRpcConfiguration(final Set<String> extraRpcApis) {
+    final Set<String> rpcApis =
+        new HashSet<>(ImmutableInProcessRpcConfiguration.DEFAULT_IN_PROCESS_RPC_APIS);
+    rpcApis.addAll(extraRpcApis);
+    return ImmutableInProcessRpcConfiguration.builder()
+        .inProcessRpcApis(rpcApis)
+        .isEnabled(true)
+        .build();
   }
 }

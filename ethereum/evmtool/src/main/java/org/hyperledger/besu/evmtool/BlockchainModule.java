@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evmtool;
 
@@ -27,7 +26,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -40,9 +39,17 @@ import dagger.Module;
 import dagger.Provides;
 import org.apache.tuweni.bytes.Bytes32;
 
+/**
+ * This class is a Dagger module that provides dependencies related to the blockchain. It includes
+ * the GenesisFileModule and DataStoreModule for providing the genesis block and data store
+ * respectively. The class is annotated with {@code @Module} to indicate that it is a Dagger module.
+ */
 @SuppressWarnings("WeakerAccess")
 @Module(includes = {GenesisFileModule.class, DataStoreModule.class})
 public class BlockchainModule {
+
+  /** Default constructor for the BlockchainModule class. */
+  public BlockchainModule() {}
 
   @Singleton
   @Provides
@@ -57,7 +64,7 @@ public class BlockchainModule {
   @Singleton
   MutableWorldState getMutableWorldState(
       @Named("StateRoot") final Bytes32 stateRoot,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStatePreimageStorage worldStatePreimageStorage,
       final GenesisState genesisState,
       @Named("KeyValueStorageName") final String keyValueStorageName,
@@ -65,20 +72,25 @@ public class BlockchainModule {
     if ("memory".equals(keyValueStorageName)) {
       final MutableWorldState mutableWorldState =
           new ForestMutableWorldState(
-              worldStateStorage, worldStatePreimageStorage, evmConfiguration);
+              worldStateStorageCoordinator.worldStateKeyValueStorage(),
+              worldStatePreimageStorage,
+              evmConfiguration);
       genesisState.writeStateTo(mutableWorldState);
       return mutableWorldState;
     } else {
       return new ForestMutableWorldState(
-          stateRoot, worldStateStorage, worldStatePreimageStorage, evmConfiguration);
+          stateRoot,
+          worldStateStorageCoordinator.worldStateKeyValueStorage(),
+          worldStatePreimageStorage,
+          evmConfiguration);
     }
   }
 
   @Provides
   @Singleton
-  WorldStateStorage provideWorldStateStorage(
+  WorldStateStorageCoordinator provideWorldStateStorage(
       @Named("worldState") final KeyValueStorage keyValueStorage) {
-    return new ForestWorldStateKeyValueStorage(keyValueStorage);
+    return new WorldStateStorageCoordinator(new ForestWorldStateKeyValueStorage(keyValueStorage));
   }
 
   @Provides

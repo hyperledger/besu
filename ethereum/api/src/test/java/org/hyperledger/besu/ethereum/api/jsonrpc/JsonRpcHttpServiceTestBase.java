@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.mockito.Mockito.mock;
@@ -27,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -78,7 +78,9 @@ public class JsonRpcHttpServiceTestBase {
   protected static OkHttpClient client;
   protected static String baseUrl;
   protected static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-  protected static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
+  protected static final String CLIENT_NODE_NAME = "TestClientVersion/0.1.0";
+  protected static final String CLIENT_VERSION = "0.1.0";
+  protected static final String CLIENT_COMMIT = "12345678";
   protected static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   protected static P2PNetwork peerDiscoveryMock;
   protected static EthPeers ethPeersMock;
@@ -108,7 +110,9 @@ public class JsonRpcHttpServiceTestBase {
     rpcMethods =
         new JsonRpcMethodsFactory()
             .methods(
+                CLIENT_NODE_NAME,
                 CLIENT_VERSION,
+                CLIENT_COMMIT,
                 CHAIN_ID,
                 new StubGenesisConfigOptions(),
                 peerDiscoveryMock,
@@ -116,7 +120,11 @@ public class JsonRpcHttpServiceTestBase {
                 synchronizer,
                 MainnetProtocolSchedule.fromConfig(
                     new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
-                    EvmConfiguration.DEFAULT),
+                    EvmConfiguration.DEFAULT,
+                    MiningParameters.MINING_DISABLED,
+                    new BadBlockManager(),
+                    false,
+                    new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
                 mock(TransactionPool.class),
@@ -149,8 +157,7 @@ public class JsonRpcHttpServiceTestBase {
     baseUrl = service.url();
   }
 
-  protected static JsonRpcHttpService createJsonRpcHttpService(final JsonRpcConfiguration config)
-      throws Exception {
+  protected static JsonRpcHttpService createJsonRpcHttpService(final JsonRpcConfiguration config) {
     return new JsonRpcHttpService(
         vertx,
         folder,
@@ -162,7 +169,7 @@ public class JsonRpcHttpServiceTestBase {
         HealthService.ALWAYS_HEALTHY);
   }
 
-  protected static JsonRpcHttpService createJsonRpcHttpService() throws Exception {
+  protected static JsonRpcHttpService createJsonRpcHttpService() {
     return new JsonRpcHttpService(
         vertx,
         folder,

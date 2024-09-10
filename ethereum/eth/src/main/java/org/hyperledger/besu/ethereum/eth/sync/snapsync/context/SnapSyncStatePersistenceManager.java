@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -127,7 +128,7 @@ public class SnapSyncStatePersistenceManager {
         .collect(Collectors.toList());
   }
 
-  public HashSet<Bytes> getAccountsHealingList() {
+  public Set<Bytes> getAccountsHealingList() {
     return healContext
         .streamValuesFromKeysThat(notEqualsTo(SNAP_ACCOUNT_HEALING_LIST_INDEX))
         .collect(Collectors.toCollection(HashSet::new));

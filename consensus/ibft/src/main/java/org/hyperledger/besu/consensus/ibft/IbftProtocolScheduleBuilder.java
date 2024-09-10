@@ -20,16 +20,21 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
 public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder {
+  /** Default constructor. */
+  protected IbftProtocolScheduleBuilder() {}
 
   /**
    * Create protocol schedule.
@@ -40,6 +45,11 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
+   * @param miningParameters the mining parameters
+   * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
+   * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
+   *     calls
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
@@ -48,7 +58,11 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
     return new IbftProtocolScheduleBuilder()
         .createProtocolSchedule(
             config,
@@ -56,7 +70,11 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             privacyParameters,
             isRevertReasonEnabled,
             bftExtraDataCodec,
-            evmConfiguration);
+            evmConfiguration,
+            miningParameters,
+            badBlockManager,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
   }
 
   /**
@@ -66,20 +84,33 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param forksSchedule the forks schedule
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
+   * @param miningParameters the mining parameters
+   * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
+   * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
+   *     calls
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<BftConfigOptions> forksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         forksSchedule,
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
-        evmConfiguration);
+        evmConfiguration,
+        miningParameters,
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   @Override

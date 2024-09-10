@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
@@ -144,6 +143,11 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
+  public synchronized Optional<BlockBody> getBlockBodySafe(final Hash blockHeaderHash) {
+    return getBlockBody(blockHeaderHash);
+  }
+
+  @Override
   public Optional<List<TransactionReceipt>> getTxReceipts(final Hash blockHeaderHash) {
     // Deterministic, but just not implemented.
     throw new UnsupportedOperationException();
@@ -188,6 +192,7 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
+  @SuppressWarnings("unused")
   public Comparator<BlockHeader> getBlockChoiceRule() {
     return (a, b) -> {
       throw new NonDeterministicOperationException(

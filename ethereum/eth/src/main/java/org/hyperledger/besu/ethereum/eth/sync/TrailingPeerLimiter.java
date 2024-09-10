@@ -69,13 +69,13 @@ public class TrailingPeerLimiter implements BlockAddedObserver {
               "Enforcing trailing peers limit (min height {}, max trailing peers {}) by disconnecting {}... with height {}")
           .addArgument(minimumHeightToBeUpToDate)
           .addArgument(maxTrailingPeers)
-          .addArgument(peerToDisconnect::getShortNodeId)
+          .addArgument(peerToDisconnect::getLoggableId)
           .addArgument(
               peerToDisconnect.chainState() == null
                   ? "(no chain state)"
                   : peerToDisconnect.chainState().getEstimatedHeight())
           .log();
-      peerToDisconnect.disconnect(DisconnectReason.USELESS_PEER);
+      peerToDisconnect.disconnect(DisconnectReason.USELESS_PEER_TRAILING_PEER);
     }
   }
 

@@ -38,10 +38,12 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataReques
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
@@ -76,7 +78,7 @@ public class WorldStateDownloaderBenchmark {
   private BlockHeader blockHeader;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private WorldStateDownloader worldStateDownloader;
-  private WorldStateStorage worldStateStorage;
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
   private RespondingEthPeer peer;
   private Responder responder;
   private InMemoryTasksPriorityQueues<NodeDataRequest> pendingRequests;
@@ -105,21 +107,22 @@ public class WorldStateDownloaderBenchmark {
 
     final StorageProvider storageProvider =
         createKeyValueStorageProvider(tempDir, tempDir.resolve("database"));
-    worldStateStorage =
-        storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG);
+    worldStateStorageCoordinator =
+        storageProvider.createWorldStateStorageCoordinator(DataStorageConfiguration.DEFAULT_CONFIG);
 
     pendingRequests = new InMemoryTasksPriorityQueues<>();
     worldStateDownloader =
         new FastWorldStateDownloader(
             ethContext,
-            worldStateStorage,
+            worldStateStorageCoordinator,
             pendingRequests,
             syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             Clock.fixed(Instant.ofEpochSecond(1000), ZoneOffset.UTC),
-            metricsSystem);
+            metricsSystem,
+            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   private Hash createExistingWorldState() {
@@ -152,7 +155,9 @@ public class WorldStateDownloaderBenchmark {
     peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
     result.getNow(null);
     final Optional<Bytes> rootData =
-        worldStateStorage.getNodeData(Bytes.EMPTY, blockHeader.getStateRoot());
+        worldStateStorageCoordinator
+            .getStrategy(ForestWorldStateKeyValueStorage.class)
+            .getNodeData(blockHeader.getStateRoot());
     if (rootData.isEmpty()) {
       throw new IllegalStateException("World state download did not complete.");
     }
@@ -160,6 +165,8 @@ public class WorldStateDownloaderBenchmark {
   }
 
   private StorageProvider createKeyValueStorageProvider(final Path dataDir, final Path dbDir) {
+    final var besuConfiguration = new BesuConfigurationImpl();
+    besuConfiguration.init(dataDir, dbDir, DataStorageConfiguration.DEFAULT_CONFIG);
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValueStorageFactory(
@@ -171,7 +178,7 @@ public class WorldStateDownloaderBenchmark {
                         DEFAULT_IS_HIGH_SPEC),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
-        .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
+        .withCommonConfiguration(besuConfiguration)
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
   }

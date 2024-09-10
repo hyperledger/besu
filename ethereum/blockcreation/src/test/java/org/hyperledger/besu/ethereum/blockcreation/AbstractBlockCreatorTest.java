@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
+import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
@@ -26,8 +26,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPPrivateKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
@@ -36,23 +37,25 @@ import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -60,6 +63,7 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -68,12 +72,21 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.CancunFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor;
+import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
@@ -83,13 +96,13 @@ import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import java.math.BigInteger;
 import java.time.Clock;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -97,15 +110,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 abstract class AbstractBlockCreatorTest {
-  private static final Optional<Address> EMPTY_DEPOSIT_CONTRACT_ADDRESS = Optional.empty();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SECPPrivateKey PRIVATE_KEY1 =
+      SIGNATURE_ALGORITHM
+          .get()
+          .createPrivateKey(
+              Bytes32.fromHexString(
+                  "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
+  private static final KeyPair KEYS1 =
+      new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
+
   @Mock private WithdrawalsProcessor withdrawalsProcessor;
   protected EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   @Test
-  void findDepositsFromReceipts() {
-    final AbstractBlockCreator blockCreator =
-        blockCreatorWithAllowedDeposits(Optional.of(DEFAULT_DEPOSIT_CONTRACT_ADDRESS));
-    final TransactionSelectionResults transactionResults = mock(TransactionSelectionResults.class);
+  void findDepositRequestsFromReceipts() {
     BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
     TransactionReceipt receiptWithoutDeposit1 = blockDataGenerator.receipt();
     TransactionReceipt receiptWithoutDeposit2 = blockDataGenerator.receipt();
@@ -118,11 +138,11 @@ abstract class AbstractBlockCreatorTest {
                 LogTopic.fromHexString(
                     "0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c5")));
     final TransactionReceipt receiptWithDeposit = blockDataGenerator.receipt(List.of(depositLog));
-    when(transactionResults.getReceipts())
-        .thenReturn(List.of(receiptWithoutDeposit1, receiptWithDeposit, receiptWithoutDeposit2));
+    List<TransactionReceipt> receipts =
+        List.of(receiptWithoutDeposit1, receiptWithDeposit, receiptWithoutDeposit2);
 
-    Deposit expectedDeposit =
-        new Deposit(
+    DepositRequest expectedDepositRequest =
+        new DepositRequest(
             BLSPublicKey.fromHexString(
                 "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
             Bytes32.fromHexString(
@@ -131,94 +151,79 @@ abstract class AbstractBlockCreatorTest {
             BLSSignature.fromHexString(
                 "0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
             UInt64.valueOf(539967));
-    final List<Deposit> expectedDeposits = List.of(expectedDeposit);
+    final List<DepositRequest> expectedDepositRequests = List.of(expectedDepositRequest);
 
-    final List<Deposit> depositsFromReceipts =
-        blockCreator.findDepositsFromReceipts(transactionResults);
-
-    assertThat(depositsFromReceipts).isEqualTo(expectedDeposits);
+    var depositRequestsFromReceipts =
+        new DepositRequestProcessor(DEFAULT_DEPOSIT_CONTRACT_ADDRESS)
+            .process(new ProcessRequestContext(null, null, null, receipts, null, null));
+    assertThat(depositRequestsFromReceipts.get()).isEqualTo(expectedDepositRequests);
   }
 
   @Test
-  void withAllowedDepositsAndContractAddress_DepositsAreParsed() {
-    final AbstractBlockCreator blockCreator =
-        blockCreatorWithAllowedDeposits(Optional.of(DEFAULT_DEPOSIT_CONTRACT_ADDRESS));
+  void withAllowedDepositRequestsAndContractAddress_DepositRequestsAreParsed() {
+    final CreateOn miningOn =
+        blockCreatorWithAllowedDepositRequests(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
 
     final BlockCreationResult blockCreationResult =
-        blockCreator.createBlock(
+        miningOn.blockCreator.createBlock(
             Optional.empty(),
             Optional.empty(),
             Optional.of(emptyList()),
             Optional.empty(),
             Optional.empty(),
             1L,
-            false);
+            false,
+            miningOn.parentHeader);
 
-    List<Deposit> deposits = emptyList();
-    final Hash depositsRoot = BodyValidation.depositsRoot(deposits);
-    assertThat(blockCreationResult.getBlock().getHeader().getDepositsRoot()).hasValue(depositsRoot);
-    assertThat(blockCreationResult.getBlock().getBody().getDeposits()).hasValue(deposits);
+    List<Request> depositRequests = emptyList();
+    final Hash requestsRoot = BodyValidation.requestsRoot(depositRequests);
+    assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).hasValue(requestsRoot);
+    assertThat(blockCreationResult.getBlock().getBody().getRequests()).hasValue(depositRequests);
   }
 
   @Test
-  void withAllowedDepositsAndNoContractAddress_DepositsAreNotParsed() {
-    final AbstractBlockCreator blockCreator = blockCreatorWithAllowedDeposits(Optional.empty());
+  void withAllowedDepositRequestsAndNoContractAddress_DepositRequestsAreNotParsed() {
+    final CreateOn miningOn = blockCreatorWithAllowedDepositRequests(null);
 
     final BlockCreationResult blockCreationResult =
-        blockCreator.createBlock(
+        miningOn.blockCreator.createBlock(
             Optional.empty(),
             Optional.empty(),
             Optional.of(emptyList()),
             Optional.empty(),
             Optional.empty(),
             1L,
-            false);
+            false,
+            miningOn.parentHeader);
 
-    assertThat(blockCreationResult.getBlock().getHeader().getDepositsRoot()).isEmpty();
-    assertThat(blockCreationResult.getBlock().getBody().getDeposits()).isEmpty();
+    assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).isEmpty();
+    assertThat(blockCreationResult.getBlock().getBody().getRequests()).isEmpty();
   }
 
   @Test
-  void withProhibitedDeposits_DepositsAreNotParsed() {
-    final AbstractBlockCreator blockCreator = blockCreatorWithProhibitedDeposits();
+  void withProhibitedDepositRequests_DepositRequestsAreNotParsed() {
+
+    final CreateOn miningOn = blockCreatorWithProhibitedDepositRequests();
 
     final BlockCreationResult blockCreationResult =
-        blockCreator.createBlock(
+        miningOn.blockCreator.createBlock(
             Optional.empty(),
             Optional.empty(),
             Optional.of(emptyList()),
             Optional.empty(),
             Optional.empty(),
             1L,
-            false);
+            false,
+            miningOn.parentHeader);
 
-    assertThat(blockCreationResult.getBlock().getHeader().getDepositsRoot()).isEmpty();
-    assertThat(blockCreationResult.getBlock().getBody().getDeposits()).isEmpty();
-  }
-
-  private AbstractBlockCreator blockCreatorWithAllowedDeposits(
-      final Optional<Address> depositContractAddress) {
-    final ProtocolSpecAdapters protocolSpecAdapters =
-        ProtocolSpecAdapters.create(
-            0,
-            specBuilder ->
-                specBuilder.depositsValidator(
-                    new DepositsValidator.AllowedDeposits(depositContractAddress.orElse(null))));
-    return createBlockCreator(protocolSpecAdapters, depositContractAddress);
-  }
-
-  private AbstractBlockCreator blockCreatorWithProhibitedDeposits() {
-    final ProtocolSpecAdapters protocolSpecAdapters =
-        ProtocolSpecAdapters.create(
-            0,
-            specBuilder ->
-                specBuilder.depositsValidator(new DepositsValidator.ProhibitedDeposits()));
-    return createBlockCreator(protocolSpecAdapters, Optional.of(DEFAULT_DEPOSIT_CONTRACT_ADDRESS));
+    assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).isEmpty();
+    assertThat(blockCreationResult.getBlock().getBody().getRequests()).isEmpty();
   }
 
   @Test
   void withProcessorAndEmptyWithdrawals_NoWithdrawalsAreProcessed() {
-    final AbstractBlockCreator blockCreator = blockCreatorWithWithdrawalsProcessor();
+    final CreateOn miningOn = blockCreatorWithWithdrawalsProcessor();
+    final AbstractBlockCreator blockCreator = miningOn.blockCreator;
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
             Optional.empty(),
@@ -227,7 +232,8 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             1L,
-            false);
+            false,
+            miningOn.parentHeader);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
@@ -235,7 +241,8 @@ abstract class AbstractBlockCreatorTest {
 
   @Test
   void withNoProcessorAndEmptyWithdrawals_NoWithdrawalsAreNotProcessed() {
-    final AbstractBlockCreator blockCreator = blockCreatorWithoutWithdrawalsProcessor();
+    final CreateOn miningOn = blockCreatorWithoutWithdrawalsProcessor();
+    final AbstractBlockCreator blockCreator = miningOn.blockCreator;
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
             Optional.empty(),
@@ -244,7 +251,8 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             1L,
-            false);
+            false,
+            miningOn.parentHeader);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
@@ -252,7 +260,8 @@ abstract class AbstractBlockCreatorTest {
 
   @Test
   void withProcessorAndWithdrawals_WithdrawalsAreProcessed() {
-    final AbstractBlockCreator blockCreator = blockCreatorWithWithdrawalsProcessor();
+    final CreateOn miningOn = blockCreatorWithWithdrawalsProcessor();
+    final AbstractBlockCreator blockCreator = miningOn.blockCreator;
     final List<Withdrawal> withdrawals =
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     final BlockCreationResult blockCreationResult =
@@ -263,7 +272,8 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             1L,
-            false);
+            false,
+            miningOn.parentHeader);
 
     final Hash withdrawalsRoot = BodyValidation.withdrawalsRoot(withdrawals);
     verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any());
@@ -274,7 +284,8 @@ abstract class AbstractBlockCreatorTest {
 
   @Test
   void withNoProcessorAndWithdrawals_WithdrawalsAreNotProcessed() {
-    final AbstractBlockCreator blockCreator = blockCreatorWithoutWithdrawalsProcessor();
+    final CreateOn miningOn = blockCreatorWithoutWithdrawalsProcessor();
+    final AbstractBlockCreator blockCreator = miningOn.blockCreator;
     final List<Withdrawal> withdrawals =
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     final BlockCreationResult blockCreationResult =
@@ -285,17 +296,17 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             1L,
-            false);
+            false,
+            miningOn.parentHeader);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
   }
 
-  @Disabled
   @Test
   public void computesGasUsageFromIncludedTransactions() {
-    final KeyPair senderKeys = SignatureAlgorithmFactory.getInstance().generateKeyPair();
-    final AbstractBlockCreator blockCreator = blockCreatorWithBlobGasSupport();
+    final CreateOn miningOn = blockCreatorWithBlobGasSupport();
+    final AbstractBlockCreator blockCreator = miningOn.blockCreator;
     BlobTestFixture blobTestFixture = new BlobTestFixture();
     BlobsWithCommitments bwc = blobTestFixture.createBlobsWithCommitments(6);
     TransactionTestFixture ttf = new TransactionTestFixture();
@@ -303,13 +314,14 @@ abstract class AbstractBlockCreatorTest {
         ttf.to(Optional.of(Address.ZERO))
             .type(TransactionType.BLOB)
             .chainId(Optional.of(BigInteger.valueOf(42)))
+            .gasLimit(21000)
             .maxFeePerGas(Optional.of(Wei.of(15)))
             .maxFeePerBlobGas(Optional.of(Wei.of(128)))
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
             .versionedHashes(Optional.of(bwc.getVersionedHashes()))
-            .createTransaction(senderKeys);
+            .blobsWithCommitments(Optional.of(bwc))
+            .createTransaction(KEYS1);
 
-    ttf.blobsWithCommitments(Optional.of(bwc));
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
             Optional.of(List.of(fullOfBlobs)),
@@ -318,60 +330,103 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             1L,
-            false);
+            false,
+            miningOn.parentHeader);
     long blobGasUsage = blockCreationResult.getBlock().getHeader().getGasUsed();
     assertThat(blobGasUsage).isNotZero();
     BlobGas excessBlobGas = blockCreationResult.getBlock().getHeader().getExcessBlobGas().get();
     assertThat(excessBlobGas).isNotNull();
   }
 
-  private AbstractBlockCreator blockCreatorWithBlobGasSupport() {
+  private CreateOn blockCreatorWithBlobGasSupport() {
+    final var alwaysValidTransactionValidatorFactory = mock(TransactionValidatorFactory.class);
+    when(alwaysValidTransactionValidatorFactory.get())
+        .thenReturn(new AlwaysValidTransactionValidator());
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(
             0,
             specBuilder -> {
-              specBuilder.feeMarket(new CancunFeeMarket(0, Optional.empty()));
               specBuilder.isReplayProtectionSupported(true);
               specBuilder.withdrawalsProcessor(withdrawalsProcessor);
+              specBuilder.transactionValidatorFactoryBuilder(
+                  (evm, gasLimitCalculator, feeMarket) -> alwaysValidTransactionValidatorFactory);
               return specBuilder;
             });
-    return createBlockCreator(protocolSpecAdapters, EMPTY_DEPOSIT_CONTRACT_ADDRESS);
+    return createBlockCreator(protocolSpecAdapters);
   }
 
-  private AbstractBlockCreator blockCreatorWithWithdrawalsProcessor() {
+  private CreateOn blockCreatorWithProhibitedDepositRequests() {
+    final ProtocolSpecAdapters protocolSpecAdapters =
+        ProtocolSpecAdapters.create(0, specBuilder -> specBuilder);
+    return createBlockCreator(protocolSpecAdapters);
+  }
+
+  private CreateOn blockCreatorWithWithdrawalsProcessor() {
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(
             0, specBuilder -> specBuilder.withdrawalsProcessor(withdrawalsProcessor));
-    return createBlockCreator(protocolSpecAdapters, EMPTY_DEPOSIT_CONTRACT_ADDRESS);
+    return createBlockCreator(protocolSpecAdapters);
   }
 
-  private AbstractBlockCreator blockCreatorWithoutWithdrawalsProcessor() {
-    return createBlockCreator(new ProtocolSpecAdapters(Map.of()), EMPTY_DEPOSIT_CONTRACT_ADDRESS);
+  private CreateOn blockCreatorWithoutWithdrawalsProcessor() {
+    final ProtocolSpecAdapters protocolSpecAdapters =
+        ProtocolSpecAdapters.create(0, specBuilder -> specBuilder.withdrawalsProcessor(null));
+    return createBlockCreator(protocolSpecAdapters);
   }
 
-  private AbstractBlockCreator createBlockCreator(
-      final ProtocolSpecAdapters protocolSpecAdapters,
-      final Optional<Address> depositContractAddress) {
-    final GenesisConfigOptions genesisConfigOptions = GenesisConfigFile.DEFAULT.getConfigOptions();
+  private CreateOn blockCreatorWithAllowedDepositRequests(final Address depositContractAddress) {
+    final ProtocolSpecAdapters protocolSpecAdapters =
+        ProtocolSpecAdapters.create(
+            0,
+            specBuilder ->
+                specBuilder
+                    .requestsValidator(
+                        new RequestsValidatorCoordinator.Builder()
+                            .addValidator(
+                                RequestType.DEPOSIT,
+                                new DepositRequestValidator((depositContractAddress)))
+                            .build())
+                    .requestProcessorCoordinator(
+                        new RequestProcessorCoordinator.Builder()
+                            .addProcessor(
+                                RequestType.DEPOSIT,
+                                new DepositRequestProcessor(depositContractAddress))
+                            .build()));
+    return createBlockCreator(protocolSpecAdapters);
+  }
+
+  record CreateOn(AbstractBlockCreator blockCreator, BlockHeader parentHeader) {}
+
+  private CreateOn createBlockCreator(final ProtocolSpecAdapters protocolSpecAdapters) {
+
+    final var genesisConfigFile = GenesisConfigFile.fromResource("/block-creation-genesis.json");
     final ExecutionContextTestFixture executionContextTestFixture =
-        ExecutionContextTestFixture.builder()
+        ExecutionContextTestFixture.builder(genesisConfigFile)
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        genesisConfigOptions,
+                        genesisConfigFile.getConfigOptions(),
                         BigInteger.valueOf(42),
                         protocolSpecAdapters,
                         PrivacyParameters.DEFAULT,
                         false,
-                        EvmConfiguration.DEFAULT)
+                        EvmConfiguration.DEFAULT,
+                        MiningParameters.MINING_DISABLED,
+                        new BadBlockManager(),
+                        false,
+                        new NoOpMetricsSystem())
                     .createProtocolSchedule())
             .build();
 
     final MutableBlockchain blockchain = executionContextTestFixture.getBlockchain();
+    BlockHeader parentHeader = blockchain.getChainHeadHeader();
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build();
     final AbstractPendingTransactionsSorter sorter =
         new GasPricePendingTransactionsSorter(
-            poolConf, Clock.systemUTC(), new NoOpMetricsSystem(), blockchain::getChainHeadHeader);
+            poolConf,
+            Clock.systemUTC(),
+            new NoOpMetricsSystem(),
+            Suppliers.ofInstance(parentHeader));
 
     final EthContext ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
@@ -385,7 +440,7 @@ abstract class AbstractBlockCreatorTest {
             ethContext,
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             poolConf,
-            null);
+            new BlobCache());
     transactionPool.setEnabled();
 
     final MiningParameters miningParameters =
@@ -399,16 +454,16 @@ abstract class AbstractBlockCreatorTest {
                     .build())
             .build();
 
-    return new TestBlockCreator(
-        miningParameters,
-        __ -> Address.ZERO,
-        __ -> Bytes.fromHexString("deadbeef"),
-        transactionPool,
-        executionContextTestFixture.getProtocolContext(),
-        executionContextTestFixture.getProtocolSchedule(),
-        blockchain.getChainHeadHeader(),
-        depositContractAddress,
-        ethScheduler);
+    return new CreateOn(
+        new TestBlockCreator(
+            miningParameters,
+            __ -> Address.ZERO,
+            __ -> Bytes.fromHexString("deadbeef"),
+            transactionPool,
+            executionContextTestFixture.getProtocolContext(),
+            executionContextTestFixture.getProtocolSchedule(),
+            ethScheduler),
+        parentHeader);
   }
 
   static class TestBlockCreator extends AbstractBlockCreator {
@@ -420,8 +475,6 @@ abstract class AbstractBlockCreatorTest {
         final TransactionPool transactionPool,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final BlockHeader parentHeader,
-        final Optional<Address> depositContractAddress,
         final EthScheduler ethScheduler) {
       super(
           miningParameters,
@@ -430,8 +483,6 @@ abstract class AbstractBlockCreatorTest {
           transactionPool,
           protocolContext,
           protocolSchedule,
-          parentHeader,
-          depositContractAddress,
           ethScheduler);
     }
 
@@ -444,6 +495,26 @@ abstract class AbstractBlockCreatorTest {
           .nonce(0L)
           .blockHeaderFunctions(blockHeaderFunctions)
           .buildBlockHeader();
+    }
+  }
+
+  static class AlwaysValidTransactionValidator implements TransactionValidator {
+
+    @Override
+    public ValidationResult<TransactionInvalidReason> validate(
+        final Transaction transaction,
+        final Optional<Wei> baseFee,
+        final Optional<Wei> blobBaseFee,
+        final TransactionValidationParams transactionValidationParams) {
+      return ValidationResult.valid();
+    }
+
+    @Override
+    public ValidationResult<TransactionInvalidReason> validateForSender(
+        final Transaction transaction,
+        final Account sender,
+        final TransactionValidationParams validationParams) {
+      return ValidationResult.valid();
     }
   }
 }

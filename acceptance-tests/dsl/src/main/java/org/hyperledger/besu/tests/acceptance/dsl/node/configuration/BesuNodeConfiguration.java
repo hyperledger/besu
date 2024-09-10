@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -26,8 +27,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.nio.file.Path;
@@ -45,9 +46,11 @@ public class BesuNodeConfiguration {
   private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
+  private final InProcessRpcConfiguration inProcessRpcConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private final Optional<PermissioningConfiguration> permissioningConfiguration;
   private final ApiConfiguration apiConfiguration;
+  private final DataStorageConfiguration dataStorageConfiguration;
   private final Optional<String> keyFilePath;
   private final boolean devMode;
   private final GenesisConfigurationProvider genesisConfigProvider;
@@ -68,7 +71,6 @@ public class BesuNodeConfiguration {
   private final List<String> runCommand;
   private final NetworkName network;
   private final Optional<KeyPair> keyPair;
-  private final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration;
   private final boolean strictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
 
@@ -81,9 +83,11 @@ public class BesuNodeConfiguration {
       final Optional<JsonRpcConfiguration> engineRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
+      final InProcessRpcConfiguration inProcessRpcConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final ApiConfiguration apiConfiguration,
+      final DataStorageConfiguration dataStorageConfiguration,
       final Optional<String> keyFilePath,
       final boolean devMode,
       final NetworkName network,
@@ -104,7 +108,6 @@ public class BesuNodeConfiguration {
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
-      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
       final boolean strictTxReplayProtectionEnabled,
       final Map<String, String> environment) {
     this.name = name;
@@ -114,9 +117,11 @@ public class BesuNodeConfiguration {
     this.engineRpcConfiguration = engineRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
+    this.inProcessRpcConfiguration = inProcessRpcConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
     this.apiConfiguration = apiConfiguration;
+    this.dataStorageConfiguration = dataStorageConfiguration;
     this.keyFilePath = keyFilePath;
     this.dataPath = dataPath;
     this.devMode = devMode;
@@ -138,7 +143,6 @@ public class BesuNodeConfiguration {
     this.privacyParameters = privacyParameters;
     this.runCommand = runCommand;
     this.keyPair = keyPair;
-    this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
     this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
     this.environment = environment;
   }
@@ -171,6 +175,10 @@ public class BesuNodeConfiguration {
     return jsonRpcIpcConfiguration;
   }
 
+  public InProcessRpcConfiguration getInProcessRpcConfiguration() {
+    return inProcessRpcConfiguration;
+  }
+
   public MetricsConfiguration getMetricsConfiguration() {
     return metricsConfiguration;
   }
@@ -181,6 +189,10 @@ public class BesuNodeConfiguration {
 
   public ApiConfiguration getApiConfiguration() {
     return apiConfiguration;
+  }
+
+  public DataStorageConfiguration getDataStorageConfiguration() {
+    return dataStorageConfiguration;
   }
 
   public Optional<String> getKeyFilePath() {
@@ -265,10 +277,6 @@ public class BesuNodeConfiguration {
 
   public Optional<KeyPair> getKeyPair() {
     return keyPair;
-  }
-
-  public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
-    return pkiKeyStoreConfiguration;
   }
 
   public boolean isStrictTxReplayProtectionEnabled() {

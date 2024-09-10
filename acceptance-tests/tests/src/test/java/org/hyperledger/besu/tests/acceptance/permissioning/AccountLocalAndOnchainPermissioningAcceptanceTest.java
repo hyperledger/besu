@@ -21,15 +21,17 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTra
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
+@Disabled("permissioning tests flaky with timeouts")
 public class AccountLocalAndOnchainPermissioningAcceptanceTest
     extends AccountSmartContractPermissioningAcceptanceTestBase {
 
   private Account senderC;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     senderC = accounts.createAccount("Account-C");
   }

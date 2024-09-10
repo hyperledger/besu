@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evmtool;
 
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
@@ -34,6 +32,16 @@ import dagger.Provides;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
+/**
+ * This class, EvmToolCommandOptionsModule, is a Dagger module that provides dependencies for the
+ * EvmToolCommand. It contains options for setting up the EVM tool, such as whether revert reasons
+ * should be persisted, the fork to evaluate, the key-value storage to be used, the data path, the
+ * block number to evaluate against, and the world state update mode.
+ *
+ * <p>The class uses PicoCLI annotations to define these options, which can be provided via the
+ * command line when running the EVM tool. Each option has a corresponding provider method that
+ * Dagger uses to inject the option's value where needed.
+ */
 @SuppressWarnings("WeakerAccess")
 @Module
 public class EvmToolCommandOptionsModule {
@@ -88,7 +96,9 @@ public class EvmToolCommandOptionsModule {
   @Provides
   @Singleton
   BesuConfiguration provideBesuConfiguration() {
-    return new BesuConfigurationImpl(dataPath, dataPath.resolve(BesuController.DATABASE_PATH));
+    final var besuConfiguration = new BesuConfigurationImpl();
+    besuConfiguration.init(dataPath, dataPath.resolve(BesuController.DATABASE_PATH), null);
+    return besuConfiguration;
   }
 
   @Option(
@@ -132,5 +142,10 @@ public class EvmToolCommandOptionsModule {
   @Singleton
   EvmConfiguration provideEvmConfiguration() {
     return new EvmConfiguration(jumpDestCacheWeightKilobytes, worldstateUpdateMode);
+  }
+
+  /** Default constructor for the EvmToolCommandOptionsModule class. */
+  public EvmToolCommandOptionsModule() {
+    // This is only here because of JavaDoc linting
   }
 }

@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.evm;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.code.CodeFactory;
+import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
@@ -86,6 +88,7 @@ public class EVM {
   private final OperationRegistry operations;
   private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
+  private final CodeFactory codeFactory;
   private final CodeCache codeCache;
   private final EvmConfiguration evmConfiguration;
   private final EvmSpecVersion evmSpecVersion;
@@ -113,6 +116,11 @@ public class EVM {
     this.codeCache = new CodeCache(evmConfiguration);
     this.evmSpecVersion = evmSpecVersion;
 
+    codeFactory =
+        new CodeFactory(
+            evmSpecVersion.maxEofVersion,
+            evmConfiguration.maxInitcodeSizeOverride().orElse(evmSpecVersion.maxInitcodeSize));
+
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
   }
 
@@ -135,9 +143,27 @@ public class EVM {
   }
 
   /**
+   * Gets the max code size, taking configuration and version into account
+   *
+   * @return The max code size override, if not set the max code size for the EVM version.
+   */
+  public int getMaxCodeSize() {
+    return evmConfiguration.maxCodeSizeOverride().orElse(evmSpecVersion.maxCodeSize);
+  }
+
+  /**
+   * Gets the max initcode Size, taking configuration and version into account
+   *
+   * @return The max initcode size override, if not set the max initcode size for the EVM version.
+   */
+  public int getMaxInitcodeSize() {
+    return evmConfiguration.maxInitcodeSizeOverride().orElse(evmSpecVersion.maxInitcodeSize);
+  }
+
+  /**
    * Returns the non-fork related configuration parameters of the EVM.
    *
-   * @return the EVM coniguration.
+   * @return the EVM configuration.
    */
   public EvmConfiguration getEvmConfiguration() {
     return evmConfiguration;
@@ -230,73 +256,77 @@ public class EVM {
               case 0x56 -> JumpOperation.staticOperation(frame);
               case 0x57 -> JumpiOperation.staticOperation(frame);
               case 0x5b -> JumpDestOperation.JUMPDEST_SUCCESS;
-              case 0x5f -> enableShanghai
-                  ? Push0Operation.staticOperation(frame)
-                  : InvalidOperation.INVALID_RESULT;
+              case 0x5f ->
+                  enableShanghai
+                      ? Push0Operation.staticOperation(frame)
+                      : InvalidOperation.INVALID_RESULT;
               case 0x60, // PUSH1-32
-                  0x61,
-                  0x62,
-                  0x63,
-                  0x64,
-                  0x65,
-                  0x66,
-                  0x67,
-                  0x68,
-                  0x69,
-                  0x6a,
-                  0x6b,
-                  0x6c,
-                  0x6d,
-                  0x6e,
-                  0x6f,
-                  0x70,
-                  0x71,
-                  0x72,
-                  0x73,
-                  0x74,
-                  0x75,
-                  0x76,
-                  0x77,
-                  0x78,
-                  0x79,
-                  0x7a,
-                  0x7b,
-                  0x7c,
-                  0x7d,
-                  0x7e,
-                  0x7f -> PushOperation.staticOperation(frame, code, pc, opcode - PUSH_BASE);
+                      0x61,
+                      0x62,
+                      0x63,
+                      0x64,
+                      0x65,
+                      0x66,
+                      0x67,
+                      0x68,
+                      0x69,
+                      0x6a,
+                      0x6b,
+                      0x6c,
+                      0x6d,
+                      0x6e,
+                      0x6f,
+                      0x70,
+                      0x71,
+                      0x72,
+                      0x73,
+                      0x74,
+                      0x75,
+                      0x76,
+                      0x77,
+                      0x78,
+                      0x79,
+                      0x7a,
+                      0x7b,
+                      0x7c,
+                      0x7d,
+                      0x7e,
+                      0x7f ->
+                  PushOperation.staticOperation(frame, code, pc, opcode - PUSH_BASE);
               case 0x80, // DUP1-16
-                  0x81,
-                  0x82,
-                  0x83,
-                  0x84,
-                  0x85,
-                  0x86,
-                  0x87,
-                  0x88,
-                  0x89,
-                  0x8a,
-                  0x8b,
-                  0x8c,
-                  0x8d,
-                  0x8e,
-                  0x8f -> DupOperation.staticOperation(frame, opcode - DupOperation.DUP_BASE);
+                      0x81,
+                      0x82,
+                      0x83,
+                      0x84,
+                      0x85,
+                      0x86,
+                      0x87,
+                      0x88,
+                      0x89,
+                      0x8a,
+                      0x8b,
+                      0x8c,
+                      0x8d,
+                      0x8e,
+                      0x8f ->
+                  DupOperation.staticOperation(frame, opcode - DupOperation.DUP_BASE);
               case 0x90, // SWAP1-16
-                  0x91,
-                  0x92,
-                  0x93,
-                  0x94,
-                  0x95,
-                  0x96,
-                  0x97,
-                  0x98,
-                  0x99,
-                  0x9a,
-                  0x9b,
-                  0x9c,
-                  0x9d,
-                  0x9e,
-                  0x9f -> SwapOperation.staticOperation(frame, opcode - SWAP_BASE);
+                      0x91,
+                      0x92,
+                      0x93,
+                      0x94,
+                      0x95,
+                      0x96,
+                      0x97,
+                      0x98,
+                      0x99,
+                      0x9a,
+                      0x9b,
+                      0x9c,
+                      0x9d,
+                      0x9e,
+                      0x9f ->
+                  SwapOperation.staticOperation(frame, opcode - SWAP_BASE);
               default -> { // unoptimized operations
                 frame.setCurrentOperation(currentOperation);
                 yield currentOperation.execute(frame, this);
@@ -344,13 +374,42 @@ public class EVM {
    * @return the code
    */
   public Code getCode(final Hash codeHash, final Bytes codeBytes) {
-    Code result = codeHash == null ? null : codeCache.getIfPresent(codeHash);
+    checkNotNull(codeHash);
+    Code result = codeCache.getIfPresent(codeHash);
     if (result == null) {
-      result = CodeFactory.createCode(codeBytes, evmSpecVersion.getMaxEofVersion(), false);
-      if (codeHash != null) {
-        codeCache.put(codeHash, result);
-      }
+      result = getCodeUncached(codeBytes);
+      codeCache.put(codeHash, result);
     }
     return result;
+  }
+
+  /**
+   * Gets code skipping the code cache.
+   *
+   * @param codeBytes the code bytes
+   * @return the code
+   */
+  public Code getCodeUncached(final Bytes codeBytes) {
+    return codeFactory.createCode(codeBytes);
+  }
+
+  /**
+   * Gets code for creation. Skips code cache and allows for extra data after EOF contracts.
+   *
+   * @param codeBytes the code bytes
+   * @return the code
+   */
+  public Code getCodeForCreation(final Bytes codeBytes) {
+    return codeFactory.createCode(codeBytes, true);
+  }
+
+  /**
+   * Parse the EOF Layout of a byte-stream. No Code or stack validation is performed.
+   *
+   * @param bytes the bytes to parse
+   * @return an EOF layout represented by they byte-stream.
+   */
+  public EOFLayout parseEOF(final Bytes bytes) {
+    return EOFLayout.parseEOF(bytes, true);
   }
 }

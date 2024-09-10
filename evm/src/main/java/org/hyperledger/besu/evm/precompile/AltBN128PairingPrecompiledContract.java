@@ -23,7 +23,7 @@ import org.hyperledger.besu.crypto.altbn128.Fq2;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
+import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -43,6 +43,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
   /** The constant FALSE. */
   static final Bytes FALSE =
       Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000");
+
   /** The constant TRUE. */
   public static final Bytes TRUE =
       Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
@@ -55,7 +56,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
     super(
         "AltBN128Pairing",
         gasCalculator,
-        LibEthPairings.EIP196_PAIR_OPERATION_RAW_VALUE,
+        LibGnarkEIP196.EIP196_PAIR_OPERATION_RAW_VALUE,
         Integer.MAX_VALUE / PARAMETER_LENGTH * PARAMETER_LENGTH);
     this.pairingGasCost = pairingGasCost;
     this.baseGasCost = baseGasCost;

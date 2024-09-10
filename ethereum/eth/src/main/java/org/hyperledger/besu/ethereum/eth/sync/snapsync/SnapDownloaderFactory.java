@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -32,7 +32,8 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
@@ -56,9 +57,10 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       final ProtocolContext protocolContext,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SyncState syncState,
-      final Clock clock) {
+      final Clock clock,
+      final SyncDurationMetrics syncDurationMetrics) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -93,10 +95,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       return Optional.empty();
     }
 
-    final SnapSyncProcessState snapSyncState =
-        new SnapSyncProcessState(
-            fastSyncStateStorage.loadState(
-                ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
+    final SnapSyncProcessState snapSyncState = new SnapSyncProcessState(fastSyncState);
 
     final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
         createSnapWorldStateDownloaderTaskCollection();
@@ -105,31 +104,33 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             ethContext,
             snapContext,
             protocolContext,
-            worldStateStorage,
+            worldStateStorageCoordinator,
             snapTaskCollection,
             syncConfig.getSnapSyncConfiguration(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             clock,
-            metricsSystem);
+            metricsSystem,
+            syncDurationMetrics);
     final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
         new SnapSyncDownloader(
             new FastSyncActions(
                 syncConfig,
-                worldStateStorage,
+                worldStateStorageCoordinator,
                 protocolSchedule,
                 protocolContext,
                 ethContext,
                 syncState,
                 pivotBlockSelector,
                 metricsSystem),
-            worldStateStorage,
+            worldStateStorageCoordinator,
             snapWorldStateDownloader,
             fastSyncStateStorage,
             snapTaskCollection,
             fastSyncDataDirectory,
-            snapSyncState);
+            snapSyncState,
+            syncDurationMetrics);
     syncState.setWorldStateDownloadStatus(snapWorldStateDownloader);
     return Optional.of(fastSyncDownloader);
   }

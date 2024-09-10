@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -41,12 +42,14 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -63,6 +66,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -71,6 +75,7 @@ import org.hyperledger.besu.util.Subscribers;
 import org.hyperledger.besu.util.number.Fraction;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
@@ -92,6 +97,7 @@ public class RetestethContext {
   public static final int MAX_PEERS = 25;
 
   private final ReentrantLock contextLock = new ReentrantLock();
+  private final BadBlockManager badBlockManager = new BadBlockManager();
   private Address coinbase;
   private Bytes extraData;
   private MutableBlockchain blockchain;
@@ -154,9 +160,15 @@ public class RetestethContext {
         JsonGenesisConfigOptions.fromJsonObject(
             JsonUtil.getObjectNode(genesisConfig, "config").get());
     protocolSchedule =
-        MainnetProtocolSchedule.fromConfig(jsonGenesisConfigOptions, EvmConfiguration.DEFAULT);
+        MainnetProtocolSchedule.fromConfig(
+            jsonGenesisConfigOptions,
+            EvmConfiguration.DEFAULT,
+            miningParameters,
+            badBlockManager,
+            false,
+            new NoOpMetricsSystem());
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
-      protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule);
+      protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule, badBlockManager);
     }
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
 
@@ -167,16 +179,19 @@ public class RetestethContext {
 
     final WorldStateArchive worldStateArchive =
         new ForestWorldStateArchive(
-            new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+            new WorldStateStorageCoordinator(
+                new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage())),
             new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
             EvmConfiguration.DEFAULT);
     final MutableWorldState worldState = worldStateArchive.getMutable();
     genesisState.writeStateTo(worldState);
 
     blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    protocolContext = new ProtocolContext(blockchain, worldStateArchive, null, Optional.empty());
+    protocolContext = new ProtocolContext(blockchain, worldStateArchive, null, badBlockManager);
 
-    blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, ethScheduler);
+    blockchainQueries =
+        new BlockchainQueries(
+            protocolSchedule, blockchain, worldStateArchive, ethScheduler, miningParameters);
 
     final String sealengine = JsonUtil.getString(genesisConfig, "sealengine", "");
     headerValidationMode =
@@ -212,7 +227,8 @@ public class RetestethContext {
                 Subscribers.none(),
                 new EpochCalculator.DefaultEpochCalculator());
 
-    blockReplay = new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
+    blockReplay =
+        new BlockReplay(protocolSchedule, protocolContext, blockchainQueries.getBlockchain());
 
     final Bytes localNodeKey = Bytes.wrap(new byte[64]);
 
@@ -231,8 +247,9 @@ public class RetestethContext {
             localNodeKey,
             MAX_PEERS,
             MAX_PEERS,
-            MAX_PEERS,
-            false);
+            false,
+            SyncMode.FAST,
+            new ForkIdManager(blockchain, List.of(), List.of(), false));
     final SyncState syncState = new SyncState(blockchain, ethPeers);
 
     ethScheduler = new EthScheduler(1, 1, 1, 1, metricsSystem);
@@ -252,8 +269,8 @@ public class RetestethContext {
             metricsSystem,
             syncState,
             transactionPoolConfiguration,
-            null,
-            new BlobCache());
+            new BlobCache(),
+            MiningParameters.newDefault());
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Genesis Block {} ", genesisState.getBlock());
@@ -274,7 +291,7 @@ public class RetestethContext {
     return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            keyValueStorage, variablesStorage, blockHeaderFunctions),
+            keyValueStorage, variablesStorage, blockHeaderFunctions, false),
         new NoOpMetricsSystem(),
         100);
   }

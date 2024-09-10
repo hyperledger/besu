@@ -39,6 +39,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-downloader-header-request-size";
   private static final String DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG =
       "--Xsynchronizer-downloader-checkpoint-timeouts-permitted";
+  private static final String DOWNLOADER_CHECKPOINT_RETRIES_FLAG =
+      "--Xsynchronizer-downloader-checkpoint-RETRIES";
   private static final String DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG =
       "--Xsynchronizer-downloader-chain-segment-size";
   private static final String DOWNLOADER_PARALLELISM_FLAG =
@@ -79,10 +81,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request";
 
-  private static final String SNAP_FLAT_DB_HEALING_ENABLED_FLAG =
-      "--Xsnapsync-synchronizer-flat-db-healing-enabled";
+  private static final String SNAP_SERVER_ENABLED_FLAG = "--Xsnapsync-server-enabled";
 
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
+
+  private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--Xsnapsync-bft-enabled";
 
   /**
    * Parse block propagation range.
@@ -106,7 +109,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT_FLAG,
       hidden = true,
-      defaultValue = "200",
       paramLabel = "<LONG>",
       description =
           "Minimum height difference before switching fast sync download peers (default: ${DEFAULT-VALUE})")
@@ -116,7 +118,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD_FLAG,
       hidden = true,
-      defaultValue = "1000000000000000000",
       paramLabel = "<UINT256>",
       description =
           "Minimum total difficulty difference before switching fast sync download peers (default: ${DEFAULT-VALUE})")
@@ -126,26 +127,23 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = DOWNLOADER_HEADER_REQUEST_SIZE_FLAG,
       hidden = true,
-      defaultValue = "200",
       paramLabel = "<INTEGER>",
       description = "Number of headers to request per packet (default: ${DEFAULT-VALUE})")
   private int downloaderHeaderRequestSize =
       SynchronizerConfiguration.DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE;
 
   @CommandLine.Option(
-      names = DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG,
+      names = {DOWNLOADER_CHECKPOINT_RETRIES_FLAG, DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG},
       hidden = true,
-      defaultValue = "5",
       paramLabel = "<INTEGER>",
       description =
           "Number of tries to attempt to download checkpoints before stopping (default: ${DEFAULT-VALUE})")
-  private int downloaderCheckpointTimeoutsPermitted =
+  private int downloaderCheckpointRetries =
       SynchronizerConfiguration.DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED;
 
   @CommandLine.Option(
       names = DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG,
       hidden = true,
-      defaultValue = "200",
       paramLabel = "<INTEGER>",
       description = "Distance between checkpoint headers (default: ${DEFAULT-VALUE})")
   private int downloaderChainSegmentSize =
@@ -154,7 +152,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = DOWNLOADER_PARALLELISM_FLAG,
       hidden = true,
-      defaultValue = "4",
       paramLabel = "<INTEGER>",
       description = "Number of threads to provide to chain downloader (default: ${DEFAULT-VALUE})")
   private int downloaderParallelism = SynchronizerConfiguration.DEFAULT_DOWNLOADER_PARALLELISM;
@@ -162,7 +159,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = TRANSACTIONS_PARALLELISM_FLAG,
       hidden = true,
-      defaultValue = "2",
       paramLabel = "<INTEGER>",
       description =
           "Number of threads to commit to transaction processing (default: ${DEFAULT-VALUE})")
@@ -179,7 +175,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = PIVOT_DISTANCE_FROM_HEAD_FLAG,
       hidden = true,
-      defaultValue = "50",
       paramLabel = "<INTEGER>",
       description =
           "Distance from initial chain head to fast sync target (default: ${DEFAULT-VALUE})")
@@ -188,7 +183,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = FULL_VALIDATION_RATE_FLAG,
       hidden = true,
-      defaultValue = "0.1",
       paramLabel = "<FLOAT>",
       description = "Fraction of headers fast sync will fully validate (default: ${DEFAULT-VALUE})")
   private float fastSyncFullValidationRate = SynchronizerConfiguration.DEFAULT_FULL_VALIDATION_RATE;
@@ -196,7 +190,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = WORLD_STATE_HASH_COUNT_PER_REQUEST_FLAG,
       hidden = true,
-      defaultValue = "384",
       paramLabel = "<INTEGER>",
       description = "Fast sync world state hashes queried per request (default: ${DEFAULT-VALUE})")
   private int worldStateHashCountPerRequest =
@@ -205,7 +198,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = WORLD_STATE_REQUEST_PARALLELISM_FLAG,
       hidden = true,
-      defaultValue = "10",
       paramLabel = "<INTEGER>",
       description =
           "Number of concurrent requests to use when downloading fast sync world state (default: ${DEFAULT-VALUE})")
@@ -215,7 +207,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS_FLAG,
       hidden = true,
-      defaultValue = "1000",
       paramLabel = "<INTEGER>",
       description =
           "Number of world state requests accepted without progress before considering the download stalled (default: ${DEFAULT-VALUE})")
@@ -225,7 +216,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = WORLD_STATE_MIN_MILLIS_BEFORE_STALLING_FLAG,
       hidden = true,
-      defaultValue = "300000",
       paramLabel = "<LONG>",
       description =
           "Minimum time in ms without progress before considering a world state download as stalled (default: ${DEFAULT-VALUE})")
@@ -235,7 +225,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = WORLD_STATE_TASK_CACHE_SIZE_FLAG,
       hidden = true,
-      defaultValue = "1000000",
       paramLabel = "<INTEGER>",
       description =
           "The max number of pending node data requests cached in-memory during fast sync world state download. (default: ${DEFAULT-VALUE})")
@@ -245,7 +234,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG,
       hidden = true,
-      defaultValue = "126",
       paramLabel = "<INTEGER>",
       description =
           "The size of the pivot block window before having to change it (default: ${DEFAULT-VALUE})")
@@ -255,7 +243,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG,
       hidden = true,
-      defaultValue = "60",
       paramLabel = "<INTEGER>",
       description =
           "The distance from the head before loading a pivot block into the cache to have a ready pivot block when the window is finished (default: ${DEFAULT-VALUE})")
@@ -265,7 +252,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = SNAP_STORAGE_COUNT_PER_REQUEST_FLAG,
       hidden = true,
-      defaultValue = "384",
       paramLabel = "<INTEGER>",
       description = "Snap sync storage queried per request (default: ${DEFAULT-VALUE})")
   private int snapsyncStorageCountPerRequest =
@@ -274,7 +260,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
       hidden = true,
-      defaultValue = "84",
       paramLabel = "<INTEGER>",
       description = "Snap sync bytecode queried per request (default: ${DEFAULT-VALUE})")
   private int snapsyncBytecodeCountPerRequest =
@@ -283,7 +268,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
       hidden = true,
-      defaultValue = "384",
       paramLabel = "<INTEGER>",
       description = "Snap sync trie node queried per request (default: ${DEFAULT-VALUE})")
   private int snapsyncTrieNodeCountPerRequest =
@@ -292,7 +276,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
       hidden = true,
-      defaultValue = "128",
       paramLabel = "<INTEGER>",
       description =
           "Snap sync flat accounts verified and healed per request (default: ${DEFAULT-VALUE})")
@@ -302,7 +285,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
       hidden = true,
-      defaultValue = "1024",
       paramLabel = "<INTEGER>",
       description =
           "Snap sync flat slots verified and healed per request (default: ${DEFAULT-VALUE})")
@@ -310,13 +292,12 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SnapSyncConfiguration.DEFAULT_LOCAL_FLAT_STORAGE_COUNT_TO_HEAL_PER_REQUEST;
 
   @CommandLine.Option(
-      names = SNAP_FLAT_DB_HEALING_ENABLED_FLAG,
+      names = SNAP_SERVER_ENABLED_FLAG,
       hidden = true,
-      defaultValue = "false",
       paramLabel = "<Boolean>",
-      description = "Snap sync flat db healing enabled (default: ${DEFAULT-VALUE})")
-  private Boolean snapsyncFlatDbHealingEnabled =
-      SnapSyncConfiguration.DEFAULT_IS_FLAT_DB_HEALING_ENABLED;
+      arity = "0..1",
+      description = "Snap sync server enabled (default: ${DEFAULT-VALUE})")
+  private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
 
   @CommandLine.Option(
       names = {CHECKPOINT_POST_MERGE_FLAG},
@@ -325,7 +306,33 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean checkpointPostMergeSyncEnabled =
       SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
+  @CommandLine.Option(
+      names = SNAP_SYNC_BFT_ENABLED_FLAG,
+      hidden = true,
+      paramLabel = "<Boolean>",
+      arity = "0..1",
+      description = "Snap sync enabled for BFT chains (default: ${DEFAULT-VALUE})")
+  private Boolean snapsyncBftEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED;
+
   private SynchronizerOptions() {}
+
+  /**
+   * Flag to know whether the Snap sync server feature is enabled or disabled.
+   *
+   * @return true if snap sync server is enabled
+   */
+  public boolean isSnapsyncServerEnabled() {
+    return snapsyncServerEnabled;
+  }
+
+  /**
+   * Flag to know whether the Snap sync should be enabled for a BFT chain
+   *
+   * @return true if snap sync for BFT is enabled
+   */
+  public boolean isSnapSyncBftEnabled() {
+    return snapsyncBftEnabled;
+  }
 
   /**
    * Create synchronizer options.
@@ -334,15 +341,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
    */
   public static SynchronizerOptions create() {
     return new SynchronizerOptions();
-  }
-
-  /**
-   * Flag to know whether the flat db healing feature is enabled or disabled.
-   *
-   * @return true is the flat db healing is enabled
-   */
-  public boolean isSnapsyncFlatDbHealingEnabled() {
-    return snapsyncFlatDbHealingEnabled;
   }
 
   /**
@@ -358,13 +356,12 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getDownloaderChangeTargetThresholdByHeight();
     options.downloaderChangeTargetThresholdByTd = config.getDownloaderChangeTargetThresholdByTd();
     options.downloaderHeaderRequestSize = config.getDownloaderHeaderRequestSize();
-    options.downloaderCheckpointTimeoutsPermitted =
-        config.getDownloaderCheckpointTimeoutsPermitted();
+    options.downloaderCheckpointRetries = config.getDownloaderCheckpointRetries();
     options.downloaderChainSegmentSize = config.getDownloaderChainSegmentSize();
     options.downloaderParallelism = config.getDownloaderParallelism();
     options.transactionsParallelism = config.getTransactionsParallelism();
     options.computationParallelism = config.getComputationParallelism();
-    options.fastSyncPivotDistance = config.getFastSyncPivotDistance();
+    options.fastSyncPivotDistance = config.getSyncPivotDistance();
     options.fastSyncFullValidationRate = config.getFastSyncFullValidationRate();
     options.worldStateHashCountPerRequest = config.getWorldStateHashCountPerRequest();
     options.worldStateRequestParallelism = config.getWorldStateRequestParallelism();
@@ -385,9 +382,9 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getLocalFlatAccountCountToHealPerRequest();
     options.snapsyncFlatStorageHealedCountPerRequest =
         config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
-    options.snapsyncFlatDbHealingEnabled =
-        config.getSnapSyncConfiguration().isFlatDbHealingEnabled();
     options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
+    options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
+    options.snapsyncBftEnabled = config.getSnapSyncConfiguration().isSnapSyncBftEnabled();
     return options;
   }
 
@@ -398,12 +395,12 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.downloaderChangeTargetThresholdByHeight(downloaderChangeTargetThresholdByHeight);
     builder.downloaderChangeTargetThresholdByTd(downloaderChangeTargetThresholdByTd);
     builder.downloaderHeadersRequestSize(downloaderHeaderRequestSize);
-    builder.downloaderCheckpointTimeoutsPermitted(downloaderCheckpointTimeoutsPermitted);
+    builder.downloaderCheckpointRetries(downloaderCheckpointRetries);
     builder.downloaderChainSegmentSize(downloaderChainSegmentSize);
     builder.downloaderParallelism(downloaderParallelism);
     builder.transactionsParallelism(transactionsParallelism);
     builder.computationParallelism(computationParallelism);
-    builder.fastSyncPivotDistance(fastSyncPivotDistance);
+    builder.syncPivotDistance(fastSyncPivotDistance);
     builder.fastSyncFullValidationRate(fastSyncFullValidationRate);
     builder.worldStateHashCountPerRequest(worldStateHashCountPerRequest);
     builder.worldStateRequestParallelism(worldStateRequestParallelism);
@@ -419,7 +416,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .trienodeCountPerRequest(snapsyncTrieNodeCountPerRequest)
             .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
-            .isFlatDbHealingEnabled(snapsyncFlatDbHealingEnabled)
+            .isSnapServerEnabled(snapsyncServerEnabled)
+            .isSnapSyncBftEnabled(snapsyncBftEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
 
@@ -439,7 +437,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             DOWNLOADER_HEADER_REQUEST_SIZE_FLAG,
             OptionParser.format(downloaderHeaderRequestSize),
             DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG,
-            OptionParser.format(downloaderCheckpointTimeoutsPermitted),
+            OptionParser.format(downloaderCheckpointRetries),
             DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG,
             OptionParser.format(downloaderChainSegmentSize),
             DOWNLOADER_PARALLELISM_FLAG,
@@ -471,15 +469,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
             OptionParser.format(snapsyncBytecodeCountPerRequest),
             SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
-            OptionParser.format(snapsyncTrieNodeCountPerRequest));
-    if (isSnapsyncFlatDbHealingEnabled()) {
-      value.addAll(
-          Arrays.asList(
-              SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
-              OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
-              SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
-              OptionParser.format(snapsyncFlatStorageHealedCountPerRequest)));
-    }
+            OptionParser.format(snapsyncTrieNodeCountPerRequest),
+            SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
+            OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
+            SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
+            OptionParser.format(snapsyncFlatStorageHealedCountPerRequest),
+            SNAP_SERVER_ENABLED_FLAG,
+            OptionParser.format(snapsyncServerEnabled),
+            SNAP_SYNC_BFT_ENABLED_FLAG,
+            OptionParser.format(snapsyncBftEnabled));
     return value;
   }
 }

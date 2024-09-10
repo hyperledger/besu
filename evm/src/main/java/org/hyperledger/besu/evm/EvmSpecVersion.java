@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,9 +11,11 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm;
+
+import org.hyperledger.besu.datatypes.HardforkId;
+import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 
 import java.util.Comparator;
 import java.util.stream.Stream;
@@ -24,66 +26,78 @@ import org.slf4j.LoggerFactory;
 /** The enum Evm spec version. */
 public enum EvmSpecVersion {
   /** Frontier evm spec version. */
-  FRONTIER(0, true, "Frontier", "Finalized"),
+  FRONTIER(MainnetHardforkId.FRONTIER, Integer.MAX_VALUE, Integer.MAX_VALUE, 0),
   /** Homestead evm spec version. */
-  HOMESTEAD(0, true, "Homestead", "Finalized"),
+  HOMESTEAD(MainnetHardforkId.HOMESTEAD, Integer.MAX_VALUE, Integer.MAX_VALUE, 0),
   /** Tangerine Whistle evm spec version. */
-  TANGERINE_WHISTLE(0, true, "Tangerine Whistle", "Finalized"),
+  TANGERINE_WHISTLE(MainnetHardforkId.TANGERINE_WHISTLE, Integer.MAX_VALUE, Integer.MAX_VALUE, 0),
   /** Spurious Dragon evm spec version. */
-  SPURIOUS_DRAGON(0, true, "Spuruous Dragon", "Finalized"),
+  SPURIOUS_DRAGON(MainnetHardforkId.SPURIOUS_DRAGON, 0x6000, Integer.MAX_VALUE, 0),
   /** Byzantium evm spec version. */
-  BYZANTIUM(0, true, "Byzantium", "Finalized"),
+  BYZANTIUM(MainnetHardforkId.BYZANTIUM, 0x6000, Integer.MAX_VALUE, 0),
   /** Constantinople evm spec version. */
-  CONSTANTINOPLE(0, true, "Constantinople", "Did not reach Mainnet"),
+  CONSTANTINOPLE(MainnetHardforkId.CONSTANTINOPLE, 0x6000, Integer.MAX_VALUE, 0),
   /** Petersburg / ConstantinopleFix evm spec version. */
-  PETERSBURG(0, true, "ConstantinopleFix", "Finalized (also called Petersburg)"),
+  PETERSBURG(MainnetHardforkId.PETERSBURG, 0x6000, Integer.MAX_VALUE, 0),
   /** Istanbul evm spec version. */
-  ISTANBUL(0, true, "Istanbul", "Finalized"),
+  ISTANBUL(MainnetHardforkId.ISTANBUL, 0x6000, Integer.MAX_VALUE, 0),
   /** Berlin evm spec version */
-  BERLIN(0, true, "Berlin", "Finalized"),
+  BERLIN(MainnetHardforkId.BERLIN, 0x6000, Integer.MAX_VALUE, 0),
   /** London evm spec version. */
-  LONDON(0, true, "London", "Finalized"),
+  LONDON(MainnetHardforkId.LONDON, 0x6000, Integer.MAX_VALUE, 0),
   /** Paris evm spec version. */
-  PARIS(0, true, "Merge", "Finalized (also called Paris)"),
+  PARIS(MainnetHardforkId.PARIS, 0x6000, Integer.MAX_VALUE, 0),
   /** Shanghai evm spec version. */
-  SHANGHAI(0, true, "Shanghai", "Finalized"),
+  SHANGHAI(MainnetHardforkId.SHANGHAI, 0x6000, 0xc000, 0),
   /** Cancun evm spec version. */
-  CANCUN(0, true, "Cancun", "Finalized"),
+  CANCUN(MainnetHardforkId.CANCUN, 0x6000, 0xc000, 0),
+  /** Cancun evm spec version. */
+  CANCUN_EOF(MainnetHardforkId.CANCUN_EOF, 0x6000, 0xc000, 1),
   /** Prague evm spec version. */
-  PRAGUE(0, false, "Prague", "Placeholder"),
+  PRAGUE(MainnetHardforkId.PRAGUE, 0x6000, 0xc000, 0),
+  /** PragueEOF evm spec version. */
+  PRAGUE_EOF(MainnetHardforkId.PRAGUE_EOF, 0x6000, 0xc000, 1),
   /** Osaka evm spec version. */
-  OSAKA(0, false, "Osaka", "Placeholder"),
+  OSAKA(MainnetHardforkId.OSAKA, 0x6000, 0xc000, 1),
+  /** Amsterdam evm spec version. */
+  AMSTERDAM(MainnetHardforkId.AMSTERDAM, 0x6000, 0xc000, 1),
   /** Bogota evm spec version. */
-  BOGOTA(0, false, "Bogota", "Placeholder"),
+  BOGOTA(MainnetHardforkId.BOGOTA, 0x6000, 0xc000, 1),
+  /** Polis evm spec version. */
+  POLIS(MainnetHardforkId.POLIS, 0x6000, 0xc000, 1),
+  /** Bangkok evm spec version. */
+  BANGKOK(MainnetHardforkId.BANGKOK, 0x6000, 0xc000, 1),
   /** Development fork for unscheduled EIPs */
-  FUTURE_EIPS(1, false, "Future_EIPs", "Development, for accepted and unscheduled EIPs"),
-  /** Development fork for EIPs not accepted to Mainnet */
-  EXPERIMENTAL_EIPS(1, false, "Experimental_EIPs", "Development, for experimental EIPs");
+  FUTURE_EIPS(MainnetHardforkId.FUTURE_EIPS, 0x6000, 0xc000, 1),
+  /** Development fork for EIPs that are not yet accepted to Mainnet */
+  EXPERIMENTAL_EIPS(MainnetHardforkId.EXPERIMENTAL_EIPS, 0x6000, 0xc000, 1);
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EvmSpecVersion.class);
 
-  /** The Spec finalized. */
-  final boolean specFinalized;
+  /** What hardfork did this VM version first show up in? */
+  final HardforkId initialHardfork;
+
   /** The Max eof version. */
   final int maxEofVersion;
 
-  /** Public name matching execution-spec-tests name */
-  final String name;
-  /** A brief description of the state of the fork */
-  final String description;
+  /** Maximum size of deployed code */
+  final int maxCodeSize;
+
+  /** Maximum size of initcode */
+  final int maxInitcodeSize;
 
   /** The Version warned. */
   boolean versionWarned = false;
 
   EvmSpecVersion(
-      final int maxEofVersion,
-      final boolean specFinalized,
-      final String name,
-      final String description) {
+      final HardforkId initialHarfork,
+      final int maxCodeSize,
+      final int maxInitcodeSize,
+      final int maxEofVersion) {
+    this.initialHardfork = initialHarfork;
     this.maxEofVersion = maxEofVersion;
-    this.specFinalized = specFinalized;
-    this.name = name;
-    this.description = description;
+    this.maxCodeSize = maxCodeSize;
+    this.maxInitcodeSize = maxInitcodeSize;
   }
 
   /**
@@ -93,7 +107,13 @@ public enum EvmSpecVersion {
    * @return the current mainnet for as of the release of this version of Besu
    */
   public static EvmSpecVersion defaultVersion() {
-    return SHANGHAI;
+    EvmSpecVersion answer = null;
+    for (EvmSpecVersion version : EvmSpecVersion.values()) {
+      if (version.initialHardfork.finalized()) {
+        answer = version;
+      }
+    }
+    return answer;
   }
 
   /**
@@ -106,12 +126,30 @@ public enum EvmSpecVersion {
   }
 
   /**
+   * Gets max deployed code size this EVM supports.
+   *
+   * @return the max eof version
+   */
+  public int getMaxCodeSize() {
+    return maxCodeSize;
+  }
+
+  /**
+   * Gets max initcode size this EVM supports.
+   *
+   * @return the max eof version
+   */
+  public int getMaxInitcodeSize() {
+    return maxInitcodeSize;
+  }
+
+  /**
    * Name of the fork, in execution-spec-tests form
    *
    * @return name of the fork
    */
   public String getName() {
-    return name;
+    return initialHardfork.name();
   }
 
   /**
@@ -120,7 +158,7 @@ public enum EvmSpecVersion {
    * @return description
    */
   public String getDescription() {
-    return description;
+    return initialHardfork.description();
   }
 
   /** Maybe warn version. */
@@ -130,7 +168,7 @@ public enum EvmSpecVersion {
       return;
     }
 
-    if (!specFinalized) {
+    if (!initialHardfork.finalized()) {
       LOGGER.error(
           "****** Not for Production Network Use ******\nExecuting code from EVM Spec Version {}, which has not been finalized.\n****** Not for Production Network Use ******",
           this.name());
@@ -145,6 +183,14 @@ public enum EvmSpecVersion {
    * @return the EVM spec version for that fork, or null if no fork matched.
    */
   public static EvmSpecVersion fromName(final String name) {
+    // TODO remove once PragueEOF settles
+    if ("prague".equalsIgnoreCase(name)) {
+      return EvmSpecVersion.PRAGUE_EOF;
+    }
+    // TODO remove once PragueEOF settles
+    if ("cancuneof".equalsIgnoreCase(name)) {
+      return EvmSpecVersion.CANCUN_EOF;
+    }
     for (var version : EvmSpecVersion.values()) {
       if (version.name().equalsIgnoreCase(name)) {
         return version;
@@ -161,7 +207,7 @@ public enum EvmSpecVersion {
    */
   public static EvmSpecVersion mostRecent() {
     return Stream.of(EvmSpecVersion.values())
-        .filter(v -> v.specFinalized)
+        .filter(v -> v.initialHardfork.finalized())
         .max(Comparator.naturalOrder())
         .orElseThrow();
   }

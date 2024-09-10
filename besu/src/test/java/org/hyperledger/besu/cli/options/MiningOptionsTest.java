@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -32,6 +32,7 @@ import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -314,6 +315,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   @Test
   public void blockTxsSelectionMaxTimeDefaultValue() {
     internalTestSuccess(
+        this::runtimeConfiguration,
         miningParams ->
             assertThat(miningParams.getNonPoaBlockTxsSelectionMaxTime())
                 .isEqualTo(DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME));
@@ -322,6 +324,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   @Test
   public void blockTxsSelectionMaxTimeOption() {
     internalTestSuccess(
+        this::runtimeConfiguration,
         miningParams -> assertThat(miningParams.getBlockTxsSelectionMaxTime()).isEqualTo(1700L),
         "--block-txs-selection-max-time",
         "1700");
@@ -341,6 +344,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   @Test
   public void poaBlockTxsSelectionMaxTimeDefaultValue() {
     internalTestSuccess(
+        this::runtimeConfiguration,
         miningParams ->
             assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
                 .isEqualTo(DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME));
@@ -350,6 +354,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   public void poaBlockTxsSelectionMaxTimeOption() throws IOException {
     final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
     internalTestSuccess(
+        this::runtimeConfiguration,
         miningParams ->
             assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
                 .isEqualTo(PositiveNumber.fromInt(80)),
@@ -361,13 +366,17 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
 
   @Test
   public void poaBlockTxsSelectionMaxTimeOptionOver100Percent() throws IOException {
-    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
+    final Path genesisFileClique = createFakeGenesisFile(VALID_GENESIS_CLIQUE_POST_LONDON);
     internalTestSuccess(
-        miningParams ->
-            assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
-                .isEqualTo(PositiveNumber.fromInt(200)),
+        this::runtimeConfiguration,
+        miningParams -> {
+          assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
+              .isEqualTo(PositiveNumber.fromInt(200));
+          assertThat(miningParams.getBlockTxsSelectionMaxTime())
+              .isEqualTo(Duration.ofSeconds(POA_BLOCK_PERIOD_SECONDS * 2).toMillis());
+        },
         "--genesis-file",
-        genesisFileIBFT2.toString(),
+        genesisFileClique.toString(),
         "--poa-block-txs-selection-max-time",
         "200");
   }
@@ -408,5 +417,18 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   @Override
   protected MiningOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getMiningOptions();
+  }
+
+  @Override
+  protected String[] getNonOptionFields() {
+    return new String[] {"transactionSelectionService"};
+  }
+
+  private MiningParameters runtimeConfiguration(
+      final TestBesuCommand besuCommand, final MiningParameters miningParameters) {
+    if (besuCommand.getGenesisConfigOptions().isPoa()) {
+      miningParameters.setBlockPeriodSeconds(POA_BLOCK_PERIOD_SECONDS);
+    }
+    return miningParameters;
   }
 }

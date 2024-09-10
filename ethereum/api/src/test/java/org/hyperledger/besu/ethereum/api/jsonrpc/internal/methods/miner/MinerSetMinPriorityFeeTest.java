@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -49,7 +49,7 @@ public class MinerSetMinPriorityFeeTest {
         new JsonRpcErrorResponse(
             request.getRequest().getId(),
             new JsonRpcError(
-                RpcErrorType.INVALID_PARAMS,
+                RpcErrorType.INVALID_MIN_PRIORITY_FEE_PARAMS,
                 "Hex value is too large: expected at most 32 bytes but got 33"));
 
     final JsonRpcResponse actual = method.response(request);
@@ -65,7 +65,8 @@ public class MinerSetMinPriorityFeeTest {
         new JsonRpcErrorResponse(
             request.getRequest().getId(),
             new JsonRpcError(
-                RpcErrorType.INVALID_PARAMS, "Missing required json rpc parameter at index 0"));
+                RpcErrorType.INVALID_MIN_PRIORITY_FEE_PARAMS,
+                "Missing required json rpc parameter at index 0"));
     final JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }

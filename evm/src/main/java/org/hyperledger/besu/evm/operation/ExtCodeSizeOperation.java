@@ -14,20 +14,28 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper.deductDelegatedCodeGasCost;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code size operation. */
 public class ExtCodeSizeOperation extends AbstractOperation {
+
+  static final Bytes EOF_SIZE = Bytes.of(2);
+
+  private final boolean enableEIP3540;
 
   /**
    * Instantiates a new Ext code size operation.
@@ -35,7 +43,18 @@ public class ExtCodeSizeOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public ExtCodeSizeOperation(final GasCalculator gasCalculator) {
+    this(gasCalculator, false);
+  }
+
+  /**
+   * Instantiates a new Ext code size operation.
+   *
+   * @param gasCalculator the gas calculator
+   * @param enableEIP3540 enable EIP-3540 semantics (EOF is size 2)
+   */
+  public ExtCodeSizeOperation(final GasCalculator gasCalculator, final boolean enableEIP3540) {
     super(0x3B, "EXTCODESIZE", 1, 1, gasCalculator);
+    this.enableEIP3540 = enableEIP3540;
   }
 
   /**
@@ -62,8 +81,31 @@ public class ExtCodeSizeOperation extends AbstractOperation {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
         final Account account = frame.getWorldUpdater().get(address);
-        frame.pushStackItem(
-            account == null ? Bytes.EMPTY : Words.intBytes(account.getCode().size()));
+
+        if (account != null) {
+          final DelegatedCodeGasCostHelper.Result result =
+              deductDelegatedCodeGasCost(frame, gasCalculator(), account);
+          if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
+            return new Operation.OperationResult(
+                result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
+          }
+        }
+
+        Bytes codeSize;
+        if (account == null) {
+          codeSize = Bytes.EMPTY;
+        } else {
+          final Bytes code = account.getCode();
+          if (enableEIP3540
+              && code.size() >= 2
+              && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
+              && code.get(1) == 0) {
+            codeSize = EOF_SIZE;
+          } else {
+            codeSize = Words.intBytes(code.size());
+          }
+        }
+        frame.pushStackItem(codeSize);
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {

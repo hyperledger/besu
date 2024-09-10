@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evmtool;
 
 import static org.hyperledger.besu.evmtool.B11rSubCommand.COMMAND_ALIAS;
@@ -53,10 +51,15 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
+/**
+ * This class implements the Runnable interface and represents the B11rSubCommand. It is responsible
+ * for handling the block builder subcommand in the EVM tool. It provides methods to read headers,
+ * move fields, and run the command.
+ */
 @Command(
     name = COMMAND_NAME,
     aliases = {COMMAND_ALIAS},
-    description = "Execute an Ethereum State Test.",
+    description = "Block Builder subcommand.",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class B11rSubCommand implements Runnable {
@@ -140,12 +143,18 @@ public class B11rSubCommand implements Runnable {
     }
   }
 
+  /** Default constructor for the B11rSubCommand class. This is required by PicoCLI. */
   @SuppressWarnings("unused")
   public B11rSubCommand() {
     // PicoCLI requires this
     parentCommand = null;
   }
 
+  /**
+   * Constructs a new B11rSubCommand with the given parent command.
+   *
+   * @param parentCommand the parent command of this subcommand
+   */
   @SuppressWarnings("unused")
   public B11rSubCommand(final EvmToolCommand parentCommand) {
     // PicoCLI requires this too

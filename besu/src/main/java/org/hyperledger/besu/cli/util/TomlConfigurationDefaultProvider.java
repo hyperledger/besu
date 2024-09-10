@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.util;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,6 +50,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
   private final CommandLine commandLine;
   private final InputStream configurationInputStream;
   private TomlParseResult result;
+  private boolean isUnknownOptionsChecked;
 
   /**
    * Instantiates a new Toml config file default value provider.
@@ -94,7 +96,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
 
   @Override
   public String defaultValue(final ArgSpec argSpec) {
-    loadConfigurationFromFile();
+    loadConfigurationIfNotLoaded();
 
     // only options can be used in config because a name is needed for the key
     // so we skip default for positional params
@@ -129,7 +131,8 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
         || type.equals(Float.class)
         || type.equals(float.class)
         || type.equals(Percentage.class)
-        || type.equals(Fraction.class);
+        || type.equals(Fraction.class)
+        || type.equals(PositiveNumber.class);
   }
 
   private String getEntryAsString(final OptionSpec spec) {
@@ -224,15 +227,19 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
   }
 
   private void checkConfigurationValidity() {
-    if (result == null || result.isEmpty())
+    if (result == null || result.isEmpty()) {
       throw new ParameterException(
-          commandLine,
-          String.format("Unable to read TOML configuration file %s", configurationInputStream));
+          commandLine, "Unable to read from empty TOML configuration file.");
+    }
+
+    if (!isUnknownOptionsChecked && !commandLine.isUnmatchedArgumentsAllowed()) {
+      checkUnknownOptions(result);
+      isUnknownOptionsChecked = true;
+    }
   }
 
   /** Load configuration from file. */
-  public void loadConfigurationFromFile() {
-
+  public void loadConfigurationIfNotLoaded() {
     if (result == null) {
       try {
         final TomlParseResult result = Toml.parse(configurationInputStream);
@@ -246,8 +253,6 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
           throw new ParameterException(
               commandLine, String.format("Invalid TOML configuration: %s", errors));
         }
-
-        checkUnknownOptions(result);
 
         this.result = result;
 
@@ -283,12 +288,12 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
             .collect(Collectors.toSet());
 
     if (!unknownOptionsList.isEmpty()) {
-      final String options = unknownOptionsList.size() > 1 ? "options" : "option";
-      final String csvUnknownOptions =
-          unknownOptionsList.stream().collect(Collectors.joining(", "));
+      final String csvUnknownOptions = String.join(", ", unknownOptionsList);
       throw new ParameterException(
           commandLine,
-          String.format("Unknown %s in TOML configuration file: %s", options, csvUnknownOptions));
+          String.format(
+              "Unknown option%s in TOML configuration file: %s",
+              unknownOptionsList.size() > 1 ? "s" : "", csvUnknownOptions));
     }
   }
 }

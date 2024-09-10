@@ -47,9 +47,9 @@ public class DiscoveryProtocolLogger {
   void logSendingPacket(final Peer peer, final Packet packet) {
     outgoingMessageCounter.labels(packet.getType().name()).inc();
     LOG.trace(
-        "<<< Sending {} packet to peer {}... ({}): {}",
+        "<<< Sending {} packet to peer {} ({}): {}",
         shortenPacketType(packet),
-        peer.getId().slice(0, 16),
+        peer.getLoggableId(),
         peer.getEnodeURL(),
         packet);
   }
@@ -57,9 +57,9 @@ public class DiscoveryProtocolLogger {
   void logReceivedPacket(final Peer peer, final Packet packet) {
     incomingMessageCounter.labels(packet.getType().name()).inc();
     LOG.trace(
-        ">>> Received {} packet from peer {}... ({}): {}",
+        ">>> Received {} packet from peer {} ({}): {}",
         shortenPacketType(packet),
-        peer.getId().slice(0, 16),
+        peer.getLoggableId(),
         peer.getEnodeURL(),
         packet);
   }

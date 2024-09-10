@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
@@ -43,7 +44,8 @@ public class FullSyncDownloader {
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
-      final SyncTerminationCondition terminationCondition) {
+      final SyncTerminationCondition terminationCondition,
+      final SyncDurationMetrics syncDurationMetrics) {
     this.syncConfig = syncConfig;
     this.protocolContext = protocolContext;
     this.syncState = syncState;
@@ -56,7 +58,8 @@ public class FullSyncDownloader {
             ethContext,
             syncState,
             metricsSystem,
-            terminationCondition);
+            terminationCondition,
+            syncDurationMetrics);
   }
 
   public CompletableFuture<Void> start() {

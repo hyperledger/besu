@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -24,6 +24,7 @@ import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SEQ_NO_S
 
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.util.VersionProvider;
+import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -48,7 +49,8 @@ import picocli.CommandLine.Spec;
     subcommands = {
       StorageSubCommand.RevertVariablesStorage.class,
       RocksDbSubCommand.class,
-      TrieLogSubCommand.class
+      TrieLogSubCommand.class,
+      RevertMetadataSubCommand.class
     })
 public class StorageSubCommand implements Runnable {
 
@@ -57,7 +59,7 @@ public class StorageSubCommand implements Runnable {
 
   @SuppressWarnings("unused")
   @ParentCommand
-  BesuCommand parentCommand;
+  BesuCommand besuCommand;
 
   @SuppressWarnings("unused")
   @Spec
@@ -97,21 +99,19 @@ public class StorageSubCommand implements Runnable {
     public void run() {
       checkNotNull(parentCommand);
 
-      final var storageProvider = getStorageProvider();
+      final var storageProvider = createBesuController().getStorageProvider();
 
       revert(storageProvider);
     }
 
-    private StorageProvider getStorageProvider() {
-      // init collection of ignorable segments
-      parentCommand.parentCommand.setIgnorableStorageSegments();
-      return parentCommand.parentCommand.getStorageProvider();
+    private BesuController createBesuController() {
+      return parentCommand.besuCommand.buildController();
     }
 
     private void revert(final StorageProvider storageProvider) {
       final var variablesStorage = storageProvider.createVariablesStorage();
       final var blockchainStorage =
-          getStorageProvider().getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN);
+          storageProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN);
       final var blockchainUpdater = blockchainStorage.startTransaction();
       final var variablesUpdater = variablesStorage.updater();
 

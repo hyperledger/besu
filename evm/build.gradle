@@ -25,6 +25,7 @@ jar {
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash,
       'Automatic-Module-Name': 'org.hyperledger.besu.evm'
       )
   }
@@ -44,9 +45,11 @@ dependencies {
   implementation 'io.tmio:tuweni-units'
   implementation 'org.hyperledger.besu:arithmetic'
   implementation 'org.hyperledger.besu:bls12-381'
+  implementation'org.hyperledger.besu:gnark'
   implementation 'tech.pegasys:jc-kzg-4844'
 
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
+  compileOnly 'io.vertx:vertx-core'
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'info.picocli:picocli'

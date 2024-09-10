@@ -1,0 +1,3 @@
+sync-mode="CHECKPOINT"
+data-storage-format="BONSAI"
+max-peers=25

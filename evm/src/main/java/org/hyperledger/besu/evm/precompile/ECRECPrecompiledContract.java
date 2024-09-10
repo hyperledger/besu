@@ -36,6 +36,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final int V_BASE = 27;
   final SignatureAlgorithm signatureAlgorithm;
+
   /**
    * Instantiates a new ECREC precompiled contract with the default signature algorithm.
    *
@@ -46,7 +47,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   /**
-   * Configure a new ECRecover precompile with a specific signature algorith and gas.
+   * Configure a new ECRecover precompile with a specific signature algorithm and gas.
    *
    * @param gasCalculator the gas calculator
    * @param signatureAlgorithm the algorithm (such as secp256k1 or secp256r1)

@@ -35,15 +35,17 @@ import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -52,7 +54,8 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class FastSyncChainDownloaderTest {
 
-  private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator =
+      mock(WorldStateStorageCoordinator.class);
 
   protected ProtocolSchedule protocolSchedule;
   protected EthProtocolManager ethProtocolManager;
@@ -73,7 +76,8 @@ public class FastSyncChainDownloaderTest {
   }
 
   public void setup(final DataStorageFormat storageFormat) {
-    when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
+    when(worldStateStorageCoordinator.getDataStorageFormat()).thenReturn(storageFormat);
+    when(worldStateStorageCoordinator.isWorldStateAvailable(any(), any())).thenReturn(true);
     final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
     otherBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
@@ -93,20 +97,23 @@ public class FastSyncChainDownloaderTest {
 
   @AfterEach
   public void tearDown() {
-    ethProtocolManager.stop();
+    if (ethProtocolManager != null) {
+      ethProtocolManager.stop();
+    }
   }
 
   private ChainDownloader downloader(
       final SynchronizerConfiguration syncConfig, final long pivotBlockNumber) {
     return FastSyncChainDownloader.create(
         syncConfig,
-        worldStateStorage,
+        worldStateStorageCoordinator,
         protocolSchedule,
         protocolContext,
         ethContext,
         syncState,
         new NoOpMetricsSystem(),
-        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()));
+        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()),
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   @ParameterizedTest
@@ -219,5 +226,12 @@ public class FastSyncChainDownloaderTest {
     assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(pivotBlockNumber);
     assertThat(localBlockchain.getChainHeadHeader())
         .isEqualTo(otherBlockchain.getBlockHeader(pivotBlockNumber).get());
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

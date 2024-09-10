@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -89,16 +89,9 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
   private boolean transactionTooLargeForBlock(
       final Transaction transaction,
       final TransactionSelectionResults transactionSelectionResults) {
-    final long blobGasUsed = context.gasCalculator().blobGasCost(transaction.getBlobCount());
 
-    if (blobGasUsed
-        > context.gasLimitCalculator().currentBlobGasLimit()
-            - transactionSelectionResults.getCumulativeBlobGasUsed()) {
-      return true;
-    }
-
-    return transaction.getGasLimit() + blobGasUsed
-        > context.processableBlockHeader().getGasLimit()
+    return transaction.getGasLimit()
+        > context.pendingBlockHeader().getGasLimit()
             - transactionSelectionResults.getCumulativeGasUsed();
   }
 
@@ -111,7 +104,7 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
    */
   private boolean blockOccupancyAboveThreshold(
       final TransactionSelectionResults transactionSelectionResults) {
-    final long gasAvailable = context.processableBlockHeader().getGasLimit();
+    final long gasAvailable = context.pendingBlockHeader().getGasLimit();
 
     final long gasUsed = transactionSelectionResults.getCumulativeGasUsed();
     final long gasRemaining = gasAvailable - gasUsed;
@@ -136,7 +129,7 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
    * @return True if the block is full, false otherwise.
    */
   private boolean blockFull(final TransactionSelectionResults transactionSelectionResults) {
-    final long gasAvailable = context.processableBlockHeader().getGasLimit();
+    final long gasAvailable = context.pendingBlockHeader().getGasLimit();
     final long gasUsed = transactionSelectionResults.getCumulativeGasUsed();
 
     final long gasRemaining = gasAvailable - gasUsed;

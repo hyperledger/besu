@@ -18,10 +18,13 @@ import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipel
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -68,7 +71,12 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(0, BlockParameter.class);
+    try {
+      return request.getRequiredParameter(0, BlockParameter.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
   }
 
   @Override
@@ -116,7 +124,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
                           "step",
                           "action");
               DebugOperationTracer debugOperationTracer =
-                  new DebugOperationTracer(new TraceOptions(false, false, true));
+                  new DebugOperationTracer(new TraceOptions(false, false, true), false);
               ExecuteTransactionStep executeTransactionStep =
                   new ExecuteTransactionStep(
                       chainUpdater,

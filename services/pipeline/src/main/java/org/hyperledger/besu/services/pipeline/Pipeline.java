@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.services.pipeline.exception.AsyncOperationException;
 import org.hyperledger.besu.util.ExceptionUtils;
+import org.hyperledger.besu.util.log.LogUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -88,6 +89,19 @@ public class Pipeline<I> {
     this.stages = stages;
     this.pipes = pipes;
     this.completerStage = completerStage;
+
+    if (LOG.isTraceEnabled()) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("Building pipeline ");
+      sb.append(name);
+      sb.append(". Stages: ");
+      for (Stage nextStage : stages) {
+        sb.append(nextStage.getName());
+        sb.append(" -> ");
+      }
+      sb.append("END");
+      LOG.trace("{}", sb.toString());
+    }
   }
 
   /**
@@ -176,7 +190,9 @@ public class Pipeline<I> {
                 || t instanceof AsyncOperationException) {
               LOG.trace("Unhandled exception in pipeline. Aborting.", t);
             } else {
-              LOG.info("Unexpected exception in pipeline. Aborting.");
+              LOG.info(
+                  LogUtil.summarizeBesuStackTrace(
+                      "Unexpected exception in pipeline. Aborting.", t));
               LOG.debug("Unexpected exception in pipeline. Aborting.", t);
             }
             try {

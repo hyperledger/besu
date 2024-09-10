@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -59,19 +60,27 @@ public class QbftRound {
   private static final Logger LOG = LoggerFactory.getLogger(QbftRound.class);
 
   private final Subscribers<MinedBlockObserver> observers;
+
   /** The Round state. */
   protected final RoundState roundState;
+
   /** The Block creator. */
   protected final BlockCreator blockCreator;
+
   /** The Protocol context. */
   protected final ProtocolContext protocolContext;
 
-  private final BlockImporter blockImporter;
+  /** The Protocol schedule. */
+  protected final ProtocolSchedule protocolSchedule;
+
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
+
   /** The Bft extra data codec. */
   protected final BftExtraDataCodec bftExtraDataCodec;
+
+  private final BlockHeader parentHeader;
 
   /**
    * Instantiates a new Qbft round.
@@ -79,35 +88,37 @@ public class QbftRound {
    * @param roundState the round state
    * @param blockCreator the block creator
    * @param protocolContext the protocol context
-   * @param blockImporter the block importer
+   * @param protocolSchedule the protocol schedule
    * @param observers the observers
    * @param nodeKey the node key
    * @param messageFactory the message factory
    * @param transmitter the transmitter
    * @param roundTimer the round timer
    * @param bftExtraDataCodec the bft extra data codec
+   * @param parentHeader the parent header
    */
   public QbftRound(
       final RoundState roundState,
       final BlockCreator blockCreator,
       final ProtocolContext protocolContext,
-      final BlockImporter blockImporter,
+      final ProtocolSchedule protocolSchedule,
       final Subscribers<MinedBlockObserver> observers,
       final NodeKey nodeKey,
       final MessageFactory messageFactory,
       final QbftMessageTransmitter transmitter,
       final RoundTimer roundTimer,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final BlockHeader parentHeader) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
-    this.blockImporter = blockImporter;
+    this.protocolSchedule = protocolSchedule;
     this.observers = observers;
     this.nodeKey = nodeKey;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
     this.bftExtraDataCodec = bftExtraDataCodec;
-
+    this.parentHeader = parentHeader;
     roundTimer.startTimer(getRoundIdentifier());
   }
 
@@ -127,7 +138,8 @@ public class QbftRound {
    */
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-    final Block block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
+    final Block block =
+        blockCreator.createBlock(headerTimeStampSeconds, this.parentHeader).getBlock();
 
     LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
     updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
@@ -147,7 +159,7 @@ public class QbftRound {
     final Block blockToPublish;
     if (bestPreparedCertificate.isEmpty()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
-      blockToPublish = blockCreator.createBlock(headerTimestamp).getBlock();
+      blockToPublish = blockCreator.createBlock(headerTimestamp, this.parentHeader).getBlock();
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
@@ -341,7 +353,10 @@ public class QbftRound {
           getRoundIdentifier(),
           blockToImport.getHash());
     }
+
     LOG.trace("Importing proposed block with extraData={}", extraData);
+    final BlockImporter blockImporter =
+        protocolSchedule.getByBlockHeader(blockToImport.getHeader()).getBlockImporter();
     final BlockImportResult result =
         blockImporter.importBlock(protocolContext, blockToImport, HeaderValidationMode.FULL);
     if (!result.isImported()) {

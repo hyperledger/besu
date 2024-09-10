@@ -18,12 +18,12 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PER
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
@@ -32,15 +32,17 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -60,6 +62,8 @@ public class MainnetTransactionProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetTransactionProcessor.class);
 
+  private static final Set<Address> EMPTY_ADDRESS_SET = Set.of();
+
   protected final GasCalculator gasCalculator;
 
   protected final TransactionValidatorFactory transactionValidatorFactory;
@@ -77,6 +81,8 @@ public class MainnetTransactionProcessor {
   protected final FeeMarket feeMarket;
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
+  private final Optional<CodeDelegationProcessor> maybeCodeDelegationProcessor;
+
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
       final TransactionValidatorFactory transactionValidatorFactory,
@@ -87,6 +93,30 @@ public class MainnetTransactionProcessor {
       final int maxStackSize,
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
+    this(
+        gasCalculator,
+        transactionValidatorFactory,
+        contractCreationProcessor,
+        messageCallProcessor,
+        clearEmptyAccounts,
+        warmCoinbase,
+        maxStackSize,
+        feeMarket,
+        coinbaseFeePriceCalculator,
+        null);
+  }
+
+  public MainnetTransactionProcessor(
+      final GasCalculator gasCalculator,
+      final TransactionValidatorFactory transactionValidatorFactory,
+      final AbstractMessageProcessor contractCreationProcessor,
+      final AbstractMessageProcessor messageCallProcessor,
+      final boolean clearEmptyAccounts,
+      final boolean warmCoinbase,
+      final int maxStackSize,
+      final FeeMarket feeMarket,
+      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
+      final CodeDelegationProcessor maybeCodeDelegationProcessor) {
     this.gasCalculator = gasCalculator;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -96,12 +126,12 @@ public class MainnetTransactionProcessor {
     this.maxStackSize = maxStackSize;
     this.feeMarket = feeMarket;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
+    this.maybeCodeDelegationProcessor = Optional.ofNullable(maybeCodeDelegationProcessor);
   }
 
   /**
    * Applies a transaction to the current system state.
    *
-   * @param blockchain The current blockchain
    * @param worldState The current world state
    * @param blockHeader The current block header
    * @param transaction The transaction to process
@@ -115,7 +145,6 @@ public class MainnetTransactionProcessor {
    * @see TransactionValidationParams
    */
   public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
@@ -125,7 +154,6 @@ public class MainnetTransactionProcessor {
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice) {
     return processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -141,7 +169,6 @@ public class MainnetTransactionProcessor {
   /**
    * Applies a transaction to the current system state.
    *
-   * @param blockchain The current blockchain
    * @param worldState The current world state
    * @param blockHeader The current block header
    * @param transaction The transaction to process
@@ -156,7 +183,6 @@ public class MainnetTransactionProcessor {
    * @see TransactionValidationParams
    */
   public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
@@ -167,7 +193,6 @@ public class MainnetTransactionProcessor {
       final OperationTracer operationTracer,
       final Wei blobGasPrice) {
     return processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -183,18 +208,16 @@ public class MainnetTransactionProcessor {
   /**
    * Applies a transaction to the current system state.
    *
-   * @param blockchain The current blockchain
    * @param worldState The current world state
    * @param blockHeader The current block header
    * @param transaction The transaction to process
-   * @param operationTracer The tracer to record results of each EVM operation
    * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param operationTracer The tracer to record results of each EVM operation
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @return the transaction result
    */
   public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
@@ -204,7 +227,6 @@ public class MainnetTransactionProcessor {
       final Boolean isPersistingPrivateState,
       final Wei blobGasPrice) {
     return processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -220,19 +242,17 @@ public class MainnetTransactionProcessor {
   /**
    * Applies a transaction to the current system state.
    *
-   * @param blockchain The current blockchain
    * @param worldState The current world state
    * @param blockHeader The current block header
    * @param transaction The transaction to process
-   * @param operationTracer The tracer to record results of each EVM operation
    * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param operationTracer The tracer to record results of each EVM operation
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams The transaction validation parameters to use
    * @return the transaction result
    */
   public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
@@ -243,7 +263,6 @@ public class MainnetTransactionProcessor {
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice) {
     return processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -257,7 +276,6 @@ public class MainnetTransactionProcessor {
   }
 
   public TransactionProcessingResult processTransaction(
-      final Blockchain ignoredBlockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
@@ -268,12 +286,16 @@ public class MainnetTransactionProcessor {
       final TransactionValidationParams transactionValidationParams,
       final PrivateMetadataUpdater privateMetadataUpdater,
       final Wei blobGasPrice) {
+    final EVMWorldUpdater evmWorldUpdater = new EVMWorldUpdater(worldState);
     try {
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
           transactionValidator.validate(
-              transaction, blockHeader.getBaseFee(), transactionValidationParams);
+              transaction,
+              blockHeader.getBaseFee(),
+              Optional.ofNullable(blobGasPrice),
+              transactionValidationParams);
       // Make sure the transaction is intrinsically valid before trying to
       // compare against a sender account (because the transaction may not
       // be signed correctly to extract the sender).
@@ -283,8 +305,7 @@ public class MainnetTransactionProcessor {
       }
 
       final Address senderAddress = transaction.getSender();
-
-      final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
+      final MutableAccount sender = evmWorldUpdater.getOrCreateSenderAccount(senderAddress);
 
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
@@ -293,7 +314,9 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
-      operationTracer.tracePrepareTransaction(worldState, transaction);
+      operationTracer.tracePrepareTransaction(evmWorldUpdater, transaction);
+
+      final Set<Address> warmAddressList = new BytesTrieSet<>(Address.SIZE);
 
       final long previousNonce = sender.incrementNonce();
       LOG.trace(
@@ -317,21 +340,34 @@ public class MainnetTransactionProcessor {
           previousBalance,
           sender.getBalance());
 
+      long codeDelegationRefund = 0L;
+      if (transaction.getCodeDelegationList().isPresent()) {
+        if (maybeCodeDelegationProcessor.isEmpty()) {
+          throw new RuntimeException("Code delegation processor is required for 7702 transactions");
+        }
+
+        final CodeDelegationResult codeDelegationResult =
+            maybeCodeDelegationProcessor.get().process(evmWorldUpdater, transaction);
+        warmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
+        codeDelegationRefund =
+            gasCalculator.calculateDelegateCodeGasRefund(
+                (codeDelegationResult.alreadyExistingDelegators()));
+      }
+
       final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
       // we need to keep a separate hash set of addresses in case they specify no storage.
       // No-storage is a common pattern, especially for Externally Owned Accounts
-      final Set<Address> addressList = new BytesTrieSet<>(Address.SIZE);
       final Multimap<Address, Bytes32> storageList = HashMultimap.create();
       int accessListStorageCount = 0;
       for (final var entry : accessListEntries) {
         final Address address = entry.address();
-        addressList.add(address);
+        warmAddressList.add(address);
         final List<Bytes32> storageKeys = entry.storageKeys();
         storageList.putAll(address, storageKeys);
         accessListStorageCount += storageKeys.size();
       }
       if (warmCoinbase) {
-        addressList.add(miningBeneficiary);
+        warmAddressList.add(miningBeneficiary);
       }
 
       final long intrinsicGas =
@@ -339,15 +375,19 @@ public class MainnetTransactionProcessor {
               transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
-      final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
+      final long codeDelegationGas =
+          gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
+      final long gasAvailable =
+          transaction.getGasLimit() - intrinsicGas - accessListGas - codeDelegationGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} (limit - intrinsic - accessList)",
+          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - codeDelegation)",
           gasAvailable,
           transaction.getGasLimit(),
           intrinsicGas,
-          accessListGas);
+          accessListGas,
+          codeDelegationGas);
 
-      final WorldUpdater worldUpdater = worldState.updater();
+      final WorldUpdater worldUpdater = evmWorldUpdater.updater();
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
           ImmutableMap.<String, Object>builder()
               .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
@@ -375,7 +415,7 @@ public class MainnetTransactionProcessor {
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .contextVariables(contextVariablesBuilder.build())
-              .accessListWarmAddresses(addressList)
+              .accessListWarmAddresses(warmAddressList)
               .accessListWarmStorage(storageList);
 
       if (transaction.getVersionedHashes().isPresent()) {
@@ -391,18 +431,19 @@ public class MainnetTransactionProcessor {
             Address.contractAddress(senderAddress, sender.getNonce() - 1L);
 
         final Bytes initCodeBytes = transaction.getPayload();
+        Code code = contractCreationProcessor.getCodeFromEVMForCreation(initCodeBytes);
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.CONTRACT_CREATION)
                 .address(contractAddress)
                 .contract(contractAddress)
-                .inputData(Bytes.EMPTY)
-                .code(contractCreationProcessor.getCodeFromEVM(null, initCodeBytes))
+                .inputData(initCodeBytes.slice(code.getSize()))
+                .code(code)
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
-        final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(to));
+        final Optional<Account> maybeContract = Optional.ofNullable(evmWorldUpdater.get(to));
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.MESSAGE_CALL)
@@ -424,12 +465,17 @@ public class MainnetTransactionProcessor {
       } else {
         initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         initialFrame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INVALID_CODE));
+        validationResult =
+            ValidationResult.invalid(
+                TransactionInvalidReason.EOF_CODE_INVALID,
+                ((CodeInvalid) initialFrame.getCode()).getInvalidReason());
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         worldUpdater.commit();
       } else {
-        if (initialFrame.getExceptionalHaltReason().isPresent()) {
+        if (initialFrame.getExceptionalHaltReason().isPresent()
+            && initialFrame.getCode().isValid()) {
           validationResult =
               ValidationResult.invalid(
                   TransactionInvalidReason.EXECUTION_HALTED,
@@ -448,7 +494,8 @@ public class MainnetTransactionProcessor {
       // after the other so that if it is the same account somehow, we end up with the right result)
       final long selfDestructRefund =
           gasCalculator.getSelfDestructRefundAmount() * initialFrame.getSelfDestructs().size();
-      final long baseRefundGas = initialFrame.getGasRefund() + selfDestructRefund;
+      final long baseRefundGas =
+          initialFrame.getGasRefund() + selfDestructRefund + codeDelegationRefund;
       final long refundedGas = refunded(transaction, initialFrame.getRemainingGas(), baseRefundGas);
       final Wei refundedWei = transactionGasPrice.multiply(refundedGas);
       final Wei balancePriorToRefund = sender.getBalance();
@@ -462,17 +509,7 @@ public class MainnetTransactionProcessor {
           .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
-      operationTracer.traceEndTransaction(
-          worldUpdater,
-          transaction,
-          initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS,
-          initialFrame.getOutputData(),
-          initialFrame.getLogs(),
-          gasUsedByTransaction,
-          0L);
-
       // update the coinbase
-      final var coinbase = worldState.getOrCreate(miningBeneficiary);
       final long usedGas = transaction.getGasLimit() - refundedGas;
       final CoinbaseFeePriceCalculator coinbaseCalculator;
       if (blockHeader.getBaseFee().isPresent()) {
@@ -494,12 +531,25 @@ public class MainnetTransactionProcessor {
       final Wei coinbaseWeiDelta =
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
+      operationTracer.traceBeforeRewardTransaction(worldUpdater, transaction, coinbaseWeiDelta);
+
+      final var coinbase = evmWorldUpdater.getOrCreate(miningBeneficiary);
       coinbase.incrementBalance(coinbaseWeiDelta);
 
-      initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
+      operationTracer.traceEndTransaction(
+          worldUpdater,
+          transaction,
+          initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS,
+          initialFrame.getOutputData(),
+          initialFrame.getLogs(),
+          gasUsedByTransaction,
+          initialFrame.getSelfDestructs(),
+          0L);
+
+      initialFrame.getSelfDestructs().forEach(evmWorldUpdater::deleteAccount);
 
       if (clearEmptyAccounts) {
-        worldState.clearAccountsThatAreEmpty();
+        evmWorldUpdater.clearAccountsThatAreEmpty();
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
@@ -510,18 +560,44 @@ public class MainnetTransactionProcessor {
             initialFrame.getOutputData(),
             validationResult);
       } else {
+        if (initialFrame.getExceptionalHaltReason().isPresent()) {
+          LOG.debug(
+              "Transaction {} processing halted: {}",
+              transaction.getHash(),
+              initialFrame.getExceptionalHaltReason().get());
+        }
+        if (initialFrame.getRevertReason().isPresent()) {
+          LOG.debug(
+              "Transaction {} reverted: {}",
+              transaction.getHash(),
+              initialFrame.getRevertReason().get());
+        }
         return TransactionProcessingResult.failed(
             gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(
-          worldState.updater(), transaction, false, Bytes.EMPTY, List.of(), 0, 0L);
+          evmWorldUpdater.updater(),
+          transaction,
+          false,
+          Bytes.EMPTY,
+          List.of(),
+          0,
+          EMPTY_ADDRESS_SET,
+          0L);
 
       // need to throw to trigger the heal
       throw re;
     } catch (final RuntimeException re) {
       operationTracer.traceEndTransaction(
-          worldState.updater(), transaction, false, Bytes.EMPTY, List.of(), 0, 0L);
+          evmWorldUpdater.updater(),
+          transaction,
+          false,
+          Bytes.EMPTY,
+          List.of(),
+          0,
+          EMPTY_ADDRESS_SET,
+          0L);
 
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(
@@ -537,7 +613,7 @@ public class MainnetTransactionProcessor {
     executor.process(frame, operationTracer);
   }
 
-  private AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
+  public AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
     return switch (type) {
       case MESSAGE_CALL -> messageCallProcessor;
       case CONTRACT_CREATION -> contractCreationProcessor;

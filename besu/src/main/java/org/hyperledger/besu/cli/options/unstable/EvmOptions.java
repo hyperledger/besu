@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.cli.options.unstable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
@@ -31,6 +30,9 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
   /** The constant WORLDSTATE_UPDATE_MODE. */
   public static final String WORLDSTATE_UPDATE_MODE = "--Xevm-worldstate-update-mode";
 
+  /** Default constructor. */
+  EvmOptions() {}
+
   /**
    * Create evm options.
    *
@@ -47,7 +49,6 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
           "size in kilobytes to allow the cache "
               + "of valid jump destinations to grow to before evicting the least recently used entry",
       fallbackValue = "32000",
-      defaultValue = "32000",
       hidden = true,
       arity = "1")
   private Long jumpDestCacheWeightKilobytes =
@@ -57,7 +58,6 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
       names = {WORLDSTATE_UPDATE_MODE},
       description = "How to handle worldstate updates within a transaction",
       fallbackValue = "STACKED",
-      defaultValue = "STACKED",
       hidden = true,
       arity = "1")
   private EvmConfiguration.WorldUpdaterMode worldstateUpdateMode =

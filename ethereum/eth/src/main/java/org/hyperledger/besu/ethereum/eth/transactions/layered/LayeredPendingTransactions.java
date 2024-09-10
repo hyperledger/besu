@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,13 +20,15 @@ import static java.util.stream.Collectors.reducing;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.RECONCILED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.NEW;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.RECONCILED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
@@ -37,34 +39,39 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import kotlin.ranges.LongRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 public class LayeredPendingTransactions implements PendingTransactions {
   private static final Logger LOG = LoggerFactory.getLogger(LayeredPendingTransactions.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
+  private static final Marker INVALID_TX_REMOVED = MarkerFactory.getMarker("INVALID_TX_REMOVED");
   private final TransactionPoolConfiguration poolConfig;
   private final AbstractPrioritizedTransactions prioritizedTransactions;
+  private final EthScheduler ethScheduler;
 
   public LayeredPendingTransactions(
       final TransactionPoolConfiguration poolConfig,
-      final AbstractPrioritizedTransactions prioritizedTransactions) {
+      final AbstractPrioritizedTransactions prioritizedTransactions,
+      final EthScheduler ethScheduler) {
     this.poolConfig = poolConfig;
     this.prioritizedTransactions = prioritizedTransactions;
+    this.ethScheduler = ethScheduler;
   }
 
   @Override
@@ -93,7 +100,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
 
     try {
-      return prioritizedTransactions.add(pendingTransaction, (int) nonceDistance);
+      return prioritizedTransactions.add(pendingTransaction, (int) nonceDistance, NEW);
     } catch (final Throwable throwable) {
       return reconcileAndRetryAdd(
           pendingTransaction, stateSenderNonce, (int) nonceDistance, throwable);
@@ -107,23 +114,25 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final Throwable throwable) {
     // in case something unexpected happened, log this sender txs, force a reconcile and retry
     // another time
-    // ToDo: demote to debug when Layered TxPool is out of preview
-    LOG.warn(
-        "Unexpected error {} when adding transaction {}, current sender status {}",
-        throwable,
-        pendingTransaction.toTraceLog(),
-        prioritizedTransactions.logSender(pendingTransaction.getSender()));
-    LOG.warn("Stack trace", throwable);
+    LOG.atDebug()
+        .setMessage(
+            "Unexpected error when adding transaction {}, current sender status {}, force a reconcile and retry")
+        .setCause(throwable)
+        .addArgument(pendingTransaction::toTraceLog)
+        .addArgument(() -> prioritizedTransactions.logSender(pendingTransaction.getSender()))
+        .log();
     reconcileSender(pendingTransaction.getSender(), stateSenderNonce);
     try {
-      return prioritizedTransactions.add(pendingTransaction, nonceDistance);
+      return prioritizedTransactions.add(pendingTransaction, nonceDistance, NEW);
     } catch (final Throwable throwable2) {
-      LOG.warn(
-          "Unexpected error {} when adding transaction {}, current sender status {}",
-          throwable,
-          pendingTransaction.toTraceLog(),
-          prioritizedTransactions.logSender(pendingTransaction.getSender()));
-      LOG.warn("Stack trace", throwable);
+      // the error should have been solved by the reconcile, logging at higher level now
+      LOG.atWarn()
+          .setCause(throwable2)
+          .setMessage(
+              "Unexpected error when adding transaction {} after reconciliation, current sender status {}")
+          .addArgument(pendingTransaction.toTraceLog())
+          .addArgument(prioritizedTransactions.logSender(pendingTransaction.getSender()))
+          .log();
       return INTERNAL_ERROR;
     }
   }
@@ -201,7 +210,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final long lowestNonce = reAddTxs.getFirst().getNonce();
       final int newNonceDistance = (int) Math.max(0, lowestNonce - stateSenderNonce);
 
-      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance));
+      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance, NEW));
     }
 
     LOG.atDebug()
@@ -234,7 +243,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .log();
   }
 
-  private void logTransactionForReplayDelete(final PendingTransaction pendingTransaction) {
+  private void logDiscardedTransaction(
+      final PendingTransaction pendingTransaction, final TransactionSelectionResult result) {
     // csv fields: sequence, addedAt, sender, nonce, type, hash, rlp
     LOG_FOR_REPLAY
         .atTrace()
@@ -246,6 +256,19 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .addArgument(pendingTransaction.getTransaction().getType())
         .addArgument(pendingTransaction::getHash)
         .addArgument(
+            () -> {
+              final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+              pendingTransaction.getTransaction().writeTo(rlp);
+              return rlp.encoded().toHexString();
+            })
+        .log();
+    LOG.atInfo()
+        .addMarker(INVALID_TX_REMOVED)
+        .addKeyValue("txhash", pendingTransaction::getHash)
+        .addKeyValue("txlog", pendingTransaction::toTraceLog)
+        .addKeyValue("reason", result)
+        .addKeyValue(
+            "txrlp",
             () -> {
               final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
               pendingTransaction.getTransaction().writeTo(rlp);
@@ -291,77 +314,74 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   @Override
-  // There's a small edge case here we could encounter.
-  // When we pass an upgrade block that has a new transaction type, we start allowing transactions
-  // of that new type into our pool.
-  // If we then reorg to a block lower than the upgrade block height _and_ we create a block, that
-  // block could end up with transactions of the new type.
-  // This seems like it would be very rare but worth it to document that we don't handle that case
-  // right now.
-  public synchronized void selectTransactions(
-      final PendingTransactions.TransactionSelector selector) {
-    final List<PendingTransaction> invalidTransactions = new ArrayList<>();
-    final Set<Hash> alreadyChecked = new HashSet<>();
+  public void selectTransactions(final PendingTransactions.TransactionSelector selector) {
     final Set<Address> skipSenders = new HashSet<>();
-    final AtomicBoolean completed = new AtomicBoolean(false);
 
-    prioritizedTransactions.stream()
-        .takeWhile(unused -> !completed.get())
-        .filter(highPrioPendingTx -> !skipSenders.contains(highPrioPendingTx.getSender()))
-        .peek(this::logSenderTxs)
-        .forEach(
-            highPrioPendingTx ->
-                prioritizedTransactions.stream(highPrioPendingTx.getSender())
-                    .takeWhile(
-                        candidatePendingTx ->
-                            !skipSenders.contains(candidatePendingTx.getSender())
-                                && !completed.get())
-                    .filter(
-                        candidatePendingTx ->
-                            !alreadyChecked.contains(candidatePendingTx.getHash())
-                                && candidatePendingTx.getNonce() <= highPrioPendingTx.getNonce())
-                    .forEach(
-                        candidatePendingTx -> {
-                          alreadyChecked.add(candidatePendingTx.getHash());
-                          final var res = selector.evaluateTransaction(candidatePendingTx);
+    final Map<Byte, List<SenderPendingTransactions>> candidateTxsByScore;
+    synchronized (this) {
+      // since selecting transactions for block creation is a potential long operation
+      // we want to avoid to keep the lock for all the process, but we just lock to get
+      // the candidate transactions
+      candidateTxsByScore = prioritizedTransactions.getByScore();
+    }
 
-                          LOG.atTrace()
-                              .setMessage("Selection result {} for transaction {}")
-                              .addArgument(res)
-                              .addArgument(candidatePendingTx::toTraceLog)
-                              .log();
+    selection:
+    for (final var entry : candidateTxsByScore.entrySet()) {
+      LOG.trace("Evaluating txs with score {}", entry.getKey());
 
-                          if (res.discard()) {
-                            invalidTransactions.add(candidatePendingTx);
-                            logTransactionForReplayDelete(candidatePendingTx);
-                          }
+      for (final var senderTxs : entry.getValue()) {
+        LOG.trace("Evaluating sender txs {}", senderTxs);
 
-                          if (res.stop()) {
-                            completed.set(true);
-                          }
+        if (!skipSenders.contains(senderTxs.sender())) {
 
-                          if (!res.selected()) {
-                            // avoid processing other txs from this sender if this one is skipped
-                            // since the following will not be selected due to the nonce gap
-                            skipSenders.add(candidatePendingTx.getSender());
-                            LOG.trace("Skipping tx from sender {}", candidatePendingTx.getSender());
-                          }
-                        }));
+          for (final var candidatePendingTx : senderTxs.pendingTransactions()) {
+            final var selectionResult = selector.evaluateTransaction(candidatePendingTx);
 
-    invalidTransactions.forEach(
-        invalidTx -> prioritizedTransactions.remove(invalidTx, INVALIDATED));
-  }
+            LOG.atTrace()
+                .setMessage("Selection result {} for transaction {}")
+                .addArgument(selectionResult)
+                .addArgument(candidatePendingTx::toTraceLog)
+                .log();
 
-  private void logSenderTxs(final PendingTransaction highPrioPendingTx) {
-    LOG.atTrace()
-        .setMessage("highPrioPendingTx {}, senderTxs {}")
-        .addArgument(highPrioPendingTx::toTraceLog)
-        .addArgument(
-            () ->
-                prioritizedTransactions.stream(highPrioPendingTx.getSender())
-                    .map(PendingTransaction::toTraceLog)
-                    .collect(Collectors.joining(", ")))
-        .log();
+            if (selectionResult.discard()) {
+              ethScheduler.scheduleTxWorkerTask(
+                  () -> {
+                    synchronized (this) {
+                      prioritizedTransactions.remove(candidatePendingTx, INVALIDATED);
+                    }
+                  });
+              logDiscardedTransaction(candidatePendingTx, selectionResult);
+            }
+
+            if (selectionResult.penalize()) {
+              ethScheduler.scheduleTxWorkerTask(
+                  () -> {
+                    synchronized (this) {
+                      prioritizedTransactions.penalize(candidatePendingTx);
+                    }
+                  });
+              LOG.atTrace()
+                  .setMessage("Transaction {} penalized")
+                  .addArgument(candidatePendingTx::toTraceLog)
+                  .log();
+            }
+
+            if (selectionResult.stop()) {
+              LOG.trace("Stopping selection");
+              break selection;
+            }
+
+            if (!selectionResult.selected()) {
+              // avoid processing other txs from this sender if this one is skipped
+              // since the following will not be selected due to the nonce gap
+              LOG.trace("Skipping remaining txs for sender {}", candidatePendingTx.getSender());
+              skipSenders.add(candidatePendingTx.getSender());
+              break;
+            }
+          }
+        }
+      }
+    }
   }
 
   @Override

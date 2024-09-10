@@ -23,10 +23,14 @@ public class Istanbul100SubProtocol implements SubProtocol {
 
   /** The constant NAME. */
   public static String NAME = "istanbul";
+
   /** The constant ISTANBUL_100. */
   public static final Capability ISTANBUL_100 = Capability.create(NAME, 100);
 
   private static final Istanbul100SubProtocol INSTANCE = new Istanbul100SubProtocol();
+
+  /** Default constructor */
+  public Istanbul100SubProtocol() {}
 
   /**
    * Get istanbul100 sub protocol.

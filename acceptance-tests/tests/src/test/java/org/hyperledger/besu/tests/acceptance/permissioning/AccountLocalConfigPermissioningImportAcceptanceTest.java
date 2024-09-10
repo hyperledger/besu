@@ -21,20 +21,19 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class AccountLocalConfigPermissioningImportAcceptanceTest extends AcceptanceTestBase {
 
-  @Rule public TemporaryFolder folder = new TemporaryFolder();
+  @TempDir Path folder;
 
   private static final String GENESIS_FILE = "/ibft/ibft.json";
 
@@ -45,20 +44,20 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
   private BesuNode nodeB;
   private Cluster permissionedCluster;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     sender = accounts.getPrimaryBenefactor();
     beneficiary = accounts.createAccount("beneficiary");
     final List<String> allowList = List.of(sender.getAddress(), beneficiary.getAddress());
-    final File sharedFile = folder.newFile();
-    persistAllowList(allowList, sharedFile.toPath());
+    final Path sharedFile = Files.createFile(folder.resolve("sharedFile"));
+    persistAllowList(allowList, sharedFile);
     bootnode = besu.createIbft2NonValidatorBootnode("bootnode", GENESIS_FILE);
     nodeA =
         besu.createIbft2NodeWithLocalAccountPermissioning(
-            "nodeA", GENESIS_FILE, allowList, sharedFile);
+            "nodeA", GENESIS_FILE, allowList, sharedFile.toFile());
     nodeB =
         besu.createIbft2NodeWithLocalAccountPermissioning(
-            "nodeB", GENESIS_FILE, allowList, sharedFile);
+            "nodeB", GENESIS_FILE, allowList, sharedFile.toFile());
     permissionedCluster =
         new Cluster(new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build(), net);
 
@@ -67,12 +66,12 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
 
   @Test
   public void transactionFromDeniedAccountShouldNotBreakBlockImport() throws IOException {
-    final File newPermissionsFile = folder.newFile();
+    final Path newPermissionsFile = Files.createFile(folder.resolve("newPermissionsFile"));
     final List<String> allowList = List.of(beneficiary.getAddress());
-    persistAllowList(allowList, newPermissionsFile.toPath());
+    persistAllowList(allowList, newPermissionsFile);
     final BesuNode nodeC =
         besu.createIbft2NodeWithLocalAccountPermissioning(
-            "nodeC", GENESIS_FILE, allowList, newPermissionsFile);
+            "nodeC", GENESIS_FILE, allowList, newPermissionsFile.toFile());
 
     waitForBlockHeight(bootnode, 2);
 
@@ -91,7 +90,7 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
         AllowlistPersistor.ALLOWLIST_TYPE.ACCOUNTS, allowList, path);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     permissionedCluster.stop();
   }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -24,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
@@ -35,7 +37,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -82,7 +83,7 @@ public class PrivateTransactionProcessor {
       final PrivateTransaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
-      final Function<Long, Hash> blockHashLookup,
+      final BlockHashLookup blockHashLookup,
       final Bytes privacyGroupId) {
     try {
       LOG.trace("Starting private execution of {}", transaction);
@@ -138,13 +139,14 @@ public class PrivateTransactionProcessor {
             privacyGroupId);
 
         final Bytes initCodeBytes = transaction.getPayload();
+        Code code = contractCreationProcessor.getCodeFromEVMForCreation(initCodeBytes);
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.CONTRACT_CREATION)
                 .address(privateContractAddress)
                 .contract(privateContractAddress)
-                .inputData(Bytes.EMPTY)
-                .code(contractCreationProcessor.getCodeFromEVM(null, initCodeBytes))
+                .inputData(initCodeBytes.slice(code.getSize()))
+                .code(code)
                 .build();
       } else {
         final Address to = transaction.getTo().get();

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -42,11 +43,13 @@ public class LayeredTransactionPoolBaseFeeTest extends AbstractLayeredTransactio
     return new BaseFeePrioritizedTransactions(
         poolConfig,
         protocolContext.getBlockchain()::getChainHeadHeader,
+        ethScheduler,
         nextLayer,
         txPoolMetrics,
         transactionReplacementTester,
         FeeMarket.london(0L),
-        new BlobCache());
+        new BlobCache(),
+        MiningParameters.newDefault());
   }
 
   @Override

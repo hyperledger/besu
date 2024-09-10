@@ -14,13 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -28,13 +31,14 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -51,7 +55,13 @@ public class ChainHeadTrackerTest {
 
   private final ProtocolSchedule protocolSchedule =
       FixedDifficultyProtocolSchedule.create(
-          GenesisConfigFile.development().getConfigOptions(), false, EvmConfiguration.DEFAULT);
+          GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
+          false,
+          EvmConfiguration.DEFAULT,
+          MiningParameters.MINING_DISABLED,
+          new BadBlockManager(),
+          false,
+          new NoOpMetricsSystem());
 
   private final TrailingPeerLimiter trailingPeerLimiter = mock(TrailingPeerLimiter.class);
 
@@ -92,7 +102,7 @@ public class ChainHeadTrackerTest {
             blockchainSetupUtil.getBlockchain(),
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getTransactionPool());
-    chainHeadTracker.onPeerConnected(respondingPeer.getEthPeer());
+    chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
 
     Assertions.assertThat(chainHeadState().getEstimatedHeight()).isZero();
 
@@ -112,7 +122,7 @@ public class ChainHeadTrackerTest {
             blockchainSetupUtil.getBlockchain(),
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getTransactionPool());
-    chainHeadTracker.onPeerConnected(respondingPeer.getEthPeer());
+    chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
 
     // Change the hash of the current known head
     respondingPeer.getEthPeer().chainState().statusReceived(Hash.EMPTY_TRIE_HASH, Difficulty.ONE);
@@ -131,7 +141,7 @@ public class ChainHeadTrackerTest {
             blockchainSetupUtil.getBlockchain(),
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getTransactionPool());
-    chainHeadTracker.onPeerConnected(respondingPeer.getEthPeer());
+    chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
 
     Assertions.assertThat(chainHeadState().getEstimatedHeight()).isZero();
 
@@ -143,5 +153,12 @@ public class ChainHeadTrackerTest {
 
   private ChainState chainHeadState() {
     return respondingPeer.getEthPeer().chainState();
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

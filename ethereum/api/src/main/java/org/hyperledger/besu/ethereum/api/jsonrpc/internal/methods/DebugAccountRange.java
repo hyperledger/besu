@@ -17,9 +17,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugAccountRangeAtResult;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -56,10 +59,30 @@ public class DebugAccountRange implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final BlockParameterOrBlockHash blockParameterOrBlockHash =
-        requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
-    final String addressHash = requestContext.getRequiredParameter(2, String.class);
-    final int maxResults = requestContext.getRequiredParameter(3, Integer.TYPE);
+    final BlockParameterOrBlockHash blockParameterOrBlockHash;
+    try {
+      blockParameterOrBlockHash =
+          requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter or block hash parameter (index 0)",
+          RpcErrorType.INVALID_BLOCK_PARAMS,
+          e);
+    }
+    final String addressHash;
+    try {
+      addressHash = requestContext.getRequiredParameter(2, String.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid address hash parameter (index 2)", RpcErrorType.INVALID_ADDRESS_HASH_PARAMS, e);
+    }
+    final int maxResults;
+    try {
+      maxResults = requestContext.getRequiredParameter(3, Integer.TYPE);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid max results parameter (index 3)", RpcErrorType.INVALID_MAX_RESULTS_PARAMS, e);
+    }
 
     final Optional<Hash> blockHashOptional = hashFromParameter(blockParameterOrBlockHash);
     if (blockHashOptional.isEmpty()) {

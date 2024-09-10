@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,9 +15,12 @@
 package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -25,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -61,14 +65,32 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    *
    * @param genesisConfigOptions {@link GenesisConfigOptions} containing the config options for the
    *     milestone starting points
+   * @param miningParameters the mining parameters
+   * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @return an initialised TransitionProtocolSchedule using post-merge defaults
    */
   public static TransitionProtocolSchedule fromConfig(
-      final GenesisConfigOptions genesisConfigOptions) {
+      final GenesisConfigOptions genesisConfigOptions,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
     ProtocolSchedule preMergeProtocolSchedule =
-        MainnetProtocolSchedule.fromConfig(genesisConfigOptions);
+        MainnetProtocolSchedule.fromConfig(
+            genesisConfigOptions,
+            miningParameters,
+            badBlockManager,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
     ProtocolSchedule postMergeProtocolSchedule =
-        MergeProtocolSchedule.create(genesisConfigOptions, false);
+        MergeProtocolSchedule.create(
+            genesisConfigOptions,
+            false,
+            miningParameters,
+            badBlockManager,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
     return new TransitionProtocolSchedule(
         preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
   }
@@ -218,6 +240,13 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public String listMilestones() {
     return transitionUtils.dispatchFunctionAccordingToMergeState(ProtocolSchedule::listMilestones);
+  }
+
+  @Override
+  public Optional<Long> milestoneFor(final HardforkId hardforkId) {
+    return mergeContext.isPostMerge()
+        ? transitionUtils.getPostMergeObject().milestoneFor(hardforkId)
+        : transitionUtils.getPreMergeObject().milestoneFor(hardforkId);
   }
 
   /**

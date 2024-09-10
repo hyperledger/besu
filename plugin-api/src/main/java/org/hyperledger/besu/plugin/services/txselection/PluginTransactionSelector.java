@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,8 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.plugin.services.txselection;
+
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 
 import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.plugin.Unstable;
@@ -24,6 +25,22 @@ import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 /** Interface for the transaction selector */
 @Unstable
 public interface PluginTransactionSelector {
+  /** Plugin transaction selector that unconditionally select every transaction */
+  PluginTransactionSelector ACCEPT_ALL =
+      new PluginTransactionSelector() {
+        @Override
+        public TransactionSelectionResult evaluateTransactionPreProcessing(
+            TransactionEvaluationContext<? extends PendingTransaction> evaluationContext) {
+          return SELECTED;
+        }
+
+        @Override
+        public TransactionSelectionResult evaluateTransactionPostProcessing(
+            TransactionEvaluationContext<? extends PendingTransaction> evaluationContext,
+            TransactionProcessingResult processingResult) {
+          return SELECTED;
+        }
+      };
 
   /**
    * Method that returns an OperationTracer that will be used when executing transactions that are
@@ -66,6 +83,7 @@ public interface PluginTransactionSelector {
   default void onTransactionSelected(
       final TransactionEvaluationContext<? extends PendingTransaction> evaluationContext,
       final TransactionProcessingResult processingResult) {}
+
   /**
    * Method called when a transaction is not selected to be added to a block.
    *

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -99,7 +100,9 @@ public class JsonRpcHttpServiceLoginTest {
   protected static OkHttpClient client;
   protected static String baseUrl;
   protected static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-  protected static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
+  protected static final String CLIENT_NODE_NAME = "TestClientVersion/0.1.0";
+  protected static final String CLIENT_VERSION = "0.1.0";
+  protected static final String CLIENT_COMMIT = "12345678";
   protected static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   protected static P2PNetwork peerDiscoveryMock;
   protected static BlockchainQueries blockchainQueries;
@@ -130,13 +133,20 @@ public class JsonRpcHttpServiceLoginTest {
     rpcMethods =
         new JsonRpcMethodsFactory()
             .methods(
+                CLIENT_NODE_NAME,
                 CLIENT_VERSION,
+                CLIENT_COMMIT,
                 CHAIN_ID,
                 genesisConfigOptions,
                 peerDiscoveryMock,
                 blockchainQueries,
                 synchronizer,
-                MainnetProtocolSchedule.fromConfig(genesisConfigOptions),
+                MainnetProtocolSchedule.fromConfig(
+                    genesisConfigOptions,
+                    MiningParameters.MINING_DISABLED,
+                    new BadBlockManager(),
+                    false,
+                    new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
                 mock(TransactionPool.class),

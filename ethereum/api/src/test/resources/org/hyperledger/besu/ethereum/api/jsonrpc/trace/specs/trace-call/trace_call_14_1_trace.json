@@ -41,7 +41,7 @@
           "init" : "0x600160015560015460025560ff60005360016000f3",
           "value" : "0x0"
         },
-        "error" : "Out of gas",
+        "error" : "Illegal state change",
         "subtraces" : 0,
         "traceAddress" : [ 0 ],
         "type" : "create"

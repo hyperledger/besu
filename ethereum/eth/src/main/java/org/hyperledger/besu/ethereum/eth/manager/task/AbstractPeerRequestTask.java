@@ -110,10 +110,10 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
       // Peer sent us malformed data - disconnect
       LOG.debug(
           "Disconnecting with BREACH_OF_PROTOCOL due to malformed message: {}",
-          peer.getShortNodeId(),
+          peer.getLoggableId(),
           e);
       LOG.trace("Peer {} Malformed message data: {}", peer, message.getData());
-      peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
       promise.completeExceptionally(new PeerBreachedProtocolException());
     }
   }

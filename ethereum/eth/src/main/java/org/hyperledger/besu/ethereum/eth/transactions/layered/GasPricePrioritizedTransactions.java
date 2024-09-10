@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 import static java.util.Comparator.comparing;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -35,17 +37,27 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
 
   public GasPricePrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
+      final EthScheduler ethScheduler,
       final TransactionsLayer nextLayer,
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
-      final BlobCache blobCache) {
-    super(poolConfig, nextLayer, metrics, transactionReplacementTester, blobCache);
+      final BlobCache blobCache,
+      final MiningParameters miningParameters) {
+    super(
+        poolConfig,
+        ethScheduler,
+        nextLayer,
+        metrics,
+        transactionReplacementTester,
+        blobCache,
+        miningParameters);
   }
 
   @Override
   protected int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2) {
-    return comparing(PendingTransaction::hasPriority)
+    return comparing(PendingTransaction::getScore)
+        .thenComparing(PendingTransaction::hasPriority)
         .thenComparing(PendingTransaction::getGasPrice)
         .thenComparing(PendingTransaction::getSequence)
         .compare(pt1, pt2);
@@ -58,25 +70,42 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
 
   @Override
   protected boolean promotionFilter(final PendingTransaction pendingTransaction) {
-    return true;
+    return pendingTransaction.hasPriority()
+        || pendingTransaction
+            .getTransaction()
+            .getGasPrice()
+            .map(miningParameters.getMinTransactionGasPrice()::lessThan)
+            .orElse(false);
   }
 
   @Override
-  public String internalLogStats() {
+  protected String internalLogStats() {
     if (orderByFee.isEmpty()) {
       return "GasPrice Prioritized: Empty";
     }
 
+    final PendingTransaction highest = orderByFee.last();
+    final PendingTransaction lowest = orderByFee.first();
+
     return "GasPrice Prioritized: "
         + "count: "
         + pendingTransactions.size()
-        + " space used: "
+        + ", space used: "
         + spaceUsed
-        + " unique senders: "
+        + ", unique senders: "
         + txsBySender.size()
-        + ", highest fee tx: "
-        + orderByFee.last().getTransaction().getGasPrice().get().toHumanReadableString()
-        + ", lowest fee tx: "
-        + orderByFee.first().getTransaction().getGasPrice().get().toHumanReadableString();
+        + ", highest priority tx: [score: "
+        + highest.getScore()
+        + ", gas price: "
+        + highest.getTransaction().getGasPrice().get().toHumanReadableString()
+        + ", hash: "
+        + highest.getHash()
+        + "], lowest priority tx: [score: "
+        + lowest.getScore()
+        + ", gas price: "
+        + lowest.getTransaction().getGasPrice().get().toHumanReadableString()
+        + ", hash: "
+        + lowest.getHash()
+        + "]";
   }
 }

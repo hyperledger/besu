@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -27,12 +27,12 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** The Transition coordinator. */
@@ -104,12 +104,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public Wei getMinPriorityFeePerGas() {
     return dispatchFunctionAccordingToMergeState(MiningCoordinator::getMinPriorityFeePerGas);
-  }
-
-  @Override
-  public void setExtraData(final Bytes extraData) {
-    miningCoordinator.setExtraData(extraData);
-    mergeCoordinator.setExtraData(extraData);
   }
 
   @Override
@@ -210,11 +204,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public void addBadBlock(final Block block, final Optional<Throwable> maybeCause) {
-    mergeCoordinator.addBadBlock(block, maybeCause);
-  }
-
-  @Override
   public boolean isBadBlock(final Hash blockHash) {
     return mergeCoordinator.isBadBlock(blockHash);
   }
@@ -227,5 +216,15 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public void finalizeProposalById(final PayloadIdentifier payloadId) {
     mergeCoordinator.finalizeProposalById(payloadId);
+  }
+
+  /**
+   * returns the instance of ethScheduler
+   *
+   * @return get the Eth scheduler
+   */
+  @Override
+  public EthScheduler getEthScheduler() {
+    return mergeCoordinator.getEthScheduler();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,16 +11,14 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.components;
 
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
-import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoaderModule;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -37,7 +35,7 @@ import org.slf4j.Logger;
     modules = {
       BesuCommandModule.class,
       MetricsSystemModule.class,
-      CachedMerkleTrieLoaderModule.class,
+      BonsaiCachedMerkleTrieLoaderModule.class,
       BesuPluginContextModule.class,
       BlobCacheModule.class
     })
@@ -55,7 +53,7 @@ public interface BesuComponent {
    *
    * @return CachedMerkleTrieLoader
    */
-  CachedMerkleTrieLoader getCachedMerkleTrieLoader();
+  BonsaiCachedMerkleTrieLoader getCachedMerkleTrieLoader();
 
   /**
    * a metrics system that is observable by a Prometheus or OTEL metrics collection subsystem
@@ -77,7 +75,6 @@ public interface BesuComponent {
    *
    * @return BesuPluginContextImpl
    */
-  @Named("besuPluginContext")
   BesuPluginContextImpl getBesuPluginContext();
 
   /**

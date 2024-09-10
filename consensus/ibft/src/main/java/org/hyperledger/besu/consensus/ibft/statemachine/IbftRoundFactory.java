@@ -99,9 +99,8 @@ public class IbftRoundFactory {
    */
   public IbftRound createNewRoundWithState(
       final BlockHeader parentHeader, final RoundState roundState) {
-    final ConsensusRoundIdentifier roundIdentifier = roundState.getRoundIdentifier();
     final BlockCreator blockCreator =
-        blockCreatorFactory.create(parentHeader, roundIdentifier.getRoundNumber());
+        blockCreatorFactory.create(roundState.getRoundIdentifier().getRoundNumber());
 
     final IbftMessageTransmitter messageTransmitter =
         new IbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
@@ -110,12 +109,13 @@ public class IbftRoundFactory {
         roundState,
         blockCreator,
         protocolContext,
-        protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockImporter(),
+        protocolSchedule,
         minedBlockObservers,
         finalState.getNodeKey(),
         messageFactory,
         messageTransmitter,
         finalState.getRoundTimer(),
-        bftExtraDataCodec);
+        bftExtraDataCodec,
+        parentHeader);
   }
 }

@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.config;
 
 import java.util.Arrays;
@@ -34,6 +33,7 @@ public class QbftFork extends BftFork {
 
   /** The constant VALIDATOR_SELECTION_MODE_KEY. */
   public static final String VALIDATOR_SELECTION_MODE_KEY = "validatorselectionmode";
+
   /** The constant VALIDATOR_CONTRACT_ADDRESS_KEY. */
   public static final String VALIDATOR_CONTRACT_ADDRESS_KEY = "validatorcontractaddress";
 

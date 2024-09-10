@@ -17,9 +17,11 @@ package org.hyperledger.besu.ethereum.eth.messages;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -32,6 +34,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -54,7 +57,13 @@ public final class BlockBodiesMessageTest {
   public void setup() {
     protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(), false, EvmConfiguration.DEFAULT);
+            GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
+            false,
+            EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
   }
 
   @Test

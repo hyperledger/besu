@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -54,7 +54,7 @@ public class EngineForkchoiceUpdatedV1 extends AbstractEngineForkchoiceUpdated {
   }
 
   @Override
-  protected RpcErrorType getInvalidPayloadError() {
+  protected RpcErrorType getInvalidParametersError() {
     return RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES;
   }
 }

@@ -16,28 +16,36 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule.DEFAULT_CHAIN_ID;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTransactions;
@@ -96,6 +104,9 @@ public class TransactionPoolFactoryTest {
   @BeforeEach
   public void setup() {
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(mock(Hash.class)));
+    final Block mockBlock = mock(Block.class);
+    when(mockBlock.getHash()).thenReturn(Hash.ZERO);
+    when(blockchain.getGenesisBlock()).thenReturn(mockBlock);
     when(context.getBlockchain()).thenReturn(blockchain);
 
     final NodeMessagePermissioningProvider nmpp = (destinationEnode, code) -> true;
@@ -110,8 +121,9 @@ public class TransactionPoolFactoryTest {
             Bytes.random(64),
             25,
             25,
-            25,
-            false);
+            false,
+            SyncMode.SNAP,
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
     when(ethContext.getEthMessages()).thenReturn(ethMessages);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
 
@@ -125,6 +137,37 @@ public class TransactionPoolFactoryTest {
         ArgumentCaptor.forClass(BlockAddedObserver.class);
     verify(blockchain, atLeastOnce()).observeBlockAdded(blockAddedListeners.capture());
 
+    assertThat(pool.isEnabled()).isFalse();
+  }
+
+  @Test
+  public void assertPoolDisabledIfChainInSyncWithoutInitialSync() {
+    SyncState syncSpy = spy(new SyncState(blockchain, ethPeers, true, Optional.empty()));
+    ArgumentCaptor<Synchronizer.InSyncListener> chainSyncCaptor =
+        ArgumentCaptor.forClass(Synchronizer.InSyncListener.class);
+
+    setupInitialSyncPhase(syncSpy);
+    // verify that we are registered to the sync state
+    verify(syncSpy).subscribeInSync(chainSyncCaptor.capture());
+    // Retrieve the captured InSyncListener
+    Synchronizer.InSyncListener chainSyncListener = chainSyncCaptor.getValue();
+
+    // mock chain being in sync:
+    chainSyncListener.onInSyncStatusChange(true);
+
+    // assert pool is disabled if chain in sync and initial sync not done
+    assertThat(pool.isEnabled()).isFalse();
+
+    // mock initial sync done (avoid triggering initial sync listener)
+    when(syncSpy.isInitialSyncPhaseDone()).thenReturn(true);
+
+    // assert pool is enabled when chain in sync and initial sync done
+    chainSyncListener.onInSyncStatusChange(true);
+    assertThat(pool.isEnabled()).isTrue();
+
+    // assert pool is re-disabled when initial sync is incomplete but chain reaches head:
+    when(syncSpy.isInitialSyncPhaseDone()).thenCallRealMethod();
+    chainSyncListener.onInSyncStatusChange(false);
     assertThat(pool.isEnabled()).isFalse();
   }
 
@@ -228,30 +271,38 @@ public class TransactionPoolFactoryTest {
                 "transaction messages handler should be enabled"));
   }
 
+  @Test
+  public void txPoolStartsDisabledWhenInitialSyncPhaseIsRequired() {
+    // when using any of the initial syncs (SNAP, FAST, ...), txpool starts disabled
+    // and is enabled only after it is in sync
+    setupInitialSyncPhase(true);
+    assertThat(pool.isEnabled()).isFalse();
+  }
+
+  @Test
+  public void callingGetNextNonceForSenderOnDisabledTxPoolWorks() {
+    setupInitialSyncPhase(true);
+
+    assertThat(pool.getNextNonceForSender(Address.fromHexString("0x123abc"))).isEmpty();
+  }
+
+  @Test
+  public void txPoolStartsEnabledWhenFullSyncConfigured() {
+    // when using FULL sync, txpool starts enabled, because it could be
+    // that it is the first node on a new network and so, it is in sync with genesis
+    // and must accept txs. Otherwise, asap it find a sync target that is ahead, the txpool
+    // will be disabled, until in sync.
+    setupInitialSyncPhase(false);
+    assertThat(pool.isEnabled()).isTrue();
+  }
+
   private void setupInitialSyncPhase(final boolean hasInitialSyncPhase) {
     syncState = new SyncState(blockchain, ethPeers, hasInitialSyncPhase, Optional.empty());
+    setupInitialSyncPhase(syncState);
+  }
 
-    pool =
-        TransactionPoolFactory.createTransactionPool(
-            schedule,
-            context,
-            ethContext,
-            TestClock.fixed(),
-            new TransactionPoolMetrics(new NoOpMetricsSystem()),
-            syncState,
-            ImmutableTransactionPoolConfiguration.builder()
-                .txPoolMaxSize(1)
-                .pendingTxRetentionPeriod(1)
-                .unstable(
-                    ImmutableTransactionPoolConfiguration.Unstable.builder()
-                        .txMessageKeepAliveSeconds(1)
-                        .build())
-                .build(),
-            peerTransactionTracker,
-            transactionsMessageSender,
-            newPooledTransactionHashesMessageSender,
-            null,
-            new BlobCache());
+  private void setupInitialSyncPhase(final SyncState syncState) {
+    pool = createTransactionPool(LAYERED, syncState);
 
     ethProtocolManager =
         new EthProtocolManager(
@@ -275,8 +326,7 @@ public class TransactionPoolFactoryTest {
       createLegacyTransactionPool_shouldUseBaseFeePendingTransactionsSorter_whenLondonEnabled() {
     setupScheduleWith(new StubGenesisConfigOptions().londonBlock(0));
 
-    final TransactionPool pool =
-        createTransactionPool(TransactionPoolConfiguration.Implementation.LEGACY);
+    final TransactionPool pool = createAndEnableTransactionPool(LEGACY, syncState);
 
     assertThat(pool.pendingTransactionsImplementation())
         .isEqualTo(BaseFeePendingTransactionsSorter.class);
@@ -287,8 +337,7 @@ public class TransactionPoolFactoryTest {
       createLegacyTransactionPool_shouldUseGasPricePendingTransactionsSorter_whenLondonNotEnabled() {
     setupScheduleWith(new StubGenesisConfigOptions().berlinBlock(0));
 
-    final TransactionPool pool =
-        createTransactionPool(TransactionPoolConfiguration.Implementation.LEGACY);
+    final TransactionPool pool = createAndEnableTransactionPool(LEGACY, syncState);
 
     assertThat(pool.pendingTransactionsImplementation())
         .isEqualTo(GasPricePendingTransactionsSorter.class);
@@ -299,7 +348,7 @@ public class TransactionPoolFactoryTest {
       createLayeredTransactionPool_shouldUseBaseFeePendingTransactionsSorter_whenLondonEnabled() {
     setupScheduleWith(new StubGenesisConfigOptions().londonBlock(0));
 
-    final TransactionPool pool = createTransactionPool(LAYERED);
+    final TransactionPool pool = createAndEnableTransactionPool(LAYERED, syncState);
 
     assertThat(pool.pendingTransactionsImplementation())
         .isEqualTo(LayeredPendingTransactions.class);
@@ -312,7 +361,7 @@ public class TransactionPoolFactoryTest {
       createLayeredTransactionPool_shouldUseGasPricePendingTransactionsSorter_whenLondonNotEnabled() {
     setupScheduleWith(new StubGenesisConfigOptions().berlinBlock(0));
 
-    final TransactionPool pool = createTransactionPool(LAYERED);
+    final TransactionPool pool = createAndEnableTransactionPool(LAYERED, syncState);
 
     assertThat(pool.pendingTransactionsImplementation())
         .isEqualTo(LayeredPendingTransactions.class);
@@ -328,7 +377,11 @@ public class TransactionPoolFactoryTest {
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,
-                EvmConfiguration.DEFAULT)
+                EvmConfiguration.DEFAULT,
+                MiningParameters.MINING_DISABLED,
+                new BadBlockManager(),
+                false,
+                new NoOpMetricsSystem())
             .createProtocolSchedule();
 
     protocolContext = mock(ProtocolContext.class);
@@ -339,27 +392,33 @@ public class TransactionPoolFactoryTest {
   }
 
   private TransactionPool createTransactionPool(
-      final TransactionPoolConfiguration.Implementation implementation) {
-    final TransactionPool txPool =
-        TransactionPoolFactory.createTransactionPool(
-            schedule,
-            protocolContext,
-            ethContext,
-            TestClock.fixed(),
-            new NoOpMetricsSystem(),
-            syncState,
-            ImmutableTransactionPoolConfiguration.builder()
-                .txPoolImplementation(implementation)
-                .txPoolMaxSize(1)
-                .pendingTxRetentionPeriod(1)
-                .unstable(
-                    ImmutableTransactionPoolConfiguration.Unstable.builder()
-                        .txMessageKeepAliveSeconds(1)
-                        .build())
-                .build(),
-            null,
-            new BlobCache());
+      final TransactionPoolConfiguration.Implementation implementation, final SyncState syncState) {
+    return TransactionPoolFactory.createTransactionPool(
+        schedule,
+        context,
+        ethContext,
+        TestClock.fixed(),
+        new TransactionPoolMetrics(new NoOpMetricsSystem()),
+        syncState,
+        ImmutableTransactionPoolConfiguration.builder()
+            .txPoolImplementation(implementation)
+            .txPoolMaxSize(1)
+            .pendingTxRetentionPeriod(1)
+            .unstable(
+                ImmutableTransactionPoolConfiguration.Unstable.builder()
+                    .txMessageKeepAliveSeconds(1)
+                    .build())
+            .build(),
+        peerTransactionTracker,
+        transactionsMessageSender,
+        newPooledTransactionHashesMessageSender,
+        new BlobCache(),
+        MiningParameters.newDefault());
+  }
 
+  private TransactionPool createAndEnableTransactionPool(
+      final TransactionPoolConfiguration.Implementation implementation, final SyncState syncState) {
+    final TransactionPool txPool = createTransactionPool(implementation, syncState);
     txPool.setEnabled();
     return txPool;
   }

@@ -1,0 +1,40 @@
+package org.hyperledger.besu.ethereum.vm.eof;
+
+import static org.hyperledger.besu.ethereum.eof.EOFReferenceTestTools.executeTest;
+import static org.hyperledger.besu.ethereum.eof.EOFReferenceTestTools.generateTestParametersForConfig;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec;
+
+import java.util.stream.Stream;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+/** The general state test operation testing framework entry point. */
+public class %%TESTS_NAME%% {
+
+  private static final String[] TEST_CONFIG_FILE_DIR_PATH =
+      new String[] {
+        %%TESTS_FILE%%
+      };
+
+  public static Stream<Arguments> getTestParametersForConfig() {
+    return generateTestParametersForConfig(TEST_CONFIG_FILE_DIR_PATH).stream().map(Arguments::of);
+  }
+
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void execution(
+      final String name,
+      final String fork,
+      final Bytes code,
+      final String containerKind,
+      final EOFTestCaseSpec.TestResult results,
+      final boolean runTest) {
+    assumeTrue(runTest, "Test " + name + " was ignored");
+    executeTest(name, fork, code, containerKind, results);
+  }
+}

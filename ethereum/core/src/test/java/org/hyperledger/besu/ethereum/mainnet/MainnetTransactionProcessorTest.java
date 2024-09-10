@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
@@ -22,14 +23,12 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -40,8 +39,10 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -69,7 +70,6 @@ class MainnetTransactionProcessorTest {
   @Mock private AbstractMessageProcessor contractCreationProcessor;
   @Mock private AbstractMessageProcessor messageCallProcessor;
 
-  @Mock private Blockchain blockchain;
   @Mock private WorldUpdater worldState;
   @Mock private ProcessableBlockHeader blockHeader;
   @Mock private Transaction transaction;
@@ -88,7 +88,8 @@ class MainnetTransactionProcessorTest {
         warmCoinbase,
         MAX_STACK_SIZE,
         FeeMarket.legacy(),
-        CoinbaseFeePriceCalculator.frontier());
+        CoinbaseFeePriceCalculator.frontier(),
+        new CodeDelegationProcessor(Optional.of(BigInteger.ONE)));
   }
 
   @Test
@@ -103,7 +104,7 @@ class MainnetTransactionProcessorTest {
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
     when(transaction.getSender()).thenReturn(senderAddress);
     when(transaction.getValue()).thenReturn(Wei.ZERO);
-    when(transactionValidatorFactory.get().validate(any(), any(), any()))
+    when(transactionValidatorFactory.get().validate(any(), any(), any(), any()))
         .thenReturn(ValidationResult.valid());
     when(transactionValidatorFactory.get().validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
@@ -124,7 +125,6 @@ class MainnetTransactionProcessorTest {
 
     var transactionProcessor = createTransactionProcessor(true);
     transactionProcessor.processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -138,7 +138,6 @@ class MainnetTransactionProcessorTest {
 
     transactionProcessor = createTransactionProcessor(false);
     transactionProcessor.processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -168,7 +167,7 @@ class MainnetTransactionProcessorTest {
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
     when(transaction.getSender()).thenReturn(senderAddress);
     when(transaction.getValue()).thenReturn(Wei.ZERO);
-    when(transactionValidatorFactory.get().validate(any(), any(), any()))
+    when(transactionValidatorFactory.get().validate(any(), any(), any(), any()))
         .thenReturn(ValidationResult.valid());
     when(transactionValidatorFactory.get().validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
@@ -187,7 +186,6 @@ class MainnetTransactionProcessorTest {
     var transactionProcessor = createTransactionProcessor(true);
     try {
       transactionProcessor.processTransaction(
-          blockchain,
           worldState,
           blockHeader,
           transaction,
@@ -221,6 +219,7 @@ class MainnetTransactionProcessorTest {
         final Bytes output,
         final List<Log> logs,
         final long gasUsed,
+        final Set<Address> selfDestructs,
         final long timeNs) {
       this.traceEndTxCalled = true;
     }
@@ -237,7 +236,6 @@ class MainnetTransactionProcessorTest {
     var transactionProcessor = createTransactionProcessor(false);
 
     transactionProcessor.processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -255,7 +253,7 @@ class MainnetTransactionProcessorTest {
   private ArgumentCaptor<TransactionValidationParams> transactionValidationParamCaptor() {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         ArgumentCaptor.forClass(TransactionValidationParams.class);
-    when(transactionValidatorFactory.get().validate(any(), any(), any()))
+    when(transactionValidatorFactory.get().validate(any(), any(), any(), any()))
         .thenReturn(ValidationResult.valid());
     // returning invalid transaction to halt method execution
     when(transactionValidatorFactory

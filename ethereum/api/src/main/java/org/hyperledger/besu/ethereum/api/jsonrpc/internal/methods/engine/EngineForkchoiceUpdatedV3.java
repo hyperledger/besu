@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -22,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePaylo
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
@@ -33,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
 
-  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
   private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV3.class);
 
   public EngineForkchoiceUpdatedV3(
@@ -43,7 +43,6 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolSchedule, protocolContext, mergeCoordinator, engineCallListener);
-    this.cancun = protocolSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
   }
 
   @Override
@@ -56,16 +55,19 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
       final EngineForkchoiceUpdatedParameter fcuParameter,
       final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes) {
     if (fcuParameter.getHeadBlockHash() == null) {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing head block hash");
+      return ValidationResult.invalid(
+          getInvalidPayloadAttributesError(), "Missing head block hash");
     } else if (fcuParameter.getSafeBlockHash() == null) {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing safe block hash");
+      return ValidationResult.invalid(
+          getInvalidPayloadAttributesError(), "Missing safe block hash");
     } else if (fcuParameter.getFinalizedBlockHash() == null) {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing finalized block hash");
+      return ValidationResult.invalid(
+          getInvalidPayloadAttributesError(), "Missing finalized block hash");
     }
     if (maybePayloadAttributes.isPresent()) {
       if (maybePayloadAttributes.get().getParentBeaconBlockRoot() == null) {
         return ValidationResult.invalid(
-            RpcErrorType.INVALID_PARAMS, "Missing parent beacon block root hash");
+            getInvalidPayloadAttributesError(), "Missing parent beacon block root hash");
       }
     }
     return ValidationResult.valid();
@@ -73,18 +75,7 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
-    if (protocolSchedule.isPresent()) {
-      if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
-        return ValidationResult.valid();
-      } else {
-        return ValidationResult.invalid(
-            RpcErrorType.UNSUPPORTED_FORK,
-            "Cancun configured to start at timestamp: " + cancun.get().milestone());
-      }
-    } else {
-      return ValidationResult.invalid(
-          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for Cancun fork set");
-    }
+    return ForkSupportHelper.validateForkSupported(CANCUN, cancunMilestone, blockTimestamp);
   }
 
   @Override
@@ -93,11 +84,17 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
     if (payloadAttributes.getParentBeaconBlockRoot() == null) {
       LOG.error(
           "Parent beacon block root hash not present in payload attributes after cancun hardfork");
-      return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS));
-    } else if (payloadAttributes.getTimestamp() < cancun.get().milestone()) {
-      return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
-    } else {
-      return Optional.empty();
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
     }
+
+    if (payloadAttributes.getTimestamp() == 0) {
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
+    }
+
+    if (cancunMilestone.isEmpty() || payloadAttributes.getTimestamp() < cancunMilestone.get()) {
+      return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
+    }
+
+    return Optional.empty();
   }
 }

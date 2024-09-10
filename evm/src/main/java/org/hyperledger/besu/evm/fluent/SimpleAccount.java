@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm.fluent;
 
@@ -184,6 +183,17 @@ public class SimpleAccount implements MutableAccount {
     return storage;
   }
 
+  /**
+   * Does this account have any storage slots that are set to non-zero values?
+   *
+   * @return true if the account has no storage values set to non-zero values. False if any storage
+   *     is set.
+   */
+  @Override
+  public boolean isStorageEmpty() {
+    return storage.isEmpty();
+  }
+
   @Override
   public void becomeImmutable() {
     immutable = true;
@@ -195,23 +205,6 @@ public class SimpleAccount implements MutableAccount {
    * @return true if there was a parent account that was committed to
    */
   public boolean commit() {
-    if (parent instanceof SimpleAccount simpleAccount) {
-      simpleAccount.balance = balance;
-      simpleAccount.nonce = nonce;
-      simpleAccount.storage.putAll(storage);
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  /**
-   * Push changes into the parent account, if one exists
-   *
-   * @return true if a parent account was updated, false if not (this indicates the account should
-   *     be inserted into the parent contact).
-   */
-  public boolean updateParent() {
     if (parent instanceof SimpleAccount simpleAccount) {
       simpleAccount.balance = balance;
       simpleAccount.nonce = nonce;

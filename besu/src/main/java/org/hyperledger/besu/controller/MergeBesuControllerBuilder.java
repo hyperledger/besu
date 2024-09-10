@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.controller;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
@@ -42,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardChain;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -58,6 +58,9 @@ import org.slf4j.LoggerFactory;
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   private final AtomicReference<SyncState> syncState = new AtomicReference<>();
   private static final Logger LOG = LoggerFactory.getLogger(MergeBesuControllerBuilder.class);
+
+  /** Default constructor. */
+  public MergeBesuControllerBuilder() {}
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
@@ -95,18 +98,15 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final EthMessages ethMessages,
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators,
-      final Optional<MergePeerFilter> mergePeerFilter) {
+      final Optional<MergePeerFilter> mergePeerFilter,
+      final ForkIdManager forkIdManager) {
 
     var mergeContext = protocolContext.getConsensusContext(MergeContext.class);
 
     var mergeBestPeerComparator =
         new TransitionBestPeerComparator(
-            configOptionsSupplier
-                .get()
-                .getTerminalTotalDifficulty()
-                .map(Difficulty::of)
-                .orElseThrow());
-    ethPeers.setBestChainComparator(mergeBestPeerComparator);
+            genesisConfigOptions.getTerminalTotalDifficulty().map(Difficulty::of).orElseThrow());
+    ethPeers.setBestPeerComparator(mergeBestPeerComparator);
     mergeContext.observeNewIsPostMergeState(mergeBestPeerComparator);
 
     Optional<MergePeerFilter> filterToUse = Optional.of(new MergePeerFilter());
@@ -128,7 +128,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             ethMessages,
             scheduler,
             peerValidators,
-            filterToUse);
+            filterToUse,
+            forkIdManager);
 
     return ethProtocolManager;
   }
@@ -156,7 +157,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
 
     this.syncState.set(syncState);
 
-    final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
     final Optional<Address> depositContractAddress =
         genesisConfigOptions.getDepositContractAddress();
 
@@ -173,7 +173,13 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return MergeProtocolSchedule.create(
-        configOptionsSupplier.get(), privacyParameters, isRevertReasonEnabled);
+        genesisConfigOptions,
+        privacyParameters,
+        isRevertReasonEnabled,
+        miningParameters,
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   @Override
@@ -182,7 +188,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
 
-    final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
     final OptionalLong terminalBlockNumber = genesisConfigOptions.getTerminalBlockNumber();
     final Optional<Hash> terminalBlockHash = genesisConfigOptions.getTerminalBlockHash();
     final boolean isPostMergeAtGenesis =
@@ -198,7 +203,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
                     .getTerminalTotalDifficulty()
                     .map(Difficulty::of)
                     .orElse(Difficulty.ZERO))
-            .setCheckpointPostMergeSync(syncConfig.isCheckpointPostMergeEnabled())
             .setPostMergeAtGenesis(isPostMergeAtGenesis);
 
     blockchain
@@ -233,9 +237,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
     List<PeerValidator> retval = super.createPeerValidators(protocolSchedule);
-    final OptionalLong powTerminalBlockNumber =
-        configOptionsSupplier.get().getTerminalBlockNumber();
-    final Optional<Hash> powTerminalBlockHash = configOptionsSupplier.get().getTerminalBlockHash();
+    final OptionalLong powTerminalBlockNumber = genesisConfigOptions.getTerminalBlockNumber();
+    final Optional<Hash> powTerminalBlockHash = genesisConfigOptions.getTerminalBlockHash();
     if (powTerminalBlockHash.isPresent() && powTerminalBlockNumber.isPresent()) {
       retval.add(
           new RequiredBlocksPeerValidator(

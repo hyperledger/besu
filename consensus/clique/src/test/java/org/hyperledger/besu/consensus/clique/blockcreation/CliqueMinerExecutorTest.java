@@ -28,12 +28,14 @@ import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -43,6 +45,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -94,10 +97,18 @@ public class CliqueMinerExecutorTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, Optional.empty());
+    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
     cliqueProtocolSchedule =
         CliqueProtocolSchedule.create(
-            GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT);
+            GENESIS_CONFIG_OPTIONS,
+            new ForksSchedule<>(List.of()),
+            proposerNodeKey,
+            false,
+            EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
     cliqueEthContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
@@ -117,7 +128,7 @@ public class CliqueMinerExecutorTest {
             miningParameters,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            true,
+            null,
             ethScheduler);
 
     // NOTE: Passing in the *parent* block, so must be 1 less than EPOCH
@@ -153,7 +164,7 @@ public class CliqueMinerExecutorTest {
             miningParameters,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            true,
+            null,
             ethScheduler);
 
     // Parent block was epoch, so the next block should contain no validators.
@@ -189,10 +200,10 @@ public class CliqueMinerExecutorTest {
             miningParameters,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            true,
+            null,
             ethScheduler);
 
-    executor.setExtraData(modifiedVanityData);
+    miningParameters.setExtraData(modifiedVanityData);
     final Bytes extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());
 
     final CliqueExtraData cliqueExtraData =
@@ -224,7 +235,7 @@ public class CliqueMinerExecutorTest {
             cliqueEthContext,
             new TransactionPoolMetrics(metricsSystem),
             conf,
-            null);
+            new BlobCache());
 
     transactionPool.setEnabled();
     return transactionPool;

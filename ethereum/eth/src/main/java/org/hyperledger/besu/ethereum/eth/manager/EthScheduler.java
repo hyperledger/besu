@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 public class EthScheduler {
   private static final Logger LOG = LoggerFactory.getLogger(EthScheduler.class);
 
-  private final Duration defaultTimeout = Duration.ofSeconds(5);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch shutdown = new CountDownLatch(1);
   private static final int TX_WORKER_CAPACITY = 1_000;
@@ -146,6 +145,10 @@ public class EthScheduler {
     servicesExecutor.execute(command);
   }
 
+  public <T> CompletableFuture<Void> scheduleServiceTask(final Runnable task) {
+    return CompletableFuture.runAsync(task, servicesExecutor);
+  }
+
   public <T> CompletableFuture<T> scheduleServiceTask(final EthTask<T> task) {
     final CompletableFuture<T> serviceFuture = task.runAsync(servicesExecutor);
     pendingFutures.add(serviceFuture);
@@ -215,10 +218,6 @@ public class EthScheduler {
     return CompletableFuture.runAsync(task, blockCreationExecutor);
   }
 
-  public <T> CompletableFuture<T> timeout(final EthTask<T> task) {
-    return timeout(task, defaultTimeout);
-  }
-
   public <T> CompletableFuture<T> timeout(final EthTask<T> task, final Duration timeout) {
     final CompletableFuture<T> future = task.run();
     final CompletableFuture<T> result = timeout(future, timeout);
@@ -244,7 +243,7 @@ public class EthScheduler {
 
   public void stop() {
     if (stopped.compareAndSet(false, true)) {
-      LOG.trace("Stopping " + getClass().getSimpleName());
+      LOG.atTrace().setMessage("Stopping {}").addArgument(getClass().getSimpleName()).log();
       syncWorkerExecutor.shutdownNow();
       txWorkerExecutor.shutdownNow();
       scheduler.shutdownNow();
@@ -252,7 +251,10 @@ public class EthScheduler {
       computationExecutor.shutdownNow();
       shutdown.countDown();
     } else {
-      LOG.trace("Attempted to stop already stopped " + getClass().getSimpleName());
+      LOG.atTrace()
+          .setMessage("Attempted to stop already stopped {}")
+          .addArgument(getClass().getSimpleName())
+          .log();
     }
   }
 

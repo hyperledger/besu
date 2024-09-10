@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -44,10 +44,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadS
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -65,6 +66,7 @@ import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -133,9 +135,10 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
     final EnginePayloadParameter payload =
-        mockEnginePayload(mockHeader, Collections.emptyList(), null, null);
+        mockEnginePayload(mockHeader, Collections.emptyList(), null, null, null, null);
 
     ValidationResult<RpcErrorType> res =
         method.validateParameters(
@@ -148,7 +151,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   @Override
   protected BlockHeader createBlockHeader(
       final Optional<List<Withdrawal>> maybeWithdrawals,
-      final Optional<List<Deposit>> maybeDeposits) {
+      final Optional<List<DepositRequest>> maybeDepositRequests,
+      final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
@@ -165,7 +169,6 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .number(parentBlockHeader.getNumber() + 1)
             .timestamp(parentBlockHeader.getTimestamp() + 12)
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
-            .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .parentBeaconBlockRoot(
@@ -185,16 +188,18 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   public void shouldValidateBlobGasUsedCorrectly() {
     // V3 must return error if null blobGasUsed
     BlockHeader blockHeader =
-        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+        createBlockHeaderFixture(
+                Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty())
             .excessBlobGas(BlobGas.MAX_BLOB_GAS)
             .blobGasUsed(null)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
+    var resp =
+        resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas fields");
+    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas used field");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -203,16 +208,18 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   public void shouldValidateExcessBlobGasCorrectly() {
     // V3 must return error if null excessBlobGas
     BlockHeader blockHeader =
-        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+        createBlockHeaderFixture(
+                Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty())
             .excessBlobGas(null)
             .blobGasUsed(100L)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
+    var resp =
+        resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas fields");
+    assertThat(jsonRpcError.getData()).isEqualTo("Missing excess blob gas field");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -228,6 +235,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty(),
             Optional.empty(),
             Optional.empty());
     var resp = resp(mockEnginePayload(mockHeader, transactions));
@@ -252,6 +260,12 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
         .blobsWithCommitments(Optional.of(bwc))
         .versionedHashes(Optional.of(bwc.getVersionedHashes()))
         .createTransaction(senderKeys);
+  }
+
+  @Override
+  @Disabled
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterCancunMilestone() {
+    // only relevant for v2
   }
 
   @Override

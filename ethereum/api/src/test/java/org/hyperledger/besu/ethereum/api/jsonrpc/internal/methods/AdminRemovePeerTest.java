@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -102,7 +102,7 @@ public class AdminRemovePeerTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_removePeer", new String[] {}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -114,7 +114,7 @@ public class AdminRemovePeerTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_removePeer", null));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -127,7 +127,7 @@ public class AdminRemovePeerTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_removePeer", new String[] {null}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -222,7 +222,7 @@ public class AdminRemovePeerTest {
             new JsonRpcRequest("2.0", "admin_removePeer", new String[] {validEnode, validEnode}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
 
     final JsonRpcResponse actualResponse = method.response(request);
 

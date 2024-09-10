@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,11 +19,13 @@ import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.BftForksScheduleFactory;
+import org.hyperledger.besu.consensus.common.ForksScheduleFactory;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
 /** The Ibft forks schedules factory. */
 public class IbftForksSchedulesFactory {
+  /** Default constructor. */
+  private IbftForksSchedulesFactory() {}
 
   /**
    * Create forks schedule.
@@ -32,7 +34,7 @@ public class IbftForksSchedulesFactory {
    * @return the forks schedule
    */
   public static ForksSchedule<BftConfigOptions> create(final GenesisConfigOptions genesisConfig) {
-    return BftForksScheduleFactory.create(
+    return ForksScheduleFactory.create(
         genesisConfig.getBftConfigOptions(),
         genesisConfig.getTransitions().getIbftForks(),
         IbftForksSchedulesFactory::createBftConfigOptions);

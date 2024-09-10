@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -26,18 +26,22 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -56,9 +60,8 @@ public class QbftProtocolScheduleTest {
     return new ProtocolContext(
         null,
         null,
-        setupContextWithBftExtraDataEncoder(
-            QbftContext.class, validators, new QbftExtraDataCodec()),
-        Optional.empty());
+        setupContextWithBftExtraDataEncoder(BftContext.class, validators, new QbftExtraDataCodec()),
+        new BadBlockManager());
   }
 
   @Test
@@ -134,7 +137,11 @@ public class QbftProtocolScheduleTest {
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
-        EvmConfiguration.DEFAULT);
+        EvmConfiguration.DEFAULT,
+        MiningParameters.MINING_DISABLED,
+        new BadBlockManager(),
+        false,
+        new NoOpMetricsSystem());
   }
 
   private boolean validateHeader(
@@ -144,7 +151,7 @@ public class QbftProtocolScheduleTest {
       final BlockHeader blockHeader,
       final int block) {
     return schedule
-        .getByBlockNumber(block)
+        .getByBlockNumberOrTimestamp(block, blockHeader.getTimestamp())
         .getBlockHeaderValidator()
         .validateHeader(
             blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.LIGHT);

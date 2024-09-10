@@ -45,10 +45,10 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
 import java.math.BigInteger;
@@ -75,7 +75,9 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
   protected BlockchainSetupUtil blockchainSetupUtil;
 
-  protected static String CLIENT_VERSION = "TestClientVersion/0.1.0";
+  protected static final String CLIENT_NODE_NAME = "TestClientVersion/0.1.0";
+  protected static final String CLIENT_VERSION = "0.1.0";
+  protected static final String CLIENT_COMMIT = "12345678";
   protected static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
   protected static final Collection<String> JSON_RPC_APIS =
       Arrays.asList(
@@ -145,7 +147,10 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
-            blockchainSetupUtil.getBlockchain(), blockchainSetupUtil.getWorldArchive());
+            blockchainSetupUtil.getProtocolSchedule(),
+            blockchainSetupUtil.getBlockchain(),
+            blockchainSetupUtil.getWorldArchive(),
+            miningParameters);
     final FilterIdGenerator filterIdGenerator = mock(FilterIdGenerator.class);
     final FilterRepository filterRepository = new FilterRepository();
     when(filterIdGenerator.nextId()).thenReturn("0x1");
@@ -165,7 +170,9 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
     return new JsonRpcMethodsFactory()
         .methods(
+            CLIENT_NODE_NAME,
             CLIENT_VERSION,
+            CLIENT_COMMIT,
             NETWORK_ID,
             new StubGenesisConfigOptions(),
             peerDiscoveryMock,

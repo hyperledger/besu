@@ -22,8 +22,10 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -57,7 +59,12 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   protected BlockParameterOrBlockHash blockParameterOrBlockHash(
       final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(1, BlockParameterOrBlockHash.class);
+    try {
+      return request.getRequiredParameter(1, BlockParameterOrBlockHash.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid block or block hash parameters (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
   }
 
   @Override
@@ -117,8 +124,9 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
           JsonRpcErrorConverter.convertTransactionInvalidReason(
               validationResult.getInvalidReason()));
     } else {
-      final TransactionProcessingResult resultTrx = result.getResult();
+      final TransactionProcessingResult resultTrx = result.result();
       if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
+
         return errorResponse(
             request,
             new JsonRpcError(
@@ -164,6 +172,11 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
         callParams.getGasPrice() == null || Wei.ZERO.equals(callParams.getGasPrice());
 
     if (header.getBaseFee().isPresent()) {
+      if (callParams.getBlobVersionedHashes().isPresent()
+          && (callParams.getMaxFeePerBlobGas().isEmpty()
+              || callParams.getMaxFeePerBlobGas().get().equals(Wei.ZERO))) {
+        return true;
+      }
       boolean isZeroMaxFeePerGas = callParams.getMaxFeePerGas().orElse(Wei.ZERO).equals(Wei.ZERO);
       boolean isZeroMaxPriorityFeePerGas =
           callParams.getMaxPriorityFeePerGas().orElse(Wei.ZERO).equals(Wei.ZERO);

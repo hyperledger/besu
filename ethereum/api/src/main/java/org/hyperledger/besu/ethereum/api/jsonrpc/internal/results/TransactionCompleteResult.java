@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -30,6 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({
   "accessList",
+  "authorizationList",
   "blockHash",
   "blockNumber",
   "chainId",
@@ -91,6 +93,9 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final List<VersionedHash> versionedHashes;
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final List<CodeDelegation> authorizationList;
+
   public TransactionCompleteResult(final TransactionWithMetadata tx) {
     final Transaction transaction = tx.getTransaction();
     final TransactionType transactionType = transaction.getType();
@@ -125,14 +130,16 @@ public class TransactionCompleteResult implements TransactionResult {
       this.yParity = Quantity.create(transaction.getYParity());
       this.v =
           (transactionType == TransactionType.ACCESS_LIST
-                  || transactionType == TransactionType.EIP1559)
-              ? this.yParity
+                      || transactionType == TransactionType.EIP1559)
+                  || transactionType == TransactionType.DELEGATE_CODE
+              ? Quantity.create(transaction.getYParity())
               : null;
     }
     this.value = Quantity.create(transaction.getValue());
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
     this.versionedHashes = transaction.getVersionedHashes().orElse(null);
+    this.authorizationList = transaction.getCodeDelegationList().orElse(null);
   }
 
   @JsonGetter(value = "accessList")
@@ -245,5 +252,10 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonGetter(value = "blobVersionedHashes")
   public List<VersionedHash> getVersionedHashes() {
     return versionedHashes;
+  }
+
+  @JsonGetter(value = "authorizationList")
+  public List<CodeDelegation> getAuthorizationList() {
+    return authorizationList;
   }
 }

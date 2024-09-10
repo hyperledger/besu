@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -35,23 +36,19 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-
-import com.google.common.io.Resources;
 
 public class BlockchainSetupUtil {
   private final GenesisState genesisState;
@@ -142,7 +139,12 @@ public class BlockchainSetupUtil {
   private static ProtocolSchedule mainnetProtocolScheduleProvider(
       final GenesisConfigFile genesisConfigFile) {
     return MainnetProtocolSchedule.fromConfig(
-        genesisConfigFile.getConfigOptions(), EvmConfiguration.DEFAULT);
+        genesisConfigFile.getConfigOptions(),
+        EvmConfiguration.DEFAULT,
+        MiningParameters.newDefault(),
+        new BadBlockManager(),
+        false,
+        new NoOpMetricsSystem());
   }
 
   private static ProtocolContext mainnetProtocolContextProvider(
@@ -156,7 +158,7 @@ public class BlockchainSetupUtil {
             return null;
           }
         },
-        Optional.empty());
+        new BadBlockManager());
   }
 
   private static BlockchainSetupUtil create(
@@ -166,13 +168,12 @@ public class BlockchainSetupUtil {
       final ProtocolContextProvider protocolContextProvider,
       final EthScheduler scheduler) {
     try {
-      final String genesisJson =
-          Resources.toString(chainResources.getGenesisURL(), StandardCharsets.UTF_8);
-
-      final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisJson);
+      final GenesisConfigFile genesisConfigFile =
+          GenesisConfigFile.fromSource(chainResources.getGenesisURL());
       final ProtocolSchedule protocolSchedule = protocolScheduleProvider.get(genesisConfigFile);
 
-      final GenesisState genesisState = GenesisState.fromJson(genesisJson, protocolSchedule);
+      final GenesisState genesisState =
+          GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
       final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
       final WorldStateArchive worldArchive =
           storageFormat == DataStorageFormat.BONSAI

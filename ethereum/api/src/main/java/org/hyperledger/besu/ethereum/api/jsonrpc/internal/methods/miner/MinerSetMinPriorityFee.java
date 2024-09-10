@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -51,10 +52,10 @@ public class MinerSetMinPriorityFee implements JsonRpcMethod {
       LOG.debug(
           "min priority fee per gas changed to {}", minPriorityFeePerGas.toHumanReadableString());
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
-    } catch (final IllegalArgumentException invalidJsonRpcParameters) {
+    } catch (final IllegalArgumentException | JsonRpcParameterException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
-          new JsonRpcError(RpcErrorType.INVALID_PARAMS, invalidJsonRpcParameters.getMessage()));
+          new JsonRpcError(RpcErrorType.INVALID_MIN_PRIORITY_FEE_PARAMS, e.getMessage()));
     }
   }
 }

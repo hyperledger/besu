@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -68,7 +69,13 @@ public class RpcErrorTypeConverterTest {
           {
             TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED,
             RpcErrorType.ETH_SEND_TX_REPLACEMENT_UNDERPRICED
-          }
+          },
+          {
+            TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE,
+            RpcErrorType.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE
+          },
+          {TransactionInvalidReason.TOTAL_BLOB_GAS_TOO_HIGH, RpcErrorType.TOTAL_BLOB_GAS_TOO_HIGH},
+          {TransactionInvalidReason.INVALID_BLOBS, RpcErrorType.INVALID_BLOBS}
         });
   }
 
@@ -78,5 +85,12 @@ public class RpcErrorTypeConverterTest {
       final TransactionInvalidReason txInvalidReason, final RpcErrorType expectedJsonRpcError) {
     assertThat(JsonRpcErrorConverter.convertTransactionInvalidReason(txInvalidReason))
         .isEqualTo(expectedJsonRpcError);
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

@@ -26,8 +26,9 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -43,7 +44,7 @@ public class FastSyncActions {
 
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncActions.class);
   protected final SynchronizerConfiguration syncConfig;
-  protected final WorldStateStorage worldStateStorage;
+  protected final WorldStateStorageCoordinator worldStateStorageCoordinator;
   protected final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
   protected final EthContext ethContext;
@@ -55,7 +56,7 @@ public class FastSyncActions {
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
@@ -63,7 +64,7 @@ public class FastSyncActions {
       final PivotBlockSelector pivotBlockSelector,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
-    this.worldStateStorage = worldStateStorage;
+    this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -142,8 +143,8 @@ public class FastSyncActions {
                                     ethContext,
                                     metricsSystem,
                                     currentState.getPivotBlockNumber().getAsLong(),
-                                    syncConfig.getFastSyncMinimumPeerCount(),
-                                    syncConfig.getFastSyncPivotDistance())
+                                    syncConfig.getSyncMinimumPeerCount(),
+                                    syncConfig.getSyncPivotDistance())
                                 .downloadPivotBlockHeader()));
   }
 
@@ -155,16 +156,18 @@ public class FastSyncActions {
     return fastSyncState;
   }
 
-  public ChainDownloader createChainDownloader(final FastSyncState currentState) {
+  public ChainDownloader createChainDownloader(
+      final FastSyncState currentState, final SyncDurationMetrics syncDurationMetrics) {
     return FastSyncChainDownloader.create(
         syncConfig,
-        worldStateStorage,
+        worldStateStorageCoordinator,
         protocolSchedule,
         protocolContext,
         ethContext,
         syncState,
         metricsSystem,
-        currentState);
+        currentState,
+        syncDurationMetrics);
   }
 
   private CompletableFuture<FastSyncState> downloadPivotBlockHeader(final Hash hash) {

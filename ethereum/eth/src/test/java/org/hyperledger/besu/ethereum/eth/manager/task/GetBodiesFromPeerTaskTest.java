@@ -24,8 +24,10 @@ import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
 
 import java.util.ArrayList;
@@ -87,9 +89,9 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
   }
 
   @Test
-  public void assertBodyIdentifierUsesDepositsToGenerateBodyIdentifiers() {
-    final Deposit deposit =
-        new Deposit(
+  public void assertBodyIdentifierUsesDepositRequestsToGenerateBodyIdentifiers() {
+    final Request deposit =
+        new DepositRequest(
             BLSPublicKey.fromHexString(
                 "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
             Bytes32.fromHexString(
@@ -108,6 +110,28 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
     assertThat(
             new GetBodiesFromPeerTask.BodyIdentifier(emptyBodyBlock)
                 .equals(new GetBodiesFromPeerTask.BodyIdentifier(bodyBlockWithDeposit)))
+        .isFalse();
+  }
+
+  @Test
+  public void assertBodyIdentifierUsesWithdrawalRequestsToGenerateBodyIdentifiers() {
+    final WithdrawalRequest withdrawalRequest =
+        new WithdrawalRequest(
+            Address.fromHexString("0x763c396673F9c391DCe3361A9A71C8E161388000"),
+            BLSPublicKey.fromHexString(
+                "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
+            GWei.ONE);
+
+    // Empty body block
+    final BlockBody emptyBodyBlock = BlockBody.empty();
+    // Block with no tx, no ommers, 1 validator exit
+    final BlockBody bodyBlockWithValidatorExit =
+        new BlockBody(
+            emptyList(), emptyList(), Optional.empty(), Optional.of(List.of(withdrawalRequest)));
+
+    assertThat(
+            new GetBodiesFromPeerTask.BodyIdentifier(emptyBodyBlock)
+                .equals(new GetBodiesFromPeerTask.BodyIdentifier(bodyBlockWithValidatorExit)))
         .isFalse();
   }
 }

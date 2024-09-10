@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,7 +28,7 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-/** An Merkle Patricial Trie. */
+/** A Merkle Patricia Trie. */
 public interface MerkleTrie<K, V> {
 
   Bytes EMPTY_TRIE_NODE = RLP.NULL;
@@ -75,6 +75,7 @@ public interface MerkleTrie<K, V> {
    * @param value The value to associate the key with.
    */
   void putPath(K path, V value);
+
   /**
    * Updates the value mapped to the specified key, creating the mapping if one does not already
    * exist.

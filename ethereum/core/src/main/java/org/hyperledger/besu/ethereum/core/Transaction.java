@@ -28,6 +28,7 @@ import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.CodeDelegationEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
@@ -51,6 +53,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.primitives.Longs;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -74,6 +78,9 @@ public class Transaction
   public static final BigInteger REPLAY_PROTECTED_V_MIN = BigInteger.valueOf(36);
 
   public static final BigInteger TWO = BigInteger.valueOf(2);
+
+  private static final Cache<Hash, Address> senderCache =
+      CacheBuilder.newBuilder().recordStats().maximumSize(100_000L).build();
 
   private final long nonce;
 
@@ -117,6 +124,7 @@ public class Transaction
   private final Optional<List<VersionedHash>> versionedHashes;
 
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
+  private final Optional<List<CodeDelegation>> maybeCodeDelegationList;
 
   public static Builder builder() {
     return new Builder();
@@ -172,7 +180,8 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<List<VersionedHash>> versionedHashes,
-      final Optional<BlobsWithCommitments> blobsWithCommitments) {
+      final Optional<BlobsWithCommitments> blobsWithCommitments,
+      final Optional<List<CodeDelegation>> maybeCodeDelegationList) {
 
     if (!forCopy) {
       if (transactionType.requiresChainId()) {
@@ -208,6 +217,12 @@ public class Transaction
         checkArgument(
             maxFeePerBlobGas.isPresent(), "Must specify max fee per blob gas for blob transaction");
       }
+
+      if (transactionType.requiresCodeDelegation()) {
+        checkArgument(
+            maybeCodeDelegationList.isPresent(),
+            "Must specify code delegation authorizations for code delegation transaction");
+      }
     }
 
     this.transactionType = transactionType;
@@ -226,6 +241,7 @@ public class Transaction
     this.chainId = chainId;
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
+    this.maybeCodeDelegationList = maybeCodeDelegationList;
   }
 
   /**
@@ -411,16 +427,23 @@ public class Transaction
   @Override
   public Address getSender() {
     if (sender == null) {
-      final SECPPublicKey publicKey =
-          signatureAlgorithm
-              .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
-              .orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          "Cannot recover public key from signature for " + this));
-      sender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+      Optional<Address> cachedSender = Optional.ofNullable(senderCache.getIfPresent(getHash()));
+      sender = cachedSender.orElseGet(this::computeSender);
     }
     return sender;
+  }
+
+  private Address computeSender() {
+    final SECPPublicKey publicKey =
+        signatureAlgorithm
+            .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Cannot recover public key from signature for " + this));
+    final Address calculatedSender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+    senderCache.put(this.hash, calculatedSender);
+    return calculatedSender;
   }
 
   /**
@@ -450,6 +473,7 @@ public class Transaction
               payload,
               maybeAccessList,
               versionedHashes.orElse(null),
+              maybeCodeDelegationList,
               chainId);
     }
     return hashNoSignature;
@@ -656,6 +680,16 @@ public class Transaction
     return blobsWithCommitments;
   }
 
+  @Override
+  public Optional<List<CodeDelegation>> getCodeDelegationList() {
+    return maybeCodeDelegationList;
+  }
+
+  @Override
+  public int codeDelegationListSize() {
+    return maybeCodeDelegationList.map(List::size).orElse(0);
+  }
+
   /**
    * Return the list of transaction hashes extracted from the collection of Transaction passed as
    * argument
@@ -680,6 +714,7 @@ public class Transaction
       final Bytes payload,
       final Optional<List<AccessListEntry>> accessList,
       final List<VersionedHash> versionedHashes,
+      final Optional<List<CodeDelegation>> codeDelegationList,
       final Optional<BigInteger> chainId) {
     if (transactionType.requiresChainId()) {
       checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
@@ -687,40 +722,58 @@ public class Transaction
     final Bytes preimage =
         switch (transactionType) {
           case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
-          case EIP1559 -> eip1559Preimage(
-              nonce,
-              maxPriorityFeePerGas,
-              maxFeePerGas,
-              gasLimit,
-              to,
-              value,
-              payload,
-              chainId,
-              accessList);
-          case BLOB -> blobPreimage(
-              nonce,
-              maxPriorityFeePerGas,
-              maxFeePerGas,
-              maxFeePerBlobGas,
-              gasLimit,
-              to,
-              value,
-              payload,
-              chainId,
-              accessList,
-              versionedHashes);
-          case ACCESS_LIST -> accessListPreimage(
-              nonce,
-              gasPrice,
-              gasLimit,
-              to,
-              value,
-              payload,
-              accessList.orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          "Developer error: the transaction should be guaranteed to have an access list here")),
-              chainId);
+          case EIP1559 ->
+              eip1559Preimage(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList);
+          case BLOB ->
+              blobPreimage(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  maxFeePerBlobGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  versionedHashes);
+          case ACCESS_LIST ->
+              accessListPreimage(
+                  nonce,
+                  gasPrice,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  accessList.orElseThrow(
+                      () ->
+                          new IllegalStateException(
+                              "Developer error: the transaction should be guaranteed to have an access list here")),
+                  chainId);
+          case DELEGATE_CODE ->
+              codeDelegationPreimage(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  codeDelegationList.orElseThrow(
+                      () ->
+                          new IllegalStateException(
+                              "Developer error: the transaction should be guaranteed to have a code delegations here")));
         };
     return keccak256(preimage);
   }
@@ -856,6 +909,38 @@ public class Transaction
               rlpOutput.endList();
             });
     return Bytes.concatenate(Bytes.of(TransactionType.ACCESS_LIST.getSerializedType()), encode);
+  }
+
+  private static Bytes codeDelegationPreimage(
+      final long nonce,
+      final Wei maxPriorityFeePerGas,
+      final Wei maxFeePerGas,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final Optional<BigInteger> chainId,
+      final Optional<List<AccessListEntry>> accessList,
+      final List<CodeDelegation> authorizationList) {
+    final Bytes encoded =
+        RLP.encode(
+            rlpOutput -> {
+              rlpOutput.startList();
+              eip1559PreimageFields(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  rlpOutput);
+              CodeDelegationEncoder.encodeCodeDelegationInner(authorizationList, rlpOutput);
+              rlpOutput.endList();
+            });
+    return Bytes.concatenate(Bytes.of(TransactionType.DELEGATE_CODE.getSerializedType()), encoded);
   }
 
   @Override
@@ -1025,7 +1110,8 @@ public class Transaction
             sender,
             chainId,
             detachedVersionedHashes,
-            detachedBlobsWithCommitments);
+            detachedBlobsWithCommitments,
+            maybeCodeDelegationList);
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
@@ -1093,6 +1179,7 @@ public class Transaction
     protected Optional<BigInteger> v = Optional.empty();
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
+    protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;
@@ -1111,6 +1198,7 @@ public class Transaction
       this.chainId = toCopy.chainId;
       this.versionedHashes = toCopy.versionedHashes.orElse(null);
       this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
+      this.codeDelegationAuthorizations = toCopy.maybeCodeDelegationList;
       return this;
     }
 
@@ -1204,6 +1292,8 @@ public class Transaction
         transactionType = TransactionType.EIP1559;
       } else if (accessList.isPresent()) {
         transactionType = TransactionType.ACCESS_LIST;
+      } else if (codeDelegationAuthorizations.isPresent()) {
+        transactionType = TransactionType.DELEGATE_CODE;
       } else {
         transactionType = TransactionType.FRONTIER;
       }
@@ -1233,7 +1323,8 @@ public class Transaction
           sender,
           chainId,
           Optional.ofNullable(versionedHashes),
-          Optional.ofNullable(blobsWithCommitments));
+          Optional.ofNullable(blobsWithCommitments),
+          codeDelegationAuthorizations);
     }
 
     public Transaction signAndBuild(final KeyPair keys) {
@@ -1260,6 +1351,7 @@ public class Transaction
                   payload,
                   accessList,
                   versionedHashes,
+                  codeDelegationAuthorizations,
                   chainId),
               keys);
     }
@@ -1281,6 +1373,11 @@ public class Transaction
 
     public Builder blobsWithCommitments(final BlobsWithCommitments blobsWithCommitments) {
       this.blobsWithCommitments = blobsWithCommitments;
+      return this;
+    }
+
+    public Builder codeDelegations(final List<CodeDelegation> codeDelegations) {
+      this.codeDelegationAuthorizations = Optional.ofNullable(codeDelegations);
       return this;
     }
   }

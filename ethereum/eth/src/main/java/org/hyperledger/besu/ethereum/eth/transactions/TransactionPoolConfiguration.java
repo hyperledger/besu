@@ -15,12 +15,18 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidator;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidatorFactory;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.immutables.value.Value;
@@ -61,16 +67,20 @@ public interface TransactionPoolConfiguration {
   int DEFAULT_TX_RETENTION_HOURS = 13;
   boolean DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED = false;
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
+  Percentage DEFAULT_BLOB_PRICE_BUMP = Percentage.fromInt(100);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   boolean DEFAULT_NO_LOCAL_PRIORITY = false;
   boolean DEFAULT_ENABLE_SAVE_RESTORE = false;
   File DEFAULT_SAVE_FILE = new File(DEFAULT_SAVE_FILE_NAME);
   long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 12_500_000L;
   int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 2000;
+  EnumMap<TransactionType, Integer> DEFAULT_MAX_PRIORITIZED_TRANSACTIONS_BY_TYPE =
+      new EnumMap<>(Map.of(TransactionType.BLOB, 6));
   int DEFAULT_MAX_FUTURE_BY_SENDER = 200;
   Implementation DEFAULT_TX_POOL_IMPLEMENTATION = Implementation.LAYERED;
   Set<Address> DEFAULT_PRIORITY_SENDERS = Set.of();
   Wei DEFAULT_TX_POOL_MIN_GAS_PRICE = Wei.of(1000);
+  byte DEFAULT_TX_POOL_MIN_SCORE = -128;
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -97,6 +107,11 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default Percentage getPriceBump() {
     return DEFAULT_PRICE_BUMP;
+  }
+
+  @Value.Default
+  default Percentage getBlobPriceBump() {
+    return DEFAULT_BLOB_PRICE_BUMP;
   }
 
   @Value.Default
@@ -140,6 +155,11 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
+  default Map<TransactionType, Integer> getMaxPrioritizedTransactionsByType() {
+    return DEFAULT_MAX_PRIORITIZED_TRANSACTIONS_BY_TYPE;
+  }
+
+  @Value.Default
   default int getMaxFutureBySender() {
     return DEFAULT_MAX_FUTURE_BY_SENDER;
   }
@@ -152,6 +172,25 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default Wei getMinGasPrice() {
     return DEFAULT_TX_POOL_MIN_GAS_PRICE;
+  }
+
+  @Value.Default
+  default byte getMinScore() {
+    return DEFAULT_TX_POOL_MIN_SCORE;
+  }
+
+  @Value.Default
+  default TransactionPoolValidatorService getTransactionPoolValidatorService() {
+    return new TransactionPoolValidatorService() {
+      @Override
+      public PluginTransactionPoolValidator createTransactionValidator() {
+        return PluginTransactionPoolValidator.VALIDATE_ALL;
+      }
+
+      @Override
+      public void registerPluginTransactionValidatorFactory(
+          final PluginTransactionPoolValidatorFactory pluginTransactionPoolValidatorFactory) {}
+    };
   }
 
   @Value.Default

@@ -36,6 +36,7 @@ import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -46,6 +47,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitV
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -118,13 +120,17 @@ public class BftBlockCreatorTest {
             PrivacyParameters.DEFAULT,
             false,
             bftExtraDataEncoder,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,
             createInMemoryWorldStateArchive(),
             setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
-            Optional.empty());
+            new BadBlockManager());
 
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
@@ -148,7 +154,7 @@ public class BftBlockCreatorTest {
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
-            null);
+            new BlobCache());
 
     transactionPool.setEnabled();
 
@@ -185,12 +191,12 @@ public class BftBlockCreatorTest {
             transactionPool,
             protContext,
             protocolSchedule,
-            parentHeader,
             bftExtraDataEncoder,
             new DeterministicEthScheduler());
 
     final int secondsBetweenBlocks = 1;
-    final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1).getBlock();
+    final Block block =
+        blockCreator.createBlock(parentHeader.getTimestamp() + 1, parentHeader).getBlock();
 
     final BlockHeaderValidator rules =
         IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(

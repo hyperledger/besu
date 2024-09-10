@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.config;
 
 import java.math.BigInteger;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -25,10 +26,10 @@ public enum NetworkName {
   MAINNET("/mainnet.json", BigInteger.valueOf(1)),
   /** Sepolia network name. */
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
-  /** Goerli network name. */
-  GOERLI("/goerli.json", BigInteger.valueOf(5)),
   /** Holešky network name. */
   HOLESKY("/holesky.json", BigInteger.valueOf(17000)),
+  /** LUKSO mainnet network name. */
+  LUKSO("/lukso.json", BigInteger.valueOf(42)),
 
   /** Dev network name. */
   DEV("/dev.json", BigInteger.valueOf(2018), false),
@@ -43,17 +44,17 @@ public enum NetworkName {
 
   private final String genesisFile;
   private final BigInteger networkId;
-  private final boolean canFastSync;
+  private final boolean canSnapSync;
   private final String deprecationDate;
 
   NetworkName(final String genesisFile, final BigInteger networkId) {
     this(genesisFile, networkId, true);
   }
 
-  NetworkName(final String genesisFile, final BigInteger networkId, final boolean canFastSync) {
+  NetworkName(final String genesisFile, final BigInteger networkId, final boolean canSnapSync) {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
-    this.canFastSync = canFastSync;
+    this.canSnapSync = canSnapSync;
     // no deprecations planned
     this.deprecationDate = null;
   }
@@ -77,12 +78,12 @@ public enum NetworkName {
   }
 
   /**
-   * Can fast sync boolean.
+   * Can SNAP sync boolean.
    *
    * @return the boolean
    */
-  public boolean canFastSync() {
-    return canFastSync;
+  public boolean canSnapSync() {
+    return canSnapSync;
   }
 
   /**
@@ -91,7 +92,7 @@ public enum NetworkName {
    * @return the string
    */
   public String normalize() {
-    return StringUtils.capitalize(name().toLowerCase());
+    return StringUtils.capitalize(name().toLowerCase(Locale.ROOT));
   }
 
   /**

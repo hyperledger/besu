@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,6 +20,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -83,6 +84,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
   public ValidationResult<TransactionInvalidReason> validate(
       final Transaction transaction,
       final Optional<Wei> baseFee,
+      final Optional<Wei> blobFee,
       final TransactionValidationParams transactionValidationParams) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
@@ -128,17 +130,59 @@ public class MainnetTransactionValidator implements TransactionValidator {
               transaction.getPayload().size(), maxInitcodeSize));
     }
 
-    return validateCostAndFee(transaction, baseFee, transactionValidationParams);
+    if (transactionType == TransactionType.DELEGATE_CODE) {
+      if (isDelegateCodeEmpty(transaction)) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.EMPTY_CODE_DELEGATION,
+            "transaction code delegation transactions must have a non-empty code delegation list");
+      }
+
+      final BigInteger halfCurveOrder = SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
+      final Optional<ValidationResult<TransactionInvalidReason>> validationResult =
+          transaction
+              .getCodeDelegationList()
+              .map(
+                  codeDelegations -> {
+                    for (CodeDelegation codeDelegation : codeDelegations) {
+                      if (codeDelegation.signature().getS().compareTo(halfCurveOrder) > 0) {
+                        return ValidationResult.invalid(
+                            TransactionInvalidReason.INVALID_SIGNATURE,
+                            "Invalid signature for code delegation. S value must be less or equal than the half curve order.");
+                      }
+
+                      if (codeDelegation.signature().getRecId() != 0
+                          && codeDelegation.signature().getRecId() != 1) {
+                        return ValidationResult.invalid(
+                            TransactionInvalidReason.INVALID_SIGNATURE,
+                            "Invalid signature for code delegation. RecId value must be 0 or 1.");
+                      }
+                    }
+
+                    return ValidationResult.valid();
+                  });
+
+      if (validationResult.isPresent() && !validationResult.get().isValid()) {
+        return validationResult.get();
+      }
+    }
+
+    return validateCostAndFee(transaction, baseFee, blobFee, transactionValidationParams);
+  }
+
+  private static boolean isDelegateCodeEmpty(final Transaction transaction) {
+    return transaction.getCodeDelegationList().isEmpty()
+        || transaction.getCodeDelegationList().get().isEmpty();
   }
 
   private ValidationResult<TransactionInvalidReason> validateCostAndFee(
       final Transaction transaction,
       final Optional<Wei> maybeBaseFee,
+      final Optional<Wei> maybeBlobFee,
       final TransactionValidationParams transactionValidationParams) {
 
     if (maybeBaseFee.isPresent()) {
       final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, maybeBaseFee);
-      if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
+      if (!transactionValidationParams.allowUnderpriced()
           && price.compareTo(maybeBaseFee.orElseThrow()) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE,
@@ -168,12 +212,27 @@ public class MainnetTransactionValidator implements TransactionValidator {
                 "total blob gas %d exceeds max blob gas per block %d",
                 txTotalBlobGas, gasLimitCalculator.currentBlobGasLimit()));
       }
+      if (maybeBlobFee.isEmpty()) {
+        throw new IllegalArgumentException(
+            "blob fee must be provided from blocks containing blobs");
+        // tx.getMaxFeePerBlobGas can be empty for eth_call
+      } else if (!transactionValidationParams.allowUnderpriced()
+          && maybeBlobFee.get().compareTo(transaction.getMaxFeePerBlobGas().get()) > 0) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE,
+            String.format(
+                "tx max fee per blob gas less than block blob gas fee: address %s blobGasFeeCap: %s, blobBaseFee: %s",
+                transaction.getSender().toHexString(),
+                transaction.getMaxFeePerBlobGas().get().toHumanReadableString(),
+                maybeBlobFee.get().toHumanReadableString()));
+      }
     }
 
     final long intrinsicGasCost =
         gasCalculator.transactionIntrinsicGasCost(
                 transaction.getPayload(), transaction.isContractCreation())
-            + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L));
+            + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L))
+            + gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
     if (Long.compareUnsigned(intrinsicGasCost, transaction.getGasLimit()) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
@@ -217,7 +276,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
               upfrontCost.toQuantityHexString(), senderBalance.toQuantityHexString()));
     }
 
-    if (transaction.getNonce() < senderNonce) {
+    if (Long.compareUnsigned(transaction.getNonce(), senderNonce) < 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.NONCE_TOO_LOW,
           String.format(
@@ -233,7 +292,8 @@ public class MainnetTransactionValidator implements TransactionValidator {
               transaction.getNonce(), senderNonce));
     }
 
-    if (!validationParams.isAllowContractAddressAsSender() && !codeHash.equals(Hash.EMPTY)) {
+    if (!validationParams.isAllowContractAddressAsSender()
+        && !canSendTransaction(sender, codeHash)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
           String.format(
@@ -242,6 +302,10 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     return ValidationResult.valid();
+  }
+
+  private static boolean canSendTransaction(final Account sender, final Hash codeHash) {
+    return codeHash.equals(Hash.EMPTY) || sender.hasDelegatedCode();
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransactionSignature(
@@ -289,7 +353,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     if (transaction.getType().supportsBlob() && transaction.getTo().isEmpty()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-          "transaction blob transactions cannot have a to address");
+          "transaction blob transactions must have a to address");
     }
 
     if (transaction.getVersionedHashes().isEmpty()) {

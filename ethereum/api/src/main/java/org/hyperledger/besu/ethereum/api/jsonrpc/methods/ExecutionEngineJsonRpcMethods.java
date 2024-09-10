@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,21 +23,24 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineE
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV3;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetBlobsV1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetClientVersionV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByRangeV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV3;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV6110;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV4;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV3;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV6110;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV4;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EnginePreparePayloadDebug;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineQosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.ArrayList;
@@ -57,13 +60,19 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ProtocolContext protocolContext;
   private final EthPeers ethPeers;
   private final Vertx consensusEngineServer;
+  private final String clientVersion;
+  private final String commit;
+  private final TransactionPool transactionPool;
 
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthPeers ethPeers,
-      final Vertx consensusEngineServer) {
+      final Vertx consensusEngineServer,
+      final String clientVersion,
+      final String commit,
+      final TransactionPool transactionPool) {
     this.mergeCoordinator =
         Optional.ofNullable(miningCoordinator)
             .filter(mc -> mc.isCompatibleWithEngineApi())
@@ -72,6 +81,9 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.protocolContext = protocolContext;
     this.ethPeers = ethPeers;
     this.consensusEngineServer = consensusEngineServer;
+    this.clientVersion = clientVersion;
+    this.commit = commit;
+    this.transactionPool = transactionPool;
   }
 
   @Override
@@ -147,7 +159,11 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
               new EngineExchangeCapabilities(
                   consensusEngineServer, protocolContext, engineQosTimer),
               new EnginePreparePayloadDebug(
-                  consensusEngineServer, protocolContext, engineQosTimer, mergeCoordinator.get())));
+                  consensusEngineServer, protocolContext, engineQosTimer, mergeCoordinator.get()),
+              new EngineGetClientVersionV1(
+                  consensusEngineServer, protocolContext, engineQosTimer, clientVersion, commit),
+              new EngineGetBlobsV1(
+                  consensusEngineServer, protocolContext, engineQosTimer, transactionPool)));
 
       if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("cancun"))) {
         executionEngineApisSupported.add(
@@ -160,9 +176,9 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 protocolSchedule));
       }
 
-      if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("ExperimentalEips"))) {
+      if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("prague"))) {
         executionEngineApisSupported.add(
-            new EngineGetPayloadV6110(
+            new EngineGetPayloadV4(
                 consensusEngineServer,
                 protocolContext,
                 mergeCoordinator.get(),
@@ -171,7 +187,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 protocolSchedule));
 
         executionEngineApisSupported.add(
-            new EngineNewPayloadV6110(
+            new EngineNewPayloadV4(
                 consensusEngineServer,
                 protocolSchedule,
                 protocolContext,

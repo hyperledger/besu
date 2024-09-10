@@ -11,16 +11,13 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -28,14 +25,17 @@ import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.TransitionUtils;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,6 +45,7 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.Streams;
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.runner.RunWith;
@@ -79,17 +80,6 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 0L))
         },
         new Object[] {
-          NetworkName.GOERLI,
-          List.of(
-              new ForkId(Bytes.ofUnsignedInt(0xa3f5ab08L), 1561651L),
-              new ForkId(Bytes.ofUnsignedInt(0xc25efa5cL), 4460644L),
-              new ForkId(Bytes.ofUnsignedInt(0x757a1c47L), 5062605L),
-              new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 1678832736L),
-              new ForkId(Bytes.ofUnsignedInt(0xf9843abfL), 1705473120),
-              new ForkId(Bytes.ofUnsignedInt(0x70cc14e2L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x70cc14e2L), 0L))
-        },
-        new Object[] {
           NetworkName.MAINNET,
           List.of(
               new ForkId(Bytes.ofUnsignedInt(0xfc64ec04L), 1150000L),
@@ -107,8 +97,9 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 13773000L),
               new ForkId(Bytes.ofUnsignedInt(0x20c327fcL), 15050000L),
               new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 1681338455L),
-              new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 1710338135L),
+              new ForkId(Bytes.ofUnsignedInt(0x9f3d2254L), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0x9f3d2254L), 0L))
         },
         new Object[] {
           NetworkName.MORDOR,
@@ -148,7 +139,7 @@ public class ForkIdsNetworkConfigTest {
   @MethodSource("parameters")
   public void testForkId(final NetworkName chainName, final List<ForkId> expectedForkIds) {
     final GenesisConfigFile genesisConfigFile =
-        GenesisConfigFile.fromConfig(EthNetworkConfig.jsonConfig(chainName));
+        GenesisConfigFile.fromResource(chainName.getGenesisFile());
     final MilestoneStreamingTransitionProtocolSchedule schedule = createSchedule(genesisConfigFile);
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, schedule);
     final Blockchain mockBlockchain = mock(Blockchain.class);
@@ -185,10 +176,23 @@ public class ForkIdsNetworkConfigTest {
     final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
     MilestoneStreamingProtocolSchedule preMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
-            (DefaultProtocolSchedule) MainnetProtocolSchedule.fromConfig(configOptions));
+            (DefaultProtocolSchedule)
+                MainnetProtocolSchedule.fromConfig(
+                    configOptions,
+                    MiningParameters.MINING_DISABLED,
+                    new BadBlockManager(),
+                    false,
+                    new NoOpMetricsSystem()));
     MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
-            (DefaultProtocolSchedule) MergeProtocolSchedule.create(configOptions, false));
+            (DefaultProtocolSchedule)
+                MergeProtocolSchedule.create(
+                    configOptions,
+                    false,
+                    MiningParameters.MINING_DISABLED,
+                    new BadBlockManager(),
+                    false,
+                    new NoOpMetricsSystem()));
     final MilestoneStreamingTransitionProtocolSchedule schedule =
         new MilestoneStreamingTransitionProtocolSchedule(
             preMergeProtocolSchedule, postMergeProtocolSchedule);
@@ -213,5 +217,12 @@ public class ForkIdsNetworkConfigTest {
       return transitionUtils.dispatchFunctionAccordingToMergeState(
           MilestoneStreamingProtocolSchedule::streamMilestoneBlocks);
     }
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

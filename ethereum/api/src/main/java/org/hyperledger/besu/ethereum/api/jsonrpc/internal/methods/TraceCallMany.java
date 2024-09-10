@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,8 +19,10 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceCallManyParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -63,14 +65,15 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    final Optional<BlockParameter> maybeBlockParameter =
-        request.getOptionalParameter(1, BlockParameter.class);
-
-    if (maybeBlockParameter.isPresent()) {
-      return maybeBlockParameter.get();
+    final Optional<BlockParameter> maybeBlockParameter;
+    try {
+      maybeBlockParameter = request.getOptionalParameter(1, BlockParameter.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
 
-    return BlockParameter.LATEST;
+    return maybeBlockParameter.orElse(BlockParameter.LATEST);
   }
 
   @Override
@@ -79,7 +82,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
     if (requestContext.getRequest().getParamLength() != 2) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
 
     final TraceCallManyParameter[] transactionsAndTraceTypeParameters;
@@ -96,7 +99,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     } catch (final Exception e) {
       LOG.error("Error parsing trace_callMany parameters: {}", e.getLocalizedMessage());
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_TRACE_CALL_MANY_PARAMS);
     }
 
     final Optional<BlockHeader> maybeBlockHeader =
@@ -153,7 +156,8 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       final BlockHeader header,
       final WorldUpdater worldUpdater) {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
-    final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
+    final DebugOperationTracer tracer =
+        new DebugOperationTracer(buildTraceOptions(traceTypes), false);
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
         transactionSimulator.processWithWorldUpdater(
             callParameter, buildTransactionValidationParams(), tracer, header, worldUpdater);
@@ -169,7 +173,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
     final TransactionTrace transactionTrace =
         new TransactionTrace(
-            simulatorResult.getTransaction(), simulatorResult.getResult(), tracer.getTraceFrames());
+            simulatorResult.transaction(), simulatorResult.result(), tracer.getTraceFrames());
 
     final Block block = blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
 

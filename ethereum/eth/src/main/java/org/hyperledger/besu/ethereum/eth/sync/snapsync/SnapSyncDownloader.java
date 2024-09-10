@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,7 +20,8 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.nio.file.Path;
@@ -30,20 +31,22 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
 
   public SnapSyncDownloader(
       final FastSyncActions fastSyncActions,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStateDownloader worldStateDownloader,
       final FastSyncStateStorage fastSyncStateStorage,
       final TaskCollection<SnapDataRequest> taskCollection,
       final Path fastSyncDataDirectory,
-      final FastSyncState initialFastSyncState) {
+      final FastSyncState initialFastSyncState,
+      final SyncDurationMetrics syncDurationMetrics) {
     super(
         fastSyncActions,
-        worldStateStorage,
+        worldStateStorageCoordinator,
         worldStateDownloader,
         fastSyncStateStorage,
         taskCollection,
         fastSyncDataDirectory,
-        initialFastSyncState);
+        initialFastSyncState,
+        syncDurationMetrics);
   }
 
   @Override

@@ -67,9 +67,9 @@ public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, B
     return sendRequestToPeer(
         peer -> {
           LOG.atTrace()
-              .setMessage("Requesting {} node data entries from peer {}...")
+              .setMessage("Requesting {} node data entries from peer {}")
               .addArgument(hashes::size)
-              .addArgument(peer::getShortNodeId)
+              .addArgument(peer::getLoggableId)
               .log();
           return peer.getNodeData(hashes);
         },

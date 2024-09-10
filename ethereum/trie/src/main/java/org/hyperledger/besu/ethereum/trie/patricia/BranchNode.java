@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -55,7 +55,7 @@ public class BranchNode<V> implements Node<V> {
 
   public BranchNode(
       final Bytes location,
-      final ArrayList<Node<V>> children,
+      final List<Node<V>> children,
       final Optional<V> value,
       final NodeFactory<V> nodeFactory,
       final Function<V, Bytes> valueSerializer) {

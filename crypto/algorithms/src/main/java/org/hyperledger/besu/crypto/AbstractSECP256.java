@@ -50,11 +50,13 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
 
   /** The Curve. */
   protected final ECDomainParameters curve;
+
   /** The Half curve order. */
   protected final BigInteger halfCurveOrder;
 
   /** The Key pair generator. */
   protected final KeyPairGenerator keyPairGenerator;
+
   /** The Curve order. */
   protected final BigInteger curveOrder;
 
@@ -395,7 +397,9 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
       final Bytes32 dataHash, final SECPSignature signature) {
     final BigInteger publicKeyBI =
         recoverFromSignature(signature.getRecId(), signature.getR(), signature.getS(), dataHash);
-    return Optional.of(SECPPublicKey.create(publicKeyBI, ALGORITHM));
+    return publicKeyBI == null
+        ? Optional.empty()
+        : Optional.of(SECPPublicKey.create(publicKeyBI, ALGORITHM));
   }
 
   @Override

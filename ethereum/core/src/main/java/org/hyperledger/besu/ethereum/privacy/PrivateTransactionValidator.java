@@ -61,7 +61,7 @@ public class PrivateTransactionValidator {
 
     LOG.debug("Validating actual nonce {}, with expected nonce {}", transactionNonce, accountNonce);
 
-    if (accountNonce > transactionNonce) {
+    if (Long.compareUnsigned(accountNonce, transactionNonce) > 0) {
       final String errorMessage =
           String.format(
               "Private Transaction nonce %s, is lower than sender account nonce %s.",

@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
@@ -77,6 +77,7 @@ public class PrivacyParameters {
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
   private PrivacyPluginService privacyPluginService;
+  private boolean privateNonceAlwaysIncrementsEnabled;
 
   public Address getPrivacyAddress() {
     if (isPrivacyPluginEnabled()) {
@@ -228,6 +229,15 @@ public class PrivacyParameters {
     }
   }
 
+  public boolean isPrivateNonceAlwaysIncrementsEnabled() {
+    return privateNonceAlwaysIncrementsEnabled;
+  }
+
+  public void setPrivateNonceAlwaysIncrementsEnabled(
+      final boolean privateNonceAlwaysIncrementsEnabled) {
+    this.privateNonceAlwaysIncrementsEnabled = privateNonceAlwaysIncrementsEnabled;
+  }
+
   @Override
   public String toString() {
     return "PrivacyParameters{"
@@ -263,6 +273,7 @@ public class PrivacyParameters {
     private boolean flexiblePrivacyGroupsEnabled;
     private boolean privacyPluginEnabled;
     private PrivacyPluginService privacyPluginService;
+    private boolean privateNonceAlwaysIncrementsEnabled;
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
       this.enclaveUrl = enclaveUrl;
@@ -314,6 +325,12 @@ public class PrivacyParameters {
       return this;
     }
 
+    public Builder setPrivateNonceAlwaysIncrementsEnabled(
+        final boolean isPrivateNonceAlwaysIncrementsEnabled) {
+      this.privateNonceAlwaysIncrementsEnabled = isPrivateNonceAlwaysIncrementsEnabled;
+      return this;
+    }
+
     public Builder setPrivacyPluginEnabled(final boolean privacyPluginEnabled) {
       this.privacyPluginEnabled = privacyPluginEnabled;
       return this;
@@ -335,8 +352,8 @@ public class PrivacyParameters {
     public PrivacyParameters build() {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
-        final WorldStateStorage privateWorldStateStorage =
-            storageProvider.createWorldStateStorage();
+        final WorldStateStorageCoordinator privateWorldStateStorage =
+            storageProvider.createWorldStateStorageCoordinator();
         final WorldStatePreimageStorage privatePreimageStorage =
             storageProvider.createWorldStatePreimageStorage();
         final WorldStateArchive privateWorldStateArchive =
@@ -382,6 +399,7 @@ public class PrivacyParameters {
       config.setMultiTenancyEnabled(multiTenancyEnabled);
       config.setFlexiblePrivacyGroupsEnabled(flexiblePrivacyGroupsEnabled);
       config.setPrivacyPluginEnabled(privacyPluginEnabled);
+      config.setPrivateNonceAlwaysIncrementsEnabled(privateNonceAlwaysIncrementsEnabled);
       return config;
     }
   }

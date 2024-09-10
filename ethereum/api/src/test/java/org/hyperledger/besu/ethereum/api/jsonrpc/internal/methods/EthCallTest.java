@@ -115,8 +115,7 @@ public class EthCallTest {
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
     final JsonCallParameter callParameter =
-        new JsonCallParameter(
-            null, null, null, null, null, null, null, null, null, Boolean.FALSE, null);
+        new JsonCallParameter.JsonCallParameterBuilder().withStrict(Boolean.FALSE).build();
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
@@ -197,7 +196,7 @@ public class EthCallTest {
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.isSuccessful()).thenReturn(false);
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
-    when(result.getResult()).thenReturn(processingResult);
+    when(result.result()).thenReturn(processingResult);
     verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
     assertThat(mapperCaptor.getValue().apply(mock(MutableWorldState.class), Optional.of(result)))
         .isEqualTo(Optional.of(expectedResponse));
@@ -236,7 +235,7 @@ public class EthCallTest {
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.isSuccessful()).thenReturn(false);
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
-    when(result.getResult()).thenReturn(processingResult);
+    when(result.result()).thenReturn(processingResult);
     verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
     assertThat(mapperCaptor.getValue().apply(mock(MutableWorldState.class), Optional.of(result)))
         .isEqualTo(Optional.of(expectedResponse));
@@ -277,7 +276,7 @@ public class EthCallTest {
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.isSuccessful()).thenReturn(false);
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
-    when(result.getResult()).thenReturn(processingResult);
+    when(result.result()).thenReturn(processingResult);
 
     verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
     System.out.println(result);
@@ -444,18 +443,16 @@ public class EthCallTest {
 
   private JsonCallParameter callParameter(
       final Wei gasPrice, final Wei maxFeesPerGas, final Wei maxPriorityFeesPerGas) {
-    return new JsonCallParameter(
-        Address.fromHexString("0x0"),
-        Address.fromHexString("0x0"),
-        0L,
-        gasPrice,
-        maxFeesPerGas,
-        maxPriorityFeesPerGas,
-        Wei.ZERO,
-        Bytes.EMPTY,
-        null,
-        null,
-        null);
+    return new JsonCallParameter.JsonCallParameterBuilder()
+        .withFrom(Address.fromHexString("0x0"))
+        .withTo(Address.fromHexString("0x0"))
+        .withGas(0L)
+        .withGasPrice(gasPrice)
+        .withMaxFeePerGas(maxFeesPerGas)
+        .withMaxPriorityFeePerGas(maxPriorityFeesPerGas)
+        .withValue(Wei.ZERO)
+        .withInput(Bytes.EMPTY)
+        .build();
   }
 
   private JsonRpcRequestContext ethCallRequest(

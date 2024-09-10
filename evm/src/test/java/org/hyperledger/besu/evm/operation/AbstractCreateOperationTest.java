@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,11 +11,13 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -23,11 +25,11 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -43,6 +45,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -54,7 +57,7 @@ class AbstractCreateOperationTest {
   private final MutableAccount account = mock(MutableAccount.class);
   private final MutableAccount newAccount = mock(MutableAccount.class);
   private final FakeCreateOperation operation =
-      new FakeCreateOperation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
+      new FakeCreateOperation(new ConstantinopleGasCalculator());
 
   private static final Bytes SIMPLE_CREATE =
       Bytes.fromHexString(
@@ -74,7 +77,7 @@ class AbstractCreateOperationTest {
   public static final Bytes INVALID_EOF =
       Bytes.fromHexString(
           "0x"
-              + "73EF99010100040200010001030000000000000000" // PUSH20 contract
+              + "73EF00990100040200010001030000000000000000" // PUSH20 contract
               + "6000" // PUSH1 0x00
               + "52" // MSTORE
               + "6014" // PUSH1 20
@@ -97,25 +100,38 @@ class AbstractCreateOperationTest {
      * Instantiates a new Create operation.
      *
      * @param gasCalculator the gas calculator
-     * @param maxInitcodeSize Maximum init code size
      */
-    public FakeCreateOperation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, maxInitcodeSize);
+    public FakeCreateOperation(final GasCalculator gasCalculator) {
+      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, 0);
     }
 
     @Override
-    public long cost(final MessageFrame frame) {
-      return gasCalculator().createOperationGasCost(frame);
+    public long cost(final MessageFrame frame, final Supplier<Code> unused) {
+      final int inputOffset = clampedToInt(frame.getStackItem(1));
+      final int inputSize = clampedToInt(frame.getStackItem(2));
+      return clampedAdd(
+          clampedAdd(
+              gasCalculator().txCreateCost(),
+              gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputSize)),
+          gasCalculator().initcodeCost(inputSize));
     }
 
     @Override
-    protected Address targetContractAddress(final MessageFrame frame) {
+    protected Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
       final Account sender = frame.getWorldUpdater().get(frame.getRecipientAddress());
       // Decrement nonce by 1 to normalize the effect of transaction execution
       final Address address =
           Address.contractAddress(frame.getRecipientAddress(), sender.getNonce() - 1L);
       frame.warmUpAddress(address);
       return address;
+    }
+
+    @Override
+    protected Code getInitCode(final MessageFrame frame, final EVM evm) {
+      final long inputOffset = clampedToLong(frame.getStackItem(1));
+      final long inputSize = clampedToLong(frame.getStackItem(2));
+      final Bytes inputData = frame.readMemory(inputOffset, inputSize);
+      return evm.getCodeUncached(inputData);
     }
 
     @Override
@@ -148,7 +164,7 @@ class AbstractCreateOperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SIMPLE_CREATE, 0, true))
+            .code(evm.getCodeUncached(SIMPLE_CREATE))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
@@ -173,12 +189,13 @@ class AbstractCreateOperationTest {
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
     when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     operation.execute(messageFrame, evm);
     final MessageFrame createFrame = messageFrameStack.peek();
     final ContractCreationProcessor ccp =
-        new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
+        new ContractCreationProcessor(evm, false, List.of(), 0, List.of());
     ccp.process(createFrame, OperationTracer.NO_TRACING);
   }
 

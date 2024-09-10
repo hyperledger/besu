@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -43,7 +43,9 @@ public class EnginePayloadParameter {
   private final List<WithdrawalParameter> withdrawals;
   private final Long blobGasUsed;
   private final String excessBlobGas;
-  private final List<DepositParameter> deposits;
+  private final List<DepositRequestParameter> depositRequests;
+  private final List<WithdrawalRequestParameter> withdrawalRequests;
+  private final List<ConsolidationRequestParameter> consolidationRequests;
 
   /**
    * Creates an instance of EnginePayloadParameter.
@@ -65,7 +67,9 @@ public class EnginePayloadParameter {
    * @param withdrawals Array of Withdrawal
    * @param blobGasUsed QUANTITY, 64 Bits
    * @param excessBlobGas QUANTITY, 64 Bits
-   * @param deposits List of deposit parameters.
+   * @param depositRequests List of deposit parameters.
+   * @param withdrawalRequestParameters List of withdrawal requests parameters.
+   * @param consolidationRequests List of consolidation requests parameters.
    */
   @JsonCreator
   public EnginePayloadParameter(
@@ -86,7 +90,11 @@ public class EnginePayloadParameter {
       @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
       @JsonProperty("blobGasUsed") final UnsignedLongParameter blobGasUsed,
       @JsonProperty("excessBlobGas") final String excessBlobGas,
-      @JsonProperty("depositReceipts") final List<DepositParameter> deposits) {
+      @JsonProperty("depositRequests") final List<DepositRequestParameter> depositRequests,
+      @JsonProperty("withdrawalRequests")
+          final List<WithdrawalRequestParameter> withdrawalRequestParameters,
+      @JsonProperty("consolidationRequests")
+          final List<ConsolidationRequestParameter> consolidationRequests) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient;
@@ -104,7 +112,9 @@ public class EnginePayloadParameter {
     this.withdrawals = withdrawals;
     this.blobGasUsed = blobGasUsed == null ? null : blobGasUsed.getValue();
     this.excessBlobGas = excessBlobGas;
-    this.deposits = deposits;
+    this.depositRequests = depositRequests;
+    this.withdrawalRequests = withdrawalRequestParameters;
+    this.consolidationRequests = consolidationRequests;
   }
 
   public Hash getBlockHash() {
@@ -175,7 +185,15 @@ public class EnginePayloadParameter {
     return excessBlobGas;
   }
 
-  public List<DepositParameter> getDeposits() {
-    return deposits;
+  public List<DepositRequestParameter> getDepositRequests() {
+    return depositRequests;
+  }
+
+  public List<WithdrawalRequestParameter> getWithdrawalRequests() {
+    return withdrawalRequests;
+  }
+
+  public List<ConsolidationRequestParameter> getConsolidationRequests() {
+    return consolidationRequests;
   }
 }

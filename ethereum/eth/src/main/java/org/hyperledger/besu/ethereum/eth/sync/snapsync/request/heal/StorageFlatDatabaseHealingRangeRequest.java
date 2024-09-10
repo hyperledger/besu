@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,27 +14,29 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.getRangeCount;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.getRangeCount;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -55,7 +57,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
   private final Bytes32 storageRoot;
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
-  private TreeMap<Bytes32, Bytes> slots;
+  private NavigableMap<Bytes32, Bytes> slots;
   private boolean isProofValid;
 
   public StorageFlatDatabaseHealingRangeRequest(
@@ -75,7 +77,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
   @Override
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
     if (!slots.isEmpty()) {
@@ -119,10 +121,10 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
   public void addLocalData(
       final WorldStateProofProvider worldStateProofProvider,
-      final TreeMap<Bytes32, Bytes> slots,
+      final NavigableMap<Bytes32, Bytes> slots,
       final ArrayDeque<Bytes> proofs) {
     if (!slots.isEmpty() && !proofs.isEmpty()) {
-      // very proof in order to check if the local flat database is valid or not
+      // verify proof in order to check if the local flat database is valid or not
       isProofValid =
           worldStateProofProvider.isValidRangeProof(
               startKeyHash, endKeyHash, storageRoot, proofs, slots);
@@ -132,8 +134,8 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
   @Override
   protected int doPersist(
-      final WorldStateStorage worldStateStorage,
-      final WorldStateStorage.Updater updater,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
+      final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
@@ -147,7 +149,8 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final MerkleTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
               (location, hash) ->
-                  worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+                  worldStateStorageCoordinator.getAccountStorageTrieNode(
+                      accountHash, location, hash),
               storageRoot,
               Function.identity(),
               Function.identity());

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -80,7 +80,7 @@ public class RetryingGetBlocksFromPeersTask
               if (peerResult.getResult().isEmpty()) {
                 currentPeer.recordUselessResponse("GetBodiesFromPeerTask");
                 throw new IncompleteResultsException(
-                    "No blocks returned by peer " + currentPeer.getShortNodeId());
+                    "No blocks returned by peer " + currentPeer.getLoggableId());
               }
 
               result.complete(peerResult);

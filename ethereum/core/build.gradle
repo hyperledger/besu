@@ -22,7 +22,8 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
       )
   }
 }
@@ -32,6 +33,7 @@ dependencies {
   api 'org.web3j:core'
 
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
+  annotationProcessor 'org.hyperledger.besu:besu-errorprone-checks'
 
   implementation project(':config')
   implementation project(':crypto:algorithms')
@@ -47,7 +49,9 @@ dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
+  implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.dagger:dagger'
+  implementation 'org.apache.maven:maven-artifact'
   annotationProcessor 'com.google.dagger:dagger-compiler'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.vertx:vertx-core'
@@ -58,7 +62,6 @@ dependencies {
   implementation 'io.tmio:tuweni-concurrent'
   implementation 'io.tmio:tuweni-units'
   implementation 'io.tmio:tuweni-rlp'
-  implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
   implementation 'tech.pegasys:jc-kzg-4844'
 

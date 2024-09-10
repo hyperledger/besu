@@ -74,19 +74,19 @@ public abstract class AbstractGetHeadersFromPeerTask
     final List<BlockHeader> headers = headersMessage.getHeaders(protocolSchedule);
     if (headers.isEmpty()) {
       // Message contains no data - nothing to do
-      LOG.debug("headers.isEmpty. Peer: {}", peer.getShortNodeId());
+      LOG.debug("headers.isEmpty. Peer: {}", peer.getLoggableId());
       return Optional.empty();
     }
     if (headers.size() > count) {
       // Too many headers - this isn't our response
-      LOG.debug("headers.size()>count. Peer: {}", peer.getShortNodeId());
+      LOG.debug("headers.size()>count. Peer: {}", peer.getLoggableId());
       return Optional.empty();
     }
 
     final BlockHeader firstHeader = headers.get(0);
     if (!matchesFirstHeader(firstHeader)) {
       // This isn't our message - nothing to do
-      LOG.debug("!matchesFirstHeader. Peer: {}", peer.getShortNodeId());
+      LOG.debug("!matchesFirstHeader. Peer: {}", peer.getLoggableId());
       return Optional.empty();
     }
 
@@ -100,7 +100,7 @@ public abstract class AbstractGetHeadersFromPeerTask
       header = headers.get(i);
       if (header.getNumber() != prevBlockHeader.getNumber() + expectedDelta) {
         // Skip doesn't match, this isn't our data
-        LOG.debug("header not matching the expected number. Peer: {}", peer.getShortNodeId());
+        LOG.debug("header not matching the expected number. Peer: {}", peer.getLoggableId());
         return Optional.empty();
       }
       // if headers are supposed to be sequential check if a chain is formed
@@ -110,8 +110,9 @@ public abstract class AbstractGetHeadersFromPeerTask
         if (!parent.getHash().equals(child.getParentHash())) {
           LOG.debug(
               "Sequential headers must form a chain through hashes (BREACH_OF_PROTOCOL), disconnecting peer: {}",
-              peer.getShortNodeId());
-          peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+              peer.getLoggableId());
+          peer.disconnect(
+              DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS);
           return Optional.empty();
         }
       }
@@ -126,10 +127,10 @@ public abstract class AbstractGetHeadersFromPeerTask
     }
 
     LOG.atTrace()
-        .setMessage("Received {} of {} headers requested from peer {}...")
+        .setMessage("Received {} of {} headers requested from peer {}")
         .addArgument(headersList::size)
         .addArgument(count)
-        .addArgument(peer::getShortNodeId)
+        .addArgument(peer::getLoggableId)
         .log();
     return Optional.of(headersList);
   }
@@ -137,8 +138,8 @@ public abstract class AbstractGetHeadersFromPeerTask
   private void updatePeerChainState(final EthPeer peer, final BlockHeader blockHeader) {
     if (blockHeader.getNumber() > peer.chainState().getEstimatedHeight()) {
       LOG.atTrace()
-          .setMessage("Updating chain state for peer {}... to block header {}")
-          .addArgument(peer::getShortNodeId)
+          .setMessage("Updating chain state for peer {} to block header {}")
+          .addArgument(peer::getLoggableId)
           .addArgument(blockHeader::toLogString)
           .log();
       peer.chainState().update(blockHeader);

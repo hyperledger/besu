@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,25 +16,33 @@ package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.cli.subcommands.storage.RocksDbHelper.formatOutputSize;
+import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_LOG_STORAGE;
 
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.rocksdb.RocksDBException;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -42,7 +50,8 @@ import picocli.CommandLine.ParentCommand;
 
 /** The Trie Log subcommand. */
 @Command(
-    name = "x-trie-log",
+    name = "trie-log",
+    aliases = "x-trie-log",
     description = "Manipulate trie logs",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
@@ -54,6 +63,8 @@ import picocli.CommandLine.ParentCommand;
     })
 public class TrieLogSubCommand implements Runnable {
 
+  private static final Logger LOG = LoggerFactory.getLogger(TrieLogSubCommand.class);
+
   @SuppressWarnings("UnusedVariable")
   @ParentCommand
   private static StorageSubCommand parentCommand;
@@ -62,6 +73,9 @@ public class TrieLogSubCommand implements Runnable {
   @CommandLine.Spec
   private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
 
+  /** Default Constructor. */
+  TrieLogSubCommand() {}
+
   @Override
   public void run() {
     final PrintWriter out = spec.commandLine().getOut();
@@ -69,7 +83,14 @@ public class TrieLogSubCommand implements Runnable {
   }
 
   private static BesuController createBesuController() {
-    return parentCommand.parentCommand.buildController();
+    final DataStorageConfiguration config = parentCommand.besuCommand.getDataStorageConfiguration();
+    // disable limit trie logs to avoid preloading during subcommand execution
+    return parentCommand
+        .besuCommand
+        .setupControllerBuilder()
+        .dataStorageConfiguration(
+            ImmutableDataStorageConfiguration.copyOf(config).withBonsaiLimitTrieLogsEnabled(false))
+        .build();
   }
 
   @Command(
@@ -123,13 +144,72 @@ public class TrieLogSubCommand implements Runnable {
       final TrieLogContext context = getTrieLogContext();
       final Path dataDirectoryPath =
           Paths.get(
-              TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
+              TrieLogSubCommand.parentCommand.besuCommand.dataDir().toAbsolutePath().toString());
+
+      LOG.info("Estimating trie logs size before pruning...");
+      long sizeBefore = estimatedSizeOfTrieLogs();
+      LOG.info("Estimated trie logs size before pruning: {}", formatOutputSize(sizeBefore));
+      LOG.info("Starting pruning...");
       final TrieLogHelper trieLogHelper = new TrieLogHelper();
-      trieLogHelper.prune(
-          context.config(),
-          context.rootWorldStateStorage(),
-          context.blockchain(),
-          dataDirectoryPath);
+      boolean success =
+          trieLogHelper.prune(
+              context.config(),
+              context.rootWorldStateStorage(),
+              context.blockchain(),
+              dataDirectoryPath);
+
+      if (success) {
+        LOG.info("Finished pruning. Re-estimating trie logs size...");
+        final long sizeAfter = estimatedSizeOfTrieLogs();
+        LOG.info(
+            "Estimated trie logs size after pruning: {} (0 B estimate is normal when using default settings)",
+            formatOutputSize(sizeAfter));
+        long estimatedSaving = sizeBefore - sizeAfter;
+        LOG.info(
+            "Prune ran successfully. We estimate you freed up {}! \uD83D\uDE80",
+            formatOutputSize(estimatedSaving));
+        spec.commandLine()
+            .getOut()
+            .printf(
+                "Prune ran successfully. We estimate you freed up %s! \uD83D\uDE80\n",
+                formatOutputSize(estimatedSaving));
+      }
+    }
+
+    private long estimatedSizeOfTrieLogs() {
+      final String dbPath =
+          TrieLogSubCommand.parentCommand
+              .besuCommand
+              .dataDir()
+              .toString()
+              .concat("/")
+              .concat(DATABASE_PATH);
+
+      AtomicLong estimatedSaving = new AtomicLong(0L);
+      try {
+        RocksDbHelper.forEachColumnFamily(
+            dbPath,
+            (rocksdb, cfHandle) -> {
+              try {
+                if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId())) {
+
+                  final long sstSize =
+                      Long.parseLong(rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size"));
+                  final long blobSize =
+                      Long.parseLong(rocksdb.getProperty(cfHandle, "rocksdb.total-blob-file-size"));
+
+                  estimatedSaving.set(sstSize + blobSize);
+                }
+              } catch (RocksDBException | NumberFormatException e) {
+                throw new RuntimeException(e);
+              }
+            });
+      } catch (Exception e) {
+        LOG.warn("Error while estimating trie log size, returning 0 for estimate", e);
+        return 0L;
+      }
+
+      return estimatedSaving.get();
     }
   }
 
@@ -169,7 +249,7 @@ public class TrieLogSubCommand implements Runnable {
         trieLogFilePath =
             Paths.get(
                 TrieLogSubCommand.parentCommand
-                    .parentCommand
+                    .besuCommand
                     .dataDir()
                     .resolve("trie-logs.bin")
                     .toAbsolutePath()
@@ -219,7 +299,7 @@ public class TrieLogSubCommand implements Runnable {
         trieLogFilePath =
             Paths.get(
                 TrieLogSubCommand.parentCommand
-                    .parentCommand
+                    .besuCommand
                     .dataDir()
                     .resolve("trie-logs.bin")
                     .toAbsolutePath()

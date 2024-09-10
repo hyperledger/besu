@@ -22,7 +22,8 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
       )
   }
 }
@@ -50,15 +51,14 @@ dependencies {
   implementation('io.tmio:tuweni-devp2p') {
     exclude group:'ch.qos.logback', module:'logback-classic'
   }
-  implementation('io.tmio:tuweni-dns-discovery'){
-    exclude group:'ch.qos.logback', module:'logback-classic'
-  }
   implementation 'io.tmio:tuweni-io'
   implementation 'io.tmio:tuweni-rlp'
   implementation 'io.tmio:tuweni-units'
+  implementation 'org.apache.commons:commons-collections4'
   implementation 'org.jetbrains.kotlin:kotlin-stdlib'
   implementation 'org.owasp.encoder:encoder'
   implementation 'org.xerial.snappy:snappy-java'
+  implementation 'commons-net:commons-net'
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
@@ -83,6 +83,7 @@ dependencies {
   }
   testImplementation 'io.vertx:vertx-codegen'
   testImplementation 'io.vertx:vertx-unit'
+  testImplementation 'io.vertx:vertx-junit5'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'

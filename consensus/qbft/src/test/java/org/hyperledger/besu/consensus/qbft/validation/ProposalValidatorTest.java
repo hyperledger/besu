@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -24,12 +24,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
@@ -41,9 +42,11 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.HashMap;
@@ -86,6 +89,8 @@ public class ProposalValidatorTest {
   @Mock private BlockValidator blockValidator;
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
+  @Mock private BftProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSpec protocolSpec;
   private ProtocolContext protocolContext;
 
   private final Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
@@ -97,17 +102,21 @@ public class ProposalValidatorTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(
-                QbftContext.class, emptyList(), bftExtraDataEncoder),
-            Optional.empty());
+            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataEncoder),
+            new BadBlockManager());
 
     // typically tests require the blockValidation to be successful
     when(blockValidator.validateAndProcessBlock(
             eq(protocolContext),
             any(),
             eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL)))
+            eq(HeaderValidationMode.FULL),
+            eq(false)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
+
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+
+    when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
 
     roundItems.put(ROUND_ID.ZERO, createRoundSpecificItems(0));
     roundItems.put(ROUND_ID.ONE, createRoundSpecificItems(1));
@@ -121,8 +130,8 @@ public class ProposalValidatorTest {
             validators.getNodeAddresses(), roundIdentifier, bftExtraDataEncoder),
         roundIdentifier,
         new ProposalValidator(
-            blockValidator,
             protocolContext,
+            protocolSchedule,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             validators.getNodeAddresses(),
             roundIdentifier,
@@ -159,7 +168,8 @@ public class ProposalValidatorTest {
             eq(protocolContext),
             any(),
             eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL)))
+            eq(HeaderValidationMode.FULL),
+            eq(false)))
         .thenReturn(new BlockProcessingResult("Failed"));
 
     assertThat(roundItem.messageValidator.validate(proposal)).isFalse();

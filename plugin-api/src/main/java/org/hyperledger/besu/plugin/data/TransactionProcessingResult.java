@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -88,4 +88,11 @@ public interface TransactionProcessingResult {
    * @return the revert reason.
    */
   Optional<Bytes> getRevertReason();
+
+  /**
+   * Return the reason why the transaction is invalid or empty if the transaction is successful
+   *
+   * @return the optional invalid reason as a string
+   */
+  Optional<String> getInvalidReason();
 }

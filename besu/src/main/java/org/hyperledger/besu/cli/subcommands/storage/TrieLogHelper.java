@@ -12,13 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.cli.options.stable.DataStorageOptions.BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
 import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.datatypes.Hash;
@@ -27,9 +26,9 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogFactoryImpl;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
 import java.io.File;
@@ -60,11 +59,15 @@ public class TrieLogHelper {
   private static final int ROCKSDB_MAX_INSERTS_PER_TRANSACTION = 1000;
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogHelper.class);
 
-  void prune(
+  /** Default Constructor. */
+  public TrieLogHelper() {}
+
+  boolean prune(
       final DataStorageConfiguration config,
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final MutableBlockchain blockchain,
       final Path dataDirectoryPath) {
+
     final String batchFileNameBase =
         dataDirectoryPath.resolve(DATABASE_PATH).resolve(TRIE_LOG_FILE).toString();
 
@@ -82,10 +85,11 @@ public class TrieLogHelper {
         lastBlockNumberToRetainTrieLogsFor,
         rootWorldStateStorage,
         layersToRetain)) {
-      return;
+      return false;
     }
 
     final long numberOfBatches = calculateNumberOfBatches(layersToRetain);
+    LOG.info("Retain {} trie logs, processing in {} batches", layersToRetain, numberOfBatches);
 
     processTrieLogBatches(
         rootWorldStateStorage,
@@ -102,7 +106,7 @@ public class TrieLogHelper {
             .count();
     if (countAfterPrune == layersToRetain) {
       if (deleteFiles(batchFileNameBase, numberOfBatches)) {
-        LOG.info("Prune ran successfully. Enjoy some disk space back! \uD83D\uDE80");
+        return true;
       } else {
         throw new IllegalStateException(
             "There was an error deleting the trie log backup files. Please ensure besu is working before deleting them manually.");
@@ -110,8 +114,11 @@ public class TrieLogHelper {
     } else {
       throw new IllegalStateException(
           String.format(
-              "Remaining trie logs (%d) did not match %s (%d). Trie logs backup files have not been deleted, it is safe to rerun the subcommand.",
-              countAfterPrune, BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD, layersToRetain));
+              "Remaining trie logs (%d) did not match %s (%d). Trie logs backup files (in %s) have not been deleted, it is safe to rerun the subcommand.",
+              countAfterPrune,
+              BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
+              layersToRetain,
+              batchFileNameBase));
     }
   }
 
@@ -131,7 +138,7 @@ public class TrieLogHelper {
       final List<Hash> trieLogKeys =
           getTrieLogKeysForBlocks(blockchain, firstBlockOfBatch, lastBlockOfBatch);
 
-      LOG.info("Saving trie logs to retain in file (batch {})...", batchNumber);
+      LOG.info("Saving trie logs to retain in file {} (batch {})...", batchFileName, batchNumber);
       saveTrieLogBatches(batchFileName, rootWorldStateStorage, trieLogKeys);
     }
 
@@ -289,25 +296,23 @@ public class TrieLogHelper {
   void validatePruneConfiguration(final DataStorageConfiguration config) {
     checkArgument(
         config.getBonsaiMaxLayersToLoad()
-            >= DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT,
+            >= DataStorageConfiguration.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT,
         String.format(
             BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
-            DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
+            DataStorageConfiguration.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
     checkArgument(
-        config.getUnstable().getBonsaiTrieLogPruningWindowSize() > 0,
+        config.getBonsaiTrieLogPruningWindowSize() > 0,
         String.format(
-            DataStorageOptions.Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
-                + "=%d must be greater than 0",
-            config.getUnstable().getBonsaiTrieLogPruningWindowSize()));
+            DataStorageOptions.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
+            config.getBonsaiTrieLogPruningWindowSize()));
     checkArgument(
-        config.getUnstable().getBonsaiTrieLogPruningWindowSize()
-            > config.getBonsaiMaxLayersToLoad(),
+        config.getBonsaiTrieLogPruningWindowSize() > config.getBonsaiMaxLayersToLoad(),
         String.format(
-            DataStorageOptions.Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
+            DataStorageOptions.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
                 + "=%d must be greater than "
                 + BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
                 + "=%d",
-            config.getUnstable().getBonsaiTrieLogPruningWindowSize(),
+            config.getBonsaiTrieLogPruningWindowSize(),
             config.getBonsaiMaxLayersToLoad()));
   }
 
@@ -319,7 +324,7 @@ public class TrieLogHelper {
 
     File file = new File(batchFileName);
     if (file.exists()) {
-      LOG.error("File already exists, skipping file creation");
+      LOG.warn("File already exists {}, skipping file creation", batchFileName);
       return;
     }
 
@@ -354,7 +359,7 @@ public class TrieLogHelper {
       final String batchFileName) {
     File file = new File(batchFileName);
     if (file.exists()) {
-      LOG.error("File already exists, skipping file creation");
+      LOG.warn("File already exists {}, skipping file creation", batchFileName);
       return;
     }
 

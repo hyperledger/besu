@@ -15,7 +15,7 @@
  */
 
 plugins {
-  id 'org.graalvm.buildtools.native' version '0.9.17'
+  id 'org.graalvm.buildtools.native' version '0.10.2'
 }
 
 apply plugin: 'java-library'
@@ -29,7 +29,8 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
       )
   }
 }
@@ -72,16 +73,6 @@ dependencies {
 
 mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
 
-startScripts {
-  applicationName = 'evm'
-  defaultJvmOpts = [
-    "-Dsecp256k1.randomize=false"
-  ]
-  doLast {
-    unixScript.text = unixScript.text.replace('BESU_HOME', '\$APP_HOME')
-    windowsScript.text = windowsScript.text.replace('BESU_HOME', '%~dp0..')
-  }
-}
 
 // rename the top level dir from besu-<version> to besu and this makes it really
 // simple for use in docker
@@ -120,8 +111,9 @@ tasks.register('distDocker', Exec) {
     }
   }
 
+  def gitDetails = getGitCommitDetails(10)
   executable "sh"
-  args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+  args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
 }
 
 tasks.register('dockerUpload', Exec) {
@@ -138,7 +130,7 @@ tasks.register('dockerUpload', Exec) {
     additionalTags.add('develop')
   }
 
-  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/ || dockerBuildVersion ==~/.*develop.*/)) {
     additionalTags.add('latest')
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
@@ -146,35 +138,4 @@ tasks.register('dockerUpload', Exec) {
   additionalTags.each { tag -> cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'" }
   executable "sh"
   args "-c", cmd
-}
-
-graalvmNative {
-  binaries {
-    main {
-      sharedLibrary = false
-      buildArgs.addAll(
-        "-H:ReflectionConfigurationFiles=${projectDir}/src/main/graal/reflection-config.json",
-        "-H:AdditionalSecurityProviders=org.bouncycastle.jce.provider.BouncyCastleProvider",
-        '-H:+TraceSecurityServices'
-        )
-
-
-      // Netty drags in older versions of bouncy castle, exclude it so there are no conflicts
-      excludeConfig.put("io.netty:netty-buffer", [".*"])
-    }
-  }
-}
-
-
-configurations.nativeImageClasspath {
-  // netty statically allocates some problematic classes
-  exclude group: 'io.netty', module: 'netty-buffer'
-  exclude group: 'io.netty', module: 'netty-common'
-  exclude group: 'io.netty', module: 'netty-transport'
-
-  // keep log4j from sneaking in.  GraalVM has an aleric reaction if it sees even one class
-  exclude group: 'org.slf4j', module: 'log4j-over-slf4j:1.7.36'
-  exclude group: "log4j", module: "log4j"
-  exclude group: "org.apache.logging.log4j"
-  exclude group: 'org.bouncycastle', module: 'bcprov-jdk18on'
 }

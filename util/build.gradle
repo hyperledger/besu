@@ -23,6 +23,7 @@ jar {
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash,
       'Automatic-Module-Name': 'org.hyperledger.besu.internal.util'
       )
   }
@@ -30,6 +31,8 @@ jar {
 
 dependencies {
   api 'org.slf4j:slf4j-api'
+
+  annotationProcessor 'org.apache.logging.log4j:log4j-core'
 
   implementation 'com.google.guava:guava'
   implementation 'net.java.dev.jna:jna'

@@ -18,6 +18,7 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.EngineJsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
 import org.hyperledger.besu.ethereum.api.query.cache.AutoTransactionLogBloomCachingService;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolEvictionService;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
+import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethstats.EthStatsService;
 import org.hyperledger.besu.metrics.MetricsService;
@@ -38,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -68,6 +71,7 @@ public class Runner implements AutoCloseable {
   private final Optional<EngineJsonRpcService> engineJsonRpc;
   private final Optional<MetricsService> metrics;
   private final Optional<JsonRpcIpcService> ipcJsonRpc;
+  private final Map<String, JsonRpcMethod> inProcessRpcMethods;
   private final Optional<Path> pidPath;
   private final Optional<WebSocketService> webSocketRpc;
   private final TransactionPoolEvictionService transactionPoolEvictionService;
@@ -89,6 +93,7 @@ public class Runner implements AutoCloseable {
    * @param graphQLHttp the graph ql http
    * @param webSocketRpc the web socket rpc
    * @param ipcJsonRpc the ipc json rpc
+   * @param inProcessRpcMethods the in-process rpc methods
    * @param stratumServer the stratum server
    * @param metrics the metrics
    * @param ethStatsService the eth stats service
@@ -107,6 +112,7 @@ public class Runner implements AutoCloseable {
       final Optional<GraphQLHttpService> graphQLHttp,
       final Optional<WebSocketService> webSocketRpc,
       final Optional<JsonRpcIpcService> ipcJsonRpc,
+      final Map<String, JsonRpcMethod> inProcessRpcMethods,
       final Optional<StratumServer> stratumServer,
       final Optional<MetricsService> metrics,
       final Optional<EthStatsService> ethStatsService,
@@ -124,6 +130,7 @@ public class Runner implements AutoCloseable {
     this.engineJsonRpc = engineJsonRpc;
     this.webSocketRpc = webSocketRpc;
     this.ipcJsonRpc = ipcJsonRpc;
+    this.inProcessRpcMethods = inProcessRpcMethods;
     this.metrics = metrics;
     this.ethStatsService = ethStatsService;
     this.besuController = besuController;
@@ -252,7 +259,7 @@ public class Runner implements AutoCloseable {
     try {
       shutdown.await();
     } catch (final InterruptedException e) {
-      LOG.debug("Interrupted while waiting for service " + serviceName + " to stop", e);
+      LOG.debug("Interrupted while waiting for service {} to stop {}", serviceName, e);
       Thread.currentThread().interrupt();
     }
   }
@@ -413,6 +420,15 @@ public class Runner implements AutoCloseable {
   }
 
   /**
+   * Get the RPC methods that can be called in-process
+   *
+   * @return RPC methods by name
+   */
+  public Map<String, JsonRpcMethod> getInProcessRpcMethods() {
+    return inProcessRpcMethods;
+  }
+
+  /**
    * Gets local enode.
    *
    * @return the local enode
@@ -420,6 +436,15 @@ public class Runner implements AutoCloseable {
   @VisibleForTesting
   Optional<EnodeURL> getLocalEnode() {
     return networkRunner.getNetwork().getLocalEnode();
+  }
+
+  /**
+   * get P2PNetwork service.
+   *
+   * @return p2p network service.
+   */
+  public P2PNetwork getP2PNetwork() {
+    return networkRunner.getNetwork();
   }
 
   @FunctionalInterface

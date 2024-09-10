@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,9 +11,12 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.services.kvstore;
+
+import static java.util.Spliterator.DISTINCT;
+import static java.util.Spliterator.ORDERED;
+import static java.util.Spliterator.SORTED;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -22,13 +25,18 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.tuple.Pair;
@@ -60,7 +68,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
    * @param parent the parent key value storage for this layered storage.
    */
   public LayeredKeyValueStorage(
-      final ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> map,
+      final ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>> map,
       final SegmentedKeyValueStorage parent) {
     super(map);
     this.parent = parent;
@@ -82,7 +90,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     try {
       Bytes wrapKey = Bytes.wrap(key);
       final Optional<byte[]> foundKey =
-          hashValueStore.computeIfAbsent(segmentId, __ -> new HashMap<>()).get(wrapKey);
+          hashValueStore.computeIfAbsent(segmentId, __ -> newSegmentMap()).get(wrapKey);
       if (foundKey == null) {
         return parent.get(segmentId, key);
       } else {
@@ -94,49 +102,135 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   }
 
   @Override
-  public Optional<NearestKeyValue> getNearestTo(
+  public Optional<NearestKeyValue> getNearestBefore(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
-    Optional<NearestKeyValue> ourNearest = super.getNearestTo(segmentIdentifier, key);
-    Optional<NearestKeyValue> parentNearest = parent.getNearestTo(segmentIdentifier, key);
+    return getNearest(
+        key,
+        k -> super.getNearestBefore(segmentIdentifier, k),
+        k -> parent.getNearestBefore(segmentIdentifier, k),
+        false);
+  }
+
+  @Override
+  public Optional<NearestKeyValue> getNearestAfter(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+    return getNearest(
+        key,
+        k -> super.getNearestAfter(segmentIdentifier, k),
+        k -> parent.getNearestAfter(segmentIdentifier, k),
+        true);
+  }
+
+  private Optional<NearestKeyValue> getNearest(
+      final Bytes key,
+      final Function<Bytes, Optional<NearestKeyValue>> ourNearestFunction,
+      final Function<Bytes, Optional<NearestKeyValue>> parentNearestFunction,
+      final boolean isAfter)
+      throws StorageException {
+
+    final Optional<NearestKeyValue> ourNearest = ourNearestFunction.apply(key);
+    final Optional<NearestKeyValue> parentNearest = parentNearestFunction.apply(key);
 
     if (ourNearest.isPresent() && parentNearest.isPresent()) {
-      // Both are present, return the one closer to the key
-      int ourDistance = ourNearest.get().key().commonPrefixLength(key);
-      int parentDistance = parentNearest.get().key().commonPrefixLength(key);
-      return (ourDistance <= parentDistance) ? ourNearest : parentNearest;
+      return compareNearest(ourNearest, parentNearest, key, isAfter);
     } else if (ourNearest.isPresent()) {
-      // Only ourNearest is present
       return ourNearest;
     } else {
-      // return parentNearest, which may be an empty Optional
       return parentNearest;
+    }
+  }
+
+  private Optional<NearestKeyValue> compareNearest(
+      final Optional<NearestKeyValue> ourNearest,
+      final Optional<NearestKeyValue> parentNearest,
+      final Bytes key,
+      final boolean isAfter) {
+
+    final int ourDistance = ourNearest.get().key().compareTo(key);
+    final int parentDistance = parentNearest.get().key().compareTo(key);
+    if (ourDistance == 0) {
+      return ourNearest;
+    } else if (parentDistance == 0) {
+      return parentNearest;
+    } else {
+      final int ourCommonPrefixLength = ourNearest.get().key().commonPrefixLength(key);
+      final int parentCommonPrefixLength = parentNearest.get().key().commonPrefixLength(key);
+      if (ourCommonPrefixLength != parentCommonPrefixLength) {
+        return ourCommonPrefixLength > parentCommonPrefixLength ? ourNearest : parentNearest;
+      } else {
+        // When searching for a key, if isAfter is true, we choose the next smallest key after our
+        // target because both found keys are after it.
+        // If isAfter is false, meaning we're doing a seekForPrev, we select the largest key that
+        // comes before our target, as it's the nearest one.
+        // For example : if the searched key is 0x0101 and we found 0x0001 and 0x0100 when isAfter
+        // == false we will take 0x0100
+        if (ourNearest.get().key().compareTo(parentNearest.get().key()) > 0) {
+          return isAfter ? parentNearest : ourNearest;
+        } else {
+          return isAfter ? ourNearest : parentNearest;
+        }
+      }
     }
   }
 
   @Override
   public Stream<Pair<byte[], byte[]>> stream(final SegmentIdentifier segmentId) {
     throwIfClosed();
+    var ourLayerState = hashValueStore.computeIfAbsent(segmentId, s -> newSegmentMap());
 
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    try {
-      // copy of our in memory store to use for streaming and filtering:
-      var ourLayerState =
-          Optional.ofNullable(hashValueStore.get(segmentId))
-              .map(HashMap::new)
-              .orElse(new HashMap<>());
+    PeekingIterator<Map.Entry<Bytes, Optional<byte[]>>> ourIterator =
+        new PeekingIterator<>(ourLayerState.entrySet().stream().iterator());
+    PeekingIterator<Pair<byte[], byte[]>> parentIterator =
+        new PeekingIterator<>(parent.stream(segmentId).iterator());
 
-      return Streams.concat(
-          ourLayerState.entrySet().stream()
-              .filter(entry -> entry.getValue().isPresent())
-              .map(
-                  bytesEntry ->
-                      Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue().get()))
-          // since we are layered, concat a parent stream filtered by our map entries:
-          ,
-          parent.stream(segmentId).filter(e -> !ourLayerState.containsKey(Bytes.of(e.getLeft()))));
-    } finally {
-      lock.unlock();
+    return StreamSupport.stream(
+            Spliterators.spliteratorUnknownSize(
+                new LayeredIterator(ourIterator, parentIterator), ORDERED | SORTED | DISTINCT),
+            false)
+        .filter(e -> e.getValue() != null);
+  }
+
+  private static class LayeredIterator implements Iterator<Pair<byte[], byte[]>> {
+    private final PeekingIterator<Map.Entry<Bytes, Optional<byte[]>>> ourIterator;
+    private final PeekingIterator<Pair<byte[], byte[]>> parentIterator;
+
+    LayeredIterator(
+        final PeekingIterator<Map.Entry<Bytes, Optional<byte[]>>> ourIterator,
+        final PeekingIterator<Pair<byte[], byte[]>> parentIterator) {
+      this.ourIterator = ourIterator;
+      this.parentIterator = parentIterator;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return ourIterator.hasNext() || parentIterator.hasNext();
+    }
+
+    private Pair<byte[], byte[]> mapEntryToPair(final Map.Entry<Bytes, Optional<byte[]>> entry) {
+      byte[] value = entry.getValue().orElse(null);
+      return Pair.of(entry.getKey().toArrayUnsafe(), value);
+    }
+
+    @Override
+    public Pair<byte[], byte[]> next() {
+      var ourPeek = ourIterator.peek();
+      var parentPeek = parentIterator.peek();
+
+      if (ourPeek == null || parentPeek == null) {
+        return ourPeek == null ? parentIterator.next() : mapEntryToPair(ourIterator.next());
+      }
+
+      // otherwise compare:
+      int comparison = ourPeek.getKey().compareTo(Bytes.wrap(parentPeek.getKey()));
+      if (comparison < 0) {
+        return mapEntryToPair(ourIterator.next());
+      } else if (comparison == 0) {
+        // skip dupe key from parent, return ours:
+        parentIterator.next();
+        return mapEntryToPair(ourIterator.next());
+      } else {
+        return parentIterator.next();
+      }
     }
   }
 
@@ -186,7 +280,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   @Override
   public boolean tryDelete(final SegmentIdentifier segmentId, final byte[] key) {
     hashValueStore
-        .computeIfAbsent(segmentId, __ -> new HashMap<>())
+        .computeIfAbsent(segmentId, __ -> newSegmentMap())
         .put(Bytes.wrap(key), Optional.empty());
     return true;
   }
@@ -206,7 +300,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
                   .forEach(
                       entry ->
                           hashValueStore
-                              .computeIfAbsent(entry.getKey(), __ -> new HashMap<>())
+                              .computeIfAbsent(entry.getKey(), __ -> newSegmentMap())
                               .putAll(entry.getValue()));
 
               // put empty rather than remove in order to not ask parent in case of deletion
@@ -214,7 +308,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
                   .forEach(
                       segmentEntry ->
                           hashValueStore
-                              .computeIfAbsent(segmentEntry.getKey(), __ -> new HashMap<>())
+                              .computeIfAbsent(segmentEntry.getKey(), __ -> newSegmentMap())
                               .putAll(
                                   segmentEntry.getValue().stream()
                                       .collect(
@@ -244,6 +338,32 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     if (parent.isClosed()) {
       LOG.error("Attempting to use a closed RocksDBKeyValueStorage");
       throw new StorageException("Storage has been closed");
+    }
+  }
+
+  private static class PeekingIterator<E> implements Iterator<E> {
+    private final Iterator<E> iterator;
+    private E next;
+
+    public PeekingIterator(final Iterator<E> iterator) {
+      this.iterator = iterator;
+      this.next = iterator.hasNext() ? iterator.next() : null;
+    }
+
+    public E peek() {
+      return next;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return next != null;
+    }
+
+    @Override
+    public E next() {
+      E oldNext = next;
+      next = iterator.hasNext() ? iterator.next() : null;
+      return oldNext;
     }
   }
 }

@@ -45,7 +45,6 @@ public class PoWBlockCreator extends AbstractBlockCreator {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final PoWSolver nonceSolver,
-      final BlockHeader parentHeader,
       final EthScheduler ethScheduler) {
     super(
         miningParameters,
@@ -54,8 +53,6 @@ public class PoWBlockCreator extends AbstractBlockCreator {
         transactionPool,
         protocolContext,
         protocolSchedule,
-        parentHeader,
-        Optional.empty(),
         ethScheduler);
 
     this.nonceSolver = nonceSolver;

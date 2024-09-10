@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -40,6 +40,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -93,6 +94,11 @@ abstract class AbstractJsonRpcTest {
               .readTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
               .build();
     }
+
+    if (testCase.getWaitTime() > 0L) {
+      waitForMillis(testCase.getWaitTime());
+    }
+
     final Call testRequest =
         client.newCall(
             new Request.Builder()
@@ -110,6 +116,14 @@ abstract class AbstractJsonRpcTest {
         .withFailMessage(
             "%s\ndid not equal\n %s", actualBody.toPrettyString(), expectedBody.toPrettyString())
         .isEqualTo(expectedBody);
+  }
+
+  private static void waitForMillis(final long millis) {
+    try {
+      Thread.sleep(millis);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected void evaluateResponse(
@@ -133,5 +147,12 @@ abstract class AbstractJsonRpcTest {
         new File(AbstractJsonRpcTest.class.getResource(testCasesPath).toURI()).listFiles();
 
     return Arrays.stream(testCasesList).sorted().map(File::toURI).map(Arguments::of);
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

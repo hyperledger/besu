@@ -16,19 +16,28 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.LONDON;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -41,7 +50,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 @ExtendWith(MockitoExtension.class)
-public class ProtocolScheduleBuilderTest {
+class ProtocolScheduleBuilderTest {
   private final long PRE_SHANGHAI_TIMESTAMP = 1680488620L; // Mon, 03 Apr 2023 02:23:40 UTC
   @Mock GenesisConfigOptions configOptions;
   @Mock private Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
@@ -57,17 +66,22 @@ public class ProtocolScheduleBuilderTest {
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
   }
 
   @Test
-  public void createProtocolScheduleInOrder() {
+  void createProtocolScheduleInOrder() {
     when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(1L));
     when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(2L));
     when(configOptions.getByzantiumBlockNumber()).thenReturn(OptionalLong.of(13L));
     when(configOptions.getMergeNetSplitBlockNumber()).thenReturn(OptionalLong.of(15L));
     when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 1));
     when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 3));
+    when(configOptions.getPragueTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 5));
     final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
 
     assertThat(protocolSchedule.getChainId()).contains(CHAIN_ID);
@@ -102,10 +116,58 @@ public class ProtocolScheduleBuilderTest {
                 .getByBlockHeader(blockHeader(54, PRE_SHANGHAI_TIMESTAMP + 4))
                 .getName())
         .isEqualTo("Cancun");
+    assertThat(
+            protocolSchedule
+                .getByBlockHeader(blockHeader(55, PRE_SHANGHAI_TIMESTAMP + 5))
+                .getName())
+        .isEqualTo("Prague");
+    assertThat(
+            protocolSchedule
+                .getByBlockHeader(blockHeader(56, PRE_SHANGHAI_TIMESTAMP + 6))
+                .getName())
+        .isEqualTo("Prague");
   }
 
   @Test
-  public void createProtocolScheduleOverlappingUsesLatestFork() {
+  void milestoneForShouldQueryAllAvailableHardforks() {
+    final long PRAGUE_TIME = 1722333828L;
+
+    when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getByzantiumBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getConstantinopleBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getPetersburgBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getIstanbulBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBerlinBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getLondonBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getPragueTime()).thenReturn(OptionalLong.of(PRAGUE_TIME));
+
+    final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
+
+    final Optional<Long> maybeBerlinMileStone = protocolSchedule.milestoneFor(BERLIN);
+    assertThat(maybeBerlinMileStone).isPresent();
+    assertThat(maybeBerlinMileStone.get()).isEqualTo(0);
+
+    final Optional<Long> maybeLondonMileStone = protocolSchedule.milestoneFor(LONDON);
+    assertThat(maybeLondonMileStone).isPresent();
+    assertThat(maybeLondonMileStone.get()).isEqualTo(0);
+
+    final Optional<Long> maybeShanghaiMileStone = protocolSchedule.milestoneFor(SHANGHAI);
+    assertThat(maybeShanghaiMileStone).isPresent();
+    assertThat(maybeShanghaiMileStone.get()).isEqualTo(0);
+
+    final Optional<Long> maybeCancunMileStone = protocolSchedule.milestoneFor(CANCUN);
+    assertThat(maybeCancunMileStone).isPresent();
+    assertThat(maybeCancunMileStone.get()).isEqualTo(0);
+
+    final Optional<Long> maybePragueMileStone = protocolSchedule.milestoneFor(PRAGUE);
+    assertThat(maybePragueMileStone).isPresent();
+    assertThat(maybePragueMileStone.get()).isEqualTo(PRAGUE_TIME);
+  }
+
+  @Test
+  void createProtocolScheduleOverlappingUsesLatestFork() {
     when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(0L));
     when(configOptions.getByzantiumBlockNumber()).thenReturn(OptionalLong.of(0L));
     final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
@@ -116,7 +178,7 @@ public class ProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void createProtocolScheduleOutOfOrderThrows() {
+  void createProtocolScheduleOutOfOrderThrows() {
     when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(0L));
     when(configOptions.getArrowGlacierBlockNumber()).thenReturn(OptionalLong.of(12L));
     when(configOptions.getGrayGlacierBlockNumber()).thenReturn(OptionalLong.of(11L));
@@ -127,7 +189,7 @@ public class ProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void createProtocolScheduleWithTimestampsOutOfOrderThrows() {
+  void createProtocolScheduleWithTimestampsOutOfOrderThrows() {
     when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(0L));
     when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(3L));
     when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(2L));
@@ -138,7 +200,7 @@ public class ProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void modifierInsertedBetweenBlocksIsAppliedToLaterAndCreatesInterimMilestone() {
+  void modifierInsertedBetweenBlocksIsAppliedToLaterAndCreatesInterimMilestone() {
     when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(5L));
 
     when(modifier.apply(any()))
@@ -158,7 +220,7 @@ public class ProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void modifierPastEndOfDefinedMilestonesGetsItsOwnMilestoneCreated() {
+  void modifierPastEndOfDefinedMilestonesGetsItsOwnMilestoneCreated() {
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));
 
@@ -175,7 +237,7 @@ public class ProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void modifierOnDefinedMilestoneIsAppliedButDoesNotGetAnExtraMilestoneCreated() {
+  void modifierOnDefinedMilestoneIsAppliedButDoesNotGetAnExtraMilestoneCreated() {
     when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(5L));
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));
@@ -199,7 +261,11 @@ public class ProtocolScheduleBuilderTest {
             ProtocolSpecAdapters.create(blockNumber, modifier),
             new PrivacyParameters(),
             false,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
 
     return new MilestoneStreamingProtocolSchedule(
         (DefaultProtocolSchedule) builder.createProtocolSchedule());

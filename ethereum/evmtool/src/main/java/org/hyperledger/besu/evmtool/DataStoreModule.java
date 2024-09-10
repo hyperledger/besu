@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evmtool;
 
@@ -39,6 +38,14 @@ import com.google.common.base.Suppliers;
 import dagger.Module;
 import dagger.Provides;
 
+/**
+ * This class is a Dagger module that provides dependencies related to the data store. It includes
+ * the GenesisFileModule for providing the genesis block. The class is annotated with
+ * {@code @Module} to indicate that it is a Dagger module. It provides various key-value storages
+ * such as variables, blockchain, world state, world state preimage, and pruning. The type of
+ * key-value storage (e.g., rocksdb, memory) can be specified. The class also provides a
+ * BlockchainStorage which is a prefixed key blockchain storage.
+ */
 @SuppressWarnings({"CloseableProvides"})
 @Module(includes = GenesisFileModule.class)
 public class DataStoreModule {
@@ -50,6 +57,9 @@ public class DataStoreModule {
                   RocksDBCLIOptions.create()::toDomainObject,
                   List.of(KeyValueSegmentIdentifier.values()),
                   RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS));
+
+  /** Default constructor for the DataStoreModule class. */
+  public DataStoreModule() {}
 
   @Provides
   @Singleton
@@ -142,6 +152,9 @@ public class DataStoreModule {
       @Named("variables") final KeyValueStorage variablesKeyValueStorage,
       final BlockHeaderFunctions blockHashFunction) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
-        keyValueStorage, new VariablesKeyValueStorage(variablesKeyValueStorage), blockHashFunction);
+        keyValueStorage,
+        new VariablesKeyValueStorage(variablesKeyValueStorage),
+        blockHashFunction,
+        false);
   }
 }

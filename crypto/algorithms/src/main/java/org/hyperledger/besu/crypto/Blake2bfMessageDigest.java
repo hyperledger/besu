@@ -34,16 +34,24 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
     super(new Blake2bfDigest());
   }
 
+  @Override
+  public Blake2bfMessageDigest clone() throws CloneNotSupportedException {
+    Blake2bfMessageDigest cloned = (Blake2bfMessageDigest) super.clone();
+    cloned.digest = ((Blake2bfDigest) this.digest).clone();
+    return cloned;
+  }
+
   /**
    * Implementation of the `F` compression function of the Blake2b cryptographic hash function.
    *
-   * <p>RFC - https://tools.ietf.org/html/rfc7693
+   * <p>RFC - <a href="https://tools.ietf.org/html/rfc7693">...</a>
    *
-   * <p>Adapted from - https://github.com/keep-network/blake2b/blob/master/compression/f.go
+   * <p>Adapted from - <a
+   * href="https://github.com/keep-network/blake2b/blob/master/compression/f.go">...</a>
    *
    * <p>Optimized for 64-bit platforms
    */
-  public static class Blake2bfDigest implements Digest {
+  public static class Blake2bfDigest implements Digest, Cloneable {
     /** The constant MESSAGE_LENGTH_BYTES. */
     public static final int MESSAGE_LENGTH_BYTES = 213;
 
@@ -71,27 +79,22 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
     // buffer which holds serialized input for this compression function
     // [ 4 bytes for rounds ][ 64 bytes for h ][ 128 bytes for m ]
     // [ 8 bytes for t_0 ][ 8 bytes for t_1 ][ 1 byte for f ]
-    private final byte[] buffer;
+    private byte[] buffer;
 
     private int bufferPos;
 
     // deserialized inputs for f compression
-    private final long[] h;
-    private final long[] m;
-    private final long[] t;
+    private long[] h;
+    private long[] m;
+    private long[] t;
     private boolean f;
     private long rounds; // unsigned integer represented as long
 
-    private final long[] v;
+    private long[] v;
     private static boolean useNative;
 
     static {
-      try {
-        useNative = LibBlake2bf.ENABLED;
-      } catch (UnsatisfiedLinkError ule) {
-        LOG.info("blake2bf native precompile not available: {}", ule.getMessage());
-        useNative = false;
-      }
+      maybeEnableNative();
     }
 
     /** Instantiates a new Blake2bf digest. */
@@ -110,6 +113,32 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
       rounds = 12;
 
       v = new long[16];
+    }
+
+    @Override
+    public Blake2bfDigest clone() throws CloneNotSupportedException {
+      Blake2bfDigest cloned = (Blake2bfDigest) super.clone();
+      cloned.buffer = this.buffer.clone();
+      cloned.h = this.h.clone();
+      cloned.m = this.m.clone();
+      cloned.t = this.t.clone();
+      cloned.v = this.v.clone();
+      return cloned;
+    }
+
+    /**
+     * Attempt to enable the native libreary
+     *
+     * @return true if the native library was successfully enabled.
+     */
+    public static boolean maybeEnableNative() {
+      try {
+        useNative = LibBlake2bf.ENABLED;
+      } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
+        LOG.info("blake2bf native precompile not available: {}", e.getMessage());
+        useNative = false;
+      }
+      return useNative;
     }
 
     /** Disable native. */

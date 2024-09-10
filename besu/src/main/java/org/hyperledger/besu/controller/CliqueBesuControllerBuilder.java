@@ -19,6 +19,7 @@ import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueB
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
+import org.hyperledger.besu.consensus.clique.CliqueForksSchedulesFactory;
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueBlockScheduler;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMiningCoordinat
 import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethods;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -52,25 +54,28 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
   private Address localAddress;
   private EpochManager epochManager;
-  private long secondsBetweenBlocks;
-  private boolean createEmptyBlocks = true;
   private final BlockInterface blockInterface = new CliqueBlockInterface();
+  private ForksSchedule<CliqueConfigOptions> forksSchedule;
+
+  /** Default constructor. */
+  public CliqueBesuControllerBuilder() {}
 
   @Override
   protected void prepForBuild() {
     localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final CliqueConfigOptions cliqueConfig = configOptionsSupplier.get().getCliqueConfigOptions();
+    final CliqueConfigOptions cliqueConfig = genesisConfigOptions.getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
-    secondsBetweenBlocks = cliqueConfig.getBlockPeriodSeconds();
-    createEmptyBlocks = cliqueConfig.getCreateEmptyBlocks();
 
     epochManager = new EpochManager(blocksPerEpoch);
+    forksSchedule = CliqueForksSchedulesFactory.create(genesisConfigOptions);
   }
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
-    return new CliqueJsonRpcMethods(protocolContext);
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MiningParameters miningParameters) {
+    return new CliqueJsonRpcMethods(protocolContext, protocolSchedule, miningParameters);
   }
 
   @Override
@@ -92,9 +97,9 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
                 clock,
                 protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider(),
                 localAddress,
-                secondsBetweenBlocks),
+                forksSchedule),
             epochManager,
-            createEmptyBlocks,
+            forksSchedule,
             ethProtocolManager.ethContext().getScheduler());
     final CliqueMiningCoordinator miningCoordinator =
         new CliqueMiningCoordinator(
@@ -102,6 +107,18 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             miningExecutor,
             syncState,
             new CliqueMiningTracker(localAddress, protocolContext));
+
+    // Update the next block period in seconds according to the transition schedule
+    protocolContext
+        .getBlockchain()
+        .observeBlockAdded(
+            o ->
+                miningParameters.setBlockPeriodSeconds(
+                    forksSchedule
+                        .getFork(o.getBlock().getHeader().getNumber() + 1)
+                        .getValue()
+                        .getBlockPeriodSeconds()));
+
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
 
     // Clique mining is implicitly enabled.
@@ -112,11 +129,16 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
-        configOptionsSupplier.get(),
+        genesisConfigOptions,
+        forksSchedule,
         nodeKey,
         privacyParameters,
         isRevertReasonEnabled,
-        evmConfiguration);
+        evmConfiguration,
+        miningParameters,
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   @Override

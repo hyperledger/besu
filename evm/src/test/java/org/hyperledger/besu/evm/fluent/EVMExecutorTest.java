@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -36,11 +35,11 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nonnull;
 
 import com.google.common.collect.MultimapBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -127,21 +126,16 @@ class EVMExecutorTest {
     EVMExecutor cancunEVM = EVMExecutor.cancun(EvmConfiguration.DEFAULT);
     assertThat(cancunEVM.getChainId()).contains(defaultChainId);
 
+    EVMExecutor cancunEOFEVM =
+        EVMExecutor.cancunEOF(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
+    assertThat(cancunEOFEVM.getChainId()).contains(defaultChainId);
+
+    EVMExecutor pragueEVM =
+        EVMExecutor.pragueEOF(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
+    assertThat(pragueEVM.getChainId()).contains(defaultChainId);
+
     EVMExecutor futureEipsVM = EVMExecutor.futureEips(EvmConfiguration.DEFAULT);
     assertThat(futureEipsVM.getChainId()).contains(defaultChainId);
-  }
-
-  @Test
-  void executeCode() {
-    var result =
-        EVMExecutor.evm(EvmSpecVersion.SHANGHAI)
-            .worldUpdater(createSimpleWorld().updater())
-            .execute(
-                CodeFactory.createCode(Bytes.fromHexString("0x6001600255"), 1, false),
-                Bytes.EMPTY,
-                Wei.ZERO,
-                Address.ZERO);
-    assertThat(result).isNotNull();
   }
 
   @Test
@@ -176,7 +170,7 @@ class EVMExecutorTest {
             .blobGasPrice(Wei.ONE)
             .callData(Bytes.fromHexString("0x12345678"))
             .ethValue(Wei.fromEth(1))
-            .code(CodeFactory.createCode(Bytes.fromHexString("0x6001600255"), 0, false))
+            .code(Bytes.fromHexString("0x6001600255"))
             .blockValues(new SimpleBlockValues())
             .difficulty(Bytes.ofUnsignedLong(1L))
             .mixHash(Bytes32.ZERO)
@@ -195,7 +189,7 @@ class EVMExecutorTest {
             .accessListWarmStorage(
                 Address.ZERO, Bytes32.ZERO, Bytes32.leftPad(Bytes.ofUnsignedLong(2L)))
             .messageCallProcessor(new MessageCallProcessor(null, null))
-            .contractCallProcessor(new ContractCreationProcessor(null, null, true, null, 1L))
+            .contractCallProcessor(new ContractCreationProcessor(null, true, null, 1L))
             .execute();
     assertThat(result).isNotNull();
   }
@@ -215,7 +209,7 @@ class EVMExecutorTest {
     assertThat(result).isNotNull();
   }
 
-  @NotNull
+  @Nonnull
   private static SimpleWorld createSimpleWorld() {
     SimpleWorld simpleWorld = new SimpleWorld();
 

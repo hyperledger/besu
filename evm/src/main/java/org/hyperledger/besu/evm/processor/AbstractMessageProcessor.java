@@ -27,6 +27,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -70,7 +71,7 @@ public abstract class AbstractMessageProcessor {
   // List of addresses to force delete when they are touched but empty
   // when the state changes in the message are were not meant to be committed.
   private final Collection<? super Address> forceDeleteAccountsWhenEmpty;
-  private final EVM evm;
+  final EVM evm;
 
   /**
    * Instantiates a new Abstract message processor.
@@ -187,13 +188,10 @@ public abstract class AbstractMessageProcessor {
     if (operationTracer != null) {
       if (frame.getState() == MessageFrame.State.NOT_STARTED) {
         operationTracer.traceContextEnter(frame);
+        start(frame, operationTracer);
       } else {
         operationTracer.traceContextReEnter(frame);
       }
-    }
-
-    if (frame.getState() == MessageFrame.State.NOT_STARTED) {
-      start(frame, operationTracer);
     }
 
     if (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
@@ -237,7 +235,17 @@ public abstract class AbstractMessageProcessor {
    * @param codeBytes the code bytes
    * @return the code from evm
    */
-  public Code getCodeFromEVM(final Hash codeHash, final Bytes codeBytes) {
+  public Code getCodeFromEVM(@Nonnull final Hash codeHash, final Bytes codeBytes) {
     return evm.getCode(codeHash, codeBytes);
+  }
+
+  /**
+   * Gets code from evm, with handling for EOF code plus calldata
+   *
+   * @param codeBytes the code bytes
+   * @return the code from evm
+   */
+  public Code getCodeFromEVMForCreation(final Bytes codeBytes) {
+    return evm.getCodeForCreation(codeBytes);
   }
 }

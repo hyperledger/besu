@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -55,12 +55,16 @@ public class ConfigurationOverviewBuilder {
   private boolean isBonsaiLimitTrieLogsEnabled = false;
   private long trieLogRetentionLimit = 0;
   private Integer trieLogsPruningWindowSize = null;
+  private boolean isSnapServerEnabled = false;
+  private boolean isSnapSyncBftEnabled = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
   private BesuPluginContextImpl besuPluginContext;
 
   /**
+   * Create a new ConfigurationOverviewBuilder.
+   *
    * @param logger the logger
    */
   public ConfigurationOverviewBuilder(final Logger logger) {
@@ -220,6 +224,28 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets snap server enabled/disabled
+   *
+   * @param snapServerEnabled bool to indicate if snap server is enabled
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setSnapServerEnabled(final boolean snapServerEnabled) {
+    isSnapServerEnabled = snapServerEnabled;
+    return this;
+  }
+
+  /**
+   * Sets snap sync BFT enabled/disabled
+   *
+   * @param snapSyncBftEnabled bool to indicate if snap sync for BFT is enabled
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setSnapSyncBftEnabled(final boolean snapSyncBftEnabled) {
+    isSnapSyncBftEnabled = snapSyncBftEnabled;
+    return this;
+  }
+
+  /**
    * Sets trie logs pruning window size
    *
    * @param size the max number of blocks to load and prune trie logs for at startup
@@ -338,6 +364,14 @@ public class ConfigurationOverviewBuilder {
     }
 
     lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
+
+    if (isSnapServerEnabled) {
+      lines.add("Experimental Snap Sync server enabled");
+    }
+
+    if (isSnapSyncBftEnabled) {
+      lines.add("Experimental Snap Sync for BFT enabled");
+    }
 
     if (isBonsaiLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();

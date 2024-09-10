@@ -22,7 +22,8 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
       )
   }
 }
@@ -38,6 +39,8 @@ dependencies {
   implementation 'info.picocli:picocli'
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-units'
+  implementation "org.immutables:value-annotations"
+  annotationProcessor "org.immutables:value"
 
   testImplementation project(':testutil')
 

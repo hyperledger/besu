@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -95,7 +95,7 @@ public class RetryingGetHeaderFromPeerByHashTask
                     "No block header for hash "
                         + referenceHash
                         + " returned by peer "
-                        + peer.getShortNodeId());
+                        + peer.getLoggableId());
               }
               result.complete(peerResult.getResult());
               return peerResult.getResult();

@@ -22,6 +22,7 @@ import org.hyperledger.besu.cli.CommandTestAbstract;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
@@ -67,7 +68,10 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     final TestBesuCommand cmd = parseCommand(cliOptions);
     final T optionsFromCommand = getOptionsFromBesuCommand(cmd);
 
-    assertThat(optionsFromCommand).usingRecursiveComparison().isEqualTo(options);
+    assertThat(optionsFromCommand)
+        .usingRecursiveComparison()
+        .ignoringFields(getNonOptionFields())
+        .isEqualTo(options);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -82,10 +86,10 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     final T optionsFromCommand = getOptionsFromBesuCommand(cmd);
 
     // Check default values supplied by CLI match expected default values
-    final String[] fieldsToIgnore = getFieldsWithComputedDefaults().toArray(new String[0]);
     assertThat(optionsFromCommand)
         .usingRecursiveComparison()
-        .ignoringFields(fieldsToIgnore)
+        .ignoringFields(getFieldsWithComputedDefaults())
+        .ignoringFields(getNonOptionFields())
         .isEqualTo(defaultOptions);
   }
 
@@ -93,8 +97,12 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
 
   protected abstract D createCustomizedDomainObject();
 
-  protected List<String> getFieldsWithComputedDefaults() {
-    return Collections.emptyList();
+  protected String[] getFieldsWithComputedDefaults() {
+    return new String[0];
+  }
+
+  protected String[] getNonOptionFields() {
+    return new String[0];
   }
 
   protected List<String> getFieldsToIgnore() {
@@ -106,10 +114,18 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
   protected abstract T getOptionsFromBesuCommand(final TestBesuCommand besuCommand);
 
   protected void internalTestSuccess(final Consumer<D> assertion, final String... args) {
+    internalTestSuccess((bc, conf) -> conf, assertion, args);
+  }
+
+  protected void internalTestSuccess(
+      final BiFunction<TestBesuCommand, D, D> runtimeConf,
+      final Consumer<D> assertion,
+      final String... args) {
     final TestBesuCommand cmd = parseCommand(args);
 
     final T options = getOptionsFromBesuCommand(cmd);
-    final D config = options.toDomainObject();
+    final D config = runtimeConf.apply(cmd, options.toDomainObject());
+
     assertion.accept(config);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();

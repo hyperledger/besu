@@ -42,6 +42,7 @@ import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Utility class for generating JUnit test parameters from json files. Each set of test parameters
@@ -75,7 +76,7 @@ public class JsonTestParameters<S, T> {
     private final List<Object[]> testParameters = new ArrayList<>(256);
 
     /**
-     * Add.
+     * Add standard reference test.
      *
      * @param name the name
      * @param fullPath the full path of the test
@@ -86,6 +87,31 @@ public class JsonTestParameters<S, T> {
         final String name, final String fullPath, final S value, final boolean runTest) {
       testParameters.add(
           new Object[] {name, value, runTest && includes(name) && includes(fullPath)});
+    }
+
+    /**
+     * Add EOF test.
+     *
+     * @param name the name
+     * @param fullPath the full path of the test
+     * @param fork the fork to be tested
+     * @param code the code to be tested
+     * @param containerKind the containerKind, if specified
+     * @param value the value
+     * @param runTest the run test
+     */
+    public void add(
+        final String name,
+        final String fullPath,
+        final String fork,
+        final Bytes code,
+        final String containerKind,
+        final S value,
+        final boolean runTest) {
+      testParameters.add(
+          new Object[] {
+            name, fork, code, containerKind, value, runTest && includes(name) && includes(fullPath)
+          });
     }
 
     private boolean includes(final String name) {
@@ -132,7 +158,8 @@ public class JsonTestParameters<S, T> {
 
   // The type to which the json file is directly mapped
   private final Class<S> jsonFileMappedType;
-  // The final type of the test case spec, which may or may not not be same than jsonFileMappedType
+
+  // The final type of the test case spec, which may or may not be same than jsonFileMappedType
   // Note that we don't really use this field as of now, but as this is the actual type of the final
   // spec used by tests, it feels "right" to have it passed explicitly at construction and having it
   // around could prove useful later.
@@ -242,7 +269,13 @@ public class JsonTestParameters<S, T> {
     return generate(getFilteredFiles(paths));
   }
 
-  private Collection<Object[]> generate(final Collection<File> filteredFiles) {
+  /**
+   * Generate collection.
+   *
+   * @param filteredFiles the filtered files
+   * @return the collection
+   */
+  public Collection<Object[]> generate(final Collection<File> filteredFiles) {
     checkState(generator != null, "Missing generator function");
 
     final Collector<T> collector =
@@ -275,7 +308,7 @@ public class JsonTestParameters<S, T> {
     final List<File> files = new ArrayList<>();
     for (final String path : paths) {
       final URL url = classLoader.getResource(path);
-      checkState(url != null, "Cannot find test directory " + path);
+      checkState(url != null, "Cannot find test directory %s", path);
       final Path dir;
       try {
         dir = Paths.get(url.toURI());

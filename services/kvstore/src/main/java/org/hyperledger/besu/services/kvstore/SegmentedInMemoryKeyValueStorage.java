@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 package org.hyperledger.besu.services.kvstore;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.hyperledger.besu.services.kvstore.KeyComparator.compareKeyLeftToRight;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -24,18 +25,22 @@ import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,10 +54,34 @@ import org.apache.tuweni.bytes.Bytes;
 public class SegmentedInMemoryKeyValueStorage
     implements SnappedKeyValueStorage, SnappableKeyValueStorage, SegmentedKeyValueStorage {
   /** protected access for the backing hash map. */
-  final ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore;
+  final ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>> hashValueStore;
 
   /** protected access to the rw lock. */
   protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+
+  /**
+   * Create a navigable segment map, with a compatible Bytes comparator
+   *
+   * @return segment map
+   */
+  protected static NavigableMap<Bytes, Optional<byte[]>> newSegmentMap() {
+    return newSegmentMap(Collections.emptyMap());
+  }
+
+  /**
+   * Create and populate a navigable segment map, with a compatible Bytes comparator.
+   *
+   * @param sourceMap sourcemap to initialize the segmentmap with.
+   * @return populated segment map
+   */
+  protected static NavigableMap<Bytes, Optional<byte[]>> newSegmentMap(
+      final Map<Bytes, Optional<byte[]>> sourceMap) {
+    // comparing by string to prevent Bytes comparator from collapsing zeroes
+    NavigableMap<Bytes, Optional<byte[]>> segMap =
+        new ConcurrentSkipListMap<>(Comparator.comparing(Bytes::toHexString));
+    segMap.putAll(sourceMap);
+    return segMap;
+  }
 
   /** Instantiates a new In memory key value storage. */
   public SegmentedInMemoryKeyValueStorage() {
@@ -65,7 +94,8 @@ public class SegmentedInMemoryKeyValueStorage
    * @param hashValueStore the hash value store
    */
   protected SegmentedInMemoryKeyValueStorage(
-      final ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore) {
+      final ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>>
+          hashValueStore) {
     this.hashValueStore = hashValueStore;
   }
 
@@ -79,8 +109,8 @@ public class SegmentedInMemoryKeyValueStorage
         segments.stream()
             .collect(
                 Collectors
-                    .<SegmentIdentifier, SegmentIdentifier, Map<Bytes, Optional<byte[]>>>
-                        toConcurrentMap(s -> s, s -> new ConcurrentHashMap<>())));
+                    .<SegmentIdentifier, SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>>
+                        toConcurrentMap(s -> s, s -> newSegmentMap())));
   }
 
   @Override
@@ -107,7 +137,7 @@ public class SegmentedInMemoryKeyValueStorage
     lock.lock();
     try {
       return hashValueStore
-          .computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
+          .computeIfAbsent(segmentIdentifier, s -> newSegmentMap())
           .getOrDefault(Bytes.wrap(key), Optional.empty());
     } finally {
       lock.unlock();
@@ -115,26 +145,67 @@ public class SegmentedInMemoryKeyValueStorage
   }
 
   @Override
-  public Optional<NearestKeyValue> getNearestTo(
+  public Optional<NearestKeyValue> getNearestBefore(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+    return getNearest(
+        segmentIdentifier,
+        e ->
+            compareKeyLeftToRight(e.getKey(), key) <= 0
+                && e.getKey().commonPrefixLength(key) >= e.getKey().size(),
+        e -> compareKeyLeftToRight(e.getKey(), key) < 0,
+        false);
+  }
+
+  @Override
+  public Optional<NearestKeyValue> getNearestAfter(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+    return getNearest(
+        segmentIdentifier,
+        e ->
+            compareKeyLeftToRight(e.getKey(), key) >= 0
+                && e.getKey().commonPrefixLength(key) >= e.getKey().size(),
+        e -> compareKeyLeftToRight(e.getKey(), key) >= 0,
+        true);
+  }
+
+  private Optional<NearestKeyValue> getNearest(
+      final SegmentIdentifier segmentIdentifier,
+      final Predicate<Map.Entry<Bytes, Optional<byte[]>>> samePrefixPredicate,
+      final Predicate<Map.Entry<Bytes, Optional<byte[]>>> fallbackPredicate,
+      final boolean useMin)
+      throws StorageException {
 
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      // TODO: revisit this for sort performance
-      Comparator<Map.Entry<Bytes, Optional<byte[]>>> comparing =
-          Comparator.comparing(
-                  (Map.Entry<Bytes, Optional<byte[]>> a) -> a.getKey().commonPrefixLength(key))
-              .thenComparing(Map.Entry.comparingByKey());
-      return this.hashValueStore
-          .computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
-          .entrySet()
-          .stream()
-          // only return keys equal to or less than
-          .filter(e -> e.getKey().compareTo(key) <= 0)
-          .sorted(comparing.reversed())
-          .findFirst()
-          .map(z -> new NearestKeyValue(z.getKey(), z.getValue()));
+      final Map<Bytes, Optional<byte[]>> segmentMap =
+          this.hashValueStore.computeIfAbsent(segmentIdentifier, s -> newSegmentMap());
+
+      final Function<Predicate<Map.Entry<Bytes, Optional<byte[]>>>, Optional<NearestKeyValue>>
+          findNearest =
+              (predicate) -> {
+                final Stream<Map.Entry<Bytes, Optional<byte[]>>> filteredStream =
+                    segmentMap.entrySet().stream().filter(predicate);
+                // Depending on the useMin flag, find either the minimum or maximum entry according
+                // to key order
+                final Optional<Map.Entry<Bytes, Optional<byte[]>>> sortedStream =
+                    useMin
+                        ? filteredStream.min(
+                            (t1, t2) -> compareKeyLeftToRight(t1.getKey(), t2.getKey()))
+                        : filteredStream.max(
+                            (t1, t2) -> compareKeyLeftToRight(t1.getKey(), t2.getKey()));
+                return sortedStream.map(
+                    entry -> new NearestKeyValue(entry.getKey(), entry.getValue()));
+              };
+
+      // First, attempt to find a key-value pair that matches the same prefix
+      final Optional<NearestKeyValue> withSamePrefix = findNearest.apply(samePrefixPredicate);
+      if (withSamePrefix.isPresent()) {
+        return withSamePrefix;
+      }
+      // If a matching entry with a common prefix is not found, the next step is to search for the
+      // nearest key that comes after or before the requested one.
+      return findNearest.apply(fallbackPredicate);
     } finally {
       lock.unlock();
     }
@@ -164,9 +235,10 @@ public class SegmentedInMemoryKeyValueStorage
     lock.lock();
     try {
       return ImmutableSet.copyOf(
-              hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>()).entrySet())
+              hashValueStore.computeIfAbsent(segmentIdentifier, s -> newSegmentMap()).entrySet())
           .stream()
           .filter(bytesEntry -> bytesEntry.getValue().isPresent())
+          .sorted(Map.Entry.comparingByKey())
           .map(
               bytesEntry ->
                   Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue().get()));
@@ -199,7 +271,7 @@ public class SegmentedInMemoryKeyValueStorage
     lock.lock();
     try {
       return ImmutableMap.copyOf(
-              hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>()))
+              hashValueStore.computeIfAbsent(segmentIdentifier, s -> newSegmentMap()))
           .entrySet()
           .stream()
           .filter(bytesEntry -> bytesEntry.getValue().isPresent())
@@ -244,8 +316,7 @@ public class SegmentedInMemoryKeyValueStorage
     return new SegmentedInMemoryKeyValueStorage(
         hashValueStore.entrySet().stream()
             .collect(
-                Collectors.toConcurrentMap(
-                    Map.Entry::getKey, e -> new ConcurrentHashMap<>(e.getValue()))));
+                Collectors.toConcurrentMap(Map.Entry::getKey, e -> newSegmentMap(e.getValue()))));
   }
 
   @Override
@@ -258,8 +329,12 @@ public class SegmentedInMemoryKeyValueStorage
 
     /** protected access to updatedValues map for the transaction. */
     protected Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> updatedValues = new HashMap<>();
+
     /** protected access to deletedValues set for the transaction. */
     protected Map<SegmentIdentifier, Set<Bytes>> removedKeys = new HashMap<>();
+
+    /** Default constructor */
+    public SegmentedInMemoryTransaction() {}
 
     @Override
     public void put(
@@ -287,7 +362,7 @@ public class SegmentedInMemoryKeyValueStorage
             .forEach(
                 entry ->
                     hashValueStore
-                        .computeIfAbsent(entry.getKey(), __ -> new HashMap<>())
+                        .computeIfAbsent(entry.getKey(), __ -> newSegmentMap())
                         .putAll(entry.getValue()));
 
         removedKeys.entrySet().stream()
@@ -295,7 +370,7 @@ public class SegmentedInMemoryKeyValueStorage
                 entry -> {
                   var keyset =
                       hashValueStore
-                          .computeIfAbsent(entry.getKey(), __ -> new HashMap<>())
+                          .computeIfAbsent(entry.getKey(), __ -> newSegmentMap())
                           .keySet();
                   keyset.removeAll(entry.getValue());
                 });

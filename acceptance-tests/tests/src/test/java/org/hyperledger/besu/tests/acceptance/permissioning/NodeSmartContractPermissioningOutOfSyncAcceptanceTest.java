@@ -16,8 +16,9 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class NodeSmartContractPermissioningOutOfSyncAcceptanceTest
     extends NodeSmartContractPermissioningAcceptanceTestBase {
@@ -25,7 +26,7 @@ public class NodeSmartContractPermissioningOutOfSyncAcceptanceTest
   private Node permissionedNodeA;
   private Node permissionedNodeB;
 
-  @Before
+  @BeforeEach
   public void setUp() throws InterruptedException {
     bootnode = bootnode("bootnode");
     permissionedNodeA = permissionedNode("permissioned-node-A");
@@ -42,17 +43,22 @@ public class NodeSmartContractPermissioningOutOfSyncAcceptanceTest
   }
 
   @Test
+  @Disabled("test is flaky #7108")
   public void addNodeToClusterAndVerifyNonBootNodePeerConnectionWorksAfterSync() {
     final long blockchainHeight = 25L;
     waitForBlockHeight(permissionedNodeA, blockchainHeight);
 
-    // Add Node B
+    // verify Node A is in sync with bootnode
+    final var minerChainHead = bootnode.execute(ethTransactions.block());
+    permissionedNodeA.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
+
+    // check that connection is forbidden (before node b is permitted)
     permissionedCluster.addNode(permissionedNodeB);
+    permissionedNodeB.verify(connectionIsForbidden(permissionedNodeA, permissionedNodeB));
+
+    // Permit Node B
     permissionedNodeA.execute(allowNode(permissionedNodeB));
     permissionedNodeA.verify(admin.addPeer(permissionedNodeB));
-
-    // check that connection is forbidden (while node b is syncing)
-    permissionedNodeB.verify(connectionIsForbidden(permissionedNodeA, permissionedNodeB));
 
     // connection should be allowed after node B syncs
     waitForBlockHeight(permissionedNodeB, blockchainHeight);

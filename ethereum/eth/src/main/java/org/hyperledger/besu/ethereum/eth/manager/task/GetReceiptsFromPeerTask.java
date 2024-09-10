@@ -85,9 +85,9 @@ public class GetReceiptsFromPeerTask
     return sendRequestToPeer(
         peer -> {
           LOG.atTrace()
-              .setMessage("Requesting {} receipts from peer {}...")
+              .setMessage("Requesting {} receipts from peer {}")
               .addArgument(blockHeaders::size)
-              .addArgument(peer::getShortNodeId)
+              .addArgument(peer::getLoggableId)
               .log();
           return peer.getReceipts(blockHashes);
         },

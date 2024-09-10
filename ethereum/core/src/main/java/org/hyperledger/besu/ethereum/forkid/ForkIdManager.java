@@ -58,7 +58,11 @@ public class ForkIdManager {
     checkNotNull(blockchain);
     checkNotNull(blockNumberForks);
     this.chainHeadSupplier = blockchain::getChainHeadHeader;
-    this.genesisHash = blockchain.getGenesisBlock().getHash();
+    try {
+      this.genesisHash = blockchain.getGenesisBlock().getHash();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     this.blockNumbersForkIds = new ArrayList<>();
     this.timestampsForkIds = new ArrayList<>();
     this.legacyEth64 = legacyEth64;
@@ -75,8 +79,7 @@ public class ForkIdManager {
             .sorted()
             .collect(Collectors.toUnmodifiableList());
     final List<Long> allForkNumbers =
-        Stream.concat(blockNumberForks.stream(), timestampForks.stream())
-            .collect(Collectors.toList());
+        Stream.concat(blockNumberForks.stream(), timestampForks.stream()).toList();
     this.forkNext = createForkIds();
     this.allForkIds =
         Stream.concat(blockNumbersForkIds.stream(), timestampsForkIds.stream())
@@ -89,7 +92,7 @@ public class ForkIdManager {
   public ForkId getForkIdForChainHead() {
     if (legacyEth64) {
       return blockNumbersForkIds.isEmpty()
-          ? null
+          ? new ForkId(genesisHashCrc, 0)
           : blockNumbersForkIds.get(blockNumbersForkIds.size() - 1);
     }
     final BlockHeader header = chainHeadSupplier.get();

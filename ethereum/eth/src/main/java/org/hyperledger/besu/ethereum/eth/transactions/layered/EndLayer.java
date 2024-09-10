@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.DROPPED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.DROPPED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedLis
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -75,7 +76,8 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public TransactionAddedResult add(final PendingTransaction pendingTransaction, final int gap) {
+  public TransactionAddedResult add(
+      final PendingTransaction pendingTransaction, final int gap, final AddReason reason) {
     notifyTransactionDropped(pendingTransaction);
     metrics.incrementRemoved(pendingTransaction, DROPPED.label(), name());
     ++droppedCount;
@@ -83,7 +85,10 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public void remove(final PendingTransaction pendingTransaction, final RemovalReason reason) {}
+  public void remove(final PendingTransaction pendingTransaction, final PoolRemovalReason reason) {}
+
+  @Override
+  public void penalize(final PendingTransaction penalizedTx) {}
 
   @Override
   public void blockAdded(
@@ -122,7 +127,8 @@ public class EndLayer implements TransactionsLayer {
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
-      final int freeSlots) {
+      final int freeSlots,
+      final int[] remainingPromotionsPerType) {
     return List.of();
   }
 
@@ -152,7 +158,8 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public PendingTransaction promoteFor(final Address sender, final long nonce) {
+  public PendingTransaction promoteFor(
+      final Address sender, final long nonce, final int[] remainingPromotionsPerType) {
     return null;
   }
 

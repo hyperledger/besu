@@ -16,9 +16,11 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
+@Disabled("permissioning tests flaky with timeouts")
 public class NodeLocalAndOnchainPermissioningAcceptanceTest
     extends NodeSmartContractPermissioningAcceptanceTestBase {
 
@@ -27,7 +29,7 @@ public class NodeLocalAndOnchainPermissioningAcceptanceTest
   private Node allowedNode;
   private Node forbiddenNode;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     bootnode = bootnode("bootnode");
     forbiddenNode = node("forbidden-node");

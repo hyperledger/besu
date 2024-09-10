@@ -30,6 +30,7 @@ import java.util.Collection;
 
 /** This is the full data set, or context, required for many of the aspects of BFT workflows. */
 public class BftFinalState {
+
   private final ValidatorProvider validatorProvider;
   private final NodeKey nodeKey;
   private final Address localAddress;
@@ -126,7 +127,8 @@ public class BftFinalState {
    * @return the boolean
    */
   public boolean isLocalNodeValidator() {
-    return getValidators().contains(localAddress);
+    final boolean isValidator = getValidators().contains(localAddress);
+    return isValidator;
   }
 
   /**

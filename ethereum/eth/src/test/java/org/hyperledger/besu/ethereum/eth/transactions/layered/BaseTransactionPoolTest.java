@@ -1,5 +1,5 @@
 /*
- * Copyright Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -31,11 +31,13 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.Optional;
 import java.util.Random;
@@ -54,13 +56,16 @@ public class BaseTransactionPoolTest {
   protected static final KeyPair KEYS2 = SIGNATURE_ALGORITHM.get().generateKeyPair();
   protected static final Address SENDER1 = Util.publicKeyToAddress(KEYS1.getPublicKey());
   protected static final Address SENDER2 = Util.publicKeyToAddress(KEYS2.getPublicKey());
-
+  protected static final Wei DEFAULT_MIN_GAS_PRICE = Wei.of(50);
+  protected static final Wei DEFAULT_MIN_PRIORITY_FEE = Wei.ZERO;
   private static final Random randomizeTxType = new Random();
 
   protected final Transaction transaction0 = createTransaction(0);
   protected final Transaction transaction1 = createTransaction(1);
   protected final Transaction transaction2 = createTransaction(2);
+  protected final Transaction blobTransaction0 = createEIP4844Transaction(0, KEYS1, 1, 1);
 
+  protected final EthScheduler ethScheduler = new DeterministicEthScheduler();
   protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
 
   protected Transaction createTransaction(final long nonce) {
@@ -93,16 +98,42 @@ public class BaseTransactionPoolTest {
   protected Transaction createEIP4844Transaction(
       final long nonce, final KeyPair keys, final int gasFeeMultiplier, final int blobCount) {
     return createTransaction(
-        TransactionType.BLOB, nonce, Wei.of(5000L).multiply(gasFeeMultiplier), 0, blobCount, keys);
+        TransactionType.BLOB,
+        nonce,
+        Wei.of(5000L).multiply(gasFeeMultiplier),
+        Wei.of(5000L).multiply(gasFeeMultiplier).divide(10),
+        0,
+        blobCount,
+        keys);
+  }
+
+  protected Transaction createTransactionOfSize(
+      final long nonce, final Wei maxGasPrice, final int txSize, final KeyPair keys) {
+
+    final TransactionType txType =
+        TransactionType.values()[
+            randomizeTxType.nextInt(txSize < blobTransaction0.getSize() ? 3 : 4)];
+
+    final Transaction baseTx =
+        createTransaction(txType, nonce, maxGasPrice, maxGasPrice.divide(10), 0, 1, keys);
+    final int payloadSize = txSize - baseTx.getSize();
+
+    return createTransaction(
+        txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, keys);
   }
 
   protected Transaction createTransaction(
       final long nonce, final Wei maxGasPrice, final int payloadSize, final KeyPair keys) {
 
-    // ToDo 4844: include BLOB tx here
-    final TransactionType txType = TransactionType.values()[randomizeTxType.nextInt(3)];
+    final TransactionType txType = TransactionType.values()[randomizeTxType.nextInt(4)];
 
-    return createTransaction(txType, nonce, maxGasPrice, payloadSize, keys);
+    return switch (txType) {
+      case FRONTIER, ACCESS_LIST, EIP1559, DELEGATE_CODE ->
+          createTransaction(txType, nonce, maxGasPrice, payloadSize, keys);
+      case BLOB ->
+          createTransaction(
+              txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, keys);
+    };
   }
 
   protected Transaction createTransaction(
@@ -111,17 +142,20 @@ public class BaseTransactionPoolTest {
       final Wei maxGasPrice,
       final int payloadSize,
       final KeyPair keys) {
-    return createTransaction(type, nonce, maxGasPrice, payloadSize, 0, keys);
+    return createTransaction(
+        type, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 0, keys);
   }
 
   protected Transaction createTransaction(
       final TransactionType type,
       final long nonce,
       final Wei maxGasPrice,
+      final Wei maxPriorityFeePerGas,
       final int payloadSize,
       final int blobCount,
       final KeyPair keys) {
-    return prepareTransaction(type, nonce, maxGasPrice, payloadSize, blobCount)
+    return prepareTransaction(
+            type, nonce, maxGasPrice, maxPriorityFeePerGas, payloadSize, blobCount)
         .createTransaction(keys);
   }
 
@@ -129,6 +163,7 @@ public class BaseTransactionPoolTest {
       final TransactionType type,
       final long nonce,
       final Wei maxGasPrice,
+      final Wei maxPriorityFeePerGas,
       final int payloadSize,
       final int blobCount) {
 
@@ -144,8 +179,9 @@ public class BaseTransactionPoolTest {
     }
     if (type.supports1559FeeMarket()) {
       tx.maxFeePerGas(Optional.of(maxGasPrice))
-          .maxPriorityFeePerGas(Optional.of(maxGasPrice.divide(10)));
+          .maxPriorityFeePerGas(Optional.of(maxPriorityFeePerGas));
       if (type.supportsBlob() && blobCount > 0) {
+        tx.maxFeePerBlobGas(Optional.of(maxGasPrice));
         final var versionHashes =
             IntStream.range(0, blobCount)
                 .mapToObj(i -> new VersionedHash((byte) 1, Hash.ZERO))
@@ -175,7 +211,9 @@ public class BaseTransactionPoolTest {
         originalTransaction.getType(),
         originalTransaction.getNonce(),
         originalTransaction.getMaxGasPrice().multiply(2),
+        originalTransaction.getMaxGasPrice().multiply(2).divide(10),
         0,
+        1,
         keys);
   }
 
@@ -220,9 +258,10 @@ public class BaseTransactionPoolTest {
     }
   }
 
-  protected long getAddedCount(final String source, final String priority, final String layer) {
+  protected long getAddedCount(
+      final String source, final String priority, final AddReason addReason, final String layer) {
     return metricsSystem.getCounterValue(
-        TransactionPoolMetrics.ADDED_COUNTER_NAME, source, priority, layer);
+        TransactionPoolMetrics.ADDED_COUNTER_NAME, source, priority, addReason.label(), layer);
   }
 
   protected long getRemovedCount(

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.ethereum.trie.forest;
 
@@ -22,10 +21,11 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
@@ -37,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class ForestWorldStateArchive implements WorldStateArchive {
-  private final WorldStateStorage worldStateStorage;
+  private final ForestWorldStateKeyValueStorage worldStateKeyValueStorage;
   private final WorldStatePreimageStorage preimageStorage;
   private final WorldStateProofProvider worldStateProof;
   private final EvmConfiguration evmConfiguration;
@@ -45,12 +45,13 @@ public class ForestWorldStateArchive implements WorldStateArchive {
   private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
   public ForestWorldStateArchive(
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStatePreimageStorage preimageStorage,
       final EvmConfiguration evmConfiguration) {
-    this.worldStateStorage = worldStateStorage;
+    this.worldStateKeyValueStorage =
+        worldStateStorageCoordinator.getStrategy(ForestWorldStateKeyValueStorage.class);
     this.preimageStorage = preimageStorage;
-    this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
+    this.worldStateProof = new WorldStateProofProvider(worldStateStorageCoordinator);
     this.evmConfiguration = evmConfiguration;
   }
 
@@ -61,7 +62,7 @@ public class ForestWorldStateArchive implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
+    return worldStateKeyValueStorage.isWorldStateAvailable(rootHash);
   }
 
   @Override
@@ -72,12 +73,12 @@ public class ForestWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
-    if (!worldStateStorage.isWorldStateAvailable(rootHash, blockHash)) {
+    if (!worldStateKeyValueStorage.isWorldStateAvailable(rootHash)) {
       return Optional.empty();
     }
     return Optional.of(
         new ForestMutableWorldState(
-            rootHash, worldStateStorage, preimageStorage, evmConfiguration));
+            rootHash, worldStateKeyValueStorage, preimageStorage, evmConfiguration));
   }
 
   @Override
@@ -93,11 +94,11 @@ public class ForestWorldStateArchive implements WorldStateArchive {
   @Override
   public Optional<Bytes> getNodeData(final Hash hash) {
     // query by location is not supported, only query by content
-    return worldStateStorage.getNodeData(null, hash);
+    return worldStateKeyValueStorage.getNodeData(hash);
   }
 
-  public WorldStateStorage getWorldStateStorage() {
-    return worldStateStorage;
+  public ForestWorldStateKeyValueStorage getWorldStateStorage() {
+    return worldStateKeyValueStorage;
   }
 
   @Override

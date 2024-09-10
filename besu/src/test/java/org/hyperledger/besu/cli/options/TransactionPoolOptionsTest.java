@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,11 +21,14 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 
 import org.hyperledger.besu.cli.converter.DurationMillisConverter;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.util.number.Percentage;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
@@ -166,6 +169,31 @@ public class TransactionPoolOptionsTest
         "Invalid value: 101, should be a number between 0 and 100 inclusive",
         "--tx-pool-price-bump",
         "101");
+  }
+
+  @Test
+  public void blobPriceBump() {
+    final Percentage blobPriceBump = Percentage.fromInt(50);
+    internalTestSuccess(
+        config -> assertThat(config.getBlobPriceBump()).isEqualTo(blobPriceBump),
+        "--tx-pool-blob-price-bump",
+        blobPriceBump.toString());
+  }
+
+  @Test
+  public void invalidBlobPriceBumpShouldFail() {
+    internalTestFailure(
+        "Invalid value: 101, should be a number between 0 and 100 inclusive",
+        "--tx-pool-blob-price-bump",
+        "101");
+  }
+
+  @Test
+  public void defaultBlobPriceBump() {
+    internalTestSuccess(
+        config ->
+            assertThat(config.getBlobPriceBump())
+                .isEqualTo(TransactionPoolConfiguration.DEFAULT_BLOB_PRICE_BUMP));
   }
 
   @Test
@@ -344,6 +372,70 @@ public class TransactionPoolOptionsTest
         "-1");
   }
 
+  @Test
+  public void maxPrioritizedTxsPerType() {
+    final int maxBlobs = 2;
+    final int maxFrontier = 200;
+    internalTestSuccess(
+        config -> {
+          assertThat(config.getMaxPrioritizedTransactionsByType().get(TransactionType.BLOB))
+              .isEqualTo(maxBlobs);
+          assertThat(config.getMaxPrioritizedTransactionsByType().get(TransactionType.FRONTIER))
+              .isEqualTo(maxFrontier);
+        },
+        "--tx-pool-max-prioritized-by-type",
+        "BLOB=" + maxBlobs + ",FRONTIER=" + maxFrontier);
+  }
+
+  @Test
+  public void maxPrioritizedTxsPerTypeConfigFile() throws IOException {
+    final int maxBlobs = 2;
+    final int maxFrontier = 200;
+    final Path tempConfigFilePath =
+        createTempFile(
+            "config",
+            String.format(
+                """
+    tx-pool-max-prioritized-by-type=["BLOB=%s","FRONTIER=%s"]
+    """,
+                maxBlobs, maxFrontier));
+    internalTestSuccess(
+        config -> {
+          assertThat(config.getMaxPrioritizedTransactionsByType().get(TransactionType.BLOB))
+              .isEqualTo(maxBlobs);
+          assertThat(config.getMaxPrioritizedTransactionsByType().get(TransactionType.FRONTIER))
+              .isEqualTo(maxFrontier);
+        },
+        "--config-file",
+        tempConfigFilePath.toString());
+  }
+
+  @Test
+  public void maxPrioritizedTxsPerTypeWrongTxType() {
+    internalTestFailure(
+        "Invalid value for option '--tx-pool-max-prioritized-by-type' (MAP<TYPE,INTEGER>): expected one of [FRONTIER, ACCESS_LIST, EIP1559, BLOB, DELEGATE_CODE] (case-insensitive) but was 'WRONG_TYPE'",
+        "--tx-pool-max-prioritized-by-type",
+        "WRONG_TYPE=1");
+  }
+
+  @Test
+  public void minScoreWorks() {
+    final byte minScore = -10;
+    internalTestSuccess(
+        config -> assertThat(config.getMinScore()).isEqualTo(minScore),
+        "--tx-pool-min-score",
+        Byte.toString(minScore));
+  }
+
+  @Test
+  public void minScoreNonByteValueReturnError() {
+    final var overflowMinScore = Integer.toString(-300);
+    internalTestFailure(
+        "Invalid value for option '--tx-pool-min-score': '" + overflowMinScore + "' is not a byte",
+        "--tx-pool-min-score",
+        overflowMinScore);
+  }
+
   @Override
   protected TransactionPoolConfiguration createDefaultDomainObject() {
     return TransactionPoolConfiguration.DEFAULT;
@@ -369,5 +461,10 @@ public class TransactionPoolOptionsTest
   @Override
   protected TransactionPoolOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getTransactionPoolOptions();
+  }
+
+  @Override
+  protected String[] getNonOptionFields() {
+    return new String[] {"transactionPoolValidatorService"};
   }
 }

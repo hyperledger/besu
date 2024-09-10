@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -60,7 +61,7 @@ public class PoWMinerExecutorTest {
             null,
             transactionPool,
             miningParameters,
-            new DefaultBlockScheduler(1, 10, TestClock.fixed()),
+            new DefaultBlockScheduler(1L, 10, TestClock.fixed()),
             new EpochCalculator.DefaultEpochCalculator(),
             ethScheduler);
 
@@ -118,7 +119,7 @@ public class PoWMinerExecutorTest {
             ethContext,
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             poolConf,
-            null);
+            new BlobCache());
     transactionPool.setEnabled();
 
     return transactionPool;

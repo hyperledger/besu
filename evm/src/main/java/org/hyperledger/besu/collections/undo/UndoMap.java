@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.collections.undo;
 
@@ -32,7 +31,8 @@ import javax.annotation.Nonnull;
  * increases the global mark, so a mark set in once collection is usable across all
  * UndoableCollection instances.
  *
- * @param <V> The type of the collection.
+ * @param <K> The type of the keys maintained by this map.
+ * @param <V> The type of mapped values.
  */
 public class UndoMap<K, V> implements Map<K, V>, Undoable {
 

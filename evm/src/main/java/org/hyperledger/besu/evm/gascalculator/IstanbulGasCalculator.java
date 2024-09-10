@@ -38,6 +38,9 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   private static final long SSTORE_RESET_GAS_LESS_SLOAD_GAS = SSTORE_RESET_GAS - SLOAD_GAS;
   private static final long NEGATIVE_SSTORE_CLEARS_SCHEDULE = -SSTORE_CLEARS_SCHEDULE;
 
+  /** Default constructor. */
+  public IstanbulGasCalculator() {}
+
   @Override
   public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreation) {
     int zeros = 0;

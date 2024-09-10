@@ -17,6 +17,10 @@
 pluginManagement {
   repositories {
     gradlePluginPortal()
+    maven {
+      url 'https://artifacts.consensys.net/public/maven/maven/'
+      content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
+    }
   }
 }
 
@@ -24,6 +28,7 @@ rootProject.name='besu'
 include 'acceptance-tests:test-plugins'
 include 'acceptance-tests:dsl'
 include 'acceptance-tests:tests'
+include 'acceptance-tests:tests:shanghai'
 include 'besu'
 include 'config'
 include 'consensus:clique'
@@ -37,7 +42,6 @@ include 'crypto:services'
 include 'datatypes'
 include 'enclave'
 include 'evm'
-include 'errorprone-checks'
 include 'ethereum:api'
 include 'ethereum:blockcreation'
 include 'ethereum:core'
@@ -64,5 +68,6 @@ include 'privacy-contracts'
 include 'services:kvstore'
 include 'services:pipeline'
 include 'services:tasks'
+include 'testfuzz'
 include 'testutil'
 include 'util'

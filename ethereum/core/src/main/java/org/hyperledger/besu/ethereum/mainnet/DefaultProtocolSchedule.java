@@ -1,24 +1,22 @@
 /*
+ * Copyright contributors to Hyperledger Besu.
  *
- *  * Copyright Hyperledger Besu Contributors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- *  * the License. You may obtain a copy of the License at
- *  *
- *  * http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- *  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- *  * specific language governing permissions and limitations under the License.
- *  *
- *  * SPDX-License-Identifier: Apache-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -28,6 +26,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
@@ -42,6 +42,8 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   protected NavigableSet<ScheduledProtocolSpec> protocolSpecs =
       new TreeSet<>(Comparator.comparing(ScheduledProtocolSpec::fork).reversed());
 
+  private final Map<HardforkId, Long> milestones = new HashMap<>();
+
   private final Optional<BigInteger> chainId;
 
   public DefaultProtocolSchedule(final Optional<BigInteger> chainId) {
@@ -52,16 +54,6 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   protected DefaultProtocolSchedule(final DefaultProtocolSchedule protocolSchedule) {
     this.chainId = protocolSchedule.chainId;
     this.protocolSpecs = protocolSchedule.protocolSpecs;
-  }
-
-  public ScheduledProtocolSpec specScheduledForBlock(final ProcessableBlockHeader blockHeader) {
-    return protocolSpecs.stream()
-        .filter(s -> s.isOnOrAfterMilestoneBoundary(blockHeader))
-        .findFirst()
-        .orElseThrow(
-            () ->
-                new IllegalStateException(
-                    "No protocol spec found for block " + blockHeader.getNumber()));
   }
 
   @Override
@@ -110,6 +102,12 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
     putMilestone(TimestampProtocolSpec.create(timestamp, protocolSpec));
   }
 
+  @Override
+  public void setMilestones(final Map<HardforkId, Long> milestones) {
+    this.milestones.clear();
+    this.milestones.putAll(milestones);
+  }
+
   private void putMilestone(final ScheduledProtocolSpec scheduledProtocolSpec) {
     // Ensure this replaces any existing spec at the same block number.
     protocolSpecs.remove(scheduledProtocolSpec);
@@ -128,6 +126,11 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
         .filter(predicate)
         .findFirst()
         .map(ScheduledProtocolSpec::fork);
+  }
+
+  @Override
+  public Optional<Long> milestoneFor(final HardforkId hardforkId) {
+    return Optional.ofNullable(milestones.get(hardforkId));
   }
 
   @Override

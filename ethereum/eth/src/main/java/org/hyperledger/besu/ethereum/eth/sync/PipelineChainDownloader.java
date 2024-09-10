@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -51,6 +52,7 @@ public class PipelineChainDownloader implements ChainDownloader {
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
   private final Counter pipelineCompleteCounter;
   private final Counter pipelineErrorCounter;
+  private final SyncDurationMetrics syncDurationMetrics;
   private Pipeline<?> currentDownloadPipeline;
 
   public PipelineChainDownloader(
@@ -58,11 +60,13 @@ public class PipelineChainDownloader implements ChainDownloader {
       final AbstractSyncTargetManager syncTargetManager,
       final DownloadPipelineFactory downloadPipelineFactory,
       final EthScheduler scheduler,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SyncDurationMetrics syncDurationMetrics) {
     this.syncState = syncState;
     this.syncTargetManager = syncTargetManager;
     this.downloadPipelineFactory = downloadPipelineFactory;
     this.scheduler = scheduler;
+    this.syncDurationMetrics = syncDurationMetrics;
 
     final LabelledMetric<Counter> labelledCounter =
         metricsSystem.createLabelledCounter(
@@ -79,12 +83,16 @@ public class PipelineChainDownloader implements ChainDownloader {
     if (!started.compareAndSet(false, true)) {
       throw new IllegalStateException("Cannot start a chain download twice");
     }
+
+    syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
+
     return performDownload();
   }
 
   @Override
   public synchronized void cancel() {
     cancelled.set(true);
+    syncTargetManager.cancel();
     if (currentDownloadPipeline != null) {
       currentDownloadPipeline.abort();
     }
@@ -120,7 +128,7 @@ public class PipelineChainDownloader implements ChainDownloader {
       LOG.warn(
           "Invalid block detected (BREACH_OF_PROTOCOL). Disconnecting from sync target. {}",
           ExceptionUtils.rootCause(error).getMessage());
-      syncState.disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL);
+      syncState.disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL_INVALID_BLOCK);
     }
 
     if (!cancelled.get() && syncTargetManager.shouldContinueDownloading()) {

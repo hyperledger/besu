@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.util.List;
@@ -57,7 +59,10 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
   @Option(
       names = {"--miner-stratum-enabled"},
-      description = "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})")
+      description =
+          "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})."
+              + " Compatible with Proof of Work (PoW) only."
+              + " Requires the network option (--network) to be set to CLASSIC.")
   private Boolean iStratumMiningEnabled = false;
 
   @Option(
@@ -188,6 +193,8 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
         DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
   }
 
+  private TransactionSelectionService transactionSelectionService;
+
   private MiningOptions() {}
 
   /**
@@ -197,6 +204,16 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
    */
   public static MiningOptions create() {
     return new MiningOptions();
+  }
+
+  /**
+   * Set the transaction selection service
+   *
+   * @param transactionSelectionService the transaction selection service
+   */
+  public void setTransactionSelectionService(
+      final TransactionSelectionService transactionSelectionService) {
+    this.transactionSelectionService = transactionSelectionService;
   }
 
   /**
@@ -285,6 +302,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
   static MiningOptions fromConfig(final MiningParameters miningParameters) {
     final MiningOptions miningOptions = MiningOptions.create();
+    miningOptions.setTransactionSelectionService(miningParameters.getTransactionSelectionService());
     miningOptions.isMiningEnabled = miningParameters.isMiningEnabled();
     miningOptions.iStratumMiningEnabled = miningParameters.isStratumMiningEnabled();
     miningOptions.stratumNetworkInterface = miningParameters.getStratumNetworkInterface();
@@ -319,6 +337,10 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
   @Override
   public MiningParameters toDomainObject() {
+    checkNotNull(
+        transactionSelectionService,
+        "transactionSelectionService must be set before using this object");
+
     final var updatableInitValuesBuilder =
         MutableInitValues.builder()
             .isMiningEnabled(isMiningEnabled)
@@ -334,27 +356,26 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
       updatableInitValuesBuilder.coinbase(coinbase);
     }
 
-    final var miningParametersBuilder =
-        ImmutableMiningParameters.builder()
-            .mutableInitValues(updatableInitValuesBuilder.build())
-            .isStratumMiningEnabled(iStratumMiningEnabled)
-            .stratumNetworkInterface(stratumNetworkInterface)
-            .stratumPort(stratumPort)
-            .nonPoaBlockTxsSelectionMaxTime(nonPoaBlockTxsSelectionMaxTime)
-            .poaBlockTxsSelectionMaxTime(poaBlockTxsSelectionMaxTime)
-            .unstable(
-                ImmutableMiningParameters.Unstable.builder()
-                    .remoteSealersLimit(unstableOptions.remoteSealersLimit)
-                    .remoteSealersTimeToLive(unstableOptions.remoteSealersTimeToLive)
-                    .powJobTimeToLive(unstableOptions.powJobTimeToLive)
-                    .maxOmmerDepth(unstableOptions.maxOmmersDepth)
-                    .stratumExtranonce(unstableOptions.stratumExtranonce)
-                    .posBlockCreationMaxTime(unstableOptions.posBlockCreationMaxTime)
-                    .posBlockCreationRepetitionMinDuration(
-                        unstableOptions.posBlockCreationRepetitionMinDuration)
-                    .build());
-
-    return miningParametersBuilder.build();
+    return ImmutableMiningParameters.builder()
+        .transactionSelectionService(transactionSelectionService)
+        .mutableInitValues(updatableInitValuesBuilder.build())
+        .isStratumMiningEnabled(iStratumMiningEnabled)
+        .stratumNetworkInterface(stratumNetworkInterface)
+        .stratumPort(stratumPort)
+        .nonPoaBlockTxsSelectionMaxTime(nonPoaBlockTxsSelectionMaxTime)
+        .poaBlockTxsSelectionMaxTime(poaBlockTxsSelectionMaxTime)
+        .unstable(
+            ImmutableMiningParameters.Unstable.builder()
+                .remoteSealersLimit(unstableOptions.remoteSealersLimit)
+                .remoteSealersTimeToLive(unstableOptions.remoteSealersTimeToLive)
+                .powJobTimeToLive(unstableOptions.powJobTimeToLive)
+                .maxOmmerDepth(unstableOptions.maxOmmersDepth)
+                .stratumExtranonce(unstableOptions.stratumExtranonce)
+                .posBlockCreationMaxTime(unstableOptions.posBlockCreationMaxTime)
+                .posBlockCreationRepetitionMinDuration(
+                    unstableOptions.posBlockCreationRepetitionMinDuration)
+                .build())
+        .build();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 
@@ -133,7 +134,7 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
   @Value.Immutable
   public interface AccountRangeData {
 
-    TreeMap<Bytes32, Bytes> accounts();
+    NavigableMap<Bytes32, Bytes> accounts();
 
     ArrayDeque<Bytes> proofs();
   }

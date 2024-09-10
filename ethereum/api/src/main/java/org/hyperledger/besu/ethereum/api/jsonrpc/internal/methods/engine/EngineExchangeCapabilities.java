@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,9 +20,12 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.ENGINE_PREPARE
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -55,7 +58,17 @@ public class EngineExchangeCapabilities extends ExecutionEngineJsonRpcMethod {
 
     LOG.atTrace()
         .setMessage("received remote capabilities: {}")
-        .addArgument(() -> requestContext.getRequiredParameter(0, String[].class))
+        .addArgument(
+            () -> {
+              try {
+                return requestContext.getRequiredParameter(0, String[].class);
+              } catch (JsonRpcParameterException e) {
+                throw new InvalidJsonRpcParameters(
+                    "Invalid remote capabilities parameters (index 0)",
+                    RpcErrorType.INVALID_REMOTE_CAPABILITIES_PARAMS,
+                    e);
+              }
+            })
         .log();
 
     final List<String> localCapabilities =
@@ -63,7 +76,6 @@ public class EngineExchangeCapabilities extends ExecutionEngineJsonRpcMethod {
             .filter(e -> e.getMethodName().startsWith("engine_"))
             .filter(e -> !e.equals(ENGINE_EXCHANGE_CAPABILITIES))
             .filter(e -> !e.equals(ENGINE_PREPARE_PAYLOAD_DEBUG))
-            .filter(e -> !e.getMethodName().endsWith("6110"))
             .map(RpcMethod::getMethodName)
             .collect(Collectors.toList());
 

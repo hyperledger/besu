@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -263,12 +263,12 @@ class ForestMutableWorldStateTest {
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);
 
     // Check that storage is empty before persisting
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash(), null)).isFalse();
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isFalse();
 
     // Persist and re-run assertions
     worldState.persist(null);
 
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash(), null)).isTrue();
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isTrue();
     assertThat(worldState.rootHash()).isEqualTo(expectedRootHash);
     assertThat(worldState.get(ADDRESS)).isNotNull();
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);

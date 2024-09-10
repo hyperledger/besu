@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -166,6 +166,15 @@ public interface Blockchain {
    * @return The block body corresponding to the target block.
    */
   Optional<BlockBody> getBlockBody(Hash blockHeaderHash);
+
+  /**
+   * Safe version of {@code getBlockBody} (it should take any locks necessary to ensure any block
+   * updates that might be taking place have been completed first)
+   *
+   * @param blockHeaderHash The hash of the block whose header we want to retrieve.
+   * @return The block body corresponding to this block hash.
+   */
+  Optional<BlockBody> getBlockBodySafe(Hash blockHeaderHash);
 
   /**
    * Given a block's hash, returns the list of transaction receipts associated with this block's

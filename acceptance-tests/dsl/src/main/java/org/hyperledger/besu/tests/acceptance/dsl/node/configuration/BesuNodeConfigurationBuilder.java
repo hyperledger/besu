@@ -24,6 +24,8 @@ import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ImmutableInProcessRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
@@ -39,8 +41,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.pki.PKCS11Utils;
 
@@ -70,9 +72,13 @@ public class BesuNodeConfigurationBuilder {
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration = new JsonRpcIpcConfiguration();
+  private InProcessRpcConfiguration inProcessRpcConfiguration =
+      ImmutableInProcessRpcConfiguration.builder().build();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private ApiConfiguration apiConfiguration = ImmutableApiConfiguration.builder().build();
+  private DataStorageConfiguration dataStorageConfiguration =
+      DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
   private String keyFilePath = null;
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
@@ -93,7 +99,6 @@ public class BesuNodeConfigurationBuilder {
   private Optional<PrivacyParameters> privacyParameters = Optional.empty();
   private List<String> runCommand = new ArrayList<>();
   private Optional<KeyPair> keyPair = Optional.empty();
-  private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
   private Boolean strictTxReplayProtectionEnabled = false;
   private Map<String, String> environment = new HashMap<>();
 
@@ -254,6 +259,12 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder jsonRpcIpcConfiguration(
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration) {
     this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder inProcessRpcConfiguration(
+      final InProcessRpcConfiguration inProcessRpcConfiguration) {
+    this.inProcessRpcConfiguration = inProcessRpcConfiguration;
     return this;
   }
 
@@ -426,13 +437,6 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder pkiBlockCreationEnabled(
-      final PkiKeyStoreConfiguration pkiKeyStoreConfiguration) {
-    this.pkiKeyStoreConfiguration = Optional.of(pkiKeyStoreConfiguration);
-
-    return this;
-  }
-
   public BesuNodeConfigurationBuilder discoveryEnabled(final boolean discoveryEnabled) {
     this.discoveryEnabled = discoveryEnabled;
     return this;
@@ -506,6 +510,12 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder dataStorageConfiguration(
+      final DataStorageConfiguration dataStorageConfiguration) {
+    this.dataStorageConfiguration = dataStorageConfiguration;
+    return this;
+  }
+
   public BesuNodeConfiguration build() {
     return new BesuNodeConfiguration(
         name,
@@ -516,9 +526,11 @@ public class BesuNodeConfigurationBuilder {
         Optional.of(engineRpcConfiguration),
         webSocketConfiguration,
         jsonRpcIpcConfiguration,
+        inProcessRpcConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
         apiConfiguration,
+        dataStorageConfiguration,
         Optional.ofNullable(keyFilePath),
         devMode,
         network,
@@ -539,7 +551,6 @@ public class BesuNodeConfigurationBuilder {
         privacyParameters,
         runCommand,
         keyPair,
-        pkiKeyStoreConfiguration,
         strictTxReplayProtectionEnabled,
         environment);
   }
