@@ -293,7 +293,8 @@ public abstract class AbstractTransactionPoolTest {
             transactionBroadcaster,
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConfig);
+            poolConfig,
+            new BlobCache());
     txPool.setEnabled();
     return txPool;
   }
