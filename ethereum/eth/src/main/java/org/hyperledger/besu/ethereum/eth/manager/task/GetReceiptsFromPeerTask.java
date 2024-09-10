@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -119,7 +120,10 @@ public class GetReceiptsFromPeerTask
         // Contains receipts that we didn't request, so mustn't be the response we're looking for.
         return Optional.empty();
       }
-      blockHeaders.forEach(header -> receiptsByHeader.put(header, receiptsInBlock));
+      blockHeaders.forEach(header -> {
+        receiptsByHeader.put(header, receiptsInBlock);
+        BodyValidation.receiptsRootCache.put(header, Boolean.TRUE);
+      });
     }
     return Optional.of(receiptsByHeader);
   }
