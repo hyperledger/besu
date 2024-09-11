@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerManager;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -318,6 +319,7 @@ public class TransactionPoolFactoryTest {
             Optional.empty(),
             mock(SynchronizerConfiguration.class),
             mock(EthScheduler.class),
+            mock(PeerManager.class),
             mock(ForkIdManager.class));
   }
 

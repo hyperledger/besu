@@ -662,7 +662,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     ethPeers.streamAllPeers().forEach(peerManager::addPeer);
 
     final PeerTaskExecutor peerTaskExecutor =
-        new PeerTaskExecutor(peerManager, new RequestSender());
+        new PeerTaskExecutor(peerManager, new RequestSender(), currentProtocolSpecSupplier);
 
     if (chainPrunerConfiguration.getChainPruningEnabled()) {
       final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);

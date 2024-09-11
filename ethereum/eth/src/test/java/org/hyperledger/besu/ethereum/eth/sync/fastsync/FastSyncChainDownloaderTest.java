@@ -95,7 +95,7 @@ public class FastSyncChainDownloaderTest {
 
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
-    peerTaskExecutor = new PeerTaskExecutor(null, null);
+    peerTaskExecutor = new PeerTaskExecutor(null, null, null);
   }
 
   @AfterEach

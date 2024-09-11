@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerManager;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -170,6 +171,7 @@ public class TestNode implements Closeable {
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
+    final PeerManager peerManager = new PeerManager();
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -196,7 +198,8 @@ public class TestNode implements Closeable {
             Collections.emptyList(),
             Optional.empty(),
             syncConfig,
-            scheduler);
+            scheduler,
+            peerManager);
 
     final NetworkRunner networkRunner =
         NetworkRunner.builder()

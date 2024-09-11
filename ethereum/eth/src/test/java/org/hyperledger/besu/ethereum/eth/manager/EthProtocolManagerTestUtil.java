@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerManager;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
@@ -103,6 +104,7 @@ public class EthProtocolManagerTestUtil {
     final EthMessages messages = new EthMessages();
     final EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
     final EthContext ethContext = new EthContext(peers, messages, ethScheduler);
+    final PeerManager peerManager = new PeerManager();
 
     return new EthProtocolManager(
         blockchain,
@@ -117,27 +119,7 @@ public class EthProtocolManagerTestUtil {
         mergePeerFilter,
         mock(SynchronizerConfiguration.class),
         ethScheduler,
-        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-  }
-
-  public static EthProtocolManager create(
-      final Blockchain blockchain,
-      final EthScheduler ethScheduler,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-      final EthPeers ethPeers,
-      final EthMessages ethMessages,
-      final EthContext ethContext) {
-    return create(
-        blockchain,
-        ethScheduler,
-        worldStateArchive,
-        transactionPool,
-        ethereumWireProtocolConfiguration,
-        ethPeers,
-        ethMessages,
-        ethContext,
+        peerManager,
         new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
   }
 
@@ -150,6 +132,30 @@ public class EthProtocolManagerTestUtil {
       final EthPeers ethPeers,
       final EthMessages ethMessages,
       final EthContext ethContext,
+      final PeerManager peerManager) {
+    return create(
+        blockchain,
+        ethScheduler,
+        worldStateArchive,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethMessages,
+        ethContext,
+        peerManager,
+        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
+  }
+
+  public static EthProtocolManager create(
+      final Blockchain blockchain,
+      final EthScheduler ethScheduler,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthMessages ethMessages,
+      final EthContext ethContext,
+      final PeerManager peerManager,
       final ForkIdManager forkIdManager) {
 
     ethPeers.setChainHeadTracker(getChainHeadTrackerMock());
@@ -168,6 +174,7 @@ public class EthProtocolManagerTestUtil {
         Optional.empty(),
         mock(SynchronizerConfiguration.class),
         ethScheduler,
+        peerManager,
         forkIdManager);
   }
 
@@ -237,7 +244,8 @@ public class EthProtocolManagerTestUtil {
         configuration,
         peers,
         messages,
-        new EthContext(peers, messages, ethScheduler));
+        new EthContext(peers, messages, ethScheduler),
+        new PeerManager());
   }
 
   public static ChainHeadTracker getChainHeadTrackerMock() {
@@ -285,6 +293,7 @@ public class EthProtocolManagerTestUtil {
         peers,
         messages,
         new EthContext(peers, messages, ethScheduler),
+        new PeerManager(),
         forkIdManager);
   }
 
@@ -320,7 +329,8 @@ public class EthProtocolManagerTestUtil {
         EthProtocolConfiguration.defaultConfig(),
         ethPeers,
         messages,
-        new EthContext(ethPeers, messages, ethScheduler));
+        new EthContext(ethPeers, messages, ethScheduler),
+        new PeerManager());
   }
 
   public static EthProtocolManager create() {

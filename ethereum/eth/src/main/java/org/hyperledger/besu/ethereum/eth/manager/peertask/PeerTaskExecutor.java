@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
@@ -23,6 +24,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 /** Manages the execution of PeerTasks, respecting their PeerTaskBehavior */
 public class PeerTaskExecutor {
@@ -30,10 +32,15 @@ public class PeerTaskExecutor {
 
   private final PeerManager peerManager;
   private final RequestSender requestSender;
+  private final Supplier<ProtocolSpec> protocolSpecSupplier;
 
-  public PeerTaskExecutor(final PeerManager peerManager, final RequestSender requestSender) {
+  public PeerTaskExecutor(
+      final PeerManager peerManager,
+      final RequestSender requestSender,
+      final Supplier<ProtocolSpec> protocolSpecSupplier) {
     this.peerManager = peerManager;
     this.requestSender = requestSender;
+    this.protocolSpecSupplier = protocolSpecSupplier;
   }
 
   public <T> PeerTaskExecutorResult<T> execute(final PeerTask<T> peerTask) {
@@ -48,7 +55,9 @@ public class PeerTaskExecutor {
             peerManager.getPeer(
                 (candidatePeer) ->
                     isPeerUnused(candidatePeer, usedEthPeers)
-                        && isPeerHeightHighEnough(candidatePeer, peerTask.getRequiredBlockNumber())
+                        && (protocolSpecSupplier.get().isPoS()
+                            || isPeerHeightHighEnough(
+                                candidatePeer, peerTask.getRequiredBlockNumber()))
                         && isPeerProtocolSuitable(candidatePeer, peerTask.getSubProtocol()));
         usedEthPeers.add(peer);
         executorResult = executeAgainstPeer(peerTask, peer);

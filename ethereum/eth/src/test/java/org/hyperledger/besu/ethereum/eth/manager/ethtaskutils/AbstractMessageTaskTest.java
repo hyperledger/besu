@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerManager;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -91,6 +92,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
   protected EthPeers ethPeers;
+  protected PeerManager peerManager;
   protected TransactionPool transactionPool;
   protected AtomicBoolean peersDoTimeout;
   protected AtomicInteger peerCountToTimeout;
@@ -133,6 +135,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
         new DeterministicEthScheduler(
             () -> peerCountToTimeout.getAndDecrement() > 0 || peersDoTimeout.get());
     ethContext = new EthContext(ethPeers, ethMessages, ethScheduler);
+    peerManager = new PeerManager();
     final SyncState syncState = new SyncState(blockchain, ethContext.getEthPeers());
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -156,7 +159,8 @@ public abstract class AbstractMessageTaskTest<T, R> {
             EthProtocolConfiguration.defaultConfig(),
             ethPeers,
             ethMessages,
-            ethContext);
+            ethContext,
+            peerManager);
   }
 
   protected abstract T generateDataToBeRequested();
