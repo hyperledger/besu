@@ -147,6 +147,20 @@ public class DefaultBlockchain implements MutableBlockchain {
       totalDifficultyCache = Optional.empty();
     }
 
+    gasUsedCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN, "chain_head_gas_used_counter", "Counter for Gas used");
+
+    numberOfTransactionsCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "chain_head_transaction_count_counter",
+            "Counter for the number of transactions");
+
+    createGauges(metricsSystem);
+  }
+
+  private void createGauges(final MetricsSystem metricsSystem) {
     metricsSystem.createLongGauge(
         BesuMetricCategory.ETHEREUM,
         "blockchain_height",
@@ -183,10 +197,6 @@ public class DefaultBlockchain implements MutableBlockchain {
         "Gas used by the current chain head block",
         () -> getChainHeadHeader().getGasUsed());
 
-    gasUsedCounter =
-        metricsSystem.createCounter(
-            BesuMetricCategory.BLOCKCHAIN, "chain_head_gas_used_counter", "Counter for Gas used");
-
     metricsSystem.createLongGauge(
         BesuMetricCategory.BLOCKCHAIN,
         "chain_head_gas_limit",
@@ -198,12 +208,6 @@ public class DefaultBlockchain implements MutableBlockchain {
         "chain_head_transaction_count",
         "Number of transactions in the current chain head block",
         () -> chainHeadTransactionCount);
-
-    numberOfTransactionsCounter =
-        metricsSystem.createCounter(
-            BesuMetricCategory.BLOCKCHAIN,
-            "chain_head_transaction_count_counter",
-            "Counter for the number of transactions");
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.BLOCKCHAIN,
