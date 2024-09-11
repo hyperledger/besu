@@ -59,16 +59,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
-@Disabled // TODO this is a monster of a functional test. Figure out how it works, consider
-// converting to full use of Mocks to simplify
 public class CheckPointSyncChainDownloaderTest {
 
   protected ProtocolSchedule protocolSchedule;
@@ -114,6 +113,7 @@ public class CheckPointSyncChainDownloaderTest {
     localBlockchain = localBlockchainSetup.getBlockchain();
     otherBlockchainSetup = BlockchainSetupUtil.forTesting(dataStorageFormat);
     otherBlockchain = otherBlockchainSetup.getBlockchain();
+    otherBlockchainSetup.importFirstBlocks(30);
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
     ethProtocolManager =
@@ -139,16 +139,28 @@ public class CheckPointSyncChainDownloaderTest {
             Optional.of(checkpoint));
 
     peerTaskExecutor = mock(PeerTaskExecutor.class);
-    Map<BlockHeader, List<TransactionReceipt>> getReceiptsFromPeerTaskResult = new HashMap<>();
-    Block block = otherBlockchain.getBlockByNumber(blockNumber).get();
-    getReceiptsFromPeerTaskResult.put(
-        block.getHeader(), otherBlockchain.getTxReceipts(block.getHash()).get());
 
-    PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> peerTaskExecutorResult =
-        new PeerTaskExecutorResult<>(
-            getReceiptsFromPeerTaskResult, PeerTaskExecutorResponseCode.SUCCESS);
     when(peerTaskExecutor.execute(any(GetReceiptsFromPeerTask.class)))
-        .thenReturn(peerTaskExecutorResult);
+        .thenAnswer(
+            new Answer<PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>>>() {
+              @Override
+              public PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> answer(
+                  final InvocationOnMock invocationOnMock) throws Throwable {
+                GetReceiptsFromPeerTask task =
+                    invocationOnMock.getArgument(0, GetReceiptsFromPeerTask.class);
+                Map<BlockHeader, List<TransactionReceipt>> getReceiptsFromPeerTaskResult =
+                    new HashMap<>();
+                Block block = otherBlockchain.getBlockByNumber(task.getRequiredBlockNumber()).get();
+                getReceiptsFromPeerTaskResult.put(
+                    block.getHeader(), otherBlockchain.getTxReceipts(block.getHash()).get());
+                PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>>
+                    peerTaskExecutorResult =
+                        new PeerTaskExecutorResult<>(
+                            getReceiptsFromPeerTaskResult, PeerTaskExecutorResponseCode.SUCCESS);
+
+                return peerTaskExecutorResult;
+              }
+            });
   }
 
   @AfterEach
@@ -177,7 +189,6 @@ public class CheckPointSyncChainDownloaderTest {
   @ArgumentsSource(CheckPointSyncChainDownloaderTestArguments.class)
   public void shouldSyncToPivotBlockInMultipleSegments(final DataStorageFormat storageFormat) {
     setup(storageFormat);
-    otherBlockchainSetup.importFirstBlocks(30);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, otherBlockchain);
@@ -214,7 +225,6 @@ public class CheckPointSyncChainDownloaderTest {
   @ArgumentsSource(CheckPointSyncChainDownloaderTestArguments.class)
   public void shouldSyncToPivotBlockInSingleSegment(final DataStorageFormat storageFormat) {
     setup(storageFormat);
-    otherBlockchainSetup.importFirstBlocks(30);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, otherBlockchain);
