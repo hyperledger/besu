@@ -62,7 +62,7 @@ public class BlockTimer {
   }
 
   /**
-   * Test only setting to enable < 1 second BFT blocks
+   * Test only setting to enable BFT blocks to be mined more frequently than once a second
    *
    * @return The block period milliseconds, if the associated test mode option
    *     BESU_X_DEV_BFT_PERIOD_MS has been set
