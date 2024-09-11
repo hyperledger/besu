@@ -31,12 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class GetReceiptsFromPeerTask
     implements PeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
-  private static final Logger LOG = LoggerFactory.getLogger(GetReceiptsFromPeerTask.class);
 
   private final Collection<BlockHeader> blockHeaders;
   private final Map<Hash, List<BlockHeader>> headersByReceiptsRoot = new HashMap<>();
@@ -65,7 +61,6 @@ public class GetReceiptsFromPeerTask
 
   @Override
   public MessageData getRequestMessage() {
-    LOG.info("Building request message");
     // Since we have to match up the data by receipt root, we only need to request receipts
     // for one of the headers with each unique receipt root.
     final List<Hash> blockHashes =
@@ -78,7 +73,9 @@ public class GetReceiptsFromPeerTask
   @Override
   public Map<BlockHeader, List<TransactionReceipt>> parseResponse(final MessageData messageData)
       throws InvalidPeerTaskResponseException {
-    LOG.info("Parsing response message");
+    if(messageData == null) {
+      throw new InvalidPeerTaskResponseException();
+    }
     final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(messageData);
     final List<List<TransactionReceipt>> receiptsByBlock = receiptsMessage.receipts();
     if (receiptsByBlock.isEmpty() || receiptsByBlock.size() > blockHeaders.size()) {

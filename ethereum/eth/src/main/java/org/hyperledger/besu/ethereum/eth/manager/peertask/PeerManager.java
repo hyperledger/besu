@@ -43,10 +43,10 @@ public class PeerManager {
    * @throws NoAvailablePeerException If there are no suitable peers
    */
   public EthPeer getPeer(final Predicate<EthPeer> filter) throws NoAvailablePeerException {
-    LOG.info("Getting peer from pool of " + ethPeersByPeerId.size() + " peers");
+    LOG.trace("Getting peer from pool of {} peers", ethPeersByPeerId.size());
     return ethPeersByPeerId.values().stream()
         .filter(filter)
-        .min(Comparator.comparing(EthPeer::getReputation))
+        .max(Comparator.comparing(EthPeer::getReputation))
         .orElseThrow(NoAvailablePeerException::new);
   }
 

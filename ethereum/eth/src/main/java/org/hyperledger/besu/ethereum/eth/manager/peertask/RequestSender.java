@@ -24,11 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class RequestSender {
-  private static final Logger LOG = LoggerFactory.getLogger(RequestSender.class);
   private static final long DEFAULT_TIMEOUT_MS = 20_000;
 
   private final long timeoutMs;
@@ -47,16 +43,13 @@ public class RequestSender {
           ExecutionException,
           InterruptedException,
           TimeoutException {
-    LOG.info("Sending request to " + ethPeer.getLoggableId());
     ResponseStream responseStream =
         ethPeer.send(requestMessageData, subProtocol, ethPeer.getConnection());
     final CompletableFuture<MessageData> responseMessageDataFuture = new CompletableFuture<>();
     responseStream.then(
         (boolean streamClosed, MessageData message, EthPeer peer) -> {
-          LOG.info("Completing responseMessageDataFuture from " + peer.getLoggableId());
           responseMessageDataFuture.complete(message);
         });
-    LOG.info("Waiting for responseMessageDataFuture to complete from " + ethPeer.getLoggableId());
     return responseMessageDataFuture.get(timeoutMs, TimeUnit.MILLISECONDS);
   }
 }

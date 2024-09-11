@@ -24,12 +24,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /** Manages the execution of PeerTasks, respecting their PeerTaskBehavior */
 public class PeerTaskExecutor {
-  private static final Logger LOG = LoggerFactory.getLogger(PeerTaskExecutor.class);
   private static final long[] WAIT_TIME_BEFORE_RETRY = {0, 20000, 5000};
 
   private final PeerManager peerManager;
@@ -57,14 +53,12 @@ public class PeerTaskExecutor {
         usedEthPeers.add(peer);
         executorResult = executeAgainstPeer(peerTask, peer);
       } catch (NoAvailablePeerException e) {
-        LOG.info("NoAvailablePeerException exception");
         executorResult =
             new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE);
       }
     } while (--triesRemaining > 0
         && executorResult.getResponseCode() != PeerTaskExecutorResponseCode.SUCCESS);
 
-    LOG.info("Finishing execution of task with response code " + executorResult.getResponseCode());
     return executorResult;
   }
 
@@ -85,14 +79,11 @@ public class PeerTaskExecutor {
         T result = peerTask.parseResponse(responseMessageData);
         executorResult = new PeerTaskExecutorResult<>(result, PeerTaskExecutorResponseCode.SUCCESS);
       } catch (PeerConnection.PeerNotConnected e) {
-        LOG.info("PeerConnection.PeerNotConnected exception");
         executorResult =
             new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.PEER_DISCONNECTED);
       } catch (InterruptedException | TimeoutException e) {
-        LOG.info("InterruptedException | TimeoutException exception");
         executorResult = new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.TIMEOUT);
       } catch (Exception e) {
-        LOG.info("Other Exception", e);
         executorResult =
             new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR);
       }
