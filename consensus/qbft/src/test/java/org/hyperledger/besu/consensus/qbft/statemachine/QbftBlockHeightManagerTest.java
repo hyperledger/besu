@@ -121,6 +121,7 @@ public class QbftBlockHeightManagerTest {
   @Mock private DefaultBlockchain blockchain;
   @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   @Mock private ValidatorMulticaster validatorMulticaster;
+  @Mock private BlockHeader parentHeader;
 
   @Captor private ArgumentCaptor<MessageData> sentMessageArgCaptor;
 
@@ -159,8 +160,7 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getRoundTimer()).thenReturn(roundTimer);
     when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
-    when(finalState.getClock()).thenReturn(clock);
-    when(blockCreator.createBlock(anyLong()))
+    when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
                 createdBlock, new TransactionSelectionResults(), new BlockCreationTiming()));
@@ -212,7 +212,8 @@ public class QbftBlockHeightManagerTest {
                   messageFactory,
                   messageTransmitter,
                   roundTimer,
-                  bftExtraDataCodec);
+                  bftExtraDataCodec,
+                  parentHeader);
             });
 
     when(roundFactory.createNewRoundWithState(any(), any()))
@@ -229,7 +230,8 @@ public class QbftBlockHeightManagerTest {
                   messageFactory,
                   messageTransmitter,
                   roundTimer,
-                  bftExtraDataCodec);
+                  bftExtraDataCodec,
+                  parentHeader);
             });
   }
 

@@ -93,7 +93,6 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
                 protocolContext,
                 protocolSchedule,
                 solver,
-                parentHeader,
                 ethScheduler);
 
     return new PoWBlockMiner(
