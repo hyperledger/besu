@@ -109,7 +109,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
       final List<BlockHeader> ommers) {
     final BlockCreator blockCreator = this.blockCreatorFactory.apply(parentHeader);
     final long timestamp = scheduler.getNextTimestamp(parentHeader).timestampForHeader();
-    return blockCreator.createBlock(transactions, ommers, timestamp);
+    return blockCreator.createBlock(transactions, ommers, timestamp, parentHeader);
   }
 
   /**
@@ -121,7 +121,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
    */
   public BlockCreationResult createBlock(final BlockHeader parentHeader, final long timestamp) {
     final BlockCreator blockCreator = this.blockCreatorFactory.apply(parentHeader);
-    return blockCreator.createBlock(Optional.empty(), Optional.empty(), timestamp);
+    return blockCreator.createBlock(Optional.empty(), Optional.empty(), timestamp, parentHeader);
   }
 
   protected boolean shouldImportBlock(final Block block) throws InterruptedException {
@@ -140,7 +140,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
 
     LOG.trace("Mining a new block with timestamp {}", newBlockTimestamp);
 
-    final var blockCreationResult = minerBlockCreator.createBlock(newBlockTimestamp);
+    final var blockCreationResult = minerBlockCreator.createBlock(newBlockTimestamp, parentHeader);
     timing.registerAll(blockCreationResult.getBlockCreationTimings());
 
     final Block block = blockCreationResult.getBlock();
