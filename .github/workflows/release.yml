@@ -9,8 +9,28 @@ env:
   GRADLE_OPTS: "-Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
 
 jobs:
+  preprocess_release:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Pre-process Release Name
+        id: pre_process_release_name
+        run: |
+          RELEASE_NAME="${{ github.event.release.name }}"
+          # strip all whitespace
+          RELEASE_NAME="${RELEASE_NAME//[[:space:]]/}"
+          if [[ ! "$RELEASE_NAME" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?(-.*)?$ ]]; then
+            echo "Release name does not conform to a valid besu release format YY.M.v[-suffix], e.g. 24.8.0-RC1."
+            exit 1
+          fi
+          echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT  # Set as output using the new syntax
+    outputs:
+      release_name: ${{ steps.pre_process_release_name.outputs.release_name }}
+
   artifacts:
     runs-on: ubuntu-22.04
+    needs: preprocess_release
+    env:
+      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
     permissions:
       contents: write
     outputs:
@@ -19,17 +39,6 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-      - name: Pre-process Release Name
-        id: pre_process_release_name
-        run: |
-            RELEASE_NAME="${{ github.event.release.name }}"
-            # strip all whitespace
-            RELEASE_NAME="${RELEASE_NAME//[[:space:]]/}"
-            if [[ ! "$RELEASE_NAME" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?(-.*)?$ ]]; then
-              echo "Release name does not conform to a valid besu release format YY.M.v[-suffix], e.g. 24.8.0-RC1."
-              exit 1
-            fi
-            echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV  # Store in environment variable
       - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
@@ -90,7 +99,9 @@ jobs:
 
   publish:
     runs-on: ubuntu-22.04
-    needs: [testWindows, artifacts]
+    needs: [preprocess_release, testWindows, artifacts]
+    env:
+      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
     permissions:
       contents: write
     steps:
@@ -115,7 +126,9 @@ jobs:
 
   artifactoryPublish:
     runs-on: ubuntu-22.04
-    needs: artifacts
+    needs: [preprocess_release, artifacts]
+    env:
+      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
     steps:
       - name: checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -152,7 +165,9 @@ jobs:
         run: docker run --rm -i hadolint/hadolint < docker/Dockerfile
 
   buildDocker:
-    needs: hadolint
+    needs: [preprocess_release, hadolint]
+    env:
+      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
     permissions:
       contents: read
       packages: write
@@ -213,7 +228,9 @@ jobs:
         run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{env.RELEASE_NAME}} -Prelease.releaseVersion=${{ env.RELEASE_NAME }}
 
   multiArch:
-    needs: buildDocker
+    needs: [preprocess_release, buildDocker]
+    env:
+      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -240,7 +257,9 @@ jobs:
         run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{env.RELEASE_NAME}} -Prelease.releaseVersion=${{ env.RELEASE_NAME }}
 
   amendNotes:
-    needs: multiArch
+    needs: [preprocess_release, multiArch]
+    env:
+      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -253,7 +272,9 @@ jobs:
             `docker pull ${{env.registry}}/${{secrets.DOCKER_ORG}}/besu:${{env.RELEASE_NAME}}`
 
   dockerPromoteX64:
-    needs: multiArch
+    needs: [preprocess_release, multiArch]
+    env:
+      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -278,7 +299,9 @@ jobs:
         run: ./gradlew "-Prelease.releaseVersion=${{ env.RELEASE_NAME }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" manifestDockerRelease
 
   verifyContainer:
-    needs: dockerPromoteX64
+    needs: [preprocess_release, dockerPromoteX64]
+    env:
+      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
     runs-on: ubuntu-22.04
     permissions:
       contents: read
