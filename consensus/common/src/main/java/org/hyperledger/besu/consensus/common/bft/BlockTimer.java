@@ -24,8 +24,13 @@ import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** Class for starting and keeping organised block timers */
 public class BlockTimer {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BlockTimer.class);
 
   private final ForksSchedule<? extends BftConfigOptions> forksSchedule;
   private final BftExecutors bftExecutors;
@@ -33,20 +38,35 @@ public class BlockTimer {
   private final BftEventQueue queue;
   private final Clock clock;
 
+  // For testing only, it can be useful to set BFT block periods less than a second. This allows
+  // Web3 test frameworks to round-trip transactions/receipts much more quickly. This env var
+  // overrides the blockperiodseconds setting with the number of milliseconds it has been set to. It
+  // should not be used in production environments.
   private static long experimentalDevBlockPeriodMillis = -1;
+  private static final String DEV_MODE_MS_BLOCK_PERIOD_ENV_VAR = "BESU_X_DEV_BFT_PERIOD_MS";
 
   static {
-    if (System.getenv("BESU_X_DEV_BFT_PERIOD_MS") != null
-        && !System.getenv("BESU_X_DEV_BFT_PERIOD_MS").equals("")) {
+    String blockPeriodMS = System.getenv(DEV_MODE_MS_BLOCK_PERIOD_ENV_VAR);
+    if (blockPeriodMS != null && !blockPeriodMS.equals("")) {
       try {
-        experimentalDevBlockPeriodMillis =
-            Integer.parseInt(System.getenv("BESU_X_DEV_BFT_PERIOD_MS"));
+        experimentalDevBlockPeriodMillis = Integer.parseInt(blockPeriodMS);
+        LOG.warn(
+            "Test-mode only BESU_X_DEV_BFT_PERIOD_MS has been set to {} millisecond blocks. Do not use in a production system.",
+            blockPeriodMS);
       } catch (NullPointerException e) {
         // Ignore - default to off
+        LOG.warn(
+            "Test-mode only BESU_X_DEV_BFT_PERIOD_MS has been set incorrectly and will be ignored");
       }
     }
   }
 
+  /**
+   * Test only setting to enable < 1 second BFT blocks
+   *
+   * @return The block period milliseconds, if the associated test mode option
+   *     BESU_X_DEV_BFT_PERIOD_MS has been set
+   */
   protected static long getExperimentalDevBlockPeriodMillis() {
     return experimentalDevBlockPeriodMillis;
   }

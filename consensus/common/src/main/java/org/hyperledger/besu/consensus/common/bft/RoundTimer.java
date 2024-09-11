@@ -46,6 +46,7 @@ public class RoundTimer {
     this.bftExecutors = bftExecutors;
     this.currentTimerTask = Optional.empty();
     if (BlockTimer.getExperimentalDevBlockPeriodMillis() > 0) {
+      // Test only option
       this.baseExpiryMillis = BlockTimer.getExperimentalDevBlockPeriodMillis();
     } else {
       this.baseExpiryMillis = baseExpirySeconds * 1000;

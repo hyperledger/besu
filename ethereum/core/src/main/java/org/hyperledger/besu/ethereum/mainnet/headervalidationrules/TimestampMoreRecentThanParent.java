@@ -27,12 +27,12 @@ public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidat
 
   private static final Logger LOG = LoggerFactory.getLogger(TimestampMoreRecentThanParent.class);
   private final long minimumSecondsSinceParent;
-  private static final boolean usingExperimentalShortBFTBlockPeriod;
 
-  static {
-    usingExperimentalShortBFTBlockPeriod =
-        System.getenv("BESU_X_DEV_BFT_PERIOD_MS") == null ? false : true;
-  }
+  // Test only option for mining blocks more frequently than once a second. Shouldn't be used in a
+  // production system
+  private static final String DEV_MODE_MS_BLOCK_PERIOD_ENV_VAR = "BESU_X_DEV_BFT_PERIOD_MS";
+  private static final boolean usingExperimentalShortBFTBlockPeriod =
+      System.getenv(DEV_MODE_MS_BLOCK_PERIOD_ENV_VAR) == null ? false : true;
 
   public TimestampMoreRecentThanParent(final long minimumSecondsSinceParent) {
     checkArgument(minimumSecondsSinceParent >= 0, "minimumSecondsSinceParent must be positive");
@@ -51,7 +51,11 @@ public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidat
   private boolean validateHeaderSufficientlyAheadOfParent(
       final long timestamp, final long parentTimestamp) {
     final long secondsSinceParent = timestamp - parentTimestamp;
-    if (!usingExperimentalShortBFTBlockPeriod && secondsSinceParent < minimumSecondsSinceParent) {
+    if (usingExperimentalShortBFTBlockPeriod) {
+      LOG.warn(
+          "Block timestamp validation disabled by test-mode only BESU_X_DEV_BFT_PERIOD_MS setting. This should not be set in a production system");
+      return true;
+    } else if (secondsSinceParent < minimumSecondsSinceParent) {
       LOG.info(
           "Invalid block header: timestamp {} is only {} seconds newer than parent timestamp {}. Minimum {} seconds",
           timestamp,
