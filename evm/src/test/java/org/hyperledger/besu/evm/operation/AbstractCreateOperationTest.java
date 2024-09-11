@@ -57,7 +57,7 @@ class AbstractCreateOperationTest {
   private final MutableAccount account = mock(MutableAccount.class);
   private final MutableAccount newAccount = mock(MutableAccount.class);
   private final FakeCreateOperation operation =
-      new FakeCreateOperation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
+      new FakeCreateOperation(new ConstantinopleGasCalculator());
 
   private static final Bytes SIMPLE_CREATE =
       Bytes.fromHexString(
@@ -100,10 +100,9 @@ class AbstractCreateOperationTest {
      * Instantiates a new Create operation.
      *
      * @param gasCalculator the gas calculator
-     * @param maxInitcodeSize Maximum init code size
      */
-    public FakeCreateOperation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, maxInitcodeSize, 0);
+    public FakeCreateOperation(final GasCalculator gasCalculator) {
+      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, 0);
     }
 
     @Override

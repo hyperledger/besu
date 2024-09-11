@@ -21,19 +21,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-
-import java.util.Optional;
 
 public class EthMaxPriorityFeePerGas implements JsonRpcMethod {
 
   private final BlockchainQueries blockchainQueries;
-  private final MiningCoordinator miningCoordinator;
 
-  public EthMaxPriorityFeePerGas(
-      final BlockchainQueries blockchainQueries, final MiningCoordinator miningCoordinator) {
+  public EthMaxPriorityFeePerGas(final BlockchainQueries blockchainQueries) {
     this.blockchainQueries = blockchainQueries;
-    this.miningCoordinator = miningCoordinator;
   }
 
   @Override
@@ -48,7 +42,6 @@ public class EthMaxPriorityFeePerGas implements JsonRpcMethod {
   }
 
   private Wei fetchAndLimitPriorityFeePerGas() {
-    final Optional<Wei> gasPrice = blockchainQueries.gasPriorityFee();
-    return gasPrice.orElseGet(miningCoordinator::getMinPriorityFeePerGas);
+    return blockchainQueries.gasPriorityFee();
   }
 }

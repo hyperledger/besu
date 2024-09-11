@@ -29,7 +29,7 @@ import java.util.Optional;
  */
 public class EVMWorldUpdater implements WorldUpdater {
   private final WorldUpdater rootWorldUpdater;
-  private final AuthorizedCodeService authorizedCodeService;
+  private final DelegatedCodeService delegatedCodeService;
 
   /**
    * Instantiates a new EVM world updater.
@@ -37,13 +37,13 @@ public class EVMWorldUpdater implements WorldUpdater {
    * @param rootWorldUpdater the root world updater
    */
   public EVMWorldUpdater(final WorldUpdater rootWorldUpdater) {
-    this(rootWorldUpdater, new AuthorizedCodeService());
+    this(rootWorldUpdater, new DelegatedCodeService());
   }
 
   private EVMWorldUpdater(
-      final WorldUpdater rootWorldUpdater, final AuthorizedCodeService authorizedCodeService) {
+      final WorldUpdater rootWorldUpdater, final DelegatedCodeService delegatedCodeService) {
     this.rootWorldUpdater = rootWorldUpdater;
-    this.authorizedCodeService = authorizedCodeService;
+    this.delegatedCodeService = delegatedCodeService;
   }
 
   /**
@@ -51,38 +51,36 @@ public class EVMWorldUpdater implements WorldUpdater {
    *
    * @return the authorized code service
    */
-  public AuthorizedCodeService authorizedCodeService() {
-    return authorizedCodeService;
+  public DelegatedCodeService authorizedCodeService() {
+    return delegatedCodeService;
   }
 
   @Override
   public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    return authorizedCodeService.processMutableAccount(
-        this, rootWorldUpdater.createAccount(address, nonce, balance), address);
+    return delegatedCodeService.processMutableAccount(
+        this, rootWorldUpdater.createAccount(address, nonce, balance));
   }
 
   @Override
   public MutableAccount getAccount(final Address address) {
-    return authorizedCodeService.processMutableAccount(
-        this, rootWorldUpdater.getAccount(address), address);
+    return delegatedCodeService.processMutableAccount(this, rootWorldUpdater.getAccount(address));
   }
 
   @Override
   public MutableAccount getOrCreate(final Address address) {
-    return authorizedCodeService.processMutableAccount(
-        this, rootWorldUpdater.getOrCreate(address), address);
+    return delegatedCodeService.processMutableAccount(this, rootWorldUpdater.getOrCreate(address));
   }
 
   @Override
   public MutableAccount getOrCreateSenderAccount(final Address address) {
-    return authorizedCodeService.processMutableAccount(
-        this, rootWorldUpdater.getOrCreateSenderAccount(address), address);
+    return delegatedCodeService.processMutableAccount(
+        this, rootWorldUpdater.getOrCreateSenderAccount(address));
   }
 
   @Override
   public MutableAccount getSenderAccount(final MessageFrame frame) {
-    return authorizedCodeService.processMutableAccount(
-        this, rootWorldUpdater.getSenderAccount(frame), frame.getSenderAddress());
+    return delegatedCodeService.processMutableAccount(
+        this, rootWorldUpdater.getSenderAccount(frame));
   }
 
   @Override
@@ -117,11 +115,11 @@ public class EVMWorldUpdater implements WorldUpdater {
 
   @Override
   public WorldUpdater updater() {
-    return new EVMWorldUpdater(rootWorldUpdater.updater(), authorizedCodeService);
+    return new EVMWorldUpdater(rootWorldUpdater.updater(), delegatedCodeService);
   }
 
   @Override
   public Account get(final Address address) {
-    return authorizedCodeService.processAccount(this, rootWorldUpdater.get(address), address);
+    return delegatedCodeService.processAccount(this, rootWorldUpdater.get(address));
   }
 }

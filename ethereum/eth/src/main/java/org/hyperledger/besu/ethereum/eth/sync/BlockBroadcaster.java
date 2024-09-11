@@ -28,11 +28,13 @@ public class BlockBroadcaster {
   private static final Logger LOG = LoggerFactory.getLogger(BlockBroadcaster.class);
 
   private final EthContext ethContext;
+  private final int maxMessageSize;
   private final Subscribers<BlockPropagatedSubscriber> blockPropagatedSubscribers =
       Subscribers.create();
 
-  public BlockBroadcaster(final EthContext ethContext) {
+  public BlockBroadcaster(final EthContext ethContext, final int maxMessageSize) {
     this.ethContext = ethContext;
+    this.maxMessageSize = maxMessageSize;
   }
 
   public long subscribePropagateNewBlocks(final BlockPropagatedSubscriber callback) {
@@ -45,7 +47,13 @@ public class BlockBroadcaster {
 
   public void propagate(final Block block, final Difficulty totalDifficulty) {
     blockPropagatedSubscribers.forEach(listener -> listener.accept(block, totalDifficulty));
-    final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
+    final NewBlockMessage newBlockMessage;
+    try {
+      newBlockMessage = NewBlockMessage.create(block, totalDifficulty, this.maxMessageSize);
+    } catch (final IllegalArgumentException e) {
+      LOG.error("Failed to create block", e);
+      return;
+    }
     ethContext
         .getEthPeers()
         .streamAvailablePeers()

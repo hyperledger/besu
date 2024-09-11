@@ -90,8 +90,8 @@ public class TestContext {
       final BlockHeader parent, final int round, final long timestamp) {
     return finalState
         .getBlockCreatorFactory()
-        .create(parent, round)
-        .createBlock(timestamp)
+        .create(round)
+        .createBlock(timestamp, parent)
         .getBlock();
   }
 
