@@ -839,6 +839,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param syncState the sync state
    * @param ethProtocolManager the eth protocol manager
    * @param pivotBlockSelector the pivot block selector
+   * @param peerTaskExecutor the peer task executor
    * @return the synchronizer
    */
   protected DefaultSynchronizer createSynchronizer(
@@ -1032,6 +1033,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param ethContext the eth context
    * @param ethMessages the eth messages
    * @param scheduler the scheduler
+   * @param peerManager the peer manager
    * @param peerValidators the peer validators
    * @param mergePeerFilter the merge peer filter
    * @param forkIdManager the fork id manager
