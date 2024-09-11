@@ -90,9 +90,9 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
 
     if (BodyValidation.receiptsRootCache.getIfPresent(header) == null) {
       final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
-    if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
-      return false;
-    }
+      if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
+        return false;
+      }
     }
 
     final long gasUsed =
