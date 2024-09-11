@@ -73,7 +73,7 @@ public class GetReceiptsFromPeerTask
   @Override
   public Map<BlockHeader, List<TransactionReceipt>> parseResponse(final MessageData messageData)
       throws InvalidPeerTaskResponseException {
-    if(messageData == null) {
+    if (messageData == null) {
       throw new InvalidPeerTaskResponseException();
     }
     final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(messageData);
