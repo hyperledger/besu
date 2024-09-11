@@ -136,6 +136,21 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
       headers.forEach(
           h -> {
             blocks.add(new Block(h, body));
+            // add here calculating async the transaction hash of each transaction
+            List<Transaction> transactions = body.getTransactions();
+            for (int i = 0; i < transactions.size(); i++) {
+              Transaction transaction = transactions.get(i);
+              ethContext
+                  .getScheduler()
+                  .scheduleTxWorkerTask(
+                      () -> {
+                        Hash txHash = transaction.getHash();
+                        LOG.atTrace()
+                            .setMessage("The hash for the transaction is calculated : {}")
+                            .addArgument(txHash)
+                            .log();
+                      });
+            }
             BodyValidation.bodiesValidatedRootsCache.put(h, Boolean.TRUE);
           });
       // Clear processed headers
