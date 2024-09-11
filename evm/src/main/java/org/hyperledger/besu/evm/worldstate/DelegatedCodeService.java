@@ -85,13 +85,19 @@ public class DelegatedCodeService {
         worldUpdater, account, resolveDelegatedAddress(account.getCode()));
   }
 
-  private Address resolveDelegatedAddress(final Bytes code) {
-    return Address.wrap(code.slice(DELEGATED_CODE_PREFIX.size()));
-  }
-
-  private boolean hasDelegatedCode(final Bytes code) {
+  /**
+   * Returns if the provided code is delegated code.
+   *
+   * @param code the code to check.
+   * @return {@code true} if the code is delegated code, {@code false} otherwise.
+   */
+  public static boolean hasDelegatedCode(final Bytes code) {
     return code != null
         && code.size() == DELEGATED_CODE_SIZE
         && code.slice(0, DELEGATED_CODE_PREFIX.size()).equals(DELEGATED_CODE_PREFIX);
+  }
+
+  private Address resolveDelegatedAddress(final Bytes code) {
+    return Address.wrap(code.slice(DELEGATED_CODE_PREFIX.size()));
   }
 }
