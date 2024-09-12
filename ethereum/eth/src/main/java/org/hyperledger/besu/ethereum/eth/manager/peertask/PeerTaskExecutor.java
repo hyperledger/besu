@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -22,6 +23,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
@@ -86,18 +88,29 @@ public class PeerTaskExecutor {
         MessageData responseMessageData =
             requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
         T result = peerTask.parseResponse(responseMessageData);
+        peer.recordUsefulResponse();
         executorResult = new PeerTaskExecutorResult<>(result, PeerTaskExecutorResponseCode.SUCCESS);
+
       } catch (PeerConnection.PeerNotConnected e) {
         executorResult =
             new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.PEER_DISCONNECTED);
+
       } catch (InterruptedException | TimeoutException e) {
+        peer.recordRequestTimeout(requestMessageData.getCode());
         executorResult = new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.TIMEOUT);
-      } catch (Exception e) {
+
+      } catch (InvalidPeerTaskResponseException e) {
+        peer.recordUselessResponse(e.getMessage());
+        executorResult =
+            new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.INVALID_RESPONSE);
+
+      } catch (ExecutionException e) {
         executorResult =
             new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR);
       }
     } while (--triesRemaining > 0
         && executorResult.getResponseCode() != PeerTaskExecutorResponseCode.SUCCESS
+        && executorResult.getResponseCode() != PeerTaskExecutorResponseCode.PEER_DISCONNECTED
         && sleepBetweenRetries(WAIT_TIME_BEFORE_RETRY[triesRemaining]));
 
     return executorResult;
