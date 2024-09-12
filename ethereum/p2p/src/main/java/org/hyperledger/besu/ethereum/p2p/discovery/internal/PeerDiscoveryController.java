@@ -323,6 +323,7 @@ public class PeerDiscoveryController {
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
+          peer.setLastSeen(System.currentTimeMillis());
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           if (!PeerDiscoveryStatus.BONDED.equals(peer.getStatus())
               && (bondingPeers.getIfPresent(sender.getId()) == null)) {
@@ -412,7 +413,18 @@ public class PeerDiscoveryController {
     }
 
     if (peer.getFirstDiscovered() == 0) {
-      connectOnRlpxLayer(peer).whenComplete(this::handleRlpxConnectionResult);
+      connectOnRlpxLayer(peer)
+          .whenComplete(
+              (pc, th) -> {
+                if (th == null || !(th.getCause() instanceof TimeoutException)) {
+                  peer.setStatus(PeerDiscoveryStatus.BONDED);
+                  peer.setFirstDiscovered(System.currentTimeMillis());
+                  addToPeerTable(peer);
+                } else {
+                  LOG.debug("Handshake timed out with peer {}", peer.getLoggableId(), th);
+                  peerTable.invalidateIP(peer.getEndpoint());
+                }
+              });
     } else {
       addToPeerTable(peer);
     }
@@ -431,29 +443,8 @@ public class PeerDiscoveryController {
     }
   }
 
-  private void handleRlpxConnectionResult(final DiscoveryPeer peer, final Throwable throwable) {
-    if (throwable == null || !(throwable.getCause() instanceof TimeoutException)) {
-      addToPeerTable(peer);
-      peer.setFirstDiscovered(System.currentTimeMillis());
-    } else {
-      LOG.debug("Handshake timed out with peer {}", peer.getLoggableId(), throwable);
-      peerTable.invalidateIP(peer.getEndpoint());
-    }
-  }
-
-  CompletableFuture<DiscoveryPeer> connectOnRlpxLayer(final DiscoveryPeer peer) {
-    final CompletableFuture<PeerConnection> connectionFuture = rlpxAgent.connect(peer);
-    return connectionFuture.handle(
-        (peerConnection, throwable) -> {
-          if (throwable != null) {
-            try {
-              throw throwable;
-            } catch (Throwable e) {
-              throw new RuntimeException(e);
-            }
-          }
-          return peer;
-        });
+  CompletableFuture<PeerConnection> connectOnRlpxLayer(final DiscoveryPeer peer) {
+    return rlpxAgent.connect(peer);
   }
 
   private Optional<PeerInteractionState> matchInteraction(final Packet packet) {
