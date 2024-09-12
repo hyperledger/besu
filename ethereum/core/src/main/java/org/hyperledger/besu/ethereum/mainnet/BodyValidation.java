@@ -42,10 +42,10 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** A utility class for body validation tasks. */
 public final class BodyValidation {
 
-  public static Cache<BlockHeader, Boolean> bodiesValidatedRootsCache =
-      CacheBuilder.newBuilder().recordStats().maximumSize(2_000).build();
-  public static Cache<BlockHeader, Boolean> receiptsRootCache =
-      CacheBuilder.newBuilder().recordStats().maximumSize(2_000).build();
+  public static Cache<Hash, Boolean> bodiesValidatedRootsForBlockHashCache =
+      CacheBuilder.newBuilder().recordStats().maximumSize(10_000).build();
+  public static Cache<Hash, Boolean> receiptsRootForBlockHashCache =
+      CacheBuilder.newBuilder().recordStats().maximumSize(10_000).build();
 
   private BodyValidation() {
     // Utility Class

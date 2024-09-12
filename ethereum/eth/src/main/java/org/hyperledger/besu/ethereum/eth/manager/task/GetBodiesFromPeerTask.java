@@ -151,7 +151,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
                             .log();
                       });
             }
-            BodyValidation.bodiesValidatedRootsCache.put(h, Boolean.TRUE);
+            BodyValidation.bodiesValidatedRootsForBlockHashCache.put(h.getHash(), Boolean.TRUE);
           });
       // Clear processed headers
       headers.clear();

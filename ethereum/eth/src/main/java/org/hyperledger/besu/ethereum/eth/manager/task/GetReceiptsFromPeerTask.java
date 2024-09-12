@@ -123,7 +123,7 @@ public class GetReceiptsFromPeerTask
       blockHeaders.forEach(
           header -> {
             receiptsByHeader.put(header, receiptsInBlock);
-            BodyValidation.receiptsRootCache.put(header, Boolean.TRUE);
+            BodyValidation.receiptsRootForBlockHashCache.put(header.getHash(), Boolean.TRUE);
           });
     }
     return Optional.of(receiptsByHeader);

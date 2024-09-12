@@ -81,14 +81,14 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
-    if (BodyValidation.bodiesValidatedRootsCache.getIfPresent(header) == null) {
+    if (BodyValidation.bodiesValidatedRootsForBlockHashCache.getIfPresent(header) == null) {
       final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
       if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
         return false;
       }
     }
 
-    if (BodyValidation.receiptsRootCache.getIfPresent(header) == null) {
+    if (BodyValidation.receiptsRootForBlockHashCache.getIfPresent(header) == null) {
       final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
       if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
         return false;
