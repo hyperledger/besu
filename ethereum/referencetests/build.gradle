@@ -14,6 +14,7 @@
  */
 
 configurations {
+  referenceTestAnnotationProcessor.extendsFrom testAnnotationProcessor
   // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
   tarConfig.extendsFrom referenceTestImplementation
   tarConfig {
