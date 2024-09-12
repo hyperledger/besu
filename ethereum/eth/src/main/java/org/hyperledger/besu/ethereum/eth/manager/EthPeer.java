@@ -291,12 +291,13 @@ public class EthPeer implements Comparable<EthPeer> {
     if (messageData.getSize() > maxMessageSize) {
       // This is a bug or else a misconfiguration of the max message size.
       LOG.error(
-          "Sending {} message to peer ({}) which exceeds local message size limit of {} bytes.  Message code: {}, Message Size: {}",
+          "Dropping {} message to peer ({}) which exceeds local message size limit of {} bytes.  Message code: {}, Message Size: {}",
           protocolName,
           this,
           maxMessageSize,
           messageData.getCode(),
           messageData.getSize());
+      return null;
     }
 
     if (requestManagers.containsKey(protocolName)) {

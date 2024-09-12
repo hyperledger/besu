@@ -71,7 +71,26 @@ public class DebugMetrics implements JsonRpcMethod {
   @SuppressWarnings("unchecked")
   private Map<String, Object> getNextMapLevel(
       final Map<String, Object> current, final String name) {
+    // Use compute to either return the existing map or create a new one
     return (Map<String, Object>)
-        current.computeIfAbsent(name, key -> new HashMap<String, Object>());
+        current.compute(
+            name,
+            (k, v) -> {
+              if (v instanceof Map) {
+                // If the value is already a Map, return it as is
+                return v;
+              } else {
+                // If the value is not a Map, create a new Map
+                Map<String, Object> newMap = new HashMap<>();
+                if (v != null) {
+                  // If v is not null and not a Map, we store it as a leaf value
+                  // If the original value was not null, store it under the "value" key
+                  // This handles cases where a metric value (e.g., Double) was previously stored
+                  // directly
+                  newMap.put("value", v);
+                }
+                return newMap;
+              }
+            });
   }
 }

@@ -87,4 +87,8 @@ public class BlobCache {
       return Optional.empty();
     }
   }
+
+  public BlobsWithCommitments.BlobQuad get(final VersionedHash vh) {
+    return cache.getIfPresent(vh);
+  }
 }

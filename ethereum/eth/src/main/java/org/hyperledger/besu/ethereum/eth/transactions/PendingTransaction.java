@@ -31,8 +31,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class PendingTransaction
     implements org.hyperledger.besu.datatypes.PendingTransaction {
   static final int NOT_INITIALIZED = -1;
-  static final int FRONTIER_AND_ACCESS_LIST_SHALLOW_MEMORY_SIZE = 888;
-  static final int EIP1559_AND_EIP4844_SHALLOW_MEMORY_SIZE = 1000;
+  static final int FRONTIER_AND_ACCESS_LIST_SHALLOW_MEMORY_SIZE = 904;
+  static final int EIP1559_AND_EIP4844_SHALLOW_MEMORY_SIZE = 1016;
   static final int OPTIONAL_TO_MEMORY_SIZE = 112;
   static final int OPTIONAL_CHAIN_ID_MEMORY_SIZE = 80;
   static final int PAYLOAD_BASE_MEMORY_SIZE = 32;
@@ -147,7 +147,7 @@ public abstract class PendingTransaction
           case ACCESS_LIST -> computeAccessListMemorySize();
           case EIP1559 -> computeEIP1559MemorySize();
           case BLOB -> computeBlobMemorySize();
-          case SET_CODE -> computeSetCodeMemorySize();
+          case DELEGATE_CODE -> computeSetCodeMemorySize();
         }
         + PENDING_TRANSACTION_MEMORY_SIZE;
   }

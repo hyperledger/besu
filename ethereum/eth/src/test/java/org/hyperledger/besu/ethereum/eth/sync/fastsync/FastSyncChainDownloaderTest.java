@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -111,7 +112,8 @@ public class FastSyncChainDownloaderTest {
         ethContext,
         syncState,
         new NoOpMetricsSystem(),
-        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()));
+        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()),
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   @ParameterizedTest
