@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -84,8 +85,8 @@ public class DefaultBlockchain implements MutableBlockchain {
   private final Optional<Cache<Hash, List<TransactionReceipt>>> transactionReceiptsCache;
   private final Optional<Cache<Hash, Difficulty>> totalDifficultyCache;
 
-  private final Counter gasUsedCounter;
-  private final Counter numberOfTransactionsCounter;
+  private Counter gasUsedCounter = NoOpMetricsSystem.NO_OP_COUNTER;
+  private Counter numberOfTransactionsCounter = NoOpMetricsSystem.NO_OP_COUNTER;
 
   private DefaultBlockchain(
       final Optional<Block> genesisBlock,
@@ -147,6 +148,11 @@ public class DefaultBlockchain implements MutableBlockchain {
       totalDifficultyCache = Optional.empty();
     }
 
+    createCounters(metricsSystem);
+    createGauges(metricsSystem);
+  }
+
+  private void createCounters(final MetricsSystem metricsSystem) {
     gasUsedCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN, "chain_head_gas_used_counter", "Counter for Gas used");
@@ -156,8 +162,6 @@ public class DefaultBlockchain implements MutableBlockchain {
             BesuMetricCategory.BLOCKCHAIN,
             "chain_head_transaction_count_counter",
             "Counter for the number of transactions");
-
-    createGauges(metricsSystem);
   }
 
   private void createGauges(final MetricsSystem metricsSystem) {
