@@ -119,7 +119,6 @@ public class GenesisFileAnalyzer {
       }
     }
 
-    // Log the detected file style
     LOG.info("Detected file style: {}", fileStyle);
 
     return fileStyle;
