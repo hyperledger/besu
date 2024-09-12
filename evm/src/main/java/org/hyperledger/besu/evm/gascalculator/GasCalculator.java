@@ -647,12 +647,33 @@ public interface GasCalculator {
   }
 
   /**
-   * Returns the upfront gas cost for EIP 7702 operation.
+   * Returns the upfront gas cost for EIP 7702 authorization processing.
    *
-   * @param authorizationListLength The length of the authorization list
+   * @param delegateCodeListLength The length of the code delegation list
    * @return the gas cost
    */
-  default long setCodeListGasCost(final int authorizationListLength) {
+  default long delegateCodeGasCost(final int delegateCodeListLength) {
+    return 0L;
+  }
+
+  /**
+   * Calculates the refund for proessing the 7702 code delegation list if an delegater account
+   * already exist in the trie.
+   *
+   * @param alreadyExistingAccountSize The number of accounts already in the trie
+   * @return the gas refund
+   */
+  default long calculateDelegateCodeGasRefund(final long alreadyExistingAccountSize) {
+    return 0L;
+  }
+
+  /**
+   * Returns the gas cost for resolving the code of a delegate account.
+   *
+   * @param isWarm whether the account is warm
+   * @return the gas cost
+   */
+  default long delegatedCodeResolutionGasCost(final boolean isWarm) {
     return 0L;
   }
 }

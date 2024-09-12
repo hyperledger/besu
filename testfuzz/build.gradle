@@ -24,7 +24,8 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
       )
   }
 }
@@ -38,7 +39,7 @@ dependencies {
   implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'com.gitlab.javafuzz:core'
+  implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
   implementation 'io.tmio:tuweni-bytes'
   implementation 'org.jacoco:org.jacoco.agent'
@@ -56,6 +57,7 @@ application {
 def corpusDir = "${buildDir}/generated/corpus"
 
 tasks.register("runFuzzer", JavaExec) {
+  doNotTrackState("Produces no artifacts")
   classpath = sourceSets.main.runtimeClasspath
   mainClass = 'org.hyperledger.besu.testfuzz.BesuFuzz'
 
@@ -67,6 +69,24 @@ tasks.register("runFuzzer", JavaExec) {
   doFirst {
     mkdir corpusDir
   }
+}
+
+// Adds guidance to the fuzzer but with a 90% performance drop.
+tasks.register("fuzzGuided") {
+  doLast {
+    runFuzzer.args += "--guidance-regexp=org/(hyperledger/besu|apache/tuweni)"
+    runFuzzer.args += "--new-corpus-dir=${corpusDir}/.."
+  }
+  finalizedBy("runFuzzer")
+}
+
+// This fuzzes besu as an external client.  Besu fuzzing as a local client is enabled by default.
+tasks.register("fuzzBesu") {
+  dependsOn(":installDist")
+  doLast {
+    runFuzzer.args += "--client=besu=../build/install/besu/bin/evmtool code-validate"
+  }
+  finalizedBy("runFuzzer")
 }
 
 tasks.register("fuzzEvmone") {
@@ -99,13 +119,13 @@ tasks.register("fuzzNethermind") {
 
 tasks.register("fuzzReth") {
   doLast {
-    runFuzzer.args += "--client=revm=revme bytecode"
+    runFuzzer.args += "--client=revm=revme bytecode --eof-runtime"
   }
   finalizedBy("runFuzzer")
 }
 
 tasks.register("fuzzAll") {
-  dependsOn fuzzEvm1, fuzzEthJS, fuzzGeth, fuzzNethermind, fuzzReth
+  dependsOn fuzzEvmone, fuzzEthereumJS, fuzzGeth, fuzzNethermind, fuzzReth
 }
 
 jacoco {

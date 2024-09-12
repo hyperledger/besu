@@ -66,6 +66,7 @@ public class IbftRound {
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final IbftMessageTransmitter transmitter;
   private final BftExtraDataCodec bftExtraDataCodec;
+  private final BlockHeader parentHeader;
 
   /**
    * Instantiates a new Ibft round.
@@ -80,6 +81,7 @@ public class IbftRound {
    * @param transmitter the transmitter
    * @param roundTimer the round timer
    * @param bftExtraDataCodec the bft extra data codec
+   * @param parentHeader the parent header
    */
   public IbftRound(
       final RoundState roundState,
@@ -91,7 +93,8 @@ public class IbftRound {
       final MessageFactory messageFactory,
       final IbftMessageTransmitter transmitter,
       final RoundTimer roundTimer,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final BlockHeader parentHeader) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -101,6 +104,7 @@ public class IbftRound {
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
     this.bftExtraDataCodec = bftExtraDataCodec;
+    this.parentHeader = parentHeader;
     roundTimer.startTimer(getRoundIdentifier());
   }
 
@@ -119,7 +123,8 @@ public class IbftRound {
    * @param headerTimeStampSeconds the header time stamp seconds
    */
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
-    final Block block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
+    final Block block =
+        blockCreator.createBlock(headerTimeStampSeconds, this.parentHeader).getBlock();
     final BftExtraData extraData = bftExtraDataCodec.decode(block.getHeader());
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
     LOG.trace(
@@ -142,7 +147,7 @@ public class IbftRound {
     final Block blockToPublish;
     if (!bestBlockFromRoundChange.isPresent()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
-      blockToPublish = blockCreator.createBlock(headerTimestamp).getBlock();
+      blockToPublish = blockCreator.createBlock(headerTimestamp, this.parentHeader).getBlock();
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());

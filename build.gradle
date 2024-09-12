@@ -25,13 +25,13 @@ import java.util.regex.Pattern
 plugins {
   id 'com.diffplug.spotless' version '6.25.0'
   id 'com.github.ben-manes.versions' version '0.51.0'
-  id 'com.github.jk1.dependency-license-report' version '2.7'
-  id 'com.jfrog.artifactory' version '5.2.0'
-  id 'io.spring.dependency-management' version '1.1.5'
+  id 'com.github.jk1.dependency-license-report' version '2.9'
+  id 'com.jfrog.artifactory' version '5.2.5'
+  id 'io.spring.dependency-management' version '1.1.6'
   id 'me.champeau.jmh' version '0.7.2' apply false
-  id 'net.ltgt.errorprone' version '3.1.0'
+  id 'net.ltgt.errorprone' version '4.0.1'
   id 'maven-publish'
-  id 'org.sonarqube' version '4.4.1.3373'
+  id 'org.sonarqube' version '5.1.0.4882'
 }
 
 sonarqube {
@@ -56,12 +56,15 @@ group = 'org.hyperledger.besu'
 
 defaultTasks 'build', 'checkLicense', 'javadoc'
 
-def buildAliases = ['dev': [
+def buildAliases = [
+  'dev': [
     'spotlessApply',
     'build',
     'checkLicense',
     'javadoc'
-  ]]
+  ],
+  'build': ['spotlessCheck', 'build']
+]
 
 def expandedTaskList = []
 gradle.startParameter.taskNames.each {
@@ -159,10 +162,6 @@ allprojects {
     maven {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content { includeGroupByRegex('com\\.splunk\\..*') }
-    }
-    maven {
-      url 'https://gitlab.com/api/v4/projects/19871573/packages/maven'
-      content { includeGroupByRegex('com\\.gitlab\\.javafuzz(\\..*)?') }
     }
 
     mavenCentral()
