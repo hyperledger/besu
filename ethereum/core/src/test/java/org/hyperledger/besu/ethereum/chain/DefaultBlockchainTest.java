@@ -35,8 +35,10 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -161,33 +163,42 @@ public class DefaultBlockchainTest {
         () -> BlockOptions.create().setDifficulty(Difficulty.of(Long.MAX_VALUE)));
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final KeyValueStorage kvStoreVariables = new InMemoryKeyValueStorage();
-    final List<Block> blocks = gen.blockSequence(10);
+    final ArrayDeque<Block> blocks = new ArrayDeque<>(gen.blockSequence(10));
     final List<List<TransactionReceipt>> blockReceipts = new ArrayList<>(blocks.size());
     blockReceipts.add(Collections.emptyList());
 
     // Write small chain to storage
     final MutableBlockchain mutableBlockchain =
-        createMutableBlockchain(kvStore, kvStoreVariables, blocks.get(0));
-    for (int i = 1; i < blocks.size(); i++) {
-      final Block block = blocks.get(i);
-      final List<TransactionReceipt> receipts = gen.receipts(block);
-      blockReceipts.add(receipts);
-      mutableBlockchain.appendBlock(block, receipts);
-    }
+        createMutableBlockchain(kvStore, kvStoreVariables, blocks.getFirst());
+    blocks.stream()
+        .filter(block -> !block.equals(blocks.getFirst()))
+        .forEach(
+            block -> {
+              final List<TransactionReceipt> receipts = gen.receipts(block);
+              blockReceipts.add(receipts);
+              mutableBlockchain.appendBlock(block, receipts);
+            });
+
+    // To make sure there are no surprising NPEs during DefaultBlockchain.<init>
+    BlockchainStorage blockchainStorage = createStorage(kvStore, kvStoreVariables);
+    BlockchainStorage.Updater updater = blockchainStorage.updater();
+    updater.setFinalized(blocks.getLast().getHash());
+    updater.setSafeBlock(blocks.getLast().getHash());
+    updater.setChainHead(blocks.getLast().getHash());
+    updater.commit();
 
     // Create read only chain
     final Blockchain blockchain =
         DefaultBlockchain.create(
-            createStorage(kvStore, kvStoreVariables),
+            blockchainStorage,
             MetricsSystemFactory.create(MetricsConfiguration.builder().enabled(true).build()),
             0);
 
-    for (int i = 0; i < blocks.size(); i++) {
-      assertBlockDataIsStored(blockchain, blocks.get(i), blockReceipts.get(i));
-    }
-    final Block lastBlock = blocks.get(blocks.size() - 1);
-    assertBlockIsHead(blockchain, lastBlock);
-    assertTotalDifficultiesAreConsistent(blockchain, lastBlock);
+    assertThat(blockReceipts.size()).isEqualTo(blocks.size());
+    Iterator<List<TransactionReceipt>> it = blockReceipts.iterator();
+    blocks.forEach(block -> assertBlockDataIsStored(blockchain, block, it.next()));
+    assertBlockIsHead(blockchain, blocks.getLast());
+    assertTotalDifficultiesAreConsistent(blockchain, blocks.getLast());
   }
 
   @Test
