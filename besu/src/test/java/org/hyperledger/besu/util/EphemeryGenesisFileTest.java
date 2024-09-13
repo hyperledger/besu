@@ -16,7 +16,6 @@ package org.hyperledger.besu.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
 import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -107,6 +106,8 @@ public class EphemeryGenesisFileTest {
 
     assertThat(config.withOverrides(override).getConfigOptions().getChainId()).isPresent();
     assertThat(config.withOverrides(override).getTimestamp()).isNotNull();
+    assertThat(expectedChainId).isEqualTo(override.get("chainId"));
+    assertThat(String.valueOf(expectedGenesisTimestamp)).isEqualTo(override.get("timestamp"));
   }
 
   @Test
@@ -119,17 +120,15 @@ public class EphemeryGenesisFileTest {
 
     long expectedGenesisTimestamp =
         GENESIS_TEST_TIMESTAMP + (PERIOD_SINCE_GENESIS * PERIOD_IN_SECONDS);
-
-    EPHEMERY.setNetworkId(expectedChainId);
-
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     override.put("chainId", String.valueOf(expectedChainId));
     override.put("timestamp", String.valueOf(expectedGenesisTimestamp));
-    config.withOverrides(override);
+    final GenesisConfigFile updatedConfig = config.withOverrides(override);
 
     assertThat(CURRENT_TIMESTAMP_HIGHER)
         .isGreaterThan(Long.parseLong(String.valueOf(GENESIS_TEST_TIMESTAMP + PERIOD_IN_SECONDS)));
-
+    assertThat(updatedConfig.getConfigOptions().getChainId()).hasValue(expectedChainId);
+    assertThat(updatedConfig.getTimestamp()).isEqualTo(expectedGenesisTimestamp);
     assertThat(override.get("timestamp")).isEqualTo(String.valueOf(expectedGenesisTimestamp));
     assertThat(override.get("chainId")).isEqualTo(expectedChainId.toString());
   }

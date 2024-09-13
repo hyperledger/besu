@@ -77,6 +77,7 @@ public record EthNetworkConfig(
                 strings ->
                     strings.stream().map(EnodeURLImpl::fromString).collect(Collectors.toList()))
             .orElse(Collections.emptyList());
+
     return new EthNetworkConfig(
         genesisConfigFile,
         networkName.getNetworkId(),

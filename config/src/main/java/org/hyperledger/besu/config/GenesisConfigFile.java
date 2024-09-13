@@ -280,6 +280,9 @@ public class GenesisConfigFile {
    * @return the timestamp
    */
   public long getTimestamp() {
+    if (overrides != null && overrides.containsKey("timestamp")) {
+      return Long.parseLong(overrides.get("timestamp"));
+    }
     return parseLong("timestamp", JsonUtil.getValueAsString(genesisRoot, "timestamp", "0x0"));
   }
 

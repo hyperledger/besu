@@ -2400,7 +2400,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (networkId != null) {
       builder.setNetworkId(networkId);
     }
-
+    // ChainId update is required for Ephemery network
+    if (network.equals(EPHEMERY)) {
+      String chainId = genesisConfigOverrides.get("chainId");
+      builder.setNetworkId(BigInteger.valueOf(Long.parseLong(chainId)));
+    }
     if (p2PDiscoveryOptionGroup.discoveryDnsUrl != null) {
       builder.setDnsDiscoveryUrl(p2PDiscoveryOptionGroup.discoveryDnsUrl);
     } else {

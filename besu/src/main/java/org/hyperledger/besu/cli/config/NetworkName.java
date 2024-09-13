@@ -49,7 +49,7 @@ public enum NetworkName {
   MORDOR("/mordor.json", BigInteger.valueOf(7));
 
   private final String genesisFile;
-  private BigInteger networkId;
+  private final BigInteger networkId;
   private final boolean canSnapSync;
   private final String deprecationDate;
 
@@ -72,17 +72,6 @@ public enum NetworkName {
    */
   public String getGenesisFile() {
     return genesisFile;
-  }
-
-  /**
-   * This method is called only by the Ephemery network. It is required to update the networkid.
-   *
-   * @param networkId Sets network id .
-   */
-  public void setNetworkId(final BigInteger networkId) {
-    if (this == EPHEMERY) {
-      this.networkId = networkId;
-    }
   }
 
   /**

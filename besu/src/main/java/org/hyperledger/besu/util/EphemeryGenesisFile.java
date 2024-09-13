@@ -30,8 +30,8 @@ import java.util.Optional;
  * Ephemery genesis file in memory
  */
 public class EphemeryGenesisFile {
-  private static final int PERIOD = 28;
-  private static final long PERIOD_IN_SECONDS = (PERIOD * 24 * 60 * 60);
+  private static final int PERIOD_IN_DAYS = 28;
+  private static final long PERIOD_IN_SECONDS = (PERIOD_IN_DAYS * 24 * 60 * 60);
 
   public static GenesisConfigFile updateGenesis(final Map<String, String> overrides)
       throws RuntimeException {
@@ -45,14 +45,16 @@ public class EphemeryGenesisFile {
       Optional<BigInteger> genesisChainId = genesisConfigFile.getConfigOptions().getChainId();
       long currentTimestamp = Instant.now().getEpochSecond();
       long periodsSinceGenesis =
-          ChronoUnit.DAYS.between(Instant.ofEpochSecond(genesisTimestamp), Instant.now()) / PERIOD;
+          ChronoUnit.DAYS.between(Instant.ofEpochSecond(genesisTimestamp), Instant.now())
+              / PERIOD_IN_DAYS;
 
       long updatedTimestamp = genesisTimestamp + (periodsSinceGenesis * PERIOD_IN_SECONDS);
       BigInteger updatedChainId =
           genesisChainId
               .orElseThrow(() -> new IllegalStateException("ChainId not present"))
               .add(BigInteger.valueOf(periodsSinceGenesis));
-
+      // If the current timestamp is greater than the genesisTimestamp + periodInseconds overidde
+      // the Ephemery config chainId and timestamp
       if (currentTimestamp > (genesisTimestamp + PERIOD_IN_SECONDS)) {
         overrides.put("chainId", String.valueOf(updatedChainId));
         overrides.put("timestamp", String.valueOf(updatedTimestamp));
