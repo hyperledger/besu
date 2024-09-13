@@ -11,7 +11,6 @@
 | Ameziane Hamlat   | ahamlat         | ahamlat          |
 | Adrian Sutton    | ajsutton         | ajsutton         |
 | Antony Denyer    | antonydenyer     | antonydenyer     |
-| Antoine Toulme   | atoulme          | atoulme          |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
@@ -38,6 +37,7 @@
 | Name             | Github           | LFID             |
 |------------------|------------------|------------------|
 | Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
+| Antoine Toulme   | atoulme          | atoulme          |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
