@@ -21,9 +21,10 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.util.FutureUtils;
 
 import java.util.List;
@@ -33,22 +34,27 @@ import java.util.function.Function;
 
 public class DownloadReceiptsStep
     implements Function<List<Block>, CompletableFuture<List<BlockWithReceipts>>> {
-  private final EthContext ethContext;
-  private final MetricsSystem metricsSystem;
+  private final PeerTaskExecutor peerTaskExecutor;
 
-  public DownloadReceiptsStep(final EthContext ethContext, final MetricsSystem metricsSystem) {
-    this.ethContext = ethContext;
-    this.metricsSystem = metricsSystem;
+  public DownloadReceiptsStep(final PeerTaskExecutor peerTaskExecutor) {
+    this.peerTaskExecutor = peerTaskExecutor;
   }
 
   @Override
   public CompletableFuture<List<BlockWithReceipts>> apply(final List<Block> blocks) {
     final List<BlockHeader> headers = blocks.stream().map(Block::getHeader).collect(toList());
-    final CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> getReceipts =
-        GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem).run();
+    final CompletableFuture<PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>>>
+        getReceipts = peerTaskExecutor.executeAsync(new GetReceiptsFromPeerTask(headers));
     final CompletableFuture<List<BlockWithReceipts>> combineWithBlocks =
         getReceipts.thenApply(
-            receiptsByHeader -> combineBlocksAndReceipts(blocks, receiptsByHeader));
+            receiptsByHeader -> {
+              if (receiptsByHeader.getResponseCode() == PeerTaskExecutorResponseCode.SUCCESS
+                  && receiptsByHeader.getResult().isPresent()) {
+                return combineBlocksAndReceipts(blocks, receiptsByHeader.getResult().get());
+              } else {
+                throw new RuntimeException("Unable to get receipts for blocks");
+              }
+            });
     FutureUtils.propagateCancellation(combineWithBlocks, getReceipts);
     return combineWithBlocks;
   }

@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -51,6 +50,8 @@ import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +66,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.platform.commons.util.ReflectionUtils;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -148,19 +150,46 @@ public class CheckPointSyncChainDownloaderTest {
                   final InvocationOnMock invocationOnMock) throws Throwable {
                 GetReceiptsFromPeerTask task =
                     invocationOnMock.getArgument(0, GetReceiptsFromPeerTask.class);
-                Map<BlockHeader, List<TransactionReceipt>> getReceiptsFromPeerTaskResult =
-                    new HashMap<>();
-                Block block = otherBlockchain.getBlockByNumber(task.getRequiredBlockNumber()).get();
-                getReceiptsFromPeerTaskResult.put(
-                    block.getHeader(), otherBlockchain.getTxReceipts(block.getHash()).get());
-                PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>>
-                    peerTaskExecutorResult =
-                        new PeerTaskExecutorResult<>(
-                            getReceiptsFromPeerTaskResult, PeerTaskExecutorResponseCode.SUCCESS);
 
-                return peerTaskExecutorResult;
+                return processTask(task);
               }
             });
+
+    when(peerTaskExecutor.executeAsync(any(GetReceiptsFromPeerTask.class)))
+        .thenAnswer(
+            new Answer<
+                CompletableFuture<
+                    PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>>>>() {
+              @Override
+              public CompletableFuture<
+                      PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>>>
+                  answer(final InvocationOnMock invocationOnMock) throws Throwable {
+                GetReceiptsFromPeerTask task =
+                    invocationOnMock.getArgument(0, GetReceiptsFromPeerTask.class);
+
+                return CompletableFuture.completedFuture(processTask(task));
+              }
+            });
+  }
+
+  @SuppressWarnings("unchecked")
+  private PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> processTask(
+      final GetReceiptsFromPeerTask task) throws IllegalAccessException {
+    Map<BlockHeader, List<TransactionReceipt>> getReceiptsFromPeerTaskResult = new HashMap<>();
+    List<Field> fields =
+        ReflectionUtils.findFields(
+            task.getClass(),
+            (field) -> field.getName().equals("blockHeaders"),
+            ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
+    fields.forEach((f) -> f.setAccessible(true));
+    Collection<BlockHeader> blockHeaders = (Collection<BlockHeader>) fields.getFirst().get(task);
+    blockHeaders.forEach(
+        (bh) ->
+            getReceiptsFromPeerTaskResult.put(
+                bh, otherBlockchain.getTxReceipts(bh.getHash()).get()));
+
+    return new PeerTaskExecutorResult<>(
+        getReceiptsFromPeerTaskResult, PeerTaskExecutorResponseCode.SUCCESS);
   }
 
   @AfterEach

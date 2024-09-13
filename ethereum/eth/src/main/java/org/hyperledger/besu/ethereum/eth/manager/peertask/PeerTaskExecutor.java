@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
@@ -73,7 +72,7 @@ public class PeerTaskExecutor {
     return executorResult;
   }
 
-  public <T> Future<PeerTaskExecutorResult<T>> executeAsync(final PeerTask<T> peerTask) {
+  public <T> CompletableFuture<PeerTaskExecutorResult<T>> executeAsync(final PeerTask<T> peerTask) {
     return CompletableFuture.supplyAsync(() -> execute(peerTask));
   }
 
@@ -116,7 +115,7 @@ public class PeerTaskExecutor {
     return executorResult;
   }
 
-  public <T> Future<PeerTaskExecutorResult<T>> executeAgainstPeerAsync(
+  public <T> CompletableFuture<PeerTaskExecutorResult<T>> executeAgainstPeerAsync(
       final PeerTask<T> peerTask, final EthPeer peer) {
     return CompletableFuture.supplyAsync(() -> executeAgainstPeer(peerTask, peer));
   }

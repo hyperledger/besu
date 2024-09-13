@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerManager;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -65,6 +66,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 /**
  * @param <T> The type of data being requested from the network
@@ -91,6 +93,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   protected static MetricsSystem metricsSystem = new NoOpMetricsSystem();
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
+  protected PeerTaskExecutor peerTaskExecutor;
   protected EthPeers ethPeers;
   protected PeerManager peerManager;
   protected TransactionPool transactionPool;
@@ -136,6 +139,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
             () -> peerCountToTimeout.getAndDecrement() > 0 || peersDoTimeout.get());
     ethContext = new EthContext(ethPeers, ethMessages, ethScheduler);
     peerManager = new PeerManager();
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     final SyncState syncState = new SyncState(blockchain, ethContext.getEthPeers());
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
