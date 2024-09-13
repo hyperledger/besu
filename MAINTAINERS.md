@@ -10,13 +10,11 @@
 | ---------------- | ---------------- | ---------------- |
 | Ameziane Hamlat   | ahamlat         | ahamlat          |
 | Adrian Sutton    | ajsutton         | ajsutton         |
-| Antony Denyer    | antonydenyer     | antonydenyer     |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
 | Gabriel Trintinalia | gabriel-trintinalia | gabrieltrintinalia |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
-| Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Gabriel Fukushima| gfukushima       | gfukushima       |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Jason Frame      | jframe           | jframe           |
@@ -37,12 +35,14 @@
 | Name             | Github           | LFID             |
 |------------------|------------------|------------------|
 | Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
+| Antony Denyer    | antonydenyer     | antonydenyer     |
 | Antoine Toulme   | atoulme          | atoulme          |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
+| Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Frank Li         | frankisawesome   | frankliawesome   |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
