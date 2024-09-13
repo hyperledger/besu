@@ -7,6 +7,8 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
+
 
 ### Bug fixes
 
@@ -26,7 +28,7 @@
 - Performance optimzation for ECMUL (2 of 2) [#7543](https://github.com/hyperledger/besu/pull/7543)
 - Include current chain head block when computing `eth_maxPriorityFeePerGas` [#7485](https://github.com/hyperledger/besu/pull/7485)
 - Remove (old) documentation updates from the changelog [#7562](https://github.com/hyperledger/besu/pull/7562)
-- Update Java and Gradle dependecies [#7571](https://github.com/hyperledger/besu/pull/7571)
+- Update Java and Gradle dependencies [#7571](https://github.com/hyperledger/besu/pull/7571)
 - Layered txpool: new options `--tx-pool-min-score` to remove a tx from pool when its score is lower than the specified value [#7576](https://github.com/hyperledger/besu/pull/7576)
 - Add `engine_getBlobsV1` method to the Engine API [#7553](https://github.com/hyperledger/besu/pull/7553)
 
@@ -42,6 +44,7 @@
 - Layered txpool: do not send notifications when moving tx between layers [#7539](https://github.com/hyperledger/besu/pull/7539)
 - Layered txpool: fix for unsent drop notifications on remove [#7538](https://github.com/hyperledger/besu/pull/7538)
 - Honor block number or tag parameter in eth_estimateGas and eth_createAccessList [#7502](https://github.com/hyperledger/besu/pull/7502)
+- Fixed NPE during DefaultBlockchain object initialization [#7601](https://github.com/hyperledger/besu/pull/7601)
 
 ## 24.9.0
 
