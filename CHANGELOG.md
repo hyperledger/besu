@@ -10,8 +10,8 @@
 ### Additions and Improvements
 - Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
 
-
 ### Bug fixes
+- Fix for `debug_traceCall` to handle transactions without specified gas price. [#7510](https://github.com/hyperledger/besu/pull/7510)
 
 ## 24.9.1
 
@@ -50,7 +50,6 @@
 ## 24.9.0
 
 This release version has been deprecated release due to CI bug
-
 
 ## 24.8.0
 
