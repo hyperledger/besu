@@ -230,6 +230,11 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.UserPrincipal;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -381,6 +386,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Identification for this node in the Client ID",
       arity = "1")
   private final Optional<String> identityString = Optional.empty();
+
+  @Option(
+          names = "--print-paths-and-exit",
+          description = "Print the configured paths and exit without starting the node."
+  )
+  private final Boolean printPathsAndExit = false;
 
   // P2P Discovery Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold P2P Discovery Options|@%n")
@@ -1093,6 +1104,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try {
       configureLogging(true);
 
+      if (printPathsAndExit) {
+        // Print configured paths requiring read/write permissions to be adjusted
+        checkPermissionsAndPrintPaths();
+        System.exit(0);  // Exit before any services are started
+      }
+
       // set merge config on the basis of genesis config
       setMergeConfigOptions();
 
@@ -1135,6 +1152,58 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (final Exception e) {
       logger.error("Failed to start Besu", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
+    }
+  }
+
+  private void checkPermissionsAndPrintPaths() {
+    // Check permissions for the data path
+    checkPermissions(dataDir(), "besu", false);
+
+    // Check permissions for genesis file
+    try {
+      if(genesisFile != null) {
+        checkPermissions(genesisFile.toPath(),"besu", true);
+      }
+    } catch (Exception e) {
+      System.out.println("Error: Failed checking genesis file: Reason: " + e.getMessage());
+    }
+  }
+
+
+  // Helper method to check permissions on a given path
+  private void checkPermissions(final Path path,final String besuUser, final boolean readOnly) {
+    try {
+      // Get the permissions of the file
+      // check if besu user is the owner - get owner permissions if yes
+      // else, check if besu and owner are in the same group - if yes, check the group permission
+      // otherwise check permissions for others
+
+      // Get the owner of the file or directory
+      UserPrincipal owner = Files.getOwner(path);
+      boolean hasReadPermission , hasWritePermission;
+
+      // Get file permissions
+      Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(path);
+
+      // Check if besu is the owner
+      if (owner.getName().equals(besuUser)) {
+        // Owner permissions
+        hasReadPermission = permissions.contains(PosixFilePermission.OWNER_READ);
+        hasWritePermission = permissions.contains(PosixFilePermission.OWNER_WRITE);
+      } else {
+        // Skipping group check for now as we know besu user and root don't have a common group
+        // Others' permissions
+        hasReadPermission = permissions.contains(PosixFilePermission.OTHERS_READ);
+        hasWritePermission = permissions.contains(PosixFilePermission.OTHERS_WRITE);
+      }
+
+      if (!hasReadPermission || (!readOnly && !hasWritePermission)) {
+        String accessType = readOnly ? "READ" : "READ_WRITE";
+        System.out.println("PERMISSION_CHECK_PATH:" + path + ":" + accessType);
+      }
+    } catch (Exception e) {
+      // Do nothing upon catching an error
+      System.out.println("Error: Failed to check permissions for path: '" + path + "'. Reason: " + e.getMessage());
     }
   }
 

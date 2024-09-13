@@ -44,7 +44,6 @@ ENV OLDPATH="${PATH}"
 ENV PATH="/opt/besu/bin:${OLDPATH}"
 
 USER root
-
 RUN chmod +x /opt/besu/bin/besu-entry.sh
 
 ENTRYPOINT ["besu-entry.sh"]
