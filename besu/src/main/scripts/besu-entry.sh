@@ -14,7 +14,6 @@
 ## SPDX-License-Identifier: Apache-2.0
 ##
 
-
 # Run Besu first to get paths needing permission adjustment
 output=$(/opt/besu/bin/besu --print-paths-and-exit "$@")
 
