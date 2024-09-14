@@ -59,6 +59,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -100,6 +101,8 @@ public class TransactionPoolFactoryTest {
   EthProtocolManager ethProtocolManager;
 
   ProtocolContext protocolContext;
+
+  protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @BeforeEach
   public void setup() {
@@ -413,7 +416,8 @@ public class TransactionPoolFactoryTest {
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
         new BlobCache(),
-        MiningParameters.newDefault());
+        MiningParameters.newDefault(),
+        metricsSystem);
   }
 
   private TransactionPool createAndEnableTransactionPool(

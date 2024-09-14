@@ -216,7 +216,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
-            new BlobCache());
+            new BlobCache(),
+            metricsSystem);
 
     this.transactionPool.setEnabled();
 

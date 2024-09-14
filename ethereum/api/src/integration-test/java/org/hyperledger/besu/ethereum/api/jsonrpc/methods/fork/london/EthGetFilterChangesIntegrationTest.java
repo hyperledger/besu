@@ -123,7 +123,8 @@ public class EthGetFilterChangesIntegrationTest {
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
             TransactionPoolConfiguration.DEFAULT,
-            new BlobCache());
+            new BlobCache(),
+            metricsSystem);
     transactionPool.setEnabled();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(

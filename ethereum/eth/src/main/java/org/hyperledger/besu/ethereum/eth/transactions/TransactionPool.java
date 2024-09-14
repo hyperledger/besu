@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.BufferedReader;
@@ -109,6 +110,9 @@ public class TransactionPool implements BlockAddedObserver {
   private final EthScheduler.OrderedProcessor<BlockAddedEvent> blockAddedEventOrderedProcessor;
   private final Map<VersionedHash, BlobsWithCommitments.BlobQuad> mapOfBlobsInTransactionPool =
       new HashMap<>();
+  private final BlobMetrics blobMetrics;
+  private final ConcurrentHashMap<VersionedHash, BlobsWithCommitments.BlobQuad> blobCacheTracker =
+      new ConcurrentHashMap<>();
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -118,7 +122,8 @@ public class TransactionPool implements BlockAddedObserver {
       final EthContext ethContext,
       final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration configuration,
-      final BlobCache blobCache) {
+      final BlobCache blobCache,
+      final MetricsSystem metricsSystem) {
     this.pendingTransactionsSupplier = pendingTransactionsSupplier;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -129,6 +134,8 @@ public class TransactionPool implements BlockAddedObserver {
     this.blockAddedEventOrderedProcessor =
         ethContext.getScheduler().createOrderedProcessor(this::processBlockAddedEvent);
     this.cacheForBlobsOfTransactionsAddedToABlock = blobCache;
+    this.blobMetrics = new BlobMetrics(metricsSystem);
+    initializeBlobMetrics();
     initLogForReplay();
     subscribePendingTransactions(this::mapBlobsOnTransactionAdded);
     subscribeDroppedTransactions(this::unmapBlobsOnTransactionDropped);
@@ -639,6 +646,7 @@ public class TransactionPool implements BlockAddedObserver {
       pendingTransactionsListenersProxy.unsubscribe();
       final PendingTransactions pendingTransactionsToSave = pendingTransactions;
       pendingTransactions = new DisabledPendingTransactions();
+      clearBlobCacheTracker();
       return saveRestoreManager
           .saveToDisk(pendingTransactionsToSave)
           .exceptionally(
@@ -671,19 +679,47 @@ public class TransactionPool implements BlockAddedObserver {
     }
     final List<BlobsWithCommitments.BlobQuad> blobQuads =
         maybeBlobsWithCommitments.get().getBlobQuads();
-    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.versionedHash()));
+    blobQuads.forEach(
+        bq -> {
+          mapOfBlobsInTransactionPool.remove(bq.versionedHash());
+          removeBlobFromCache(bq.versionedHash());
+        });
   }
 
   public BlobsWithCommitments.BlobQuad getBlobQuad(final VersionedHash vh) {
     BlobsWithCommitments.BlobQuad blobQuad = mapOfBlobsInTransactionPool.get(vh);
     if (blobQuad == null) {
       blobQuad = cacheForBlobsOfTransactionsAddedToABlock.get(vh);
+      if (blobQuad != null) {
+        blobCacheTracker.putIfAbsent(vh, blobQuad);
+      }
     }
     return blobQuad;
   }
 
   public boolean isEnabled() {
     return isPoolEnabled.get();
+  }
+
+  public int getBlobCacheSize() {
+    return blobCacheTracker.size();
+  }
+
+  public int getBlobMapSize() {
+    return mapOfBlobsInTransactionPool.size();
+  }
+
+  private void removeBlobFromCache(final VersionedHash vh) {
+    blobCacheTracker.remove(vh);
+  }
+
+  private void clearBlobCacheTracker() {
+    blobCacheTracker.clear();
+  }
+
+  private void initializeBlobMetrics() {
+    blobMetrics.createBlobCacheSizeMetric(this::getBlobCacheSize);
+    blobMetrics.createBlobMapSizeMetric(this::getBlobMapSize);
   }
 
   class PendingTransactionsListenersProxy {

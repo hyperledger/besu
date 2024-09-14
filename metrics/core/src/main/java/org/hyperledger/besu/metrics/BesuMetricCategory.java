@@ -55,7 +55,9 @@ public enum BesuMetricCategory implements MetricCategory {
   /** Stratum besu metric category. */
   STRATUM("stratum"),
   /** Block processing besu metric category. */
-  BLOCK_PROCESSING("block_processing");
+  BLOCK_PROCESSING("block_processing"),
+  /** Blob storage besu metric category. */
+  BLOB_STORAGE("blob_storage");
 
   private static final Optional<String> BESU_PREFIX = Optional.of("besu_");
 

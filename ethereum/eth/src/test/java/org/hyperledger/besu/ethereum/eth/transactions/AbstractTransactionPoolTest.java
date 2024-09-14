@@ -294,7 +294,8 @@ public abstract class AbstractTransactionPoolTest {
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
             poolConfig,
-            new BlobCache());
+            new BlobCache(),
+            metricsSystem);
     txPool.setEnabled();
     return txPool;
   }

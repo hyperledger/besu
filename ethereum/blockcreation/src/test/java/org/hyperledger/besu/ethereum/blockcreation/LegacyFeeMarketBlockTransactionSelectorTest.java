@@ -96,7 +96,8 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
-            new BlobCache());
+            new BlobCache(),
+            metricsSystem);
     transactionPool.setEnabled();
     return transactionPool;
   }

@@ -80,7 +80,8 @@ public class TransactionPoolFactory {
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
         blobCache,
-        miningParameters);
+        miningParameters,
+        metricsSystem);
   }
 
   static TransactionPool createTransactionPool(
@@ -95,7 +96,8 @@ public class TransactionPoolFactory {
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender,
       final BlobCache blobCache,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final MetricsSystem metricsSystem) {
 
     final TransactionPool transactionPool =
         new TransactionPool(
@@ -119,7 +121,8 @@ public class TransactionPoolFactory {
             ethContext,
             metrics,
             transactionPoolConfiguration,
-            blobCache);
+            blobCache,
+            metricsSystem);
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
