@@ -57,7 +57,7 @@ public class PeerTable {
   private final LinkedHashMapWithMaximumSize<String, Integer> ipAddressCheckMap =
       new LinkedHashMapWithMaximumSize<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
   private final CircularFifoQueue<String> invalidIPs =
-      new CircularFifoQueue<>(DEFAULT_BUCKET_SIZE * N_BUCKETS * 4);
+      new CircularFifoQueue<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
 
   /**
    * Builds a new peer table, where distance is calculated using the provided nodeId as a baseline.
