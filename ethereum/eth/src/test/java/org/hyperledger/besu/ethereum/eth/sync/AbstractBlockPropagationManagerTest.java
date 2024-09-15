@@ -117,7 +117,13 @@ public abstract class AbstractBlockPropagationManagerTest {
             blockchainUtil.getTransactionPool(),
             EthProtocolConfiguration.defaultConfig());
     syncConfig = SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();
-    syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
+
+    // for tests use simple peer comparator
+    final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
+    ethPeers.setBestPeerComparator(EthPeers.HEAVIEST_CHAIN);
+
+    syncState = new SyncState(blockchain, ethPeers);
+
     blockBroadcaster = mock(BlockBroadcaster.class);
     blockPropagationManager =
         new BlockPropagationManager(

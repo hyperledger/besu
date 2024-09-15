@@ -100,7 +100,11 @@ public class FastSyncActionsTest {
             blockchainSetupUtil.getTransactionPool(),
             EthProtocolConfiguration.defaultConfig());
     ethContext = ethProtocolManager.ethContext();
+
     ethPeers = ethContext.getEthPeers();
+    // for tests use the heaviest chain comparator
+    ethPeers.setBestPeerComparator(EthPeers.HEAVIEST_CHAIN);
+
     syncState = new SyncState(blockchain, ethPeers);
     metricsSystem = new NoOpMetricsSystem();
     fastSyncActions =

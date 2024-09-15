@@ -85,6 +85,7 @@ public class EthPeersTest {
     assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
     assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
 
+    ethProtocolManager.ethContext().getEthPeers().setBestPeerComparator(EthPeers.HEAVIEST_CHAIN);
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerB);
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
         .contains(peerB);
@@ -113,6 +114,7 @@ public class EthPeersTest {
     assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
     assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
 
+    ethProtocolManager.ethContext().getEthPeers().setBestPeerComparator(EthPeers.HEAVIEST_CHAIN);
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerA);
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
         .isEmpty();

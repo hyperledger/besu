@@ -8,6 +8,7 @@
 
 ### Additions and Improvements
 - Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
+- Use peer reputation (then chain height) to compare current peers
 
 ### Bug fixes
 - Fix for `debug_traceCall` to handle transactions without specified gas price. [#7510](https://github.com/hyperledger/besu/pull/7510)
