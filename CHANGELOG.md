@@ -7,6 +7,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Peering - compare incoming peer with current peers before deciding which to keep [#6968](https://github.com/hyperledger/besu/pull/6968)
 - Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
 
 ### Bug fixes
