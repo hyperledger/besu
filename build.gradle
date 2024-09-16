@@ -25,13 +25,13 @@ import java.util.regex.Pattern
 plugins {
   id 'com.diffplug.spotless' version '6.25.0'
   id 'com.github.ben-manes.versions' version '0.51.0'
-  id 'com.github.jk1.dependency-license-report' version '2.7'
-  id 'com.jfrog.artifactory' version '5.2.0'
-  id 'io.spring.dependency-management' version '1.1.5'
+  id 'com.github.jk1.dependency-license-report' version '2.9'
+  id 'com.jfrog.artifactory' version '5.2.5'
+  id 'io.spring.dependency-management' version '1.1.6'
   id 'me.champeau.jmh' version '0.7.2' apply false
-  id 'net.ltgt.errorprone' version '3.1.0'
+  id 'net.ltgt.errorprone' version '4.0.1'
   id 'maven-publish'
-  id 'org.sonarqube' version '4.4.1.3373'
+  id 'org.sonarqube' version '5.1.0.4882'
 }
 
 sonarqube {
@@ -45,10 +45,6 @@ sonarqube {
   }
 }
 
-tasks.register('spotlessCheckFast') {
-  dependsOn subprojects.collect { it.tasks.withType(com.diffplug.gradle.spotless.SpotlessCheck) }
-}
-
 project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
@@ -60,12 +56,15 @@ group = 'org.hyperledger.besu'
 
 defaultTasks 'build', 'checkLicense', 'javadoc'
 
-def buildAliases = ['dev': [
+def buildAliases = [
+  'dev': [
     'spotlessApply',
     'build',
     'checkLicense',
     'javadoc'
-  ]]
+  ],
+  'build': ['spotlessCheck', 'build']
+]
 
 def expandedTaskList = []
 gradle.startParameter.taskNames.each {
@@ -163,10 +162,6 @@ allprojects {
     maven {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content { includeGroupByRegex('com\\.splunk\\..*') }
-    }
-    maven {
-      url 'https://gitlab.com/api/v4/projects/19871573/packages/maven'
-      content { includeGroupByRegex('com\\.gitlab\\.javafuzz(\\..*)?') }
     }
 
     mavenCentral()
@@ -436,12 +431,6 @@ allprojects {
     options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
-
-  plugins.withType(JavaPlugin) {
-    tasks.withType(JavaCompile) {
-      it.dependsOn(rootProject.tasks.named('spotlessCheckFast'))
-    }
-  }
 }
 
 task deploy() {}
@@ -465,7 +454,7 @@ task checkMavenCoordinateCollisions {
 
 tasks.register('checkPluginAPIChanges', DefaultTask) {}
 checkPluginAPIChanges.dependsOn(':plugin-api:checkAPIChanges')
-check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions', 'spotlessCheckFast')
+check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions')
 
 subprojects {
 
@@ -830,7 +819,7 @@ task distDocker {
         dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
         println "Building for platform ${project.getProperty('docker-platform')}"
       }
-      def gitDetails = getGitCommitDetails()
+      def gitDetails = getGitCommitDetails(7)
       executable shell
       workingDir dockerBuildDir
       args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
@@ -998,13 +987,17 @@ def buildTime() {
 def calculateVersion() {
   // Regex pattern for basic calendar versioning, with provision to omit patch rev
   def calVerPattern = ~/\d+\.\d+(\.\d+)?(-.*)?/
-  def gitDetails = getGitCommitDetails() // Adjust length as needed
+
   if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
-    println("Generating project version using supplied version: ${project.version}-${gitDetails.hash}")
-    return "${project.version}-${gitDetails.hash}"
+    if (project.hasProperty('versionappendcommit') && project.versionappendcommit == "true") {
+      def gitDetails = getGitCommitDetails(7) // Adjust length as needed
+      return "${project.version}-${gitDetails.hash}"
+    }
+    return "${project.version}"
   } else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git
-    println("Generating project version using date (${gitDetails.date}-develop-${gitDetails.hash}), as supplied version is not semver: ${project.version}")
+    println("Generating project version as supplied is version not semver: ${project.version}")
+    def gitDetails = getGitCommitDetails(7) // Adjust length as needed
     return "${gitDetails.date}-develop-${gitDetails.hash}"
   }
 }

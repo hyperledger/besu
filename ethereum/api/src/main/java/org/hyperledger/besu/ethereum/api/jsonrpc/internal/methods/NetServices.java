@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -32,16 +33,19 @@ public class NetServices implements JsonRpcMethod {
   private final WebSocketConfiguration webSocketConfiguration;
   private final P2PNetwork p2pNetwork;
   private final MetricsConfiguration metricsConfiguration;
+  private final GraphQLConfiguration graphQLConfiguration;
 
   public NetServices(
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final P2PNetwork p2pNetwork,
-      final MetricsConfiguration metricsConfiguration) {
+      final MetricsConfiguration metricsConfiguration,
+      final GraphQLConfiguration graphQLConfiguration) {
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.p2pNetwork = p2pNetwork;
     this.metricsConfiguration = metricsConfiguration;
+    this.graphQLConfiguration = graphQLConfiguration;
   }
 
   @Override
@@ -81,6 +85,11 @@ public class NetServices implements JsonRpcMethod {
           "metrics",
           createServiceDetailsMap(
               metricsConfiguration.getHost(), metricsConfiguration.getActualPort()));
+    }
+    if (graphQLConfiguration.isEnabled()) {
+      servicesMapBuilder.put(
+          "graphQL",
+          createServiceDetailsMap(graphQLConfiguration.getHost(), graphQLConfiguration.getPort()));
     }
 
     return new JsonRpcSuccessResponse(

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,8 +18,13 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
+import org.hyperledger.besu.chainexport.RlpBlockExporter;
+import org.hyperledger.besu.chainimport.JsonBlockImporter;
+import org.hyperledger.besu.chainimport.RlpBlockImporter;
+import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -30,23 +35,32 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoaderModule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.metrics.MetricsSystemFactory;
+import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.BlockchainService;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
@@ -70,6 +84,7 @@ import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
+import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -79,8 +94,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -96,60 +116,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
   private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new ConcurrentHashMap<>();
 
-  private BesuPluginContextImpl buildPluginContext(
-      final BesuNode node,
-      final StorageServiceImpl storageService,
-      final SecurityModuleServiceImpl securityModuleService,
-      final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
-      final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
-      final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl,
-      final BlockchainServiceImpl blockchainServiceImpl,
-      final RpcEndpointServiceImpl rpcEndpointServiceImpl,
-      final BesuConfiguration commonPluginConfiguration,
-      final PermissioningServiceImpl permissioningService) {
-    final CommandLine commandLine = new CommandLine(CommandSpec.create());
-    final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
-    besuPluginContext.addService(StorageService.class, storageService);
-    besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
-    besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
-    besuPluginContext.addService(RpcEndpointService.class, rpcEndpointServiceImpl);
-    besuPluginContext.addService(
-        TransactionSelectionService.class, transactionSelectionServiceImpl);
-    besuPluginContext.addService(
-        TransactionPoolValidatorService.class, transactionPoolValidatorServiceImpl);
-    besuPluginContext.addService(
-        TransactionSimulationService.class, transactionSimulationServiceImpl);
-    besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
-    besuPluginContext.addService(BesuConfiguration.class, commonPluginConfiguration);
-
-    final Path pluginsPath;
-    final String pluginDir = System.getProperty("besu.plugins.dir");
-    if (pluginDir == null || pluginDir.isEmpty()) {
-      pluginsPath = node.homeDirectory().resolve("plugins");
-      final File pluginsDirFile = pluginsPath.toFile();
-      if (!pluginsDirFile.isDirectory()) {
-        pluginsDirFile.mkdirs();
-        pluginsDirFile.deleteOnExit();
-      }
-      System.setProperty("besu.plugins.dir", pluginsPath.toString());
-    } else {
-      pluginsPath = Path.of(pluginDir);
-    }
-
-    besuPluginContext.addService(BesuConfiguration.class, commonPluginConfiguration);
-    besuPluginContext.addService(PermissioningService.class, permissioningService);
-    besuPluginContext.addService(PrivacyPluginService.class, new PrivacyPluginServiceImpl());
-
-    besuPluginContext.registerPlugins(
-        new PluginConfiguration.Builder().pluginsDir(pluginsPath).build());
-
-    commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
-
-    // register built-in plugins
-    new RocksDBPlugin().register(besuPluginContext);
-    return besuPluginContext;
-  }
-
   @Override
   public void startNode(final BesuNode node) {
 
@@ -162,114 +128,45 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       throw new UnsupportedOperationException("commands are not supported with thread runner");
     }
 
-    final StorageServiceImpl storageService = new StorageServiceImpl();
-    final SecurityModuleServiceImpl securityModuleService = new SecurityModuleServiceImpl();
-    final TransactionSimulationServiceImpl transactionSimulationServiceImpl =
-        new TransactionSimulationServiceImpl();
-    final TransactionSelectionServiceImpl transactionSelectionServiceImpl =
-        new TransactionSelectionServiceImpl();
-    final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl =
-        new TransactionPoolValidatorServiceImpl();
-    final BlockchainServiceImpl blockchainServiceImpl = new BlockchainServiceImpl();
-    final RpcEndpointServiceImpl rpcEndpointServiceImpl = new RpcEndpointServiceImpl();
+    BesuNodeProviderModule module = new BesuNodeProviderModule(node);
+    AcceptanceTestBesuComponent component =
+        DaggerThreadBesuNodeRunner_AcceptanceTestBesuComponent.builder()
+            .besuNodeProviderModule(module)
+            .build();
+
     final Path dataDir = node.homeDirectory();
-    final BesuConfigurationImpl commonPluginConfiguration = new BesuConfigurationImpl();
     final PermissioningServiceImpl permissioningService = new PermissioningServiceImpl();
 
-    final var miningParameters =
-        ImmutableMiningParameters.builder()
-            .from(node.getMiningParameters())
-            .transactionSelectionService(transactionSelectionServiceImpl)
-            .build();
-    commonPluginConfiguration
-        .init(dataDir, dataDir.resolve(DATABASE_PATH), node.getDataStorageConfiguration())
-        .withMiningParameters(miningParameters);
-
-    final BesuPluginContextImpl besuPluginContext =
-        besuPluginContextMap.computeIfAbsent(
-            node,
-            n ->
-                buildPluginContext(
-                    node,
-                    storageService,
-                    securityModuleService,
-                    transactionSimulationServiceImpl,
-                    transactionSelectionServiceImpl,
-                    transactionPoolValidatorServiceImpl,
-                    blockchainServiceImpl,
-                    rpcEndpointServiceImpl,
-                    commonPluginConfiguration,
-                    permissioningService));
-
     GlobalOpenTelemetry.resetForTest();
-    final ObservableMetricsSystem metricsSystem =
-        MetricsSystemFactory.create(node.getMetricsConfiguration());
+    final ObservableMetricsSystem metricsSystem = component.getObservableMetricsSystem();
     final List<EnodeURL> bootnodes =
-        node.getConfiguration().getBootnodes().stream()
-            .map(EnodeURLImpl::fromURI)
-            .collect(Collectors.toList());
-    final NetworkName network = node.getNetwork() == null ? NetworkName.DEV : node.getNetwork();
-    final EthNetworkConfig.Builder networkConfigBuilder =
-        new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network))
-            .setBootNodes(bootnodes);
+        node.getConfiguration().getBootnodes().stream().map(EnodeURLImpl::fromURI).toList();
+
+    final EthNetworkConfig.Builder networkConfigBuilder = component.ethNetworkConfigBuilder();
+    networkConfigBuilder.setBootNodes(bootnodes);
     node.getConfiguration()
         .getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)
         .ifPresent(networkConfigBuilder::setGenesisConfigFile);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
-    final SynchronizerConfiguration synchronizerConfiguration =
-        new SynchronizerConfiguration.Builder().build();
-    final BesuControllerBuilder builder =
-        new BesuController.Builder()
-            .fromEthNetworkConfig(ethNetworkConfig, synchronizerConfiguration.getSyncMode());
+    final BesuControllerBuilder builder = component.besuControllerBuilder();
+    builder.isRevertReasonEnabled(node.isRevertReasonEnabled());
+    builder.networkConfiguration(node.getNetworkingConfiguration());
 
-    final KeyValueStorageProvider storageProvider =
-        new KeyValueStorageProviderBuilder()
-            .withStorageFactory(storageService.getByName("rocksdb").get())
-            .withCommonConfiguration(commonPluginConfiguration)
-            .withMetricsSystem(metricsSystem)
-            .build();
-
-    final TransactionPoolConfiguration txPoolConfig =
-        ImmutableTransactionPoolConfiguration.builder()
-            .from(node.getTransactionPoolConfiguration())
-            .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
-            .transactionPoolValidatorService(transactionPoolValidatorServiceImpl)
-            .build();
-
-    final InProcessRpcConfiguration inProcessRpcConfiguration = node.inProcessRpcConfiguration();
-
-    final int maxPeers = 25;
-
-    builder
-        .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
-        .dataDirectory(node.homeDirectory())
-        .miningParameters(miningParameters)
-        .privacyParameters(node.getPrivacyParameters())
-        .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
-        .metricsSystem(metricsSystem)
-        .transactionPoolConfiguration(txPoolConfig)
-        .dataStorageConfiguration(node.getDataStorageConfiguration())
-        .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-        .clock(Clock.systemUTC())
-        .isRevertReasonEnabled(node.isRevertReasonEnabled())
-        .storageProvider(storageProvider)
-        .gasLimitCalculator(GasLimitCalculator.constant())
-        .evmConfiguration(EvmConfiguration.DEFAULT)
-        .maxPeers(maxPeers)
-        .maxRemotelyInitiatedPeers(15)
-        .networkConfiguration(node.getNetworkingConfiguration())
-        .randomPeerPriority(false);
+    builder.dataDirectory(dataDir);
+    builder.nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))));
+    builder.privacyParameters(node.getPrivacyParameters());
 
     node.getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)
         .ifPresent(builder::genesisConfigFile);
 
-    final BesuController besuController = builder.build();
+    final BesuController besuController = component.besuController();
 
-    initTransactionSimulationService(
-        transactionSimulationServiceImpl, besuController, node.getApiConfiguration());
-    initBlockchainService(blockchainServiceImpl, besuController);
+    InProcessRpcConfiguration inProcessRpcConfiguration = node.inProcessRpcConfiguration();
+
+    final BesuPluginContextImpl besuPluginContext =
+        besuPluginContextMap.computeIfAbsent(node, n -> component.getBesuPluginContext());
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
     runnerBuilder.permissioningConfiguration(node.getPermissioningConfiguration());
@@ -293,17 +190,13 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .p2pEnabled(node.isP2pEnabled())
         .p2pTLSConfiguration(node.getTLSConfiguration())
         .graphQLConfiguration(GraphQLConfiguration.createDefault())
-        .staticNodes(
-            node.getStaticNodes().stream()
-                .map(EnodeURLImpl::fromString)
-                .collect(Collectors.toList()))
+        .staticNodes(node.getStaticNodes().stream().map(EnodeURLImpl::fromString).toList())
         .besuPluginContext(besuPluginContext)
         .autoLogBloomCaching(false)
-        .storageProvider(storageProvider)
-        .rpcEndpointService(rpcEndpointServiceImpl)
+        .storageProvider(besuController.getStorageProvider())
+        .rpcEndpointService(component.rpcEndpointService())
         .inProcessRpcConfiguration(inProcessRpcConfiguration);
     node.engineRpcConfiguration().ifPresent(runnerBuilder::engineJsonRpcConfiguration);
-
     besuPluginContext.beforeExternalServices();
     final Runner runner = runnerBuilder.build();
 
@@ -318,7 +211,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             besuController.getSyncState(),
             besuController.getProtocolContext().getBadBlockManager()));
 
-    rpcEndpointServiceImpl.init(runner.getInProcessRpcMethods());
+    component.rpcEndpointService().init(runner.getInProcessRpcMethods());
 
     besuPluginContext.startPlugins();
 
@@ -326,25 +219,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     besuRunners.put(node.getName(), runner);
     MDC.remove("node");
-  }
-
-  private void initBlockchainService(
-      final BlockchainServiceImpl blockchainServiceImpl, final BesuController besuController) {
-    blockchainServiceImpl.init(
-        besuController.getProtocolContext(), besuController.getProtocolSchedule());
-  }
-
-  private void initTransactionSimulationService(
-      final TransactionSimulationServiceImpl transactionSimulationService,
-      final BesuController besuController,
-      final ApiConfiguration apiConfiguration) {
-    transactionSimulationService.init(
-        besuController.getProtocolContext().getBlockchain(),
-        new TransactionSimulator(
-            besuController.getProtocolContext().getBlockchain(),
-            besuController.getProtocolContext().getWorldStateArchive(),
-            besuController.getProtocolSchedule(),
-            apiConfiguration.getGasCap()));
   }
 
   @Override
@@ -395,5 +269,332 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   @Override
   public String getConsoleContents() {
     throw new RuntimeException("Console contents can only be captured in process execution");
+  }
+
+  @Module
+  static class BesuNodeProviderModule {
+
+    private final BesuNode toProvide;
+
+    public BesuNodeProviderModule(final BesuNode toProvide) {
+      this.toProvide = toProvide;
+    }
+
+    @Provides
+    public BesuNode provideBesuNodeRunner() {
+      return toProvide;
+    }
+
+    @Provides
+    @Named("ExtraCLIOptions")
+    public List<String> provideExtraCLIOptions() {
+      return toProvide.getExtraCLIOptions();
+    }
+
+    @Provides
+    Path provideDataDir() {
+      return toProvide.homeDirectory();
+    }
+
+    @Provides
+    @Singleton
+    RpcEndpointServiceImpl provideRpcEndpointService() {
+      return new RpcEndpointServiceImpl();
+    }
+
+    @Provides
+    @Singleton
+    BlockchainServiceImpl provideBlockchainService(final BesuController besuController) {
+      BlockchainServiceImpl retval = new BlockchainServiceImpl();
+      retval.init(besuController.getProtocolContext(), besuController.getProtocolSchedule());
+      return retval;
+    }
+
+    @Provides
+    @Singleton
+    Blockchain provideBlockchain(final BesuController besuController) {
+      return besuController.getProtocolContext().getBlockchain();
+    }
+
+    @Provides
+    @SuppressWarnings("CloseableProvides")
+    WorldStateArchive provideWorldStateArchive(final BesuController besuController) {
+      return besuController.getProtocolContext().getWorldStateArchive();
+    }
+
+    @Provides
+    ProtocolSchedule provideProtocolSchedule(final BesuController besuController) {
+      return besuController.getProtocolSchedule();
+    }
+
+    @Provides
+    ApiConfiguration provideApiConfiguration(final BesuNode node) {
+      return node.getApiConfiguration();
+    }
+
+    @Provides
+    @Singleton
+    TransactionPoolValidatorServiceImpl provideTransactionPoolValidatorService() {
+      return new TransactionPoolValidatorServiceImpl();
+    }
+
+    @Provides
+    @Singleton
+    TransactionSelectionServiceImpl provideTransactionSelectionService() {
+      return new TransactionSelectionServiceImpl();
+    }
+
+    @Provides
+    @Singleton
+    TransactionPoolConfiguration provideTransactionPoolConfiguration(
+        final BesuNode node,
+        final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl) {
+
+      TransactionPoolConfiguration txPoolConfig =
+          ImmutableTransactionPoolConfiguration.builder()
+              .from(node.getTransactionPoolConfiguration())
+              .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
+              .transactionPoolValidatorService(transactionPoolValidatorServiceImpl)
+              .build();
+      return txPoolConfig;
+    }
+
+    @Provides
+    @Singleton
+    TransactionSimulator provideTransactionSimulator(
+        final Blockchain blockchain,
+        final WorldStateArchive worldStateArchive,
+        final ProtocolSchedule protocolSchedule,
+        final ApiConfiguration apiConfiguration) {
+      return new TransactionSimulator(
+          blockchain, worldStateArchive, protocolSchedule, apiConfiguration.getGasCap());
+    }
+
+    @Provides
+    @Singleton
+    TransactionSimulationServiceImpl provideTransactionSimulationService(
+        final Blockchain blockchain, final TransactionSimulator transactionSimulator) {
+      TransactionSimulationServiceImpl retval = new TransactionSimulationServiceImpl();
+      retval.init(blockchain, transactionSimulator);
+      return retval;
+    }
+  }
+
+  @Module
+  @SuppressWarnings("CloseableProvides")
+  static class BesuControllerModule {
+    @Provides
+    @Singleton
+    public SynchronizerConfiguration provideSynchronizationConfiguration() {
+      final SynchronizerConfiguration synchronizerConfiguration =
+          SynchronizerConfiguration.builder().build();
+      return synchronizerConfiguration;
+    }
+
+    @Singleton
+    @Provides
+    public BesuControllerBuilder provideBesuControllerBuilder(
+        final EthNetworkConfig ethNetworkConfig,
+        final SynchronizerConfiguration synchronizerConfiguration,
+        final TransactionPoolConfiguration transactionPoolConfiguration) {
+
+      final BesuControllerBuilder builder =
+          new BesuController.Builder()
+              .fromEthNetworkConfig(ethNetworkConfig, synchronizerConfiguration.getSyncMode());
+      builder.transactionPoolConfiguration(transactionPoolConfiguration);
+      return builder;
+    }
+
+    @Provides
+    @Singleton
+    public BesuController provideBesuController(
+        final SynchronizerConfiguration synchronizerConfiguration,
+        final BesuControllerBuilder builder,
+        final ObservableMetricsSystem metricsSystem,
+        final KeyValueStorageProvider storageProvider,
+        final MiningParameters miningParameters) {
+
+      builder
+          .synchronizerConfiguration(synchronizerConfiguration)
+          .metricsSystem(metricsSystem)
+          .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
+          .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+          .clock(Clock.systemUTC())
+          .storageProvider(storageProvider)
+          .gasLimitCalculator(GasLimitCalculator.constant())
+          .evmConfiguration(EvmConfiguration.DEFAULT)
+          .maxPeers(25)
+          .maxRemotelyInitiatedPeers(15)
+          .miningParameters(miningParameters)
+          .randomPeerPriority(false)
+          .besuComponent(null);
+      return builder.build();
+    }
+
+    @Provides
+    @Singleton
+    public EthNetworkConfig.Builder provideEthNetworkConfigBuilder() {
+      final EthNetworkConfig.Builder networkConfigBuilder =
+          new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(NetworkName.DEV));
+      return networkConfigBuilder;
+    }
+
+    @Provides
+    public EthNetworkConfig provideEthNetworkConfig(
+        final EthNetworkConfig.Builder networkConfigBuilder) {
+
+      final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
+      return ethNetworkConfig;
+    }
+
+    @Provides
+    public BesuPluginContextImpl providePluginContext(
+        final StorageServiceImpl storageService,
+        final SecurityModuleServiceImpl securityModuleService,
+        final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
+        final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
+        final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl,
+        final BlockchainServiceImpl blockchainServiceImpl,
+        final RpcEndpointServiceImpl rpcEndpointServiceImpl,
+        final BesuConfiguration commonPluginConfiguration,
+        final PermissioningServiceImpl permissioningService,
+        final @Named("ExtraCLIOptions") List<String> extraCLIOptions) {
+      final CommandLine commandLine = new CommandLine(CommandSpec.create());
+      final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
+      besuPluginContext.addService(StorageService.class, storageService);
+      besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
+      besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
+      besuPluginContext.addService(RpcEndpointService.class, rpcEndpointServiceImpl);
+      besuPluginContext.addService(
+          TransactionSelectionService.class, transactionSelectionServiceImpl);
+      besuPluginContext.addService(
+          TransactionPoolValidatorService.class, transactionPoolValidatorServiceImpl);
+      besuPluginContext.addService(
+          TransactionSimulationService.class, transactionSimulationServiceImpl);
+      besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
+      besuPluginContext.addService(BesuConfiguration.class, commonPluginConfiguration);
+
+      final Path pluginsPath;
+      final String pluginDir = System.getProperty("besu.plugins.dir");
+      if (pluginDir == null || pluginDir.isEmpty()) {
+        pluginsPath = commonPluginConfiguration.getDataPath().resolve("plugins");
+        final File pluginsDirFile = pluginsPath.toFile();
+        if (!pluginsDirFile.isDirectory()) {
+          pluginsDirFile.mkdirs();
+          pluginsDirFile.deleteOnExit();
+        }
+        System.setProperty("besu.plugins.dir", pluginsPath.toString());
+      } else {
+        pluginsPath = Path.of(pluginDir);
+      }
+
+      besuPluginContext.addService(BesuConfiguration.class, commonPluginConfiguration);
+      besuPluginContext.addService(PermissioningService.class, permissioningService);
+      besuPluginContext.addService(PrivacyPluginService.class, new PrivacyPluginServiceImpl());
+
+      besuPluginContext.registerPlugins(
+          new PluginConfiguration.Builder().pluginsDir(pluginsPath).build());
+      commandLine.parseArgs(extraCLIOptions.toArray(new String[0]));
+
+      // register built-in plugins
+      new RocksDBPlugin().register(besuPluginContext);
+      return besuPluginContext;
+    }
+
+    @Provides
+    public KeyValueStorageProvider provideKeyValueStorageProvider(
+        final BesuConfiguration commonPluginConfiguration, final MetricsSystem metricsSystem) {
+
+      final StorageServiceImpl storageService = new StorageServiceImpl();
+      storageService.registerKeyValueStorage(
+          new InMemoryStoragePlugin.InMemoryKeyValueStorageFactory("memory"));
+      final KeyValueStorageProvider storageProvider =
+          new KeyValueStorageProviderBuilder()
+              .withStorageFactory(storageService.getByName("memory").get())
+              .withCommonConfiguration(commonPluginConfiguration)
+              .withMetricsSystem(metricsSystem)
+              .build();
+
+      return storageProvider;
+    }
+
+    @Provides
+    public MiningParameters provideMiningParameters(
+        final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
+        final BesuNode node) {
+      final var miningParameters =
+          ImmutableMiningParameters.builder()
+              .from(node.getMiningParameters())
+              .transactionSelectionService(transactionSelectionServiceImpl)
+              .build();
+
+      return miningParameters;
+    }
+
+    @Provides
+    @Inject
+    BesuConfiguration provideBesuConfiguration(
+        final Path dataDir, final MiningParameters miningParameters, final BesuNode node) {
+      final BesuConfigurationImpl commonPluginConfiguration = new BesuConfigurationImpl();
+      commonPluginConfiguration.init(
+          dataDir, dataDir.resolve(DATABASE_PATH), node.getDataStorageConfiguration());
+      commonPluginConfiguration.withMiningParameters(miningParameters);
+      return commonPluginConfiguration;
+    }
+  }
+
+  @Module
+  static class MockBesuCommandModule {
+
+    @Provides
+    BesuCommand provideBesuCommand(final BesuPluginContextImpl pluginContext) {
+      final BesuCommand besuCommand =
+          new BesuCommand(
+              RlpBlockImporter::new,
+              JsonBlockImporter::new,
+              RlpBlockExporter::new,
+              new RunnerBuilder(),
+              new BesuController.Builder(),
+              pluginContext,
+              System.getenv(),
+              LoggerFactory.getLogger(MockBesuCommandModule.class));
+      besuCommand.toCommandLine();
+      return besuCommand;
+    }
+
+    @Provides
+    @Singleton
+    MetricsConfiguration provideMetricsConfiguration() {
+      return MetricsConfiguration.builder().build();
+    }
+
+    @Provides
+    @Named("besuCommandLogger")
+    @Singleton
+    Logger provideBesuCommandLogger() {
+      return LoggerFactory.getLogger(MockBesuCommandModule.class);
+    }
+  }
+
+  @Singleton
+  @Component(
+      modules = {
+        ThreadBesuNodeRunner.BesuControllerModule.class,
+        ThreadBesuNodeRunner.MockBesuCommandModule.class,
+        BonsaiCachedMerkleTrieLoaderModule.class,
+        MetricsSystemModule.class,
+        ThreadBesuNodeRunner.BesuNodeProviderModule.class,
+        BlobCacheModule.class
+      })
+  public interface AcceptanceTestBesuComponent extends BesuComponent {
+    BesuController besuController();
+
+    BesuControllerBuilder besuControllerBuilder(); // TODO: needing this sucks
+
+    EthNetworkConfig.Builder ethNetworkConfigBuilder();
+
+    RpcEndpointServiceImpl rpcEndpointService();
+
+    BlockchainServiceImpl blockchainService();
   }
 }
