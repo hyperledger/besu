@@ -93,7 +93,12 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), any(), NONE))
+                    blockchainSetupUtil.getProtocolContext(),
+                    block,
+                    emptyList(),
+                    any(),
+                    NONE,
+                    BodyValidationMode.FULL))
         .isTrue();
   }
 
@@ -117,7 +122,12 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), any(), NONE))
+                    blockchainSetupUtil.getProtocolContext(),
+                    block,
+                    emptyList(),
+                    any(),
+                    NONE,
+                    BodyValidationMode.FULL))
         .isFalse();
   }
 
@@ -141,7 +151,12 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), any(), NONE))
+                    blockchainSetupUtil.getProtocolContext(),
+                    block,
+                    emptyList(),
+                    any(),
+                    NONE,
+                    BodyValidationMode.FULL))
         .isFalse();
   }
 

@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -72,7 +73,8 @@ public class ImportBlocksStepTest {
             validationPolicy,
             ommerValidationPolicy,
             null,
-            pivotHeader);
+            pivotHeader,
+            BodyValidationMode.FULL);
   }
 
   @Test
@@ -84,12 +86,13 @@ public class ImportBlocksStepTest {
             .collect(toList());
 
     for (final BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
-      when(blockImporter.fastImportBlock(
+      when(blockImporter.importBlockForSyncing(
               protocolContext,
               blockWithReceipts.getBlock(),
               blockWithReceipts.getReceipts(),
               FULL,
-              LIGHT))
+              LIGHT,
+              BodyValidationMode.FULL))
           .thenReturn(new BlockImportResult(true));
     }
     importBlocksStep.accept(blocksWithReceipts);
@@ -105,8 +108,13 @@ public class ImportBlocksStepTest {
     final Block block = gen.block();
     final BlockWithReceipts blockWithReceipts = new BlockWithReceipts(block, gen.receipts(block));
 
-    when(blockImporter.fastImportBlock(
-            protocolContext, block, blockWithReceipts.getReceipts(), FULL, LIGHT))
+    when(blockImporter.importBlockForSyncing(
+            protocolContext,
+            block,
+            blockWithReceipts.getReceipts(),
+            FULL,
+            LIGHT,
+            BodyValidationMode.FULL))
         .thenReturn(new BlockImportResult(false));
     assertThatThrownBy(() -> importBlocksStep.accept(singletonList(blockWithReceipts)))
         .isInstanceOf(InvalidBlockException.class);

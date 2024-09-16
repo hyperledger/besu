@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
 import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRangeSource;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -117,6 +118,10 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
     final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
+    final BodyValidationMode bodyValidationMode =
+        protocolSchedule.anyMatch(scheduledProtocolSpec -> scheduledProtocolSpec.spec().isPoS())
+            ? BodyValidationMode.NONE
+            : BodyValidationMode.LIGHT;
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
             new RangeHeadersFetcher(
@@ -148,7 +153,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             attachedValidationPolicy,
             ommerValidationPolicy,
             ethContext,
-            fastSyncState.getPivotBlockHeader().get());
+            fastSyncState.getPivotBlockHeader().get(),
+            bodyValidationMode);
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",

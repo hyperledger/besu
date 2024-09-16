@@ -106,7 +106,8 @@ class PragueRequestsValidatorTest {
                     block,
                     emptyList(),
                     expectedRequests,
-                    NONE))
+                    NONE,
+                    BodyValidationMode.FULL))
         .isFalse();
   }
 }
