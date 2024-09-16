@@ -237,7 +237,7 @@ public class PeerTable {
   }
 
   private static String getKey(final Endpoint endpoint) {
-    return endpoint.getHost() + endpoint.getFunctionalTcpPort();
+    return endpoint.getHost() + ":" + endpoint.getFunctionalTcpPort();
   }
 
   /**
