@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyBatchAdapter;
 import org.hyperledger.besu.ethereum.trie.verkle.hasher.Hasher;
-import org.hyperledger.besu.ethereum.verkletrie.util.SuffixTreeEncoder;
+import org.hyperledger.besu.ethereum.trie.verkle.util.SuffixTreeEncoder;
 
 import java.util.HashMap;
 import java.util.HashSet;
