@@ -19,6 +19,10 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.InvalidPeerTaskRe
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,14 +38,19 @@ public class PeerTaskExecutor {
   private final PeerManager peerManager;
   private final RequestSender requestSender;
   private final Supplier<ProtocolSpec> protocolSpecSupplier;
+  private final LabelledMetric<OperationTimer> requestTimer;
 
   public PeerTaskExecutor(
       final PeerManager peerManager,
       final RequestSender requestSender,
-      final Supplier<ProtocolSpec> protocolSpecSupplier) {
+      final Supplier<ProtocolSpec> protocolSpecSupplier,
+      final MetricsSystem metricsSystem) {
     this.peerManager = peerManager;
     this.requestSender = requestSender;
     this.protocolSpecSupplier = protocolSpecSupplier;
+    requestTimer =
+        metricsSystem.createLabelledTimer(
+            BesuMetricCategory.PEERS, "Peer Task Executor Request Time", "", "Task Class Name");
   }
 
   public <T> PeerTaskExecutorResult<T> execute(final PeerTask<T> peerTask) {
@@ -84,8 +93,13 @@ public class PeerTaskExecutor {
         peerTask.getPeerTaskBehaviors().contains(PeerTaskBehavior.RETRY_WITH_SAME_PEER) ? 3 : 1;
     do {
       try {
-        MessageData responseMessageData =
-            requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
+
+        MessageData responseMessageData;
+        try (final OperationTimer.TimingContext timingContext =
+            requestTimer.labels(peerTask.getClass().getSimpleName()).startTimer()) {
+          responseMessageData =
+              requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
+        }
         T result = peerTask.parseResponse(responseMessageData);
         peer.recordUsefulResponse();
         executorResult = new PeerTaskExecutorResult<>(result, PeerTaskExecutorResponseCode.SUCCESS);

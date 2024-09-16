@@ -96,7 +96,7 @@ public class FullSyncTargetManagerTest {
             protocolSchedule,
             protocolContext,
             ethContext,
-            new PeerTaskExecutor(null, null, null),
+            new PeerTaskExecutor(null, null, null, new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
             SyncTerminationCondition.never());
   }

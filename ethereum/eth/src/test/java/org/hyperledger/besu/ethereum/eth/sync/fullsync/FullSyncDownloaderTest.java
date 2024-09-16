@@ -96,7 +96,7 @@ public class FullSyncDownloaderTest {
         protocolSchedule,
         protocolContext,
         ethContext,
-        new PeerTaskExecutor(null, null, null),
+        new PeerTaskExecutor(null, null, null, new NoOpMetricsSystem()),
         syncState,
         metricsSystem,
         SyncTerminationCondition.never(),

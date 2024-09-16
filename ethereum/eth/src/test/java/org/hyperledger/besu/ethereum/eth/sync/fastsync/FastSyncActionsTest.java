@@ -105,7 +105,7 @@ public class FastSyncActionsTest {
     ethPeers = ethContext.getEthPeers();
     syncState = new SyncState(blockchain, ethPeers);
     metricsSystem = new NoOpMetricsSystem();
-    peerTaskExecutor = new PeerTaskExecutor(null, null, null);
+    peerTaskExecutor = new PeerTaskExecutor(null, null, null, new NoOpMetricsSystem());
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
