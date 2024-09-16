@@ -19,6 +19,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.DetermineCommonAncestorTask;
@@ -43,6 +44,7 @@ public abstract class AbstractSyncTargetManager {
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
+  private final PeerTaskExecutor peerTaskExecutor;
   private final MetricsSystem metricsSystem;
 
   protected AbstractSyncTargetManager(
@@ -50,11 +52,13 @@ public abstract class AbstractSyncTargetManager {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
       final MetricsSystem metricsSystem) {
     this.config = config;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.peerTaskExecutor = peerTaskExecutor;
     this.metricsSystem = metricsSystem;
   }
 
@@ -70,7 +74,7 @@ public abstract class AbstractSyncTargetManager {
                 return DetermineCommonAncestorTask.create(
                         protocolSchedule,
                         protocolContext,
-                        ethContext,
+                        peerTaskExecutor,
                         bestPeer,
                         config.getDownloaderHeaderRequestSize(),
                         metricsSystem)

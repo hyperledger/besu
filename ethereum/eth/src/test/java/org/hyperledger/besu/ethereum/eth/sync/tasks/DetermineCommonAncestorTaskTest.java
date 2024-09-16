@@ -26,6 +26,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -37,30 +38,41 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException.FailureReason;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerByNumberPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.ExceptionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class DetermineCommonAncestorTaskTest {
 
@@ -71,8 +83,8 @@ public class DetermineCommonAncestorTaskTest {
   private MutableBlockchain localBlockchain;
   private Block localGenesisBlock;
   private EthProtocolManager ethProtocolManager;
-  private EthContext ethContext;
   private ProtocolContext protocolContext;
+  private PeerTaskExecutor peerTaskExecutor;
 
   @BeforeEach
   public void setup() {
@@ -86,9 +98,9 @@ public class DetermineCommonAncestorTaskTest {
             worldStateArchive,
             mock(TransactionPool.class),
             EthProtocolConfiguration.defaultConfig());
-    ethContext = ethProtocolManager.ethContext();
     protocolContext =
         new ProtocolContext(localBlockchain, worldStateArchive, null, new BadBlockManager());
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
   }
 
   @Test
@@ -103,10 +115,18 @@ public class DetermineCommonAncestorTaskTest {
         DetermineCommonAncestorTask.create(
             protocolSchedule,
             protocolContext,
-            ethContext,
+            peerTaskExecutor,
             respondingEthPeer.getEthPeer(),
             defaultHeaderRequestSize,
             metricsSystem);
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeerAsync(
+                Mockito.any(GetHeadersFromPeerByNumberPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenReturn(
+            CompletableFuture.completedFuture(
+                new PeerTaskExecutorResult<>(
+                    null, PeerTaskExecutorResponseCode.PEER_DISCONNECTED)));
 
     final AtomicReference<Throwable> failure = new AtomicReference<>();
     final CompletableFuture<BlockHeader> future = task.run();
@@ -115,43 +135,66 @@ public class DetermineCommonAncestorTaskTest {
           failure.set(error);
         });
 
-    // Disconnect the target peer
-    respondingEthPeer.disconnect(DisconnectReason.CLIENT_QUITTING);
-
     assertThat(failure.get()).isNotNull();
     final Throwable error = ExceptionUtils.rootCause(failure.get());
     assertThat(error).isInstanceOf(EthTaskException.class);
-    assertThat(((EthTaskException) error).reason()).isEqualTo(FailureReason.NO_AVAILABLE_PEERS);
+    assertThat(((EthTaskException) error).reason()).isEqualTo(FailureReason.PEER_DISCONNECTED);
   }
 
   @Test
-  public void shouldHandleEmptyResponses() {
+  public void shouldHandleEmptyResponses()
+      throws ExecutionException, InterruptedException, TimeoutException {
     final Blockchain remoteBlockchain = setupLocalAndRemoteChains(11, 11, 5);
 
-    final RespondingEthPeer.Responder emptyResponder = RespondingEthPeer.emptyResponder();
-    final RespondingEthPeer.Responder fullResponder =
-        RespondingEthPeer.blockchainResponder(remoteBlockchain);
     final RespondingEthPeer respondingEthPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+    final AtomicBoolean executeTask = new AtomicBoolean(false);
 
     final EthTask<BlockHeader> task =
         DetermineCommonAncestorTask.create(
             protocolSchedule,
             protocolContext,
-            ethContext,
+            peerTaskExecutor,
             respondingEthPeer.getEthPeer(),
             defaultHeaderRequestSize,
             metricsSystem);
-
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeerAsync(
+                Mockito.any(GetHeadersFromPeerByNumberPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            new Answer<CompletableFuture<PeerTaskExecutorResult<List<BlockHeader>>>>() {
+              @Override
+              public CompletableFuture<PeerTaskExecutorResult<List<BlockHeader>>> answer(
+                  final InvocationOnMock invocationOnMock) throws Throwable {
+                if (!executeTask.get()) {
+                  // simulate empty response
+                  return CompletableFuture.completedFuture(
+                      new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.SUCCESS));
+                }
+                GetHeadersFromPeerByNumberPeerTask task =
+                    invocationOnMock.getArgument(0, GetHeadersFromPeerByNumberPeerTask.class);
+                List<BlockHeader> blockHeaders = new ArrayList<>();
+                int numberDelta = (task.getSkip() + 1) * (task.getDirection().isReverse() ? -1 : 1);
+                for (long i = 1; i < task.getCount(); i++) {
+                  remoteBlockchain
+                      .getBlockHeader(task.getBlockNumber() + (i * numberDelta))
+                      .ifPresent(blockHeaders::add);
+                }
+                return CompletableFuture.completedFuture(
+                    new PeerTaskExecutorResult<>(
+                        blockHeaders, PeerTaskExecutorResponseCode.SUCCESS));
+              }
+            });
     // Empty response should be handled without any error
-    final CompletableFuture<BlockHeader> future = task.run();
-    respondingEthPeer.respond(emptyResponder);
+    final CompletableFuture<BlockHeader> future =
+        task.runAsync(Executors.newSingleThreadExecutor());
     assertThat(future).isNotDone();
 
     // Task should continue on and complete when valid responses are received
     // Execute task and wait for response
-    respondingEthPeer.respondWhile(fullResponder, () -> !future.isDone());
+    executeTask.set(true);
 
+    future.get(5000, TimeUnit.MILLISECONDS);
     assertThat(future).isDone();
     assertThat(future).isNotCompletedExceptionally();
     final BlockHeader expectedResult = remoteBlockchain.getBlockHeader(4).get();
@@ -177,8 +220,6 @@ public class DetermineCommonAncestorTaskTest {
   public void shouldIssueConsistentNumberOfRequestsToPeer() {
     final Blockchain remoteBlockchain = setupLocalAndRemoteChains(101, 101, 1);
 
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(remoteBlockchain);
     final RespondingEthPeer respondingEthPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
@@ -186,15 +227,37 @@ public class DetermineCommonAncestorTaskTest {
         DetermineCommonAncestorTask.create(
             protocolSchedule,
             protocolContext,
-            ethContext,
+            peerTaskExecutor,
             respondingEthPeer.getEthPeer(),
             defaultHeaderRequestSize,
             metricsSystem);
     final DetermineCommonAncestorTask spy = spy(task);
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeerAsync(
+                Mockito.any(GetHeadersFromPeerByNumberPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            new Answer<CompletableFuture<PeerTaskExecutorResult<List<BlockHeader>>>>() {
+              @Override
+              public CompletableFuture<PeerTaskExecutorResult<List<BlockHeader>>> answer(
+                  final InvocationOnMock invocationOnMock) throws Throwable {
+                GetHeadersFromPeerByNumberPeerTask task =
+                    invocationOnMock.getArgument(0, GetHeadersFromPeerByNumberPeerTask.class);
+                List<BlockHeader> blockHeaders = new ArrayList<>();
+                int numberDelta = (task.getSkip() + 1) * (task.getDirection().isReverse() ? -1 : 1);
+                for (long i = 1; i < task.getCount(); i++) {
+                  remoteBlockchain
+                      .getBlockHeader(task.getBlockNumber() + (i * numberDelta))
+                      .ifPresent(blockHeaders::add);
+                }
+                return CompletableFuture.completedFuture(
+                    new PeerTaskExecutorResult<>(
+                        blockHeaders, PeerTaskExecutorResponseCode.SUCCESS));
+              }
+            });
+
     // Execute task
     final CompletableFuture<BlockHeader> future = spy.run();
-    respondingEthPeer.respondWhile(responder, () -> !future.isDone());
 
     final AtomicReference<BlockHeader> result = new AtomicReference<>();
     future.whenComplete(
@@ -213,8 +276,6 @@ public class DetermineCommonAncestorTaskTest {
     final Blockchain remoteBlockchain = setupLocalAndRemoteChains(100, 100, 96);
     final BlockHeader commonHeader = localBlockchain.getBlockHeader(95).get();
 
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(remoteBlockchain);
     final RespondingEthPeer respondingEthPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
@@ -222,15 +283,37 @@ public class DetermineCommonAncestorTaskTest {
         DetermineCommonAncestorTask.create(
             protocolSchedule,
             protocolContext,
-            ethContext,
+            peerTaskExecutor,
             respondingEthPeer.getEthPeer(),
             10,
             metricsSystem);
     final DetermineCommonAncestorTask spy = spy(task);
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeerAsync(
+                Mockito.any(GetHeadersFromPeerByNumberPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            new Answer<CompletableFuture<PeerTaskExecutorResult<List<BlockHeader>>>>() {
+              @Override
+              public CompletableFuture<PeerTaskExecutorResult<List<BlockHeader>>> answer(
+                  final InvocationOnMock invocationOnMock) throws Throwable {
+                GetHeadersFromPeerByNumberPeerTask task =
+                    invocationOnMock.getArgument(0, GetHeadersFromPeerByNumberPeerTask.class);
+                List<BlockHeader> blockHeaders = new ArrayList<>();
+                int numberDelta = (task.getSkip() + 1) * (task.getDirection().isReverse() ? -1 : 1);
+                for (long i = 1; i < task.getCount(); i++) {
+                  remoteBlockchain
+                      .getBlockHeader(task.getBlockNumber() + (i * numberDelta))
+                      .ifPresent(blockHeaders::add);
+                }
+                return CompletableFuture.completedFuture(
+                    new PeerTaskExecutorResult<>(
+                        blockHeaders, PeerTaskExecutorResponseCode.SUCCESS));
+              }
+            });
+
     // Execute task
     final CompletableFuture<BlockHeader> future = spy.run();
-    respondingEthPeer.respondWhile(responder, () -> !future.isDone());
 
     final AtomicReference<BlockHeader> result = new AtomicReference<>();
     future.whenComplete(
@@ -254,7 +337,7 @@ public class DetermineCommonAncestorTaskTest {
         DetermineCommonAncestorTask.create(
             protocolSchedule,
             protocolContext,
-            ethContext,
+            peerTaskExecutor,
             peer,
             defaultHeaderRequestSize,
             metricsSystem);
@@ -266,6 +349,7 @@ public class DetermineCommonAncestorTaskTest {
     verify(peer, times(0)).getHeadersByHash(any(), anyInt(), anyInt(), anyBoolean());
     verify(peer, times(0)).getHeadersByNumber(anyLong(), anyInt(), anyInt(), anyBoolean());
     verify(peer, times(0)).send(any());
+    verifyNoInteractions(peerTaskExecutor);
   }
 
   /**

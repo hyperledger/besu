@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -95,6 +96,7 @@ public class FullSyncDownloaderTest {
         protocolSchedule,
         protocolContext,
         ethContext,
+        new PeerTaskExecutor(null, null, null),
         syncState,
         metricsSystem,
         SyncTerminationCondition.never(),

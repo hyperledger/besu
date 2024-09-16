@@ -14,4 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
-public class InvalidPeerTaskResponseException extends Exception {}
+public class InvalidPeerTaskResponseException extends Exception {
+
+  public InvalidPeerTaskResponseException() {
+    super();
+  }
+
+  public InvalidPeerTaskResponseException(final Throwable cause) {
+    super(cause);
+  }
+}

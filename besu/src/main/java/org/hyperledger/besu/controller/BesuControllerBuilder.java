@@ -686,7 +686,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
             miningParameters);
 
-    final List<PeerValidator> peerValidators = createPeerValidators(protocolSchedule);
+    final List<PeerValidator> peerValidators =
+        createPeerValidators(protocolSchedule, peerTaskExecutor);
 
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
@@ -1151,27 +1152,32 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param protocolSchedule the protocol schedule
    * @return the list
    */
-  protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
+  protected List<PeerValidator> createPeerValidators(
+      final ProtocolSchedule protocolSchedule, final PeerTaskExecutor peerTaskExecutor) {
     final List<PeerValidator> validators = new ArrayList<>();
 
     final OptionalLong daoBlock = genesisConfigOptions.getDaoForkBlock();
     if (daoBlock.isPresent()) {
       // Setup dao validator
       validators.add(
-          new DaoForkPeerValidator(protocolSchedule, metricsSystem, daoBlock.getAsLong()));
+          new DaoForkPeerValidator(protocolSchedule, peerTaskExecutor, daoBlock.getAsLong()));
     }
 
     final OptionalLong classicBlock = genesisConfigOptions.getClassicForkBlock();
     // setup classic validator
     if (classicBlock.isPresent()) {
       validators.add(
-          new ClassicForkPeerValidator(protocolSchedule, metricsSystem, classicBlock.getAsLong()));
+          new ClassicForkPeerValidator(
+              protocolSchedule, peerTaskExecutor, classicBlock.getAsLong()));
     }
 
     for (final Map.Entry<Long, Hash> requiredBlock : requiredBlocks.entrySet()) {
       validators.add(
           new RequiredBlocksPeerValidator(
-              protocolSchedule, metricsSystem, requiredBlock.getKey(), requiredBlock.getValue()));
+              protocolSchedule,
+              peerTaskExecutor,
+              requiredBlock.getKey(),
+              requiredBlock.getValue()));
     }
 
     final CheckpointConfigOptions checkpointConfigOptions =
@@ -1180,7 +1186,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       validators.add(
           new CheckpointBlocksPeerValidator(
               protocolSchedule,
-              metricsSystem,
+              peerTaskExecutor,
               checkpointConfigOptions.getNumber().orElseThrow(),
               checkpointConfigOptions.getHash().map(Hash::fromHexString).orElseThrow()));
     }

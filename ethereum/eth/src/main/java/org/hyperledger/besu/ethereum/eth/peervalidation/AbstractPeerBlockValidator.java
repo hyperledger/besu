@@ -19,10 +19,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByNumberTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerByNumberPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
 import java.util.List;
@@ -36,7 +37,7 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
   static long DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER = 10L;
 
   private final ProtocolSchedule protocolSchedule;
-  private final MetricsSystem metricsSystem;
+  private final PeerTaskExecutor peerTaskExecutor;
 
   final long blockNumber;
   // Wait for peer's chainhead to advance some distance beyond blockNumber before validating
@@ -44,64 +45,69 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
 
   AbstractPeerBlockValidator(
       final ProtocolSchedule protocolSchedule,
-      final MetricsSystem metricsSystem,
+      final PeerTaskExecutor peerTaskExecutor,
       final long blockNumber,
       final long chainHeightEstimationBuffer) {
     checkArgument(chainHeightEstimationBuffer >= 0);
     this.protocolSchedule = protocolSchedule;
-    this.metricsSystem = metricsSystem;
+    this.peerTaskExecutor = peerTaskExecutor;
     this.blockNumber = blockNumber;
     this.chainHeightEstimationBuffer = chainHeightEstimationBuffer;
   }
 
   protected AbstractPeerBlockValidator(
       final ProtocolSchedule protocolSchedule,
-      final MetricsSystem metricsSystem,
+      final PeerTaskExecutor peerTaskExecutor,
       final long blockNumber) {
-    this(protocolSchedule, metricsSystem, blockNumber, DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
+    this(protocolSchedule, peerTaskExecutor, blockNumber, DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
   }
 
   @Override
   public CompletableFuture<Boolean> validatePeer(
       final EthContext ethContext, final EthPeer ethPeer) {
-    final AbstractPeerTask<List<BlockHeader>> getHeaderTask =
-        GetHeadersFromPeerByNumberTask.forSingleNumber(
-                protocolSchedule, ethContext, blockNumber, metricsSystem)
-            .setTimeout(Duration.ofSeconds(20))
-            .assignPeer(ethPeer);
-    return getHeaderTask
-        .run()
-        .handle(
-            (res, err) -> {
-              if (err != null) {
-                // Mark peer as invalid on error
-                LOG.debug(
-                    "Peer {} is invalid because required block ({}) is unavailable: {}",
-                    ethPeer,
-                    blockNumber,
-                    err.toString());
-                return false;
-              }
-              final List<BlockHeader> headers = res.getResult();
-              if (headers.size() == 0) {
-                if (blockIsRequired()) {
-                  // If no headers are returned, fail
-                  LOG.debug(
-                      "Peer {} is invalid because required block ({}) is unavailable.",
-                      ethPeer,
-                      blockNumber);
-                  return false;
-                } else {
-                  LOG.debug(
-                      "Peer {} deemed valid because unavailable block ({}) is not required.",
-                      ethPeer,
-                      blockNumber);
-                  return true;
-                }
-              }
-              final BlockHeader header = headers.get(0);
-              return validateBlockHeader(ethPeer, header);
-            });
+    final GetHeadersFromPeerByNumberPeerTask getHeadersPeerTask =
+        new GetHeadersFromPeerByNumberPeerTask(
+            blockNumber,
+            1,
+            0,
+            GetHeadersFromPeerByNumberPeerTask.Direction.FORWARD,
+            protocolSchedule);
+    PeerTaskExecutorResult<List<BlockHeader>> getHeadersResult =
+        peerTaskExecutor.executeAgainstPeer(getHeadersPeerTask, ethPeer);
+
+    CompletableFuture<Boolean> isPeerValid = new CompletableFuture<>();
+    if (getHeadersResult.getResponseCode() != PeerTaskExecutorResponseCode.SUCCESS
+        || getHeadersResult.getResult().isEmpty()) {
+      // Mark peer as invalid on error
+      LOG.debug(
+          "Peer {} is invalid because required block ({}) is unavailable: {}",
+          ethPeer,
+          blockNumber,
+          getHeadersResult.getResponseCode());
+      isPeerValid.complete(false);
+    } else {
+      final List<BlockHeader> headers = getHeadersResult.getResult().get();
+      if (headers.isEmpty()) {
+        if (blockIsRequired()) {
+          // If no headers are returned, fail
+          LOG.debug(
+              "Peer {} is invalid because required block ({}) is unavailable.",
+              ethPeer,
+              blockNumber);
+          isPeerValid.complete(false);
+        } else {
+          LOG.debug(
+              "Peer {} deemed valid because unavailable block ({}) is not required.",
+              ethPeer,
+              blockNumber);
+          isPeerValid.complete(true);
+        }
+      } else {
+        final BlockHeader header = headers.getFirst();
+        isPeerValid.complete(validateBlockHeader(ethPeer, header));
+      }
+    }
+    return isPeerValid;
   }
 
   abstract boolean validateBlockHeader(EthPeer ethPeer, BlockHeader header);

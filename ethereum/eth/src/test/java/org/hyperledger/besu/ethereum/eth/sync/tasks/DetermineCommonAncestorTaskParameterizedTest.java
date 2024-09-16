@@ -30,10 +30,10 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -55,10 +55,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
 
 public class DetermineCommonAncestorTaskParameterizedTest {
   private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+  private PeerTaskExecutor peerTaskExecutor;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private static Block genesisBlock;
@@ -87,6 +89,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
   @BeforeEach
   public void setup() {
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
   }
 
   public static Stream<Arguments> parameters() throws IOException {
@@ -149,7 +152,6 @@ public class DetermineCommonAncestorTaskParameterizedTest {
     final AtomicReference<BlockHeader> actualResult = new AtomicReference<>();
     final AtomicBoolean done = new AtomicBoolean(false);
 
-    final EthContext ethContext = ethProtocolManager.ethContext();
     final ProtocolContext protocolContext =
         new ProtocolContext(localBlockchain, worldStateArchive, null, new BadBlockManager());
 
@@ -157,7 +159,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
         DetermineCommonAncestorTask.create(
             protocolSchedule,
             protocolContext,
-            ethContext,
+            peerTaskExecutor,
             respondingEthPeer.getEthPeer(),
             headerRequestSize,
             metricsSystem);

@@ -43,27 +43,6 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
     this.blockNumber = blockNumber;
   }
 
-  public static AbstractGetHeadersFromPeerTask startingAtNumber(
-      final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
-      final long firstBlockNumber,
-      final int segmentLength,
-      final MetricsSystem metricsSystem) {
-    return new GetHeadersFromPeerByNumberTask(
-        protocolSchedule, ethContext, firstBlockNumber, segmentLength, 0, false, metricsSystem);
-  }
-
-  public static AbstractGetHeadersFromPeerTask endingAtNumber(
-      final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
-      final long lastlockNumber,
-      final int segmentLength,
-      final int skip,
-      final MetricsSystem metricsSystem) {
-    return new GetHeadersFromPeerByNumberTask(
-        protocolSchedule, ethContext, lastlockNumber, segmentLength, skip, true, metricsSystem);
-  }
-
   public static AbstractGetHeadersFromPeerTask forSingleNumber(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,

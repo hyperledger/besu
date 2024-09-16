@@ -133,6 +133,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                     protocolSchedule,
                     protocolContext,
                     ethContext,
+                    peerTaskExecutor,
                     syncState,
                     metricsSystem,
                     terminationCondition,
