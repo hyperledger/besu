@@ -2809,4 +2809,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     return builder.build();
   }
+
+  /**
+   * Returns the plugin context.
+   *
+   * @return the plugin context.
+   */
+  public BesuPluginContextImpl getBesuPluginContext() {
+    return besuPluginContext;
+  }
 }

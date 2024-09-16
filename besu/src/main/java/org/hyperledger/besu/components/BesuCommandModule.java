@@ -42,9 +42,7 @@ public class BesuCommandModule {
 
   @Provides
   @Singleton
-  BesuCommand provideBesuCommand(
-      final BesuPluginContextImpl pluginContext,
-      final @Named("besuCommandLogger") Logger commandLogger) {
+  BesuCommand provideBesuCommand(final @Named("besuCommandLogger") Logger commandLogger) {
     final BesuCommand besuCommand =
         new BesuCommand(
             RlpBlockImporter::new,
@@ -52,7 +50,7 @@ public class BesuCommandModule {
             RlpBlockExporter::new,
             new RunnerBuilder(),
             new BesuController.Builder(),
-            pluginContext,
+            new BesuPluginContextImpl(),
             System.getenv(),
             commandLogger);
     besuCommand.toCommandLine();
@@ -70,5 +68,11 @@ public class BesuCommandModule {
   @Singleton
   Logger provideBesuCommandLogger() {
     return Besu.getFirstLogger();
+  }
+
+  @Provides
+  @Singleton
+  BesuPluginContextImpl provideBesuPluginContextImpl(final BesuCommand provideFrom) {
+    return provideFrom.getBesuPluginContext();
   }
 }

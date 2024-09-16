@@ -552,7 +552,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(evmConfiguration, "Missing evm config");
     checkNotNull(networkingConfiguration, "Missing network configuration");
     checkNotNull(dataStorageConfiguration, "Missing data storage configuration");
-
+    checkNotNull(besuComponent, "Must supply a BesuComponent");
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
