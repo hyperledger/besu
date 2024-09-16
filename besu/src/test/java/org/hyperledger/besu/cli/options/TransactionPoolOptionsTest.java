@@ -428,6 +428,24 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
+  public void minScoreWorksConfigFile() throws IOException {
+    final byte minScore = -10;
+    final Path tempConfigFilePath =
+        createTempFile(
+            "config",
+            String.format(
+                """
+              tx-pool-min-score=%s
+              """,
+                minScore));
+
+    internalTestSuccess(
+        config -> assertThat(config.getMinScore()).isEqualTo(minScore),
+        "--config-file",
+        tempConfigFilePath.toString());
+  }
+
+  @Test
   public void minScoreNonByteValueReturnError() {
     final var overflowMinScore = Integer.toString(-300);
     internalTestFailure(

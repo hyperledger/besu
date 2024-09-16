@@ -12,6 +12,7 @@
 
 ### Bug fixes
 - Fix for `debug_traceCall` to handle transactions without specified gas price. [#7510](https://github.com/hyperledger/besu/pull/7510)
+- Fix reading `tx-pool-min-score` option from configuration file [#7623](https://github.com/hyperledger/besu/pull/7623)
 
 ## 24.9.1
 
