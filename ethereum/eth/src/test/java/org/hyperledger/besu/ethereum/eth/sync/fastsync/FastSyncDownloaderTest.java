@@ -599,7 +599,7 @@ public class FastSyncDownloaderTest {
 
     downloader.start();
     Assertions.assertThat(downloader.calculateTrailingPeerRequirements())
-        .contains(new TrailingPeerRequirements(50, 0));
+        .contains(new TrailingPeerRequirements(50, 5));
   }
 
   @ParameterizedTest
