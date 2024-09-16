@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Upcoming Breaking Changes
+- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
 
 ### Breaking Changes
 
