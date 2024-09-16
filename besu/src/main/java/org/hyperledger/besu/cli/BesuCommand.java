@@ -1568,6 +1568,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings("ConstantConditions")
   private void validateNatParams() {
+    if (natMethod.equals(NatMethod.KUBERNETES)) {
+      logger.warn("Kubernetes NAT method is deprecated. Please use Docker or UPNP");
+    }
+    if (!unstableNatOptions.getNatManagerServiceName().equals(DEFAULT_BESU_SERVICE_NAME_FILTER)) {
+      logger.warn(
+          "`--Xnat-kube-service-name` and Kubernetes NAT method are deprecated. Please use Docker or UPNP");
+    }
     if (!(natMethod.equals(NatMethod.AUTO) || natMethod.equals(NatMethod.KUBERNETES))
         && !unstableNatOptions
             .getNatManagerServiceName()
