@@ -206,6 +206,9 @@ public abstract class CommandTestAbstract {
   @Mock(lenient = true)
   protected BesuController mockController;
 
+  @Mock(lenient = true)
+  protected BesuComponent mockBesuComponent;
+
   @Mock protected RlpBlockExporter rlpBlockExporter;
   @Mock protected JsonBlockImporter jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
@@ -457,6 +460,7 @@ public abstract class CommandTestAbstract {
         besuCommand.parameterExceptionHandler(),
         besuCommand.executionExceptionHandler(),
         in,
+        mockBesuComponent,
         args);
     return besuCommand;
   }

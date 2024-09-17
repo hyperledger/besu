@@ -85,7 +85,6 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.components.DaggerBesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -1009,8 +1008,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuExecutionExceptionHandler executionExceptionHandler,
       final InputStream in,
       final BesuComponent besuComponent,
-      final String... args
-      ) {
+      final String... args) {
     if (besuComponent == null) {
       throw new IllegalArgumentException("BesuComponent must be provided");
     }

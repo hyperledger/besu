@@ -45,9 +45,8 @@ public final class Besu {
             besuCommand.parameterExceptionHandler(),
             besuCommand.executionExceptionHandler(),
             System.in,
-                besuComponent,
-            args
-            );
+            besuComponent,
+            args);
 
     System.exit(exitCode);
   }
