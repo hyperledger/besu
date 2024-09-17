@@ -40,6 +40,7 @@ import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.converter.SubnetInfoConverter;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
+import org.hyperledger.besu.cli.custom.PeerTaskFeatureToggle;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
 import org.hyperledger.besu.cli.options.MiningOptions;
@@ -841,6 +842,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--cache-last-blocks"},
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfblocksToCache = 0;
+
+  @Option(
+      names = {"--peertask-system-enabled"},
+      description =
+          "Temporary feature toggle to enable using the new peertask system (default: ${DEFAULT-VALUE})")
+  private final Boolean isPeerTaskSystemEnabled = false;
 
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
@@ -1783,6 +1790,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricsConfiguration = metricsConfiguration();
 
     instantiateSignatureAlgorithmFactory();
+
+    PeerTaskFeatureToggle.initialize(isPeerTaskSystemEnabled);
+    logger.info("PeerTask feature toggle is {}", PeerTaskFeatureToggle.usePeerTaskSystem() ? "enabled" : "disabled");
 
     logger.info(generateConfigurationOverview());
     logger.info("Security Module: {}", securityModuleName);
