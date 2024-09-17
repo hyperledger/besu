@@ -12,8 +12,7 @@
 
 ### Bug fixes
 - Fix for `debug_traceCall` to handle transactions without specified gas price. [#7510](https://github.com/hyperledger/besu/pull/7510)
-
- - Fix for IBFT2 chains using the BONSAI DB format [#7631](https://github.com/hyperledger/besu/pull/7631)
+- Fix for IBFT2 chains using the BONSAI DB format [#7631](https://github.com/hyperledger/besu/pull/7631)
 
 ## 24.9.1
 
