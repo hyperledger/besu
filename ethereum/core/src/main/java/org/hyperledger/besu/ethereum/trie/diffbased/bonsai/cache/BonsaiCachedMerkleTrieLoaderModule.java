@@ -18,13 +18,14 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import dagger.Module;
 import dagger.Provides;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 @Module
 public class BonsaiCachedMerkleTrieLoaderModule {
 
   @Provides
   BonsaiCachedMerkleTrieLoader provideCachedMerkleTrieLoaderModule(
-      final ObservableMetricsSystem metricsSystem) {
-    return new BonsaiCachedMerkleTrieLoader(metricsSystem);
+      final MetricsSystem metricsSystem) {
+    return new BonsaiCachedMerkleTrieLoader((ObservableMetricsSystem) metricsSystem);
   }
 }
