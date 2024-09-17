@@ -180,7 +180,12 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), any(), NONE))
+                    blockchainSetupUtil.getProtocolContext(),
+                    block,
+                    emptyList(),
+                    any(),
+                    NONE,
+                    BodyValidationMode.FULL))
         .isFalse();
   }
 }
