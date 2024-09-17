@@ -18,7 +18,7 @@ package org.hyperledger.besu.nat;
 public enum NatMethod {
   /** Upnp nat method. */
   UPNP,
-  /** Upnpp 2 ponly nat method. */
+  /** Upnp p2p only nat method. */
   UPNPP2PONLY,
   /** Docker nat method. */
   DOCKER,
