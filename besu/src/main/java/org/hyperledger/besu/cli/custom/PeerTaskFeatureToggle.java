@@ -50,4 +50,6 @@ public class PeerTaskFeatureToggle {
     }
     return USE_PEER_TASK_SYSTEM;
   }
+
+  private PeerTaskFeatureToggle() {}
 }
