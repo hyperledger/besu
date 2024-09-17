@@ -33,7 +33,8 @@ public class PeerTaskFeatureToggle {
    */
   public static void initialize(final Boolean usePeerTaskSystem) {
     if (USE_PEER_TASK_SYSTEM != null) {
-      LOGGER.warn("PeerTaskFeatureToggle has already been initialized, and cannot be initialized again");
+      LOGGER.warn(
+          "PeerTaskFeatureToggle has already been initialized, and cannot be initialized again");
     } else {
       USE_PEER_TASK_SYSTEM = usePeerTaskSystem;
     }
