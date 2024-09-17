@@ -30,7 +30,6 @@ public class PeerTaskFeatureToggle {
    * PeerTaskFeatureToggle may only be initialized once!
    *
    * @param usePeerTaskSystem Boolean indicating whether or not the PeerTask system should be used
-   * @throws IllegalStateException if PeerTaskFeatureToggle has already been initialized
    */
   public static void initialize(final Boolean usePeerTaskSystem) {
     if (USE_PEER_TASK_SYSTEM != null) {
