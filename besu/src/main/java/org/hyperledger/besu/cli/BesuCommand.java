@@ -1792,7 +1792,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     instantiateSignatureAlgorithmFactory();
 
     PeerTaskFeatureToggle.initialize(isPeerTaskSystemEnabled);
-    logger.info("PeerTask feature toggle is {}", PeerTaskFeatureToggle.usePeerTaskSystem() ? "enabled" : "disabled");
 
     logger.info(generateConfigurationOverview());
     logger.info("Security Module: {}", securityModuleName);
