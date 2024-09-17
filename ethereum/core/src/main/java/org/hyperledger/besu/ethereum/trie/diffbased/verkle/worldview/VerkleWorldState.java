@@ -126,7 +126,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
               // generate account triekeys
               final List<Bytes32> accountKeyIds = new ArrayList<>();
               if (!accountUpdate.getValue().isUnchanged()) {
-                accountKeyIds.addAll(trieKeyPreloader.generateAccountKeyIds());
+                accountKeyIds.add(trieKeyPreloader.generateAccountKeyId());
               }
 
               // generate storage triekeys
@@ -207,7 +207,8 @@ public class VerkleWorldState extends DiffBasedWorldState {
       final DiffBasedValue<VerkleAccount> accountUpdate) {
     if (accountUpdate.isUnchanged()) {
       return;
-    } else if (accountUpdate.getUpdated() == null) {
+    }
+    if (accountUpdate.getUpdated() == null) {
       verkleEntryFactory.generateAccountKeysForRemoval(accountKey);
       final Hash addressHash = hashAndSavePreImage(accountKey);
       maybeStateUpdater.ifPresent(
@@ -237,7 +238,8 @@ public class VerkleWorldState extends DiffBasedWorldState {
         || codeUpdate.isUnchanged()
         || (codeIsEmpty(codeUpdate.getPrior()) && codeIsEmpty(codeUpdate.getUpdated()))) {
       return;
-    } else if (codeUpdate.getUpdated() == null) {
+    }
+    if (codeUpdate.getUpdated() == null) {
       final Hash priorCodeHash = Hash.hash(codeUpdate.getPrior());
       verkleEntryFactory.generateCodeKeysForRemoval(accountKey, codeUpdate.getPrior());
       final Hash accountHash = accountKey.addressHash();
@@ -257,7 +259,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
     }
   }
 
-  private void generateStorageValue(
+  private void generateStorageValues(
       final Address accountKey,
       final VerkleEntryFactory verkleEntryFactory,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
@@ -311,7 +313,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
         maybeStateUpdater,
         worldStateUpdater.getCodeToUpdate().get(accountKey));
 
-    generateStorageValue(
+    generateStorageValues(
         accountKey,
         verkleEntryFactory,
         maybeStateUpdater,

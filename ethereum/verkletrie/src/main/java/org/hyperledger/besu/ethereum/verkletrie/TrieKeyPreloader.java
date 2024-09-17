@@ -42,8 +42,8 @@ public class TrieKeyPreloader {
     trieKeyAdapter = new TrieKeyBatchAdapter(hasher);
   }
 
-  public List<Bytes32> generateAccountKeyIds() {
-    return List.of(Parameters.BASIC_DATA_LEAF_KEY);
+  public Bytes32 generateAccountKeyId() {
+    return Parameters.BASIC_DATA_LEAF_KEY;
   }
 
   public List<Bytes32> generateCodeChunkKeyIds(final Bytes code) {
