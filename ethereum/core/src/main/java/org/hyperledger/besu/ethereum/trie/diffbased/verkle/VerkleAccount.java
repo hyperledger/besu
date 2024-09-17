@@ -37,6 +37,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class VerkleAccount extends DiffBasedAccount {
   private Hash storageRoot; // TODO REMOVE AS USELESS
+  private int hashCode;
 
   public VerkleAccount(
       final DiffBasedWorldView context,
@@ -179,5 +180,34 @@ public class VerkleAccount extends DiffBasedAccount {
   @Override
   public boolean isStorageEmpty() {
     return true; // TODO need to find a way to manage that with verkle
+  }
+
+  @Override
+  public boolean equals(final Object other) {
+    if (this == other) {
+      return true;
+    } else if (!(other instanceof VerkleAccount)) {
+      return false;
+    }
+    VerkleAccount otherVerkleAccount = (VerkleAccount) other;
+    return Objects.equals(this.address, otherVerkleAccount.address)
+        && this.nonce == otherVerkleAccount.nonce
+        && Objects.equals(this.balance, otherVerkleAccount.balance)
+        && Objects.equals(this.codeHash, otherVerkleAccount.codeHash);
+  }
+
+  @Override
+  public int hashCode() {
+    if (!immutable) {
+      return computeHashCode();
+    }
+    if (hashCode == 0) {
+      hashCode = computeHashCode();
+    }
+    return hashCode;
+  }
+
+  private int computeHashCode() {
+    return Objects.hash(address, nonce, balance, codeHash);
   }
 }
