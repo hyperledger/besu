@@ -124,8 +124,7 @@ public class PeerTaskExecutorTest {
       throws PeerConnection.PeerNotConnected,
           ExecutionException,
           InterruptedException,
-          TimeoutException,
-          InvalidPeerTaskResponseException {
+          TimeoutException {
     String subprotocol = "subprotocol";
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
@@ -147,8 +146,7 @@ public class PeerTaskExecutorTest {
       throws PeerConnection.PeerNotConnected,
           ExecutionException,
           InterruptedException,
-          TimeoutException,
-          InvalidPeerTaskResponseException {
+          TimeoutException {
     String subprotocol = "subprotocol";
     int requestMessageDataCode = 123;
 

@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,10 +39,7 @@ public class PeerTaskRequestSenderTest {
 
   @Test
   public void testSendRequest()
-      throws PeerConnection.PeerNotConnected,
-          ExecutionException,
-          InterruptedException,
-          TimeoutException {
+      throws PeerConnection.PeerNotConnected, ExecutionException, InterruptedException {
     String subprotocol = "subprotocol";
     MessageData requestMessageData = Mockito.mock(MessageData.class);
     MessageData responseMessageData = Mockito.mock(MessageData.class);
