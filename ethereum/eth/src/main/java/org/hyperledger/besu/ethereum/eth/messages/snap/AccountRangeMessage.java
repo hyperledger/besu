@@ -29,6 +29,7 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
@@ -118,7 +119,8 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
     return ImmutableAccountRangeData.builder().accounts(accounts).proofs(proofs).build();
   }
 
-  private Bytes toFullAccount(final RLPInput rlpInput) {
+  @VisibleForTesting
+  public static Bytes toFullAccount(final RLPInput rlpInput) {
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(rlpInput);
 
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
