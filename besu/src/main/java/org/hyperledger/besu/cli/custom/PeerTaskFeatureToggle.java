@@ -14,11 +14,15 @@
  */
 package org.hyperledger.besu.cli.custom;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Temporary class to allow easy access to the PeerTask feature toggle. This class can be removed
  * once we've properly tested the PeerTask system and want to enable it permanently
  */
 public class PeerTaskFeatureToggle {
+  private static final Logger LOGGER = LoggerFactory.getLogger(PeerTaskFeatureToggle.class);
   private static Boolean USE_PEER_TASK_SYSTEM = null;
 
   /**
@@ -30,10 +34,10 @@ public class PeerTaskFeatureToggle {
    */
   public static void initialize(final Boolean usePeerTaskSystem) {
     if (USE_PEER_TASK_SYSTEM != null) {
-      throw new IllegalStateException(
-          "PeerTaskFeatureToggle has already been initialized, and cannot be initialized again");
+      LOGGER.warn("PeerTaskFeatureToggle has already been initialized, and cannot be initialized again");
+    } else {
+      USE_PEER_TASK_SYSTEM = usePeerTaskSystem;
     }
-    USE_PEER_TASK_SYSTEM = usePeerTaskSystem;
   }
 
   /**
