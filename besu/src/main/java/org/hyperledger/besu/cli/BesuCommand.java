@@ -84,6 +84,8 @@ import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
+import org.hyperledger.besu.components.BesuComponent;
+import org.hyperledger.besu.components.DaggerBesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -390,6 +392,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl;
   private final TransactionSimulationServiceImpl transactionSimulationServiceImpl;
   private final BlockchainServiceImpl blockchainServiceImpl;
+  private BesuComponent besuComponent;
 
   static class P2PDiscoveryOptionGroup {
 
@@ -996,6 +999,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param parameterExceptionHandler Handler for exceptions related to command line parameters.
    * @param executionExceptionHandler Handler for exceptions during command execution.
    * @param in The input stream for commands.
+   * @param besuComponent The Besu component.
    * @param args The command line arguments.
    * @return The execution result status code.
    */
@@ -1004,8 +1008,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuParameterExceptionHandler parameterExceptionHandler,
       final BesuExecutionExceptionHandler executionExceptionHandler,
       final InputStream in,
-      final String... args) {
-
+      final BesuComponent besuComponent,
+      final String... args
+      ) {
+    if (besuComponent == null) {
+      throw new IllegalArgumentException("BesuComponent must be provided");
+    }
+    this.besuComponent = besuComponent;
     initializeCommandLineSettings(in);
 
     // Create the execution strategy chain.
@@ -1875,7 +1884,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
         .cacheLastBlocks(numberOfblocksToCache)
-        .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled);
+        .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
+        .besuComponent(besuComponent);
   }
 
   private JsonRpcConfiguration createEngineJsonRpcConfiguration(
