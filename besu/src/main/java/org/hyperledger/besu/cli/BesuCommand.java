@@ -215,6 +215,7 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.GroupPrincipal;
@@ -1253,7 +1254,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     boolean isMember = false;
     if (line != null) {
       // Split the groups
-      Iterable<String> userGroups = Splitter.on("\\s+").split(line);
+      Iterable<String> userGroups = Splitter.on(" ").split(line);
       // Check if any of the user's groups match the file's group
 
       for (String grp : userGroups) {
