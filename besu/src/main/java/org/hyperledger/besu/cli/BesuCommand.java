@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
@@ -203,9 +204,11 @@ import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -214,6 +217,8 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.GroupPrincipal;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
 import java.time.Clock;
@@ -235,6 +240,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
@@ -385,10 +391,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Optional<String> identityString = Optional.empty();
 
+  private Boolean printPathsAndExit = Boolean.FALSE;
+  private String besuUserName = "besu";
+
   @Option(
       names = "--print-paths-and-exit",
-      description = "Print the configured paths and exit without starting the node.")
-  private final Boolean printPathsAndExit = false;
+      paramLabel = "<username>",
+      description = "Print the configured paths and exit without starting the node.",
+      arity = "0..1")
+  void setUserName(final String userName) {
+    if (userName != null) {
+      besuUserName = userName;
+    }
+    printPathsAndExit = Boolean.TRUE;
+  }
 
   // P2P Discovery Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold P2P Discovery Options|@%n")
@@ -1103,7 +1119,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       if (printPathsAndExit) {
         // Print configured paths requiring read/write permissions to be adjusted
-        checkPermissionsAndPrintPaths();
+        checkPermissionsAndPrintPaths(besuUserName);
         System.exit(0); // Exit before any services are started
       }
 
@@ -1152,17 +1168,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private void checkPermissionsAndPrintPaths() {
+  private void checkPermissionsAndPrintPaths(final String userName) {
     // Check permissions for the data path
-    checkPermissions(dataDir(), "besu", false);
+    checkPermissions(dataDir(), userName, false);
 
     // Check permissions for genesis file
     try {
       if (genesisFile != null) {
-        checkPermissions(genesisFile.toPath(), "besu", true);
+        checkPermissions(genesisFile.toPath(), userName, true);
       }
     } catch (Exception e) {
-      System.out.println("Error: Failed checking genesis file: Reason: " + e.getMessage());
+      commandLine
+          .getOut()
+          .println("Error: Failed checking genesis file: Reason: " + e.getMessage());
     }
   }
 
@@ -1171,7 +1189,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try {
       // Get the permissions of the file
       // check if besu user is the owner - get owner permissions if yes
-      // else, check if besu and owner are in the same group - if yes, check the group permission
+      // else, check if besu user and owner are in the same group - if yes, check the group
+      // permission
       // otherwise check permissions for others
 
       // Get the owner of the file or directory
@@ -1187,21 +1206,64 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         hasReadPermission = permissions.contains(PosixFilePermission.OWNER_READ);
         hasWritePermission = permissions.contains(PosixFilePermission.OWNER_WRITE);
       } else {
-        // Skipping group check for now as we know besu user and root don't have a common group
-        // Others' permissions
-        hasReadPermission = permissions.contains(PosixFilePermission.OTHERS_READ);
-        hasWritePermission = permissions.contains(PosixFilePermission.OTHERS_WRITE);
+        // Get the group of the file
+        // Get POSIX file attributes and then group
+        PosixFileAttributes attrs = Files.readAttributes(path, PosixFileAttributes.class);
+        GroupPrincipal group = attrs.group();
+
+        // Check if besu user belongs to this group
+        boolean isMember = isGroupMember(besuUserName, group);
+
+        if (isMember) {
+          // Group's permissions
+          hasReadPermission = permissions.contains(PosixFilePermission.GROUP_READ);
+          hasWritePermission = permissions.contains(PosixFilePermission.GROUP_WRITE);
+        } else {
+          // Others' permissions
+          hasReadPermission = permissions.contains(PosixFilePermission.OTHERS_READ);
+          hasWritePermission = permissions.contains(PosixFilePermission.OTHERS_WRITE);
+        }
       }
 
       if (!hasReadPermission || (!readOnly && !hasWritePermission)) {
         String accessType = readOnly ? "READ" : "READ_WRITE";
-        System.out.println("PERMISSION_CHECK_PATH:" + path + ":" + accessType);
+        commandLine.getOut().println("PERMISSION_CHECK_PATH:" + path + ":" + accessType);
       }
     } catch (Exception e) {
       // Do nothing upon catching an error
-      System.out.println(
-          "Error: Failed to check permissions for path: '" + path + "'. Reason: " + e.getMessage());
+      commandLine
+          .getOut()
+          .println(
+              "Error: Failed to check permissions for path: '"
+                  + path
+                  + "'. Reason: "
+                  + e.getMessage());
     }
+  }
+
+  private static boolean isGroupMember(final String userName, final GroupPrincipal group)
+      throws IOException {
+    // Get the groups of the user by executing 'id -Gn username'
+    Process process = Runtime.getRuntime().exec(new String[] {"id", "-Gn", userName});
+    BufferedReader reader =
+        new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8));
+
+    // Read the output of the command
+    String line = reader.readLine();
+    boolean isMember = false;
+    if (line != null) {
+      // Split the groups
+      Iterable<String> userGroups = Splitter.on("\\s+").split(line);
+      // Check if any of the user's groups match the file's group
+
+      for (String grp : userGroups) {
+        if (grp.equals(group.getName())) {
+          isMember = true;
+          break;
+        }
+      }
+    }
+    return isMember;
   }
 
   @VisibleForTesting

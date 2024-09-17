@@ -15,13 +15,13 @@
 ##
 
 # Run Besu first to get paths needing permission adjustment
-output=$(/opt/besu/bin/besu --print-paths-and-exit "$@")
+output=$(/opt/besu/bin/besu --print-paths-and-exit $BESU_USER_NAME "$@")
 
 # Parse the output to find the paths and their required access types
 echo "$output" | while IFS=: read -r prefix path accessType; do
     if [[ "$prefix" == "PERMISSION_CHECK_PATH" ]]; then
       # Change ownership to besu user and group
-      chown -R besu:besu $path
+      chown -R $BESU_USER_NAME:$BESU_USER_NAME $path
 
       # Ensure read/write permissions for besu user
 
@@ -29,10 +29,14 @@ echo "$output" | while IFS=: read -r prefix path accessType; do
 
       if [[ "$accessType" == "READ" ]]; then
         # Set read-only permissions for besu user
-        chmod -R u+r $path
+        # Add execute for directories to allow access
+        find $path -type d -exec chmod u+rx {} \;
+        find $path -type f -exec chmod u+r {} \;
       elif [[ "$accessType" == "READ_WRITE" ]]; then
         # Set read/write permissions for besu user
-        chmod -R u+rw $path
+        # Add execute for directories to allow access
+        find $path -type d -exec chmod u+rwx {} \;
+        find $path -type f -exec chmod u+rw {} \;
       fi
     fi
 done
@@ -42,4 +46,4 @@ done
 COMMAND="/opt/besu/bin/besu $@"
 
 # Switch to the besu user and execute the command
-exec su -s /bin/bash besu -c "$COMMAND"
+exec su -s /bin/bash $BESU_USER_NAME -c "$COMMAND"
