@@ -154,8 +154,7 @@ public class BftBlockCreatorTest {
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
-            new BlobCache(),
-            metricsSystem);
+            new BlobCache());
 
     transactionPool.setEnabled();
 

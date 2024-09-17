@@ -44,7 +44,6 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.BufferedReader;
@@ -110,7 +109,6 @@ public class TransactionPool implements BlockAddedObserver {
   private final EthScheduler.OrderedProcessor<BlockAddedEvent> blockAddedEventOrderedProcessor;
   private final Map<VersionedHash, BlobsWithCommitments.BlobQuad> mapOfBlobsInTransactionPool =
       new HashMap<>();
-  private final BlobMetrics blobMetrics;
   private final ConcurrentHashMap<VersionedHash, BlobsWithCommitments.BlobQuad> blobCacheTracker =
       new ConcurrentHashMap<>();
 
@@ -122,8 +120,7 @@ public class TransactionPool implements BlockAddedObserver {
       final EthContext ethContext,
       final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration configuration,
-      final BlobCache blobCache,
-      final MetricsSystem metricsSystem) {
+      final BlobCache blobCache) {
     this.pendingTransactionsSupplier = pendingTransactionsSupplier;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -134,7 +131,6 @@ public class TransactionPool implements BlockAddedObserver {
     this.blockAddedEventOrderedProcessor =
         ethContext.getScheduler().createOrderedProcessor(this::processBlockAddedEvent);
     this.cacheForBlobsOfTransactionsAddedToABlock = blobCache;
-    this.blobMetrics = new BlobMetrics(metricsSystem);
     initializeBlobMetrics();
     initLogForReplay();
     subscribePendingTransactions(this::mapBlobsOnTransactionAdded);
@@ -718,8 +714,8 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private void initializeBlobMetrics() {
-    blobMetrics.createBlobCacheSizeMetric(this::getBlobCacheSize);
-    blobMetrics.createBlobMapSizeMetric(this::getBlobMapSize);
+    metrics.createBlobCacheSizeMetric(this::getBlobCacheSize);
+    metrics.createBlobMapSizeMetric(this::getBlobMapSize);
   }
 
   class PendingTransactionsListenersProxy {

@@ -119,8 +119,7 @@ public class PoWMinerExecutorTest {
             ethContext,
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             poolConf,
-            new BlobCache(),
-            metricsSystem);
+            new BlobCache());
     transactionPool.setEnabled();
 
     return transactionPool;

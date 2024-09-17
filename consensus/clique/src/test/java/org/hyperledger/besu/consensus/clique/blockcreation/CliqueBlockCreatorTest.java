@@ -247,8 +247,7 @@ public class CliqueBlockCreatorTest {
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
             conf,
-            new BlobCache(),
-            metricsSystem);
+            new BlobCache());
     transactionPool.setEnabled();
     return transactionPool;
   }

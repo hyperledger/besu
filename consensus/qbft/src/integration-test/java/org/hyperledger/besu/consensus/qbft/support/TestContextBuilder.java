@@ -482,8 +482,7 @@ public class TestContextBuilder {
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
-            new BlobCache(),
-            metricsSystem);
+            new BlobCache());
 
     transactionPool.setEnabled();
 

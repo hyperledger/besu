@@ -103,8 +103,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
-            new BlobCache(),
-            metricsSystem);
+            new BlobCache());
     transactionPool.setEnabled();
     return transactionPool;
   }

@@ -375,8 +375,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
-            new BlobCache(),
-            metricsSystem);
+            new BlobCache());
     transactionPool.setEnabled();
 
     return transactionPool;

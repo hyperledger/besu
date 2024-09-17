@@ -235,8 +235,7 @@ public class CliqueMinerExecutorTest {
             cliqueEthContext,
             new TransactionPoolMetrics(metricsSystem),
             conf,
-            new BlobCache(),
-            metricsSystem);
+            new BlobCache());
 
     transactionPool.setEnabled();
     return transactionPool;

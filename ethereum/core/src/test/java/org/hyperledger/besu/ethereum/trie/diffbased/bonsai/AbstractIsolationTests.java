@@ -72,7 +72,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
@@ -129,8 +128,6 @@ public abstract class AbstractIsolationTests {
   protected TransactionPoolMetrics txPoolMetrics =
       new TransactionPoolMetrics(new NoOpMetricsSystem());
 
-  protected MetricsSystem metricsSystem = new NoOpMetricsSystem();
-
   protected final PendingTransactions sorter =
       new LayeredPendingTransactions(
           poolConfiguration,
@@ -185,8 +182,7 @@ public abstract class AbstractIsolationTests {
             ethContext,
             txPoolMetrics,
             poolConfiguration,
-            new BlobCache(),
-            metricsSystem);
+            new BlobCache());
     transactionPool.setEnabled();
   }
 
