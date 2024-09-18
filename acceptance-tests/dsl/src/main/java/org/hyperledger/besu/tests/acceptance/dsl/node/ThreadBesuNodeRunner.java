@@ -138,7 +138,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     final PermissioningServiceImpl permissioningService = new PermissioningServiceImpl();
 
     GlobalOpenTelemetry.resetForTest();
-    final ObservableMetricsSystem metricsSystem = component.getObservableMetricsSystem();
+    final ObservableMetricsSystem metricsSystem =
+        (ObservableMetricsSystem) component.getMetricsSystem();
     final List<EnodeURL> bootnodes =
         node.getConfiguration().getBootnodes().stream().map(EnodeURLImpl::fromURI).toList();
 
@@ -281,6 +282,16 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
+    @Singleton
+    MetricsConfiguration provideMetricsConfiguration() {
+      if (toProvide.getMetricsConfiguration() != null) {
+        return toProvide.getMetricsConfiguration();
+      } else {
+        return MetricsConfiguration.builder().build();
+      }
+    }
+
+    @Provides
     public BesuNode provideBesuNodeRunner() {
       return toProvide;
     }
@@ -410,13 +421,13 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     public BesuController provideBesuController(
         final SynchronizerConfiguration synchronizerConfiguration,
         final BesuControllerBuilder builder,
-        final ObservableMetricsSystem metricsSystem,
+        final MetricsSystem metricsSystem,
         final KeyValueStorageProvider storageProvider,
         final MiningParameters miningParameters) {
 
       builder
           .synchronizerConfiguration(synchronizerConfiguration)
-          .metricsSystem(metricsSystem)
+          .metricsSystem((ObservableMetricsSystem) metricsSystem)
           .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
           .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
           .clock(Clock.systemUTC())
@@ -560,12 +571,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
               LoggerFactory.getLogger(MockBesuCommandModule.class));
       besuCommand.toCommandLine();
       return besuCommand;
-    }
-
-    @Provides
-    @Singleton
-    MetricsConfiguration provideMetricsConfiguration() {
-      return MetricsConfiguration.builder().build();
     }
 
     @Provides

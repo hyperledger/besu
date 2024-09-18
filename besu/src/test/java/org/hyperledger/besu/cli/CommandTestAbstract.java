@@ -42,6 +42,7 @@ import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -69,6 +70,7 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
@@ -203,6 +205,9 @@ public abstract class CommandTestAbstract {
 
   @Mock(lenient = true)
   protected BesuController mockController;
+
+  @Mock(lenient = true)
+  protected BesuComponent mockBesuComponent;
 
   @Mock protected RlpBlockExporter rlpBlockExporter;
   @Mock protected JsonBlockImporter jsonBlockImporter;
@@ -344,6 +349,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.allowedSubnets(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.poaDiscoveryRetryBootnodes(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
+    when(mockBesuComponent.getMetricsSystem()).thenReturn(new NoOpMetricsSystem());
 
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
@@ -451,6 +457,7 @@ public abstract class CommandTestAbstract {
         besuCommand.parameterExceptionHandler(),
         besuCommand.executionExceptionHandler(),
         in,
+        mockBesuComponent,
         args);
     return besuCommand;
   }
