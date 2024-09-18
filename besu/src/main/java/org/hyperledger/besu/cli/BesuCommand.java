@@ -844,7 +844,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer numberOfblocksToCache = 0;
 
   @Option(
-      names = {"--peertask-system-enabled"},
+      names = {"--Xpeertask-system-enabled"},
       description =
           "Temporary feature toggle to enable using the new peertask system (default: ${DEFAULT-VALUE})")
   private final Boolean isPeerTaskSystemEnabled = false;

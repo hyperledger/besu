@@ -226,7 +226,7 @@ Xsecp256k1-native-enabled=false
 Xaltbn128-native-enabled=false
 Xsnapsync-server-enabled=true
 Xbonsai-full-flat-db-enabled=true
-peertask-system-enabled=false
+Xpeertask-system-enabled=false
 
 # compatibility flags
 compatibility-eth64-forkid-enabled=false
