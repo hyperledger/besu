@@ -53,8 +53,8 @@ public class EphemeryGenesisUpdater {
           genesisChainId
               .orElseThrow(() -> new IllegalStateException("ChainId not present"))
               .add(BigInteger.valueOf(periodsSinceGenesis));
-      // If the current timestamp is greater than the genesisTimestamp + periodInseconds overidde
-      // the Ephemery config chainId and timestamp
+      // has a period elapsed since original ephemery genesis time? if so, override chainId and
+      // timestamp
       if (currentTimestamp > (genesisTimestamp + PERIOD_IN_SECONDS)) {
         overrides.put("chainId", String.valueOf(updatedChainId));
         overrides.put("timestamp", String.valueOf(updatedTimestamp));

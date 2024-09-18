@@ -77,6 +77,10 @@ public class EphemeryGenesisUpdaterTest {
   @Test
   public void testEphemeryWhenGenesisJsonIsValid() {
     final GenesisConfigFile config = GenesisConfigFile.fromConfig(VALID_GENESIS_JSON.toString());
+    assertThat(String.valueOf(config.getTimestamp()))
+        .isEqualTo(String.valueOf(GENESIS_TEST_TIMESTAMP));
+    assertThat(config.getConfigOptions().getChainId())
+        .hasValue(BigInteger.valueOf(GENESIS_CONFIG_TEST_CHAINID));
     assertThat(String.valueOf(config.getTimestamp())).isNotNull();
     assertThat(String.valueOf(config.getTimestamp())).isNotEmpty();
     assertThat(String.valueOf(config.getConfigOptions().getChainId())).isNotNull();
