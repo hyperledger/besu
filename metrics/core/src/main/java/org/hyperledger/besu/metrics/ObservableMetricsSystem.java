@@ -17,7 +17,6 @@ package org.hyperledger.besu.metrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
-import javax.inject.Singleton;
 import java.util.Set;
 import java.util.stream.Stream;
 

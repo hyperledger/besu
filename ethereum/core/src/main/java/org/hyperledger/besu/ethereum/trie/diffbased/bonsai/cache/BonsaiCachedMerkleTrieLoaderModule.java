@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache;
 
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import dagger.Module;
 import dagger.Provides;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 @Module
 public class BonsaiCachedMerkleTrieLoaderModule {

@@ -50,7 +50,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -139,7 +138,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     MDC.remove("node");
   }
 
-  private @NotNull List<String> commandlineArgs(final BesuNode node, final Path dataDir) {
+  private List<String> commandlineArgs(final BesuNode node, final Path dataDir) {
     final List<String> params = new ArrayList<>();
     params.add("build/install/besu/bin/besu");
 

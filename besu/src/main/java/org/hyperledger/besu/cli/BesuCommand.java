@@ -145,7 +145,6 @@ import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.MetricsProtocol;
-import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -866,9 +865,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuController besuController;
   private BesuConfigurationImpl pluginCommonConfiguration;
 
-  private final Supplier<ObservableMetricsSystem> metricsSystem =
-      Suppliers.memoize(() -> MetricsSystemFactory.create(metricsConfiguration()));
-
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
@@ -1110,7 +1106,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Starting Besu");
 
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
-      vertx = createVertx(createVertxOptions(metricsSystem.get()));
+      vertx = createVertx(createVertxOptions(besuComponent.getMetricsSystem()));
 
       validateOptions();
 
@@ -1397,8 +1393,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void setReleaseMetrics() {
-    metricsSystem
-        .get()
+    besuComponent
+        .getMetricsSystem()
         .createLabelledGauge(
             StandardMetricCategory.PROCESS, "release", "Release information", "version")
         .labels(() -> 1, BesuInfo.version());
@@ -1862,7 +1858,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .miningParameters(miningParametersSupplier.get())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(new NodeKey(securityModule()))
-        .metricsSystem(metricsSystem.get())
+        .metricsSystem((ObservableMetricsSystem) besuComponent.getMetricsSystem())
         .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
@@ -2285,7 +2281,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     p2pTLSConfiguration.ifPresent(runnerBuilder::p2pTLSConfiguration);
 
-    final ObservableMetricsSystem metricsSystem = this.metricsSystem.get();
     final Runner runner =
         runnerBuilder
             .vertx(vertx)
@@ -2312,7 +2307,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .pidPath(pidPath)
             .dataDir(dataDir())
             .bannedNodeIds(p2PDiscoveryOptionGroup.bannedNodeIds)
-            .metricsSystem(metricsSystem)
+            .metricsSystem((ObservableMetricsSystem) besuComponent.getMetricsSystem())
             .permissioningService(permissioningService)
             .metricsConfiguration(metricsConfiguration)
             .staticNodes(staticNodes)
@@ -2479,7 +2474,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return Instance of MetricsSystem
    */
   public MetricsSystem getMetricsSystem() {
-    return metricsSystem.get();
+    return besuComponent.getMetricsSystem();
   }
 
   private Set<EnodeURL> loadStaticNodes() throws IOException {

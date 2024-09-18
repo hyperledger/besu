@@ -36,5 +36,4 @@ public class MetricsSystemModule {
   MetricsSystem provideMetricsSystem(final MetricsConfiguration metricsConfig) {
     return MetricsSystemFactory.create(metricsConfig);
   }
-
 }

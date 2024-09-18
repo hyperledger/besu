@@ -138,7 +138,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     final PermissioningServiceImpl permissioningService = new PermissioningServiceImpl();
 
     GlobalOpenTelemetry.resetForTest();
-    final ObservableMetricsSystem metricsSystem = (ObservableMetricsSystem) component.getMetricsSystem();
+    final ObservableMetricsSystem metricsSystem =
+        (ObservableMetricsSystem) component.getMetricsSystem();
     final List<EnodeURL> bootnodes =
         node.getConfiguration().getBootnodes().stream().map(EnodeURLImpl::fromURI).toList();
 
@@ -283,7 +284,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     @Provides
     @Singleton
     MetricsConfiguration provideMetricsConfiguration() {
-      if(toProvide.getMetricsConfiguration() != null) {
+      if (toProvide.getMetricsConfiguration() != null) {
         return toProvide.getMetricsConfiguration();
       } else {
         return MetricsConfiguration.builder().build();
