@@ -390,6 +390,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     options.remove(spec.optionsMap().get("--config-file"));
     options.remove(spec.optionsMap().get("--help"));
     options.remove(spec.optionsMap().get("--version"));
+    options.remove(spec.optionsMap().get("--print-paths-and-exit"));
 
     for (final String tomlKey : tomlResult.keySet()) {
       final CommandLine.Model.OptionSpec optionSpec = spec.optionsMap().get("--" + tomlKey);

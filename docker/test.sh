@@ -41,4 +41,12 @@ bash $TEST_PATH/dgoss run --sysctl net.ipv6.conf.all.disable_ipv6=1 $DOCKER_IMAG
 --graphql-http-enabled \
 > ./reports/01.xml || i=`expr $i + 1`
 
+if [[ $i != 0 ]]; then exit $i; fi
+
+# Test for directory permissions
+GOSS_FILES_PATH=$TEST_PATH/02 \
+bash $TEST_PATH/dgoss run --sysctl net.ipv6.conf.all.disable_ipv6=1 -v besu-data:/var/lib/besu $DOCKER_IMAGE --data-path=/var/lib/besu \
+--network=dev \
+> ./reports/02.xml || i=`expr $i + 1`
+
 exit $i

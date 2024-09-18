@@ -11,7 +11,9 @@
 - Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
 
 ### Bug fixes
+- Fix mounted data path directory permissions for besu user [#7575](https://github.com/hyperledger/besu/pull/7575)
 - Fix for `debug_traceCall` to handle transactions without specified gas price. [#7510](https://github.com/hyperledger/besu/pull/7510)
+
 
 ## 24.9.1
 
