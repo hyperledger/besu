@@ -188,7 +188,7 @@ public class SnapServerTest {
   public void assertAccountLimitRangeResponse() {
     // assert we limit the range response according to size
     final int acctCount = 2000;
-    final long acctRLPSize = 105;
+    final long acctRLPSize = 37;
 
     List<Integer> randomLoad = IntStream.range(1, 4096).boxed().collect(Collectors.toList());
     Collections.shuffle(randomLoad);
