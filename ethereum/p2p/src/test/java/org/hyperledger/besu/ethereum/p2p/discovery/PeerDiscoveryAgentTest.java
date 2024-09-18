@@ -193,13 +193,8 @@ public class PeerDiscoveryAgentTest {
             .collect(Collectors.toList());
 
     // Start another peer
-    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent();
+    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(otherPeers);
 
-    // Bond agent with the otherAgents
-    for (MockPeerDiscoveryAgent a : otherAgents) {
-      Packet packet = helper.createPingPacket(agent, a);
-      helper.sendMessageBetweenAgents(agent, a, packet);
-    }
     // We used to do a hasSize match but we had issues with duplicate peers getting added to the
     // list.  By moving to a contains we make sure that all the peers are loaded with tolerance for
     // duplicates.  If we fix the duplication problem we should use containsExactlyInAnyOrder to
