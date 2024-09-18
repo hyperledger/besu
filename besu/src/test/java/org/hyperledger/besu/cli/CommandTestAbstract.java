@@ -24,7 +24,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -71,6 +70,7 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
@@ -206,6 +206,9 @@ public abstract class CommandTestAbstract {
   @Mock(lenient = true)
   protected BesuController mockController;
 
+  @Mock(lenient = true)
+  protected BesuComponent mockBesuComponent;
+
   @Mock protected RlpBlockExporter rlpBlockExporter;
   @Mock protected JsonBlockImporter jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
@@ -256,10 +259,8 @@ public abstract class CommandTestAbstract {
 
   @BeforeEach
   public void initMocks() throws Exception {
-    // doReturn used because of generic BesuController
-    doReturn(mockControllerBuilder)
-        .when(mockControllerBuilderFactory)
-        .fromEthNetworkConfig(any(), any());
+    when(mockControllerBuilderFactory.fromEthNetworkConfig(any(), any()))
+        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.synchronizerConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.ethProtocolConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.transactionPoolConfiguration(any()))
@@ -288,14 +289,12 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
         .thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
-        .thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.besuComponent(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.genesisStateHashCacheEnabled(any()))
         .thenReturn(mockControllerBuilder);
 
-    // doReturn used because of generic BesuController
-    doReturn(mockController).when(mockControllerBuilder).build();
+    when(mockControllerBuilder.build()).thenReturn(mockController);
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
     lenient().when(mockController.getProtocolSchedule()).thenReturn(mockProtocolSchedule);
     lenient().when(mockController.getProtocolContext()).thenReturn(mockProtocolContext);
@@ -350,6 +349,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.allowedSubnets(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.poaDiscoveryRetryBootnodes(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
+    when(mockBesuComponent.getMetricsSystem()).thenReturn(new NoOpMetricsSystem());
 
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
@@ -457,6 +457,7 @@ public abstract class CommandTestAbstract {
         besuCommand.parameterExceptionHandler(),
         besuCommand.executionExceptionHandler(),
         in,
+        mockBesuComponent,
         args);
     return besuCommand;
   }
