@@ -38,39 +38,6 @@ public class BlockTimer {
   private final BftEventQueue queue;
   private final Clock clock;
 
-  // For testing only, it can be useful to set BFT block periods less than a second. This allows
-  // Web3 test frameworks to round-trip transactions/receipts much more quickly. This env var
-  // overrides the blockperiodseconds setting with the number of milliseconds it has been set to. It
-  // should not be used in production environments.
-  private static long experimentalDevBlockPeriodMillis = -1;
-  private static final String DEV_MODE_MS_BLOCK_PERIOD_ENV_VAR = "BESU_X_DEV_BFT_PERIOD_MS";
-
-  static {
-    String blockPeriodMS = System.getenv(DEV_MODE_MS_BLOCK_PERIOD_ENV_VAR);
-    if (blockPeriodMS != null && !blockPeriodMS.equals("")) {
-      try {
-        experimentalDevBlockPeriodMillis = Integer.parseInt(blockPeriodMS);
-        LOG.warn(
-            "Test-mode only BESU_X_DEV_BFT_PERIOD_MS has been set to {} millisecond blocks. Do not use in a production system.",
-            blockPeriodMS);
-      } catch (NullPointerException e) {
-        // Ignore - default to off
-        LOG.warn(
-            "Test-mode only BESU_X_DEV_BFT_PERIOD_MS has been set incorrectly and will be ignored");
-      }
-    }
-  }
-
-  /**
-   * Test only setting to enable BFT blocks to be mined more frequently than once a second
-   *
-   * @return The block period milliseconds, if the associated test mode option
-   *     BESU_X_DEV_BFT_PERIOD_MS has been set
-   */
-  protected static long getExperimentalDevBlockPeriodMillis() {
-    return experimentalDevBlockPeriodMillis;
-  }
-
   /**
    * Construct a BlockTimer with primed executor service ready to start timers
    *
@@ -119,10 +86,17 @@ public class BlockTimer {
     final long now = clock.millis();
     final long expiryTime;
 
-    if (getExperimentalDevBlockPeriodMillis() > 0) {
-      // Experimental development mode for setting < 1 second block periods e.g. for CI/CD pipelines
+    // Experimental option for test scenarios only. Not for production use.
+    final long blockPeriodMilliseconds =
+        forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodMilliseconds();
+
+    if (blockPeriodMilliseconds > 0) {
+      // Experimental mode for setting < 1 second block periods e.g. for CI/CD pipelines
       // running tests against Besu
-      expiryTime = clock.millis() + getExperimentalDevBlockPeriodMillis();
+      expiryTime = clock.millis() + blockPeriodMilliseconds;
+      LOG.warn(
+          "Test-mode only xblockperiodmilliseconds has been set to {} millisecond blocks. Do not use in a production system.",
+          blockPeriodMilliseconds);
     } else {
       // absolute time when the timer is supposed to expire
       final int blockPeriodSeconds =
