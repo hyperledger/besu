@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages.snap;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -28,6 +29,7 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
@@ -117,7 +119,8 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
     return ImmutableAccountRangeData.builder().accounts(accounts).proofs(proofs).build();
   }
 
-  private Bytes toFullAccount(final RLPInput rlpInput) {
+  @VisibleForTesting
+  public static Bytes toFullAccount(final RLPInput rlpInput) {
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(rlpInput);
 
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
@@ -128,6 +131,26 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
     rlpOutput.writeBytes(accountValue.getCodeHash());
     rlpOutput.endList();
 
+    return rlpOutput.encoded();
+  }
+
+  public static Bytes toSlimAccount(final RLPInput rlpInput) {
+    StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(rlpInput);
+    var rlpOutput = new BytesValueRLPOutput();
+    rlpOutput.startList();
+    rlpOutput.writeLongScalar(accountValue.getNonce());
+    rlpOutput.writeUInt256Scalar(accountValue.getBalance());
+    if (accountValue.getStorageRoot().equals(Hash.EMPTY_TRIE_HASH)) {
+      rlpOutput.writeNull();
+    } else {
+      rlpOutput.writeBytes(accountValue.getStorageRoot());
+    }
+    if (accountValue.getCodeHash().equals(Hash.EMPTY)) {
+      rlpOutput.writeNull();
+    } else {
+      rlpOutput.writeBytes(accountValue.getCodeHash());
+    }
+    rlpOutput.endList();
     return rlpOutput.encoded();
   }
 

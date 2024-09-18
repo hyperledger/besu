@@ -18,7 +18,8 @@ RUN apt-get update $NO_PROXY_CACHE  && \
   chown besu:besu /opt/besu  && \
   chmod 0755 /opt/besu
 
-USER besu
+ARG BESU_USER=besu
+USER ${BESU_USER}
 WORKDIR /opt/besu
 
 COPY --chown=besu:besu besu /opt/besu/
@@ -43,7 +44,12 @@ ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
 ENV OLDPATH="${PATH}"
 ENV PATH="/opt/besu/bin:${OLDPATH}"
 
-ENTRYPOINT ["besu"]
+USER root
+RUN chmod +x /opt/besu/bin/besu-entry.sh
+
+ENV BESU_USER_NAME=${BESU_USER}
+
+ENTRYPOINT ["besu-entry.sh"]
 HEALTHCHECK --start-period=5s --interval=5s --timeout=1s --retries=10 CMD bash -c "[ -f /tmp/pid ]"
 
 # Build-time metadata as defined at http://label-schema.org
