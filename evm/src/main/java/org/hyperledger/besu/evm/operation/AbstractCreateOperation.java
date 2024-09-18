@@ -45,9 +45,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected static final OperationResult INVALID_OPERATION =
       new OperationResult(0L, ExceptionalHaltReason.INVALID_OPERATION);
 
-  /** The maximum init code size */
-  protected final int maxInitcodeSize;
-
   /** The EOF Version this create operation requires initcode to be in */
   protected final int eofVersion;
 
@@ -59,7 +56,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param stackItemsConsumed the stack items consumed
    * @param stackItemsProduced the stack items produced
    * @param gasCalculator the gas calculator
-   * @param maxInitcodeSize Maximum init code size
    * @param eofVersion the EOF version this create operation is valid in
    */
   protected AbstractCreateOperation(
@@ -68,10 +64,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       final int stackItemsConsumed,
       final int stackItemsProduced,
       final GasCalculator gasCalculator,
-      final int maxInitcodeSize,
       final int eofVersion) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator);
-    this.maxInitcodeSize = maxInitcodeSize;
     this.eofVersion = eofVersion;
   }
 
@@ -103,7 +97,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     Code code = codeSupplier.get();
 
-    if (code != null && code.getSize() > maxInitcodeSize) {
+    if (code != null && code.getSize() > evm.getMaxInitcodeSize()) {
       frame.popStackItems(getStackItemsConsumed());
       return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
     }

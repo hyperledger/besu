@@ -29,9 +29,10 @@ assignees: ''
     - publishes the docker `latest` tag variants
 - [ ] Check binary SHAs are correct on the release page
 - [ ] Check "Container Verify" GitHub workflow has run successfully
-- [ ] Create besu-docs release - https://github.com/hyperledger/besu-docs/releases/new
-  - Copy release notes from besu
-  - If publishing the release in github doesn't automatically trigger this workflow, then manually run https://github.com/hyperledger/besu-docs/actions/workflows/update-version.yml
-- [ ] Create homebrew release - run GHA workflow directly https://github.com/hyperledger/homebrew-besu/actions/workflows/update-version.yml
+- [ ] Update the besu-docs version [update-version workflow](https://github.com/hyperledger/besu-docs/actions/workflows/update-version.yml)
+  - If the PR has not been automatically created, create the PR manually using the created branch `besu-version-<version>`
+- [ ] Create homebrew release using [update-version workflow](https://github.com/hyperledger/homebrew-besu/actions/workflows/update-version.yml)
+  - If the PR has not been automatically created, create the PR manually using the created branch `update-<version>`
+  - Run commands `brew tap hyperledger/besu && brew install besu` on MacOSX and verify latest version has been installed
 - [ ] Delete the burn-in nodes (unless required for further analysis eg performance)
 - [ ] Social announcements

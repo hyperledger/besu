@@ -40,8 +40,8 @@
         "consolidationRequests": [
           {
             "sourceAddress": "0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f",
-            "sourcePubKey": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-            "targetPubKey": "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"
+            "sourcePubkey": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "targetPubkey": "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"
           }
         ],
         "blockNumber": "0x4",

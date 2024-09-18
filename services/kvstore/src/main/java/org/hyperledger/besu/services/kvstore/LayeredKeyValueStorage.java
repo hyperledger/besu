@@ -178,61 +178,60 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     throwIfClosed();
     var ourLayerState = hashValueStore.computeIfAbsent(segmentId, s -> newSegmentMap());
 
-    // otherwise, interleave the sorted streams:
-    final PeekingIterator<Map.Entry<Bytes, Optional<byte[]>>> ourIterator =
-        new PeekingIterator<>(
-            ourLayerState.entrySet().stream()
-                .filter(entry -> entry.getValue().isPresent())
-                .iterator());
-
-    final PeekingIterator<Pair<byte[], byte[]>> parentIterator =
+    PeekingIterator<Map.Entry<Bytes, Optional<byte[]>>> ourIterator =
+        new PeekingIterator<>(ourLayerState.entrySet().stream().iterator());
+    PeekingIterator<Pair<byte[], byte[]>> parentIterator =
         new PeekingIterator<>(parent.stream(segmentId).iterator());
 
     return StreamSupport.stream(
-        Spliterators.spliteratorUnknownSize(
-            new Iterator<>() {
-              @Override
-              public boolean hasNext() {
-                return ourIterator.hasNext() || parentIterator.hasNext();
-              }
+            Spliterators.spliteratorUnknownSize(
+                new LayeredIterator(ourIterator, parentIterator), ORDERED | SORTED | DISTINCT),
+            false)
+        .filter(e -> e.getValue() != null);
+  }
 
-              private Pair<byte[], byte[]> mapEntryToPair(
-                  final Map.Entry<Bytes, Optional<byte[]>> entry) {
-                return Optional.of(entry)
-                    .map(
-                        e ->
-                            Pair.of(
-                                e.getKey().toArrayUnsafe(),
-                                e.getValue().orElseGet(() -> new byte[0])))
-                    .get();
-              }
+  private static class LayeredIterator implements Iterator<Pair<byte[], byte[]>> {
+    private final PeekingIterator<Map.Entry<Bytes, Optional<byte[]>>> ourIterator;
+    private final PeekingIterator<Pair<byte[], byte[]>> parentIterator;
 
-              @Override
-              public Pair<byte[], byte[]> next() {
-                var ourPeek = ourIterator.peek();
-                var parentPeek = parentIterator.peek();
+    LayeredIterator(
+        final PeekingIterator<Map.Entry<Bytes, Optional<byte[]>>> ourIterator,
+        final PeekingIterator<Pair<byte[], byte[]>> parentIterator) {
+      this.ourIterator = ourIterator;
+      this.parentIterator = parentIterator;
+    }
 
-                if (ourPeek == null || parentPeek == null) {
-                  return ourPeek == null
-                      ? parentIterator.next()
-                      : mapEntryToPair(ourIterator.next());
-                }
+    @Override
+    public boolean hasNext() {
+      return ourIterator.hasNext() || parentIterator.hasNext();
+    }
 
-                // otherwise compare:
-                int comparison = ourPeek.getKey().compareTo(Bytes.wrap(parentPeek.getKey()));
-                if (comparison < 0) {
-                  return mapEntryToPair(ourIterator.next());
-                } else if (comparison == 0) {
-                  // skip dupe key from parent, return ours:
-                  parentIterator.next();
-                  return mapEntryToPair(ourIterator.next());
-                } else {
-                  return parentIterator.next();
-                }
-              }
-            },
-            ORDERED | SORTED | DISTINCT),
-        false);
+    private Pair<byte[], byte[]> mapEntryToPair(final Map.Entry<Bytes, Optional<byte[]>> entry) {
+      byte[] value = entry.getValue().orElse(null);
+      return Pair.of(entry.getKey().toArrayUnsafe(), value);
+    }
+
+    @Override
+    public Pair<byte[], byte[]> next() {
+      var ourPeek = ourIterator.peek();
+      var parentPeek = parentIterator.peek();
+
+      if (ourPeek == null || parentPeek == null) {
+        return ourPeek == null ? parentIterator.next() : mapEntryToPair(ourIterator.next());
+      }
+
+      // otherwise compare:
+      int comparison = ourPeek.getKey().compareTo(Bytes.wrap(parentPeek.getKey()));
+      if (comparison < 0) {
+        return mapEntryToPair(ourIterator.next());
+      } else if (comparison == 0) {
+        // skip dupe key from parent, return ours:
+        parentIterator.next();
+        return mapEntryToPair(ourIterator.next());
+      } else {
+        return parentIterator.next();
+      }
+    }
   }
 
   @Override

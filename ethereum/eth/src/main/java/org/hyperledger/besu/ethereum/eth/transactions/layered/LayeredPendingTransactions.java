@@ -20,8 +20,9 @@ import static java.util.stream.Collectors.reducing;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.RECONCILED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.NEW;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.RECONCILED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -41,7 +42,6 @@ import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -100,7 +100,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
 
     try {
-      return prioritizedTransactions.add(pendingTransaction, (int) nonceDistance);
+      return prioritizedTransactions.add(pendingTransaction, (int) nonceDistance, NEW);
     } catch (final Throwable throwable) {
       return reconcileAndRetryAdd(
           pendingTransaction, stateSenderNonce, (int) nonceDistance, throwable);
@@ -123,7 +123,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .log();
     reconcileSender(pendingTransaction.getSender(), stateSenderNonce);
     try {
-      return prioritizedTransactions.add(pendingTransaction, nonceDistance);
+      return prioritizedTransactions.add(pendingTransaction, nonceDistance, NEW);
     } catch (final Throwable throwable2) {
       // the error should have been solved by the reconcile, logging at higher level now
       LOG.atWarn()
@@ -210,7 +210,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final long lowestNonce = reAddTxs.getFirst().getNonce();
       final int newNonceDistance = (int) Math.max(0, lowestNonce - stateSenderNonce);
 
-      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance));
+      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance, NEW));
     }
 
     LOG.atDebug()
@@ -315,8 +315,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   @Override
   public void selectTransactions(final PendingTransactions.TransactionSelector selector) {
-    final List<PendingTransaction> invalidTransactions = new ArrayList<>();
-    final List<PendingTransaction> penalizedTransactions = new ArrayList<>();
     final Set<Address> skipSenders = new HashSet<>();
 
     final Map<Byte, List<SenderPendingTransactions>> candidateTxsByScore;
@@ -346,12 +344,22 @@ public class LayeredPendingTransactions implements PendingTransactions {
                 .log();
 
             if (selectionResult.discard()) {
-              invalidTransactions.add(candidatePendingTx);
+              ethScheduler.scheduleTxWorkerTask(
+                  () -> {
+                    synchronized (this) {
+                      prioritizedTransactions.remove(candidatePendingTx, INVALIDATED);
+                    }
+                  });
               logDiscardedTransaction(candidatePendingTx, selectionResult);
             }
 
             if (selectionResult.penalize()) {
-              penalizedTransactions.add(candidatePendingTx);
+              ethScheduler.scheduleTxWorkerTask(
+                  () -> {
+                    synchronized (this) {
+                      prioritizedTransactions.penalize(candidatePendingTx);
+                    }
+                  });
               LOG.atTrace()
                   .setMessage("Transaction {} penalized")
                   .addArgument(candidatePendingTx::toTraceLog)
@@ -374,22 +382,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
         }
       }
     }
-
-    ethScheduler.scheduleTxWorkerTask(
-        () -> {
-          invalidTransactions.forEach(
-              invalidTx -> {
-                synchronized (this) {
-                  prioritizedTransactions.remove(invalidTx, INVALIDATED);
-                }
-              });
-          penalizedTransactions.forEach(
-              penalizedTx -> {
-                synchronized (this) {
-                  prioritizedTransactions.internalPenalize(penalizedTx);
-                }
-              });
-        });
   }
 
   @Override

@@ -401,7 +401,7 @@ public class BlockTransactionSelector {
     LOG.atTrace()
         .setMessage("Selected {} for block creation, evaluated in {}")
         .addArgument(transaction::toTraceLog)
-        .addArgument(evaluationContext.getPendingTransaction())
+        .addArgument(evaluationContext.getEvaluationTimer())
         .log();
     return SELECTED;
   }

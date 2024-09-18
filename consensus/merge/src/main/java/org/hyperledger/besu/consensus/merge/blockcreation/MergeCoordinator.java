@@ -294,7 +294,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 prevRandao,
                 timestamp,
                 withdrawals,
-                parentBeaconBlockRoot)
+                parentBeaconBlockRoot,
+                parentHeader)
             .getBlock();
 
     BlockProcessingResult result = validateProposedBlock(emptyBlock);
@@ -322,7 +323,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         payloadIdentifier,
         mergeBlockCreator,
         withdrawals,
-        parentBeaconBlockRoot);
+        parentBeaconBlockRoot,
+        parentHeader);
 
     return payloadIdentifier;
   }
@@ -363,12 +365,18 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final PayloadIdentifier payloadIdentifier,
       final MergeBlockCreator mergeBlockCreator,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot) {
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final BlockHeader parentHeader) {
 
     final Supplier<BlockCreationResult> blockCreator =
         () ->
             mergeBlockCreator.createBlock(
-                Optional.empty(), random, timestamp, withdrawals, parentBeaconBlockRoot);
+                Optional.empty(),
+                random,
+                timestamp,
+                withdrawals,
+                parentBeaconBlockRoot,
+                parentHeader);
 
     LOG.debug(
         "Block creation started for payload id {}, remaining time is {}ms",

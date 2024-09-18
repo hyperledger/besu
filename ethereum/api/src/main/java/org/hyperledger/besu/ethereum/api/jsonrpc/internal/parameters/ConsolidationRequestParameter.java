@@ -61,12 +61,12 @@ public class ConsolidationRequestParameter {
   }
 
   @JsonGetter
-  public String getSourcePubKey() {
+  public String getSourcePubkey() {
     return sourcePubkey;
   }
 
   @JsonGetter
-  public String getTargetPubKey() {
+  public String getTargetPubkey() {
     return targetPubkey;
   }
 

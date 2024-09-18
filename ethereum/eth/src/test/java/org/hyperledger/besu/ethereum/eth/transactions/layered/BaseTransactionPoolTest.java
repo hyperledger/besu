@@ -128,7 +128,7 @@ public class BaseTransactionPoolTest {
     final TransactionType txType = TransactionType.values()[randomizeTxType.nextInt(4)];
 
     return switch (txType) {
-      case FRONTIER, ACCESS_LIST, EIP1559, SET_CODE ->
+      case FRONTIER, ACCESS_LIST, EIP1559, DELEGATE_CODE ->
           createTransaction(txType, nonce, maxGasPrice, payloadSize, keys);
       case BLOB ->
           createTransaction(
@@ -258,9 +258,10 @@ public class BaseTransactionPoolTest {
     }
   }
 
-  protected long getAddedCount(final String source, final String priority, final String layer) {
+  protected long getAddedCount(
+      final String source, final String priority, final AddReason addReason, final String layer) {
     return metricsSystem.getCounterValue(
-        TransactionPoolMetrics.ADDED_COUNTER_NAME, source, priority, layer);
+        TransactionPoolMetrics.ADDED_COUNTER_NAME, source, priority, addReason.label(), layer);
   }
 
   protected long getRemovedCount(

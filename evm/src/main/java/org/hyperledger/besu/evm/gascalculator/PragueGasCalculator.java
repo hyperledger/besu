@@ -16,19 +16,17 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
 
+import org.hyperledger.besu.datatypes.CodeDelegation;
+
 /**
  * Gas Calculator for Prague
  *
- * <p>Placeholder for new gas schedule items. If Prague finalzies without changes this can be
- * removed
- *
  * <UL>
- *   <LI>TBD
+ *   <LI>Gas costs for EIP-7702 (Code Delegation)
  * </UL>
  */
 public class PragueGasCalculator extends CancunGasCalculator {
-
-  static final long PER_CONTRACT_CODE_BASE_COST = 2500L;
+  final long existingAccountGasRefund;
 
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
@@ -42,10 +40,21 @@ public class PragueGasCalculator extends CancunGasCalculator {
    */
   protected PragueGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
+    this.existingAccountGasRefund = newAccountGasCost() - CodeDelegation.PER_AUTH_BASE_COST;
   }
 
   @Override
-  public long setCodeListGasCost(final int authorizationListLength) {
-    return PER_CONTRACT_CODE_BASE_COST * authorizationListLength;
+  public long delegateCodeGasCost(final int delegateCodeListLength) {
+    return newAccountGasCost() * delegateCodeListLength;
+  }
+
+  @Override
+  public long calculateDelegateCodeGasRefund(final long alreadyExistingAccounts) {
+    return existingAccountGasRefund * alreadyExistingAccounts;
+  }
+
+  @Override
+  public long delegatedCodeResolutionGasCost(final boolean isWarm) {
+    return isWarm ? getWarmStorageReadCost() : getColdAccountAccessCost();
   }
 }

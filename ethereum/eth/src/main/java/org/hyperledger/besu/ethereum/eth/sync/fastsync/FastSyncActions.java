@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByH
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -155,7 +156,8 @@ public class FastSyncActions {
     return fastSyncState;
   }
 
-  public ChainDownloader createChainDownloader(final FastSyncState currentState) {
+  public ChainDownloader createChainDownloader(
+      final FastSyncState currentState, final SyncDurationMetrics syncDurationMetrics) {
     return FastSyncChainDownloader.create(
         syncConfig,
         worldStateStorageCoordinator,
@@ -164,7 +166,8 @@ public class FastSyncActions {
         ethContext,
         syncState,
         metricsSystem,
-        currentState);
+        currentState,
+        syncDurationMetrics);
   }
 
   private CompletableFuture<FastSyncState> downloadPivotBlockHeader(final Hash hash) {

@@ -650,7 +650,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
-                    evm.getEvmVersion().getMaxInitcodeSize()))
+                    evm.getMaxInitcodeSize()))
         .withdrawalsProcessor(new WithdrawalsProcessor())
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
         .name("Shanghai");
@@ -715,7 +715,7 @@ public abstract class MainnetProtocolSpecs {
                     evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559(),
-                    new AuthorityProcessor(chainId)))
+                    new CodeDelegationProcessor(chainId)))
         // change to check for max blob gas per block for EIP-4844
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -730,7 +730,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559,
                         TransactionType.BLOB),
-                    evm.getEvmVersion().getMaxInitcodeSize()))
+                    evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::cancunBlockHeaderValidator)
         .blockHashProcessor(new CancunBlockHashProcessor())
@@ -813,8 +813,8 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559,
                         TransactionType.BLOB,
-                        TransactionType.SET_CODE),
-                    evm.getEvmVersion().getMaxInitcodeSize()))
+                        TransactionType.DELEGATE_CODE),
+                    evm.getMaxInitcodeSize()))
 
         // EIP-2935 Blockhash processor
         .blockHashProcessor(new PragueBlockHashProcessor())

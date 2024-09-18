@@ -143,6 +143,24 @@ public class EVM {
   }
 
   /**
+   * Gets the max code size, taking configuration and version into account
+   *
+   * @return The max code size override, if not set the max code size for the EVM version.
+   */
+  public int getMaxCodeSize() {
+    return evmConfiguration.maxCodeSizeOverride().orElse(evmSpecVersion.maxCodeSize);
+  }
+
+  /**
+   * Gets the max initcode Size, taking configuration and version into account
+   *
+   * @return The max initcode size override, if not set the max initcode size for the EVM version.
+   */
+  public int getMaxInitcodeSize() {
+    return evmConfiguration.maxInitcodeSizeOverride().orElse(evmSpecVersion.maxInitcodeSize);
+  }
+
+  /**
    * Returns the non-fork related configuration parameters of the EVM.
    *
    * @return the EVM configuration.

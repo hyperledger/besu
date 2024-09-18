@@ -92,7 +92,7 @@ public class TransactionTestFixture {
           builder.versionedHashes(versionedHashes.get());
         }
         break;
-      case SET_CODE:
+      case DELEGATE_CODE:
         break;
     }
 

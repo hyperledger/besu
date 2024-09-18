@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
@@ -84,7 +85,6 @@ import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
-import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -204,16 +204,23 @@ import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.GroupPrincipal;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.UserPrincipal;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -233,6 +240,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
@@ -244,6 +252,8 @@ import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
+import oshi.PlatformEnum;
+import oshi.SystemInfo;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -382,6 +392,28 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Identification for this node in the Client ID",
       arity = "1")
   private final Optional<String> identityString = Optional.empty();
+
+  private Boolean printPathsAndExit = Boolean.FALSE;
+  private String besuUserName = "besu";
+
+  @Option(
+      names = "--print-paths-and-exit",
+      paramLabel = "<username>",
+      description = "Print the configured paths and exit without starting the node.",
+      arity = "0..1")
+  void setUserName(final String userName) {
+    PlatformEnum currentPlatform = SystemInfo.getCurrentPlatform();
+    // Only allow on Linux and macOS
+    if (currentPlatform == PlatformEnum.LINUX || currentPlatform == PlatformEnum.MACOS) {
+      if (userName != null) {
+        besuUserName = userName;
+      }
+      printPathsAndExit = Boolean.TRUE;
+    } else {
+      throw new UnsupportedOperationException(
+          "--print-paths-and-exit is only supported on Linux and macOS.");
+    }
+  }
 
   // P2P Discovery Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold P2P Discovery Options|@%n")
@@ -865,13 +897,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuController besuController;
   private BesuConfigurationImpl pluginCommonConfiguration;
 
-  private BesuComponent besuComponent;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
-      Suppliers.memoize(
-          () ->
-              besuComponent == null || besuComponent.getObservableMetricsSystem() == null
-                  ? MetricsSystemFactory.create(metricsConfiguration())
-                  : besuComponent.getObservableMetricsSystem());
+      Suppliers.memoize(() -> MetricsSystemFactory.create(metricsConfiguration()));
+
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
@@ -879,7 +907,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   /**
    * Besu command constructor.
    *
-   * @param besuComponent BesuComponent which acts as our application context
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
@@ -887,18 +914,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param controllerBuilder instance of BesuController.Builder
    * @param besuPluginContext instance of BesuPluginContextImpl
    * @param environment Environment variables map
+   * @param commandLogger instance of Logger for outputting to the CLI
    */
   public BesuCommand(
-      final BesuComponent besuComponent,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilder,
       final BesuPluginContextImpl besuPluginContext,
-      final Map<String, String> environment) {
+      final Map<String, String> environment,
+      final Logger commandLogger) {
     this(
-        besuComponent,
         rlpBlockImporter,
         jsonBlockImporterFactory,
         rlpBlockExporterFactory,
@@ -914,13 +941,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new TransactionSelectionServiceImpl(),
         new TransactionPoolValidatorServiceImpl(),
         new TransactionSimulationServiceImpl(),
-        new BlockchainServiceImpl());
+        new BlockchainServiceImpl(),
+        commandLogger);
   }
 
   /**
    * Overloaded Besu command constructor visible for testing.
    *
-   * @param besuComponent BesuComponent which acts as our application context
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
@@ -937,10 +964,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param transactionValidatorServiceImpl instance of TransactionValidatorServiceImpl
    * @param transactionSimulationServiceImpl instance of TransactionSimulationServiceImpl
    * @param blockchainServiceImpl instance of BlockchainServiceImpl
+   * @param commandLogger instance of Logger for outputting to the CLI
    */
   @VisibleForTesting
   protected BesuCommand(
-      final BesuComponent besuComponent,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -956,9 +983,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
       final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl,
       final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
-      final BlockchainServiceImpl blockchainServiceImpl) {
-    this.besuComponent = besuComponent;
-    this.logger = besuComponent.getBesuCommandLogger();
+      final BlockchainServiceImpl blockchainServiceImpl,
+      final Logger commandLogger) {
+
+    this.logger = commandLogger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;
@@ -970,8 +998,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.securityModuleService = securityModuleService;
     this.permissioningService = permissioningService;
     this.privacyPluginService = privacyPluginService;
-    this.pluginCommonConfiguration = new BesuConfigurationImpl();
-    besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
+    if (besuPluginContext.getService(BesuConfigurationImpl.class).isPresent()) {
+      this.pluginCommonConfiguration =
+          besuPluginContext.getService(BesuConfigurationImpl.class).get();
+    } else {
+      this.pluginCommonConfiguration = new BesuConfigurationImpl();
+      besuPluginContext.addService(BesuConfiguration.class, this.pluginCommonConfiguration);
+    }
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
     this.transactionSelectionServiceImpl = transactionSelectionServiceImpl;
     this.transactionValidatorServiceImpl = transactionValidatorServiceImpl;
@@ -1093,6 +1126,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try {
       configureLogging(true);
 
+      if (printPathsAndExit) {
+        // Print configured paths requiring read/write permissions to be adjusted
+        checkPermissionsAndPrintPaths(besuUserName);
+        System.exit(0); // Exit before any services are started
+      }
+
       // set merge config on the basis of genesis config
       setMergeConfigOptions();
 
@@ -1136,6 +1175,104 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.error("Failed to start Besu", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
+  }
+
+  private void checkPermissionsAndPrintPaths(final String userName) {
+    // Check permissions for the data path
+    checkPermissions(dataDir(), userName, false);
+
+    // Check permissions for genesis file
+    try {
+      if (genesisFile != null) {
+        checkPermissions(genesisFile.toPath(), userName, true);
+      }
+    } catch (Exception e) {
+      commandLine
+          .getOut()
+          .println("Error: Failed checking genesis file: Reason: " + e.getMessage());
+    }
+  }
+
+  // Helper method to check permissions on a given path
+  private void checkPermissions(final Path path, final String besuUser, final boolean readOnly) {
+    try {
+      // Get the permissions of the file
+      // check if besu user is the owner - get owner permissions if yes
+      // else, check if besu user and owner are in the same group - if yes, check the group
+      // permission
+      // otherwise check permissions for others
+
+      // Get the owner of the file or directory
+      UserPrincipal owner = Files.getOwner(path);
+      boolean hasReadPermission, hasWritePermission;
+
+      // Get file permissions
+      Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(path);
+
+      // Check if besu is the owner
+      if (owner.getName().equals(besuUser)) {
+        // Owner permissions
+        hasReadPermission = permissions.contains(PosixFilePermission.OWNER_READ);
+        hasWritePermission = permissions.contains(PosixFilePermission.OWNER_WRITE);
+      } else {
+        // Get the group of the file
+        // Get POSIX file attributes and then group
+        PosixFileAttributes attrs = Files.readAttributes(path, PosixFileAttributes.class);
+        GroupPrincipal group = attrs.group();
+
+        // Check if besu user belongs to this group
+        boolean isMember = isGroupMember(besuUserName, group);
+
+        if (isMember) {
+          // Group's permissions
+          hasReadPermission = permissions.contains(PosixFilePermission.GROUP_READ);
+          hasWritePermission = permissions.contains(PosixFilePermission.GROUP_WRITE);
+        } else {
+          // Others' permissions
+          hasReadPermission = permissions.contains(PosixFilePermission.OTHERS_READ);
+          hasWritePermission = permissions.contains(PosixFilePermission.OTHERS_WRITE);
+        }
+      }
+
+      if (!hasReadPermission || (!readOnly && !hasWritePermission)) {
+        String accessType = readOnly ? "READ" : "READ_WRITE";
+        commandLine.getOut().println("PERMISSION_CHECK_PATH:" + path + ":" + accessType);
+      }
+    } catch (Exception e) {
+      // Do nothing upon catching an error
+      commandLine
+          .getOut()
+          .println(
+              "Error: Failed to check permissions for path: '"
+                  + path
+                  + "'. Reason: "
+                  + e.getMessage());
+    }
+  }
+
+  private static boolean isGroupMember(final String userName, final GroupPrincipal group)
+      throws IOException {
+    // Get the groups of the user by executing 'id -Gn username'
+    Process process = Runtime.getRuntime().exec(new String[] {"id", "-Gn", userName});
+    BufferedReader reader =
+        new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8));
+
+    // Read the output of the command
+    String line = reader.readLine();
+    boolean isMember = false;
+    if (line != null) {
+      // Split the groups
+      Iterable<String> userGroups = Splitter.on(" ").split(line);
+      // Check if any of the user's groups match the file's group
+
+      for (String grp : userGroups) {
+        if (grp.equals(group.getName())) {
+          isMember = true;
+          break;
+        }
+      }
+    }
+    return isMember;
   }
 
   @VisibleForTesting
@@ -1568,6 +1705,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings("ConstantConditions")
   private void validateNatParams() {
+    if (natMethod.equals(NatMethod.KUBERNETES)) {
+      logger.warn("Kubernetes NAT method is deprecated. Please use Docker or UPNP");
+    }
+    if (!unstableNatOptions.getNatManagerServiceName().equals(DEFAULT_BESU_SERVICE_NAME_FILTER)) {
+      logger.warn(
+          "`--Xnat-kube-service-name` and Kubernetes NAT method are deprecated. Please use Docker or UPNP");
+    }
     if (!(natMethod.equals(NatMethod.AUTO) || natMethod.equals(NatMethod.KUBERNETES))
         && !unstableNatOptions
             .getNatManagerServiceName()
@@ -1821,9 +1965,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public BesuController buildController() {
     try {
-      return this.besuComponent == null
-          ? getControllerBuilder().build()
-          : getControllerBuilder().besuComponent(this.besuComponent).build();
+      return setupControllerBuilder().build();
     } catch (final Exception e) {
       throw new ExecutionException(this.commandLine, e.getMessage(), e);
     }
@@ -1834,7 +1976,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    *
    * @return instance of BesuControllerBuilder
    */
-  public BesuControllerBuilder getControllerBuilder() {
+  public BesuControllerBuilder setupControllerBuilder() {
     pluginCommonConfiguration
         .init(dataDir(), dataDir().resolve(DATABASE_PATH), getDataStorageConfiguration())
         .withMiningParameters(miningParametersSupplier.get())
@@ -2800,7 +2942,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
     builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());
 
-    builder.setPluginContext(besuComponent.getBesuPluginContext());
+    builder.setPluginContext(this.besuPluginContext);
 
     return builder.build();
   }

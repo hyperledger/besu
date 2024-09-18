@@ -1,0 +1,21 @@
+{
+  "request": {
+    "id": 3,
+    "jsonrpc": "2.0",
+    "method": "eth_estimateGas",
+    "params": [
+      {
+        "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "to": "0x8888f1f195afa192cfee860698584c030f4c9db1",
+        "value": "0x1"
+      },
+      "earliest"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": "0x5208"
+  },
+  "statusCode": 200
+}

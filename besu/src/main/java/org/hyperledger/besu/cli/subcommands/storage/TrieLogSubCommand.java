@@ -87,7 +87,7 @@ public class TrieLogSubCommand implements Runnable {
     // disable limit trie logs to avoid preloading during subcommand execution
     return parentCommand
         .besuCommand
-        .getControllerBuilder()
+        .setupControllerBuilder()
         .dataStorageConfiguration(
             ImmutableDataStorageConfiguration.copyOf(config).withBonsaiLimitTrieLogsEnabled(false))
         .build();

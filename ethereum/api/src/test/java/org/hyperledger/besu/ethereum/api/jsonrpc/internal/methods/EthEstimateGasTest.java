@@ -22,7 +22,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -66,7 +65,9 @@ public class EthEstimateGasTest {
 
   private EthEstimateGas method;
 
-  @Mock private BlockHeader blockHeader;
+  @Mock private BlockHeader latestBlockHeader;
+  @Mock private BlockHeader finalizedBlockHeader;
+  @Mock private BlockHeader genesisBlockHeader;
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
@@ -76,16 +77,18 @@ public class EthEstimateGasTest {
   public void setUp() {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
-    when(blockchain.getChainHeadHash())
-        .thenReturn(
-            Hash.fromHexString(
-                "0x3f07a9c83155594c000642e7d60e8a8a00038d03e9849171a05ed0e2d47acbb3"));
-    when(blockchain.getBlockHeader(
-            Hash.fromHexString(
-                "0x3f07a9c83155594c000642e7d60e8a8a00038d03e9849171a05ed0e2d47acbb3")))
-        .thenReturn(Optional.of(blockHeader));
-    when(blockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
-    when(blockHeader.getNumber()).thenReturn(1L);
+    when(blockchainQueries.headBlockNumber()).thenReturn(2L);
+    when(blockchainQueries.getBlockHeaderByNumber(0L)).thenReturn(Optional.of(genesisBlockHeader));
+    when(blockchainQueries.finalizedBlockHeader()).thenReturn(Optional.of(finalizedBlockHeader));
+    when(blockchainQueries.getBlockHeaderByNumber(1L))
+        .thenReturn(Optional.of(finalizedBlockHeader));
+    when(genesisBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
+    when(genesisBlockHeader.getNumber()).thenReturn(0L);
+    when(finalizedBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
+    when(finalizedBlockHeader.getNumber()).thenReturn(1L);
+    when(blockchain.getChainHeadHeader()).thenReturn(latestBlockHeader);
+    when(latestBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
+    when(latestBlockHeader.getNumber()).thenReturn(2L);
     when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(true);
 
     method = new EthEstimateGas(blockchainQueries, transactionSimulator);
@@ -104,15 +107,13 @@ public class EthEstimateGasTest {
             eq(modifiedLegacyTransactionCallParameter(Wei.ZERO)),
             any(TransactionValidationParams.class),
             any(OperationTracer.class),
-            eq(1L)))
+            eq(latestBlockHeader)))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, RpcErrorType.INTERNAL_ERROR);
 
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -122,28 +123,24 @@ public class EthEstimateGasTest {
             eq(modifiedEip1559TransactionCallParameter()),
             any(TransactionValidationParams.class),
             any(OperationTracer.class),
-            eq(1L)))
+            eq(latestBlockHeader)))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, RpcErrorType.INTERNAL_ERROR);
 
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
   public void shouldReturnGasEstimateWhenTransientLegacyTransactionProcessorReturnsResultSuccess() {
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
-    mockTransientProcessorResultGasEstimate(1L, true, false);
+    mockTransientProcessorResultGasEstimate(1L, true, false, latestBlockHeader);
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
 
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -151,20 +148,19 @@ public class EthEstimateGasTest {
     final Wei gasPrice = Wei.of(1000);
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(defaultLegacyTransactionCallParameter(gasPrice));
-    mockTransientProcessorResultGasEstimate(1L, true, gasPrice, Optional.empty());
+    mockTransientProcessorResultGasEstimate(
+        1L, true, gasPrice, Optional.empty(), latestBlockHeader);
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
 
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
   public void shouldReturnGasEstimateErrorWhenGasPricePresentForEip1559Transaction() {
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(eip1559TransactionCallParameter(Optional.of(Wei.of(10))));
-    mockTransientProcessorResultGasEstimate(1L, false, false);
+    mockTransientProcessorResultGasEstimate(1L, false, false, latestBlockHeader);
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessageContaining("gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas");
@@ -174,12 +170,10 @@ public class EthEstimateGasTest {
   public void
       shouldReturnGasEstimateWhenTransientEip1559TransactionProcessorReturnsResultSuccess() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
-    mockTransientProcessorResultGasEstimate(1L, true, false);
+    mockTransientProcessorResultGasEstimate(1L, true, false, latestBlockHeader);
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -187,28 +181,24 @@ public class EthEstimateGasTest {
       shouldReturnGasEstimateErrorWhenTransientLegacyTransactionProcessorReturnsResultFailure() {
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
-    mockTransientProcessorResultGasEstimate(1L, false, false);
+    mockTransientProcessorResultGasEstimate(1L, false, false, latestBlockHeader);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, RpcErrorType.INTERNAL_ERROR);
 
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
   public void
       shouldReturnGasEstimateErrorWhenTransientEip1559TransactionProcessorReturnsResultFailure() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
-    mockTransientProcessorResultGasEstimate(1L, false, false);
+    mockTransientProcessorResultGasEstimate(1L, false, false, latestBlockHeader);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, RpcErrorType.INTERNAL_ERROR);
 
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -217,7 +207,8 @@ public class EthEstimateGasTest {
         ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     mockTransientProcessorResultTxInvalidReason(
         TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
-        "transaction up-front cost 10 exceeds transaction sender account balance 5");
+        "transaction up-front cost 10 exceeds transaction sender account balance 5",
+        latestBlockHeader);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         ValidationResult.invalid(
@@ -226,9 +217,7 @@ public class EthEstimateGasTest {
     final JsonRpcError rpcError = JsonRpcError.from(validationResult);
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, rpcError);
 
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -236,7 +225,8 @@ public class EthEstimateGasTest {
     final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
     mockTransientProcessorResultTxInvalidReason(
         TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
-        "transaction up-front cost 10 exceeds transaction sender account balance 5");
+        "transaction up-front cost 10 exceeds transaction sender account balance 5",
+        latestBlockHeader);
     final ValidationResult<TransactionInvalidReason> validationResult =
         ValidationResult.invalid(
             TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
@@ -244,9 +234,7 @@ public class EthEstimateGasTest {
     final JsonRpcError rpcError = JsonRpcError.from(validationResult);
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, rpcError);
 
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -254,21 +242,21 @@ public class EthEstimateGasTest {
     when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(false);
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
-    mockTransientProcessorResultGasEstimate(1L, false, false);
+    mockTransientProcessorResultGasEstimate(1L, false, false, latestBlockHeader);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, RpcErrorType.WORLD_STATE_UNAVAILABLE);
 
     JsonRpcResponse theResponse = method.response(request);
 
-    Assertions.assertThat(theResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(theResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
   public void shouldReturnErrorWhenTransactionReverted() {
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
-    mockTransientProcessorResultGasEstimate(1L, false, true);
+    mockTransientProcessorResultGasEstimate(1L, false, true, latestBlockHeader);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, new JsonRpcError(RpcErrorType.REVERT_ERROR, "0x00"));
@@ -278,7 +266,7 @@ public class EthEstimateGasTest {
 
     final JsonRpcResponse actualResponse = method.response(request);
 
-    Assertions.assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     assertThat(((JsonRpcErrorResponse) actualResponse).getError().getMessage())
         .isEqualTo("Execution reverted");
@@ -296,7 +284,8 @@ public class EthEstimateGasTest {
             + "00002545524332303a207472616e736665722066726f6d20746865207a65726f20"
             + "61646472657373000000000000000000000000000000000000000000000000000000";
 
-    mockTransientProcessorTxReverted(1L, false, Bytes.fromHexString(executionRevertedReason));
+    mockTransientProcessorTxReverted(
+        1L, false, Bytes.fromHexString(executionRevertedReason), latestBlockHeader);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
@@ -307,7 +296,7 @@ public class EthEstimateGasTest {
 
     final JsonRpcResponse actualResponse = method.response(request);
 
-    Assertions.assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     assertThat(((JsonRpcErrorResponse) actualResponse).getError().getMessage())
         .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
@@ -323,7 +312,8 @@ public class EthEstimateGasTest {
         "0x08c379a000000000000000000000000000000000000000000000000000000000"
             + "123451234512345123451234512345123451234512345123451234512345123451";
 
-    mockTransientProcessorTxReverted(1L, false, Bytes.fromHexString(invalidRevertReason));
+    mockTransientProcessorTxReverted(
+        1L, false, Bytes.fromHexString(invalidRevertReason), latestBlockHeader);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
@@ -334,7 +324,7 @@ public class EthEstimateGasTest {
 
     final JsonRpcResponse actualResponse = method.response(request);
 
-    Assertions.assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     assertThat(((JsonRpcErrorResponse) actualResponse).getError().getMessage())
         .isEqualTo("Execution reverted: ABI decode error");
@@ -344,7 +334,7 @@ public class EthEstimateGasTest {
   public void shouldIgnoreSenderBalanceAccountWhenStrictModeDisabled() {
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
-    mockTransientProcessorResultGasEstimate(1L, false, true);
+    mockTransientProcessorResultGasEstimate(1L, false, true, latestBlockHeader);
 
     method.response(request);
 
@@ -357,14 +347,14 @@ public class EthEstimateGasTest {
                     .isAllowExceedingBalance(true)
                     .build()),
             any(OperationTracer.class),
-            eq(1L));
+            eq(latestBlockHeader));
   }
 
   @Test
   public void shouldNotIgnoreSenderBalanceAccountWhenStrictModeEnabled() {
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO, true));
-    mockTransientProcessorResultGasEstimate(1L, false, true);
+    mockTransientProcessorResultGasEstimate(1L, false, true, latestBlockHeader);
 
     method.response(request);
 
@@ -377,7 +367,7 @@ public class EthEstimateGasTest {
                     .isAllowExceedingBalance(false)
                     .build()),
             any(OperationTracer.class),
-            eq(1L));
+            eq(latestBlockHeader));
   }
 
   @Test
@@ -385,22 +375,44 @@ public class EthEstimateGasTest {
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     mockTransientProcessorResultTxInvalidReason(
-        TransactionInvalidReason.EXECUTION_HALTED, "INVALID_OPERATION");
+        TransactionInvalidReason.EXECUTION_HALTED, "INVALID_OPERATION", latestBlockHeader);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         ValidationResult.invalid(TransactionInvalidReason.EXECUTION_HALTED, "INVALID_OPERATION");
     final JsonRpcError rpcError = JsonRpcError.from(validationResult);
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, rpcError);
 
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void shouldUseBlockTagParamWhenPresent() {
+    final JsonRpcRequestContext request =
+        ethEstimateGasRequest(eip1559TransactionCallParameter(), "finalized");
+    mockTransientProcessorResultGasEstimate(1L, true, false, finalizedBlockHeader);
+
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
+
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void shouldUseBlockNumberParamWhenPresent() {
+    final JsonRpcRequestContext request =
+        ethEstimateGasRequest(eip1559TransactionCallParameter(), "0x0");
+    mockTransientProcessorResultGasEstimate(1L, true, false, genesisBlockHeader);
+
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
+
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private void mockTransientProcessorResultTxInvalidReason(
-      final TransactionInvalidReason reason, final String validationFailedErrorMessage) {
+      final TransactionInvalidReason reason,
+      final String validationFailedErrorMessage,
+      final BlockHeader blockHeader) {
     final TransactionSimulatorResult mockTxSimResult =
-        getMockTransactionSimulatorResult(false, 0, Wei.ZERO, Optional.empty());
+        getMockTransactionSimulatorResult(false, 0, Wei.ZERO, Optional.empty(), blockHeader);
     when(mockTxSimResult.getValidationResult())
         .thenReturn(
             validationFailedErrorMessage == null
@@ -409,45 +421,55 @@ public class EthEstimateGasTest {
   }
 
   private void mockTransientProcessorTxReverted(
-      final long estimateGas, final boolean isSuccessful, final Bytes revertReason) {
+      final long estimateGas,
+      final boolean isSuccessful,
+      final Bytes revertReason,
+      final BlockHeader blockHeader) {
     mockTransientProcessorResultGasEstimate(
-        estimateGas, isSuccessful, Wei.ZERO, Optional.of(revertReason));
+        estimateGas, isSuccessful, Wei.ZERO, Optional.of(revertReason), blockHeader);
   }
 
   private void mockTransientProcessorResultGasEstimate(
-      final long estimateGas, final boolean isSuccessful, final boolean isReverted) {
+      final long estimateGas,
+      final boolean isSuccessful,
+      final boolean isReverted,
+      final BlockHeader blockHeader) {
     mockTransientProcessorResultGasEstimate(
         estimateGas,
         isSuccessful,
         Wei.ZERO,
-        isReverted ? Optional.of(Bytes.of(0)) : Optional.empty());
+        isReverted ? Optional.of(Bytes.of(0)) : Optional.empty(),
+        blockHeader);
   }
 
   private void mockTransientProcessorResultGasEstimate(
       final long estimateGas,
       final boolean isSuccessful,
       final Wei gasPrice,
-      final Optional<Bytes> revertReason) {
-    getMockTransactionSimulatorResult(isSuccessful, estimateGas, gasPrice, revertReason);
+      final Optional<Bytes> revertReason,
+      final BlockHeader blockHeader) {
+    getMockTransactionSimulatorResult(
+        isSuccessful, estimateGas, gasPrice, revertReason, blockHeader);
   }
 
   private TransactionSimulatorResult getMockTransactionSimulatorResult(
       final boolean isSuccessful,
       final long estimateGas,
       final Wei gasPrice,
-      final Optional<Bytes> revertReason) {
+      final Optional<Bytes> revertReason,
+      final BlockHeader blockHeader) {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
     when(transactionSimulator.process(
             eq(modifiedLegacyTransactionCallParameter(gasPrice)),
             any(TransactionValidationParams.class),
             any(OperationTracer.class),
-            eq(1L)))
+            eq(blockHeader)))
         .thenReturn(Optional.of(mockTxSimResult));
     when(transactionSimulator.process(
             eq(modifiedEip1559TransactionCallParameter()),
             any(TransactionValidationParams.class),
             any(OperationTracer.class),
-            eq(1L)))
+            eq(blockHeader)))
         .thenReturn(Optional.of(mockTxSimResult));
 
     final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
@@ -522,5 +544,11 @@ public class EthEstimateGasTest {
   private JsonRpcRequestContext ethEstimateGasRequest(final CallParameter callParameter) {
     return new JsonRpcRequestContext(
         new JsonRpcRequest("2.0", "eth_estimateGas", new Object[] {callParameter}));
+  }
+
+  private JsonRpcRequestContext ethEstimateGasRequest(
+      final CallParameter callParameter, final String blockParam) {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest("2.0", "eth_estimateGas", new Object[] {callParameter, blockParam}));
   }
 }

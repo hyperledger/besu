@@ -81,7 +81,7 @@ public class MainnetTransactionProcessor {
   protected final FeeMarket feeMarket;
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
-  private final Optional<AuthorityProcessor> maybeAuthorityProcessor;
+  private final Optional<CodeDelegationProcessor> maybeCodeDelegationProcessor;
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
@@ -116,7 +116,7 @@ public class MainnetTransactionProcessor {
       final int maxStackSize,
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
-      final AuthorityProcessor maybeAuthorityProcessor) {
+      final CodeDelegationProcessor maybeCodeDelegationProcessor) {
     this.gasCalculator = gasCalculator;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -126,7 +126,7 @@ public class MainnetTransactionProcessor {
     this.maxStackSize = maxStackSize;
     this.feeMarket = feeMarket;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
-    this.maybeAuthorityProcessor = Optional.ofNullable(maybeAuthorityProcessor);
+    this.maybeCodeDelegationProcessor = Optional.ofNullable(maybeCodeDelegationProcessor);
   }
 
   /**
@@ -316,16 +316,7 @@ public class MainnetTransactionProcessor {
 
       operationTracer.tracePrepareTransaction(evmWorldUpdater, transaction);
 
-      final Set<Address> addressList = new BytesTrieSet<>(Address.SIZE);
-
-      if (transaction.getAuthorizationList().isPresent()) {
-        if (maybeAuthorityProcessor.isEmpty()) {
-          throw new RuntimeException("Authority processor is required for 7702 transactions");
-        }
-
-        maybeAuthorityProcessor.get().addContractToAuthority(evmWorldUpdater, transaction);
-        addressList.addAll(evmWorldUpdater.authorizedCodeService().getAuthorities());
-      }
+      final Set<Address> warmAddressList = new BytesTrieSet<>(Address.SIZE);
 
       final long previousNonce = sender.incrementNonce();
       LOG.trace(
@@ -349,6 +340,20 @@ public class MainnetTransactionProcessor {
           previousBalance,
           sender.getBalance());
 
+      long codeDelegationRefund = 0L;
+      if (transaction.getCodeDelegationList().isPresent()) {
+        if (maybeCodeDelegationProcessor.isEmpty()) {
+          throw new RuntimeException("Code delegation processor is required for 7702 transactions");
+        }
+
+        final CodeDelegationResult codeDelegationResult =
+            maybeCodeDelegationProcessor.get().process(evmWorldUpdater, transaction);
+        warmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
+        codeDelegationRefund =
+            gasCalculator.calculateDelegateCodeGasRefund(
+                (codeDelegationResult.alreadyExistingDelegators()));
+      }
+
       final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
       // we need to keep a separate hash set of addresses in case they specify no storage.
       // No-storage is a common pattern, especially for Externally Owned Accounts
@@ -356,13 +361,13 @@ public class MainnetTransactionProcessor {
       int accessListStorageCount = 0;
       for (final var entry : accessListEntries) {
         final Address address = entry.address();
-        addressList.add(address);
+        warmAddressList.add(address);
         final List<Bytes32> storageKeys = entry.storageKeys();
         storageList.putAll(address, storageKeys);
         accessListStorageCount += storageKeys.size();
       }
       if (warmCoinbase) {
-        addressList.add(miningBeneficiary);
+        warmAddressList.add(miningBeneficiary);
       }
 
       final long intrinsicGas =
@@ -370,16 +375,17 @@ public class MainnetTransactionProcessor {
               transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
-      final long setCodeGas = gasCalculator.setCodeListGasCost(transaction.authorizationListSize());
+      final long codeDelegationGas =
+          gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
       final long gasAvailable =
-          transaction.getGasLimit() - intrinsicGas - accessListGas - setCodeGas;
+          transaction.getGasLimit() - intrinsicGas - accessListGas - codeDelegationGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - setCode)",
+          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - codeDelegation)",
           gasAvailable,
           transaction.getGasLimit(),
           intrinsicGas,
           accessListGas,
-          setCodeGas);
+          codeDelegationGas);
 
       final WorldUpdater worldUpdater = evmWorldUpdater.updater();
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
@@ -409,7 +415,7 @@ public class MainnetTransactionProcessor {
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .contextVariables(contextVariablesBuilder.build())
-              .accessListWarmAddresses(addressList)
+              .accessListWarmAddresses(warmAddressList)
               .accessListWarmStorage(storageList);
 
       if (transaction.getVersionedHashes().isPresent()) {
@@ -488,7 +494,8 @@ public class MainnetTransactionProcessor {
       // after the other so that if it is the same account somehow, we end up with the right result)
       final long selfDestructRefund =
           gasCalculator.getSelfDestructRefundAmount() * initialFrame.getSelfDestructs().size();
-      final long baseRefundGas = initialFrame.getGasRefund() + selfDestructRefund;
+      final long baseRefundGas =
+          initialFrame.getGasRefund() + selfDestructRefund + codeDelegationRefund;
       final long refundedGas = refunded(transaction, initialFrame.getRemainingGas(), baseRefundGas);
       final Wei refundedWei = transactionGasPrice.multiply(refundedGas);
       final Wei balancePriorToRefund = sender.getBalance();
@@ -528,7 +535,6 @@ public class MainnetTransactionProcessor {
 
       final var coinbase = evmWorldUpdater.getOrCreate(miningBeneficiary);
       coinbase.incrementBalance(coinbaseWeiDelta);
-      evmWorldUpdater.authorizedCodeService().resetAuthorities();
 
       operationTracer.traceEndTransaction(
           worldUpdater,

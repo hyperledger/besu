@@ -68,6 +68,7 @@ import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
+import org.hyperledger.besu.util.number.ByteUnits;
 
 import java.math.BigInteger;
 import java.time.ZoneId;
@@ -154,7 +155,7 @@ public class BesuEventsImplTest {
         .when(mockWorldStateArchive.getMutable(any(), anyBoolean()))
         .thenReturn(Optional.of(mockWorldState));
 
-    blockBroadcaster = new BlockBroadcaster(mockEthContext);
+    blockBroadcaster = new BlockBroadcaster(mockEthContext, 10 * ByteUnits.MEGABYTE);
     syncState = new SyncState(blockchain, mockEthPeers);
     TransactionPoolConfiguration txPoolConfig =
         ImmutableTransactionPoolConfiguration.builder()

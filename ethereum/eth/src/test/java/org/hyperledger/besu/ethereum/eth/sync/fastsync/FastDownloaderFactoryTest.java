@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -115,7 +116,8 @@ public class FastDownloaderFactoryTest {
                     ethContext,
                     worldStateStorageCoordinator,
                     syncState,
-                    clock))
+                    clock,
+                    SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS))
         .isInstanceOf(IllegalStateException.class);
   }
 
@@ -139,7 +141,8 @@ public class FastDownloaderFactoryTest {
             ethContext,
             worldStateStorageCoordinator,
             syncState,
-            clock);
+            clock,
+            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
     assertThat(result).isEmpty();
   }
 
@@ -166,7 +169,8 @@ public class FastDownloaderFactoryTest {
         ethContext,
         worldStateStorageCoordinator,
         syncState,
-        clock);
+        clock,
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
 
     verify(mutableBlockchain).getChainHeadBlockNumber();
   }
@@ -200,7 +204,8 @@ public class FastDownloaderFactoryTest {
         ethContext,
         worldStateStorageCoordinator,
         syncState,
-        clock);
+        clock,
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
 
     verify(worldStateKeyValueStorage).clear();
     assertThat(Files.exists(stateQueueDir)).isFalse();
@@ -236,7 +241,8 @@ public class FastDownloaderFactoryTest {
                     ethContext,
                     worldStateStorageCoordinator,
                     syncState,
-                    clock))
+                    clock,
+                    SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS))
         .isInstanceOf(IllegalStateException.class);
   }
 

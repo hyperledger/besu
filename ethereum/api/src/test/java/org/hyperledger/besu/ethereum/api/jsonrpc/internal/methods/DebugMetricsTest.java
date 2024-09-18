@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.metrics.BesuMetricCategory.BLOCKCHAIN;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.PEERS;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.RPC;
 import static org.mockito.Mockito.mock;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableMap;
@@ -82,6 +84,36 @@ public class DebugMetricsTest {
                     ImmutableMap.of("label2A", "value1", "label2B", "value2"),
                     "label1B",
                     ImmutableMap.of("label2B", "value3")))));
+  }
+
+  @Test
+  public void shouldHandleDoubleValuesInNestedStructureWithoutClassCastException() {
+    // Tests fix for issue# 7383: debug_metrics method error
+    when(metricsSystem.streamObservations())
+        .thenReturn(
+            Stream.of(
+                // This creates a double value for "a"
+                new Observation(BLOCKCHAIN, "nested_metric", 1.0, List.of("a")),
+                // This attempts to create a nested structure under "a", which was previously a
+                // double
+                new Observation(BLOCKCHAIN, "nested_metric", 2.0, asList("a", "b")),
+                // This adds another level of nesting
+                new Observation(BLOCKCHAIN, "nested_metric", 3.0, asList("a", "b", "c"))));
+
+    assertResponse(
+        ImmutableMap.of(
+            BLOCKCHAIN.getName(),
+            ImmutableMap.of(
+                "nested_metric",
+                ImmutableMap.of(
+                    "a",
+                    ImmutableMap.of(
+                        "value",
+                        1.0,
+                        "b",
+                        ImmutableMap.of(
+                            "value", 2.0,
+                            "c", 3.0))))));
   }
 
   private void assertResponse(final ImmutableMap<String, Object> expectedResponse) {

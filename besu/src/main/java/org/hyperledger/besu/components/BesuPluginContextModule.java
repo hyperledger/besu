@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.components;
 
+import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -29,15 +30,23 @@ public class BesuPluginContextModule {
   /** Default constructor. */
   public BesuPluginContextModule() {}
 
+  @Provides
+  @Singleton
+  BesuConfigurationImpl provideBesuPluginConfig() {
+    return new BesuConfigurationImpl();
+  }
+
   /**
    * Creates a BesuPluginContextImpl, used for plugin service discovery.
    *
+   * @param pluginConfig the BesuConfigurationImpl
    * @return the BesuPluginContext
    */
   @Provides
-  @Named("besuPluginContext")
   @Singleton
-  public BesuPluginContextImpl provideBesuPluginContext() {
-    return new BesuPluginContextImpl();
+  public BesuPluginContextImpl provideBesuPluginContext(final BesuConfigurationImpl pluginConfig) {
+    BesuPluginContextImpl retval = new BesuPluginContextImpl();
+    retval.addService(BesuConfiguration.class, pluginConfig);
+    return retval;
   }
 }
