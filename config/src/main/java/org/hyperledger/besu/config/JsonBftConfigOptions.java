@@ -140,6 +140,9 @@ public class JsonBftConfigOptions implements BftConfigOptions {
     if (bftConfigRoot.has("blockperiodseconds")) {
       builder.put("blockPeriodSeconds", getBlockPeriodSeconds());
     }
+    if (bftConfigRoot.has("xblockperiodmilliseconds")) {
+      builder.put("xBlockPeriodMilliSeconds", getBlockPeriodMilliseconds());
+    }
     if (bftConfigRoot.has("requesttimeoutseconds")) {
       builder.put("requestTimeoutSeconds", getRequestTimeoutSeconds());
     }
