@@ -3,14 +3,18 @@
 ## [Unreleased]
 
 ### Upcoming Breaking Changes
+- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
 
 ### Breaking Changes
 
 ### Additions and Improvements
 - Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
 
-
 ### Bug fixes
+- Fix mounted data path directory permissions for besu user [#7575](https://github.com/hyperledger/besu/pull/7575)
+- Fix for `debug_traceCall` to handle transactions without specified gas price. [#7510](https://github.com/hyperledger/besu/pull/7510)
+- Corrects a regression where custom plugin services are not initialized correctly. [#7625](https://github.com/hyperledger/besu/pull/7625)
+
 
 ## 24.9.1
 
@@ -53,7 +57,6 @@
 ## 24.9.0
 
 This release version has been deprecated release due to CI bug
-
 
 ## 24.8.0
 
