@@ -215,7 +215,6 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.GroupPrincipal;
@@ -253,6 +252,8 @@ import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
+import oshi.PlatformEnum;
+import oshi.SystemInfo;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -401,10 +402,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Print the configured paths and exit without starting the node.",
       arity = "0..1")
   void setUserName(final String userName) {
-    if (userName != null) {
-      besuUserName = userName;
+    PlatformEnum currentPlatform = SystemInfo.getCurrentPlatform();
+    // Only allow on Linux and macOS
+    if (currentPlatform == PlatformEnum.LINUX || currentPlatform == PlatformEnum.MACOS) {
+      if (userName != null) {
+        besuUserName = userName;
+      }
+      printPathsAndExit = Boolean.TRUE;
+    } else {
+      throw new UnsupportedOperationException(
+          "--print-paths-and-exit is only supported on Linux and macOS.");
     }
-    printPathsAndExit = Boolean.TRUE;
   }
 
   // P2P Discovery Option Group
