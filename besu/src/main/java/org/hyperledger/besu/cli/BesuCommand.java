@@ -843,12 +843,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfblocksToCache = 0;
 
-  @Option(
-      names = {"--Xpeertask-system-enabled"},
-      description =
-          "Temporary feature toggle to enable using the new peertask system (default: ${DEFAULT-VALUE})")
-  private final Boolean isPeerTaskSystemEnabled = false;
-
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
   // Plugins Configuration Option Group
@@ -1790,8 +1784,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricsConfiguration = metricsConfiguration();
 
     instantiateSignatureAlgorithmFactory();
-
-    PeerTaskFeatureToggle.initialize(isPeerTaskSystemEnabled);
 
     logger.info(generateConfigurationOverview());
     logger.info("Security Module: {}", securityModuleName);

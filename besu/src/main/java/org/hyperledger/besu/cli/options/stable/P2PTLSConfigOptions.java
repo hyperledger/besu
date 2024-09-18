@@ -20,6 +20,7 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_FILE_FORMA
 
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskFeatureToggle;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 
 import java.nio.file.Path;
@@ -103,6 +104,13 @@ public class P2PTLSConfigOptions {
           "Whether to send a SNI header in the TLS ClientHello message (default: ${DEFAULT-VALUE})")
   private final Boolean p2pTlsClientHelloSniHeaderEnabled = false;
 
+  @Option(
+          names = {"--Xpeertask-system-enabled"},
+          hidden = true,
+          description =
+                  "Temporary feature toggle to enable using the new peertask system (default: ${DEFAULT-VALUE})")
+  private final Boolean isPeerTaskSystemEnabled = false;
+
   /** Default constructor. */
   P2PTLSConfigOptions() {}
 
@@ -127,6 +135,8 @@ public class P2PTLSConfigOptions {
           commandLine,
           "File containing password to unlock keystore is required when p2p TLS is enabled");
     }
+
+    PeerTaskFeatureToggle.initialize(isPeerTaskSystemEnabled);
 
     return Optional.of(
         TLSConfiguration.Builder.tlsConfiguration()
