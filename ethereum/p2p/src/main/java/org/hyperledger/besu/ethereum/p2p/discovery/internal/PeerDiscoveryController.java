@@ -426,6 +426,7 @@ public class PeerDiscoveryController {
                 }
               });
     } else {
+      peer.setStatus(PeerDiscoveryStatus.BONDED);
       addToPeerTable(peer);
     }
   }
