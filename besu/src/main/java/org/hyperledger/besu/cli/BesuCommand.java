@@ -117,7 +117,6 @@ import org.hyperledger.besu.ethereum.core.MiningParametersMetrics;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.VersionMetadata;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskFeatureToggle;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;

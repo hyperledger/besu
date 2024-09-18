@@ -105,10 +105,10 @@ public class P2PTLSConfigOptions {
   private final Boolean p2pTlsClientHelloSniHeaderEnabled = false;
 
   @Option(
-          names = {"--Xpeertask-system-enabled"},
-          hidden = true,
-          description =
-                  "Temporary feature toggle to enable using the new peertask system (default: ${DEFAULT-VALUE})")
+      names = {"--Xpeertask-system-enabled"},
+      hidden = true,
+      description =
+          "Temporary feature toggle to enable using the new peertask system (default: ${DEFAULT-VALUE})")
   private final Boolean isPeerTaskSystemEnabled = false;
 
   /** Default constructor. */
