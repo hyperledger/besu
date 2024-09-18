@@ -152,9 +152,6 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
     env.put("OTEL_BSP_SCHEDULE_DELAY", "1000");
     env.put("OTEL_BSP_EXPORT_TIMEOUT", "3000");
 
-    // TODO: process and thread node runners are creating their own nodes to run, so we need to
-    // inject
-    // the configuration to the node runner to be able to configure the metrics
     metricsNode =
         besu.create(
             new BesuNodeConfigurationBuilder()
