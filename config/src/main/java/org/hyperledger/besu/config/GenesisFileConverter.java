@@ -194,7 +194,7 @@ public class GenesisFileConverter {
       besuGenesis.put("extraData", "0x" + fixCliqueExtraData(extraDataBytes).toHexString());
     }
 
-    // Ensure clique.period is set
+    // Ensure clique.period is set.
     if (!besuConfig.has("clique") || !besuConfig.get("clique").has("period")) {
       ObjectNode cliqueConfig =
           besuConfig.has("clique")
