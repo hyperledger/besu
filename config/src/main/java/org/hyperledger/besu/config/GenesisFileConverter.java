@@ -36,10 +36,10 @@ public class GenesisFileConverter {
   /**
    * Converts a Geth-style genesis file to a Besu-style genesis file.
    *
-   * @param gethGenesis The Geth-style genesis file as a JSON object.
+   * @param preNormalizedConfig The pre-normalized config section of the genesis file.
    * @return A Besu-style genesis file as a JSON object.
    */
-  static ObjectNode convertGethToBesu(final ObjectNode gethGenesis) {
+  static ObjectNode convertGethToBesu(final ObjectNode preNormalizedConfig) {
     LOG.info("Starting Geth to Besu genesis conversion.");
 
     final ObjectNode besuGenesis = JsonUtil.createEmptyObjectNode();
@@ -47,27 +47,23 @@ public class GenesisFileConverter {
 
     try {
       // Convert config section
-      convertConfig(gethGenesis, besuConfig);
+      convertConfig(besuConfig, preNormalizedConfig);
 
       // Set the converted config in the Besu genesis
       besuGenesis.set("config", besuConfig);
 
       // Convert other root-level fields
-      convertRootLevelFields(gethGenesis, besuGenesis);
+      convertRootLevelFields(preNormalizedConfig, besuGenesis);
 
       // Convert allocations
-      convertAllocations(gethGenesis, besuGenesis);
+      convertAllocations(preNormalizedConfig, besuGenesis);
 
       // Handle consensus-specific conversions
-      handleConsensusSpecificConversions(gethGenesis, besuGenesis, besuConfig);
+      handleConsensusSpecificConversions(preNormalizedConfig, besuGenesis, besuConfig);
 
       // Handle extraData field
-      if (gethGenesis.has("extradata") || gethGenesis.has("extraData")) {
-        String extraDataString =
-            gethGenesis.has("extradata")
-                ? gethGenesis.get("extradata").asText()
-                : gethGenesis.get("extraData").asText();
-
+      if (preNormalizedConfig.has("extraData")) {
+        String extraDataString = preNormalizedConfig.get("extraData").asText();
         Bytes extraData = Bytes.fromHexString(extraDataString);
         Bytes fixedExtraData = fixCliqueExtraData(extraData);
         besuGenesis.put("extraData", fixedExtraData.toHexString());
@@ -82,9 +78,11 @@ public class GenesisFileConverter {
     return besuGenesis;
   }
 
-  private static void convertConfig(final ObjectNode gethGenesis, final ObjectNode besuConfig) {
-    if (gethGenesis.has("config")) {
-      JsonNode gethConfig = gethGenesis.get("config");
+  private static void convertConfig(
+      final ObjectNode besuConfig, final ObjectNode preNormalizedConfig) {
+    // Copy all fields from the pre-normalized config
+    if (preNormalizedConfig.has("config")) {
+      JsonNode gethConfig = preNormalizedConfig.get("config");
       Iterator<String> fieldNames = gethConfig.fieldNames();
       while (fieldNames.hasNext()) {
         String fieldName = fieldNames.next();
@@ -108,24 +106,22 @@ public class GenesisFileConverter {
       "muirGlacierBlock", "berlinBlock", "londonBlock"
     };
     for (String field : forkFields) {
-      if (gethGenesis.has("config") && gethGenesis.get("config").has(field)) {
-        besuConfig.set(field, gethGenesis.get("config").get(field));
+      if (preNormalizedConfig.has("config") && preNormalizedConfig.get("config").has(field)) {
+        besuConfig.set(field, preNormalizedConfig.get("config").get(field));
       }
     }
   }
 
   private static void convertRootLevelFields(
-      final ObjectNode gethGenesis, final ObjectNode besuGenesis) {
+      final ObjectNode preNormalizedConfig, final ObjectNode besuGenesis) {
     String[] rootFields = {"difficulty", "gasLimit", "nonce", "mixHash", "coinbase", "timestamp"};
     for (String field : rootFields) {
-      copyIfPresent(gethGenesis, besuGenesis, field);
+      copyIfPresent(preNormalizedConfig, besuGenesis, field);
     }
 
     // Handle extraData separately
-    if (gethGenesis.has("extraData")) {
-      besuGenesis.put("extraData", gethGenesis.get("extraData").asText());
-    } else if (gethGenesis.has("extradata")) {
-      besuGenesis.put("extraData", gethGenesis.get("extradata").asText());
+    if (preNormalizedConfig.has("extraData")) {
+      besuGenesis.put("extraData", preNormalizedConfig.get("extraData").asText());
     }
   }
 
@@ -160,9 +156,11 @@ public class GenesisFileConverter {
   }
 
   private static void handleConsensusSpecificConversions(
-      final ObjectNode gethGenesis, final ObjectNode besuGenesis, final ObjectNode besuConfig) {
+      final ObjectNode preNormalizedConfig,
+      final ObjectNode besuGenesis,
+      final ObjectNode besuConfig) {
     if (besuConfig.has("clique")) {
-      handleCliqueConversion(gethGenesis, besuGenesis, besuConfig);
+      handleCliqueConversion(preNormalizedConfig, besuGenesis, besuConfig);
     } else if (besuConfig.has("ethash")) {
       handleEthashConversion(besuGenesis);
     } else {
@@ -172,8 +170,8 @@ public class GenesisFileConverter {
     }
 
     // Handle extraData field
-    if (gethGenesis.has("extradata")) {
-      String extraData = gethGenesis.get("extradata").asText();
+    if (preNormalizedConfig.has("extraData")) {
+      String extraData = preNormalizedConfig.get("extraData").asText();
 
       // Convert extraData and fix it using the updated fixCliqueExtraData method
       besuGenesis.put(
@@ -183,10 +181,12 @@ public class GenesisFileConverter {
   }
 
   private static void handleCliqueConversion(
-      final ObjectNode gethGenesis, final ObjectNode besuGenesis, final ObjectNode besuConfig) {
+      final ObjectNode preNormalizedConfig,
+      final ObjectNode besuGenesis,
+      final ObjectNode besuConfig) {
     String extraData = null;
-    if (gethGenesis.has("extradata")) {
-      extraData = gethGenesis.get("extradata").asText();
+    if (preNormalizedConfig.has("extraData")) {
+      extraData = preNormalizedConfig.get("extraData").asText();
     }
 
     if (extraData != null) {

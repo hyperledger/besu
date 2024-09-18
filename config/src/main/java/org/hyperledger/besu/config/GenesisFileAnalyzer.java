@@ -37,7 +37,6 @@ public class GenesisFileAnalyzer {
     public enum FileStyle {
       BESU,
       GETH,
-      AMBIGUOUS,
       UNKNOWN
     }
 
@@ -114,8 +113,10 @@ public class GenesisFileAnalyzer {
     // Check for Geth-specific extraData format that Besu doesn't support
     if (genesisJson.has("extradata")) {
       String extraData = genesisJson.get("extradata").asText();
-      if (extraData.length() == 64 || extraData.length() == 32) {
-        fileStyle = GenesisAnalysis.FileStyle.GETH;
+      if (extraData != null && !extraData.isEmpty()) {
+        if (extraData.length() == 64 || extraData.length() == 32) {
+          fileStyle = GenesisAnalysis.FileStyle.GETH;
+        }
       }
     }
 

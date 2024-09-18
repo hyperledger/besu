@@ -25,7 +25,8 @@ public class GenesisFileHandler {
   private GenesisFileHandler() {}
 
   static GenesisReader processGenesisFile(final ObjectNode config) {
-    GenesisFileAnalyzer.GenesisAnalysis analysis = GenesisFileAnalyzer.analyzeGenesisFile(config);
+    GenesisFileAnalyzer.GenesisAnalysis analysis =
+        GenesisFileAnalyzer.analyzeGenesisFile(JsonUtil.normalizeKeys(config));
 
     // Log the analysis results
     LOG.info("Genesis file analysis results:");
@@ -39,12 +40,10 @@ public class GenesisFileHandler {
 
   private static GenesisReader createGenesisReader(
       final ObjectNode config, final GenesisFileAnalyzer.GenesisAnalysis analysis) {
-    ObjectNode processedConfig = JsonUtil.normalizeKeys(config);
-
-    if (analysis.fileStyle() == GenesisFileAnalyzer.GenesisAnalysis.FileStyle.GETH) {
-      LOG.info("Converting Geth-style genesis file to Besu format");
-      processedConfig = GenesisFileConverter.convertGethToBesu(processedConfig);
-    }
+    ObjectNode processedConfig =
+        (analysis.fileStyle() == GenesisFileAnalyzer.GenesisAnalysis.FileStyle.GETH)
+            ? GenesisFileConverter.convertGethToBesu(config)
+            : config;
 
     return new GenesisReader.FromObjectNode(processedConfig);
   }

@@ -21,6 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -66,6 +70,14 @@ public class GenesisFileHandlingTest {
         """;
     ObjectNode gethGenesis = (ObjectNode) objectMapper.readTree(gethGenesisJson);
 
+    GenesisFileAnalyzer.GenesisAnalysis analysis =
+        GenesisFileAnalyzer.analyzeGenesisFile(gethGenesis);
+
+    assertEquals(
+        GenesisFileAnalyzer.GenesisAnalysis.FileStyle.GETH,
+        analysis.fileStyle(),
+        "Expected FileStyle: GETH, Actual: " + analysis.fileStyle());
+
     ObjectNode besuGenesis = GenesisFileConverter.convertGethToBesu(gethGenesis);
 
     LOG.info("Geth Genesis: {}", gethGenesis);
@@ -110,11 +122,20 @@ public class GenesisFileHandlingTest {
       },
       "difficulty": "0x1",
       "gasLimit": "0x8000000",
-      "extradata": "0x0000000000000000000000000000000000000000000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "extradata":
+ "0x0000000000000000000000000000000000000000000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
       "alloc": {}
     }
     """;
     ObjectNode gethGenesis = (ObjectNode) objectMapper.readTree(gethCliqueGenesisJson);
+
+    GenesisFileAnalyzer.GenesisAnalysis analysis =
+        GenesisFileAnalyzer.analyzeGenesisFile(gethGenesis);
+
+    assertEquals(
+        GenesisFileAnalyzer.GenesisAnalysis.FileStyle.GETH,
+        analysis.fileStyle(),
+        "Expected FileStyle: GETH, Actual: " + analysis.fileStyle());
 
     ObjectNode besuGenesis = GenesisFileConverter.convertGethToBesu(gethGenesis);
 
@@ -130,7 +151,12 @@ public class GenesisFileHandlingTest {
         "Expected difficulty: 0x1, Actual: " + besuGenesis.get("difficulty").asText());
     assertTrue(
         besuGenesis.has("extraData"),
-        "Expected 'extraData' in Besu genesis, Actual keys: " + besuGenesis.fieldNames());
+        "Expected 'extraData' in Besu genesis, Actual keys: "
+            + StreamSupport.stream(
+                    Spliterators.spliteratorUnknownSize(
+                        besuGenesis.fieldNames(), Spliterator.ORDERED),
+                    false)
+                .collect(Collectors.joining(", ")));
 
     String gethExtraData = gethGenesis.get("extradata").asText();
     String besuExtraData = besuGenesis.get("extraData").asText();
@@ -172,6 +198,14 @@ public class GenesisFileHandlingTest {
     ObjectNode incompleteGethGenesis =
         (ObjectNode) objectMapper.readTree(incompleteGethGenesisJson);
 
+    GenesisFileAnalyzer.GenesisAnalysis analysis =
+        GenesisFileAnalyzer.analyzeGenesisFile(incompleteGethGenesis);
+
+    assertEquals(
+        GenesisFileAnalyzer.GenesisAnalysis.FileStyle.GETH,
+        analysis.fileStyle(),
+        "Expected FileStyle: GETH, Actual: " + analysis.fileStyle());
+
     ObjectNode besuGenesis = GenesisFileConverter.convertGethToBesu(incompleteGethGenesis);
 
     LOG.info("Incomplete Geth Genesis: {}", incompleteGethGenesis);
@@ -210,7 +244,16 @@ public class GenesisFileHandlingTest {
           }
         }
         """;
-    ObjectNode edgeCaseGethGenesis = (ObjectNode) objectMapper.readTree(edgeCaseGethGenesisJson);
+    ObjectNode edgeCaseGethGenesis = (ObjectNode)
+ objectMapper.readTree(edgeCaseGethGenesisJson);
+
+    GenesisFileAnalyzer.GenesisAnalysis analysis =
+        GenesisFileAnalyzer.analyzeGenesisFile(edgeCaseGethGenesis);
+
+    assertEquals(
+        GenesisFileAnalyzer.GenesisAnalysis.FileStyle.GETH,
+        analysis.fileStyle(),
+        "Expected FileStyle: GETH, Actual: " + analysis.fileStyle());
 
     ObjectNode besuGenesis = GenesisFileConverter.convertGethToBesu(edgeCaseGethGenesis);
 
