@@ -196,7 +196,7 @@ import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
-import org.hyperledger.besu.util.EphemeryGenesisFile;
+import org.hyperledger.besu.util.EphemeryGenesisUpdater;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -1663,7 +1663,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     GenesisConfigFile effectiveGenesisFile;
     effectiveGenesisFile =
         network.equals(EPHEMERY)
-            ? EphemeryGenesisFile.updateGenesis(genesisConfigOverrides)
+            ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
             : genesisFile != null
                 ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
                 : GenesisConfigFile.fromResource(
@@ -2410,7 +2410,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // ChainId update is required for Ephemery network
     if (network.equals(EPHEMERY)) {
       String chainId = genesisConfigOverrides.get("chainId");
-      builder.setNetworkId(BigInteger.valueOf(Long.parseLong(chainId)));
+      builder.setNetworkId(new BigInteger(chainId));
     }
     if (p2PDiscoveryOptionGroup.discoveryDnsUrl != null) {
       builder.setDnsDiscoveryUrl(p2PDiscoveryOptionGroup.discoveryDnsUrl);

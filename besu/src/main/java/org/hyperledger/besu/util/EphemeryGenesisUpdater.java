@@ -26,10 +26,10 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * The Generate Ephemery Genesis File. Checks for update based on the set period and update the
- * Ephemery genesis file in memory
+ * The Generate Ephemery Genesis Updater. Checks for update based on the set period and update the
+ * Ephemery genesis in memory
  */
-public class EphemeryGenesisFile {
+public class EphemeryGenesisUpdater {
   private static final int PERIOD_IN_DAYS = 28;
   private static final long PERIOD_IN_SECONDS = (PERIOD_IN_DAYS * 24 * 60 * 60);
 
@@ -62,7 +62,7 @@ public class EphemeryGenesisFile {
       }
       return genesisConfigFile.withOverrides(overrides);
     } catch (IOException e) {
-      throw new RuntimeException("Error updating genesis file: " + e.getMessage(), e);
+      throw new RuntimeException("Error updating ephemery genesis: " + e.getMessage(), e);
     }
   }
 }

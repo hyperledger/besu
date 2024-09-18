@@ -31,7 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class EphemeryGenesisFileTest {
+public class EphemeryGenesisUpdaterTest {
   private static final int GENESIS_CONFIG_TEST_CHAINID = 39438135;
   private static final long GENESIS_TEST_TIMESTAMP = 1720119600;
   private static final long CURRENT_TIMESTAMP = 1712041200;

@@ -32,8 +32,8 @@ public enum NetworkName {
   LUKSO("/lukso.json", BigInteger.valueOf(42)),
 
   /**
-   * EPHEMERY network name. The networkId is the default networkId that will be used to make update
-   * to the most recent networkId.
+   * EPHEMERY network name. The actual networkId used is calculated based on this default value and the current time.
+   * https://ephemery.dev/
    */
   EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135)),
 
