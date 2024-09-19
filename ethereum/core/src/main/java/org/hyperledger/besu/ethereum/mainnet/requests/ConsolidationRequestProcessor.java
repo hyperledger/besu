@@ -29,6 +29,11 @@ public class ConsolidationRequestProcessor
   private static final int PUBLIC_KEY_BYTES = 48;
   private static final int CONSOLIDATION_REQUEST_BYTES_SIZE =
       ADDRESS_BYTES + PUBLIC_KEY_BYTES + PUBLIC_KEY_BYTES;
+  private final Address consolidationRequestRedeployAddress;
+
+  public ConsolidationRequestProcessor(final Address consolidationRequestRedeployAddress) {
+    this.consolidationRequestRedeployAddress = consolidationRequestRedeployAddress;
+  }
 
   /**
    * Gets the call address for consolidation requests.
@@ -37,7 +42,7 @@ public class ConsolidationRequestProcessor
    */
   @Override
   protected Address getCallAddress() {
-    return CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS;
+    return consolidationRequestRedeployAddress;
   }
 
   /**

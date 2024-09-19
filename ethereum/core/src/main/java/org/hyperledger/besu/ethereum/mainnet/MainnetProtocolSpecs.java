@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.ethereum.mainnet.requests.ConsolidationRequestProcessor.CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS;
 import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsProcessors;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
@@ -774,6 +775,11 @@ public abstract class MainnetProtocolSpecs {
     final Address depositContractAddress =
         genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
 
+    final Address consolidationRequestContractAddress =
+            genesisConfigOptions
+                    .getConsolidationRequestContractAddress()
+                    .orElse(CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS);
+
     return cancunDefinition(
             chainId,
             enableRevertReason,
@@ -795,9 +801,10 @@ public abstract class MainnetProtocolSpecs {
 
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestsValidator(pragueRequestsValidator(depositContractAddress))
+        .requestsValidator(pragueRequestsValidator(consolidationRequestContractAddress))
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestProcessorCoordinator(
-            pragueRequestsProcessors(withdrawalRequestContractAddress, depositContractAddress))
+            pragueRequestsProcessors(withdrawalRequestContractAddress, depositContractAddress, consolidationRequestContractAddress))
 
         // change to accept EIP-7702 transactions
         .transactionValidatorFactoryBuilder(
