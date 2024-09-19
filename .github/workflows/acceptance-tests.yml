@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GRADLE_OPTS: "-Xmx6g"
+  GRADLE_OPTS: "-Xmx7g"
   total-runners: 12
 
 jobs:
