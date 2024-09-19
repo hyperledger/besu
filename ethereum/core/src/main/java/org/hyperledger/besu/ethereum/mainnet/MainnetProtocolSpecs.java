@@ -776,9 +776,9 @@ public abstract class MainnetProtocolSpecs {
         genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
 
     final Address consolidationRequestContractAddress =
-            genesisConfigOptions
-                    .getConsolidationRequestContractAddress()
-                    .orElse(CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS);
+        genesisConfigOptions
+            .getConsolidationRequestContractAddress()
+            .orElse(CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS);
 
     return cancunDefinition(
             chainId,
@@ -804,7 +804,10 @@ public abstract class MainnetProtocolSpecs {
         .requestsValidator(pragueRequestsValidator(consolidationRequestContractAddress))
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestProcessorCoordinator(
-            pragueRequestsProcessors(withdrawalRequestContractAddress, depositContractAddress, consolidationRequestContractAddress))
+            pragueRequestsProcessors(
+                withdrawalRequestContractAddress,
+                depositContractAddress,
+                consolidationRequestContractAddress))
 
         // change to accept EIP-7702 transactions
         .transactionValidatorFactoryBuilder(

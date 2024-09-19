@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+- Add configuration of Consolidation Request Contract Address via genesis configuration [#7647](https://github.com/hyperledger/besu/pull/7647)
+
 
 ### Upcoming Breaking Changes
 - k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release

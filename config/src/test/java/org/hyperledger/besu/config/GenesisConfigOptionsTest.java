@@ -385,11 +385,12 @@ class GenesisConfigOptionsTest {
   @Test
   void shouldGetConsolidationRequestContractAddress() {
     final GenesisConfigOptions config =
-            fromConfigOptions(
-                    singletonMap(
-                            "consolidationRequestContractAddress", "0x00000000219ab540356cbb839cbe05303d7705fa"));
+        fromConfigOptions(
+            singletonMap(
+                "consolidationRequestContractAddress",
+                "0x00000000219ab540356cbb839cbe05303d7705fa"));
     assertThat(config.getConsolidationRequestContractAddress())
-            .hasValue(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
+        .hasValue(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
   }
 
   @Test
@@ -401,11 +402,11 @@ class GenesisConfigOptionsTest {
   @Test
   void asMapIncludesConsolidationRequestContractAddress() {
     final GenesisConfigOptions config =
-            fromConfigOptions(Map.of("consolidationRequestContractAddress", "0x0"));
+        fromConfigOptions(Map.of("consolidationRequestContractAddress", "0x0"));
 
     assertThat(config.asMap())
-            .containsOnlyKeys("consolidationRequestContractAddress")
-            .containsValue(Address.ZERO);
+        .containsOnlyKeys("consolidationRequestContractAddress")
+        .containsValue(Address.ZERO);
   }
 
   private GenesisConfigOptions fromConfigOptions(final Map<String, Object> configOptions) {

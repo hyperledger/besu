@@ -28,12 +28,16 @@ public class MainnetRequestsValidator {
   }
 
   public static RequestProcessorCoordinator pragueRequestsProcessors(
-      final Address withdrawalRequestContractAddress, final Address depositContractAddress, final Address consolidationRequestContractAddress) {
+      final Address withdrawalRequestContractAddress,
+      final Address depositContractAddress,
+      final Address consolidationRequestContractAddress) {
     return new RequestProcessorCoordinator.Builder()
         .addProcessor(
             RequestType.WITHDRAWAL,
             new WithdrawalRequestProcessor(withdrawalRequestContractAddress))
-        .addProcessor(RequestType.CONSOLIDATION, new ConsolidationRequestProcessor(consolidationRequestContractAddress))
+        .addProcessor(
+            RequestType.CONSOLIDATION,
+            new ConsolidationRequestProcessor(consolidationRequestContractAddress))
         .addProcessor(RequestType.DEPOSIT, new DepositRequestProcessor(depositContractAddress))
         .build();
   }
