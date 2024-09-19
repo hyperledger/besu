@@ -137,7 +137,7 @@ public class EthPeers {
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.maxMessageSize = maxMessageSize;
-    this.bestPeerComparator = HEAVIEST_CHAIN;
+    this.bestPeerComparator = MOST_USEFUL_PEER;
     this.localNodeId = localNodeId;
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
@@ -369,7 +369,7 @@ public class EthPeers {
   }
 
   public void setBestPeerComparator(final Comparator<EthPeer> comparator) {
-    LOG.info("Updating the default best peer comparator");
+    LOG.info("Updating the default best peer comparator to {}", comparator);
     bestPeerComparator = comparator;
   }
 
