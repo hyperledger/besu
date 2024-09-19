@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
+import javax.inject.Singleton;
 
 import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.common.AttributeKey;
@@ -67,6 +68,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Metrics system relying on the native OpenTelemetry format. */
+@Singleton
 public class OpenTelemetrySystem implements ObservableMetricsSystem {
 
   private static final Logger LOG = LoggerFactory.getLogger(OpenTelemetrySystem.class);
