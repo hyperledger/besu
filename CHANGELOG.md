@@ -9,6 +9,7 @@
 
 ### Additions and Improvements
 - Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
+- Set default value for sync-min-peers to 1 
 
 ### Bug fixes
 - Fix mounted data path directory permissions for besu user [#7575](https://github.com/hyperledger/besu/pull/7575)
