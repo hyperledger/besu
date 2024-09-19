@@ -34,11 +34,18 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** A utility class for body validation tasks. */
 public final class BodyValidation {
+
+  public static Cache<Hash, Boolean> bodiesValidatedRootsForBlockHashCache =
+      CacheBuilder.newBuilder().recordStats().maximumSize(10_000).build();
+  public static Cache<Hash, Boolean> receiptsRootForBlockHashCache =
+      CacheBuilder.newBuilder().recordStats().maximumSize(10_000).build();
 
   private BodyValidation() {
     // Utility Class
