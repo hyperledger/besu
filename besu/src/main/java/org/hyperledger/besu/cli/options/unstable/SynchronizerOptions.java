@@ -341,6 +341,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     return snapsyncBftEnabled;
   }
 
+  /**
+   * Flag to indicate whether the peer task system should be used where available
+   *
+   * @return true if the peer task system should be used where available
+   */
   public boolean isPeerTaskSystemEnabled() {
     return isPeerTaskSystemEnabled;
   }
