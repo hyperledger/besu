@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
@@ -82,6 +83,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final BlockBroadcaster blockBroadcaster,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final Path dataDirectory,
       final StorageProvider storageProvider,
@@ -147,6 +149,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   protocolContext,
                   metricsSystem,
                   ethContext,
+                  peerTaskExecutor,
                   worldStateStorageCoordinator,
                   syncState,
                   clock,
@@ -163,6 +166,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   protocolContext,
                   metricsSystem,
                   ethContext,
+                  peerTaskExecutor,
                   worldStateStorageCoordinator,
                   syncState,
                   clock,
@@ -179,6 +183,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   protocolContext,
                   metricsSystem,
                   ethContext,
+                  peerTaskExecutor,
                   worldStateStorageCoordinator,
                   syncState,
                   clock,

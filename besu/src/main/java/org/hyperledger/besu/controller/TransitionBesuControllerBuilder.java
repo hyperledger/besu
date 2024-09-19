@@ -40,6 +40,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerManager;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
@@ -163,7 +165,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
-      final ForkIdManager forkIdManager) {
+      final ForkIdManager forkIdManager,
+      final PeerManager peerManager) {
     return mergeBesuControllerBuilder.createEthProtocolManager(
         protocolContext,
         synchronizerConfiguration,
@@ -175,7 +178,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         scheduler,
         peerValidators,
         mergePeerFilter,
-        forkIdManager);
+        forkIdManager,
+        peerManager);
   }
 
   @Override
@@ -225,6 +229,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager,
       final PivotBlockSelector pivotBlockSelector) {
@@ -235,6 +240,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             worldStateStorageCoordinator,
             protocolContext,
             ethContext,
+            peerTaskExecutor,
             syncState,
             ethProtocolManager,
             pivotBlockSelector);

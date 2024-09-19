@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -99,7 +100,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
-      final ForkIdManager forkIdManager) {
+      final ForkIdManager forkIdManager,
+      final PeerManager peerManager) {
 
     var mergeContext = protocolContext.getConsensusContext(MergeContext.class);
 
@@ -129,7 +131,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             scheduler,
             peerValidators,
             filterToUse,
-            forkIdManager);
+            forkIdManager,
+            peerManager);
 
     return ethProtocolManager;
   }

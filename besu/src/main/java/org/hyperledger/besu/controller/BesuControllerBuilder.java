@@ -55,6 +55,9 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
 import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerManager;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRequestSender;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.CheckpointBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
@@ -652,6 +655,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
+    final PeerManager peerManager = new PeerManager();
+    ethPeers.streamAllPeers().forEach(peerManager::addPeer);
+    final PeerTaskExecutor peerTaskExecutor =
+        new PeerTaskExecutor(
+            peerManager, new PeerTaskRequestSender(), currentProtocolSpecSupplier, metricsSystem);
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
@@ -691,7 +699,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             scheduler,
             peerValidators,
             Optional.empty(),
-            forkIdManager);
+            forkIdManager,
+            peerManager);
 
     final PivotBlockSelector pivotBlockSelector =
         createPivotSelector(
@@ -703,6 +712,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             worldStateStorageCoordinator,
             protocolContext,
             ethContext,
+            peerTaskExecutor,
             syncState,
             ethProtocolManager,
             pivotBlockSelector);
@@ -835,6 +845,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager,
       final PivotBlockSelector pivotBlockSelector) {
@@ -846,6 +857,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         worldStateStorageCoordinator,
         ethProtocolManager.getBlockBroadcaster(),
         ethContext,
+        peerTaskExecutor,
         syncState,
         dataDirectory,
         storageProvider,
@@ -1035,7 +1047,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
-      final ForkIdManager forkIdManager) {
+      final ForkIdManager forkIdManager,
+      final PeerManager peerManager) {
     return new EthProtocolManager(
         protocolContext.getBlockchain(),
         networkId,
@@ -1049,7 +1062,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         mergePeerFilter,
         synchronizerConfiguration,
         scheduler,
-        forkIdManager);
+        forkIdManager,
+        peerManager);
   }
 
   /**

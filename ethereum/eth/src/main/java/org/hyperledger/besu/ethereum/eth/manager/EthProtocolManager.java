@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerManager;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
@@ -69,6 +70,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   private final Hash genesisHash;
   private final ForkIdManager forkIdManager;
+  private final PeerManager peerManager;
   private final BigInteger networkId;
   private final EthPeers ethPeers;
   private final EthMessages ethMessages;
@@ -92,7 +94,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final Optional<MergePeerFilter> mergePeerFilter,
       final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler,
-      final ForkIdManager forkIdManager) {
+      final ForkIdManager forkIdManager,
+      final PeerManager peerManager) {
     this.networkId = networkId;
     this.peerValidators = peerValidators;
     this.scheduler = scheduler;
@@ -102,6 +105,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.genesisHash = blockchain.getBlockHashByNumber(0L).orElse(Hash.ZERO);
 
     this.forkIdManager = forkIdManager;
+    this.peerManager = peerManager;
 
     this.ethPeers = ethPeers;
     this.ethMessages = ethMessages;
@@ -140,7 +144,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final EthScheduler scheduler) {
+      final EthScheduler scheduler,
+      final PeerManager peerManager) {
     this(
         blockchain,
         networkId,
@@ -158,7 +163,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             blockchain,
             Collections.emptyList(),
             Collections.emptyList(),
-            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
+            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()),
+        peerManager);
   }
 
   public EthContext ethContext() {
@@ -337,7 +343,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   public void handleNewConnection(final PeerConnection connection) {
     ethPeers.registerNewConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
-
+    peerManager.addPeer(peer);
     final Capability cap = connection.capability(getSupportedProtocol());
     final ForkId latestForkId =
         cap.getVersion() >= 64 ? forkIdManager.getForkIdForChainHead() : null;
@@ -369,6 +375,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
     final boolean wasActiveConnection = ethPeers.registerDisconnect(connection);
+    peerManager.removePeer(connection.getPeer());
     LOG.atDebug()
         .setMessage("Disconnect - active Connection? {} - {} - {} - {} {} - {} peers left")
         .addArgument(wasActiveConnection)

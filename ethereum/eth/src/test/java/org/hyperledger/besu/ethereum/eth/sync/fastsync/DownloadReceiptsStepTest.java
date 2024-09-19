@@ -30,22 +30,32 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskFeatureToggleTestHelper;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class DownloadReceiptsStepTest {
 
   private static ProtocolContext protocolContext;
   private static MutableBlockchain blockchain;
 
+  private PeerTaskExecutor peerTaskExecutor;
   private EthProtocolManager ethProtocolManager;
   private DownloadReceiptsStep downloadReceiptsStep;
 
@@ -59,6 +69,7 @@ public class DownloadReceiptsStepTest {
 
   @BeforeEach
   public void setUp() {
+    peerTaskExecutor = mock(PeerTaskExecutor.class);
     TransactionPool transactionPool = mock(TransactionPool.class);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
@@ -69,11 +80,13 @@ public class DownloadReceiptsStepTest {
             transactionPool,
             EthProtocolConfiguration.defaultConfig());
     downloadReceiptsStep =
-        new DownloadReceiptsStep(ethProtocolManager.ethContext(), new NoOpMetricsSystem());
+        new DownloadReceiptsStep(
+            ethProtocolManager.ethContext(), peerTaskExecutor, new NoOpMetricsSystem());
   }
 
   @Test
-  public void shouldDownloadReceiptsForBlocks() {
+  public void shouldDownloadReceiptsForBlocks() throws IllegalAccessException {
+    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(false);
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     final List<Block> blocks = asList(block(1), block(2), block(3), block(4));
@@ -90,6 +103,32 @@ public class DownloadReceiptsStepTest {
                 blockWithReceipts(4)));
   }
 
+  @Test
+  public void shouldDownloadReceiptsForBlocksUsingPeerTaskSystem()
+      throws IllegalAccessException, ExecutionException, InterruptedException {
+    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(true);
+
+    final List<Block> blocks = asList(mockBlock(), mockBlock(), mockBlock(), mockBlock());
+    Map<BlockHeader, List<TransactionReceipt>> receiptsMap = new HashMap<>();
+    blocks.forEach(
+        (b) -> receiptsMap.put(b.getHeader(), List.of(Mockito.mock(TransactionReceipt.class))));
+    PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> peerTaskResult =
+        new PeerTaskExecutorResult<>(receiptsMap, PeerTaskExecutorResponseCode.SUCCESS);
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetReceiptsFromPeerTask.class)))
+        .thenReturn(peerTaskResult);
+
+    final CompletableFuture<List<BlockWithReceipts>> result = downloadReceiptsStep.apply(blocks);
+
+    assertThat(result.get().get(0).getBlock()).isEqualTo(blocks.get(0));
+    assertThat(result.get().get(0).getReceipts().size()).isEqualTo(1);
+    assertThat(result.get().get(1).getBlock()).isEqualTo(blocks.get(1));
+    assertThat(result.get().get(1).getReceipts().size()).isEqualTo(1);
+    assertThat(result.get().get(2).getBlock()).isEqualTo(blocks.get(2));
+    assertThat(result.get().get(2).getReceipts().size()).isEqualTo(1);
+    assertThat(result.get().get(3).getBlock()).isEqualTo(blocks.get(3));
+    assertThat(result.get().get(3).getReceipts().size()).isEqualTo(1);
+  }
+
   private Block block(final long number) {
     final BlockHeader header = blockchain.getBlockHeader(number).get();
     return new Block(header, blockchain.getBlockBody(header.getHash()).get());
@@ -99,5 +138,12 @@ public class DownloadReceiptsStepTest {
     final Block block = block(number);
     final List<TransactionReceipt> receipts = blockchain.getTxReceipts(block.getHash()).get();
     return new BlockWithReceipts(block, receipts);
+  }
+
+  private Block mockBlock() {
+    final Block block = Mockito.mock(Block.class);
+    final BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
+    Mockito.when(block.getHeader()).thenAnswer((invocationOnMock) -> blockHeader);
+    return block;
   }
 }
