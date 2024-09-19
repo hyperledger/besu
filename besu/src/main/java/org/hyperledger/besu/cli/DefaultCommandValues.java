@@ -89,7 +89,7 @@ public interface DefaultCommandValues {
   JwtAlgorithm DEFAULT_JWT_ALGORITHM = JwtAlgorithm.RS256;
 
   /** The constant SYNC_MIN_PEER_COUNT. */
-  int SYNC_MIN_PEER_COUNT = 5;
+  int SYNC_MIN_PEER_COUNT = 1;
 
   /** The constant DEFAULT_MAX_PEERS. */
   int DEFAULT_MAX_PEERS = 25;
