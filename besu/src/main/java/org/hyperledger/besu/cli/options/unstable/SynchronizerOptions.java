@@ -314,6 +314,13 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       description = "Snap sync enabled for BFT chains (default: ${DEFAULT-VALUE})")
   private Boolean snapsyncBftEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED;
 
+  @CommandLine.Option(
+      names = {"--Xpeertask-system-enabled"},
+      hidden = true,
+      description =
+          "Temporary feature toggle to enable using the new peertask system (default: ${DEFAULT-VALUE})")
+  private final Boolean isPeerTaskSystemEnabled = false;
+
   private SynchronizerOptions() {}
 
   /**
@@ -332,6 +339,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
    */
   public boolean isSnapSyncBftEnabled() {
     return snapsyncBftEnabled;
+  }
+
+  public boolean isPeerTaskSystemEnabled() {
+    return isPeerTaskSystemEnabled;
   }
 
   /**
