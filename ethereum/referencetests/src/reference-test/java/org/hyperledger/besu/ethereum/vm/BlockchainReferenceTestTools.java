@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
+import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCase;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.evm.EVM;
@@ -55,98 +55,92 @@ public class BlockchainReferenceTestTools {
             "test.ethereum.blockchain.eips",
             "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,CancunToPragueAtTime15k"
                 + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
-                + "London,Merge,Paris,Shanghai,Cancun,Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
+                + "London,Merge,Paris,Shanghai,Cancun,Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok,Verkle");
     NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
-  }
-
-  private static final JsonTestParameters<?, ?> params =
-      JsonTestParameters.create(BlockchainReferenceTestCaseSpec.class)
-          .generator(
-              (testName, fullPath, spec, collector) -> {
-                final String eip = spec.getNetwork();
-                collector.add(
-                    testName + "[" + eip + "]", fullPath, spec, NETWORKS_TO_RUN.contains(eip));
-              });
-
-  static {
-    if (NETWORKS_TO_RUN.isEmpty()) {
-      params.ignoreAll();
-    }
-
-    // Consumes a huge amount of memory
-    params.ignore("static_Call1MB1024Calldepth_d1g0v0_\\w+");
-    params.ignore("ShanghaiLove_");
-
-    // Absurd amount of gas, doesn't run in parallel
-    params.ignore("randomStatetest94_\\w+");
-
-    // Don't do time-consuming tests
-    params.ignore("CALLBlake2f_MaxRounds");
-    params.ignore("loopMul_");
-
-    // Inconclusive fork choice rule, since in merge CL should be choosing forks and setting the
-    // chain head.
-    // Perfectly valid test pre-merge.
-    params.ignore(
-        "UncleFromSideChain_(Merge|Paris|Shanghai|Cancun|Prague|Osaka|Amsterdam|Bogota|Polis|Bangkok)");
-
-    // EOF tests don't have Prague stuff like deopsits right now
-    params.ignore("/stEOF/");
-
-    // None of the Prague tests have withdrawls and deposits handling
-    params.ignore("\\[Prague\\]");
   }
 
   private BlockchainReferenceTestTools() {
     // utility class
   }
 
-  public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {
+  public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath, final Class<? extends BlockchainReferenceTestCase> mappedType) {
+    var params = JsonTestParameters.create(mappedType)
+      .generator(
+        (testName, fullPath, spec, collector) -> {
+          final String eip = spec.getNetwork();
+          collector.add(
+            testName + "[" + eip + "]", fullPath, spec, NETWORKS_TO_RUN.contains(eip));
+        })
+      // Consumes a huge amount of memory
+      .ignore("static_Call1MB1024Calldepth_d1g0v0_\\w+")
+      .ignore("ShanghaiLove_")
+
+      // Absurd amount of gas, doesn't run in parallel
+      .ignore("randomStatetest94_\\w+")
+
+      // Don't do time-consuming tests
+      .ignore("CALLBlake2f_MaxRounds")
+      .ignore("loopMul_")
+
+      // Inconclusive fork choice rule, since in merge CL should be choosing forks and setting the
+      // chain head.
+      // Perfectly valid test pre-merge.
+      .ignore(
+        "UncleFromSideChain_(Merge|Paris|Shanghai|Cancun|Prague|Osaka|Amsterdam|Bogota|Polis|Bangkok)")
+
+      // EOF tests don't have Prague stuff like deopsits right now
+      .ignore("/stEOF/")
+
+      // None of the Prague tests have withdrawls and deposits handling
+      .ignore("\\[Prague\\]");
+
+    if (NETWORKS_TO_RUN.isEmpty()) {
+      params.ignoreAll();
+    }
+
     return params.generate(filePath);
   }
 
   @SuppressWarnings("java:S5960") // this is actually test code
-  public static void executeTest(final BlockchainReferenceTestCaseSpec spec) {
-    final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
+  public static void executeTest(final BlockchainReferenceTestCase testCase) {
+    final BlockHeader genesisBlockHeader = testCase.getGenesisBlockHeader();
     final MutableWorldState worldState =
-        spec.getWorldStateArchive()
+        testCase.getWorldStateArchive()
             .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
             .orElseThrow();
 
     final ProtocolSchedule schedule =
-        REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
+        REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(testCase.getNetwork());
 
-    final MutableBlockchain blockchain = spec.getBlockchain();
-    final ProtocolContext context = spec.getProtocolContext();
+    final MutableBlockchain blockchain = testCase.getBlockchain();
+    final ProtocolContext context = testCase.getProtocolContext();
 
-    for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
-        spec.getCandidateBlocks()) {
-      if (!candidateBlock.isExecutable()) {
+    for (final Block candidateBlock :
+        testCase.getBlocks()) {
+      if (!testCase.isExecutable(candidateBlock)) {
         return;
       }
 
       try {
-        final Block block = candidateBlock.getBlock();
-
-        final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
+        final ProtocolSpec protocolSpec = schedule.getByBlockHeader(candidateBlock.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
 
         verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
 
         final HeaderValidationMode validationMode =
-            "NoProof".equalsIgnoreCase(spec.getSealEngine())
+            "NoProof".equalsIgnoreCase(testCase.getSealEngine())
                 ? HeaderValidationMode.LIGHT
                 : HeaderValidationMode.FULL;
         final BlockImportResult importResult =
-            blockImporter.importBlock(context, block, validationMode, validationMode);
+            blockImporter.importBlock(context, candidateBlock, validationMode, validationMode);
 
-        assertThat(importResult.isImported()).isEqualTo(candidateBlock.isValid());
+        assertThat(importResult.isImported()).isEqualTo(testCase.isValid(candidateBlock));
       } catch (final RLPException e) {
-        assertThat(candidateBlock.isValid()).isFalse();
+        assertThat(testCase.isValid(candidateBlock)).isFalse();
       }
     }
 
-    Assertions.assertThat(blockchain.getChainHeadHash()).isEqualTo(spec.getLastBlockHash());
+    Assertions.assertThat(blockchain.getChainHeadHash()).isEqualTo(testCase.getLastBlockHash());
   }
 
   static void verifyJournaledEVMAccountCompatability(

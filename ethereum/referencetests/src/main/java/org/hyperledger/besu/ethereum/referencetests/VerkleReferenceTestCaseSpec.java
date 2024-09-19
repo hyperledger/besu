@@ -14,10 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createVerkleInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -51,10 +50,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestCase {
+public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase {
 
   private final String network;
 
@@ -72,8 +70,9 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
   private final ProtocolContext protocolContext;
 
   private static WorldStateArchive buildWorldStateArchive(
-      final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
-    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+      final Map<String, ReferenceTestWorldState.AccountMock> accounts,
+      final MutableBlockchain blockchain) {
+    final WorldStateArchive worldStateArchive = createVerkleInMemoryWorldStateArchive(blockchain);
 
     final MutableWorldState worldState = worldStateArchive.getMutable();
     final WorldUpdater updater = worldState.updater();
@@ -82,9 +81,7 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
       ReferenceTestWorldState.insertAccount(
           updater, Address.fromHexString(entry.getKey()), entry.getValue());
     }
-
     updater.commit();
-    worldState.persist(null);
 
     return worldStateArchive;
   }
@@ -95,7 +92,7 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
   }
 
   @JsonCreator
-  public BlockchainReferenceTestCaseSpec(
+  public VerkleReferenceTestCaseSpec(
       @JsonProperty("network") final String network,
       @JsonProperty("blocks") final CandidateBlock[] candidateBlocks,
       @JsonProperty("genesisBlockHeader") final ReferenceTestBlockHeader genesisBlockHeader,
@@ -107,8 +104,8 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
     this.candidateBlocks = candidateBlocks;
     this.genesisBlockHeader = genesisBlockHeader;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
-    this.worldStateArchive = buildWorldStateArchive(accounts);
     this.blockchain = buildBlockchain(genesisBlockHeader);
+    this.worldStateArchive = buildWorldStateArchive(accounts, this.blockchain);
     this.sealEngine = sealEngine;
     this.protocolContext =
         new ProtocolContext(this.blockchain, this.worldStateArchive, null, new BadBlockManager());
@@ -122,24 +119,6 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
   @Override
   public List<Block> getBlocks() {
     return Arrays.stream(candidateBlocks).map(CandidateBlock::getBlock).toList();
-  }
-
-  @Override
-  public boolean isExecutable(final Block block) {
-    Optional<CandidateBlock> candidateBlock =
-        Arrays.stream(candidateBlocks)
-            .filter(cb -> Objects.equals(cb.getBlock(), block))
-            .findFirst();
-    return candidateBlock.isPresent() && candidateBlock.get().rlp != null;
-  }
-
-  @Override
-  public boolean isValid(final Block block) {
-    Optional<CandidateBlock> candidateBlock =
-        Arrays.stream(candidateBlocks)
-            .filter(cb -> Objects.equals(cb.getBlock(), block))
-            .findFirst();
-    return candidateBlock.isPresent() && candidateBlock.get().valid;
   }
 
   @Override
@@ -168,6 +147,24 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
   }
 
   @Override
+  public boolean isExecutable(final Block block) {
+    Optional<CandidateBlock> candidateBlock =
+        Arrays.stream(candidateBlocks)
+            .filter(cb -> Objects.equals(cb.getBlock(), block))
+            .findFirst();
+    return candidateBlock.isPresent() && candidateBlock.get().rlp != null;
+  }
+
+  @Override
+  public boolean isValid(final Block block) {
+    Optional<CandidateBlock> candidateBlock =
+        Arrays.stream(candidateBlocks)
+            .filter(cb -> Objects.equals(cb.getBlock(), block))
+            .findFirst();
+    return candidateBlock.isPresent() && candidateBlock.get().valid;
+  }
+
+  @Override
   public String getSealEngine() {
     return sealEngine;
   }
@@ -193,14 +190,6 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
-        @JsonProperty("requestsRoot") final String requestsRoot,
-        @JsonProperty("dataGasUsed")
-            final String dataGasUsed, // TODO: remove once reference tests have been updated
-        @JsonProperty("excessDataGas")
-            final String excessDataGas, // TODO: remove once reference tests have been updated
-        @JsonProperty("blobGasUsed") final String blobGasUsed,
-        @JsonProperty("excessBlobGas") final String excessBlobGas,
-        @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
         @JsonProperty("hash") final String hash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
@@ -224,14 +213,10 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
-          dataGasUsed != null
-              ? Long.decode(dataGasUsed)
-              : blobGasUsed != null ? Long.decode(blobGasUsed) : 0,
-          excessDataGas != null
-              ? BlobGas.fromHexString(excessDataGas)
-              : excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
-          parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
-          requestsRoot != null ? Hash.fromHexString(requestsRoot) : null,
+          0L,
+          null,
+          null,
+          null,
           null, // TODO MANAGE THAT
           new BlockHeaderFunctions() {
             @Override
@@ -274,19 +259,18 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
     @JsonCreator
     public CandidateBlock(
         @JsonProperty("rlp") final String rlp,
-        @JsonProperty("blockHeader") final Object blockHeader,
+        @JsonProperty("blockHeader") final ReferenceTestBlockHeader blockHeader,
         @JsonProperty("transactions") final Object transactions,
         @JsonProperty("uncleHeaders") final Object uncleHeaders,
         @JsonProperty("withdrawals") final Object withdrawals,
-        @JsonProperty("depositRequests") final Object depositRequests,
-        @JsonProperty("withdrawalRequests") final Object withdrawalRequests) {
-      boolean blockVaid = true;
+        @SuppressWarnings("unused") @JsonProperty("witness") final Object witness) {
+      boolean blockValid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
       try {
         rlpAttempt = Bytes.fromHexString(rlp);
       } catch (final IllegalArgumentException e) {
-        blockVaid = false;
+        blockValid = false;
       }
       this.rlp = rlpAttempt;
 
@@ -294,10 +278,10 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
           && transactions == null
           && uncleHeaders == null
           && withdrawals == null) {
-        blockVaid = false;
+        blockValid = false;
       }
 
-      this.valid = blockVaid;
+      this.valid = blockValid;
     }
 
     public Block getBlock() {

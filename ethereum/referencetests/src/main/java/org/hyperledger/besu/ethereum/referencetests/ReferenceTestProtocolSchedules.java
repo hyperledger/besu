@@ -92,6 +92,7 @@ public class ReferenceTestProtocolSchedules {
     builder.put("Prague", createSchedule(genesisStub.clone().pragueEOFTime(0)));
     builder.put("Future_EIPs", createSchedule(genesisStub.clone().futureEipsTime(0)));
     builder.put("Experimental_EIPs", createSchedule(genesisStub.clone().experimentalEipsTime(0)));
+    builder.put("Verkle", createSchedule(genesisStub.clone().pragueTime(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 
