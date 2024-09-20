@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +56,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final Hash worldStateRootHash,
       final HeaderValidationMode ommerValidationMode) {
 
-    if (!validateBodyLight(context, block, receipts, requests, ommerValidationMode)) {
+    if (!validateBodyLight(
+        context, block, receipts, requests, ommerValidationMode, BodyValidationMode.FULL)) {
       return false;
     }
 
@@ -77,18 +79,26 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final Block block,
       final List<TransactionReceipt> receipts,
       final Optional<List<Request>> requests,
-      final HeaderValidationMode ommerValidationMode) {
+      final HeaderValidationMode ommerValidationMode,
+      final BodyValidationMode bodyValidationMode) {
+    if (bodyValidationMode == BodyValidationMode.NONE) {
+      return true;
+    }
+
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
-    final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
-    if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
-      return false;
-    }
+    // these checks are only needed for full validation and can be skipped for light validation
+    if (bodyValidationMode == BodyValidationMode.FULL) {
+      final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
+      if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
+        return false;
+      }
 
-    final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
-    if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
-      return false;
+      final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
+      if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
+        return false;
+      }
     }
 
     final long gasUsed =
@@ -115,7 +125,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  private static boolean validateTransactionsRoot(
+  @VisibleForTesting
+  protected boolean validateTransactionsRoot(
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
       LOG.info(
@@ -157,7 +168,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  private static boolean validateReceiptsRoot(
+  @VisibleForTesting
+  protected boolean validateReceiptsRoot(
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
       LOG.warn(
