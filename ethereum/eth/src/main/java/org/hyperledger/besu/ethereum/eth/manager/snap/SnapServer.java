@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
@@ -240,12 +241,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                         stopWatch,
                         maxResponseBytes,
                         (pair) -> {
-                          var rlpOutput = new BytesValueRLPOutput();
-                          rlpOutput.startList();
-                          rlpOutput.writeBytes(pair.getFirst());
-                          rlpOutput.writeRLPBytes(pair.getSecond());
-                          rlpOutput.endList();
-                          return rlpOutput.encodedSize();
+                          Bytes bytes =
+                              AccountRangeMessage.toSlimAccount(RLP.input(pair.getSecond()));
+                          return Hash.SIZE + bytes.size();
                         });
 
                 final Bytes32 endKeyBytes = range.endKeyHash();
@@ -257,11 +255,15 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     storage.streamFlatAccounts(range.startKeyHash(), shouldContinuePredicate);
 
                 if (accounts.isEmpty() && shouldContinuePredicate.shouldContinue.get()) {
+                  var fromNextHash =
+                      range.endKeyHash().compareTo(range.startKeyHash()) >= 0
+                          ? range.endKeyHash()
+                          : range.startKeyHash();
                   // fetch next account after range, if it exists
                   LOGGER.debug(
                       "found no accounts in range, taking first value starting from {}",
-                      asLogHash(range.endKeyHash()));
-                  accounts = storage.streamFlatAccounts(range.endKeyHash(), UInt256.MAX_VALUE, 1L);
+                      asLogHash(fromNextHash));
+                  accounts = storage.streamFlatAccounts(fromNextHash, UInt256.MAX_VALUE, 1L);
                 }
 
                 final var worldStateProof =
