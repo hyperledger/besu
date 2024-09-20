@@ -212,7 +212,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       rlpOutput.writeBytes(rlp);
       return;
     }
-    
+
     if (!transactionType.equals(TransactionType.FRONTIER)) {
       rlpOutput.writeIntScalar(transactionType.getSerializedType());
     }
