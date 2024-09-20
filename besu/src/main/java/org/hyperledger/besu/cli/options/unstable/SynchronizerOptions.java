@@ -436,7 +436,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .isSnapSyncBftEnabled(snapsyncBftEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
-
+    builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
     return builder;
   }
 

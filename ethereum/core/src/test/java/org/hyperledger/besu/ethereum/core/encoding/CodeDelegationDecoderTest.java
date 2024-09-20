@@ -99,4 +99,16 @@ class CodeDelegationDecoderTest {
     assertThat(signature.getS().toString(16))
         .isEqualTo("3c8a25b2becd6e666f69803d1ae3322f2e137b7745c2c7f19da80f993ffde4df");
   }
+
+  @Test
+  void shouldDecodeInnerPayloadWhenSignatureIsZero() {
+    final BytesValueRLPInput input =
+        new BytesValueRLPInput(
+            Bytes.fromHexString(
+                "0xdf8501a1f0ff5a947a40026a3b9a41754a95eec8c92c6b99886f440c5b808080"),
+            true);
+    final CodeDelegation authorization = CodeDelegationTransactionDecoder.decodeInnerPayload(input);
+
+    assertThat(authorization.chainId()).isEqualTo(new BigInteger("01a1f0ff5a", 16));
+  }
 }
