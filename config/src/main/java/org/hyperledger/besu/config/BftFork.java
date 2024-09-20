@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.OptionalLong;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -39,6 +40,9 @@ public class BftFork implements Fork {
 
   /** The constant BLOCK_PERIOD_SECONDS_KEY. */
   public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
+
+  /** The constant BLOCK_PERIOD_MILLISECONDS_KEY. */
+  public static final String BLOCK_PERIOD_MILLISECONDS_KEY = "xblockperiodmilliseconds";
 
   /** The constant BLOCK_REWARD_KEY. */
   public static final String BLOCK_REWARD_KEY = "blockreward";
@@ -80,6 +84,15 @@ public class BftFork implements Fork {
    */
   public OptionalInt getBlockPeriodSeconds() {
     return JsonUtil.getPositiveInt(forkConfigRoot, BLOCK_PERIOD_SECONDS_KEY);
+  }
+
+  /**
+   * Gets block period milliseconds. Experimental for test scenarios only.
+   *
+   * @return the block period milliseconds
+   */
+  public OptionalLong getBlockPeriodMilliseconds() {
+    return JsonUtil.getLong(forkConfigRoot, BLOCK_PERIOD_MILLISECONDS_KEY);
   }
 
   /**
