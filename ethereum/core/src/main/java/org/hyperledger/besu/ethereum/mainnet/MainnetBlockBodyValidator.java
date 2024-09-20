@@ -87,7 +87,9 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return true;
     }
 
-    if (bodyValidationMode == BodyValidationMode.LIGHT) {
+    // these checks are only need to be done for full validation and can be skipped for light
+    // validation
+    if (bodyValidationMode == BodyValidationMode.FULL) {
       final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
       if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
         return false;
