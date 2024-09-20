@@ -64,6 +64,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.time.Duration;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
@@ -105,7 +106,7 @@ public class BftBlockCreatorTest {
           public BlockHeaderValidator.Builder createBlockHeaderRuleset(
               final BftConfigOptions config, final FeeMarket feeMarket) {
             return IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-                5, Optional.empty());
+                Duration.ofSeconds(5), Optional.empty());
           }
         };
     final GenesisConfigOptions configOptions =
@@ -200,7 +201,7 @@ public class BftBlockCreatorTest {
 
     final BlockHeaderValidator rules =
         IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-                secondsBetweenBlocks, Optional.empty())
+                Duration.ofSeconds(secondsBetweenBlocks), Optional.empty())
             .build();
 
     // NOTE: The header will not contain commit seals, so can only do light validation on header.
