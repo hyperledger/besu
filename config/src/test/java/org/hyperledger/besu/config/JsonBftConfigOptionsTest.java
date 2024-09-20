@@ -65,7 +65,7 @@ public class JsonBftConfigOptionsTest {
 
   @Test
   public void shouldGetEmptyBlockPeriodFromConfig() {
-    final BftConfigOptions config = fromConfigOptions(singletonMap("emptyblockperiodseconds", 60));
+    final BftConfigOptions config = fromConfigOptions(singletonMap("xemptyblockperiodseconds", 60));
     assertThat(config.getEmptyBlockPeriodSeconds()).isEqualTo(60);
   }
 

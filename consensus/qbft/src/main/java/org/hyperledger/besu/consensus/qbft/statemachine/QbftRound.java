@@ -143,28 +143,18 @@ public class QbftRound {
   }
 
   /**
-   * Send proposal message.
-   *
-   * @param block to send
-   */
-  public void sendProposalMessage(final Block block) {
-    LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
-    updateStateWithProposalAndTransmit(block);
-  }
-
-  /**
    * Create and send proposal message.
    *
    * @param headerTimeStampSeconds the header time stamp seconds
    */
-  public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
-    LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-    final Block block =
-        blockCreator.createBlock(headerTimeStampSeconds, this.parentHeader).getBlock();
-
-    LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
-    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
-  }
+//    public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
+//      LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
+//      final Block block =
+//          blockCreator.createBlock(headerTimeStampSeconds, this.parentHeader).getBlock();
+//
+//      LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
+//      updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
+//    }
 
   /**
    * Start round with.

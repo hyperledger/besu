@@ -42,7 +42,7 @@ public class BftFork implements Fork {
   public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
 
   /** The constant EMPTY_BLOCK_PERIOD_SECONDS_KEY. */
-  public static final String EMPTY_BLOCK_PERIOD_SECONDS_KEY = "emptyblockperiodseconds";
+  public static final String EMPTY_BLOCK_PERIOD_SECONDS_KEY = "xemptyblockperiodseconds";
 
   /** The constant BLOCK_PERIOD_MILLISECONDS_KEY. */
   public static final String BLOCK_PERIOD_MILLISECONDS_KEY = "xblockperiodmilliseconds";

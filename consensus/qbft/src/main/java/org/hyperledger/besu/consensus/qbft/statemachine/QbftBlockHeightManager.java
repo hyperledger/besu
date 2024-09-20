@@ -161,7 +161,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       LOG.trace(
           "Block has transactions and this node is a proposer so it will send a proposal: "
               + roundIdentifier);
-      qbftRound.sendProposalMessage(block);
+      qbftRound.updateStateWithProposalAndTransmit(block);
 
     } else {
       // handle the block times period
@@ -172,7 +172,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
         LOG.trace(
             "Block has no transactions and this node is a proposer so it will send a proposal: "
                 + roundIdentifier);
-        qbftRound.sendProposalMessage(block);
+        qbftRound.updateStateWithProposalAndTransmit(block);
       } else {
         LOG.trace(
             "Block has no transactions but emptyBlockPeriodSeconds did not expired yet: "
