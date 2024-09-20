@@ -85,7 +85,7 @@ public interface BlockValidator {
 
   /**
    * Performs fast block validation appropriate for use during syncing skipping transaction receipt
-   * roots and receipts roots are these are done during the download of the blocks.
+   * roots and receipts roots as these are done during the download of the blocks.
    *
    * @param context the protocol context
    * @param block the block to validate
