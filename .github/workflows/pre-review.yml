@@ -12,7 +12,7 @@ concurrency:
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.parallel=true"
-  total-runners: 8
+  total-runners: 10
 
 jobs:
   repolint:

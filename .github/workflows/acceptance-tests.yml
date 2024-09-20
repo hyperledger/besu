@@ -12,7 +12,7 @@ concurrency:
 
 env:
   GRADLE_OPTS: "-Xmx7g"
-  total-runners: 12
+  total-runners: 14
 
 jobs:
   acceptanceTestEthereum:
