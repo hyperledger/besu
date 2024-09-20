@@ -79,6 +79,17 @@ class CodeDelegationSignatureTest {
   }
 
   @Test
+  void testYParityExceedsTwoPow256() {
+    BigInteger r = BigInteger.ONE;
+    BigInteger s = BigInteger.TWO;
+    BigInteger yParity = TWO_POW_256;
+
+    assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> CodeDelegationSignature.create(r, s, yParity))
+        .withMessageContainingAll("Invalid 'yParity' value, should be < 2^256");
+  }
+
+  @Test
   void testValidYParityZero() {
     BigInteger r = BigInteger.ONE;
     BigInteger s = BigInteger.TEN;

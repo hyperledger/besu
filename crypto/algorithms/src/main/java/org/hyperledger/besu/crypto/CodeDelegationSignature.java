@@ -56,7 +56,7 @@ public class CodeDelegationSignature extends SECPSignature {
           "Invalid 's' value, should be < 2^256 but got " + s.toString(16));
     }
 
-    if (yParity.compareTo(TWO_POW_256) > 0) {
+    if (yParity.compareTo(TWO_POW_256) >= 0) {
       throw new IllegalArgumentException(
           "Invalid 'yParity' value, should be < 2^256 but got " + yParity.toString(16));
     }
