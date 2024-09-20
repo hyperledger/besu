@@ -52,6 +52,8 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
  */
 public class MainnetTransactionValidator implements TransactionValidator {
 
+  public static final BigInteger TWO_POW_256 = BigInteger.TWO.pow(256);
+
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
   private final FeeMarket feeMarket;
@@ -163,6 +165,12 @@ public class MainnetTransactionValidator implements TransactionValidator {
             .map(
                 codeDelegations -> {
                   for (CodeDelegation codeDelegation : codeDelegations) {
+                    if (codeDelegation.chainId().compareTo(TWO_POW_256) >= 0) {
+                      throw new IllegalArgumentException(
+                          "Invalid 'chainId' value, should be < 2^256 but got "
+                              + codeDelegation.chainId());
+                    }
+
                     if (codeDelegation.signature().getS().compareTo(halfCurveOrder) > 0) {
                       return ValidationResult.invalid(
                           TransactionInvalidReason.INVALID_SIGNATURE,
