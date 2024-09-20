@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.List;
@@ -73,10 +74,11 @@ public interface BlockImporter {
    * @return {@code BlockImportResult}
    * @see BlockImportResult
    */
-  BlockImportResult fastImportBlock(
+  BlockImportResult importBlockForSyncing(
       ProtocolContext context,
       Block block,
       List<TransactionReceipt> receipts,
       HeaderValidationMode headerValidationMode,
-      HeaderValidationMode ommerValidationMode);
+      HeaderValidationMode ommerValidationMode,
+      BodyValidationMode bodyValidationMode);
 }
