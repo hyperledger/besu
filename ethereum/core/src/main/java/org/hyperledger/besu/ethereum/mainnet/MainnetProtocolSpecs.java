@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.blockhash.PragueBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
@@ -780,6 +781,12 @@ public abstract class MainnetProtocolSpecs {
             .getConsolidationRequestContractAddress()
             .orElse(CONSOLIDATION_REQUEST_CONTRACT_ADDRESS);
 
+    RequestContractAddresses requestContractAddresses =
+        new RequestContractAddresses(
+            withdrawalRequestContractAddress,
+            depositContractAddress,
+            consolidationRequestContractAddress);
+
     return cancunDefinition(
             chainId,
             enableRevertReason,
@@ -803,11 +810,7 @@ public abstract class MainnetProtocolSpecs {
         .requestsValidator(pragueRequestsValidator(depositContractAddress))
         .requestsValidator(pragueRequestsValidator(consolidationRequestContractAddress))
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
-        .requestProcessorCoordinator(
-            pragueRequestsProcessors(
-                withdrawalRequestContractAddress,
-                depositContractAddress,
-                consolidationRequestContractAddress))
+        .requestProcessorCoordinator(pragueRequestsProcessors(requestContractAddresses))
 
         // change to accept EIP-7702 transactions
         .transactionValidatorFactoryBuilder(
