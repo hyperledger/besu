@@ -28,13 +28,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class PeerManagerTest {
+public class DefaultPeerManagerTest {
 
-  public PeerManager peerManager;
+  public DefaultPeerManager peerManager;
 
   @BeforeEach
   public void beforeTest() {
-    peerManager = new PeerManager();
+    peerManager = new DefaultPeerManager();
   }
 
   @Test
