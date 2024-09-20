@@ -28,6 +28,7 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
+import java.util.function.IntSupplier;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -284,5 +285,21 @@ public class TransactionPoolMetrics {
 
   private String priority(final boolean hasPriority) {
     return hasPriority ? "yes" : "no";
+  }
+
+  public void createBlobCacheSizeMetric(final IntSupplier sizeSupplier) {
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.TRANSACTION_POOL,
+        "blob_cache_size",
+        "Current size of the blob cache",
+        sizeSupplier);
+  }
+
+  public void createBlobMapSizeMetric(final IntSupplier sizeSupplier) {
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.TRANSACTION_POOL,
+        "blob_map_size",
+        "Current size of the blob map",
+        sizeSupplier);
   }
 }

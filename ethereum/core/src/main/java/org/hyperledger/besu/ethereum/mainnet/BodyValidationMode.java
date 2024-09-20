@@ -12,28 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.metrics;
+package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+public enum BodyValidationMode {
+  /** No Validation. data must be pre-validated */
+  NONE,
 
-import javax.inject.Singleton;
+  /** Skip receipts and transactions root validation */
+  LIGHT,
 
-import dagger.Module;
-import dagger.Provides;
-
-/**
- * Dagger module for providing the {@link MetricsSystem} and {@link ObservableMetricsSystem}
- * instances.
- */
-@Module
-public class MetricsSystemModule {
-  /** Default constructor */
-  public MetricsSystemModule() {}
-
-  @Provides
-  @Singleton
-  MetricsSystem provideMetricsSystem(final MetricsConfiguration metricsConfig) {
-    return MetricsSystemFactory.create(metricsConfig);
-  }
+  /** Fully validate the body */
+  FULL;
 }
