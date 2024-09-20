@@ -23,10 +23,10 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskFeatureToggle;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -43,6 +43,7 @@ public class CheckpointDownloadBlockStep {
   private final EthContext ethContext;
   private final PeerTaskExecutor peerTaskExecutor;
   private final Checkpoint checkpoint;
+  private final SynchronizerConfiguration synchronizerConfiguration;
   private final MetricsSystem metricsSystem;
 
   public CheckpointDownloadBlockStep(
@@ -50,11 +51,13 @@ public class CheckpointDownloadBlockStep {
       final EthContext ethContext,
       final PeerTaskExecutor peerTaskExecutor,
       final Checkpoint checkpoint,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.peerTaskExecutor = peerTaskExecutor;
     this.checkpoint = checkpoint;
+    this.synchronizerConfiguration = synchronizerConfiguration;
     this.metricsSystem = metricsSystem;
   }
 
@@ -75,7 +78,7 @@ public class CheckpointDownloadBlockStep {
   private CompletableFuture<Optional<BlockWithReceipts>> downloadReceipts(
       final PeerTaskResult<Block> peerTaskResult) {
     final Block block = peerTaskResult.getResult();
-    if (PeerTaskFeatureToggle.usePeerTaskSystem()) {
+    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
       CompletableFuture<Optional<BlockWithReceipts>> futureReceipts = new CompletableFuture<>();
       GetReceiptsFromPeerTask task =
           new GetReceiptsFromPeerTask(List.of(block.getHeader()), new BodyValidator());

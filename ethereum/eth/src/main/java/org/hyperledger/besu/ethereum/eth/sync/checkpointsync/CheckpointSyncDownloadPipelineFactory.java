@@ -86,7 +86,7 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
 
     final CheckpointDownloadBlockStep checkPointDownloadBlockStep =
         new CheckpointDownloadBlockStep(
-            protocolSchedule, ethContext, peerTaskExecutor, checkpoint, metricsSystem);
+            protocolSchedule, ethContext, peerTaskExecutor, checkpoint, syncConfig, metricsSystem);
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",

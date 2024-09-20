@@ -144,7 +144,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =
-        new DownloadReceiptsStep(ethContext, peerTaskExecutor, metricsSystem);
+        new DownloadReceiptsStep(ethContext, peerTaskExecutor, syncConfig, metricsSystem);
     final ImportBlocksStep importBlockStep =
         new ImportBlocksStep(
             protocolSchedule,

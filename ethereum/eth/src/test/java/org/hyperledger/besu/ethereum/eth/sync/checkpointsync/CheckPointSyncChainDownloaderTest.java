@@ -49,7 +49,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-import org.hyperledger.ethereum.eth.manager.peertask.PeerTaskFeatureToggleTestHelper;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -221,7 +220,6 @@ public class CheckPointSyncChainDownloaderTest {
   @ArgumentsSource(CheckPointSyncChainDownloaderTestArguments.class)
   public void shouldSyncToPivotBlockInMultipleSegments(final DataStorageFormat storageFormat)
       throws IllegalAccessException {
-    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(false);
     setup(storageFormat);
 
     final RespondingEthPeer peer =
@@ -233,6 +231,7 @@ public class CheckPointSyncChainDownloaderTest {
         SynchronizerConfiguration.builder()
             .downloaderChainSegmentSize(5)
             .downloaderHeadersRequestSize(3)
+            .isPeerTaskSystemEnabled(false)
             .build();
     final long pivotBlockNumber = 25;
     ethContext
@@ -258,7 +257,6 @@ public class CheckPointSyncChainDownloaderTest {
   @ArgumentsSource(CheckPointSyncChainDownloaderTestArguments.class)
   public void shouldSyncToPivotBlockInSingleSegment(final DataStorageFormat storageFormat)
       throws IllegalAccessException {
-    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(false);
     setup(storageFormat);
 
     final RespondingEthPeer peer =
@@ -267,7 +265,8 @@ public class CheckPointSyncChainDownloaderTest {
         RespondingEthPeer.blockchainResponder(otherBlockchain);
 
     final long pivotBlockNumber = 10;
-    final SynchronizerConfiguration syncConfig = SynchronizerConfiguration.builder().build();
+    final SynchronizerConfiguration syncConfig =
+        SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build();
     ethContext
         .getEthPeers()
         .streamAvailablePeers()
@@ -292,7 +291,6 @@ public class CheckPointSyncChainDownloaderTest {
   public void shouldSyncToPivotBlockInMultipleSegmentsWithPeerTaskSystem(
       final DataStorageFormat storageFormat)
       throws IllegalAccessException, ExecutionException, InterruptedException, TimeoutException {
-    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(true);
     setup(storageFormat);
 
     final RespondingEthPeer peer =
@@ -304,6 +302,7 @@ public class CheckPointSyncChainDownloaderTest {
         SynchronizerConfiguration.builder()
             .downloaderChainSegmentSize(5)
             .downloaderHeadersRequestSize(3)
+            .isPeerTaskSystemEnabled(true)
             .build();
     final long pivotBlockNumber = 25;
     ethContext
@@ -329,7 +328,6 @@ public class CheckPointSyncChainDownloaderTest {
   @ArgumentsSource(CheckPointSyncChainDownloaderTestArguments.class)
   public void shouldSyncToPivotBlockInSingleSegmentWithPeerTaskSystem(
       final DataStorageFormat storageFormat) throws IllegalAccessException {
-    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(true);
     setup(storageFormat);
 
     final RespondingEthPeer peer =
@@ -338,7 +336,8 @@ public class CheckPointSyncChainDownloaderTest {
         RespondingEthPeer.blockchainResponder(otherBlockchain);
 
     final long pivotBlockNumber = 10;
-    final SynchronizerConfiguration syncConfig = SynchronizerConfiguration.builder().build();
+    final SynchronizerConfiguration syncConfig =
+        SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build();
     ethContext
         .getEthPeers()
         .streamAvailablePeers()

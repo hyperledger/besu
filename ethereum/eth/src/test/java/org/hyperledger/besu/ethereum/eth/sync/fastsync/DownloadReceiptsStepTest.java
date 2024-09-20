@@ -34,10 +34,10 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-import org.hyperledger.ethereum.eth.manager.peertask.PeerTaskFeatureToggleTestHelper;
 
 import java.util.HashMap;
 import java.util.List;
@@ -57,7 +57,6 @@ public class DownloadReceiptsStepTest {
 
   private PeerTaskExecutor peerTaskExecutor;
   private EthProtocolManager ethProtocolManager;
-  private DownloadReceiptsStep downloadReceiptsStep;
 
   @BeforeAll
   public static void setUpClass() {
@@ -79,14 +78,16 @@ public class DownloadReceiptsStepTest {
             protocolContext.getWorldStateArchive(),
             transactionPool,
             EthProtocolConfiguration.defaultConfig());
-    downloadReceiptsStep =
-        new DownloadReceiptsStep(
-            ethProtocolManager.ethContext(), peerTaskExecutor, new NoOpMetricsSystem());
   }
 
   @Test
   public void shouldDownloadReceiptsForBlocks() throws IllegalAccessException {
-    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(false);
+    DownloadReceiptsStep downloadReceiptsStep =
+        new DownloadReceiptsStep(
+            ethProtocolManager.ethContext(),
+            peerTaskExecutor,
+            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
+            new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     final List<Block> blocks = asList(block(1), block(2), block(3), block(4));
@@ -106,7 +107,12 @@ public class DownloadReceiptsStepTest {
   @Test
   public void shouldDownloadReceiptsForBlocksUsingPeerTaskSystem()
       throws IllegalAccessException, ExecutionException, InterruptedException {
-    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(true);
+    DownloadReceiptsStep downloadReceiptsStep =
+        new DownloadReceiptsStep(
+            ethProtocolManager.ethContext(),
+            peerTaskExecutor,
+            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
+            new NoOpMetricsSystem());
 
     final List<Block> blocks = asList(mockBlock(), mockBlock(), mockBlock(), mockBlock());
     Map<BlockHeader, List<TransactionReceipt>> receiptsMap = new HashMap<>();
