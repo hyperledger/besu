@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveCodeStorageStrategy;
@@ -78,15 +79,20 @@ public class FlatDbStrategyProvider {
   }
 
   @VisibleForTesting
-  FlatDbMode deriveFlatDbStrategy(final SegmentedKeyValueStorage composedWorldStateStorage) {
-    // final FlatDbMode requestedFlatDbMode =
-    //    dataStorageConfiguration.getUnstable().getBonsaiFullFlatDbEnabled()
-    //        ? FlatDbMode.FULL
-    //        : FlatDbMode.PARTIAL;
+  synchronized FlatDbMode deriveFlatDbStrategy(
+      final SegmentedKeyValueStorage composedWorldStateStorage) {
+    final FlatDbMode requestedFlatDbMode =
+        dataStorageConfiguration.getUnstable().getBonsaiFullFlatDbEnabled()
+            ? (dataStorageConfiguration
+                    .getDataStorageFormat()
+                    .equals(DataStorageFormat.BONSAI_ARCHIVE)
+                ? FlatDbMode.ARCHIVE
+                : FlatDbMode.FULL)
+            : FlatDbMode.PARTIAL;
 
     // TODO: commented out for archive testing
-    // final var existingTrieData =
-    //     composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).isPresent();
+    final var existingTrieData =
+        composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).isPresent();
 
     var flatDbMode =
         FlatDbMode.fromVersion(
@@ -100,15 +106,20 @@ public class FlatDbStrategyProvider {
                       // and default to the storage config otherwise
 
                       // TODO: temporarily hard code ARCHIVE mode for testing
+                      /*var flatDbModeVal =
+                      dataStorageConfiguration
+                              .getDataStorageFormat()
+                              .equals(DataStorageFormat.BONSAI_ARCHIVE)
+                          ? FlatDbMode.ARCHIVE.getVersion()
+                          : FlatDbMode.FULL.getVersion();*/
                       var flatDbModeVal =
-                          dataStorageConfiguration
-                                  .getDataStorageFormat()
-                                  .equals(DataStorageFormat.BONSAI_ARCHIVE)
+                          existingTrieData
                               ? FlatDbMode.ARCHIVE.getVersion()
-                              : FlatDbMode.FULL.getVersion();
-                      // existingTrieData
-                      //        ? FlatDbMode.ARCHIVE.getVersion()
-                      //        : requestedFlatDbMode.getVersion();
+                              : requestedFlatDbMode.getVersion();
+
+                      // MRW TODO - If there is archive data in the freezer segment, we can assume
+                      // archive mode
+
                       // persist this config in the db
                       var setDbModeTx = composedWorldStateStorage.startTransaction();
                       setDbModeTx.put(

@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldSta
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
@@ -43,8 +44,13 @@ public class GenesisWorldStateProvider {
    */
   public static MutableWorldState createGenesisWorldState(
       final DataStorageConfiguration dataStorageConfiguration) {
-    if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat().isBonsaiFormat()) {
-      return createGenesisBonsaiWorldState();
+
+    if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
+        == DataStorageFormat.BONSAI) {
+      return createGenesisBonsaiWorldState(false);
+    } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
+        == DataStorageFormat.BONSAI_ARCHIVE) {
+      return createGenesisBonsaiWorldState(true);
     } else {
       return createGenesisForestWorldState();
     }
@@ -55,7 +61,7 @@ public class GenesisWorldStateProvider {
    *
    * @return a mutable world state for the Genesis block
    */
-  private static MutableWorldState createGenesisBonsaiWorldState() {
+  private static MutableWorldState createGenesisBonsaiWorldState(final boolean archiveMode) {
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
     final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
@@ -65,7 +71,9 @@ public class GenesisWorldStateProvider {
                 new InMemoryKeyValueStorage(),
                 new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+            archiveMode
+                ? DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG
+                : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     return new BonsaiWorldState(
         bonsaiWorldStateKeyValueStorage,
         bonsaiCachedMerkleTrieLoader,
