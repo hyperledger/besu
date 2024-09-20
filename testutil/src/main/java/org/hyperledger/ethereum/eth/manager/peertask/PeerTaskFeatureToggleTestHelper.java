@@ -14,9 +14,10 @@
  */
 package org.hyperledger.ethereum.eth.manager.peertask;
 
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskFeatureToggle;
+
 import java.lang.reflect.Field;
 
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskFeatureToggle;
 import org.junit.platform.commons.util.ReflectionUtils;
 
 public class PeerTaskFeatureToggleTestHelper {
