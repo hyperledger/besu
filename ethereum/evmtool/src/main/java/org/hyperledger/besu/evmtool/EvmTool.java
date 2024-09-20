@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evmtool;
 
+import org.hyperledger.besu.Besu;
 import org.hyperledger.besu.util.LogConfigurator;
 
 /** The main entry point for the EVM (Ethereum Virtual Machine) tool. */
@@ -29,6 +30,7 @@ public final class EvmTool {
    */
   public static void main(final String... args) {
     LogConfigurator.setLevel("", "OFF");
+    Besu.setupNative();
     final EvmToolCommand evmToolCommand = new EvmToolCommand();
 
     evmToolCommand.execute(args);
