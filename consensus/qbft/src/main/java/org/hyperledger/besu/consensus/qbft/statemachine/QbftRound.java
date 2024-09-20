@@ -143,20 +143,6 @@ public class QbftRound {
   }
 
   /**
-   * Create and send proposal message.
-   *
-   * @param headerTimeStampSeconds the header time stamp seconds
-   */
-//    public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
-//      LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-//      final Block block =
-//          blockCreator.createBlock(headerTimeStampSeconds, this.parentHeader).getBlock();
-//
-//      LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
-//      updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
-//    }
-
-  /**
    * Start round with.
    *
    * @param roundChangeArtifacts the round change artifacts

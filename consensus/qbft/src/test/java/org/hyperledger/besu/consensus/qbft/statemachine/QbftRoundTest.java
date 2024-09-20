@@ -194,91 +194,6 @@ public class QbftRoundTest {
     verify(transmitter, never()).multicastCommit(any(), any(), any());
   }
 
-  //  @Test
-  //  public void sendsAProposalAndPrepareWhenSendProposalRequested() {
-  //    final RoundState roundState = new RoundState(roundIdentifier, 3, messageValidator);
-  //    final QbftRound round =
-  //        new QbftRound(
-  //            roundState,
-  //            blockCreator,
-  //            protocolContext,
-  //            protocolSchedule,
-  //            subscribers,
-  //            nodeKey,
-  //            messageFactory,
-  //            transmitter,
-  //            roundTimer,
-  //            bftExtraDataCodec,
-  //            parentHeader);
-  //
-  //    round.createAndSendProposalMessage(15);
-  //    verify(transmitter, times(1))
-  //        .multicastProposal(
-  //            roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList());
-  //    verify(transmitter, times(1)).multicastPrepare(roundIdentifier, proposedBlock.getHash());
-  //    verify(transmitter, never()).multicastCommit(any(), any(), any());
-  //  }
-
-  //  @Test
-  //  public void singleValidatorImportBlocksImmediatelyOnProposalCreation() {
-  //    final RoundState roundState = new RoundState(roundIdentifier, 1, messageValidator);
-  //    final QbftRound round =
-  //        new QbftRound(
-  //            roundState,
-  //            blockCreator,
-  //            protocolContext,
-  //            protocolSchedule,
-  //            subscribers,
-  //            nodeKey,
-  //            messageFactory,
-  //            transmitter,
-  //            roundTimer,
-  //            bftExtraDataCodec,
-  //            parentHeader);
-  //    round.createAndSendProposalMessage(15);
-  //    verify(transmitter, times(1))
-  //        .multicastProposal(
-  //            roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList());
-  //    verify(transmitter, times(1)).multicastPrepare(roundIdentifier, proposedBlock.getHash());
-  //    verify(transmitter, times(1)).multicastCommit(any(), any(), any());
-  //  }
-
-  //  @Test
-  //  public void localNodeProposesToNetworkOfTwoValidatorsImportsOnReceptionOfCommitFromPeer() {
-  //    final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
-  //    final QbftRound round =
-  //        new QbftRound(
-  //            roundState,
-  //            blockCreator,
-  //            protocolContext,
-  //            protocolSchedule,
-  //            subscribers,
-  //            nodeKey,
-  //            messageFactory,
-  //            transmitter,
-  //            roundTimer,
-  //            bftExtraDataCodec,
-  //            parentHeader);
-  //
-  //    final Hash commitSealHash =
-  //        new BftBlockHashing(new QbftExtraDataCodec())
-  //            .calculateDataHashForCommittedSeal(proposedBlock.getHeader(), proposedExtraData);
-  //    final SECPSignature localCommitSeal = nodeKey.sign(commitSealHash);
-  //
-  //    round.createAndSendProposalMessage(15);
-  //    verify(transmitter, never()).multicastCommit(any(), any(), any());
-  //
-  //    round.handlePrepareMessage(
-  //        messageFactory2.createPrepare(roundIdentifier, proposedBlock.getHash()));
-  //
-  //    verify(transmitter, times(1))
-  //        .multicastCommit(roundIdentifier, proposedBlock.getHash(), localCommitSeal);
-  //
-  //    round.handleCommitMessage(
-  //        messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(),
-  // remoteCommitSeal));
-  //  }
-
   @Test
   public void aProposalWithAnewBlockIsSentUponReceptionOfARoundChangeWithNoCertificate() {
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
@@ -391,26 +306,6 @@ public class QbftRoundTest {
         messageFactory2.createPrepare(roundIdentifier, proposedBlock.getHash()));
     assertThat(roundState.isPrepared()).isTrue();
   }
-
-  //  @Test
-  //  public void creatingNewBlockNotifiesBlockMiningObservers() {
-  //    final RoundState roundState = new RoundState(roundIdentifier, 1, messageValidator);
-  //    final QbftRound round =
-  //        new QbftRound(
-  //            roundState,
-  //            blockCreator,
-  //            protocolContext,
-  //            protocolSchedule,
-  //            subscribers,
-  //            nodeKey,
-  //            messageFactory,
-  //            transmitter,
-  //            roundTimer,
-  //            bftExtraDataCodec,
-  //            parentHeader);
-  //    round.createAndSendProposalMessage(15);
-  //    verify(minedBlockObserver).blockMined(any());
-  //  }
 
   @Test
   public void blockIsOnlyImportedOnceWhenCommitsAreReceivedBeforeProposal() {
