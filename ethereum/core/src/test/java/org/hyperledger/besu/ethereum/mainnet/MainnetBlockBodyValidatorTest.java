@@ -14,29 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.apache.tuweni.units.bigints.UInt64;
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.GWei;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
-import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestValidator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.NONE;
@@ -49,6 +26,30 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
+import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.tuweni.units.bigints.UInt64;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class MainnetBlockBodyValidatorTest {
@@ -204,13 +205,15 @@ class MainnetBlockBodyValidatorTest {
 
     final MainnetBlockBodyValidator bodyValidator = new MainnetBlockBodyValidator(protocolSchedule);
 
-      assertThat(bodyValidator.validateBodyLight(
-          blockchainSetupUtil.getProtocolContext(),
-          block,
-          receipts,
-          Optional.empty(),
-          NONE,
-          BodyValidationMode.NONE)).isTrue();
+    assertThat(
+            bodyValidator.validateBodyLight(
+                blockchainSetupUtil.getProtocolContext(),
+                block,
+                receipts,
+                Optional.empty(),
+                NONE,
+                BodyValidationMode.NONE))
+        .isTrue();
     verifyNoInteractions(block);
     verifyNoInteractions(receipts);
   }
@@ -218,16 +221,16 @@ class MainnetBlockBodyValidatorTest {
   @Test
   public void lightValidationDoesNotCheckTransactionRootOrReceiptRoot() {
     final Block block =
-            blockDataGenerator.block(
-                    new BlockOptions()
-                            .setBlockNumber(1)
-                            .setGasUsed(0)
-                            .hasTransactions(false)
-                            .hasOmmers(false)
-                            .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
-                            .setLogsBloom(LogsBloomFilter.empty())
-                            .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
-                            .setWithdrawals(Optional.of(withdrawals)));
+        blockDataGenerator.block(
+            new BlockOptions()
+                .setBlockNumber(1)
+                .setGasUsed(0)
+                .hasTransactions(false)
+                .hasOmmers(false)
+                .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
+                .setLogsBloom(LogsBloomFilter.empty())
+                .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
+                .setWithdrawals(Optional.of(withdrawals)));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
     final MainnetBlockBodyValidator bodyValidator = new MainnetBlockBodyValidator(protocolSchedule);
@@ -249,16 +252,16 @@ class MainnetBlockBodyValidatorTest {
   @Test
   public void fullValidationChecksTransactionRootAndReceiptRoot() {
     final Block block =
-            blockDataGenerator.block(
-                    new BlockOptions()
-                            .setBlockNumber(1)
-                            .setGasUsed(0)
-                            .hasTransactions(false)
-                            .hasOmmers(false)
-                            .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
-                            .setLogsBloom(LogsBloomFilter.empty())
-                            .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
-                            .setWithdrawals(Optional.of(withdrawals)));
+        blockDataGenerator.block(
+            new BlockOptions()
+                .setBlockNumber(1)
+                .setGasUsed(0)
+                .hasTransactions(false)
+                .hasOmmers(false)
+                .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
+                .setLogsBloom(LogsBloomFilter.empty())
+                .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
+                .setWithdrawals(Optional.of(withdrawals)));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
     final MainnetBlockBodyValidator bodyValidator = new MainnetBlockBodyValidator(protocolSchedule);
@@ -266,16 +269,18 @@ class MainnetBlockBodyValidatorTest {
 
     assertThat(
             bodyValidatorSpy.validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(),
-                    block,
-                    emptyList(),
-                    Optional.empty(),
-                    NONE,
-                    BodyValidationMode.FULL))
-            .isTrue();
+                blockchainSetupUtil.getProtocolContext(),
+                block,
+                emptyList(),
+                Optional.empty(),
+                NONE,
+                BodyValidationMode.FULL))
+        .isTrue();
     final Hash receiptsRoot = BodyValidation.receiptsRoot(emptyList());
     final Hash transactionsRoot = BodyValidation.transactionsRoot(emptyList());
-    verify(bodyValidatorSpy, times(1)).validateReceiptsRoot(block.getHeader(), receiptsRoot, receiptsRoot);
-    verify(bodyValidatorSpy, times(1)).validateTransactionsRoot(block.getHeader(), transactionsRoot, transactionsRoot);
+    verify(bodyValidatorSpy, times(1))
+        .validateReceiptsRoot(block.getHeader(), receiptsRoot, receiptsRoot);
+    verify(bodyValidatorSpy, times(1))
+        .validateTransactionsRoot(block.getHeader(), transactionsRoot, transactionsRoot);
   }
 }
