@@ -48,6 +48,11 @@ public class BftEventQueue {
     started.set(true);
   }
 
+  /** Stop the event queue. Until it has been started no events will be queued for processing. */
+  public void stop() {
+    started.set(false);
+  }
+
   private boolean isStarted() {
     return started.get();
   }
