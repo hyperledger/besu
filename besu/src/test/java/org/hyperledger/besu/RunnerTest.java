@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskFeatureToggle;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -104,6 +105,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
+import org.hyperledger.ethereum.eth.manager.peertask.PeerTaskFeatureToggleTestHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -119,7 +121,7 @@ public final class RunnerTest {
   private Vertx vertx;
 
   @BeforeEach
-  public void initVertx() {
+  public void initVertx() throws IllegalAccessException {
     vertx = Vertx.vertx();
   }
 
@@ -131,7 +133,18 @@ public final class RunnerTest {
   @TempDir private Path temp;
 
   @Test
-  public void getFixedNodes() {
+  public void getFixedNodes() throws IllegalAccessException {
+    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(false);
+    doGetFixedNodes();
+  }
+
+  @Test
+  public void getFixedNodesUsingPeerTaskSystem() throws IllegalAccessException {
+    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(true);
+    doGetFixedNodes();
+  }
+
+  private void doGetFixedNodes() {
     final EnodeURL staticNode =
         EnodeURLImpl.fromString(
             "enode://8f4b88336cc40ef2516d8b27df812e007fb2384a61e93635f1899051311344f3dcdbb49a4fe49a79f66d2f589a9f282e8cc4f1d7381e8ef7e4fcc6b0db578c77@127.0.0.1:30301");
@@ -150,6 +163,17 @@ public final class RunnerTest {
 
   @Test
   public void fullSyncFromGenesis() throws Exception {
+    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(false);
+    doFullSyncFromGenesis();
+  }
+
+  @Test
+  public void fullSyncFromGenesisUsingPeerTaskSystem() throws Exception {
+    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(true);
+    doFullSyncFromGenesis();
+  }
+
+  private void doFullSyncFromGenesis() throws Exception {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
     MergeConfigOptions.setMergeEnabled(false);
 
@@ -158,6 +182,17 @@ public final class RunnerTest {
 
   @Test
   public void fastSyncFromGenesis() throws Exception {
+    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(false);
+    doFastSyncFromGenesis();
+  }
+
+  @Test
+  public void fastSyncFromGenesisUsingPeerTaskSystem() throws Exception {
+    PeerTaskFeatureToggleTestHelper.setPeerTaskFeatureToggle(true);
+    doFastSyncFromGenesis();
+  }
+
+  private void doFastSyncFromGenesis() throws Exception {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
     MergeConfigOptions.setMergeEnabled(false);
 

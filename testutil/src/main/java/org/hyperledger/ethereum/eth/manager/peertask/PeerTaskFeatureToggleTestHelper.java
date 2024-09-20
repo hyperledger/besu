@@ -12,10 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager.peertask;
+package org.hyperledger.ethereum.eth.manager.peertask;
 
 import java.lang.reflect.Field;
 
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskFeatureToggle;
 import org.junit.platform.commons.util.ReflectionUtils;
 
 public class PeerTaskFeatureToggleTestHelper {
