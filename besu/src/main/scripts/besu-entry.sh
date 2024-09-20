@@ -45,5 +45,10 @@ done
 # Construct the command as a single string
 COMMAND="/opt/besu/bin/besu $@"
 
-# Switch to the besu user and execute the command
-exec su -s /bin/bash $BESU_USER_NAME -c "$COMMAND"
+# Check if current user is root
+if [ "$(id -u)" -eq 0 ]; then
+    # Switch to the besu user and execute the command
+    exec su -s /bin/bash "$BESU_USER_NAME" -c "$COMMAND"
+else
+    exec /bin/bash -c "$COMMAND"
+fi
