@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.math.BigInteger;
 
+/** Secp signature with code delegation. */
 public class CodeDelegationSignature extends SECPSignature {
   private static final BigInteger TWO_POW_256 = BigInteger.TWO.pow(256);
 
