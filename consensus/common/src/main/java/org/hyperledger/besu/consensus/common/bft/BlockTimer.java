@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 public class BlockTimer {
 
   private static final Logger LOG = LoggerFactory.getLogger(BlockTimer.class);
+
   private final ForksSchedule<? extends BftConfigOptions> forksSchedule;
   private final BftExecutors bftExecutors;
   private Optional<ScheduledFuture<?>> currentTimerTask;
@@ -84,7 +85,29 @@ public class BlockTimer {
    */
   public synchronized void startTimer(
       final ConsensusRoundIdentifier round, final BlockHeader chainHeadHeader) {
+    cancelTimer();
 
+    final long now = clock.millis();
+    final long expiryTime;
+
+    // Experimental option for test scenarios only. Not for production use.
+    final long blockPeriodMilliseconds =
+        forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodMilliseconds();
+
+    if (blockPeriodMilliseconds > 0) {
+      // Experimental mode for setting < 1 second block periods e.g. for CI/CD pipelines
+      // running tests against Besu
+      expiryTime = clock.millis() + blockPeriodMilliseconds;
+      LOG.warn(
+          "Test-mode only xblockperiodmilliseconds has been set to {} millisecond blocks. Do not use in a production system.",
+          blockPeriodMilliseconds);
+    } else {
+      // absolute time when the timer is supposed to expire
+      final int blockPeriodSeconds =
+          forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
+      final long minimumTimeBetweenBlocksMillis = blockPeriodSeconds * 1000L;
+      expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
+    }
     // absolute time when the timer is supposed to expire
     final int currentBlockPeriodSeconds =
         forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();

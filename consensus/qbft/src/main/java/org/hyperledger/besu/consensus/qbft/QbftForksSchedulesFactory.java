@@ -50,6 +50,7 @@ public class QbftForksSchedulesFactory {
 
     fork.getBlockPeriodSeconds().ifPresent(bftConfigOptions::setBlockPeriodSeconds);
     fork.getEmptyBlockPeriodSeconds().ifPresent(bftConfigOptions::setEmptyBlockPeriodSeconds);
+    fork.getBlockPeriodMilliseconds().ifPresent(bftConfigOptions::setBlockPeriodMilliseconds);
     fork.getBlockRewardWei().ifPresent(bftConfigOptions::setBlockRewardWei);
 
     if (fork.isMiningBeneficiaryConfigured()) {

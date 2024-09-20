@@ -44,6 +44,12 @@ ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
 ENV OLDPATH="${PATH}"
 ENV PATH="/opt/besu/bin:${OLDPATH}"
 
+
+# The entry script just sets permissions as needed based on besu config
+# and is replaced by the besu process running as besu user.
+# Suppressing this warning as there's no risk here because the root user
+# only sets permissions and does not continue running the main process.
+# hadolint ignore=DL3002
 USER root
 RUN chmod +x /opt/besu/bin/besu-entry.sh
 
