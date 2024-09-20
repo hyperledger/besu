@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class PeerTaskRequestSender {
-  private static final long DEFAULT_TIMEOUT_MS = 20_000;
+  private static final long DEFAULT_TIMEOUT_MS = 5_000;
 
   private final long timeoutMs;
 
