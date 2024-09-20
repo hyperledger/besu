@@ -129,6 +129,7 @@ public class TransactionPool implements BlockAddedObserver {
     this.blockAddedEventOrderedProcessor =
         ethContext.getScheduler().createOrderedProcessor(this::processBlockAddedEvent);
     this.cacheForBlobsOfTransactionsAddedToABlock = blobCache;
+    initializeBlobMetrics();
     initLogForReplay();
     subscribePendingTransactions(this::mapBlobsOnTransactionAdded);
     subscribeDroppedTransactions(this::unmapBlobsOnTransactionDropped);
@@ -684,6 +685,19 @@ public class TransactionPool implements BlockAddedObserver {
 
   public boolean isEnabled() {
     return isPoolEnabled.get();
+  }
+
+  public int getBlobCacheSize() {
+    return (int) cacheForBlobsOfTransactionsAddedToABlock.size();
+  }
+
+  public int getBlobMapSize() {
+    return mapOfBlobsInTransactionPool.size();
+  }
+
+  private void initializeBlobMetrics() {
+    metrics.createBlobCacheSizeMetric(this::getBlobCacheSize);
+    metrics.createBlobMapSizeMetric(this::getBlobMapSize);
   }
 
   class PendingTransactionsListenersProxy {
