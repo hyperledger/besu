@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.mainnet.requests.ConsolidationRequestProcessor.CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS;
+import static org.hyperledger.besu.ethereum.mainnet.requests.ConsolidationRequestProcessor.CONSOLIDATION_REQUEST_CONTRACT_ADDRESS;
 import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsProcessors;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
@@ -778,7 +778,7 @@ public abstract class MainnetProtocolSpecs {
     final Address consolidationRequestContractAddress =
         genesisConfigOptions
             .getConsolidationRequestContractAddress()
-            .orElse(CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS);
+            .orElse(CONSOLIDATION_REQUEST_CONTRACT_ADDRESS);
 
     return cancunDefinition(
             chainId,
