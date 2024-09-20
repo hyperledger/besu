@@ -93,6 +93,7 @@ public interface BlockValidator {
    * @param requests the requests
    * @param headerValidationMode the header validation mode
    * @param ommerValidationMode the ommer validation mode
+   * @param bodyValidationMode the body validation mode
    * @return true if the block is valid, false otherwise
    */
   boolean validateBlockForSyncing(
