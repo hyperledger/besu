@@ -55,6 +55,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
 import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.DefaultPeerManager;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerManager;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRequestSender;
@@ -655,7 +656,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
-    final PeerManager peerManager = new PeerManager();
+    final PeerManager peerManager = new DefaultPeerManager();
     ethPeers.streamAllPeers().forEach(peerManager::addPeer);
     final PeerTaskExecutor peerTaskExecutor =
         new PeerTaskExecutor(
