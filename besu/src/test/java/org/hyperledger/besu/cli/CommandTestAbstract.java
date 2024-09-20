@@ -149,7 +149,7 @@ public abstract class CommandTestAbstract {
                   .put(
                       "qbft",
                       new JsonObject()
-                          .put("emptyblockperiodseconds", POA_EMPTY_BLOCK_PERIOD_SECONDS)));
+                          .put("xemptyblockperiodseconds", POA_EMPTY_BLOCK_PERIOD_SECONDS)));
   protected static final JsonObject VALID_GENESIS_IBFT2_POST_LONDON =
       (new JsonObject())
           .put(

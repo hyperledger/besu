@@ -104,7 +104,7 @@ public class JsonBftConfigOptionsTest {
   @Test
   public void shouldNotThrowOnNonPositiveEmptyBlockPeriod() {
     // can be 0 to be compatible with older versions
-    final BftConfigOptions config = fromConfigOptions(singletonMap("emptyblockperiodseconds", 0));
+    final BftConfigOptions config = fromConfigOptions(singletonMap("xemptyblockperiodseconds", 0));
     assertThatCode(() -> config.getEmptyBlockPeriodSeconds()).doesNotThrowAnyException();
   }
 
