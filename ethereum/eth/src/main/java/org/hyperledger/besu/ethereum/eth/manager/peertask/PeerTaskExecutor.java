@@ -48,7 +48,10 @@ public class PeerTaskExecutor {
     this.protocolSpecSupplier = protocolSpecSupplier;
     requestTimer =
         metricsSystem.createLabelledTimer(
-            BesuMetricCategory.PEERS, "PeerTaskExecutor:RequestTime", "Time taken to send a request", "className");
+            BesuMetricCategory.PEERS,
+            "PeerTaskExecutor:RequestTime",
+            "Time taken to send a request",
+            "className");
   }
 
   public <T> PeerTaskExecutorResult<T> execute(final PeerTask<T> peerTask) {
