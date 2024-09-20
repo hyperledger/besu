@@ -17,23 +17,11 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /** "Manages" the EthPeers for the PeerTaskExecutor */
-public class PeerManager {
-  private static final Logger LOG = LoggerFactory.getLogger(PeerManager.class);
-
-  // use a synchronized map to ensure the map is never modified by multiple threads at once
-  private final Map<PeerId, EthPeer> ethPeersByPeerId =
-      Collections.synchronizedMap(new HashMap<>());
+public interface PeerManager {
 
   /**
    * Gets the highest reputation peer matching the supplies filter
@@ -42,23 +30,28 @@ public class PeerManager {
    * @return the highest reputation peer matching the supplies filter
    * @throws NoAvailablePeerException If there are no suitable peers
    */
-  public EthPeer getPeer(final Predicate<EthPeer> filter) throws NoAvailablePeerException {
-    LOG.trace("Getting peer from pool of {} peers", ethPeersByPeerId.size());
-    return ethPeersByPeerId.values().stream()
-        .filter(filter)
-        .max(Comparator.naturalOrder())
-        .orElseThrow(NoAvailablePeerException::new);
-  }
+  EthPeer getPeer(final Predicate<EthPeer> filter) throws NoAvailablePeerException;
 
-  public Optional<EthPeer> getPeerByPeerId(final PeerId peerId) {
-    return Optional.ofNullable(ethPeersByPeerId.get(peerId));
-  }
+  /**
+   * Attempts to get the EthPeer identified by peerId
+   *
+   * @param peerId the peerId of the desired EthPeer
+   * @return An Optional\<EthPeer\> containing the EthPeer identified by peerId if present in the
+   *     PeerManager, or empty otherwise
+   */
+  Optional<EthPeer> getPeerByPeerId(final PeerId peerId);
 
-  public void addPeer(final EthPeer ethPeer) {
-    ethPeersByPeerId.put(ethPeer.getConnection().getPeer(), ethPeer);
-  }
+  /**
+   * Add the supplied EthPeer to the PeerManager
+   *
+   * @param ethPeer the EthPeer to be added to the PeerManager
+   */
+  void addPeer(final EthPeer ethPeer);
 
-  public void removePeer(final PeerId peerId) {
-    ethPeersByPeerId.remove(peerId);
-  }
+  /**
+   * Remove the EthPeer identified by peerId from the PeerManager
+   *
+   * @param peerId the PeerId of the EthPeer to be removed from the PeerManager
+   */
+  void removePeer(final PeerId peerId);
 }
