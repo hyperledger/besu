@@ -104,7 +104,7 @@ public class GetReceiptsFromPeerTask
     }
 
     final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
-    final List<List<TransactionReceipt>> receiptsByBlock = receiptsMessage.receipts();
+    final List<List<TransactionReceipt>> receiptsByBlock = receiptsMessage.receipts(true);
     if (receiptsByBlock.isEmpty()) {
       return Optional.empty();
     } else if (receiptsByBlock.size() > blockHeaders.size()) {
