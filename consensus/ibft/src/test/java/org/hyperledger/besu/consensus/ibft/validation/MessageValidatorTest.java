@@ -113,7 +113,7 @@ public class MessageValidatorTest {
 
     when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
+    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any(), eq(false)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
 
     when(roundChangeCertificateValidator.validateProposalMessageMatchesLatestPrepareCertificate(
@@ -168,7 +168,7 @@ public class MessageValidatorTest {
 
   @Test
   public void blockValidationFailureFailsValidation() {
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
+    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any(), eq(false)))
         .thenReturn(new BlockProcessingResult("Failed"));
 
     final Proposal proposalMsg =
