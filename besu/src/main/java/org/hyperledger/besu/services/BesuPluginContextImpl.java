@@ -125,7 +125,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
    * @param config the plugin configuration
    * @throws IllegalStateException if the system is not in the UNINITIALIZED state.
    */
-  public void initialize(PluginConfiguration config) {
+  public void initialize(final PluginConfiguration config) {
     checkState(
         state == Lifecycle.UNINITIALIZED,
         "Besu plugins have already been initialized. Cannot register additional plugins.");

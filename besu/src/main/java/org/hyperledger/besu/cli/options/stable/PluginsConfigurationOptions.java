@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.stable;
 
+import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME;
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME;
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_OPTION_NAME;
 
@@ -48,7 +49,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
   private List<PluginInfo> plugins;
 
   @CommandLine.Option(
-      names = {"--halt-on-plugin-error"},
+      names = {DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME},
       description =
           "Prevent Besu from starting if any plugins fail to initialize correctly (default: ${DEFAULT-VALUE})",
       hidden = true,
@@ -104,7 +105,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
 
     boolean haltOnPluginError =
         CommandLineUtils.getOptionValueOrDefault(
-            commandLine, "--halt-on-plugin-error", Boolean::parseBoolean);
+            commandLine, DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME, Boolean::parseBoolean);
 
     return new PluginConfiguration.Builder()
         .requestedPlugins(plugins)
