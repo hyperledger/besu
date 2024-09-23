@@ -105,19 +105,6 @@ public class GenesisFileAnalyzer {
           || configNode.has("contractSizeLimit")) {
         return GenesisAnalysis.FileStyle.BESU;
       }
-
-      // The presence of ethash with fixeddifficulty is compatible with both BESU and GETH
-      // So we don't need to change the fileStyle based on this
-    }
-
-    // Check for Geth-specific extraData format that Besu doesn't support
-    if (genesisJson.has("extradata")) {
-      String extraData = genesisJson.get("extradata").asText();
-      if (extraData != null && !extraData.isEmpty()) {
-        if (extraData.length() == 64 || extraData.length() == 32) {
-          fileStyle = GenesisAnalysis.FileStyle.GETH;
-        }
-      }
     }
 
     LOG.info("Detected file style: {}", fileStyle);

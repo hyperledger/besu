@@ -25,8 +25,9 @@ public class GenesisFileHandler {
   private GenesisFileHandler() {}
 
   static GenesisReader processGenesisFile(final ObjectNode config) {
+    ObjectNode normalizedConfig = JsonUtil.normalizeKeys(config);
     GenesisFileAnalyzer.GenesisAnalysis analysis =
-        GenesisFileAnalyzer.analyzeGenesisFile(JsonUtil.normalizeKeys(config));
+        GenesisFileAnalyzer.analyzeGenesisFile(normalizedConfig);
 
     // Log the analysis results
     LOG.info("Genesis file analysis results:");
@@ -35,14 +36,16 @@ public class GenesisFileHandler {
     LOG.info("Network Version: {}", analysis.networkVersion());
 
     // Create and return the appropriate GenesisReader
-    return createGenesisReader(config, analysis);
+    return createGenesisReader(config, normalizedConfig, analysis);
   }
 
   private static GenesisReader createGenesisReader(
-      final ObjectNode config, final GenesisFileAnalyzer.GenesisAnalysis analysis) {
+      final ObjectNode config,
+      final ObjectNode normalizedConfig,
+      final GenesisFileAnalyzer.GenesisAnalysis analysis) {
     ObjectNode processedConfig =
         (analysis.fileStyle() == GenesisFileAnalyzer.GenesisAnalysis.FileStyle.GETH)
-            ? GenesisFileConverter.convertGethToBesu(config)
+            ? GenesisFileConverter.convertGethToBesu(config, normalizedConfig)
             : config;
 
     return new GenesisReader.FromObjectNode(processedConfig);

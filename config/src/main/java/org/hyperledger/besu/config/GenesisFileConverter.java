@@ -14,15 +14,16 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.math.BigInteger;
 import java.util.Iterator;
+import java.util.Locale;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.rlp.RLP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,8 @@ import org.slf4j.LoggerFactory;
 public class GenesisFileConverter {
 
   private static final Logger LOG = LoggerFactory.getLogger(GenesisFileConverter.class);
+  private static final int EXTRA_VANITY_LENGTH = 32;
+  private static final int SECP_SIG_BYTES_REQUIRED = 65;
 
   private GenesisFileConverter() {}
 
@@ -37,9 +40,11 @@ public class GenesisFileConverter {
    * Converts a Geth-style genesis file to a Besu-style genesis file.
    *
    * @param preNormalizedConfig The pre-normalized config section of the genesis file.
+   * @param normalizedConfig The normalized config section of the genesis file.
    * @return A Besu-style genesis file as a JSON object.
    */
-  static ObjectNode convertGethToBesu(final ObjectNode preNormalizedConfig) {
+  static ObjectNode convertGethToBesu(
+      final ObjectNode preNormalizedConfig, final ObjectNode normalizedConfig) {
     LOG.info("Starting Geth to Besu genesis conversion.");
 
     final ObjectNode besuGenesis = JsonUtil.createEmptyObjectNode();
@@ -47,27 +52,19 @@ public class GenesisFileConverter {
 
     try {
       // Convert config section
-      convertConfig(besuConfig, preNormalizedConfig);
+      convertConfig(preNormalizedConfig, normalizedConfig, besuConfig);
 
       // Set the converted config in the Besu genesis
       besuGenesis.set("config", besuConfig);
 
-      // Convert other root-level fields
-      convertRootLevelFields(preNormalizedConfig, besuGenesis);
-
       // Convert allocations
       convertAllocations(preNormalizedConfig, besuGenesis);
 
+      // Convert other root-level fields
+      convertRootLevelFields(normalizedConfig, besuGenesis);
+
       // Handle consensus-specific conversions
       handleConsensusSpecificConversions(preNormalizedConfig, besuGenesis, besuConfig);
-
-      // Handle extraData field
-      if (preNormalizedConfig.has("extraData")) {
-        String extraDataString = preNormalizedConfig.get("extraData").asText();
-        Bytes extraData = Bytes.fromHexString(extraDataString);
-        Bytes fixedExtraData = fixCliqueExtraData(extraData);
-        besuGenesis.put("extraData", fixedExtraData.toHexString());
-      }
 
       LOG.info("Geth to Besu conversion completed.");
     } catch (Exception e) {
@@ -79,7 +76,9 @@ public class GenesisFileConverter {
   }
 
   private static void convertConfig(
-      final ObjectNode besuConfig, final ObjectNode preNormalizedConfig) {
+      final ObjectNode preNormalizedConfig,
+      final ObjectNode normalizedConfig,
+      final ObjectNode besuConfig) {
     // Copy all fields from the pre-normalized config
     if (preNormalizedConfig.has("config")) {
       JsonNode gethConfig = preNormalizedConfig.get("config");
@@ -91,8 +90,8 @@ public class GenesisFileConverter {
     }
 
     // Ensure chainId is present and in the correct format
-    if (besuConfig.has("chainId")) {
-      JsonNode chainIdNode = besuConfig.get("chainId");
+    if (normalizedConfig.has("chainid")) {
+      JsonNode chainIdNode = normalizedConfig.get("chainid");
       if (chainIdNode.isTextual()) {
         long chainId = Long.parseLong(chainIdNode.asText().replaceFirst("^0x", ""), 16);
         besuConfig.put("chainId", chainId);
@@ -106,22 +105,34 @@ public class GenesisFileConverter {
       "muirGlacierBlock", "berlinBlock", "londonBlock"
     };
     for (String field : forkFields) {
-      if (preNormalizedConfig.has("config") && preNormalizedConfig.get("config").has(field)) {
-        besuConfig.set(field, preNormalizedConfig.get("config").get(field));
+      String normalizedField = field.toLowerCase(Locale.ROOT);
+      if (normalizedConfig.has("config") && normalizedConfig.get("config").has(normalizedField)) {
+        besuConfig.set(field, normalizedConfig.get("config").get(normalizedField));
       }
     }
   }
 
   private static void convertRootLevelFields(
-      final ObjectNode preNormalizedConfig, final ObjectNode besuGenesis) {
-    String[] rootFields = {"difficulty", "gasLimit", "nonce", "mixHash", "coinbase", "timestamp"};
+      final ObjectNode normalizedConfig, final ObjectNode besuGenesis) {
+    String[] rootFields = {
+      "coinbase",
+      "difficulty",
+      "extraData",
+      "gasLimit",
+      "nonce",
+      "mixhash",
+      "parentHash",
+      "timestamp"
+    };
     for (String field : rootFields) {
-      copyIfPresent(preNormalizedConfig, besuGenesis, field);
-    }
-
-    // Handle extraData separately
-    if (preNormalizedConfig.has("extraData")) {
-      besuGenesis.put("extraData", preNormalizedConfig.get("extraData").asText());
+      if (field.equals("extraData")) {
+        // Handle extraData separately
+        if (normalizedConfig.has("extradata")) {
+          besuGenesis.put(field, normalizedConfig.get("extradata").asText());
+        }
+      } else {
+        copyIfPresent(normalizedConfig, besuGenesis, field);
+      }
     }
   }
 
@@ -163,20 +174,12 @@ public class GenesisFileConverter {
       handleCliqueConversion(preNormalizedConfig, besuGenesis, besuConfig);
     } else if (besuConfig.has("ethash")) {
       handleEthashConversion(besuGenesis);
-    } else {
-      // Default to Ethash if no consensus is specified
-      besuConfig.set("ethash", JsonUtil.createEmptyObjectNode());
-      handleEthashConversion(besuGenesis);
     }
 
     // Handle extraData field
     if (preNormalizedConfig.has("extraData")) {
       String extraData = preNormalizedConfig.get("extraData").asText();
-
-      // Convert extraData and fix it using the updated fixCliqueExtraData method
-      besuGenesis.put(
-          "extraData",
-          "0x" + fixCliqueExtraData(Bytes.fromHexStringLenient(extraData)).toHexString());
+      besuGenesis.put("extraData", extraData);
     }
   }
 
@@ -184,14 +187,11 @@ public class GenesisFileConverter {
       final ObjectNode preNormalizedConfig,
       final ObjectNode besuGenesis,
       final ObjectNode besuConfig) {
-    String extraData = null;
+    // Copy extraData as-is
     if (preNormalizedConfig.has("extraData")) {
-      extraData = preNormalizedConfig.get("extraData").asText();
-    }
-
-    if (extraData != null) {
-      Bytes extraDataBytes = Bytes.fromHexStringLenient(extraData);
-      besuGenesis.put("extraData", "0x" + fixCliqueExtraData(extraDataBytes).toHexString());
+      String extraData = preNormalizedConfig.get("extraData").asText();
+      validateCliqueExtraData(extraData);
+      besuGenesis.put("extraData", extraData);
     }
 
     // Ensure clique.period is set.
@@ -201,6 +201,25 @@ public class GenesisFileConverter {
               ? (ObjectNode) besuConfig.get("clique")
               : besuConfig.putObject("clique");
       cliqueConfig.put("period", 15); // Default period
+    }
+  }
+
+  private static void validateCliqueExtraData(final String extraData) {
+    if (!extraData.startsWith("0x")) {
+      throw new IllegalArgumentException("extraData must start with 0x");
+    }
+
+    Bytes extraDataBytes = Bytes.fromHexString(extraData);
+
+    if (extraDataBytes.size() < EXTRA_VANITY_LENGTH + SECP_SIG_BYTES_REQUIRED) {
+      throw new IllegalArgumentException(
+          "Invalid Bytes supplied - too short to produce a valid Clique Extra Data object.");
+    }
+
+    final int validatorByteCount =
+        extraDataBytes.size() - EXTRA_VANITY_LENGTH - SECP_SIG_BYTES_REQUIRED;
+    if ((validatorByteCount % Address.SIZE) != 0) {
+      throw new IllegalArgumentException("Bytes is of invalid size - i.e. contains unused bytes.");
     }
   }
 
@@ -214,43 +233,10 @@ public class GenesisFileConverter {
     if (!besuGenesis.has("nonce")) {
       besuGenesis.put("nonce", "0x0000000000000042");
     }
-    if (!besuGenesis.has("mixHash")) {
+    if (!besuGenesis.has("mixHash") && !besuGenesis.has("mixhash")) {
       besuGenesis.put(
           "mixHash", "0x0000000000000000000000000000000000000000000000000000000000000000");
     }
-  }
-
-  static Bytes fixCliqueExtraData(final Bytes extraData) {
-    // Ensure minimum length of 32 bytes for vanity data
-    if (extraData.size() < 32) {
-      return Bytes.concatenate(extraData, Bytes.wrap(new byte[194 - extraData.size()]));
-    }
-
-    // Determine if we're dealing with Geth-style (32 bytes) or our test-style (30 bytes) vanity
-    // data
-    int vanityLength = (extraData.get(30) == 0 && extraData.get(31) == 0) ? 32 : 30;
-
-    // Preserve the original vanity data
-    Bytes vanityData = extraData.slice(0, vanityLength);
-
-    // Extract validator addresses (all bytes after vanity data)
-    Bytes validatorData =
-        extraData.size() > vanityLength ? extraData.slice(vanityLength) : Bytes.EMPTY;
-
-    // RLP encode the validator addresses
-    Bytes rlpEncodedValidators = RLP.encode(writer -> writer.writeValue(validatorData));
-
-    // Combine and ensure total length is 194 bytes
-    Bytes combined = Bytes.concatenate(vanityData, rlpEncodedValidators);
-
-    if (combined.size() < 194) {
-      int paddingSize = 194 - combined.size();
-      combined = Bytes.concatenate(combined, Bytes.wrap(new byte[paddingSize]));
-    } else if (combined.size() > 194) {
-      combined = combined.slice(0, 194);
-    }
-
-    return combined;
   }
 
   private static String convertBalance(final String balance) {
@@ -262,9 +248,10 @@ public class GenesisFileConverter {
   }
 
   private static void copyIfPresent(
-      final ObjectNode from, final ObjectNode to, final String field) {
-    if (from.has(field)) {
-      to.set(field, from.get(field));
+      final ObjectNode fromNormalized, final ObjectNode to, final String field) {
+    String normalizedField = field.toLowerCase(Locale.ROOT);
+    if (fromNormalized.has(normalizedField)) {
+      to.set(field, fromNormalized.get(normalizedField));
     }
   }
 }
