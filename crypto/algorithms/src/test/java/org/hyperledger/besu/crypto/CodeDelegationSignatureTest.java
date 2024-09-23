@@ -29,19 +29,19 @@ class CodeDelegationSignatureTest {
   void testValidInputs() {
     BigInteger r = BigInteger.ONE;
     BigInteger s = BigInteger.TEN;
-    long yParity = 1L;
+    BigInteger yParity = BigInteger.ONE;
 
     CodeDelegationSignature result = CodeDelegationSignature.create(r, s, yParity);
 
     assertThat(r).isEqualTo(result.getR());
     assertThat(s).isEqualTo(result.getS());
-    assertThat((byte) yParity).isEqualTo(result.getRecId());
+    assertThat(yParity.byteValue()).isEqualTo(result.getRecId());
   }
 
   @Test
   void testNullRValue() {
     BigInteger s = BigInteger.TEN;
-    long yParity = 0L;
+    BigInteger yParity = BigInteger.ZERO;
 
     assertThatExceptionOfType(NullPointerException.class)
         .isThrownBy(() -> CodeDelegationSignature.create(null, s, yParity));
@@ -50,7 +50,7 @@ class CodeDelegationSignatureTest {
   @Test
   void testNullSValue() {
     BigInteger r = BigInteger.ONE;
-    long yParity = 0L;
+    BigInteger yParity = BigInteger.ZERO;
 
     assertThatExceptionOfType(NullPointerException.class)
         .isThrownBy(() -> CodeDelegationSignature.create(r, null, yParity));
@@ -60,7 +60,7 @@ class CodeDelegationSignatureTest {
   void testRValueExceedsTwoPow256() {
     BigInteger r = TWO_POW_256;
     BigInteger s = BigInteger.TEN;
-    long yParity = 0L;
+    BigInteger yParity = BigInteger.ZERO;
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> CodeDelegationSignature.create(r, s, yParity))
@@ -71,7 +71,7 @@ class CodeDelegationSignatureTest {
   void testSValueExceedsTwoPow256() {
     BigInteger r = BigInteger.ONE;
     BigInteger s = TWO_POW_256;
-    long yParity = 0L;
+    BigInteger yParity = BigInteger.ZERO;
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> CodeDelegationSignature.create(r, s, yParity))
@@ -79,15 +79,26 @@ class CodeDelegationSignatureTest {
   }
 
   @Test
+  void testYParityExceedsTwoPow256() {
+    BigInteger r = BigInteger.ONE;
+    BigInteger s = BigInteger.TWO;
+    BigInteger yParity = TWO_POW_256;
+
+    assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> CodeDelegationSignature.create(r, s, yParity))
+        .withMessageContainingAll("Invalid 'yParity' value, should be < 2^256");
+  }
+
+  @Test
   void testValidYParityZero() {
     BigInteger r = BigInteger.ONE;
     BigInteger s = BigInteger.TEN;
-    long yParity = 0L;
+    BigInteger yParity = BigInteger.ZERO;
 
     CodeDelegationSignature result = CodeDelegationSignature.create(r, s, yParity);
 
     assertThat(r).isEqualTo(result.getR());
     assertThat(s).isEqualTo(result.getS());
-    assertThat((byte) yParity).isEqualTo(result.getRecId());
+    assertThat(yParity.byteValue()).isEqualTo(result.getRecId());
   }
 }
