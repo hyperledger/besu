@@ -249,10 +249,12 @@ public abstract class DiffBasedWorldStateKeyValueStorage
                   frozenStateCount.getAndIncrement();
                 });
 
-        LOG.atDebug()
-            .setMessage("no previous state for account {} found to move to cold storage")
-            .addArgument(accountHash)
-            .log();
+        if (frozenStateCount.get() == 0) {
+          LOG.atDebug()
+              .setMessage("no previous state for account {} found to move to cold storage")
+              .addArgument(accountHash)
+              .log();
+        }
       } catch (Exception e) {
         LOG.error("Error moving account state for account {} to cold storage", accountHash, e);
       }
@@ -273,7 +275,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
    */
   public int freezePreviousStorageState(
       final Optional<BlockHeader> previousBlockHeader, final Bytes storageSlotKey) {
-    AtomicInteger frozenStateCount = new AtomicInteger();
+    AtomicInteger frozenStorageCount = new AtomicInteger();
     if (previousBlockHeader.isPresent()) {
       try {
         // Get the key for the previous block
@@ -304,19 +306,21 @@ public abstract class DiffBasedWorldStateKeyValueStorage
                       nearestKey.key().toArrayUnsafe(),
                       nearestKey.value().get());
                   tx.commit();
-                  frozenStateCount.getAndIncrement();
+                  frozenStorageCount.getAndIncrement();
                 });
 
-        LOG.atDebug()
-            .setMessage("no previous state for storage {} found to move to cold storage")
-            .addArgument(storageSlotKey)
-            .log();
+        if (frozenStorageCount.get() == 0) {
+          LOG.atDebug()
+              .setMessage("no previous state for storage {} found to move to cold storage")
+              .addArgument(storageSlotKey)
+              .log();
+        }
       } catch (Exception e) {
         LOG.error("Error moving storage state for slot {} to cold storage", storageSlotKey, e);
       }
     }
 
-    return frozenStateCount.get();
+    return frozenStorageCount.get();
   }
 
   public Optional<Long> getLatestArchiveFrozenBlock() {
