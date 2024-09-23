@@ -218,18 +218,13 @@ public class VerkleWorldState extends DiffBasedWorldState {
           bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
       return;
     }
-    final Bytes priorValue =
-        accountUpdate.getPrior() == null ? null : accountUpdate.getPrior().serializeAccount();
-    final Bytes accountValue = accountUpdate.getUpdated().serializeAccount();
-    if (!accountValue.equals(priorValue)) {
-      verkleEntryFactory.generateAccountKeyValueForUpdate(
-          accountKey,
-          accountUpdate.getUpdated().getNonce(),
-          accountUpdate.getUpdated().getBalance());
-      maybeStateUpdater.ifPresent(
-          bonsaiUpdater ->
-              bonsaiUpdater.putAccountInfoState(hashAndSavePreImage(accountKey), accountValue));
-    }
+    final VerkleAccount updatedAcount = accountUpdate.getUpdated();
+    verkleEntryFactory.generateAccountKeyValueForUpdate(
+        accountKey, updatedAcount.getNonce(), updatedAcount.getBalance());
+    maybeStateUpdater.ifPresent(
+        bonsaiUpdater ->
+            bonsaiUpdater.putAccountInfoState(
+                hashAndSavePreImage(accountKey), updatedAcount.serializeAccount()));
   }
 
   private void generateCodeValues(
