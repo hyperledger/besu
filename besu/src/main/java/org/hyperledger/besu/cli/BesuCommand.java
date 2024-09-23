@@ -1080,9 +1080,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private IExecutionStrategy createPluginRegistrationTask(final IExecutionStrategy nextStep) {
     return parseResult -> {
-      PluginConfiguration pluginConfiguration =
-          PluginsConfigurationOptions.fromCommandLine(commandLine);
-      besuPluginContext.initialize(pluginConfiguration);
       besuPluginContext.registerPlugins();
       commandLine.setExecutionStrategy(nextStep);
       return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
@@ -1362,6 +1359,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void preparePlugins() {
+    besuPluginContext.initialize(PluginsConfigurationOptions.fromCommandLine(commandLine));
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
