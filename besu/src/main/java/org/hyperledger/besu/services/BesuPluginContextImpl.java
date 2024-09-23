@@ -244,8 +244,8 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
               "Error calling `beforeExternalServices` on plugin of type {}, start will not be called.",
               plugin.getClass().getName(),
               e);
+          pluginsIterator.remove();
         }
-        pluginsIterator.remove();
       }
     }
 
@@ -278,8 +278,8 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
               "Error starting plugin of type {}, stop will not be called.",
               plugin.getClass().getName(),
               e);
+          pluginsIterator.remove();
         }
-        pluginsIterator.remove();
       }
     }
 
@@ -312,8 +312,8 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
                   + plugin.getClass().getName()
                   + ", stop will not be called.",
               e);
+          pluginsIterator.remove();
         }
-        pluginsIterator.remove();
       }
     }
   }
