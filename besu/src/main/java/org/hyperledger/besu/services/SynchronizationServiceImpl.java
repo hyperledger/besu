@@ -133,6 +133,11 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   }
 
   @Override
+  public boolean isInSync(final long tolerance) {
+    return syncState.isInSync(tolerance);
+  }
+
+  @Override
   public void disableWorldStateTrie() {
     // TODO maybe find a best way in the future to delete and disable trie
     worldStateArchive.ifPresent(

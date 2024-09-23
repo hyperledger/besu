@@ -57,6 +57,15 @@ public interface SynchronizationService extends BesuService {
    */
   boolean isInitialSyncPhaseDone();
 
+  /**
+   * Returns whether the local chain is synced with remote chain's head.
+   *
+   * @param tolerance how many blocks are allowed before chain is considered out of sync.
+   *     `tolerance=0` is allowed.
+   * @return true if chain is syncing, false otherwise.
+   */
+  boolean isInSync(long tolerance);
+
   /** Disables the worldstate trie for update. */
   void disableWorldStateTrie();
 }
