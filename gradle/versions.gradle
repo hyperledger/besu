@@ -25,6 +25,8 @@ dependencyManagement {
 
     dependency 'com.github.ben-manes.caffeine:caffeine:3.1.8'
 
+    dependency 'com.google.protobuf:protobuf-java:3.25.5'
+
     dependency 'com.github.oshi:oshi-core:6.6.3'
 
     dependency 'com.google.auto.service:auto-service:1.1.1'
