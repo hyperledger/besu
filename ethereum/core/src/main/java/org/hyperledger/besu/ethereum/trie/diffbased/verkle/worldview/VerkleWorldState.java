@@ -44,6 +44,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -119,13 +120,15 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
     final Map<Address, HasherContext> preloadedHashers = new ConcurrentHashMap<>();
 
-    worldStateUpdater.getAccountsToUpdate().entrySet().parallelStream()
+    final Set<Address> addressesToPersist = getAddressesToPersist(worldStateUpdater);
+    addressesToPersist.parallelStream()
         .forEach(
-            accountUpdate -> {
-              final Address accountKey = accountUpdate.getKey();
+            accountKey -> {
+              final DiffBasedValue<VerkleAccount> accountUpdate =
+                  worldStateUpdater.getAccountsToUpdate().get(accountKey);
               // generate account triekeys
               final List<Bytes32> accountKeyIds = new ArrayList<>();
-              if (!accountUpdate.getValue().isUnchanged()) {
+              if (accountUpdate != null && !accountUpdate.isUnchanged()) {
                 accountKeyIds.add(trieKeyPreloader.generateAccountKeyId());
               }
 
@@ -167,7 +170,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
                       accountKey, accountKeyIds, storageKeyIds, codeKeyIds));
             });
 
-    for (final Address accountKey : worldStateUpdater.getAccountsToUpdate().keySet()) {
+    for (final Address accountKey : addressesToPersist) {
       updateState(
           accountKey,
           stateTrie,
@@ -205,7 +208,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
       final VerkleEntryFactory verkleEntryFactory,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final DiffBasedValue<VerkleAccount> accountUpdate) {
-    if (accountUpdate.isUnchanged()) {
+    if (accountUpdate == null || accountUpdate.isUnchanged()) {
       return;
     }
     if (accountUpdate.getUpdated() == null) {
@@ -353,6 +356,16 @@ public class VerkleWorldState extends DiffBasedWorldState {
                               storage -> storage.setPrior(UInt256.fromBytes(bytes))),
                       () -> storageUpdate.ifPresent(storage -> storage.setPrior(null)));
             });
+  }
+
+  public Set<Address> getAddressesToPersist(
+      final DiffBasedWorldStateUpdateAccumulator<?> accumulator) {
+    Set<Address> mergedAddresses =
+        new HashSet<>(accumulator.getAccountsToUpdate().keySet()); // accountsToUpdate
+    mergedAddresses.addAll(accumulator.getCodeToUpdate().keySet()); // codeToUpdate
+    mergedAddresses.addAll(accumulator.getStorageToClear()); // storageToClear
+    mergedAddresses.addAll(accumulator.getStorageToUpdate().keySet()); // storageToUpdate
+    return mergedAddresses;
   }
 
   @Override
