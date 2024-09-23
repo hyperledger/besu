@@ -119,6 +119,12 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     return StreamSupport.stream(serviceLoader.spliterator(), false).toList();
   }
 
+  /**
+   * Initializes the plugin context with the provided {@link PluginConfiguration}.
+   *
+   * @param config the plugin configuration
+   * @throws IllegalStateException if the system is not in the UNINITIALIZED state.
+   */
   public void initialize(PluginConfiguration config) {
     checkState(
         state == Lifecycle.UNINITIALIZED,

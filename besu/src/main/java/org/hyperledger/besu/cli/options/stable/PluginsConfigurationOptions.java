@@ -44,7 +44,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
       split = ",",
       hidden = true,
       converter = PluginInfoConverter.class,
-      arity = "1..*")
+      arity = "1")
   private List<PluginInfo> plugins;
 
   @CommandLine.Option(
