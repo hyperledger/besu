@@ -77,10 +77,15 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
   public void validate(final CommandLine commandLine) {
     String errorMessage =
         String.format(
-            "%s option can only be used when %s is true",
-            DEFAULT_PLUGINS_OPTION_NAME, DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME);
+            "%s and %s option can only be used when %s is true",
+            DEFAULT_PLUGINS_OPTION_NAME,
+            DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME,
+            DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME);
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
-        commandLine, errorMessage, externalPluginsEnabled, List.of(DEFAULT_PLUGINS_OPTION_NAME));
+        commandLine,
+        errorMessage,
+        externalPluginsEnabled,
+        List.of(DEFAULT_PLUGINS_OPTION_NAME, DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME));
   }
 
   @Override

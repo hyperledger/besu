@@ -109,11 +109,11 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   @Test
   public void shouldFailWhenPluginsIsDisabledAndPluginsExplicitlyRequested() {
     parseCommand("--Xplugins-external-enabled=false", "--plugins", "pluginA");
-    verify(mockBesuPluginContext).initialize(pluginConfigurationArgumentCaptor.capture());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--plugins option can only be used when --Xplugins-external-enabled is true");
+        .contains(
+            "--plugins and --halt-on-plugin-error option can only be used when --Xplugins-external-enabled is true");
   }
 
   @Test
@@ -135,5 +135,15 @@ public class PluginsOptionsTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void shouldFailWhenPluginsIsDisabledAnHaltOnErrorTrue() {
+    parseCommand("--Xplugins-external-enabled=false", "--halt-on-plugin-error=true");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--plugins and --halt-on-plugin-error option can only be used when --Xplugins-external-enabled is true");
   }
 }
