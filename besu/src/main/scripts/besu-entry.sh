@@ -14,6 +14,14 @@
 ## SPDX-License-Identifier: Apache-2.0
 ##
 
+# Construct the command as a single string
+COMMAND="/opt/besu/bin/besu $@"
+
+# Check if current user is not root. If not, run the command as is.
+if [ "$(id -u)" -ne 0 ]; then
+    exec /bin/bash -c "$COMMAND"
+fi
+
 # Run Besu first to get paths needing permission adjustment
 output=$(/opt/besu/bin/besu --print-paths-and-exit $BESU_USER_NAME "$@")
 
@@ -41,9 +49,5 @@ echo "$output" | while IFS=: read -r prefix path accessType; do
     fi
 done
 
-# Finally, run Besu with the actual arguments passed to the container
-# Construct the command as a single string
-COMMAND="/opt/besu/bin/besu $@"
-
 # Switch to the besu user and execute the command
-exec su -s /bin/bash $BESU_USER_NAME -c "$COMMAND"
+exec su -s /bin/bash "$BESU_USER_NAME" -c "$COMMAND"
