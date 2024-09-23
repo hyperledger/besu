@@ -67,6 +67,20 @@ public class TestPicoCLIPlugin implements BesuPlugin {
   }
 
   @Override
+  public void beforeExternalServices() {
+    LOG.info("Before external services. Test Option is '{}'", testOption);
+    state = "beforeExternalServices";
+
+    if ("FAILBEFOREEXTERNALSERVICES".equals(testOption)) {
+      state = "failbeforeExternalServices";
+      throw new RuntimeException("I was told to fail before external services");
+    }
+
+    writeSignal("beforeExternalServices");
+    state = "beforeExternalServicesFinished";
+  }
+
+  @Override
   public void start() {
     LOG.info("Starting.  Test Option is '{}'", testOption);
     state = "starting";
@@ -78,6 +92,20 @@ public class TestPicoCLIPlugin implements BesuPlugin {
 
     writeSignal("started");
     state = "started";
+  }
+
+  @Override
+  public void afterExternalServicePostMainLoop() {
+    LOG.info("After external services post main loop. Test Option is '{}'", testOption);
+    state = "afterExternalServicePostMainLoop";
+
+    if ("FAILAFTEREXTERNALSERVICEPOSTMAINLOOP".equals(testOption)) {
+      state = "failafterExternalServicePostMainLoop";
+      throw new RuntimeException("I was told to fail after external services post main loop");
+    }
+
+    writeSignal("afterExternalServicePostMainLoop");
+    state = "afterExternalServicePostMainLoopFinished";
   }
 
   @Override

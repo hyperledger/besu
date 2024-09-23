@@ -56,6 +56,8 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   private enum Lifecycle {
     /** Uninitialized lifecycle. */
     UNINITIALIZED,
+    /** Initialized lifecycle. */
+    INITIALIZED,
     /** Registering lifecycle. */
     REGISTERING,
     /** Registered lifecycle. */
@@ -83,6 +85,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   private final List<BesuPlugin> registeredPlugins = new ArrayList<>();
 
   private final List<String> pluginVersions = new ArrayList<>();
+  private PluginConfiguration config;
 
   /** Instantiates a new Besu plugin context. */
   public BesuPluginContextImpl() {}
@@ -116,19 +119,24 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     return StreamSupport.stream(serviceLoader.spliterator(), false).toList();
   }
 
+  public void initialize(PluginConfiguration config) {
+    checkState(
+        state == Lifecycle.UNINITIALIZED,
+        "Besu plugins have already been initialized. Cannot register additional plugins.");
+    this.config = config;
+    state = Lifecycle.INITIALIZED;
+  }
+
   /**
    * Registers plugins based on the provided {@link PluginConfiguration}. This method finds plugins
    * according to the configuration settings, filters them if necessary and then registers the
    * filtered or found plugins
    *
-   * @param config The configuration settings used to find and filter plugins for registration. The
-   *     configuration includes the plugin directory and any configured plugin identifiers if
-   *     applicable.
    * @throws IllegalStateException if the system is not in the UNINITIALIZED state.
    */
-  public void registerPlugins(final PluginConfiguration config) {
+  public void registerPlugins() {
     checkState(
-        state == Lifecycle.UNINITIALIZED,
+        state == Lifecycle.INITIALIZED,
         "Besu plugins have already been registered. Cannot register additional plugins.");
     state = Lifecycle.REGISTERING;
 
@@ -195,11 +203,14 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
       LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
       pluginVersions.add(plugin.getVersion());
     } catch (final Exception e) {
-      LOG.error(
-          "Error registering plugin of type "
-              + plugin.getClass().getName()
-              + ", start and stop will not be called.",
-          e);
+      if (config.isHaltOnPluginError()) {
+        throw new RuntimeException(
+            "Error registering plugin of type " + plugin.getClass().getName(), e);
+      } else
+        LOG.error(
+            "Error registering plugin of type {}, start and stop will not be called.",
+            plugin.getClass().getName(),
+            e);
       return false;
     }
     return true;
@@ -223,11 +234,17 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         LOG.debug(
             "beforeExternalServices called on plugin of type {}.", plugin.getClass().getName());
       } catch (final Exception e) {
-        LOG.error(
-            "Error calling `beforeExternalServices` on plugin of type "
-                + plugin.getClass().getName()
-                + ", stop will not be called.",
-            e);
+        if (config.isHaltOnPluginError()) {
+          throw new RuntimeException(
+              "Error calling `beforeExternalServices` on plugin of type "
+                  + plugin.getClass().getName(),
+              e);
+        } else {
+          LOG.error(
+              "Error calling `beforeExternalServices` on plugin of type {}, start will not be called.",
+              plugin.getClass().getName(),
+              e);
+        }
         pluginsIterator.remove();
       }
     }
@@ -253,11 +270,15 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         plugin.start();
         LOG.debug("Started plugin of type {}.", plugin.getClass().getName());
       } catch (final Exception e) {
-        LOG.error(
-            "Error starting plugin of type "
-                + plugin.getClass().getName()
-                + ", stop will not be called.",
-            e);
+        if (config.isHaltOnPluginError()) {
+          throw new RuntimeException(
+              "Error starting plugin of type " + plugin.getClass().getName(), e);
+        } else {
+          LOG.error(
+              "Error starting plugin of type {}, stop will not be called.",
+              plugin.getClass().getName(),
+              e);
+        }
         pluginsIterator.remove();
       }
     }
@@ -279,7 +300,19 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
       final BesuPlugin plugin = pluginsIterator.next();
       try {
         plugin.afterExternalServicePostMainLoop();
-      } finally {
+      } catch (final Exception e) {
+        if (config.isHaltOnPluginError()) {
+          throw new RuntimeException(
+              "Error calling `afterExternalServicePostMainLoop` on plugin of type "
+                  + plugin.getClass().getName(),
+              e);
+        } else {
+          LOG.error(
+              "Error calling `afterExternalServicePostMainLoop` on plugin of type "
+                  + plugin.getClass().getName()
+                  + ", stop will not be called.",
+              e);
+        }
         pluginsIterator.remove();
       }
     }

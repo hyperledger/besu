@@ -47,6 +47,15 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
       arity = "1..*")
   private List<PluginInfo> plugins;
 
+  @CommandLine.Option(
+      names = {"--halt-on-plugin-error"},
+      description =
+          "Prevent Besu from starting if any plugins fail to initialize correctly (default: ${DEFAULT-VALUE})",
+      hidden = true,
+      defaultValue = "false",
+      arity = "1")
+  private final Boolean haltOnPluginError = false;
+
   /** Default Constructor. */
   public PluginsConfigurationOptions() {}
 
@@ -55,6 +64,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
     return new PluginConfiguration.Builder()
         .externalPluginsEnabled(externalPluginsEnabled)
         .requestedPlugins(plugins)
+        .haltOnPluginError(haltOnPluginError)
         .build();
   }
 
@@ -92,9 +102,14 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME, Boolean::parseBoolean);
 
+    boolean haltOnPluginError =
+        CommandLineUtils.getOptionValueOrDefault(
+            commandLine, "--halt-on-plugin-error", Boolean::parseBoolean);
+
     return new PluginConfiguration.Builder()
         .requestedPlugins(plugins)
         .externalPluginsEnabled(externalPluginsEnabled)
+        .haltOnPluginError(haltOnPluginError)
         .build();
   }
 }

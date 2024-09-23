@@ -42,6 +42,9 @@ public class BesuPluginContextImplTest {
   private static final Path DEFAULT_PLUGIN_DIRECTORY = Paths.get(".");
   private BesuPluginContextImpl contextImpl;
 
+  private static final PluginConfiguration DEFAULT_CONFIGURATION =
+      PluginConfiguration.builder().pluginsDir(DEFAULT_PLUGIN_DIRECTORY).build();
+
   @BeforeAll
   public static void createFakePluginDir() throws IOException {
     if (System.getProperty("besu.plugins.dir") == null) {
@@ -64,8 +67,8 @@ public class BesuPluginContextImplTest {
   @Test
   public void verifyEverythingGoesSmoothly() {
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
-    contextImpl.registerPlugins(
-        PluginConfiguration.builder().pluginsDir(DEFAULT_PLUGIN_DIRECTORY).build());
+    contextImpl.initialize(DEFAULT_CONFIGURATION);
+    contextImpl.registerPlugins();
     assertThat(contextImpl.getRegisteredPlugins()).isNotEmpty();
 
     final Optional<TestPicoCLIPlugin> testPluginOptional =
@@ -87,8 +90,8 @@ public class BesuPluginContextImplTest {
     System.setProperty("testPicoCLIPlugin.testOption", "FAILREGISTER");
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
-    contextImpl.registerPlugins(
-        PluginConfiguration.builder().pluginsDir(DEFAULT_PLUGIN_DIRECTORY).build());
+    contextImpl.initialize(DEFAULT_CONFIGURATION);
+    contextImpl.registerPlugins();
     assertThat(contextImpl.getRegisteredPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
 
     contextImpl.beforeExternalServices();
@@ -106,8 +109,8 @@ public class BesuPluginContextImplTest {
     System.setProperty("testPicoCLIPlugin.testOption", "FAILSTART");
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
-    contextImpl.registerPlugins(
-        PluginConfiguration.builder().pluginsDir(DEFAULT_PLUGIN_DIRECTORY).build());
+    contextImpl.initialize(DEFAULT_CONFIGURATION);
+    contextImpl.registerPlugins();
     assertThat(contextImpl.getRegisteredPlugins())
         .extracting("class")
         .contains(TestPicoCLIPlugin.class);
@@ -132,8 +135,8 @@ public class BesuPluginContextImplTest {
     System.setProperty("testPicoCLIPlugin.testOption", "FAILSTOP");
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
-    contextImpl.registerPlugins(
-        PluginConfiguration.builder().pluginsDir(DEFAULT_PLUGIN_DIRECTORY).build());
+    contextImpl.initialize(DEFAULT_CONFIGURATION);
+    contextImpl.registerPlugins();
     assertThat(contextImpl.getRegisteredPlugins())
         .extracting("class")
         .contains(TestPicoCLIPlugin.class);
@@ -154,10 +157,8 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void lifecycleExceptions() throws Throwable {
-    final ThrowableAssert.ThrowingCallable registerPlugins =
-        () ->
-            contextImpl.registerPlugins(
-                PluginConfiguration.builder().pluginsDir(DEFAULT_PLUGIN_DIRECTORY).build());
+    contextImpl.initialize(DEFAULT_CONFIGURATION);
+    final ThrowableAssert.ThrowingCallable registerPlugins = () -> contextImpl.registerPlugins();
 
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(contextImpl::startPlugins);
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(contextImpl::stopPlugins);
@@ -179,11 +180,9 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void shouldRegisterAllPluginsWhenNoPluginsOption() {
-    final PluginConfiguration config =
-        PluginConfiguration.builder().pluginsDir(DEFAULT_PLUGIN_DIRECTORY).build();
-
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
-    contextImpl.registerPlugins(config);
+    contextImpl.initialize(DEFAULT_CONFIGURATION);
+    contextImpl.registerPlugins();
     final Optional<TestPicoCLIPlugin> testPluginOptional =
         findTestPlugin(contextImpl.getRegisteredPlugins(), TestPicoCLIPlugin.class);
     assertThat(testPluginOptional).isPresent();
@@ -193,10 +192,9 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void shouldRegisterOnlySpecifiedPluginWhenPluginsOptionIsSet() {
-    final PluginConfiguration config = createConfigurationForSpecificPlugin("TestPicoCLIPlugin");
-
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
-    contextImpl.registerPlugins(config);
+    contextImpl.initialize(createConfigurationForSpecificPlugin("TestPicoCLIPlugin"));
+    contextImpl.registerPlugins();
 
     final Optional<TestPicoCLIPlugin> requestedPlugin =
         findTestPlugin(contextImpl.getRegisteredPlugins(), TestPicoCLIPlugin.class);
@@ -212,9 +210,9 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void shouldNotRegisterUnspecifiedPluginsWhenPluginsOptionIsSet() {
-    final PluginConfiguration config = createConfigurationForSpecificPlugin("TestPicoCLIPlugin");
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
-    contextImpl.registerPlugins(config);
+    contextImpl.initialize(createConfigurationForSpecificPlugin("TestPicoCLIPlugin"));
+    contextImpl.registerPlugins();
 
     final Optional<TestPicoCLIPlugin> nonRequestedPlugin =
         findTestPlugin(contextImpl.getRegisteredPlugins(), TestBesuEventsPlugin.class);
@@ -223,10 +221,9 @@ public class BesuPluginContextImplTest {
 
   @Test
   void shouldThrowExceptionIfExplicitlySpecifiedPluginNotFound() {
-    PluginConfiguration config = createConfigurationForSpecificPlugin("NonExistentPlugin");
-
+    contextImpl.initialize(createConfigurationForSpecificPlugin("NonExistentPlugin"));
     String exceptionMessage =
-        assertThrows(NoSuchElementException.class, () -> contextImpl.registerPlugins(config))
+        assertThrows(NoSuchElementException.class, () -> contextImpl.registerPlugins())
             .getMessage();
     final String expectedMessage =
         "The following requested plugins were not found: NonExistentPlugin";
@@ -241,7 +238,8 @@ public class BesuPluginContextImplTest {
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
             .externalPluginsEnabled(false)
             .build();
-    contextImpl.registerPlugins(config);
+    contextImpl.initialize(config);
+    contextImpl.registerPlugins();
     assertThat(contextImpl.getRegisteredPlugins().isEmpty()).isTrue();
   }
 
@@ -252,8 +250,171 @@ public class BesuPluginContextImplTest {
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
             .externalPluginsEnabled(true)
             .build();
-    contextImpl.registerPlugins(config);
+    contextImpl.initialize(config);
+    contextImpl.registerPlugins();
     assertThat(contextImpl.getRegisteredPlugins().isEmpty()).isFalse();
+  }
+
+  @Test
+  void shouldHaltOnPluginErrorWhenFlagIsTrue() {
+    System.setProperty("testPicoCLIPlugin.testOption", "FAILREGISTER");
+
+    PluginConfiguration config =
+        PluginConfiguration.builder()
+            .requestedPlugins(List.of(new PluginInfo("TestPicoCLIPlugin")))
+            .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
+            .haltOnPluginError(true)
+            .build();
+
+    contextImpl.initialize(config);
+
+    String errorMessage =
+        String.format("Error registering plugin of type %s", TestPicoCLIPlugin.class.getName());
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(() -> contextImpl.registerPlugins())
+        .withMessageContaining(errorMessage);
+  }
+
+  @Test
+  void shouldNotHaltOnPluginErrorWhenFlagIsFalse() {
+    System.setProperty("testPicoCLIPlugin.testOption", "FAILREGISTER");
+
+    PluginConfiguration config =
+        PluginConfiguration.builder()
+            .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
+            .haltOnPluginError(false)
+            .build();
+
+    contextImpl.initialize(config);
+    contextImpl.registerPlugins();
+    assertThat(contextImpl.getRegisteredPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
+  }
+
+  @Test
+  void shouldHaltOnPluginBeforeExternalServicesErrorWhenFlagIsTrue() {
+    System.setProperty("testPicoCLIPlugin.testOption", "FAILBEFOREEXTERNALSERVICES");
+
+    PluginConfiguration config =
+        PluginConfiguration.builder()
+            .requestedPlugins(List.of(new PluginInfo("TestPicoCLIPlugin")))
+            .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
+            .haltOnPluginError(true)
+            .build();
+
+    contextImpl.initialize(config);
+    contextImpl.registerPlugins();
+
+    String errorMessage =
+        String.format(
+            "Error calling `beforeExternalServices` on plugin of type %s",
+            TestPicoCLIPlugin.class.getName());
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(() -> contextImpl.beforeExternalServices())
+        .withMessageContaining(errorMessage);
+  }
+
+  @Test
+  void shouldNotHaltOnPluginBeforeExternalServicesErrorWhenFlagIsFalse() {
+    System.setProperty("testPicoCLIPlugin.testOption", "FAILBEFOREEXTERNALSERVICES");
+
+    PluginConfiguration config =
+        PluginConfiguration.builder()
+            .requestedPlugins(List.of(new PluginInfo("TestPicoCLIPlugin")))
+            .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
+            .haltOnPluginError(false)
+            .build();
+
+    contextImpl.initialize(config);
+    contextImpl.registerPlugins();
+    contextImpl.beforeExternalServices();
+
+    assertThat(contextImpl.getRegisteredPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
+  }
+
+  @Test
+  void shouldHaltOnPluginBeforeMainLoopErrorWhenFlagIsTrue() {
+    System.setProperty("testPicoCLIPlugin.testOption", "FAILSTART");
+
+    PluginConfiguration config =
+        PluginConfiguration.builder()
+            .requestedPlugins(List.of(new PluginInfo("TestPicoCLIPlugin")))
+            .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
+            .haltOnPluginError(true)
+            .build();
+
+    contextImpl.initialize(config);
+    contextImpl.registerPlugins();
+    contextImpl.beforeExternalServices();
+
+    String errorMessage =
+        String.format("Error starting plugin of type %s", TestPicoCLIPlugin.class.getName());
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(() -> contextImpl.startPlugins())
+        .withMessageContaining(errorMessage);
+  }
+
+  @Test
+  void shouldNotHaltOnPluginBeforeMainLoopErrorWhenFlagIsFalse() {
+    System.setProperty("testPicoCLIPlugin.testOption", "FAILBEFOREMAINLOOP");
+
+    PluginConfiguration config =
+        PluginConfiguration.builder()
+            .requestedPlugins(List.of(new PluginInfo("TestPicoCLIPlugin")))
+            .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
+            .haltOnPluginError(false)
+            .build();
+
+    contextImpl.initialize(config);
+    contextImpl.registerPlugins();
+    contextImpl.beforeExternalServices();
+    contextImpl.startPlugins();
+
+    assertThat(contextImpl.getRegisteredPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
+  }
+
+  @Test
+  void shouldHaltOnPluginAfterExternalServicePostMainLoopErrorWhenFlagIsTrue() {
+    System.setProperty("testPicoCLIPlugin.testOption", "FAILAFTEREXTERNALSERVICEPOSTMAINLOOP");
+
+    PluginConfiguration config =
+        PluginConfiguration.builder()
+            .requestedPlugins(List.of(new PluginInfo("TestPicoCLIPlugin")))
+            .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
+            .haltOnPluginError(true)
+            .build();
+
+    contextImpl.initialize(config);
+    contextImpl.registerPlugins();
+    contextImpl.beforeExternalServices();
+    contextImpl.startPlugins();
+
+    String errorMessage =
+        String.format(
+            "Error calling `afterExternalServicePostMainLoop` on plugin of type %s",
+            TestPicoCLIPlugin.class.getName());
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(() -> contextImpl.afterExternalServicesMainLoop())
+        .withMessageContaining(errorMessage);
+  }
+
+  @Test
+  void shouldNotHaltOnPluginAfterExternalServicePostMainLoopErrorWhenFlagIsFalse() {
+    System.setProperty("testPicoCLIPlugin.testOption", "FAILAFTEREXTERNALSERVICEPOSTMAINLOOP");
+
+    PluginConfiguration config =
+        PluginConfiguration.builder()
+            .requestedPlugins(List.of(new PluginInfo("TestPicoCLIPlugin")))
+            .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
+            .haltOnPluginError(false)
+            .build();
+
+    contextImpl.initialize(config);
+    contextImpl.registerPlugins();
+    contextImpl.beforeExternalServices();
+    contextImpl.startPlugins();
+    contextImpl.afterExternalServicesMainLoop();
+
+    assertThat(contextImpl.getRegisteredPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
   }
 
   private PluginConfiguration createConfigurationForSpecificPlugin(final String pluginName) {
