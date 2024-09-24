@@ -160,7 +160,7 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getRoundTimer()).thenReturn(roundTimer);
     when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
-    when(finalState. getClock()).thenReturn(clock);
+    when(finalState.getClock()).thenReturn(clock);
     when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
