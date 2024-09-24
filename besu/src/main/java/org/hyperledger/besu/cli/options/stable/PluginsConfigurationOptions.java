@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.stable;
 
-import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME;
+import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME;
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME;
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_OPTION_NAME;
 
@@ -49,7 +49,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
   private List<PluginInfo> plugins;
 
   @CommandLine.Option(
-      names = {DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME},
+      names = {DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME},
       description =
           "Allow Besu startup even if any plugins fail to initialize correctly (default: ${DEFAULT-VALUE})",
       defaultValue = "false",
@@ -78,13 +78,13 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
         String.format(
             "%s and %s option can only be used when %s is true",
             DEFAULT_PLUGINS_OPTION_NAME,
-            DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME,
+            DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME,
             DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME);
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         errorMessage,
         externalPluginsEnabled,
-        List.of(DEFAULT_PLUGINS_OPTION_NAME, DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME));
+        List.of(DEFAULT_PLUGINS_OPTION_NAME, DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME));
   }
 
   @Override
@@ -109,7 +109,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
 
     boolean continueOnPluginError =
         CommandLineUtils.getOptionValueOrDefault(
-            commandLine, DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME, Boolean::parseBoolean);
+            commandLine, DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME, Boolean::parseBoolean);
 
     return new PluginConfiguration.Builder()
         .requestedPlugins(plugins)
