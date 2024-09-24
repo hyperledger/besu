@@ -15,17 +15,13 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.BALANCE_LEAF_KEY;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_KECCAK_LEAF_KEY;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_SIZE_LEAF_KEY;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.NONCE_LEAF_KEY;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERSION_LEAF_KEY;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -179,13 +175,7 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
     long statelessGas =
         frame
             .getAccessWitness()
-            .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, VERSION_LEAF_KEY);
-    statelessGas =
-        clampedAdd(
-            statelessGas,
-            frame
-                .getAccessWitness()
-                .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, CODE_SIZE_LEAF_KEY));
+            .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, Parameters.BASIC_DATA_LEAF_KEY);
     if (statelessGas == 0) {
       statelessGas = getWarmStorageReadCost();
     }
@@ -254,7 +244,8 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
       final long statelessGas =
           frame
               .getAccessWitness()
-              .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, BALANCE_LEAF_KEY);
+              .touchAddressOnReadAndComputeGas(
+                  address, UInt256.ZERO, Parameters.BASIC_DATA_LEAF_KEY);
       if (statelessGas == 0) {
         return getWarmStorageReadCost();
       } else {
@@ -275,7 +266,8 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
         final long statelessGas =
             frame
                 .getAccessWitness()
-                .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, CODE_KECCAK_LEAF_KEY);
+                .touchAddressOnReadAndComputeGas(
+                    address, UInt256.ZERO, Parameters.CODE_HASH_LEAF_KEY);
         if (statelessGas == 0) {
           return getWarmStorageReadCost();
         } else {
@@ -298,13 +290,8 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
         long statelessGas =
             frame
                 .getAccessWitness()
-                .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, VERSION_LEAF_KEY);
-        statelessGas =
-            clampedAdd(
-                statelessGas,
-                frame
-                    .getAccessWitness()
-                    .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, CODE_SIZE_LEAF_KEY));
+                .touchAddressOnReadAndComputeGas(
+                    address, UInt256.ZERO, Parameters.BASIC_DATA_LEAF_KEY);
         if (statelessGas == 0) {
           return getWarmStorageReadCost();
         } else {
@@ -331,7 +318,8 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
       long statelessGas =
           frame
               .getAccessWitness()
-              .touchAddressOnReadAndComputeGas(originatorAddress, UInt256.ZERO, BALANCE_LEAF_KEY);
+              .touchAddressOnReadAndComputeGas(
+                  originatorAddress, UInt256.ZERO, Parameters.BASIC_DATA_LEAF_KEY);
       if (!originatorAddress.equals(recipientAddress)) {
         statelessGas =
             clampedAdd(
@@ -339,7 +327,7 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
                 frame
                     .getAccessWitness()
                     .touchAddressOnReadAndComputeGas(
-                        recipientAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
+                        recipientAddress, UInt256.ZERO, Parameters.BASIC_DATA_LEAF_KEY));
       }
       if (!inheritance.isZero()) {
         statelessGas =
@@ -348,7 +336,7 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
                 frame
                     .getAccessWitness()
                     .touchAddressOnWriteAndComputeGas(
-                        originatorAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
+                        originatorAddress, UInt256.ZERO, Parameters.BASIC_DATA_LEAF_KEY));
         if (!originatorAddress.equals(recipientAddress)) {
           statelessGas =
               clampedAdd(
@@ -356,7 +344,7 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
                   frame
                       .getAccessWitness()
                       .touchAddressOnWriteAndComputeGas(
-                          recipientAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
+                          recipientAddress, UInt256.ZERO, Parameters.BASIC_DATA_LEAF_KEY));
         }
         if (recipient == null) {
           statelessGas =
@@ -365,14 +353,7 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
                   frame
                       .getAccessWitness()
                       .touchAddressOnWriteAndComputeGas(
-                          recipientAddress, UInt256.ZERO, VERSION_LEAF_KEY));
-          statelessGas =
-              clampedAdd(
-                  statelessGas,
-                  frame
-                      .getAccessWitness()
-                      .touchAddressOnWriteAndComputeGas(
-                          recipientAddress, UInt256.ZERO, NONCE_LEAF_KEY));
+                          recipientAddress, UInt256.ZERO, Parameters.BASIC_DATA_LEAF_KEY));
         }
       }
       return clampedAdd(gasCost, statelessGas);
