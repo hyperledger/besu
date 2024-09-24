@@ -13,6 +13,8 @@
 ### Additions and Improvements
 - Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
 - Add Blob Transaction Metrics [#7622](https://github.com/hyperledger/besu/pull/7622)
+- Implemented support for emptyBlockPeriodSeconds in QBFT [#6965](https://github.com/hyperledger/besu/pull/6965)
+
 
 ### Bug fixes
 - Fix mounted data path directory permissions for besu user [#7575](https://github.com/hyperledger/besu/pull/7575)
