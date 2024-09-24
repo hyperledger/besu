@@ -173,7 +173,7 @@ public class QbftBlockHeightManagerTest {
 
     protocolContext =
         new ProtocolContext(
-            blockchain,QbftBlockHeightManagerTest
+            blockchain,
             null,
             setupContextWithBftExtraDataEncoder(
                 BftContext.class, validators, new QbftExtraDataCodec()),
@@ -293,6 +293,7 @@ public class QbftBlockHeightManagerTest {
   public void
       onBlockTimerExpiryForNonProposerRoundTimerIsStartedAndNoProposalMessageIsTransmitted() {
     when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(false);
+    when(blockTimer.checkEmptyBlockExpired(any(), eq(0l))).thenReturn(true);
 
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
