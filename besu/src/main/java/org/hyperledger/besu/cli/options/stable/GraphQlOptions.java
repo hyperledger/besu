@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import picocli.CommandLine;
 
 /** Handles configuration options for the GraphQL HTTP service in Besu. */
+// TODO: implement CLIOptions<GraphQLConfiguration>
 public class GraphQlOptions {
   @CommandLine.Option(
       names = {"--graphql-http-enabled"},
