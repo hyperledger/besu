@@ -224,7 +224,7 @@ public interface SignatureAlgorithm {
    * @return the code delegation signature
    */
   CodeDelegationSignature createCodeDelegationSignature(
-      final BigInteger r, final BigInteger s, final long yParity);
+      final BigInteger r, final BigInteger s, final BigInteger yParity);
 
   /**
    * Decode secp signature.
