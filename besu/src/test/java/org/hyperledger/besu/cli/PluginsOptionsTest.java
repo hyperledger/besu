@@ -113,25 +113,27 @@ public class PluginsOptionsTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--plugins and --halt-on-plugin-error option can only be used when --Xplugins-external-enabled is true");
+            "--plugins and --plugin-continue-on-error option can only be used when --Xplugins-external-enabled is true");
   }
 
   @Test
-  public void shouldHaveHaltOnErrorFalseByDefault() {
+  public void shouldHaveContinueOnErrorFalseByDefault() {
     parseCommand();
     verify(mockBesuPluginContext).initialize(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isHaltOnPluginError()).isEqualTo(false);
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isContinueOnPluginError())
+        .isEqualTo(false);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
-  public void shouldUseHaltOnErrorWhenTrue() {
-    parseCommand("--halt-on-plugin-error=true");
+  public void shouldUseContinueOnErrorWhenTrue() {
+    parseCommand("--plugin-continue-on-error=true");
     verify(mockBesuPluginContext).initialize(pluginConfigurationArgumentCaptor.capture());
 
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isHaltOnPluginError()).isEqualTo(true);
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isContinueOnPluginError())
+        .isEqualTo(true);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -139,11 +141,11 @@ public class PluginsOptionsTest extends CommandTestAbstract {
 
   @Test
   public void shouldFailWhenPluginsIsDisabledAnHaltOnErrorTrue() {
-    parseCommand("--Xplugins-external-enabled=false", "--halt-on-plugin-error=true");
+    parseCommand("--Xplugins-external-enabled=false", "--plugin-continue-on-error=true");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--plugins and --halt-on-plugin-error option can only be used when --Xplugins-external-enabled is true");
+            "--plugins and --plugin-continue-on-error option can only be used when --Xplugins-external-enabled is true");
   }
 }

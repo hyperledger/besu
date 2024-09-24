@@ -23,17 +23,17 @@ public class PluginConfiguration {
   private final List<PluginInfo> requestedPlugins;
   private final Path pluginsDir;
   private final boolean externalPluginsEnabled;
-  private final boolean haltOnPluginError;
+  private final boolean continueOnPluginError;
 
   public PluginConfiguration(
       final List<PluginInfo> requestedPlugins,
       final Path pluginsDir,
       final boolean externalPluginsEnabled,
-      final boolean haltOnPluginError) {
+      final boolean continueOnPluginError) {
     this.requestedPlugins = requestedPlugins;
     this.pluginsDir = pluginsDir;
     this.externalPluginsEnabled = externalPluginsEnabled;
-    this.haltOnPluginError = haltOnPluginError;
+    this.continueOnPluginError = continueOnPluginError;
   }
 
   public List<String> getRequestedPlugins() {
@@ -50,8 +50,8 @@ public class PluginConfiguration {
     return externalPluginsEnabled;
   }
 
-  public boolean isHaltOnPluginError() {
-    return haltOnPluginError;
+  public boolean isContinueOnPluginError() {
+    return continueOnPluginError;
   }
 
   public static Path defaultPluginsDir() {
@@ -69,7 +69,7 @@ public class PluginConfiguration {
     private List<PluginInfo> requestedPlugins;
     private Path pluginsDir;
     private boolean externalPluginsEnabled = true;
-    private boolean haltOnPluginError = false;
+    private boolean continueOnPluginError = false;
 
     public Builder requestedPlugins(final List<PluginInfo> requestedPlugins) {
       this.requestedPlugins = requestedPlugins;
@@ -86,8 +86,8 @@ public class PluginConfiguration {
       return this;
     }
 
-    public Builder haltOnPluginError(final boolean haltOnPluginError) {
-      this.haltOnPluginError = haltOnPluginError;
+    public Builder continueOnPluginError(final boolean continueOnPluginError) {
+      this.continueOnPluginError = continueOnPluginError;
       return this;
     }
 
@@ -96,7 +96,7 @@ public class PluginConfiguration {
         pluginsDir = PluginConfiguration.defaultPluginsDir();
       }
       return new PluginConfiguration(
-          requestedPlugins, pluginsDir, externalPluginsEnabled, haltOnPluginError);
+          requestedPlugins, pluginsDir, externalPluginsEnabled, continueOnPluginError);
     }
   }
 }

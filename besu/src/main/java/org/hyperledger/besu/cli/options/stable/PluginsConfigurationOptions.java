@@ -28,7 +28,7 @@ import java.util.List;
 
 import picocli.CommandLine;
 
-/** The Plugins Options options. */
+/** The Plugins options. */
 public class PluginsConfigurationOptions implements CLIOptions<PluginConfiguration> {
 
   @CommandLine.Option(
@@ -51,11 +51,11 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
   @CommandLine.Option(
       names = {DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME},
       description =
-          "Prevent Besu from starting if any plugins fail to initialize correctly (default: ${DEFAULT-VALUE})",
+          "Allow Besu startup even if any plugins fail to initialize correctly (default: ${DEFAULT-VALUE})",
       hidden = true,
       defaultValue = "false",
       arity = "1")
-  private final Boolean haltOnPluginError = false;
+  private final Boolean continueOnPluginError = false;
 
   /** Default Constructor. */
   public PluginsConfigurationOptions() {}
@@ -65,7 +65,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
     return new PluginConfiguration.Builder()
         .externalPluginsEnabled(externalPluginsEnabled)
         .requestedPlugins(plugins)
-        .haltOnPluginError(haltOnPluginError)
+        .continueOnPluginError(continueOnPluginError)
         .build();
   }
 
@@ -108,14 +108,14 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME, Boolean::parseBoolean);
 
-    boolean haltOnPluginError =
+    boolean continueOnPluginError =
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME, Boolean::parseBoolean);
 
     return new PluginConfiguration.Builder()
         .requestedPlugins(plugins)
         .externalPluginsEnabled(externalPluginsEnabled)
-        .haltOnPluginError(haltOnPluginError)
+        .continueOnPluginError(continueOnPluginError)
         .build();
   }
 }

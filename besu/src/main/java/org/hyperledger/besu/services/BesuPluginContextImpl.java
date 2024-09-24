@@ -206,17 +206,18 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   private boolean registerPlugin(final BesuPlugin plugin) {
     try {
       plugin.register(this);
-      LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
       pluginVersions.add(plugin.getVersion());
+      LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
     } catch (final Exception e) {
-      if (config.isHaltOnPluginError()) {
-        throw new RuntimeException(
-            "Error registering plugin of type " + plugin.getClass().getName(), e);
-      } else
+      if (config.isContinueOnPluginError()) {
         LOG.error(
             "Error registering plugin of type {}, start and stop will not be called.",
             plugin.getClass().getName(),
             e);
+      } else {
+        throw new RuntimeException(
+            "Error registering plugin of type " + plugin.getClass().getName(), e);
+      }
       return false;
     }
     return true;
@@ -240,21 +241,20 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         LOG.debug(
             "beforeExternalServices called on plugin of type {}.", plugin.getClass().getName());
       } catch (final Exception e) {
-        if (config.isHaltOnPluginError()) {
-          throw new RuntimeException(
-              "Error calling `beforeExternalServices` on plugin of type "
-                  + plugin.getClass().getName(),
-              e);
-        } else {
+        if (config.isContinueOnPluginError()) {
           LOG.error(
               "Error calling `beforeExternalServices` on plugin of type {}, start will not be called.",
               plugin.getClass().getName(),
               e);
           pluginsIterator.remove();
+        } else {
+          throw new RuntimeException(
+              "Error calling `beforeExternalServices` on plugin of type "
+                  + plugin.getClass().getName(),
+              e);
         }
       }
     }
-
     LOG.debug("Plugin startup complete.");
     state = Lifecycle.BEFORE_EXTERNAL_SERVICES_FINISHED;
   }
@@ -276,15 +276,15 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         plugin.start();
         LOG.debug("Started plugin of type {}.", plugin.getClass().getName());
       } catch (final Exception e) {
-        if (config.isHaltOnPluginError()) {
-          throw new RuntimeException(
-              "Error starting plugin of type " + plugin.getClass().getName(), e);
-        } else {
+        if (config.isContinueOnPluginError()) {
           LOG.error(
               "Error starting plugin of type {}, stop will not be called.",
               plugin.getClass().getName(),
               e);
           pluginsIterator.remove();
+        } else {
+          throw new RuntimeException(
+              "Error starting plugin of type " + plugin.getClass().getName(), e);
         }
       }
     }
@@ -307,18 +307,18 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
       try {
         plugin.afterExternalServicePostMainLoop();
       } catch (final Exception e) {
-        if (config.isHaltOnPluginError()) {
-          throw new RuntimeException(
-              "Error calling `afterExternalServicePostMainLoop` on plugin of type "
-                  + plugin.getClass().getName(),
-              e);
-        } else {
+        if (config.isContinueOnPluginError()) {
           LOG.error(
               "Error calling `afterExternalServicePostMainLoop` on plugin of type "
                   + plugin.getClass().getName()
                   + ", stop will not be called.",
               e);
           pluginsIterator.remove();
+        } else {
+          throw new RuntimeException(
+              "Error calling `afterExternalServicePostMainLoop` on plugin of type "
+                  + plugin.getClass().getName(),
+              e);
         }
       }
     }

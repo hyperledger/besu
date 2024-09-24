@@ -59,7 +59,11 @@ public class BesuPluginContextImplTest {
   private BesuPluginContextImpl contextImpl;
 
   private static final PluginConfiguration DEFAULT_CONFIGURATION =
-      PluginConfiguration.builder().pluginsDir(DEFAULT_PLUGIN_DIRECTORY).build();
+      PluginConfiguration.builder()
+          .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
+          .externalPluginsEnabled(true)
+          .continueOnPluginError(true)
+          .build();
 
   @BeforeAll
   public static void createFakePluginDir() throws IOException {
@@ -261,25 +265,20 @@ public class BesuPluginContextImplTest {
 
   @Test
   void shouldRegisterPluginsIfExternalPluginsEnabled() {
-    PluginConfiguration config =
-        PluginConfiguration.builder()
-            .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .externalPluginsEnabled(true)
-            .build();
-    contextImpl.initialize(config);
+    contextImpl.initialize(DEFAULT_CONFIGURATION);
     contextImpl.registerPlugins();
     assertThat(contextImpl.getRegisteredPlugins().isEmpty()).isFalse();
   }
 
   @Test
-  void shouldHaltOnRegisterErrorWhenFlagIsTrue() {
+  void shouldHaltOnRegisterErrorWhenFlagIsFalse() {
     System.setProperty(TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_REGISTER);
 
     PluginConfiguration config =
         PluginConfiguration.builder()
             .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .haltOnPluginError(true)
+            .continueOnPluginError(false)
             .build();
 
     contextImpl.initialize(config);
@@ -292,13 +291,13 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  void shouldNotHaltOnRegisterErrorWhenFlagIsFalse() {
+  void shouldNotHaltOnRegisterErrorWhenFlagIsTrue() {
     System.setProperty(TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_REGISTER);
 
     PluginConfiguration config =
         PluginConfiguration.builder()
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .haltOnPluginError(false)
+            .continueOnPluginError(true)
             .build();
 
     contextImpl.initialize(config);
@@ -307,14 +306,14 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  void shouldHaltOnBeforeExternalServicesErrorWhenFlagIsTrue() {
+  void shouldHaltOnBeforeExternalServicesErrorWhenFlagIsFalse() {
     System.setProperty(TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_BEFORE_EXTERNAL_SERVICES);
 
     PluginConfiguration config =
         PluginConfiguration.builder()
             .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .haltOnPluginError(true)
+            .continueOnPluginError(false)
             .build();
 
     contextImpl.initialize(config);
@@ -330,14 +329,14 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  void shouldNotHaltOnBeforeExternalServicesErrorWhenFlagIsFalse() {
+  void shouldNotHaltOnBeforeExternalServicesErrorWhenFlagIsTrue() {
     System.setProperty(TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_BEFORE_EXTERNAL_SERVICES);
 
     PluginConfiguration config =
         PluginConfiguration.builder()
             .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .haltOnPluginError(false)
+            .continueOnPluginError(true)
             .build();
 
     contextImpl.initialize(config);
@@ -348,14 +347,14 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  void shouldHaltOnBeforeMainLoopErrorWhenFlagIsTrue() {
+  void shouldHaltOnBeforeMainLoopErrorWhenFlagIsFalse() {
     System.setProperty(TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_START);
 
     PluginConfiguration config =
         PluginConfiguration.builder()
             .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .haltOnPluginError(true)
+            .continueOnPluginError(false)
             .build();
 
     contextImpl.initialize(config);
@@ -370,14 +369,14 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  void shouldNotHaltOnBeforeMainLoopErrorWhenFlagIsFalse() {
+  void shouldNotHaltOnBeforeMainLoopErrorWhenFlagIsTrue() {
     System.setProperty(TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_BEFORE_MAIN_LOOP);
 
     PluginConfiguration config =
         PluginConfiguration.builder()
             .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .haltOnPluginError(false)
+            .continueOnPluginError(true)
             .build();
 
     contextImpl.initialize(config);
@@ -389,7 +388,7 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  void shouldHaltOnAfterExternalServicePostMainLoopErrorWhenFlagIsTrue() {
+  void shouldHaltOnAfterExternalServicePostMainLoopErrorWhenFlagIsFalse() {
     System.setProperty(
         TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_AFTER_EXTERNAL_SERVICE_POST_MAIN_LOOP);
 
@@ -397,7 +396,7 @@ public class BesuPluginContextImplTest {
         PluginConfiguration.builder()
             .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .haltOnPluginError(true)
+            .continueOnPluginError(false)
             .build();
 
     contextImpl.initialize(config);
@@ -415,7 +414,7 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  void shouldNotHaltOnAfterExternalServicePostMainLoopErrorWhenFlagIsFalse() {
+  void shouldNotHaltOnAfterExternalServicePostMainLoopErrorWhenFlagIsTrue() {
     System.setProperty(
         TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_AFTER_EXTERNAL_SERVICE_POST_MAIN_LOOP);
 
@@ -423,7 +422,7 @@ public class BesuPluginContextImplTest {
         PluginConfiguration.builder()
             .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .haltOnPluginError(false)
+            .continueOnPluginError(true)
             .build();
 
     contextImpl.initialize(config);
