@@ -34,6 +34,8 @@ public class JsonBftConfigOptions implements BftConfigOptions {
 
   private static final long DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 1;
+  // 0 keeps working as before, increase to activate it
+  private static final int DEFAULT_EMPTY_BLOCK_PERIOD_SECONDS = 0;
   private static final int DEFAULT_BLOCK_PERIOD_MILLISECONDS = 0; // Experimental for test only
   private static final int DEFAULT_ROUND_EXPIRY_SECONDS = 1;
   // In a healthy network this can be very small. This default limit will allow for suitable
@@ -65,6 +67,12 @@ public class JsonBftConfigOptions implements BftConfigOptions {
   public int getBlockPeriodSeconds() {
     return JsonUtil.getPositiveInt(
         bftConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
+  }
+
+  @Override
+  public int getEmptyBlockPeriodSeconds() {
+    return JsonUtil.getInt(
+        bftConfigRoot, "xemptyblockperiodseconds", DEFAULT_EMPTY_BLOCK_PERIOD_SECONDS);
   }
 
   @Override
