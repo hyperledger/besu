@@ -52,7 +52,6 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
       names = {DEFAULT_HALT_ON_PLUGIN_ERROR_OPTION_NAME},
       description =
           "Allow Besu startup even if any plugins fail to initialize correctly (default: ${DEFAULT-VALUE})",
-      hidden = true,
       defaultValue = "false",
       arity = "1")
   private final Boolean continueOnPluginError = false;
