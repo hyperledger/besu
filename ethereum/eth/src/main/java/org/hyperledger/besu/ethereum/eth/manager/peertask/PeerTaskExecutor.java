@@ -32,7 +32,6 @@ import java.util.function.Supplier;
 
 /** Manages the execution of PeerTasks, respecting their PeerTaskBehavior */
 public class PeerTaskExecutor {
-  private static final long[] WAIT_TIME_BEFORE_RETRY = {0, 20000, 5000};
 
   private final PeerSelector peerSelector;
   private final PeerTaskRequestSender requestSender;
@@ -123,7 +122,7 @@ public class PeerTaskExecutor {
     } while (--triesRemaining > 0
         && executorResult.getResponseCode() != PeerTaskExecutorResponseCode.SUCCESS
         && executorResult.getResponseCode() != PeerTaskExecutorResponseCode.PEER_DISCONNECTED
-        && sleepBetweenRetries(WAIT_TIME_BEFORE_RETRY[triesRemaining]));
+        && sleepBetweenRetries());
 
     return executorResult;
   }
@@ -133,9 +132,10 @@ public class PeerTaskExecutor {
     return CompletableFuture.supplyAsync(() -> executeAgainstPeer(peerTask, peer));
   }
 
-  private boolean sleepBetweenRetries(final long sleepTime) {
+  private boolean sleepBetweenRetries() {
     try {
-      Thread.sleep(sleepTime);
+      //sleep for 1 second to match implemented wait between retries in AbstractRetryingPeerTask
+      Thread.sleep(1000);
       return true;
     } catch (InterruptedException e) {
       return false;
