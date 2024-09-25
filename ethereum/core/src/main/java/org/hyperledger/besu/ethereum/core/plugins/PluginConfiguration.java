@@ -23,14 +23,17 @@ public class PluginConfiguration {
   private final List<PluginInfo> requestedPlugins;
   private final Path pluginsDir;
   private final boolean externalPluginsEnabled;
+  private final boolean continueOnPluginError;
 
   public PluginConfiguration(
       final List<PluginInfo> requestedPlugins,
       final Path pluginsDir,
-      final boolean externalPluginsEnabled) {
+      final boolean externalPluginsEnabled,
+      final boolean continueOnPluginError) {
     this.requestedPlugins = requestedPlugins;
     this.pluginsDir = pluginsDir;
     this.externalPluginsEnabled = externalPluginsEnabled;
+    this.continueOnPluginError = continueOnPluginError;
   }
 
   public List<String> getRequestedPlugins() {
@@ -45,6 +48,10 @@ public class PluginConfiguration {
 
   public boolean isExternalPluginsEnabled() {
     return externalPluginsEnabled;
+  }
+
+  public boolean isContinueOnPluginError() {
+    return continueOnPluginError;
   }
 
   public static Path defaultPluginsDir() {
@@ -62,6 +69,7 @@ public class PluginConfiguration {
     private List<PluginInfo> requestedPlugins;
     private Path pluginsDir;
     private boolean externalPluginsEnabled = true;
+    private boolean continueOnPluginError = false;
 
     public Builder requestedPlugins(final List<PluginInfo> requestedPlugins) {
       this.requestedPlugins = requestedPlugins;
@@ -78,11 +86,17 @@ public class PluginConfiguration {
       return this;
     }
 
+    public Builder continueOnPluginError(final boolean continueOnPluginError) {
+      this.continueOnPluginError = continueOnPluginError;
+      return this;
+    }
+
     public PluginConfiguration build() {
       if (pluginsDir == null) {
         pluginsDir = PluginConfiguration.defaultPluginsDir();
       }
-      return new PluginConfiguration(requestedPlugins, pluginsDir, externalPluginsEnabled);
+      return new PluginConfiguration(
+          requestedPlugins, pluginsDir, externalPluginsEnabled, continueOnPluginError);
     }
   }
 }

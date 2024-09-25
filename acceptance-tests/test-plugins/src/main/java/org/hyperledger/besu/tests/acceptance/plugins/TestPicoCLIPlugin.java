@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -32,16 +32,25 @@ import picocli.CommandLine.Option;
 public class TestPicoCLIPlugin implements BesuPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(TestPicoCLIPlugin.class);
 
+  private static final String UNSET = "UNSET";
+  private static final String FAIL_REGISTER = "FAILREGISTER";
+  private static final String FAIL_BEFORE_EXTERNAL_SERVICES = "FAILBEFOREEXTERNALSERVICES";
+  private static final String FAIL_START = "FAILSTART";
+  private static final String FAIL_AFTER_EXTERNAL_SERVICE_POST_MAIN_LOOP =
+      "FAILAFTEREXTERNALSERVICEPOSTMAINLOOP";
+  private static final String FAIL_STOP = "FAILSTOP";
+  private static final String PLUGIN_LIFECYCLE_PREFIX = "pluginLifecycle.";
+
   @Option(
       names = {"--Xplugin-test-option"},
       hidden = true,
-      defaultValue = "UNSET")
+      defaultValue = UNSET)
   String testOption = System.getProperty("testPicoCLIPlugin.testOption");
 
   @Option(
       names = {"--plugin-test-stable-option"},
       hidden = true,
-      defaultValue = "UNSET")
+      defaultValue = UNSET)
   String stableOption = "";
 
   private String state = "uninited";
@@ -52,7 +61,7 @@ public class TestPicoCLIPlugin implements BesuPlugin {
     LOG.info("Registering.  Test Option is '{}'", testOption);
     state = "registering";
 
-    if ("FAILREGISTER".equals(testOption)) {
+    if (FAIL_REGISTER.equals(testOption)) {
       state = "failregister";
       throw new RuntimeException("I was told to fail at registration");
     }
@@ -67,11 +76,25 @@ public class TestPicoCLIPlugin implements BesuPlugin {
   }
 
   @Override
+  public void beforeExternalServices() {
+    LOG.info("Before external services. Test Option is '{}'", testOption);
+    state = "beforeExternalServices";
+
+    if (FAIL_BEFORE_EXTERNAL_SERVICES.equals(testOption)) {
+      state = "failbeforeExternalServices";
+      throw new RuntimeException("I was told to fail before external services");
+    }
+
+    writeSignal("beforeExternalServices");
+    state = "beforeExternalServicesFinished";
+  }
+
+  @Override
   public void start() {
     LOG.info("Starting.  Test Option is '{}'", testOption);
     state = "starting";
 
-    if ("FAILSTART".equals(testOption)) {
+    if (FAIL_START.equals(testOption)) {
       state = "failstart";
       throw new RuntimeException("I was told to fail at startup");
     }
@@ -81,11 +104,25 @@ public class TestPicoCLIPlugin implements BesuPlugin {
   }
 
   @Override
+  public void afterExternalServicePostMainLoop() {
+    LOG.info("After external services post main loop. Test Option is '{}'", testOption);
+    state = "afterExternalServicePostMainLoop";
+
+    if (FAIL_AFTER_EXTERNAL_SERVICE_POST_MAIN_LOOP.equals(testOption)) {
+      state = "failafterExternalServicePostMainLoop";
+      throw new RuntimeException("I was told to fail after external services post main loop");
+    }
+
+    writeSignal("afterExternalServicePostMainLoop");
+    state = "afterExternalServicePostMainLoopFinished";
+  }
+
+  @Override
   public void stop() {
     LOG.info("Stopping.  Test Option is '{}'", testOption);
     state = "stopping";
 
-    if ("FAILSTOP".equals(testOption)) {
+    if (FAIL_STOP.equals(testOption)) {
       state = "failstop";
       throw new RuntimeException("I was told to fail at stop");
     }
@@ -103,7 +140,7 @@ public class TestPicoCLIPlugin implements BesuPlugin {
   @SuppressWarnings("ResultOfMethodCallIgnored")
   private void writeSignal(final String signal) {
     try {
-      final File callbackFile = new File(callbackDir, "pluginLifecycle." + signal);
+      final File callbackFile = new File(callbackDir, PLUGIN_LIFECYCLE_PREFIX + signal);
       if (!callbackFile.getParentFile().exists()) {
         callbackFile.getParentFile().mkdirs();
         callbackFile.getParentFile().deleteOnExit();
