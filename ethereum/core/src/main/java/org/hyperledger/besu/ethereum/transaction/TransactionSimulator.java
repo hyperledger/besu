@@ -236,7 +236,9 @@ public class TransactionSimulator {
             : blockHeaderToProcess.getGasLimit();
     if (rpcGasCap > 0) {
       gasLimit = rpcGasCap;
-      LOG.atTrace().setMessage("Capping gasLimit to {}").addArgument(rpcGasCap).log();
+      LOG.trace(
+          "Gas limit capped at {} for transaction simulation due to a specific RPC gas cap value provided",
+          rpcGasCap);
     }
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
