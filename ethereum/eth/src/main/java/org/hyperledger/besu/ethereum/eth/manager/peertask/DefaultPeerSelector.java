@@ -46,7 +46,7 @@ public class DefaultPeerSelector implements PeerSelector {
    */
   @Override
   public EthPeer getPeer(final Predicate<EthPeer> filter) throws NoAvailablePeerException {
-    LOG.trace("Getting peer from pool of {} peers", ethPeersByPeerId.size());
+    LOG.trace("Finding peer from pool of {} peers", ethPeersByPeerId.size());
     return ethPeersByPeerId.values().stream()
         .filter(filter)
         .max(Comparator.naturalOrder())
