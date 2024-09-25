@@ -57,6 +57,24 @@ public class DefaultPeerSelectorTest {
     Assertions.assertSame(protocol1With5ReputationPeer, result);
   }
 
+  @Test
+  public void testGetPeerButNoPeerMatchesFilter() throws NoAvailablePeerException {
+    EthPeer protocol1With5ReputationPeer =
+            createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol1", 5);
+    peerSelector.addPeer(protocol1With5ReputationPeer);
+    EthPeer protocol1With4ReputationPeer =
+            createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol1", 4);
+    peerSelector.addPeer(protocol1With4ReputationPeer);
+    EthPeer protocol2With50ReputationPeer =
+            createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol2", 50);
+    peerSelector.addPeer(protocol2With50ReputationPeer);
+    EthPeer protocol2With4ReputationPeer =
+            createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol2", 4);
+    peerSelector.addPeer(protocol2With4ReputationPeer);
+
+    Assertions.assertThrows(NoAvailablePeerException.class, () -> peerSelector.getPeer((p) -> p.getProtocolName().equals("fake protocol")));
+  }
+
   private EthPeer createTestPeer(
       final Set<Capability> connectionCapabilities,
       final String protocolName,
