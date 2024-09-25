@@ -24,10 +24,10 @@ import java.util.function.Predicate;
 public interface PeerSelector {
 
   /**
-   * Gets the highest reputation peer matching the supplied filter
+   * Gets a peer matching the supplied filter
    *
    * @param filter a filter to match prospective peers with
-   * @return the highest reputation peer matching the supplies filter
+   * @return a peer matching the supplied filter
    * @throws NoAvailablePeerException If there are no suitable peers
    */
   EthPeer getPeer(final Predicate<EthPeer> filter) throws NoAvailablePeerException;

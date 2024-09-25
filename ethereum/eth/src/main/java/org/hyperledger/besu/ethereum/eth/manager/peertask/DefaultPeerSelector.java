@@ -38,6 +38,13 @@ public class DefaultPeerSelector implements PeerSelector {
   private final Map<PeerId, EthPeer> ethPeersByPeerId =
       Collections.synchronizedMap(new HashMap<>());
 
+  /**
+   * Gets the highest reputation peer matching the supplied filter
+   *
+   * @param filter a filter to match prospective peers with
+   * @return the highest reputation peer matching the supplies filter
+   * @throws NoAvailablePeerException If there are no suitable peers
+   */
   @Override
   public EthPeer getPeer(final Predicate<EthPeer> filter) throws NoAvailablePeerException {
     LOG.trace("Getting peer from pool of {} peers", ethPeersByPeerId.size());
