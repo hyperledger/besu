@@ -17,30 +17,34 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is a simple PeerManager implementation that can be used the default implementation in most
+ * This is a simple PeerSelector implementation that can be used the default implementation in most
  * situations
  */
-public class DefaultPeerManager implements PeerManager {
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultPeerManager.class);
+public class DefaultPeerSelector implements PeerSelector {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultPeerSelector.class);
 
-  // use a synchronized map to ensure the map is never modified by multiple threads at once
-  private final Map<PeerId, EthPeer> ethPeersByPeerId =
-      Collections.synchronizedMap(new HashMap<>());
+  private final Map<PeerId, EthPeer> ethPeersByPeerId = new ConcurrentHashMap<>();
 
+  /**
+   * Gets the highest reputation peer matching the supplied filter
+   *
+   * @param filter a filter to match prospective peers with
+   * @return the highest reputation peer matching the supplies filter
+   * @throws NoAvailablePeerException If there are no suitable peers
+   */
   @Override
   public EthPeer getPeer(final Predicate<EthPeer> filter) throws NoAvailablePeerException {
-    LOG.trace("Getting peer from pool of {} peers", ethPeersByPeerId.size());
+    LOG.trace("Finding peer from pool of {} peers", ethPeersByPeerId.size());
     return ethPeersByPeerId.values().stream()
         .filter(filter)
         .max(Comparator.naturalOrder())

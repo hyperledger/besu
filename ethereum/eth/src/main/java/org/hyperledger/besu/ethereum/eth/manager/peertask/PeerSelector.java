@@ -20,14 +20,14 @@ import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-/** "Manages" the EthPeers for the PeerTaskExecutor */
-public interface PeerManager {
+/** Selects the EthPeers for the PeerTaskExecutor */
+public interface PeerSelector {
 
   /**
-   * Gets the highest reputation peer matching the supplies filter
+   * Gets a peer matching the supplied filter
    *
    * @param filter a filter to match prospective peers with
-   * @return the highest reputation peer matching the supplies filter
+   * @return a peer matching the supplied filter
    * @throws NoAvailablePeerException If there are no suitable peers
    */
   EthPeer getPeer(final Predicate<EthPeer> filter) throws NoAvailablePeerException;
@@ -37,21 +37,21 @@ public interface PeerManager {
    *
    * @param peerId the peerId of the desired EthPeer
    * @return An Optional\<EthPeer\> containing the EthPeer identified by peerId if present in the
-   *     PeerManager, or empty otherwise
+   *     PeerSelector, or empty otherwise
    */
   Optional<EthPeer> getPeerByPeerId(final PeerId peerId);
 
   /**
-   * Add the supplied EthPeer to the PeerManager
+   * Add the supplied EthPeer to the PeerSelector
    *
-   * @param ethPeer the EthPeer to be added to the PeerManager
+   * @param ethPeer the EthPeer to be added to the PeerSelector
    */
   void addPeer(final EthPeer ethPeer);
 
   /**
-   * Remove the EthPeer identified by peerId from the PeerManager
+   * Remove the EthPeer identified by peerId from the PeerSelector
    *
-   * @param peerId the PeerId of the EthPeer to be removed from the PeerManager
+   * @param peerId the PeerId of the EthPeer to be removed from the PeerSelector
    */
   void removePeer(final PeerId peerId);
 }
