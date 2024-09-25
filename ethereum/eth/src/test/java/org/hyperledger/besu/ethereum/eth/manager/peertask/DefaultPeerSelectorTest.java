@@ -58,7 +58,7 @@ public class DefaultPeerSelectorTest {
   }
 
   @Test
-  public void testGetPeerButNoPeerMatchesFilter() throws NoAvailablePeerException {
+  public void testGetPeerButNoPeerMatchesFilter() {
     EthPeer protocol1With5ReputationPeer =
             createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol1", 5);
     peerSelector.addPeer(protocol1With5ReputationPeer);
