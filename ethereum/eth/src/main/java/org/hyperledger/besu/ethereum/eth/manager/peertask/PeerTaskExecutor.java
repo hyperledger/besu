@@ -137,7 +137,7 @@ public class PeerTaskExecutor {
 
   private boolean sleepBetweenRetries() {
     try {
-      //sleep for 1 second to match implemented wait between retries in AbstractRetryingPeerTask
+      // sleep for 1 second to match implemented wait between retries in AbstractRetryingPeerTask
       Thread.sleep(1000);
       return true;
     } catch (InterruptedException e) {
