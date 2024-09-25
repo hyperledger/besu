@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 import org.slf4j.Logger;
@@ -34,9 +35,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultPeerSelector implements PeerSelector {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPeerSelector.class);
 
-  // use a synchronized map to ensure the map is never modified by multiple threads at once
-  private final Map<PeerId, EthPeer> ethPeersByPeerId =
-      Collections.synchronizedMap(new HashMap<>());
+  private final Map<PeerId, EthPeer> ethPeersByPeerId = new ConcurrentHashMap<>();
 
   /**
    * Gets the highest reputation peer matching the supplied filter
