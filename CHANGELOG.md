@@ -27,6 +27,9 @@
 
 ### Upcoming Breaking Changes
 
+### Additions and Improvements
+- Allowing Besu to parse a Geth-style genesis like other clients [#7273](https://github.com/hyperledger/besu/pull/7273)
+
 ### Breaking Changes
 - Receipt compaction is enabled by default. It will no longer be possible to downgrade Besu to versions prior to 24.5.1.
 
