@@ -21,10 +21,12 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -81,7 +83,7 @@ public class DownloadReceiptsStepTest {
   }
 
   @Test
-  public void shouldDownloadReceiptsForBlocks() throws IllegalAccessException {
+  public void shouldDownloadReceiptsForBlocks() {
     DownloadReceiptsStep downloadReceiptsStep =
         new DownloadReceiptsStep(
             ethProtocolManager.ethContext(),
@@ -106,7 +108,7 @@ public class DownloadReceiptsStepTest {
 
   @Test
   public void shouldDownloadReceiptsForBlocksUsingPeerTaskSystem()
-      throws IllegalAccessException, ExecutionException, InterruptedException {
+      throws ExecutionException, InterruptedException {
     DownloadReceiptsStep downloadReceiptsStep =
         new DownloadReceiptsStep(
             ethProtocolManager.ethContext(),
@@ -150,6 +152,10 @@ public class DownloadReceiptsStepTest {
     final Block block = Mockito.mock(Block.class);
     final BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
     Mockito.when(block.getHeader()).thenAnswer((invocationOnMock) -> blockHeader);
+    final BlockBody blockBody = Mockito.mock(BlockBody.class);
+    Mockito.when(block.getBody()).thenAnswer((invocationOnMock) -> blockBody);
+    Mockito.when(blockBody.getTransactions())
+        .thenAnswer((invocationOnMock) -> List.of(Mockito.mock(Transaction.class)));
     return block;
   }
 }

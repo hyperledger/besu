@@ -93,6 +93,10 @@ public class CheckpointDownloadBlockStep {
                 .orElseThrow(
                     () ->
                         new IllegalStateException("PeerTask response code was success, but empty"));
+        if (block.getBody().getTransactions().size() != transactionReceipts.size()) {
+          throw new IllegalStateException(
+              "PeerTask response code was success, but incorrect number of receipts returned");
+        }
         BlockWithReceipts blockWithReceipts = new BlockWithReceipts(block, transactionReceipts);
         futureReceipts.complete(Optional.of(blockWithReceipts));
       } else {
