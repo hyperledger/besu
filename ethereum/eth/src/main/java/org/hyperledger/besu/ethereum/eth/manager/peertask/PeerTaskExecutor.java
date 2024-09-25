@@ -34,17 +34,17 @@ import java.util.function.Supplier;
 public class PeerTaskExecutor {
   private static final long[] WAIT_TIME_BEFORE_RETRY = {0, 20000, 5000};
 
-  private final PeerManager peerManager;
+  private final PeerSelector peerSelector;
   private final PeerTaskRequestSender requestSender;
   private final Supplier<ProtocolSpec> protocolSpecSupplier;
   private final LabelledMetric<OperationTimer> requestTimer;
 
   public PeerTaskExecutor(
-      final PeerManager peerManager,
+      final PeerSelector peerSelector,
       final PeerTaskRequestSender requestSender,
       final Supplier<ProtocolSpec> protocolSpecSupplier,
       final MetricsSystem metricsSystem) {
-    this.peerManager = peerManager;
+    this.peerSelector = peerSelector;
     this.requestSender = requestSender;
     this.protocolSpecSupplier = protocolSpecSupplier;
     requestTimer =
@@ -61,7 +61,7 @@ public class PeerTaskExecutor {
       EthPeer peer;
       try {
         peer =
-            peerManager.getPeer(
+            peerSelector.getPeer(
                 (candidatePeer) ->
                     isPeerUnused(candidatePeer, usedEthPeers)
                         && (protocolSpecSupplier.get().isPoS()

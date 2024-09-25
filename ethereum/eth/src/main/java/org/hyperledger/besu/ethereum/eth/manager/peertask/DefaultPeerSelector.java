@@ -28,11 +28,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is a simple PeerManager implementation that can be used the default implementation in most
+ * This is a simple PeerSelector implementation that can be used the default implementation in most
  * situations
  */
-public class DefaultPeerManager implements PeerManager {
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultPeerManager.class);
+public class DefaultPeerSelector implements PeerSelector {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultPeerSelector.class);
 
   // use a synchronized map to ensure the map is never modified by multiple threads at once
   private final Map<PeerId, EthPeer> ethPeersByPeerId =

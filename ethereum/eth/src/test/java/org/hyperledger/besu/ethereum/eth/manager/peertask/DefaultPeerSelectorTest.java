@@ -28,31 +28,31 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class DefaultPeerManagerTest {
+public class DefaultPeerSelectorTest {
 
-  public DefaultPeerManager peerManager;
+  public DefaultPeerSelector peerSelector;
 
   @BeforeEach
   public void beforeTest() {
-    peerManager = new DefaultPeerManager();
+    peerSelector = new DefaultPeerSelector();
   }
 
   @Test
   public void testGetPeer() throws NoAvailablePeerException {
     EthPeer protocol1With5ReputationPeer =
         createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol1", 5);
-    peerManager.addPeer(protocol1With5ReputationPeer);
+    peerSelector.addPeer(protocol1With5ReputationPeer);
     EthPeer protocol1With4ReputationPeer =
         createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol1", 4);
-    peerManager.addPeer(protocol1With4ReputationPeer);
+    peerSelector.addPeer(protocol1With4ReputationPeer);
     EthPeer protocol2With50ReputationPeer =
         createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol2", 50);
-    peerManager.addPeer(protocol2With50ReputationPeer);
+    peerSelector.addPeer(protocol2With50ReputationPeer);
     EthPeer protocol2With4ReputationPeer =
         createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol2", 4);
-    peerManager.addPeer(protocol2With4ReputationPeer);
+    peerSelector.addPeer(protocol2With4ReputationPeer);
 
-    EthPeer result = peerManager.getPeer((p) -> p.getProtocolName().equals("protocol1"));
+    EthPeer result = peerSelector.getPeer((p) -> p.getProtocolName().equals("protocol1"));
 
     Assertions.assertSame(protocol1With5ReputationPeer, result);
   }

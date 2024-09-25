@@ -35,7 +35,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 public class PeerTaskExecutorTest {
-  private @Mock PeerManager peerManager;
+  private @Mock PeerSelector peerSelector;
   private @Mock PeerTaskRequestSender requestSender;
   private @Mock ProtocolSpec protocolSpec;
   private @Mock PeerTask<Object> peerTask;
@@ -51,7 +51,7 @@ public class PeerTaskExecutorTest {
     mockCloser = MockitoAnnotations.openMocks(this);
     peerTaskExecutor =
         new PeerTaskExecutor(
-            peerManager, requestSender, () -> protocolSpec, new NoOpMetricsSystem());
+            peerSelector, requestSender, () -> protocolSpec, new NoOpMetricsSystem());
   }
 
   @AfterEach
@@ -205,7 +205,7 @@ public class PeerTaskExecutorTest {
     String subprotocol = "subprotocol";
     Object responseObject = new Object();
 
-    Mockito.when(peerManager.getPeer(Mockito.any(Predicate.class))).thenReturn(ethPeer);
+    Mockito.when(peerSelector.getPeer(Mockito.any(Predicate.class))).thenReturn(ethPeer);
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
     Mockito.when(peerTask.getPeerTaskBehaviors()).thenReturn(Collections.emptyList());
@@ -238,7 +238,7 @@ public class PeerTaskExecutorTest {
     int requestMessageDataCode = 123;
     EthPeer peer2 = Mockito.mock(EthPeer.class);
 
-    Mockito.when(peerManager.getPeer(Mockito.any(Predicate.class)))
+    Mockito.when(peerSelector.getPeer(Mockito.any(Predicate.class)))
         .thenReturn(ethPeer)
         .thenReturn(peer2);
 
