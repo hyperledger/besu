@@ -105,8 +105,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     final MetricsConfiguration metricsConfiguration =
         MetricsConfiguration.builder().enabled(false).host("8.6.7.5").port(309).build();
-    // push-host is defaulting to p2p-host, instead of localhost.
-    // metrics as passed to runner builder differed?
+
     parseCommand("--config-file", toml.toString());
 
     verify(mockRunnerBuilder).discovery(eq(false));
