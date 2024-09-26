@@ -328,7 +328,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
         .getNonStorageKeyValuesForUpdate()
         .forEach(
             (key, value) -> {
-              System.out.println("add key " + key + "  leaf value " + value);
+              System.out.println("add key " + key + " leaf value " + value);
               stateTrie.put(key, value);
             });
     verkleEntryFactory

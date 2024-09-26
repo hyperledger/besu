@@ -69,15 +69,15 @@ public class VerkleEntryFactory {
     Bytes32 basicDataValue;
     if ((basicDataValue = nonStorageKeyValuesForUpdate.get(basicDataKey)) == null) {
       basicDataValue = Bytes32.ZERO;
-    } else {
-      basicDataValue = SuffixTreeEncoder.eraseVersion(basicDataValue);
-      basicDataValue = SuffixTreeEncoder.eraseNonce(basicDataValue);
-      basicDataValue = SuffixTreeEncoder.eraseBalance(basicDataValue);
     }
 
-    basicDataValue = SuffixTreeEncoder.addVersionIntoValue(basicDataValue, Bytes32.ZERO);
-    basicDataValue = SuffixTreeEncoder.addNonceIntoValue(basicDataValue, UInt256.valueOf(nonce));
-    basicDataValue = SuffixTreeEncoder.addBalanceIntoValue(basicDataValue, balance);
+    basicDataValue = SuffixTreeEncoder.setVersionInValue(basicDataValue, Bytes.of(0));
+    basicDataValue = SuffixTreeEncoder.setNonceInValue(basicDataValue, Bytes.ofUnsignedLong(nonce));
+    basicDataValue =
+        SuffixTreeEncoder.setBalanceInValue(
+            basicDataValue,
+            // balance size is exactly 16 bytes
+            balance.slice(16));
     nonStorageKeyValuesForUpdate.put(basicDataKey, basicDataValue);
   }
 
@@ -87,12 +87,13 @@ public class VerkleEntryFactory {
     Bytes32 basicDataValue;
     if ((basicDataValue = nonStorageKeyValuesForUpdate.get(basicDataKey)) == null) {
       basicDataValue = Bytes32.ZERO;
-    } else {
-      basicDataValue = SuffixTreeEncoder.eraseCodeSize(basicDataValue);
     }
 
     basicDataValue =
-        SuffixTreeEncoder.addCodeSizeIntoValue(basicDataValue, UInt256.valueOf(code.size()));
+        SuffixTreeEncoder.setCodeSizeInValue(
+            basicDataValue,
+            // code size is exactly 3 bytes
+            Bytes.ofUnsignedInt(code.size()).slice(1));
     nonStorageKeyValuesForUpdate.put(basicDataKey, basicDataValue);
     nonStorageKeyValuesForUpdate.put(trieKeyAdapter.codeHashKey(address), codeHash);
     List<UInt256> codeChunks = trieKeyAdapter.chunkifyCode(code);
