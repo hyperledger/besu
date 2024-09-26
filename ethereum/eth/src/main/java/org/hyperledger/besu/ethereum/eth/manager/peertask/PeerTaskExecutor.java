@@ -50,7 +50,7 @@ public class PeerTaskExecutor {
         metricsSystem.createLabelledTimer(
             BesuMetricCategory.PEERS,
             "PeerTaskExecutor:RequestTime",
-            "Time taken to send a request",
+            "Time taken to send a request and receive a response",
             "className");
   }
 
@@ -95,13 +95,14 @@ public class PeerTaskExecutor {
     do {
       try {
 
-        MessageData responseMessageData;
+        T result ;
         try (final OperationTimer.TimingContext timingContext =
             requestTimer.labels(peerTask.getClass().getSimpleName()).startTimer()) {
-          responseMessageData =
-              requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
+          MessageData responseMessageData =
+                  requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
+
+          result = peerTask.parseResponse(responseMessageData);
         }
-        T result = peerTask.parseResponse(responseMessageData);
         peer.recordUsefulResponse();
         executorResult = new PeerTaskExecutorResult<>(result, PeerTaskExecutorResponseCode.SUCCESS);
 
