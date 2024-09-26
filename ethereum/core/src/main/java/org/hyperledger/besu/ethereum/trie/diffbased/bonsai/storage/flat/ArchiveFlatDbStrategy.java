@@ -54,7 +54,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
   static final byte[] MIN_BLOCK_SUFFIX = Bytes.ofUnsignedLong(0L).toArrayUnsafe();
   public static final byte[] DELETED_ACCOUNT_VALUE = new byte[0];
   public static final byte[] DELETED_CODE_VALUE = new byte[0];
-  static final byte[] DELETED_STORAGE_VALUE = new byte[0];
+  public static final byte[] DELETED_STORAGE_VALUE = new byte[0];
 
   @Override
   public Optional<Bytes> getFlatAccount(
@@ -64,48 +64,43 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
       final SegmentedKeyValueStorage storage) {
 
     getAccountCounter.inc();
+    Optional<Bytes> accountFound;
+
     // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
     Bytes keyNearest = calculateArchiveKeyWithMaxSuffix(context, accountHash.toArrayUnsafe());
 
-    // use getNearest() with an account key that is suffixed by the block context
-    final Optional<Bytes> accountFound =
+    // Find the nearest account state for this address and block context
+    Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccount =
         storage
             .getNearestBefore(ACCOUNT_INFO_STATE, keyNearest)
-            // return empty when we find a "deleted value key"
-            .filter(
-                found ->
-                    !Arrays.areEqual(
-                        DELETED_ACCOUNT_VALUE, found.value().orElse(DELETED_ACCOUNT_VALUE)))
-            // don't return accounts that do not have a matching account hash
-            .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size())
-            .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+            .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size());
 
-    if (accountFound.isPresent()) {
-      getAccountFoundInFlatDatabaseCounter.inc();
-      return accountFound;
-    } else {
-      // Check the frozen state as old state is moved out of the primary DB segment
-      final Optional<Bytes> frozenAccountFound =
+    // If there isn't a match look in the freezer DB segment
+    if (nearestAccount.isEmpty()) {
+      accountFound =
           storage
               .getNearestBefore(ACCOUNT_INFO_STATE_FREEZER, keyNearest)
-              // return empty when we find a "deleted value key"
+              .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size())
+              .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+    } else {
+      accountFound =
+          nearestAccount
               .filter(
                   found ->
                       !Arrays.areEqual(
                           DELETED_ACCOUNT_VALUE, found.value().orElse(DELETED_ACCOUNT_VALUE)))
-              // don't return accounts that do not have a matching account hash
-              .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size())
+              // return empty when we find a "deleted value key"
               .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
-
-      if (frozenAccountFound.isPresent()) {
-        // TODO - different metric for frozen lookups?
-        getAccountFoundInFlatDatabaseCounter.inc();
-      } else {
-        getAccountNotFoundInFlatDatabaseCounter.inc();
-      }
-
-      return frozenAccountFound;
     }
+
+    if (accountFound.isPresent()) {
+      // TODO - different metric for frozen lookups?
+      getAccountFoundInFlatDatabaseCounter.inc();
+    } else {
+      getAccountNotFoundInFlatDatabaseCounter.inc();
+    }
+
+    return accountFound;
   }
 
   /*
@@ -144,6 +139,8 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
       final Hash accountHash,
       final StorageSlotKey storageSlotKey,
       final SegmentedKeyValueStorage storage) {
+
+    Optional<Bytes> storageFound;
     getStorageValueCounter.inc();
 
     // get natural key from account hash and slot key
@@ -151,47 +148,44 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
     // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
     Bytes keyNearest = calculateArchiveKeyWithMaxSuffix(context, naturalKey);
 
-    // use getNearest() with a key that is suffixed by the block context
-    final Optional<Bytes> storageFound =
+    // Find the nearest storage for this address, slot key hash, and block context
+    Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestStorage =
         storage
             .getNearestBefore(ACCOUNT_STORAGE_STORAGE, keyNearest)
-            // return empty when we find a "deleted value key"
             .filter(
-                found ->
-                    !Arrays.areEqual(
-                        DELETED_STORAGE_VALUE, found.value().orElse(DELETED_STORAGE_VALUE)))
-            // don't return accounts that do not have a matching account hash and slotHash prefix
-            .filter(
-                found -> Bytes.of(naturalKey).commonPrefixLength(found.key()) >= naturalKey.length)
-            // map NearestKey to Bytes-wrapped value
-            .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+                found -> Bytes.of(naturalKey).commonPrefixLength(found.key()) >= naturalKey.length);
 
-    if (storageFound.isPresent()) {
-      getStorageValueFlatDatabaseCounter.inc();
-      return storageFound;
-    } else {
+    // If there isn't a match look in the freezer DB segment
+    if (nearestStorage.isEmpty()) {
       // Check the frozen storage as old state is moved out of the primary DB segment
-      final Optional<Bytes> frozenStorageFound =
+      storageFound =
           storage
               .getNearestBefore(ACCOUNT_STORAGE_FREEZER, keyNearest)
+              // don't return accounts that do not have a matching account hash
+              .filter(
+                  found ->
+                      Bytes.of(naturalKey).commonPrefixLength(found.key()) >= naturalKey.length)
+              .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+    } else {
+      storageFound =
+          nearestStorage
               // return empty when we find a "deleted value key"
               .filter(
                   found ->
                       !Arrays.areEqual(
                           DELETED_STORAGE_VALUE, found.value().orElse(DELETED_STORAGE_VALUE)))
-              // don't return accounts that do not have a matching account hash
-              .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size())
+              // map NearestKey to Bytes-wrapped value
               .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
 
-      if (frozenStorageFound.isPresent()) {
+      if (storageFound.isPresent()) {
         // TODO - different metric for frozen lookups?
         getStorageValueFlatDatabaseCounter.inc();
       } else {
         getStorageValueNotFoundInFlatDatabaseCounter.inc();
       }
-
-      return frozenStorageFound;
     }
+
+    return storageFound;
   }
 
   /*

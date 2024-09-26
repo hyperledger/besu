@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-import static org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveFlatDbStrategy.DELETED_ACCOUNT_VALUE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiContext;
@@ -51,7 +50,6 @@ import java.util.stream.Stream;
 import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.bouncycastle.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -223,31 +221,33 @@ public abstract class DiffBasedWorldStateKeyValueStorage
         final BonsaiContext previousContext = new BonsaiContext();
         previousContext.setBlockHeader(previousBlockHeader.get());
         final Bytes previousKey =
-            ArchiveFlatDbStrategy.calculateArchiveKeyWithMaxSuffix(
-                previousContext, accountHash.toArrayUnsafe());
+            Bytes.of(
+                ArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(
+                    previousContext, accountHash.toArrayUnsafe()));
 
-        composedWorldStateStorage
-            .getNearestBefore(ACCOUNT_INFO_STATE, previousKey)
-            .filter(
-                // Ignore deleted entries
-                found ->
-                    !Arrays.areEqual(
-                        DELETED_ACCOUNT_VALUE, found.value().orElse(DELETED_ACCOUNT_VALUE)))
-            // Skip "nearest" entries that are for a different account
-            .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size())
-            .stream()
-            .forEach(
-                (nearestKey) -> {
-                  SegmentedKeyValueStorageTransaction tx =
-                      composedWorldStateStorage.startTransaction();
-                  tx.remove(ACCOUNT_INFO_STATE, nearestKey.key().toArrayUnsafe());
-                  tx.put(
-                      ACCOUNT_INFO_STATE_FREEZER,
-                      nearestKey.key().toArrayUnsafe(),
-                      nearestKey.value().get());
-                  tx.commit();
-                  frozenStateCount.getAndIncrement();
-                });
+        Optional<SegmentedKeyValueStorage.NearestKeyValue> nextMatch;
+
+        // Move all entries that match this address hash to the freezer DB segment
+        while ((nextMatch =
+                composedWorldStateStorage
+                    .getNearestBefore(ACCOUNT_INFO_STATE, previousKey)
+                    .filter(
+                        found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size()))
+            .isPresent()) {
+          nextMatch.stream()
+              .forEach(
+                  (nearestKey) -> {
+                    SegmentedKeyValueStorageTransaction tx =
+                        composedWorldStateStorage.startTransaction();
+                    tx.remove(ACCOUNT_INFO_STATE, nearestKey.key().toArrayUnsafe());
+                    tx.put(
+                        ACCOUNT_INFO_STATE_FREEZER,
+                        nearestKey.key().toArrayUnsafe(),
+                        nearestKey.value().get());
+                    tx.commit();
+                    frozenStateCount.getAndIncrement();
+                  });
+        }
 
         if (frozenStateCount.get() == 0) {
           LOG.atDebug()
@@ -282,32 +282,36 @@ public abstract class DiffBasedWorldStateKeyValueStorage
         final BonsaiContext previousContext = new BonsaiContext();
         previousContext.setBlockHeader(previousBlockHeader.get());
         final Bytes previousKey =
-            ArchiveFlatDbStrategy.calculateArchiveKeyWithMaxSuffix(
-                previousContext, storageSlotKey.toArrayUnsafe());
+            Bytes.of(
+                ArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(
+                    previousContext, storageSlotKey.toArrayUnsafe()));
 
-        composedWorldStateStorage
-            .getNearestBefore(ACCOUNT_STORAGE_STORAGE, previousKey)
-            .filter(
-                // Ignore deleted entries
-                found ->
-                    !Arrays.areEqual(
-                        DELETED_ACCOUNT_VALUE, found.value().orElse(DELETED_ACCOUNT_VALUE)))
-            // Skip "nearest" entries that are for a different account
-            .filter(
-                found -> storageSlotKey.commonPrefixLength(found.key()) >= storageSlotKey.size())
-            .stream()
-            .forEach(
-                (nearestKey) -> {
-                  SegmentedKeyValueStorageTransaction tx =
-                      composedWorldStateStorage.startTransaction();
-                  tx.remove(ACCOUNT_STORAGE_STORAGE, nearestKey.key().toArrayUnsafe());
-                  tx.put(
-                      ACCOUNT_STORAGE_FREEZER,
-                      nearestKey.key().toArrayUnsafe(),
-                      nearestKey.value().get());
-                  tx.commit();
-                  frozenStorageCount.getAndIncrement();
-                });
+        Optional<SegmentedKeyValueStorage.NearestKeyValue> nextMatch;
+
+        // Move all entries that match the storage hash for this address & slot
+        // to the freezer DB segment
+        while ((nextMatch =
+                composedWorldStateStorage
+                    .getNearestBefore(ACCOUNT_STORAGE_STORAGE, previousKey)
+                    .filter(
+                        found ->
+                            storageSlotKey.commonPrefixLength(found.key())
+                                >= storageSlotKey.size()))
+            .isPresent()) {
+          nextMatch.stream()
+              .forEach(
+                  (nearestKey) -> {
+                    SegmentedKeyValueStorageTransaction tx =
+                        composedWorldStateStorage.startTransaction();
+                    tx.remove(ACCOUNT_STORAGE_STORAGE, nearestKey.key().toArrayUnsafe());
+                    tx.put(
+                        ACCOUNT_STORAGE_FREEZER,
+                        nearestKey.key().toArrayUnsafe(),
+                        nearestKey.value().get());
+                    tx.commit();
+                    frozenStorageCount.getAndIncrement();
+                  });
+        }
 
         if (frozenStorageCount.get() == 0) {
           LOG.atDebug()
