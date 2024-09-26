@@ -84,9 +84,9 @@ public class PeerTaskExecutorTest {
     Mockito.verify(ethPeer).recordUsefulResponse();
 
     Assertions.assertNotNull(result);
-    Assertions.assertTrue(result.getResult().isPresent());
-    Assertions.assertSame(responseObject, result.getResult().get());
-    Assertions.assertEquals(PeerTaskExecutorResponseCode.SUCCESS, result.getResponseCode());
+    Assertions.assertTrue(result.result().isPresent());
+    Assertions.assertSame(responseObject, result.result().get());
+    Assertions.assertEquals(PeerTaskExecutorResponseCode.SUCCESS, result.responseCode());
   }
 
   @Test
@@ -117,9 +117,9 @@ public class PeerTaskExecutorTest {
     Mockito.verify(ethPeer).recordUsefulResponse();
 
     Assertions.assertNotNull(result);
-    Assertions.assertTrue(result.getResult().isPresent());
-    Assertions.assertSame(responseObject, result.getResult().get());
-    Assertions.assertEquals(PeerTaskExecutorResponseCode.SUCCESS, result.getResponseCode());
+    Assertions.assertTrue(result.result().isPresent());
+    Assertions.assertSame(responseObject, result.result().get());
+    Assertions.assertEquals(PeerTaskExecutorResponseCode.SUCCESS, result.responseCode());
   }
 
   @Test
@@ -139,9 +139,9 @@ public class PeerTaskExecutorTest {
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
 
     Assertions.assertNotNull(result);
-    Assertions.assertTrue(result.getResult().isEmpty());
+    Assertions.assertTrue(result.result().isEmpty());
     Assertions.assertEquals(
-        PeerTaskExecutorResponseCode.PEER_DISCONNECTED, result.getResponseCode());
+        PeerTaskExecutorResponseCode.PEER_DISCONNECTED, result.responseCode());
   }
 
   @Test
@@ -165,8 +165,8 @@ public class PeerTaskExecutorTest {
     Mockito.verify(ethPeer).recordRequestTimeout(requestMessageDataCode);
 
     Assertions.assertNotNull(result);
-    Assertions.assertTrue(result.getResult().isEmpty());
-    Assertions.assertEquals(PeerTaskExecutorResponseCode.TIMEOUT, result.getResponseCode());
+    Assertions.assertTrue(result.result().isEmpty());
+    Assertions.assertEquals(PeerTaskExecutorResponseCode.TIMEOUT, result.responseCode());
   }
 
   @Test
@@ -191,9 +191,9 @@ public class PeerTaskExecutorTest {
     Mockito.verify(ethPeer).recordUselessResponse(null);
 
     Assertions.assertNotNull(result);
-    Assertions.assertTrue(result.getResult().isEmpty());
+    Assertions.assertTrue(result.result().isEmpty());
     Assertions.assertEquals(
-        PeerTaskExecutorResponseCode.INVALID_RESPONSE, result.getResponseCode());
+        PeerTaskExecutorResponseCode.INVALID_RESPONSE, result.responseCode());
   }
 
   @Test
@@ -222,9 +222,9 @@ public class PeerTaskExecutorTest {
     Mockito.verify(ethPeer).recordUsefulResponse();
 
     Assertions.assertNotNull(result);
-    Assertions.assertTrue(result.getResult().isPresent());
-    Assertions.assertSame(responseObject, result.getResult().get());
-    Assertions.assertEquals(PeerTaskExecutorResponseCode.SUCCESS, result.getResponseCode());
+    Assertions.assertTrue(result.result().isPresent());
+    Assertions.assertSame(responseObject, result.result().get());
+    Assertions.assertEquals(PeerTaskExecutorResponseCode.SUCCESS, result.responseCode());
   }
 
   @Test
@@ -262,8 +262,8 @@ public class PeerTaskExecutorTest {
     Mockito.verify(peer2).recordUsefulResponse();
 
     Assertions.assertNotNull(result);
-    Assertions.assertTrue(result.getResult().isPresent());
-    Assertions.assertSame(responseObject, result.getResult().get());
-    Assertions.assertEquals(PeerTaskExecutorResponseCode.SUCCESS, result.getResponseCode());
+    Assertions.assertTrue(result.result().isPresent());
+    Assertions.assertSame(responseObject, result.result().get());
+    Assertions.assertEquals(PeerTaskExecutorResponseCode.SUCCESS, result.responseCode());
   }
 }

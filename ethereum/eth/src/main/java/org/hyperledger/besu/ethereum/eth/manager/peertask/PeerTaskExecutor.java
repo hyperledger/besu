@@ -26,6 +26,7 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -80,10 +81,10 @@ public class PeerTaskExecutor {
         executorResult = executeAgainstPeer(peerTask, peer);
       } catch (NoAvailablePeerException e) {
         executorResult =
-            new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE);
+            new PeerTaskExecutorResult<>(Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE);
       }
     } while (--triesRemaining > 0
-        && executorResult.getResponseCode() != PeerTaskExecutorResponseCode.SUCCESS);
+        && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS);
 
     return executorResult;
   }
@@ -112,28 +113,28 @@ public class PeerTaskExecutor {
           result = peerTask.parseResponse(responseMessageData);
         }
         peer.recordUsefulResponse();
-        executorResult = new PeerTaskExecutorResult<>(result, PeerTaskExecutorResponseCode.SUCCESS);
+        executorResult = new PeerTaskExecutorResult<>(Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS);
 
       } catch (PeerConnection.PeerNotConnected e) {
         executorResult =
-            new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.PEER_DISCONNECTED);
+            new PeerTaskExecutorResult<>(Optional.empty(), PeerTaskExecutorResponseCode.PEER_DISCONNECTED);
 
       } catch (InterruptedException | TimeoutException e) {
         peer.recordRequestTimeout(requestMessageData.getCode());
-        executorResult = new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.TIMEOUT);
+        executorResult = new PeerTaskExecutorResult<>(Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT);
 
       } catch (InvalidPeerTaskResponseException e) {
         peer.recordUselessResponse(e.getMessage());
         executorResult =
-            new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.INVALID_RESPONSE);
+            new PeerTaskExecutorResult<>(Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE);
 
       } catch (ExecutionException e) {
         executorResult =
-            new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR);
+            new PeerTaskExecutorResult<>(Optional.empty(), PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR);
       }
     } while (--triesRemaining > 0
-        && executorResult.getResponseCode() != PeerTaskExecutorResponseCode.SUCCESS
-        && executorResult.getResponseCode() != PeerTaskExecutorResponseCode.PEER_DISCONNECTED
+        && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+        && executorResult.responseCode() != PeerTaskExecutorResponseCode.PEER_DISCONNECTED
         && sleepBetweenRetries());
 
     return executorResult;
