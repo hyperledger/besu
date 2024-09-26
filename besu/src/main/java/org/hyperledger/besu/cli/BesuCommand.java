@@ -1936,8 +1936,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new ParameterException(
             commandLine, String.format("%s %s", "Checkpoint sync", errorSuffix));
       }
-      if (getDataStorageConfiguration().getDataStorageFormat().isBonsaiFormat()) {
+      if (getDataStorageConfiguration().getDataStorageFormat() == DataStorageFormat.BONSAI) {
         throw new ParameterException(commandLine, String.format("%s %s", "Bonsai", errorSuffix));
+      }
+      if (getDataStorageConfiguration().getDataStorageFormat() == DataStorageFormat.BONSAI_ARCHIVE) {
+        throw new ParameterException(commandLine, String.format("%s %s", "Bonsai archive", errorSuffix));
       }
 
       if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)
