@@ -483,6 +483,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     return Optional.empty();
   }
 
+  @Override
+  public Optional<Address> getConsolidationRequestContractAddress() {
+    return Optional.empty();
+  }
+
   /**
    * Homestead block stub genesis config options.
    *

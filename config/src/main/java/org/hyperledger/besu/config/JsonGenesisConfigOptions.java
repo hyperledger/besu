@@ -52,6 +52,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String WITHDRAWAL_REQUEST_CONTRACT_ADDRESS_KEY =
       "withdrawalrequestcontractaddress";
   private static final String DEPOSIT_CONTRACT_ADDRESS_KEY = "depositcontractaddress";
+  private static final String CONSOLIDATION_REQUEST_CONTRACT_ADDRESS_KEY =
+      "consolidationrequestcontractaddress";
 
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -464,6 +466,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public Optional<Address> getConsolidationRequestContractAddress() {
+    Optional<String> inputAddress =
+        JsonUtil.getString(configRoot, CONSOLIDATION_REQUEST_CONTRACT_ADDRESS_KEY);
+    return inputAddress.map(Address::fromHexString);
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
@@ -517,6 +526,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getWithdrawalRequestContractAddress()
         .ifPresent(l -> builder.put("withdrawalRequestContractAddress", l));
     getDepositContractAddress().ifPresent(l -> builder.put("depositContractAddress", l));
+    getConsolidationRequestContractAddress()
+        .ifPresent(l -> builder.put("consolidationRequestContractAddress", l));
 
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());

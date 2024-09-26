@@ -553,4 +553,11 @@ public interface GenesisConfigOptions {
    * @return the deposit address
    */
   Optional<Address> getDepositContractAddress();
+
+  /**
+   * The consolidation request contract address
+   *
+   * @return the consolidation request contract address
+   */
+  Optional<Address> getConsolidationRequestContractAddress();
 }
