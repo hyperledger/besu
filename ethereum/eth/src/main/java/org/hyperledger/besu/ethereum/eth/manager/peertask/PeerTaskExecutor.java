@@ -97,7 +97,7 @@ public class PeerTaskExecutor {
       try {
 
         T result;
-        try (final OperationTimer.TimingContext timingContext =
+        try (final OperationTimer.TimingContext ignored =
             requestTimer.labels(peerTask.getClass().getSimpleName()).startTimer()) {
           MessageData responseMessageData =
               requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
