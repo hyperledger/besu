@@ -56,7 +56,6 @@ public class BesuCommandModule {
             new BesuPluginContextImpl(),
             System.getenv(),
             commandLogger);
-    // besuCommand.toCommandLine();
     return besuCommand;
   }
 
