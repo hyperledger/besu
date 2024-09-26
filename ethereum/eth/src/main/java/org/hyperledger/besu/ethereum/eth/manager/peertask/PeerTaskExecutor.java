@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -95,11 +96,11 @@ public class PeerTaskExecutor {
     do {
       try {
 
-        T result ;
+        T result;
         try (final OperationTimer.TimingContext timingContext =
             requestTimer.labels(peerTask.getClass().getSimpleName()).startTimer()) {
           MessageData responseMessageData =
-                  requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
+              requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
 
           result = peerTask.parseResponse(responseMessageData);
         }
@@ -155,7 +156,7 @@ public class PeerTaskExecutor {
     return ethPeer.chainState().getEstimatedHeight() >= requiredHeight;
   }
 
-  private static boolean isPeerProtocolSuitable(final EthPeer ethPeer, final String protocol) {
-    return ethPeer.getProtocolName().equals(protocol);
+  private static boolean isPeerProtocolSuitable(final EthPeer ethPeer, final SubProtocol protocol) {
+    return ethPeer.getProtocolName().equals(protocol.getName());
   }
 }
