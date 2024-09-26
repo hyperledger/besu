@@ -34,6 +34,9 @@ import java.util.function.Supplier;
 /** Manages the execution of PeerTasks, respecting their PeerTaskBehavior */
 public class PeerTaskExecutor {
 
+  public static final int RETRIES_WITH_SAME_PEER = 3;
+  public static final int RETRIES_WITH_OTHER_PEER = 3;
+  public static final int NO_RETRIES = 1;
   private final PeerSelector peerSelector;
   private final PeerTaskRequestSender requestSender;
   private final Supplier<ProtocolSpec> protocolSpecSupplier;
@@ -58,7 +61,9 @@ public class PeerTaskExecutor {
   public <T> PeerTaskExecutorResult<T> execute(final PeerTask<T> peerTask) {
     PeerTaskExecutorResult<T> executorResult;
     int triesRemaining =
-        peerTask.getPeerTaskBehaviors().contains(PeerTaskBehavior.RETRY_WITH_OTHER_PEERS) ? 3 : 1;
+        peerTask.getPeerTaskBehaviors().contains(PeerTaskBehavior.RETRY_WITH_OTHER_PEERS)
+            ? RETRIES_WITH_OTHER_PEER
+            : NO_RETRIES;
     final Collection<EthPeer> usedEthPeers = new ArrayList<>();
     do {
       EthPeer peer;
@@ -92,7 +97,9 @@ public class PeerTaskExecutor {
     MessageData requestMessageData = peerTask.getRequestMessage();
     PeerTaskExecutorResult<T> executorResult;
     int triesRemaining =
-        peerTask.getPeerTaskBehaviors().contains(PeerTaskBehavior.RETRY_WITH_SAME_PEER) ? 3 : 1;
+        peerTask.getPeerTaskBehaviors().contains(PeerTaskBehavior.RETRY_WITH_SAME_PEER)
+            ? RETRIES_WITH_SAME_PEER
+            : NO_RETRIES;
     do {
       try {
 
