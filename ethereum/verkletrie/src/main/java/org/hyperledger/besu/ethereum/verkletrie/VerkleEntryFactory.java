@@ -45,7 +45,7 @@ public class VerkleEntryFactory {
     trieKeyAdapter = new TrieKeyBatchAdapter(hasher);
   }
 
-  public void generateAccountKeysForRemoval(final Address address) {
+  public void generateAccountKeyForRemoval(final Address address) {
     keysForRemoval.add(trieKeyAdapter.basicDataKey(address));
   }
 
@@ -58,8 +58,7 @@ public class VerkleEntryFactory {
     }
   }
 
-  public void generateStorageKeysForRemoval(
-      final Address address, final StorageSlotKey storageKey) {
+  public void generateStorageKeyForRemoval(final Address address, final StorageSlotKey storageKey) {
     keysForRemoval.add(trieKeyAdapter.storageKey(address, storageKey.getSlotKey().orElseThrow()));
   }
 
@@ -81,6 +80,10 @@ public class VerkleEntryFactory {
     nonStorageKeyValuesForUpdate.put(basicDataKey, basicDataValue);
   }
 
+  public void generateCodeHashKeyValueForUpdate(final Address address, final Hash codeHash) {
+    nonStorageKeyValuesForUpdate.put(trieKeyAdapter.codeHashKey(address), codeHash);
+  }
+
   public void generateCodeKeyValuesForUpdate(
       final Address address, final Bytes code, final Hash codeHash) {
     Bytes32 basicDataKey = trieKeyAdapter.basicDataKey(address);
@@ -95,7 +98,9 @@ public class VerkleEntryFactory {
             // code size is exactly 3 bytes
             Bytes.ofUnsignedInt(code.size()).slice(1));
     nonStorageKeyValuesForUpdate.put(basicDataKey, basicDataValue);
-    nonStorageKeyValuesForUpdate.put(trieKeyAdapter.codeHashKey(address), codeHash);
+
+    generateCodeHashKeyValueForUpdate(address, codeHash);
+
     List<UInt256> codeChunks = trieKeyAdapter.chunkifyCode(code);
     for (int i = 0; i < codeChunks.size(); i++) {
       nonStorageKeyValuesForUpdate.put(
