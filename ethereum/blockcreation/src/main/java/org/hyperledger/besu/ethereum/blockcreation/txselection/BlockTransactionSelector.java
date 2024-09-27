@@ -218,7 +218,8 @@ public class BlockTransactionSelector {
   private void cancelEvaluatingTxWithGraceTime(final FutureTask<Void> txSelectionTask) {
     final long elapsedTime =
         currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.MILLISECONDS);
-    final long txRemainingTime = blockTxsSelectionMaxTime - elapsedTime;
+    // adding 100ms so we are sure it take strictly more than the block selection max time
+    final long txRemainingTime = (blockTxsSelectionMaxTime - elapsedTime) + 100;
 
     LOG.atDebug()
         .setMessage(

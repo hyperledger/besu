@@ -107,7 +107,6 @@ import java.util.stream.Stream;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -956,7 +955,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
         false);
   }
 
-  @Disabled
   @ParameterizedTest
   @MethodSource("subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver")
   public void pendingTransactionsThatTakesTooLongToEvaluateIsPenalized(
@@ -1107,7 +1105,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
         NONCE_TOO_LOW);
   }
 
-  @Disabled
   @ParameterizedTest
   @MethodSource("subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver")
   public void
