@@ -12,8 +12,9 @@ jobs:
     steps:
       - name: Pre-process Release Name
         id: pre_process_release_name
+        env:
+          RELEASE_NAME: "${{ github.event.release.name }}"
         run: |
-          RELEASE_NAME="${{ github.event.release.name }}"
           # strip all whitespace
           RELEASE_NAME="${RELEASE_NAME//[[:space:]]/}"
           if [[ ! "$RELEASE_NAME" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?(-.*)?$ ]]; then
