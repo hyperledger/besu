@@ -50,7 +50,7 @@ import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.GraphQlOptions;
 import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
-import org.hyperledger.besu.cli.options.stable.MetricsOptionGroup;
+import org.hyperledger.besu.cli.options.stable.MetricsOptions;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PDiscoveryOptions;
 import org.hyperledger.besu.cli.options.stable.PermissionsOptions;
@@ -62,7 +62,6 @@ import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
 import org.hyperledger.besu.cli.options.unstable.InProcessRpcOptions;
 import org.hyperledger.besu.cli.options.unstable.IpcOptions;
-import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
 import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
@@ -89,7 +88,7 @@ import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.Blake2bfMessageDigest;
@@ -246,7 +245,6 @@ import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
-import io.vertx.core.metrics.MetricsOptions;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -295,7 +293,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final NetworkingOptions unstableNetworkingOptions = NetworkingOptions.create();
   final SynchronizerOptions unstableSynchronizerOptions = SynchronizerOptions.create();
   final EthProtocolOptions unstableEthProtocolOptions = EthProtocolOptions.create();
-  final MetricsCLIOptions unstableMetricsCLIOptions = MetricsCLIOptions.create();
   private final DnsOptions unstableDnsOptions = DnsOptions.create();
   private final NatOptions unstableNatOptions = NatOptions.create();
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
@@ -584,7 +581,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // Metrics Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Metrics Options|@%n")
-  MetricsOptionGroup metricsOptionGroup = new MetricsOptionGroup();
+  MetricsOptions metricsOptions = MetricsOptions.create();
 
   @Option(
       names = {"--host-allowlist"},
@@ -1153,7 +1150,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final ImmutableMap<String, Object> unstableOptions =
         unstableOptionsBuild
             .put("Ethereum Wire Protocol", unstableEthProtocolOptions)
-            .put("Metrics", unstableMetricsCLIOptions)
             .put("P2P Network", unstableNetworkingOptions)
             .put("RPC", unstableRPCOptions)
             .put("DNS Configuration", unstableDnsOptions)
@@ -1864,7 +1860,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return instance of MetricsConfiguration.
    */
   public MetricsConfiguration metricsConfiguration() {
-    if (metricsOptionGroup.getMetricsEnabled() && metricsOptionGroup.getMetricsPushEnabled()) {
+    if (metricsOptions.getMetricsEnabled() && metricsOptions.getMetricsPushEnabled()) {
       throw new ParameterException(
           this.commandLine,
           "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
@@ -1875,40 +1871,33 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--metrics-enabled",
-        !metricsOptionGroup.getMetricsEnabled(),
+        !metricsOptions.getMetricsEnabled(),
         asList("--metrics-host", "--metrics-port"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
         "--metrics-push-enabled",
-        !metricsOptionGroup.getMetricsPushEnabled(),
+        !metricsOptions.getMetricsPushEnabled(),
         asList(
             "--metrics-push-host",
             "--metrics-push-port",
             "--metrics-push-interval",
             "--metrics-push-prometheus-job"));
 
-    return unstableMetricsCLIOptions
-        .toDomainObject()
-        .enabled(metricsOptionGroup.getMetricsEnabled())
+    final MetricsConfiguration.Builder metricsConfigurationBuilder =
+        metricsOptions.toDomainObject();
+    metricsConfigurationBuilder
         .host(
-            Strings.isNullOrEmpty(metricsOptionGroup.getMetricsHost())
+            Strings.isNullOrEmpty(metricsOptions.getMetricsHost())
                 ? p2PDiscoveryOptions.p2pHost
-                : metricsOptionGroup.getMetricsHost())
-        .port(metricsOptionGroup.getMetricsPort())
-        .protocol(metricsOptionGroup.getMetricsProtocol())
-        .metricCategories(metricsOptionGroup.getMetricCategories())
-        .pushEnabled(metricsOptionGroup.getMetricsPushEnabled())
+                : metricsOptions.getMetricsHost())
         .pushHost(
-            Strings.isNullOrEmpty(metricsOptionGroup.getMetricsPushHost())
+            Strings.isNullOrEmpty(metricsOptions.getMetricsPushHost())
                 ? p2PDiscoveryOptions.autoDiscoverDefaultIP().getHostAddress()
-                : metricsOptionGroup.getMetricsPushHost())
-        .pushPort(metricsOptionGroup.getMetricsPushPort())
-        .pushInterval(metricsOptionGroup.getMetricsPushInterval())
-        .hostsAllowlist(hostsAllowlist)
-        .prometheusJob(metricsOptionGroup.getMetricsPrometheusJob())
-        .build();
+                : metricsOptions.getMetricsPushHost())
+        .hostsAllowlist(hostsAllowlist);
+    return metricsConfigurationBuilder.build();
   }
 
   private PrivacyParameters privacyParameters() {
@@ -2281,7 +2270,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return new VertxOptions()
         .setPreferNativeTransport(true)
         .setMetricsOptions(
-            new MetricsOptions()
+            new io.vertx.core.metrics.MetricsOptions()
                 .setEnabled(true)
                 .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
   }
@@ -2537,9 +2526,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts, rpcWebsocketOptions.getRpcWsPort(), rpcWebsocketOptions.isRpcWsEnabled());
     addPortIfEnabled(effectivePorts, engineRPCConfig.engineRpcPort(), isEngineApiEnabled());
     addPortIfEnabled(
-        effectivePorts,
-        metricsOptionGroup.getMetricsPort(),
-        metricsOptionGroup.getMetricsEnabled());
+        effectivePorts, metricsOptions.getMetricsPort(), metricsOptions.getMetricsEnabled());
     addPortIfEnabled(
         effectivePorts,
         miningParametersSupplier.get().getStratumPort(),
@@ -2613,7 +2600,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void setMergeConfigOptions() {
-    MergeConfigOptions.setMergeEnabled(
+    MergeConfiguration.setMergeEnabled(
         genesisConfigOptionsSupplier.get().getTerminalTotalDifficulty().isPresent());
   }
 
@@ -2658,7 +2645,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean isMergeEnabled() {
-    return MergeConfigOptions.isMergeEnabled();
+    return MergeConfiguration.isMergeEnabled();
   }
 
   private boolean isEngineApiEnabled() {
@@ -2752,11 +2739,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Returns the plugin context.
+   * 2 Returns the plugin context.
    *
    * @return the plugin context.
    */
   public BesuPluginContextImpl getBesuPluginContext() {
     return besuPluginContext;
+  }
+
+  /**
+   * Returns the metrics options
+   *
+   * @return the metrics options
+   */
+  public MetricsOptions getMetricsOptions() {
+    return metricsOptions;
   }
 }

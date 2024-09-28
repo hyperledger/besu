@@ -389,7 +389,7 @@ public class TransactionPoolOptionsTest
 
   @Test
   public void maxPrioritizedTxsPerTypeConfigFile() throws IOException {
-    final int maxBlobs = 2;
+    final int maxBlobs = 0;
     final int maxFrontier = 200;
     final Path tempConfigFilePath =
         createTempFile(
