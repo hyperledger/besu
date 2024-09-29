@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT_INVALID_TX;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.INVALID_TX_EVALUATION_TOO_LONG;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
@@ -52,9 +53,11 @@ import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -97,11 +100,12 @@ public class BlockTransactionSelector {
       new TransactionSelectionResults();
   private final List<AbstractTransactionSelector> transactionSelectors;
   private final PluginTransactionSelector pluginTransactionSelector;
-  private final BlockAwareOperationTracer pluginOperationTracer;
+  private final BlockAwareOperationTracer operationTracer;
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
   private final long blockTxsSelectionMaxTime;
   private WorldUpdater blockWorldStateUpdater;
+  private volatile TransactionEvaluationContext currTxEvaluationContext;
 
   public BlockTransactionSelector(
       final MiningParameters miningParameters,
@@ -139,7 +143,8 @@ public class BlockTransactionSelector {
             transactionPool);
     transactionSelectors = createTransactionSelectors(blockSelectionContext);
     this.pluginTransactionSelector = pluginTransactionSelector;
-    this.pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
+    this.operationTracer =
+        new InterruptibleOperationTracer(pluginTransactionSelector.getOperationTracer());
     blockWorldStateUpdater = worldState.updater();
     blockTxsSelectionMaxTime = miningParameters.getBlockTxsSelectionMaxTime();
   }
@@ -178,15 +183,17 @@ public class BlockTransactionSelector {
   }
 
   private void timeLimitedSelection() {
-    final var txSelection =
-        ethScheduler.scheduleBlockCreationTask(
+    final var txSelectionTask =
+        new FutureTask<Void>(
             () ->
                 blockSelectionContext
                     .transactionPool()
-                    .selectTransactions(this::evaluateTransaction));
+                    .selectTransactions(this::evaluateTransaction),
+            null);
+    ethScheduler.scheduleBlockCreationTask(txSelectionTask);
 
     try {
-      txSelection.get(blockTxsSelectionMaxTime, TimeUnit.MILLISECONDS);
+      txSelectionTask.get(blockTxsSelectionMaxTime, TimeUnit.MILLISECONDS);
     } catch (InterruptedException | ExecutionException e) {
       if (isCancelled.get()) {
         throw new CancellationException("Cancelled during transaction selection");
@@ -197,12 +204,49 @@ public class BlockTransactionSelector {
       synchronized (isTimeout) {
         isTimeout.set(true);
       }
+
+      cancelEvaluatingTxWithGraceTime(txSelectionTask);
+
       LOG.warn(
           "Interrupting the selection of transactions for block inclusion as it exceeds the maximum configured duration of "
               + blockTxsSelectionMaxTime
               + "ms",
           e);
     }
+  }
+
+  private void cancelEvaluatingTxWithGraceTime(final FutureTask<Void> txSelectionTask) {
+    final long elapsedTime =
+        currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.MILLISECONDS);
+    // adding 100ms so we are sure it take strictly more than the block selection max time
+    final long txRemainingTime = (blockTxsSelectionMaxTime - elapsedTime) + 100;
+
+    LOG.atDebug()
+        .setMessage(
+            "Transaction {} is processing for {}ms, giving it {}ms grace time, before considering it taking too much time to execute")
+        .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
+        .addArgument(elapsedTime)
+        .addArgument(txRemainingTime)
+        .log();
+
+    ethScheduler.scheduleFutureTask(
+        () -> {
+          if (!txSelectionTask.isDone()) {
+            LOG.atDebug()
+                .setMessage(
+                    "Transaction {} is still processing after the grace time, total processing time {}ms,"
+                        + " greater than max block selection time of {}ms, forcing an interrupt")
+                .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
+                .addArgument(
+                    () ->
+                        currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.MILLISECONDS))
+                .addArgument(blockTxsSelectionMaxTime)
+                .log();
+
+            txSelectionTask.cancel(true);
+          }
+        },
+        Duration.ofMillis(txRemainingTime));
   }
 
   /**
@@ -236,6 +280,7 @@ public class BlockTransactionSelector {
 
     final TransactionEvaluationContext evaluationContext =
         createTransactionEvaluationContext(pendingTransaction);
+    currTxEvaluationContext = evaluationContext;
 
     TransactionSelectionResult selectionResult = evaluatePreProcessing(evaluationContext);
     if (!selectionResult.selected()) {
@@ -337,7 +382,7 @@ public class BlockTransactionSelector {
         blockSelectionContext.pendingBlockHeader(),
         pendingTransaction.getTransaction(),
         blockSelectionContext.miningBeneficiary(),
-        pluginOperationTracer,
+        operationTracer,
         blockHashLookup,
         false,
         TransactionValidationParams.mining(),
@@ -422,14 +467,10 @@ public class BlockTransactionSelector {
     final var pendingTransaction = evaluationContext.getPendingTransaction();
 
     // check if this tx took too much to evaluate, and in case it was invalid remove it from the
-    // pool, otherwise penalize it.
+    // pool, otherwise penalize it. Not synchronized since there is no state change here.
     final TransactionSelectionResult actualResult =
         isTimeout.get()
-            ? transactionTookTooLong(evaluationContext, selectionResult)
-                ? selectionResult.discard()
-                    ? INVALID_TX_EVALUATION_TOO_LONG
-                    : TX_EVALUATION_TOO_LONG
-                : BLOCK_SELECTION_TIMEOUT
+            ? rewriteSelectionResultForTimeout(evaluationContext, selectionResult)
             : selectionResult;
 
     transactionSelectionResults.updateNotSelected(evaluationContext.getTransaction(), actualResult);
@@ -446,6 +487,34 @@ public class BlockTransactionSelector {
     return actualResult;
   }
 
+  /**
+   * In case of a block creation timeout, we rewrite the selection result, so we can easily spot
+   * what happened looking at the transaction selection results.
+   *
+   * @param evaluationContext The current selection session data.
+   * @param selectionResult The result of the transaction selection process.
+   * @return the rewritten selection result
+   */
+  private TransactionSelectionResult rewriteSelectionResultForTimeout(
+      final TransactionEvaluationContext evaluationContext,
+      final TransactionSelectionResult selectionResult) {
+
+    if (transactionTookTooLong(evaluationContext, selectionResult)) {
+      return selectionResult.discard() ? INVALID_TX_EVALUATION_TOO_LONG : TX_EVALUATION_TOO_LONG;
+    }
+
+    return selectionResult.discard() ? BLOCK_SELECTION_TIMEOUT_INVALID_TX : BLOCK_SELECTION_TIMEOUT;
+  }
+
+  /**
+   * Check if the evaluation of this tx took more than the block creation max time, because if true
+   * we want to penalize it. We penalize it, instead of directly removing, because it could happen
+   * that the tx will evaluate in time next time. Invalid txs are always removed.
+   *
+   * @param evaluationContext The current selection session data.
+   * @param selectionResult The result of the transaction selection process.
+   * @return true if the evaluation of this tx took more than the block creation max time
+   */
   private boolean transactionTookTooLong(
       final TransactionEvaluationContext evaluationContext,
       final TransactionSelectionResult selectionResult) {

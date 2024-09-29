@@ -599,6 +599,12 @@ public class MainnetTransactionProcessor {
           EMPTY_ADDRESS_SET,
           0L);
 
+      final var cause = re.getCause();
+      if (cause != null && cause instanceof InterruptedException) {
+        return TransactionProcessingResult.invalid(
+            ValidationResult.invalid(TransactionInvalidReason.EXECUTION_INTERRUPTED));
+      }
+
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(
           ValidationResult.invalid(
