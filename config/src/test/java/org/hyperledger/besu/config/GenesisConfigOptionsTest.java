@@ -382,6 +382,33 @@ class GenesisConfigOptionsTest {
         .containsValue(Address.ZERO);
   }
 
+  @Test
+  void shouldGetConsolidationRequestContractAddress() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(
+            singletonMap(
+                "consolidationRequestContractAddress",
+                "0x00000000219ab540356cbb839cbe05303d7705fa"));
+    assertThat(config.getConsolidationRequestContractAddress())
+        .hasValue(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
+  }
+
+  @Test
+  void shouldNotHaveConsolidationRequestContractAddressWhenEmpty() {
+    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getConsolidationRequestContractAddress()).isEmpty();
+  }
+
+  @Test
+  void asMapIncludesConsolidationRequestContractAddress() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(Map.of("consolidationRequestContractAddress", "0x0"));
+
+    assertThat(config.asMap())
+        .containsOnlyKeys("consolidationRequestContractAddress")
+        .containsValue(Address.ZERO);
+  }
+
   private GenesisConfigOptions fromConfigOptions(final Map<String, Object> configOptions) {
     final ObjectNode rootNode = JsonUtil.createEmptyObjectNode();
     final ObjectNode options = JsonUtil.objectNodeFromMap(configOptions);

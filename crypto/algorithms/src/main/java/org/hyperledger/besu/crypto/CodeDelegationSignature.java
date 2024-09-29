@@ -42,18 +42,25 @@ public class CodeDelegationSignature extends SECPSignature {
    * @return the new CodeDelegationSignature
    */
   public static CodeDelegationSignature create(
-      final BigInteger r, final BigInteger s, final long yParity) {
+      final BigInteger r, final BigInteger s, final BigInteger yParity) {
     checkNotNull(r);
     checkNotNull(s);
 
     if (r.compareTo(TWO_POW_256) >= 0) {
-      throw new IllegalArgumentException("Invalid 'r' value, should be < 2^256 but got " + r);
+      throw new IllegalArgumentException(
+          "Invalid 'r' value, should be < 2^256 but got " + r.toString(16));
     }
 
     if (s.compareTo(TWO_POW_256) >= 0) {
-      throw new IllegalArgumentException("Invalid 's' value, should be < 2^256 but got " + s);
+      throw new IllegalArgumentException(
+          "Invalid 's' value, should be < 2^256 but got " + s.toString(16));
     }
 
-    return new CodeDelegationSignature(r, s, (byte) yParity);
+    if (yParity.compareTo(TWO_POW_256) >= 0) {
+      throw new IllegalArgumentException(
+          "Invalid 'yParity' value, should be < 2^256 but got " + yParity.toString(16));
+    }
+
+    return new CodeDelegationSignature(r, s, yParity.byteValue());
   }
 }
