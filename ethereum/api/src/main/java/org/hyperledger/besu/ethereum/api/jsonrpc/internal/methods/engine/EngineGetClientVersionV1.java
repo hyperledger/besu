@@ -49,7 +49,8 @@ public class EngineGetClientVersionV1 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
-    String safeCommit = (commit != null && commit.length() >= 8) ? commit.substring(0, 8) : "unknown";
+    String safeCommit =
+        (commit != null && commit.length() >= 8) ? commit.substring(0, 8) : "unknown";
     return new JsonRpcSuccessResponse(
         request.getRequest().getId(),
         new EngineGetClientVersionResultV1(
