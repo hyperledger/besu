@@ -60,5 +60,5 @@ public interface PeerTask<T> {
    *
    * @return the Collection of behaviors this task is expected to exhibit in the PeetTaskExecutor
    */
-  Collection<PeerTaskBehavior> getPeerTaskBehaviors();
+  Collection<PeerTaskRetryBehavior> getPeerTaskBehaviors();
 }

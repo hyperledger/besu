@@ -101,7 +101,7 @@ public class PeerTaskExecutorTest {
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
     Mockito.when(peerTask.getPeerTaskBehaviors())
-        .thenReturn(List.of(PeerTaskBehavior.RETRY_WITH_SAME_PEER));
+        .thenReturn(List.of(PeerTaskRetryBehavior.RETRY_WITH_SAME_PEER));
 
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
     Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
@@ -246,7 +246,7 @@ public class PeerTaskExecutorTest {
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
     Mockito.when(peerTask.getPeerTaskBehaviors())
-        .thenReturn(List.of(PeerTaskBehavior.RETRY_WITH_OTHER_PEERS));
+        .thenReturn(List.of(PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS));
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
     Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
