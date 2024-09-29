@@ -120,7 +120,11 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
   }
 
   private boolean isNumericType(final Class<?> type) {
-    return type.equals(Integer.class)
+    return type.equals(Byte.class)
+        || type.equals(byte.class)
+        || type.equals(Short.class)
+        || type.equals(short.class)
+        || type.equals(Integer.class)
         || type.equals(int.class)
         || type.equals(Long.class)
         || type.equals(long.class)
