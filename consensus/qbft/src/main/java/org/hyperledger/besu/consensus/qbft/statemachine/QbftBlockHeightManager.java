@@ -28,6 +28,7 @@ import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
@@ -130,19 +131,57 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
     logValidatorChanges(qbftRound);
 
+    if (roundIdentifier.equals(qbftRound.getRoundIdentifier())) {
+      buildBlockAndMaybePropose(roundIdentifier, qbftRound);
+    } else {
+      LOG.trace(
+          "Block timer expired for a round ({}) other than current ({})",
+          roundIdentifier,
+          qbftRound.getRoundIdentifier());
+    }
+  }
+
+  private void buildBlockAndMaybePropose(
+      final ConsensusRoundIdentifier roundIdentifier, final QbftRound qbftRound) {
+
     // mining will be checked against round 0 as the current round is initialised to 0 above
     final boolean isProposer =
         finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier());
 
-    if (isProposer) {
-      if (roundIdentifier.equals(qbftRound.getRoundIdentifier())) {
-        final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
-        qbftRound.createAndSendProposalMessage(headerTimeStampSeconds);
+    if (!isProposer) {
+      // nothing to do here...
+      LOG.trace("This node is not a proposer so it will not send a proposal: " + roundIdentifier);
+      return;
+    }
+
+    final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
+    final Block block = qbftRound.createBlock(headerTimeStampSeconds);
+    final boolean blockHasTransactions = !block.getBody().getTransactions().isEmpty();
+    if (blockHasTransactions) {
+      LOG.trace(
+          "Block has transactions and this node is a proposer so it will send a proposal: "
+              + roundIdentifier);
+      qbftRound.updateStateWithProposalAndTransmit(block);
+
+    } else {
+      // handle the block times period
+      final long currentTimeInMillis = finalState.getClock().millis();
+      boolean emptyBlockExpired =
+          finalState.getBlockTimer().checkEmptyBlockExpired(parentHeader, currentTimeInMillis);
+      if (emptyBlockExpired) {
+        LOG.trace(
+            "Block has no transactions and this node is a proposer so it will send a proposal: "
+                + roundIdentifier);
+        qbftRound.updateStateWithProposalAndTransmit(block);
       } else {
         LOG.trace(
-            "Block timer expired for a round ({}) other than current ({})",
-            roundIdentifier,
-            qbftRound.getRoundIdentifier());
+            "Block has no transactions but emptyBlockPeriodSeconds did not expired yet: "
+                + roundIdentifier);
+        finalState
+            .getBlockTimer()
+            .resetTimerForEmptyBlock(roundIdentifier, parentHeader, currentTimeInMillis);
+        finalState.getRoundTimer().cancelTimer();
+        currentRound = Optional.empty();
       }
     }
   }

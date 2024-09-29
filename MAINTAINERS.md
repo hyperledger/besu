@@ -28,7 +28,6 @@
 | Matthew Whitehead| matthew1001      | matthew.whitehead      |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Stefan Pingel    | pinges           | pinges           |
-| Danno Ferrin     | shemnon          | shemnon          |
 | Simon Dudley     | siladu           | siladu           |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
 
@@ -52,6 +51,7 @@
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Rob Dawson       | rojotek          | RobDawson        |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
+| Danno Ferrin     | shemnon          | shemnon          |
 | Taccat Isid      | taccatisid       | taccatisid       |
 | Tim Beiko        | timbeiko         | timbeiko         |
 | Vijay Michalik   | vmichalik        | VijayMichalik    |
