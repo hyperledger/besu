@@ -17,6 +17,7 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -30,6 +31,7 @@ public class JsonBftConfigOptionsTest {
 
   private static final int EXPECTED_DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int EXPECTED_DEFAULT_BLOCK_PERIOD = 1;
+  private static final int EXPECTED_EMPTY_DEFAULT_BLOCK_PERIOD = 0;
   private static final int EXPECTED_DEFAULT_REQUEST_TIMEOUT = 1;
   private static final int EXPECTED_DEFAULT_GOSSIPED_HISTORY_LIMIT = 1000;
   private static final int EXPECTED_DEFAULT_MESSAGE_QUEUE_LIMIT = 1000;
@@ -62,9 +64,21 @@ public class JsonBftConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetEmptyBlockPeriodFromConfig() {
+    final BftConfigOptions config = fromConfigOptions(singletonMap("xemptyblockperiodseconds", 60));
+    assertThat(config.getEmptyBlockPeriodSeconds()).isEqualTo(60);
+  }
+
+  @Test
   public void shouldFallbackToDefaultBlockPeriod() {
     final BftConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.getBlockPeriodSeconds()).isEqualTo(EXPECTED_DEFAULT_BLOCK_PERIOD);
+  }
+
+  @Test
+  public void shouldFallbackToEmptyDefaultBlockPeriod() {
+    final BftConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getEmptyBlockPeriodSeconds()).isEqualTo(EXPECTED_EMPTY_DEFAULT_BLOCK_PERIOD);
   }
 
   @Test
@@ -74,10 +88,24 @@ public class JsonBftConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetDefaultEmptyBlockPeriodFromDefaultConfig() {
+
+    assertThat(JsonBftConfigOptions.DEFAULT.getEmptyBlockPeriodSeconds())
+        .isEqualTo(EXPECTED_EMPTY_DEFAULT_BLOCK_PERIOD);
+  }
+
+  @Test
   public void shouldThrowOnNonPositiveBlockPeriod() {
     final BftConfigOptions config = fromConfigOptions(singletonMap("blockperiodseconds", -1));
     assertThatThrownBy(() -> config.getBlockPeriodSeconds())
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  public void shouldNotThrowOnNonPositiveEmptyBlockPeriod() {
+    // can be 0 to be compatible with older versions
+    final BftConfigOptions config = fromConfigOptions(singletonMap("xemptyblockperiodseconds", 0));
+    assertThatCode(() -> config.getEmptyBlockPeriodSeconds()).doesNotThrowAnyException();
   }
 
   @Test

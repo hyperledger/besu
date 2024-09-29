@@ -41,6 +41,9 @@ public class BftFork implements Fork {
   /** The constant BLOCK_PERIOD_SECONDS_KEY. */
   public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
 
+  /** The constant EMPTY_BLOCK_PERIOD_SECONDS_KEY. */
+  public static final String EMPTY_BLOCK_PERIOD_SECONDS_KEY = "xemptyblockperiodseconds";
+
   /** The constant BLOCK_PERIOD_MILLISECONDS_KEY. */
   public static final String BLOCK_PERIOD_MILLISECONDS_KEY = "xblockperiodmilliseconds";
 
@@ -84,6 +87,16 @@ public class BftFork implements Fork {
    */
   public OptionalInt getBlockPeriodSeconds() {
     return JsonUtil.getPositiveInt(forkConfigRoot, BLOCK_PERIOD_SECONDS_KEY);
+  }
+
+  /**
+   * Gets empty block period seconds.
+   *
+   * @return the empty block period seconds
+   */
+  public OptionalInt getEmptyBlockPeriodSeconds() {
+    // It can be 0 to disable custom empty block periods
+    return JsonUtil.getInt(forkConfigRoot, EMPTY_BLOCK_PERIOD_SECONDS_KEY);
   }
 
   /**

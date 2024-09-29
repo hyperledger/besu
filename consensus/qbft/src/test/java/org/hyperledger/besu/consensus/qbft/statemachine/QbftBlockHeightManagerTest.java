@@ -157,8 +157,10 @@ public class QbftBlockHeightManagerTest {
     when(messageValidator.validateCommit(any())).thenReturn(true);
     when(messageValidator.validatePrepare(any())).thenReturn(true);
     when(finalState.getBlockTimer()).thenReturn(blockTimer);
+    when(finalState.getRoundTimer()).thenReturn(roundTimer);
     when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
+    when(finalState.getClock()).thenReturn(clock);
     when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
@@ -267,6 +269,7 @@ public class QbftBlockHeightManagerTest {
   @Test
   public void onBlockTimerExpiryRoundTimerIsStartedAndProposalMessageIsTransmitted() {
     when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
+    when(blockTimer.checkEmptyBlockExpired(any(), eq(0l))).thenReturn(true);
 
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
@@ -290,6 +293,7 @@ public class QbftBlockHeightManagerTest {
   public void
       onBlockTimerExpiryForNonProposerRoundTimerIsStartedAndNoProposalMessageIsTransmitted() {
     when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(false);
+    when(blockTimer.checkEmptyBlockExpired(any(), eq(0l))).thenReturn(true);
 
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
@@ -463,6 +467,7 @@ public class QbftBlockHeightManagerTest {
   public void messagesForCurrentRoundAreBufferedAndUsedToPreloadRoundWhenItIsStarted() {
     when(finalState.getQuorum()).thenReturn(1);
     when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
+    when(blockTimer.checkEmptyBlockExpired(any(), eq(0l))).thenReturn(true);
 
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
@@ -500,6 +505,7 @@ public class QbftBlockHeightManagerTest {
   @Test
   public void preparedCertificateIncludedInRoundChangeMessageOnRoundTimeoutExpired() {
     when(finalState.isLocalNodeProposerForRound(any())).thenReturn(true);
+    when(blockTimer.checkEmptyBlockExpired(any(), eq(0l))).thenReturn(true);
 
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
@@ -576,5 +582,25 @@ public class QbftBlockHeightManagerTest {
 
     manager.handleProposalPayload(futureRoundProposal);
     verify(roundFactory, never()).createNewRound(any(), anyInt());
+  }
+
+  @Test
+  public void checkOnlyEmptyBlockPeriodSecondsIsInvokedForBlocksWithNoTransactions() {
+    when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
+
+    final QbftBlockHeightManager manager =
+        new QbftBlockHeightManager(
+            headerTestFixture.buildHeader(),
+            finalState,
+            roundChangeManager,
+            roundFactory,
+            clock,
+            messageValidatorFactory,
+            messageFactory);
+
+    manager.handleBlockTimerExpiry(roundIdentifier);
+
+    verify(blockTimer, times(0)).getEmptyBlockPeriodSeconds();
+    verify(blockTimer, times(0)).getBlockPeriodSeconds();
   }
 }
