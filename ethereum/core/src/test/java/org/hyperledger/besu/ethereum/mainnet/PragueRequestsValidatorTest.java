@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.NONE;
+import static org.hyperledger.besu.ethereum.mainnet.requests.ConsolidationRequestProcessor.CONSOLIDATION_REQUEST_CONTRACT_ADDRESS;
 import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
+import static org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestProcessor.DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 
@@ -31,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
@@ -52,9 +55,13 @@ class PragueRequestsValidatorTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WithdrawalsValidator withdrawalsValidator;
+  private final RequestContractAddresses requestContractAddresses =
+      new RequestContractAddresses(
+          DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS,
+          DEFAULT_DEPOSIT_CONTRACT_ADDRESS,
+          CONSOLIDATION_REQUEST_CONTRACT_ADDRESS);
 
-  RequestsValidatorCoordinator requestValidator =
-      pragueRequestsValidator(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
+  RequestsValidatorCoordinator requestValidator = pragueRequestsValidator(requestContractAddresses);
 
   @BeforeEach
   public void setUp() {
