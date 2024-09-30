@@ -1,8 +1,6 @@
 # Changelog
 
 ## [Unreleased]
-- Add configuration of Consolidation Request Contract Address via genesis configuration [#7647](https://github.com/hyperledger/besu/pull/7647)
-
 
 ### Upcoming Breaking Changes
 - k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
@@ -15,6 +13,8 @@
 - Add Blob Transaction Metrics [#7622](https://github.com/hyperledger/besu/pull/7622)
 - Implemented support for emptyBlockPeriodSeconds in QBFT [#6965](https://github.com/hyperledger/besu/pull/6965)
 - LUKSO Cancun Hardfork [#7686](https://github.com/hyperledger/besu/pull/7686)
+- Add configuration of Consolidation Request Contract Address via genesis configuration [#7647](https://github.com/hyperledger/besu/pull/7647)
+- Interrupt pending transaction processing on block creation timeout [#7673](https://github.com/hyperledger/besu/pull/7673)
 
 ### Bug fixes
 - Fix mounted data path directory permissions for besu user [#7575](https://github.com/hyperledger/besu/pull/7575)
