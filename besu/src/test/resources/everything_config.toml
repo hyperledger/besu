@@ -226,6 +226,7 @@ Xsecp256k1-native-enabled=false
 Xaltbn128-native-enabled=false
 Xsnapsync-server-enabled=true
 Xbonsai-full-flat-db-enabled=true
+Xpeertask-system-enabled=false
 
 # compatibility flags
 compatibility-eth64-forkid-enabled=false
@@ -247,3 +248,4 @@ Xevm-jumpdest-cache-weight-kb=32000
 # plugins
 Xplugins-external-enabled=true
 plugins=["none"]
+plugin-continue-on-error=false

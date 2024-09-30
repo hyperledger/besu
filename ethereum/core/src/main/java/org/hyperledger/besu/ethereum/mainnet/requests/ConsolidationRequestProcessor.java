@@ -22,13 +22,18 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class ConsolidationRequestProcessor
     extends AbstractSystemCallRequestProcessor<ConsolidationRequest> {
-  public static final Address CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS =
+  public static final Address CONSOLIDATION_REQUEST_CONTRACT_ADDRESS =
       Address.fromHexString("0x00b42dbF2194e931E80326D950320f7d9Dbeac02");
 
   private static final int ADDRESS_BYTES = 20;
   private static final int PUBLIC_KEY_BYTES = 48;
   private static final int CONSOLIDATION_REQUEST_BYTES_SIZE =
       ADDRESS_BYTES + PUBLIC_KEY_BYTES + PUBLIC_KEY_BYTES;
+  private final Address consolidationRequestContractAddress;
+
+  public ConsolidationRequestProcessor(final Address consolidationRequestContractAddress) {
+    this.consolidationRequestContractAddress = consolidationRequestContractAddress;
+  }
 
   /**
    * Gets the call address for consolidation requests.
@@ -37,7 +42,7 @@ public class ConsolidationRequestProcessor
    */
   @Override
   protected Address getCallAddress() {
-    return CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS;
+    return consolidationRequestContractAddress;
   }
 
   /**
