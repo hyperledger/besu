@@ -54,6 +54,22 @@ public class GenesisReaderTest {
   }
 
   @Test
+  public void readGenesisFromObjectDoesNotModifyObjectNodeArg() {
+    final var configNode = mapper.createObjectNode();
+    configNode.put("londonBlock", 1);
+    final var allocNode = mapper.createObjectNode();
+    allocNode.put(Address.BLS12_G2MUL.toUnprefixedHexString(), generateAllocation(Wei.ONE));
+    final var rootNode = mapper.createObjectNode();
+    rootNode.put("chainId", 12);
+    rootNode.put(CONFIG_FIELD, configNode);
+    rootNode.put(ALLOCATION_FIELD, allocNode);
+    var rootNodeCopy = rootNode.deepCopy();
+    new GenesisReader.FromObjectNode(rootNode);
+
+    assertThat(rootNode).isEqualTo(rootNodeCopy);
+  }
+
+  @Test
   public void readGenesisFromURL(@TempDir final Path folder) throws IOException {
     final String jsonStr =
         """
