@@ -15,13 +15,17 @@
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +37,12 @@ import org.slf4j.LoggerFactory;
 public class DefaultPeerSelector implements PeerSelector {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPeerSelector.class);
 
+  private final Supplier<ProtocolSpec> protocolSpecSupplier;
   private final Map<PeerId, EthPeer> ethPeersByPeerId = new ConcurrentHashMap<>();
+
+  public DefaultPeerSelector(final Supplier<ProtocolSpec> protocolSpecSupplier) {
+    this.protocolSpecSupplier = protocolSpecSupplier;
+  }
 
   /**
    * Gets the highest reputation peer matching the supplied filter
@@ -42,13 +51,26 @@ public class DefaultPeerSelector implements PeerSelector {
    * @return the highest reputation peer matching the supplies filter
    * @throws NoAvailablePeerException If there are no suitable peers
    */
-  @Override
-  public EthPeer getPeer(final Predicate<EthPeer> filter) throws NoAvailablePeerException {
+  private EthPeer getPeer(final Predicate<EthPeer> filter) throws NoAvailablePeerException {
     LOG.trace("Finding peer from pool of {} peers", ethPeersByPeerId.size());
     return ethPeersByPeerId.values().stream()
         .filter(filter)
         .max(Comparator.naturalOrder())
         .orElseThrow(NoAvailablePeerException::new);
+  }
+
+  @Override
+  public EthPeer getPeer(
+      final Collection<EthPeer> usedEthPeers,
+      final long requiredPeerHeight,
+      final SubProtocol requiredSubProtocol)
+      throws NoAvailablePeerException {
+    return getPeer(
+        (candidatePeer) ->
+            isPeerUnused(candidatePeer, usedEthPeers)
+                && (protocolSpecSupplier.get().isPoS()
+                    || isPeerHeightHighEnough(candidatePeer, requiredPeerHeight))
+                && isPeerProtocolSuitable(candidatePeer, requiredSubProtocol));
   }
 
   @Override
@@ -64,5 +86,17 @@ public class DefaultPeerSelector implements PeerSelector {
   @Override
   public void removePeer(final PeerId peerId) {
     ethPeersByPeerId.remove(peerId);
+  }
+
+  private boolean isPeerUnused(final EthPeer ethPeer, final Collection<EthPeer> usedEthPeers) {
+    return !usedEthPeers.contains(ethPeer);
+  }
+
+  private boolean isPeerHeightHighEnough(final EthPeer ethPeer, final long requiredHeight) {
+    return ethPeer.chainState().getEstimatedHeight() >= requiredHeight;
+  }
+
+  private boolean isPeerProtocolSuitable(final EthPeer ethPeer, final SubProtocol protocol) {
+    return ethPeer.getProtocolName().equals(protocol.getName());
   }
 }

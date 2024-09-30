@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
-public enum PeerTaskBehavior {
+public enum PeerTaskRetryBehavior {
   RETRY_WITH_SAME_PEER,
   RETRY_WITH_OTHER_PEERS
 }

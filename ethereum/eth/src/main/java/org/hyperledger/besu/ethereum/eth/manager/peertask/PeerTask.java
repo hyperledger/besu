@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.Collection;
 
@@ -29,7 +30,7 @@ public interface PeerTask<T> {
    *
    * @return the SubProtocol used for this PeerTask
    */
-  String getSubProtocol();
+  SubProtocol getSubProtocol();
 
   /**
    * Gets the minimum required block number for a peer to have to successfully execute this task
@@ -59,5 +60,5 @@ public interface PeerTask<T> {
    *
    * @return the Collection of behaviors this task is expected to exhibit in the PeetTaskExecutor
    */
-  Collection<PeerTaskBehavior> getPeerTaskBehaviors();
+  Collection<PeerTaskRetryBehavior> getPeerTaskBehaviors();
 }

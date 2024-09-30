@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RequestManager.ResponseStream;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -38,13 +39,13 @@ public class PeerTaskRequestSender {
   }
 
   public MessageData sendRequest(
-      final String subProtocol, final MessageData requestMessageData, final EthPeer ethPeer)
+      final SubProtocol subProtocol, final MessageData requestMessageData, final EthPeer ethPeer)
       throws PeerConnection.PeerNotConnected,
           ExecutionException,
           InterruptedException,
           TimeoutException {
     ResponseStream responseStream =
-        ethPeer.send(requestMessageData, subProtocol, ethPeer.getConnection());
+        ethPeer.send(requestMessageData, subProtocol.getName(), ethPeer.getConnection());
     final CompletableFuture<MessageData> responseMessageDataFuture = new CompletableFuture<>();
     responseStream.then(
         (boolean streamClosed, MessageData message, EthPeer peer) -> {

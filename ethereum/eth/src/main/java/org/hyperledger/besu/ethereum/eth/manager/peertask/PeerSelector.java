@@ -16,21 +16,28 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
+import java.util.Collection;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 /** Selects the EthPeers for the PeerTaskExecutor */
 public interface PeerSelector {
 
   /**
-   * Gets a peer matching the supplied filter
+   * Gets a peer with the requiredPeerHeight (if not PoS), and with the requiredSubProtocol, and
+   * which is not in the supplied collection of usedEthPeers
    *
-   * @param filter a filter to match prospective peers with
-   * @return a peer matching the supplied filter
+   * @param usedEthPeers a collection of EthPeers to be excluded from selection because they have
+   *     already been used
+   * @param requiredPeerHeight the minimum peer height required of the selected peer
+   * @param requiredSubProtocol the SubProtocol required of the peer
+   * @return a peer matching the supplied conditions
    * @throws NoAvailablePeerException If there are no suitable peers
    */
-  EthPeer getPeer(final Predicate<EthPeer> filter) throws NoAvailablePeerException;
+  EthPeer getPeer(
+      Collection<EthPeer> usedEthPeers, long requiredPeerHeight, SubProtocol requiredSubProtocol)
+      throws NoAvailablePeerException;
 
   /**
    * Attempts to get the EthPeer identified by peerId
@@ -39,19 +46,19 @@ public interface PeerSelector {
    * @return An Optional\<EthPeer\> containing the EthPeer identified by peerId if present in the
    *     PeerSelector, or empty otherwise
    */
-  Optional<EthPeer> getPeerByPeerId(final PeerId peerId);
+  Optional<EthPeer> getPeerByPeerId(PeerId peerId);
 
   /**
    * Add the supplied EthPeer to the PeerSelector
    *
    * @param ethPeer the EthPeer to be added to the PeerSelector
    */
-  void addPeer(final EthPeer ethPeer);
+  void addPeer(EthPeer ethPeer);
 
   /**
    * Remove the EthPeer identified by peerId from the PeerSelector
    *
    * @param peerId the PeerId of the EthPeer to be removed from the PeerSelector
    */
-  void removePeer(final PeerId peerId);
+  void removePeer(PeerId peerId);
 }

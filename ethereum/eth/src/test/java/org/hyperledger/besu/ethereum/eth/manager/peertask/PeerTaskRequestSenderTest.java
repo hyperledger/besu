@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RequestManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -40,7 +41,7 @@ public class PeerTaskRequestSenderTest {
   @Test
   public void testSendRequest()
       throws PeerConnection.PeerNotConnected, ExecutionException, InterruptedException {
-    String subprotocol = "subprotocol";
+    SubProtocol subprotocol = Mockito.mock(SubProtocol.class);
     MessageData requestMessageData = Mockito.mock(MessageData.class);
     MessageData responseMessageData = Mockito.mock(MessageData.class);
     EthPeer peer = Mockito.mock(EthPeer.class);
@@ -49,7 +50,8 @@ public class PeerTaskRequestSenderTest {
         Mockito.mock(RequestManager.ResponseStream.class);
 
     Mockito.when(peer.getConnection()).thenReturn(peerConnection);
-    Mockito.when(peer.send(requestMessageData, subprotocol, peerConnection))
+    Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
+    Mockito.when(peer.send(requestMessageData, "subprotocol", peerConnection))
         .thenReturn(responseStream);
 
     CompletableFuture<MessageData> actualResponseMessageDataFuture =

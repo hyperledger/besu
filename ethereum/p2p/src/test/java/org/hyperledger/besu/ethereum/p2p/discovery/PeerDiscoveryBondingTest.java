@@ -47,11 +47,15 @@ public class PeerDiscoveryBondingTest {
     final List<IncomingPacket> otherAgentIncomingPongs =
         otherAgent.getIncomingPackets().stream()
             .filter(p -> p.packet.getType().equals(PacketType.PONG))
-            .collect(Collectors.toList());
+            .toList();
     assertThat(otherAgentIncomingPongs.size()).isEqualTo(1);
 
     assertThat(
-            otherAgentIncomingPongs.get(0).packet.getPacketData(PongPacketData.class).isPresent())
+            otherAgentIncomingPongs
+                .getFirst()
+                .packet
+                .getPacketData(PongPacketData.class)
+                .isPresent())
         .isTrue();
     final PongPacketData pong =
         otherAgentIncomingPongs.get(0).packet.getPacketData(PongPacketData.class).get();

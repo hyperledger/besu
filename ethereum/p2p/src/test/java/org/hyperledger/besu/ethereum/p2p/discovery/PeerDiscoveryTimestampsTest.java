@@ -40,16 +40,13 @@ public class PeerDiscoveryTimestampsTest {
     final Packet pong = helper.createPongPacket(agent, Hash.hash(agentPing.getHash()));
     helper.sendMessageBetweenAgents(testAgent, agent, pong);
 
-    long lastSeen;
     long firstDiscovered;
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
 
     DiscoveryPeer p = agent.streamDiscoveredPeers().iterator().next();
-    assertThat(p.getLastSeen()).isGreaterThan(0);
     assertThat(p.getFirstDiscovered()).isGreaterThan(0);
 
-    lastSeen = p.getLastSeen();
     firstDiscovered = p.getFirstDiscovered();
 
     helper.sendMessageBetweenAgents(testAgent, agent, testAgentPing);
@@ -57,52 +54,6 @@ public class PeerDiscoveryTimestampsTest {
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
 
     p = agent.streamDiscoveredPeers().iterator().next();
-    assertThat(p.getLastSeen()).isGreaterThan(lastSeen);
     assertThat(p.getFirstDiscovered()).isEqualTo(firstDiscovered);
-  }
-
-  @Test
-  public void lastContactedTimestampUpdatedOnOutboundMessage() {
-    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
-    assertThat(agent.streamDiscoveredPeers()).hasSize(0);
-
-    // Start a test peer and send a PING packet to the agent under test.
-    final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
-    final Packet ping = helper.createPingPacket(testAgent, agent);
-    helper.sendMessageBetweenAgents(testAgent, agent, ping);
-
-    assertThat(agent.streamDiscoveredPeers()).hasSize(1);
-
-    final long lastContacted;
-    final long lastSeen;
-    final long firstDiscovered;
-
-    DiscoveryPeer peer = agent.streamDiscoveredPeers().iterator().next();
-    final long lc = peer.getLastContacted();
-    final long ls = peer.getLastSeen();
-    final long fd = peer.getFirstDiscovered();
-
-    assertThat(lc).isGreaterThan(0);
-    assertThat(ls).isGreaterThan(0);
-    assertThat(fd).isGreaterThan(0);
-
-    lastContacted = lc;
-    lastSeen = ls;
-    firstDiscovered = fd;
-
-    // Send another packet and ensure that timestamps are updated accordingly.
-    // Sleep beforehand to make sure timestamps will be different.
-    try {
-      Thread.sleep(1);
-    } catch (InterruptedException e) {
-      // Swallow exception because we only want to pause the test.
-    }
-    helper.sendMessageBetweenAgents(testAgent, agent, ping);
-
-    peer = agent.streamDiscoveredPeers().iterator().next();
-
-    assertThat(peer.getLastContacted()).isGreaterThan(lastContacted);
-    assertThat(peer.getLastSeen()).isGreaterThan(lastSeen);
-    assertThat(peer.getFirstDiscovered()).isEqualTo(firstDiscovered);
   }
 }

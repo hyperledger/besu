@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -23,61 +22,60 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
 
-/** Manages the execution of PeerTasks, respecting their PeerTaskBehavior */
+/** Manages the execution of PeerTasks, respecting their PeerTaskRetryBehavior */
 public class PeerTaskExecutor {
 
+  public static final int RETRIES_WITH_SAME_PEER = 3;
+  public static final int RETRIES_WITH_OTHER_PEER = 3;
+  public static final int NO_RETRIES = 1;
   private final PeerSelector peerSelector;
   private final PeerTaskRequestSender requestSender;
-  private final Supplier<ProtocolSpec> protocolSpecSupplier;
+
   private final LabelledMetric<OperationTimer> requestTimer;
 
   public PeerTaskExecutor(
       final PeerSelector peerSelector,
       final PeerTaskRequestSender requestSender,
-      final Supplier<ProtocolSpec> protocolSpecSupplier,
       final MetricsSystem metricsSystem) {
     this.peerSelector = peerSelector;
     this.requestSender = requestSender;
-    this.protocolSpecSupplier = protocolSpecSupplier;
     requestTimer =
         metricsSystem.createLabelledTimer(
             BesuMetricCategory.PEERS,
             "PeerTaskExecutor:RequestTime",
-            "Time taken to send a request",
+            "Time taken to send a request and receive a response",
             "className");
   }
 
   public <T> PeerTaskExecutorResult<T> execute(final PeerTask<T> peerTask) {
     PeerTaskExecutorResult<T> executorResult;
     int triesRemaining =
-        peerTask.getPeerTaskBehaviors().contains(PeerTaskBehavior.RETRY_WITH_OTHER_PEERS) ? 3 : 1;
-    final Collection<EthPeer> usedEthPeers = new ArrayList<>();
+        peerTask.getPeerTaskBehaviors().contains(PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS)
+            ? RETRIES_WITH_OTHER_PEER
+            : NO_RETRIES;
+    final Collection<EthPeer> usedEthPeers = new HashSet<>();
     do {
       EthPeer peer;
       try {
         peer =
             peerSelector.getPeer(
-                (candidatePeer) ->
-                    isPeerUnused(candidatePeer, usedEthPeers)
-                        && (protocolSpecSupplier.get().isPoS()
-                            || isPeerHeightHighEnough(
-                                candidatePeer, peerTask.getRequiredBlockNumber()))
-                        && isPeerProtocolSuitable(candidatePeer, peerTask.getSubProtocol()));
+                usedEthPeers, peerTask.getRequiredBlockNumber(), peerTask.getSubProtocol());
         usedEthPeers.add(peer);
         executorResult = executeAgainstPeer(peerTask, peer);
       } catch (NoAvailablePeerException e) {
         executorResult =
-            new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE);
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE);
       }
     } while (--triesRemaining > 0
-        && executorResult.getResponseCode() != PeerTaskExecutorResponseCode.SUCCESS);
+        && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS);
 
     return executorResult;
   }
@@ -91,40 +89,48 @@ public class PeerTaskExecutor {
     MessageData requestMessageData = peerTask.getRequestMessage();
     PeerTaskExecutorResult<T> executorResult;
     int triesRemaining =
-        peerTask.getPeerTaskBehaviors().contains(PeerTaskBehavior.RETRY_WITH_SAME_PEER) ? 3 : 1;
+        peerTask.getPeerTaskBehaviors().contains(PeerTaskRetryBehavior.RETRY_WITH_SAME_PEER)
+            ? RETRIES_WITH_SAME_PEER
+            : NO_RETRIES;
     do {
       try {
-
-        MessageData responseMessageData;
-        try (final OperationTimer.TimingContext timingContext =
+        T result;
+        try (final OperationTimer.TimingContext ignored =
             requestTimer.labels(peerTask.getClass().getSimpleName()).startTimer()) {
-          responseMessageData =
+          MessageData responseMessageData =
               requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
+
+          result = peerTask.parseResponse(responseMessageData);
         }
-        T result = peerTask.parseResponse(responseMessageData);
         peer.recordUsefulResponse();
-        executorResult = new PeerTaskExecutorResult<>(result, PeerTaskExecutorResponseCode.SUCCESS);
+        executorResult =
+            new PeerTaskExecutorResult<>(
+                Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS);
 
       } catch (PeerConnection.PeerNotConnected e) {
         executorResult =
-            new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.PEER_DISCONNECTED);
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.PEER_DISCONNECTED);
 
       } catch (InterruptedException | TimeoutException e) {
         peer.recordRequestTimeout(requestMessageData.getCode());
-        executorResult = new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.TIMEOUT);
+        executorResult =
+            new PeerTaskExecutorResult<>(Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT);
 
       } catch (InvalidPeerTaskResponseException e) {
         peer.recordUselessResponse(e.getMessage());
         executorResult =
-            new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.INVALID_RESPONSE);
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE);
 
       } catch (ExecutionException e) {
         executorResult =
-            new PeerTaskExecutorResult<>(null, PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR);
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR);
       }
     } while (--triesRemaining > 0
-        && executorResult.getResponseCode() != PeerTaskExecutorResponseCode.SUCCESS
-        && executorResult.getResponseCode() != PeerTaskExecutorResponseCode.PEER_DISCONNECTED
+        && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+        && executorResult.responseCode() != PeerTaskExecutorResponseCode.PEER_DISCONNECTED
         && sleepBetweenRetries());
 
     return executorResult;
@@ -143,18 +149,5 @@ public class PeerTaskExecutor {
     } catch (InterruptedException e) {
       return false;
     }
-  }
-
-  private static boolean isPeerUnused(
-      final EthPeer ethPeer, final Collection<EthPeer> usedEthPeers) {
-    return !usedEthPeers.contains(ethPeer);
-  }
-
-  private static boolean isPeerHeightHighEnough(final EthPeer ethPeer, final long requiredHeight) {
-    return ethPeer.chainState().getEstimatedHeight() >= requiredHeight;
-  }
-
-  private static boolean isPeerProtocolSuitable(final EthPeer ethPeer, final String protocol) {
-    return ethPeer.getProtocolName().equals(protocol);
   }
 }
