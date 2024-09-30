@@ -163,11 +163,11 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
       arity = "1")
   private String metricsPrometheusJob = "besu-client";
 
-  /** Returns a newly created {@link MetricsOptions} with default values.
+  /**
+   * Returns a newly created {@link MetricsOptions} with default values.
    *
    * @return new instance
    */
-
   public static MetricsOptions create() {
     return new MetricsOptions();
   }
