@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.PartialFlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -45,6 +46,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class FlatDbStrategyProviderTest {
   private final FlatDbStrategyProvider flatDbStrategyProvider =
       new FlatDbStrategyProvider(new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
+  private final FlatDbStrategyProvider archiveFlatDbStrategyProvider =
+      new FlatDbStrategyProvider(
+          new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG);
   private final SegmentedKeyValueStorage composedWorldStateStorage =
       new SegmentedInMemoryKeyValueStorage(
           List.of(
@@ -75,7 +79,22 @@ class FlatDbStrategyProviderTest {
     assertThat(flatDbStrategyProvider.flatDbStrategy).isNotNull();
     assertThat(flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage))
         .isInstanceOf(FullFlatDbStrategy.class);
+    assertThat(flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage))
+        .isNotInstanceOf(ArchiveFlatDbStrategy.class);
     assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
+        .isInstanceOf(CodeHashCodeStorageStrategy.class);
+  }
+
+  @Test
+  void upgradesFlatDbStrategyToArchiveFlatDbMode() {
+    updateFlatDbMode(FlatDbMode.PARTIAL);
+
+    archiveFlatDbStrategyProvider.upgradeToFullFlatDbMode(composedWorldStateStorage);
+    assertThat(archiveFlatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.ARCHIVE);
+    assertThat(archiveFlatDbStrategyProvider.flatDbStrategy).isNotNull();
+    assertThat(archiveFlatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage))
+        .isInstanceOf(ArchiveFlatDbStrategy.class);
+    assertThat(archiveFlatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
         .isInstanceOf(CodeHashCodeStorageStrategy.class);
   }
 
@@ -100,6 +119,31 @@ class FlatDbStrategyProviderTest {
             ? CodeHashCodeStorageStrategy.class
             : AccountHashCodeStorageStrategy.class;
     assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.FULL);
+    assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
+        .isInstanceOf(expectedCodeStorageClass);
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void emptyDbCreatesArchiveFlatDbStrategyUsingCodeByHashConfig(final boolean codeByHashEnabled) {
+    final DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(DataStorageFormat.BONSAI_ARCHIVE)
+            .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .unstable(
+                ImmutableDataStorageConfiguration.Unstable.builder()
+                    .bonsaiCodeStoredByCodeHashEnabled(codeByHashEnabled)
+                    .build())
+            .build();
+    final FlatDbStrategyProvider flatDbStrategyProvider =
+        new FlatDbStrategyProvider(new NoOpMetricsSystem(), dataStorageConfiguration);
+
+    flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
+    final Class<? extends CodeStorageStrategy> expectedCodeStorageClass =
+        codeByHashEnabled
+            ? CodeHashCodeStorageStrategy.class
+            : AccountHashCodeStorageStrategy.class;
+    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.ARCHIVE);
     assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
         .isInstanceOf(expectedCodeStorageClass);
   }
@@ -136,6 +180,36 @@ class FlatDbStrategyProviderTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {false, true})
+  void existingAccountHashArchiveDbUsesAccountHash(final boolean codeByHashEnabled) {
+    final DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(DataStorageFormat.BONSAI_ARCHIVE)
+            .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .unstable(
+                ImmutableDataStorageConfiguration.Unstable.builder()
+                    .bonsaiCodeStoredByCodeHashEnabled(codeByHashEnabled)
+                    .build())
+            .build();
+    final FlatDbStrategyProvider flatDbStrategyProvider =
+        new FlatDbStrategyProvider(new NoOpMetricsSystem(), dataStorageConfiguration);
+
+    final SegmentedKeyValueStorageTransaction transaction =
+        composedWorldStateStorage.startTransaction();
+    final AccountHashCodeStorageStrategy accountHashCodeStorageStrategy =
+        new AccountHashCodeStorageStrategy();
+    // key representing account hash just needs to not be the code hash
+    final Hash accountHash = Hash.wrap(Bytes32.fromHexString("0001"));
+    accountHashCodeStorageStrategy.putFlatCode(transaction, accountHash, null, Bytes.of(2));
+    transaction.commit();
+
+    flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
+    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.ARCHIVE);
+    assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
+        .isInstanceOf(AccountHashCodeStorageStrategy.class);
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
   void existingCodeHashDbUsesCodeHash(final boolean codeByHashEnabled) {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
@@ -163,9 +237,49 @@ class FlatDbStrategyProviderTest {
         .isInstanceOf(CodeHashCodeStorageStrategy.class);
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void existingCodeHashArchiveDbUsesCodeHash(final boolean codeByHashEnabled) {
+    final DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(DataStorageFormat.BONSAI_ARCHIVE)
+            .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .unstable(
+                ImmutableDataStorageConfiguration.Unstable.builder()
+                    .bonsaiCodeStoredByCodeHashEnabled(codeByHashEnabled)
+                    .build())
+            .build();
+    final FlatDbStrategyProvider flatDbStrategyProvider =
+        new FlatDbStrategyProvider(new NoOpMetricsSystem(), dataStorageConfiguration);
+
+    final SegmentedKeyValueStorageTransaction transaction =
+        composedWorldStateStorage.startTransaction();
+
+    final CodeHashCodeStorageStrategy codeHashCodeStorageStrategy =
+        new CodeHashCodeStorageStrategy();
+    codeHashCodeStorageStrategy.putFlatCode(transaction, null, Hash.hash(Bytes.of(1)), Bytes.of(1));
+    transaction.commit();
+
+    flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
+    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.ARCHIVE);
+    assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
+        .isInstanceOf(CodeHashCodeStorageStrategy.class);
+  }
+
   @Test
   void downgradesFlatDbStrategyToPartiallyFlatDbMode() {
     updateFlatDbMode(FlatDbMode.FULL);
+
+    flatDbStrategyProvider.downgradeToPartialFlatDbMode(composedWorldStateStorage);
+    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.PARTIAL);
+    assertThat(flatDbStrategyProvider.flatDbStrategy).isNotNull();
+    assertThat(flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage))
+        .isInstanceOf(PartialFlatDbStrategy.class);
+  }
+
+  @Test
+  void downgradesArchiveFlatDbStrategyToPartiallyFlatDbMode() {
+    updateFlatDbMode(FlatDbMode.ARCHIVE);
 
     flatDbStrategyProvider.downgradeToPartialFlatDbMode(composedWorldStateStorage);
     assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.PARTIAL);

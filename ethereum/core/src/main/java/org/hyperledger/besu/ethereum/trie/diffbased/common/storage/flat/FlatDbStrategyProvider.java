@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiContext;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveCodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.PartialFlatDbStrategy;
@@ -70,8 +69,7 @@ public class FlatDbStrategyProvider {
       } else if (flatDbMode == FlatDbMode.ARCHIVE) {
         final BonsaiContext context = new BonsaiContext();
         this.flatDbStrategy =
-            new ArchiveFlatDbStrategy(
-                context, metricsSystem, new ArchiveCodeStorageStrategy(context));
+            new ArchiveFlatDbStrategy(context, metricsSystem, codeStorageStrategy);
       } else {
         this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem, codeStorageStrategy);
       }
@@ -175,9 +173,16 @@ public class FlatDbStrategyProvider {
   public void upgradeToFullFlatDbMode(final SegmentedKeyValueStorage composedWorldStateStorage) {
     final SegmentedKeyValueStorageTransaction transaction =
         composedWorldStateStorage.startTransaction();
-    LOG.info("setting FlatDbStrategy to FULL");
-    transaction.put(
-        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
+    if (dataStorageConfiguration.getDataStorageFormat() == DataStorageFormat.BONSAI) {
+      LOG.info("setting FlatDbStrategy to FULL");
+      transaction.put(
+          TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
+    } else if (dataStorageConfiguration.getDataStorageFormat()
+        == DataStorageFormat.BONSAI_ARCHIVE) {
+      LOG.info("setting FlatDbStrategy to ARCHIVE");
+      transaction.put(
+          TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.ARCHIVE.getVersion().toArrayUnsafe());
+    }
     transaction.commit();
     loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy
   }
