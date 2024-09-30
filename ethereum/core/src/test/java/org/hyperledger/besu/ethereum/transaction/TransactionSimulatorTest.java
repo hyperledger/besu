@@ -79,7 +79,7 @@ public class TransactionSimulatorTest {
 
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
-  private static final long GASCAP = 500L;
+  private static final long GAS_CAP = 50000L;
   private TransactionSimulator transactionSimulator;
   private TransactionSimulator cappedTransactionSimulator;
 
@@ -96,7 +96,7 @@ public class TransactionSimulatorTest {
     this.transactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, 0);
     this.cappedTransactionSimulator =
-        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, GASCAP);
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, GAS_CAP);
   }
 
   @Test
@@ -530,7 +530,7 @@ public class TransactionSimulatorTest {
   @Test
   public void shouldCapGasLimitWhenOriginalTransactionExceedsGasCap() {
     final CallParameter callParameter =
-        eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, GASCAP + 1);
+        eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, GAS_CAP + 1);
 
     final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
 
@@ -542,7 +542,7 @@ public class TransactionSimulatorTest {
             .type(TransactionType.EIP1559)
             .chainId(BigInteger.ONE)
             .nonce(1L)
-            .gasLimit(GASCAP)
+            .gasLimit(GAS_CAP)
             .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
             .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
             .to(callParameter.getTo())
@@ -566,11 +566,11 @@ public class TransactionSimulatorTest {
   }
 
   @Test
-  public void shouldUseRpcGasCapWhenCapIsHigherThanGasLimit() {
+  public void rpcGasCapShouldNotOverrideExplicitTxGasLimit() {
     // generate a transaction with a gas limit that is lower than the gas cap,
-    // expect the gas cap to override parameter gas limit
+    // expect the gas cap to not override tx gas limit
     final CallParameter callParameter =
-        eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, GASCAP - 1);
+        eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, GAS_CAP - 1);
 
     final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
 
@@ -591,7 +591,7 @@ public class TransactionSimulatorTest {
             .value(callParameter.getValue())
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
-            .gasLimit(GASCAP)
+            .gasLimit(GAS_CAP - 1)
             .build();
 
     // call process with original transaction

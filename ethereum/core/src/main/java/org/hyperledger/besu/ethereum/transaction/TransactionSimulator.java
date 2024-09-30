@@ -230,16 +230,23 @@ public class TransactionSimulator {
     final Account sender = updater.get(senderAddress);
     final long nonce = sender != null ? sender.getNonce() : 0L;
 
-    long gasLimit =
+    final long txGasLimit =
         callParams.getGasLimit() >= 0
             ? callParams.getGasLimit()
             : blockHeaderToProcess.getGasLimit();
+
+    final long simulationGasLimit;
     if (rpcGasCap > 0) {
-      gasLimit = rpcGasCap;
+      simulationGasLimit = Math.min(txGasLimit, rpcGasCap);
       LOG.trace(
-          "Gas limit capped at {} for transaction simulation due to provided RPC gas cap.",
+          "Gas limit capped at {} for transaction simulation, tx gas limit is {} and provided RPC gas cap is {}",
+          simulationGasLimit,
+          txGasLimit,
           rpcGasCap);
+    } else {
+      simulationGasLimit = txGasLimit;
     }
+
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
 
@@ -265,7 +272,7 @@ public class TransactionSimulator {
             header,
             senderAddress,
             nonce,
-            gasLimit,
+            simulationGasLimit,
             value,
             payload,
             blobGasPrice);
