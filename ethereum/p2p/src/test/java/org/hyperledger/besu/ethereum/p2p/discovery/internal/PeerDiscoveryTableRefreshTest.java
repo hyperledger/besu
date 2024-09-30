@@ -22,6 +22,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
@@ -34,8 +35,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -59,6 +60,9 @@ public class PeerDiscoveryTableRefreshTest {
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     final MockTimerUtil timer = new MockTimerUtil();
 
+    final RlpxAgent rlpxAgent = mock(RlpxAgent.class);
+    when(rlpxAgent.connect(any()))
+        .thenReturn(CompletableFuture.failedFuture(new RuntimeException()));
     final PeerDiscoveryController controller =
         spy(
             PeerDiscoveryController.builder()
@@ -70,7 +74,7 @@ public class PeerDiscoveryTableRefreshTest {
                 .workerExecutor(new BlockingAsyncExecutor())
                 .tableRefreshIntervalMs(0)
                 .metricsSystem(new NoOpMetricsSystem())
-                .rlpxAgent(mock(RlpxAgent.class))
+                .rlpxAgent(rlpxAgent)
                 .build());
     controller.start();
 
@@ -117,7 +121,7 @@ public class PeerDiscoveryTableRefreshTest {
     final List<Packet> capturedFindNeighborsPackets =
         captor.getAllValues().stream()
             .filter(p -> p.getType().equals(PacketType.FIND_NEIGHBORS))
-            .collect(Collectors.toList());
+            .toList();
     assertThat(capturedFindNeighborsPackets.size()).isEqualTo(5);
 
     // Collect targets from find neighbors packets
