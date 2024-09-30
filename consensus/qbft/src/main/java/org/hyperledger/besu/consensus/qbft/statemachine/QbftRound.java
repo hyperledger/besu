@@ -132,17 +132,14 @@ public class QbftRound {
   }
 
   /**
-   * Create and send proposal message.
+   * Create a block
    *
-   * @param headerTimeStampSeconds the header time stamp seconds
+   * @param headerTimeStampSeconds of the block
+   * @return a Block
    */
-  public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
+  public Block createBlock(final long headerTimeStampSeconds) {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-    final Block block =
-        blockCreator.createBlock(headerTimeStampSeconds, this.parentHeader).getBlock();
-
-    LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
-    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
+    return blockCreator.createBlock(headerTimeStampSeconds, this.parentHeader).getBlock();
   }
 
   /**
@@ -170,6 +167,15 @@ public class QbftRound {
         blockToPublish,
         roundChangeArtifacts.getRoundChanges(),
         bestPreparedCertificate.map(PreparedCertificate::getPrepares).orElse(emptyList()));
+  }
+
+  /**
+   * Update state with proposal and transmit.
+   *
+   * @param block the block
+   */
+  protected void updateStateWithProposalAndTransmit(final Block block) {
+    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
 
   /**
