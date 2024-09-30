@@ -14,19 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.SnapProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
+import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
-import java.time.Clock;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class DefaultPeerSelectorTest {
 
@@ -34,67 +38,98 @@ public class DefaultPeerSelectorTest {
 
   @BeforeEach
   public void beforeTest() {
-    peerSelector = new DefaultPeerSelector();
+    ProtocolSpec protocolSpec = Mockito.mock(ProtocolSpec.class);
+    Mockito.when(protocolSpec.isPoS()).thenReturn(false);
+    peerSelector = new DefaultPeerSelector(() -> protocolSpec);
   }
 
   @Test
   public void testGetPeer() throws NoAvailablePeerException {
-    EthPeer protocol1With5ReputationPeer =
-        createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol1", 5);
-    peerSelector.addPeer(protocol1With5ReputationPeer);
-    EthPeer protocol1With4ReputationPeer =
-        createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol1", 4);
-    peerSelector.addPeer(protocol1With4ReputationPeer);
-    EthPeer protocol2With50ReputationPeer =
-        createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol2", 50);
-    peerSelector.addPeer(protocol2With50ReputationPeer);
-    EthPeer protocol2With4ReputationPeer =
-        createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol2", 4);
-    peerSelector.addPeer(protocol2With4ReputationPeer);
+    EthPeer expectedPeer = createTestPeer(10, EthProtocol.get(), 5);
+    peerSelector.addPeer(expectedPeer);
+    EthPeer excludedForLowChainHeightPeer = createTestPeer(5, EthProtocol.get(), 50);
+    peerSelector.addPeer(excludedForLowChainHeightPeer);
+    EthPeer excludedForWrongProtocolPeer = createTestPeer(10, SnapProtocol.get(), 50);
+    peerSelector.addPeer(excludedForWrongProtocolPeer);
+    EthPeer excludedForLowReputationPeer = createTestPeer(10, EthProtocol.get(), 1);
+    peerSelector.addPeer(excludedForLowReputationPeer);
+    EthPeer excludedForBeingAlreadyUsedPeer = createTestPeer(10, EthProtocol.get(), 50);
+    peerSelector.addPeer(excludedForBeingAlreadyUsedPeer);
 
-    EthPeer result = peerSelector.getPeer((p) -> p.getProtocolName().equals("protocol1"));
+    Set<EthPeer> usedEthPeers = new HashSet<>();
+    usedEthPeers.add(excludedForBeingAlreadyUsedPeer);
 
-    Assertions.assertSame(protocol1With5ReputationPeer, result);
+    EthPeer result = peerSelector.getPeer(usedEthPeers, 10, EthProtocol.get());
+
+    Assertions.assertSame(expectedPeer, result);
   }
 
   @Test
   public void testGetPeerButNoPeerMatchesFilter() {
-    EthPeer protocol1With5ReputationPeer =
-        createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol1", 5);
-    peerSelector.addPeer(protocol1With5ReputationPeer);
-    EthPeer protocol1With4ReputationPeer =
-        createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol1", 4);
-    peerSelector.addPeer(protocol1With4ReputationPeer);
-    EthPeer protocol2With50ReputationPeer =
-        createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol2", 50);
-    peerSelector.addPeer(protocol2With50ReputationPeer);
-    EthPeer protocol2With4ReputationPeer =
-        createTestPeer(Set.of(Capability.create("capability1", 1)), "protocol2", 4);
-    peerSelector.addPeer(protocol2With4ReputationPeer);
+    EthPeer expectedPeer = createTestPeer(10, EthProtocol.get(), 5);
+    peerSelector.addPeer(expectedPeer);
+    EthPeer excludedForLowChainHeightPeer = createTestPeer(5, EthProtocol.get(), 50);
+    peerSelector.addPeer(excludedForLowChainHeightPeer);
+    EthPeer excludedForWrongProtocolPeer = createTestPeer(10, SnapProtocol.get(), 50);
+    peerSelector.addPeer(excludedForWrongProtocolPeer);
+    EthPeer excludedForLowReputationPeer = createTestPeer(10, EthProtocol.get(), 1);
+    peerSelector.addPeer(excludedForLowReputationPeer);
+    EthPeer excludedForBeingAlreadyUsedPeer = createTestPeer(10, EthProtocol.get(), 50);
+    peerSelector.addPeer(excludedForBeingAlreadyUsedPeer);
+
+    Set<EthPeer> usedEthPeers = new HashSet<>();
+    usedEthPeers.add(excludedForBeingAlreadyUsedPeer);
 
     Assertions.assertThrows(
         NoAvailablePeerException.class,
-        () -> peerSelector.getPeer((p) -> p.getProtocolName().equals("fake protocol")));
+        () -> peerSelector.getPeer(usedEthPeers, 10, new MockSubProtocol()));
   }
 
   private EthPeer createTestPeer(
-      final Set<Capability> connectionCapabilities,
-      final String protocolName,
-      final int reputationAdjustment) {
-    PeerConnection peerConnection = new MockPeerConnection(connectionCapabilities);
-    EthPeer peer =
-        new EthPeer(
-            peerConnection,
-            protocolName,
-            null,
-            Collections.emptyList(),
-            1,
-            Clock.systemUTC(),
-            Collections.emptyList(),
-            Bytes.EMPTY);
-    for (int i = 0; i < reputationAdjustment; i++) {
-      peer.getReputation().recordUsefulResponse();
+      final long chainHeight, final SubProtocol protocol, final int reputation) {
+    EthPeer ethPeer = Mockito.mock(EthPeer.class);
+    PeerConnection peerConnection = Mockito.mock(PeerConnection.class);
+    Peer peer = Mockito.mock(Peer.class);
+    ChainState chainState = Mockito.mock(ChainState.class);
+    PeerReputation peerReputation = Mockito.mock(PeerReputation.class);
+
+    Mockito.when(ethPeer.getConnection()).thenReturn(peerConnection);
+    Mockito.when(peerConnection.getPeer()).thenReturn(peer);
+    Mockito.when(ethPeer.getProtocolName()).thenReturn(protocol.getName());
+    Mockito.when(ethPeer.chainState()).thenReturn(chainState);
+    Mockito.when(chainState.getEstimatedHeight()).thenReturn(chainHeight);
+    Mockito.when(ethPeer.getReputation()).thenReturn(peerReputation);
+    Mockito.when(peerReputation.getScore()).thenReturn(reputation);
+
+    Mockito.when(ethPeer.compareTo(Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              EthPeer otherPeer = invocationOnMock.getArgument(0, EthPeer.class);
+              return Integer.compare(reputation, otherPeer.getReputation().getScore());
+            });
+    return ethPeer;
+  }
+
+  private static class MockSubProtocol implements SubProtocol {
+
+    @Override
+    public String getName() {
+      return "Mock";
     }
-    return peer;
+
+    @Override
+    public int messageSpace(final int protocolVersion) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isValidMessageCode(final int protocolVersion, final int code) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String messageName(final int protocolVersion, final int code) {
+      throw new UnsupportedOperationException();
+    }
   }
 }

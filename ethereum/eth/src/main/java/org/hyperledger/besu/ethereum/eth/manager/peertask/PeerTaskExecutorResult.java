@@ -16,8 +16,5 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import java.util.Optional;
 
-public record PeerTaskExecutorResult<T> (
-  Optional<T> result,
-  PeerTaskExecutorResponseCode responseCode
-)
-{}
+public record PeerTaskExecutorResult<T>(
+    Optional<T> result, PeerTaskExecutorResponseCode responseCode) {}
