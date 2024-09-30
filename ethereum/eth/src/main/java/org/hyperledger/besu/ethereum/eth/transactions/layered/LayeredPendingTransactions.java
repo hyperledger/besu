@@ -351,9 +351,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
                     }
                   });
               logDiscardedTransaction(candidatePendingTx, selectionResult);
-            }
-
-            if (selectionResult.penalize()) {
+            } else if (selectionResult.penalize()) {
               ethScheduler.scheduleTxWorkerTask(
                   () -> {
                     synchronized (this) {

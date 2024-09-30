@@ -53,12 +53,12 @@ interface GenesisReader {
     private final ObjectNode rootWithoutAllocations;
 
     public FromObjectNode(final ObjectNode root) {
-      final var removedAllocations = root.remove(ALLOCATION_FIELD);
       this.allocations =
-          removedAllocations != null
-              ? (ObjectNode) removedAllocations
+          root.get(ALLOCATION_FIELD) != null
+              ? (ObjectNode) root.get(ALLOCATION_FIELD)
               : JsonUtil.createEmptyObjectNode();
-      this.rootWithoutAllocations = normalizeKeys(root);
+      this.rootWithoutAllocations =
+          normalizeKeys(root, field -> !field.getKey().equals(ALLOCATION_FIELD));
     }
 
     @Override
