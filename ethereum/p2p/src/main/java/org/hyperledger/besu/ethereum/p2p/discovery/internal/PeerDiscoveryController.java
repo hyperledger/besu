@@ -323,7 +323,6 @@ public class PeerDiscoveryController {
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
-          peer.setLastSeen(System.currentTimeMillis());
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           if (!PeerDiscoveryStatus.BONDED.equals(peer.getStatus())
               && (bondingPeers.getIfPresent(sender.getId()) == null)) {
@@ -412,7 +411,7 @@ public class PeerDiscoveryController {
       return;
     }
 
-    if (peer.getFirstDiscovered() == 0) {
+    if (peer.getFirstDiscovered() == 0L) {
       connectOnRlpxLayer(peer)
           .whenComplete(
               (pc, th) -> {
