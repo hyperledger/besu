@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
 import java.util.Optional;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
@@ -120,6 +121,9 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         Optional.of(feeMarket).filter(FeeMarket::implementsBaseFee).map(BaseFeeMarket.class::cast);
 
     return IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-        config.getBlockPeriodSeconds(), baseFeeMarket);
+        config.getBlockPeriodMilliseconds() > 0
+            ? Duration.ofMillis(config.getBlockPeriodMilliseconds())
+            : Duration.ofSeconds(config.getBlockPeriodSeconds()),
+        baseFeeMarket);
   }
 }
