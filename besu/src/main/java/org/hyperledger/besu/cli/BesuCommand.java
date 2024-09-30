@@ -26,6 +26,7 @@ import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionSimulator.RpcGasCapMode.BOUNDED;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 
 import org.hyperledger.besu.BesuInfo;
@@ -1434,11 +1435,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         besuController.getProtocolContext(), besuController.getProtocolSchedule());
     transactionSimulationServiceImpl.init(
         besuController.getProtocolContext().getBlockchain(),
-        new TransactionSimulator(
-            besuController.getProtocolContext().getBlockchain(),
-            besuController.getProtocolContext().getWorldStateArchive(),
-            besuController.getProtocolSchedule(),
-            apiConfiguration.getGasCap()));
+        new TransactionSimulator.Builder(
+                besuController.getProtocolContext().getBlockchain(),
+                besuController.getProtocolContext().getWorldStateArchive(),
+                besuController.getProtocolSchedule())
+            .rpcGasCap(apiConfiguration.getGasCap(), BOUNDED)
+            .build());
     rpcEndpointServiceImpl.init(runner.getInProcessRpcMethods());
 
     besuPluginContext.addService(

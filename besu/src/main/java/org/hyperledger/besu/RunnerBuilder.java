@@ -20,6 +20,7 @@ import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 import static org.hyperledger.besu.controller.BesuController.CACHE_PATH;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
+import static org.hyperledger.besu.ethereum.transaction.TransactionSimulator.RpcGasCapMode.BOUNDED;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
@@ -699,11 +700,10 @@ public class RunnerBuilder {
     final Synchronizer synchronizer = besuController.getSynchronizer();
 
     final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(
-            context.getBlockchain(),
-            context.getWorldStateArchive(),
-            protocolSchedule,
-            apiConfiguration.getGasCap());
+        new TransactionSimulator.Builder(
+                context.getBlockchain(), context.getWorldStateArchive(), protocolSchedule)
+            .rpcGasCap(apiConfiguration.getGasCap(), BOUNDED)
+            .build();
 
     final Bytes localNodeId = nodeKey.getPublicKey().getEncodedBytes();
     final Optional<NodePermissioningController> nodePermissioningController =

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import static org.hyperledger.besu.ethereum.transaction.TransactionSimulator.RpcGasCapMode.BOUNDED;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
@@ -123,10 +125,11 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new DebugTraceCall(
             blockchainQueries,
             protocolSchedule,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())));
+            new TransactionSimulator.Builder(
+                    blockchainQueries.getBlockchain(),
+                    blockchainQueries.getWorldStateArchive(),
+                    protocolSchedule)
+                .rpcGasCap(apiConfiguration.getGasCap(), BOUNDED)
+                .build()));
   }
 }

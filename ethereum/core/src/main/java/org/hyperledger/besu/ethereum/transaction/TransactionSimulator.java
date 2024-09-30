@@ -79,17 +79,17 @@ public class TransactionSimulator {
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
-  private final long rpcGasCap;
+  private final SimulationGasLimitCalculator simulationGasLimitCalculator;
 
-  public TransactionSimulator(
+  private TransactionSimulator(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final long rpcGasCap) {
+      final SimulationGasLimitCalculator simulationGasLimitCalculator) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
-    this.rpcGasCap = rpcGasCap;
+    this.simulationGasLimitCalculator = simulationGasLimitCalculator;
   }
 
   public Optional<TransactionSimulatorResult> process(
@@ -230,22 +230,9 @@ public class TransactionSimulator {
     final Account sender = updater.get(senderAddress);
     final long nonce = sender != null ? sender.getNonce() : 0L;
 
-    final long txGasLimit =
-        callParams.getGasLimit() >= 0
-            ? callParams.getGasLimit()
-            : blockHeaderToProcess.getGasLimit();
-
-    final long simulationGasLimit;
-    if (rpcGasCap > 0) {
-      simulationGasLimit = Math.min(txGasLimit, rpcGasCap);
-      LOG.trace(
-          "Gas limit capped at {} for transaction simulation, tx gas limit is {} and provided RPC gas cap is {}",
-          simulationGasLimit,
-          txGasLimit,
-          rpcGasCap);
-    } else {
-      simulationGasLimit = txGasLimit;
-    }
+    final long simulationGasLimit =
+        simulationGasLimitCalculator.calculate(
+            callParams.getGasLimit(), blockHeaderToProcess.getGasLimit());
 
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
@@ -386,5 +373,88 @@ public class TransactionSimulator {
     }
 
     return Optional.of(worldState.get(address) != null);
+  }
+
+  @FunctionalInterface
+  public interface SimulationGasLimitCalculator {
+    long calculate(final long txGasLimit, final long blockGasLimit);
+
+    static long bounded(final long txGasLimit, final long blockGasLimit, final long rpcGasCap) {
+      final long txGasCap = txGasLimit >= 0 ? txGasLimit : blockGasLimit;
+
+      if (rpcGasCap > 0) {
+        final long simulationGasLimit = Math.min(txGasCap, rpcGasCap);
+        LOG.trace(
+            "Gas limit capped at {} for transaction simulation, tx gas limit={}, block gas limit={}, RPC gas cap={}",
+            simulationGasLimit,
+            txGasLimit,
+            blockGasLimit,
+            rpcGasCap);
+        return simulationGasLimit;
+      }
+      return txGasLimit;
+    }
+
+    static long unbounded(final long txGasLimit, final long blockGasLimit, final long rpcGasCap) {
+
+      if (rpcGasCap > 0) {
+        LOG.trace("Returning RPC gas cap {} for transaction simulation", rpcGasCap);
+
+        return rpcGasCap;
+      }
+
+      final long simulationGasLimit = txGasLimit >= 0 ? txGasLimit : blockGasLimit;
+
+      LOG.trace(
+          "Gas limit capped at {} for transaction simulation, tx gas limit={}, block gas limit={}",
+          simulationGasLimit,
+          txGasLimit,
+          blockGasLimit);
+      return simulationGasLimit;
+    }
+  }
+
+  public enum RpcGasCapMode {
+    BOUNDED,
+    UNBOUNDED
+  }
+
+  public static final class Builder {
+    private final Blockchain blockchain;
+    private final WorldStateArchive worldStateArchive;
+    private final ProtocolSchedule protocolSchedule;
+    private long rpcGasCap = 0;
+    private RpcGasCapMode rpcGasCapMode = RpcGasCapMode.BOUNDED;
+
+    public Builder(
+        final Blockchain blockchain,
+        final WorldStateArchive worldStateArchive,
+        final ProtocolSchedule protocolSchedule) {
+      this.blockchain = blockchain;
+      this.worldStateArchive = worldStateArchive;
+      this.protocolSchedule = protocolSchedule;
+    }
+
+    public Builder rpcGasCap(final long rpcGasCap, final RpcGasCapMode mode) {
+      this.rpcGasCap = rpcGasCap;
+      this.rpcGasCapMode = mode;
+      return this;
+    }
+
+    public TransactionSimulator build() {
+      final SimulationGasLimitCalculator simulationGasLimitCalculator;
+      if (rpcGasCap > 0 && rpcGasCapMode.equals(RpcGasCapMode.UNBOUNDED)) {
+        simulationGasLimitCalculator =
+            (txGasLimit, blockGasLimit) ->
+                SimulationGasLimitCalculator.unbounded(txGasLimit, blockGasLimit, rpcGasCap);
+      } else {
+        simulationGasLimitCalculator =
+            (txGasLimit, blockGasLimit) ->
+                SimulationGasLimitCalculator.bounded(txGasLimit, blockGasLimit, rpcGasCap);
+      }
+
+      return new TransactionSimulator(
+          blockchain, worldStateArchive, protocolSchedule, simulationGasLimitCalculator);
+    }
   }
 }

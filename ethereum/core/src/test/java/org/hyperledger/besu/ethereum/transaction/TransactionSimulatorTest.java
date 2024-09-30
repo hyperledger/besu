@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.transaction.TransactionSimulator.RpcGasCapMode.UNBOUNDED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -94,9 +95,11 @@ public class TransactionSimulatorTest {
   @BeforeEach
   public void setUp() {
     this.transactionSimulator =
-        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, 0);
+        new TransactionSimulator.Builder(blockchain, worldStateArchive, protocolSchedule).build();
     this.cappedTransactionSimulator =
-        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, GAS_CAP);
+        new TransactionSimulator.Builder(blockchain, worldStateArchive, protocolSchedule)
+            .rpcGasCap(GAS_CAP, UNBOUNDED)
+            .build();
   }
 
   @Test
@@ -566,7 +569,47 @@ public class TransactionSimulatorTest {
   }
 
   @Test
-  public void rpcGasCapShouldNotOverrideExplicitTxGasLimit() {
+  public void shouldUseRpcGasCapWhenCapIsUnboundedAndHigherThanGasLimit() {
+    // generate a transaction with a gas limit that is lower than the gas cap,
+    // expect the gas cap to override parameter gas limit
+    final CallParameter callParameter =
+        eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, GAS_CAP - 1);
+
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+    mockProtocolSpecForProcessWithWorldUpdater();
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.ONE)
+            .nonce(1L)
+            .gasLimit(callParameter.getGasLimit())
+            .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+            .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .gasLimit(GAS_CAP)
+            .build();
+
+    // call process with original transaction
+    cappedTransactionSimulator.process(
+        callParameter,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        1L);
+
+    // expect transaction with the original gas limit to be processed
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  @Test
+  public void shouldUseTxGasLimitWhenRpcGasCapIsBounded() {
     // generate a transaction with a gas limit that is lower than the gas cap,
     // expect the gas cap to not override tx gas limit
     final CallParameter callParameter =
@@ -595,7 +638,7 @@ public class TransactionSimulatorTest {
             .build();
 
     // call process with original transaction
-    cappedTransactionSimulator.process(
+    transactionSimulator.process(
         callParameter,
         TransactionValidationParams.transactionSimulator(),
         OperationTracer.NO_TRACING,

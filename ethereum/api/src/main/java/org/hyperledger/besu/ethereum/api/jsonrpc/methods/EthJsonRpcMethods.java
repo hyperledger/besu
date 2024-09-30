@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import static org.hyperledger.besu.ethereum.transaction.TransactionSimulator.RpcGasCapMode.BOUNDED;
+import static org.hyperledger.besu.ethereum.transaction.TransactionSimulator.RpcGasCapMode.UNBOUNDED;
+
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -127,11 +130,12 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthGetBlockTransactionCountByHash(blockchainQueries),
         new EthCall(
             blockchainQueries,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())),
+            new TransactionSimulator.Builder(
+                    blockchainQueries.getBlockchain(),
+                    blockchainQueries.getWorldStateArchive(),
+                    protocolSchedule)
+                .rpcGasCap(apiConfiguration.getGasCap(), UNBOUNDED)
+                .build()),
         new EthFeeHistory(
             protocolSchedule,
             blockchainQueries.getBlockchain(),
@@ -161,18 +165,20 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthSendTransaction(),
         new EthEstimateGas(
             blockchainQueries,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())),
+            new TransactionSimulator.Builder(
+                    blockchainQueries.getBlockchain(),
+                    blockchainQueries.getWorldStateArchive(),
+                    protocolSchedule)
+                .rpcGasCap(apiConfiguration.getGasCap(), BOUNDED)
+                .build()),
         new EthCreateAccessList(
             blockchainQueries,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())),
+            new TransactionSimulator.Builder(
+                    blockchainQueries.getBlockchain(),
+                    blockchainQueries.getWorldStateArchive(),
+                    protocolSchedule)
+                .rpcGasCap(apiConfiguration.getGasCap(), BOUNDED)
+                .build()),
         new EthMining(miningCoordinator),
         new EthCoinbase(miningCoordinator),
         new EthProtocolVersion(supportedCapabilities),

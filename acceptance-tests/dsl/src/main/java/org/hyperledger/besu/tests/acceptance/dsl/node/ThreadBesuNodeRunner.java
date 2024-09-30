@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
+import static org.hyperledger.besu.ethereum.transaction.TransactionSimulator.RpcGasCapMode.BOUNDED;
 
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
@@ -377,8 +378,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final WorldStateArchive worldStateArchive,
         final ProtocolSchedule protocolSchedule,
         final ApiConfiguration apiConfiguration) {
-      return new TransactionSimulator(
-          blockchain, worldStateArchive, protocolSchedule, apiConfiguration.getGasCap());
+      return new TransactionSimulator.Builder(blockchain, worldStateArchive, protocolSchedule)
+          .rpcGasCap(apiConfiguration.getGasCap(), BOUNDED)
+          .build();
     }
 
     @Provides

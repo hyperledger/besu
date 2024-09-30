@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
+import static org.hyperledger.besu.ethereum.transaction.TransactionSimulator.RpcGasCapMode.BOUNDED;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
@@ -147,9 +149,10 @@ public class PendingStateAdapter extends AdapterBase {
         environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
     final long gasCap = environment.getGraphQlContext().get(GraphQLContextType.GAS_CAP);
     final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(
-            query.getBlockchain(), query.getWorldStateArchive(), protocolSchedule, gasCap);
-
+        new TransactionSimulator.Builder(
+                query.getBlockchain(), query.getWorldStateArchive(), protocolSchedule)
+            .rpcGasCap(gasCap, BOUNDED)
+            .build();
     long gasParam = -1;
     Wei gasPriceParam = null;
     Wei valueParam = null;

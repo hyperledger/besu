@@ -445,7 +445,7 @@ public class TestContextBuilder {
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
     final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule, 0L);
+        new TransactionSimulator.Builder(blockChain, worldStateArchive, protocolSchedule).build();
 
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
