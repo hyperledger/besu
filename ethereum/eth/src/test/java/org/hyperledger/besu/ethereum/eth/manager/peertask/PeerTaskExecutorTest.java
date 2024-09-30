@@ -49,9 +49,7 @@ public class PeerTaskExecutorTest {
   @BeforeEach
   public void beforeTest() {
     mockCloser = MockitoAnnotations.openMocks(this);
-    peerTaskExecutor =
-        new PeerTaskExecutor(
-            peerSelector, requestSender, new NoOpMetricsSystem());
+    peerTaskExecutor = new PeerTaskExecutor(peerSelector, requestSender, new NoOpMetricsSystem());
   }
 
   @AfterEach
@@ -204,7 +202,8 @@ public class PeerTaskExecutorTest {
     Object responseObject = new Object();
 
     Mockito.when(
-            peerSelector.getPeer(Mockito.any(Collection.class), Mockito.eq(10L), Mockito.eq(subprotocol)))
+            peerSelector.getPeer(
+                Mockito.any(Collection.class), Mockito.eq(10L), Mockito.eq(subprotocol)))
         .thenReturn(ethPeer);
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
@@ -240,7 +239,8 @@ public class PeerTaskExecutorTest {
     EthPeer peer2 = Mockito.mock(EthPeer.class);
 
     Mockito.when(
-            peerSelector.getPeer(Mockito.any(Collection.class), Mockito.eq(10L), Mockito.eq(subprotocol)))
+            peerSelector.getPeer(
+                Mockito.any(Collection.class), Mockito.eq(10L), Mockito.eq(subprotocol)))
         .thenReturn(ethPeer)
         .thenReturn(peer2);
 
