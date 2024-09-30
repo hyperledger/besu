@@ -31,9 +31,11 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.util.Subscribers;
@@ -237,14 +239,11 @@ public abstract class DiffBasedWorldStateKeyValueStorage
           nextMatch.stream()
               .forEach(
                   (nearestKey) -> {
-                    SegmentedKeyValueStorageTransaction tx =
-                        composedWorldStateStorage.startTransaction();
-                    tx.remove(ACCOUNT_INFO_STATE, nearestKey.key().toArrayUnsafe());
-                    tx.put(
+                    moveDBEntry(
+                        ACCOUNT_INFO_STATE,
                         ACCOUNT_INFO_STATE_FREEZER,
                         nearestKey.key().toArrayUnsafe(),
                         nearestKey.value().get());
-                    tx.commit();
                     frozenStateCount.getAndIncrement();
                   });
         }
@@ -301,14 +300,11 @@ public abstract class DiffBasedWorldStateKeyValueStorage
           nextMatch.stream()
               .forEach(
                   (nearestKey) -> {
-                    SegmentedKeyValueStorageTransaction tx =
-                        composedWorldStateStorage.startTransaction();
-                    tx.remove(ACCOUNT_STORAGE_STORAGE, nearestKey.key().toArrayUnsafe());
-                    tx.put(
+                    moveDBEntry(
+                        ACCOUNT_STORAGE_STORAGE,
                         ACCOUNT_STORAGE_FREEZER,
                         nearestKey.key().toArrayUnsafe(),
                         nearestKey.value().get());
-                    tx.commit();
                     frozenStorageCount.getAndIncrement();
                   });
         }
@@ -325,6 +321,32 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     }
 
     return frozenStorageCount.get();
+  }
+
+  private void moveDBEntry(
+      final SegmentIdentifier fromSegment,
+      final SegmentIdentifier toSegment,
+      final byte[] key,
+      final byte[] value) {
+    boolean retried = false;
+    while (true) { // Allow for a single DB retry
+      try {
+        SegmentedKeyValueStorageTransaction tx = composedWorldStateStorage.startTransaction();
+        tx.remove(fromSegment, key);
+        tx.put(toSegment, key, value);
+        tx.commit();
+        break;
+      } catch (StorageException se) {
+        if (se.getMessage().contains("RocksDBException: Busy")) {
+          if (retried) {
+            break;
+          }
+          retried = true;
+        } else {
+          break;
+        }
+      }
+    }
   }
 
   public Optional<Long> getLatestArchiveFrozenBlock() {
