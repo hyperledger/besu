@@ -669,7 +669,7 @@ startScripts {
     "-XX:G1ConcRefinementThreads=2",
     "-XX:G1HeapWastePercent=15",
     "-XX:MaxGCPauseMillis=100",
-    "-XX:StartFlightRecording,dumponexit=true,settings=default.jfc",
+    "-XX:StartFlightRecording,settings=default.jfc",
     "-Xlog:jfr*=off"
   ]
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
