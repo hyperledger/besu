@@ -34,8 +34,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class EphemeryGenesisUpdaterTest {
   private static final int GENESIS_CONFIG_TEST_CHAINID = 39438135;
   private static final long GENESIS_TEST_TIMESTAMP = 1720119600;
-  private static final long CURRENT_TIMESTAMP = 1712041200;
-  private static final long CURRENT_TIMESTAMP_HIGHER = 1922041200;
+  private static final long EARLIER_TIMESTAMP = 1712041200;
+  private static final long LATER_TIMESTAMP = 1922041200;
   private static final long PERIOD_IN_SECONDS = 28 * 24 * 60 * 60;
   private static final long PERIOD_SINCE_GENESIS = 3;
 
@@ -83,14 +83,12 @@ public class EphemeryGenesisUpdaterTest {
         .hasValue(BigInteger.valueOf(GENESIS_CONFIG_TEST_CHAINID));
     assertThat(String.valueOf(config.getTimestamp())).isNotNull();
     assertThat(String.valueOf(config.getTimestamp())).isNotEmpty();
-    assertThat(String.valueOf(config.getConfigOptions().getChainId())).isNotNull();
-    assertThat(String.valueOf(config.getConfigOptions().getChainId())).isNotEmpty();
   }
 
   @Test
   public void testEphemeryNotYetDueForUpdate() {
     final GenesisConfigFile config = GenesisConfigFile.fromConfig(VALID_GENESIS_JSON.toString());
-    assertThat(CURRENT_TIMESTAMP).isLessThan(config.getTimestamp() + PERIOD_IN_SECONDS);
+    assertThat(EARLIER_TIMESTAMP).isLessThan(config.getTimestamp() + PERIOD_IN_SECONDS);
   }
 
   @Test
@@ -131,7 +129,7 @@ public class EphemeryGenesisUpdaterTest {
     override.put("timestamp", String.valueOf(expectedGenesisTimestamp));
     final GenesisConfigFile updatedConfig = config.withOverrides(override);
 
-    assertThat(CURRENT_TIMESTAMP_HIGHER)
+    assertThat(LATER_TIMESTAMP)
         .isGreaterThan(Long.parseLong(String.valueOf(GENESIS_TEST_TIMESTAMP + PERIOD_IN_SECONDS)));
     assertThat(updatedConfig.getConfigOptions().getChainId()).hasValue(expectedChainId);
     assertThat(updatedConfig.getTimestamp()).isEqualTo(expectedGenesisTimestamp);
