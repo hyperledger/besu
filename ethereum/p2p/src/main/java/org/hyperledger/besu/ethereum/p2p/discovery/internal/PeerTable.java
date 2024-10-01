@@ -112,7 +112,7 @@ public class PeerTable {
    * @see AddOutcome
    */
   public AddResult tryAdd(final DiscoveryPeer peer) {
-    if (ipAddressIsInvalid(peer.getEndpoint())) {
+    if (isIpAddressInvalid(peer.getEndpoint())) {
       return AddResult.invalid();
     }
     final Bytes id = peer.getId();
@@ -212,7 +212,7 @@ public class PeerTable {
     return Arrays.stream(table).flatMap(e -> e.getPeers().stream());
   }
 
-  boolean ipAddressIsInvalid(final Endpoint endpoint) {
+  public boolean isIpAddressInvalid(final Endpoint endpoint) {
     final String key = getKey(endpoint);
     if (invalidIPs.contains(key)) {
       return true;
@@ -223,7 +223,7 @@ public class PeerTable {
       for (final Bucket bucket : table) {
         bucket.getPeers().stream()
             .filter(p -> p.getEndpoint().getHost().equals(endpoint.getHost()))
-            .forEach(p -> evictAndStore(p, bucket, key));
+            .forEach(bucket::evict);
       }
       return true;
     } else {
@@ -231,13 +231,13 @@ public class PeerTable {
     }
   }
 
-  private void evictAndStore(final DiscoveryPeer peer, final Bucket bucket, final String key) {
-    bucket.evict(peer);
+  public void invalidateIP(final Endpoint endpoint) {
+    final String key = getKey(endpoint);
     invalidIPs.add(key);
   }
 
   private static String getKey(final Endpoint endpoint) {
-    return endpoint.getHost() + endpoint.getFunctionalTcpPort();
+    return endpoint.getHost() + ":" + endpoint.getFunctionalTcpPort();
   }
 
   /**
