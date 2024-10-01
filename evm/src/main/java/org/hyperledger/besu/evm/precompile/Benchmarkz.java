@@ -97,7 +97,7 @@ public class Benchmarkz {
     final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
     final double perCall = elapsed / MATH_ITERATIONS;
     final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
-
+    System.out.printf("\tsecp256k1 %f seconds, %f ,mgas/sec", elapsed, (MATH_ITERATIONS * 3000L / 1_000_000 / elapsed));
     System.out.printf("secp256k1 signature recovery for %,d gas.%n", (int) gasSpent);
   }
 
@@ -675,8 +675,10 @@ public class Benchmarkz {
 
     final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
     final double perCall = elapsed / MATH_ITERATIONS;
-    System.out.printf("\telapsed in nanos %f\n", elapsed);
-    System.out.printf("\tper call %f\n", perCall);
+    System.out.printf("\t%s %f seconds, %f ,mgas/sec",
+        contract.getName(),
+        elapsed,
+        (MATH_ITERATIONS * contract.gasRequirement(arg) / 1_000_000d / elapsed));
     return perCall * GAS_PER_SECOND_STANDARD;
   }
 
