@@ -81,13 +81,14 @@ public class CodeDelegationTransactionDecoder {
     final Address address = Address.wrap(input.readBytes());
     final long nonce = input.readLongScalar();
 
-    final byte yParity = (byte) input.readUnsignedByteScalar();
+    final BigInteger yParity = input.readUInt256Scalar().toUnsignedBigInteger();
     final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
     final BigInteger s = input.readUInt256Scalar().toUnsignedBigInteger();
 
     input.leaveList();
 
-    final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, yParity);
+    final SECPSignature signature =
+        SIGNATURE_ALGORITHM.get().createCodeDelegationSignature(r, s, yParity);
 
     return new org.hyperledger.besu.ethereum.core.CodeDelegation(
         chainId, address, nonce, signature);
