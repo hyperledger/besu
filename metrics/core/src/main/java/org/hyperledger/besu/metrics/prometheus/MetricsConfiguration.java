@@ -30,13 +30,17 @@ import com.google.common.base.MoreObjects;
 
 /** The Metrics configuration. */
 public class MetricsConfiguration {
-  private static final String DEFAULT_METRICS_HOST = "127.0.0.1";
+
+  /** The constant DEFAULT_METRICS_HOST. */
+  public static final String DEFAULT_METRICS_HOST = "127.0.0.1";
 
   /** The constant DEFAULT_METRICS_PORT. */
   public static final int DEFAULT_METRICS_PORT = 9545;
 
   private static final MetricsProtocol DEFAULT_METRICS_PROTOCOL = MetricsProtocol.PROMETHEUS;
-  private static final String DEFAULT_METRICS_PUSH_HOST = "127.0.0.1";
+
+  /** The constant DEFAULT_METRICS_PUSH_HOST. */
+  public static final String DEFAULT_METRICS_PUSH_HOST = "127.0.0.1";
 
   /** The constant DEFAULT_METRICS_PUSH_PORT. */
   public static final int DEFAULT_METRICS_PUSH_PORT = 9001;

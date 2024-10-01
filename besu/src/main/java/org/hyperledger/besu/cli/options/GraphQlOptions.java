@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.stable;
+package org.hyperledger.besu.cli.options;
 
 import static java.util.Arrays.asList;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import picocli.CommandLine;
 
 /** Handles configuration options for the GraphQL HTTP service in Besu. */
+// TODO: implement CLIOptions<GraphQLConfiguration>
 public class GraphQlOptions {
   @CommandLine.Option(
       names = {"--graphql-http-enabled"},

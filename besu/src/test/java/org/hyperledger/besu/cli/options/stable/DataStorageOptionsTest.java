@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT;
 
 import org.hyperledger.besu.cli.options.AbstractCLIOptionsTest;
+import org.hyperledger.besu.cli.options.DataStorageOptions;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;

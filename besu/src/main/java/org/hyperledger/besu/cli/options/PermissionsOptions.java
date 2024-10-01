@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.stable;
+package org.hyperledger.besu.cli.options;
 
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.datatypes.Address;
@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import picocli.CommandLine;
 
 /** Handles configuration options for permissions in Besu. */
+// TODO: implement CLIOption<PermissioningConfiguration>
 public class PermissionsOptions {
   @CommandLine.Option(
       names = {"--permissions-nodes-config-file-enabled"},

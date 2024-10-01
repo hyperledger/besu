@@ -12,11 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.stable;
+package org.hyperledger.besu.cli.options;
 
 import java.util.Locale;
 import java.util.Set;
 
+import com.google.common.annotations.VisibleForTesting;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
@@ -39,7 +40,7 @@ public class LoggingLevelOption {
       Set.of("OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL");
 
   /** The Picocli CommandSpec. Visible for testing. Injected by Picocli framework at runtime. */
-  @Spec CommandSpec spec;
+  @VisibleForTesting public @Spec CommandSpec spec;
 
   private String logLevel;
 

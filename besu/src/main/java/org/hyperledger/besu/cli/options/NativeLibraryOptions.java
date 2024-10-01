@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.unstable;
+package org.hyperledger.besu.cli.options;
 
 import picocli.CommandLine;
 

@@ -12,12 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.unstable;
+package org.hyperledger.besu.cli.options;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration.DEFAULT_IN_PROCESS_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration.DEFAULT_IN_PROCESS_RPC_ENABLED;
 
-import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ImmutableInProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;

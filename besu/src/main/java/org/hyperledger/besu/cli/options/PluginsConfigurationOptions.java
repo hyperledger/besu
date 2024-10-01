@@ -12,14 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.stable;
+package org.hyperledger.besu.cli.options;
 
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME;
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME;
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_OPTION_NAME;
 
 import org.hyperledger.besu.cli.converter.PluginInfoConverter;
-import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;

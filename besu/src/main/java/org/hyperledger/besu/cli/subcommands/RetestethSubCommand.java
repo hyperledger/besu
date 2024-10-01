@@ -19,7 +19,7 @@ import static org.hyperledger.besu.cli.subcommands.RetestethSubCommand.COMMAND_N
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
-import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
+import org.hyperledger.besu.cli.options.LoggingLevelOption;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethConfiguration;

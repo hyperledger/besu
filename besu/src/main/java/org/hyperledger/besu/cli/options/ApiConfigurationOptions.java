@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.stable;
+package org.hyperledger.besu.cli.options;
 
 import static java.util.Arrays.asList;
 
@@ -28,6 +28,7 @@ import picocli.CommandLine;
  * Handles configuration options for the API in Besu, including gas price settings, RPC log range,
  * and trace filter range.
  */
+// TODO: implement CLIOption<ApiConfiguration>
 public class ApiConfigurationOptions {
   /** Default constructor. */
   public ApiConfigurationOptions() {}

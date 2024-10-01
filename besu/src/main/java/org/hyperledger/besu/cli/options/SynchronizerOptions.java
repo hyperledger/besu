@@ -12,10 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.unstable;
+package org.hyperledger.besu.cli.options;
 
-import org.hyperledger.besu.cli.options.CLIOptions;
-import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;

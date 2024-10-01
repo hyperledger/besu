@@ -18,6 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 
+import org.hyperledger.besu.cli.options.LoggingLevelOption;
+
 import java.util.Arrays;
 
 import org.apache.logging.log4j.Level;

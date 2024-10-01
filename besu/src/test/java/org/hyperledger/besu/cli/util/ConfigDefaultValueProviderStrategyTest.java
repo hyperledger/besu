@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
-import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
+import org.hyperledger.besu.cli.options.LoggingLevelOption;
 
 import java.io.File;
 import java.io.IOException;

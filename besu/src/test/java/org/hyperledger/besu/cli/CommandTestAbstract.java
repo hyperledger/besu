@@ -34,14 +34,13 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.options.DataStorageOptions;
+import org.hyperledger.besu.cli.options.EthProtocolOptions;
+import org.hyperledger.besu.cli.options.EthstatsOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
+import org.hyperledger.besu.cli.options.NetworkingOptions;
+import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
-import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
-import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
-import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
-import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
-import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
-import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.controller.BesuController;
@@ -608,10 +607,6 @@ public abstract class CommandTestAbstract {
 
     public DataStorageOptions getDataStorageOptions() {
       return dataStorageOptions;
-    }
-
-    public MetricsCLIOptions getMetricsCLIOptions() {
-      return unstableMetricsCLIOptions;
     }
 
     public void close() {
