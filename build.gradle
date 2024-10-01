@@ -166,6 +166,8 @@ allprojects {
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
 
+    mavenLocal()
+
     mavenCentral()
 
     // ethereum execution spec tests fixtures. Exclusively for ethereum submodule to run ref tests
