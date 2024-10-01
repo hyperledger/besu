@@ -71,7 +71,8 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
 
   private static WorldStateArchive buildWorldStateArchive(
       final Map<String, ReferenceTestWorldState.AccountMock> accounts,
-      final MutableBlockchain blockchain) {
+      final MutableBlockchain blockchain,
+      final BlockHeader genesis) {
     final WorldStateArchive worldStateArchive = createVerkleInMemoryWorldStateArchive(blockchain);
 
     final MutableWorldState worldState = worldStateArchive.getMutable();
@@ -82,6 +83,8 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
           updater, Address.fromHexString(entry.getKey()), entry.getValue());
     }
     updater.commit();
+
+    worldState.persist(genesis);
 
     return worldStateArchive;
   }
@@ -105,7 +108,7 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
     this.genesisBlockHeader = genesisBlockHeader;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
     this.blockchain = buildBlockchain(genesisBlockHeader);
-    this.worldStateArchive = buildWorldStateArchive(accounts, this.blockchain);
+    this.worldStateArchive = buildWorldStateArchive(accounts, this.blockchain, genesisBlockHeader);
     this.sealEngine = sealEngine;
     this.protocolContext =
         new ProtocolContext(this.blockchain, this.worldStateArchive, null, new BadBlockManager());
