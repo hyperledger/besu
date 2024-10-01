@@ -20,11 +20,12 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskBehavior;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRetryBehavior;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,8 +53,8 @@ public class GetReceiptsFromPeerTask
   }
 
   @Override
-  public String getSubProtocol() {
-    return EthProtocol.NAME;
+  public SubProtocol getSubProtocol() {
+    return EthProtocol.get();
   }
 
   @Override
@@ -101,7 +102,8 @@ public class GetReceiptsFromPeerTask
   }
 
   @Override
-  public Collection<PeerTaskBehavior> getPeerTaskBehaviors() {
-    return List.of(PeerTaskBehavior.RETRY_WITH_OTHER_PEERS, PeerTaskBehavior.RETRY_WITH_SAME_PEER);
+  public Collection<PeerTaskRetryBehavior> getPeerTaskBehaviors() {
+    return List.of(
+        PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS, PeerTaskRetryBehavior.RETRY_WITH_SAME_PEER);
   }
 }

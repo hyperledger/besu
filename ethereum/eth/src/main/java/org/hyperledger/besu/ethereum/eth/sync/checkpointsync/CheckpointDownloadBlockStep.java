@@ -85,10 +85,10 @@ public class CheckpointDownloadBlockStep {
       PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> executorResult =
           peerTaskExecutor.execute(task);
 
-      if (executorResult.getResponseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
+      if (executorResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
         List<TransactionReceipt> transactionReceipts =
             executorResult
-                .getResult()
+                .result()
                 .map((map) -> map.get(block.getHeader()))
                 .orElseThrow(
                     () ->

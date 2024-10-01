@@ -55,8 +55,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
 import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.DefaultPeerManager;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerManager;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.DefaultPeerSelector;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerSelector;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRequestSender;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
@@ -656,11 +656,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
-    final PeerManager peerManager = new DefaultPeerManager();
-    ethPeers.streamAllPeers().forEach(peerManager::addPeer);
+    final PeerSelector peerSelector = new DefaultPeerSelector(currentProtocolSpecSupplier);
+    ethPeers.streamAllPeers().forEach(peerSelector::addPeer);
     final PeerTaskExecutor peerTaskExecutor =
-        new PeerTaskExecutor(
-            peerManager, new PeerTaskRequestSender(), currentProtocolSpecSupplier, metricsSystem);
+        new PeerTaskExecutor(peerSelector, new PeerTaskRequestSender(), metricsSystem);
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
@@ -701,7 +700,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             peerValidators,
             Optional.empty(),
             forkIdManager,
-            peerManager);
+            peerSelector);
 
     final PivotBlockSelector pivotBlockSelector =
         createPivotSelector(
@@ -1036,7 +1035,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param peerValidators the peer validators
    * @param mergePeerFilter the merge peer filter
    * @param forkIdManager the fork id manager
-   * @param peerManager the PeerManager
+   * @param peerSelector the PeerSelector
    * @return the eth protocol manager
    */
   protected EthProtocolManager createEthProtocolManager(
@@ -1051,7 +1050,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
       final ForkIdManager forkIdManager,
-      final PeerManager peerManager) {
+      final PeerSelector peerSelector) {
     return new EthProtocolManager(
         protocolContext.getBlockchain(),
         networkId,
@@ -1066,7 +1065,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         synchronizerConfiguration,
         scheduler,
         forkIdManager,
-        peerManager);
+        peerSelector);
   }
 
   /**

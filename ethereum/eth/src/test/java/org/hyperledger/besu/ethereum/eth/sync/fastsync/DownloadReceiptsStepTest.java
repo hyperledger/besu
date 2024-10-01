@@ -44,6 +44,7 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -121,7 +122,8 @@ public class DownloadReceiptsStepTest {
     blocks.forEach(
         (b) -> receiptsMap.put(b.getHeader(), List.of(Mockito.mock(TransactionReceipt.class))));
     PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> peerTaskResult =
-        new PeerTaskExecutorResult<>(receiptsMap, PeerTaskExecutorResponseCode.SUCCESS);
+        new PeerTaskExecutorResult<>(
+            Optional.of(receiptsMap), PeerTaskExecutorResponseCode.SUCCESS);
     Mockito.when(peerTaskExecutor.execute(Mockito.any(GetReceiptsFromPeerTask.class)))
         .thenReturn(peerTaskResult);
 

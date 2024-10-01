@@ -41,7 +41,7 @@ public class GetReceiptsFromPeerTaskTest {
   @Test
   public void testGetSubProtocol() {
     GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(Collections.emptyList(), null);
-    Assertions.assertEquals(EthProtocol.NAME, task.getSubProtocol());
+    Assertions.assertEquals(EthProtocol.get(), task.getSubProtocol());
   }
 
   @Test
@@ -83,7 +83,7 @@ public class GetReceiptsFromPeerTaskTest {
   }
 
   @Test
-  public void testParseResponseForInvalidResponse() throws InvalidPeerTaskResponseException {
+  public void testParseResponseForInvalidResponse() {
     GetReceiptsFromPeerTask task =
         new GetReceiptsFromPeerTask(
             List.of(mockBlockHeader(1), mockBlockHeader(2), mockBlockHeader(3)), null);

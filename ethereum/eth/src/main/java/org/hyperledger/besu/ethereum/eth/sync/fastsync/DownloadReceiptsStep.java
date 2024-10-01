@@ -66,10 +66,10 @@ public class DownloadReceiptsStep
             new GetReceiptsFromPeerTask(headers, new BodyValidator());
         PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
             peerTaskExecutor.execute(getReceiptsFromPeerTask);
-        if (getReceiptsResult.getResponseCode() == PeerTaskExecutorResponseCode.SUCCESS
-            && getReceiptsResult.getResult().isPresent()) {
+        if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
+            && getReceiptsResult.result().isPresent()) {
           Map<BlockHeader, List<TransactionReceipt>> receiptsResult =
-              getReceiptsResult.getResult().get();
+              getReceiptsResult.result().get();
           receiptsResult
               .keySet()
               .forEach(
