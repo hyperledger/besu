@@ -130,6 +130,9 @@ public class VerkleWorldState extends DiffBasedWorldState {
               final List<Bytes32> accountKeyIds = new ArrayList<>();
               if (accountUpdate != null && !accountUpdate.isUnchanged()) {
                 accountKeyIds.add(trieKeyPreloader.generateAccountKeyId());
+                if (accountUpdate.getPrior() == null) {
+                  accountKeyIds.add(Parameters.CODE_HASH_LEAF_KEY);
+                }
               }
 
               // generate storage triekeys
@@ -212,13 +215,16 @@ public class VerkleWorldState extends DiffBasedWorldState {
       return;
     }
     if (accountUpdate.getUpdated() == null) {
-      verkleEntryFactory.generateAccountKeysForRemoval(accountKey);
+      verkleEntryFactory.generateAccountKeyForRemoval(accountKey);
       final Hash addressHash = hashAndSavePreImage(accountKey);
       maybeStateUpdater.ifPresent(
           bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
       return;
     }
     final VerkleAccount updatedAcount = accountUpdate.getUpdated();
+    if (accountUpdate.getPrior() == null) {
+      verkleEntryFactory.generateCodeHashKeyValueForUpdate(accountKey, updatedAcount.getCodeHash());
+    }
     verkleEntryFactory.generateAccountKeyValueForUpdate(
         accountKey, updatedAcount.getNonce(), updatedAcount.getBalance());
     maybeStateUpdater.ifPresent(
@@ -274,7 +280,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
       if (!storageUpdate.getValue().isUnchanged()) {
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
         if (updatedStorage == null) {
-          verkleEntryFactory.generateStorageKeysForRemoval(accountKey, storageUpdate.getKey());
+          verkleEntryFactory.generateStorageKeyForRemoval(accountKey, storageUpdate.getKey());
           maybeStateUpdater.ifPresent(
               diffBasedUpdater ->
                   diffBasedUpdater.removeStorageValueBySlotHash(updatedAddressHash, slotHash));
@@ -328,7 +334,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
         .getNonStorageKeyValuesForUpdate()
         .forEach(
             (key, value) -> {
-              System.out.println("add key " + key + "  leaf value " + value);
+              System.out.println("add key " + key + " leaf value " + value);
               stateTrie.put(key, value);
             });
     verkleEntryFactory
