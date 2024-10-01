@@ -234,7 +234,10 @@ public abstract class DiffBasedWorldStateKeyValueStorage
                 composedWorldStateStorage
                     .getNearestBefore(ACCOUNT_INFO_STATE, previousKey)
                     .filter(
-                        found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size()))
+                        found ->
+                            found.value().isPresent()
+                                && accountHash.commonPrefixLength(found.key())
+                                    >= accountHash.size()))
             .isPresent()) {
           nextMatch.stream()
               .forEach(
@@ -249,8 +252,18 @@ public abstract class DiffBasedWorldStateKeyValueStorage
         }
 
         if (frozenStateCount.get() == 0) {
+          // A lot of entries will have no previous history, so use trace to log when no previous
+          // storage was found
+          LOG.atTrace()
+              .setMessage("no previous state found for block {}, address hash {}")
+              .addArgument(previousBlockHeader.get().getNumber())
+              .addArgument(accountHash)
+              .log();
+        } else {
           LOG.atDebug()
-              .setMessage("no previous state for account {} found to move to cold storage")
+              .setMessage("{} storage entries frozen for block {}, address hash {}")
+              .addArgument(frozenStateCount.get())
+              .addArgument(previousBlockHeader.get().getNumber())
               .addArgument(accountHash)
               .log();
         }
@@ -294,12 +307,25 @@ public abstract class DiffBasedWorldStateKeyValueStorage
                     .getNearestBefore(ACCOUNT_STORAGE_STORAGE, previousKey)
                     .filter(
                         found ->
-                            storageSlotKey.commonPrefixLength(found.key())
-                                >= storageSlotKey.size()))
+                            found.value().isPresent()
+                                && storageSlotKey.commonPrefixLength(found.key())
+                                    >= storageSlotKey.size()))
             .isPresent()) {
           nextMatch.stream()
               .forEach(
                   (nearestKey) -> {
+                    if (frozenStorageCount.get() > 0 && frozenStorageCount.get() % 100 == 0) {
+                      // Log progress in case catching up causes there to be a large number of keys
+                      // to move
+                      LOG.atDebug()
+                          .setMessage(
+                              "{} storage entries frozen for block {}, slot hash {}, latest key {}")
+                          .addArgument(frozenStorageCount.get())
+                          .addArgument(previousBlockHeader.get().getNumber())
+                          .addArgument(storageSlotKey)
+                          .addArgument(nearestKey.key())
+                          .log();
+                    }
                     moveDBEntry(
                         ACCOUNT_STORAGE_STORAGE,
                         ACCOUNT_STORAGE_FREEZER,
@@ -310,8 +336,18 @@ public abstract class DiffBasedWorldStateKeyValueStorage
         }
 
         if (frozenStorageCount.get() == 0) {
+          // A lot of entries will have no previous history, so use trace to log when no previous
+          // storage was found
+          LOG.atTrace()
+              .setMessage("no previous storage found for block {}, slot hash {}")
+              .addArgument(previousBlockHeader.get().getNumber())
+              .addArgument(storageSlotKey)
+              .log();
+        } else {
           LOG.atDebug()
-              .setMessage("no previous state for storage {} found to move to cold storage")
+              .setMessage("{} storage entries frozen for block {}, slot hash {}")
+              .addArgument(frozenStorageCount.get())
+              .addArgument(previousBlockHeader.get().getNumber())
               .addArgument(storageSlotKey)
               .log();
         }
@@ -337,10 +373,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
         tx.commit();
         break;
       } catch (StorageException se) {
-        if (se.getMessage().contains("RocksDBException: Busy")) {
-          if (retried) {
-            break;
-          }
+        if (!retried && se.getMessage().contains("RocksDBException: Busy")) {
           retried = true;
         } else {
           break;
