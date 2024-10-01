@@ -182,7 +182,7 @@ public class PeerDiscoveryAgentTest {
   }
 
   @Test
-  public void neighborsPacketLimited() {
+  public void neighborsPacketLimited() throws InterruptedException {
     // Start 20 agents with no bootstrap peers.
     final List<MockPeerDiscoveryAgent> otherAgents =
         helper.startDiscoveryAgents(20, Collections.emptyList());
@@ -192,8 +192,9 @@ public class PeerDiscoveryAgentTest {
             .map(Optional::get)
             .collect(Collectors.toList());
 
-    // Start another peer pointing to those 20 agents.
+    // Start another peer
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(otherPeers);
+
     // We used to do a hasSize match but we had issues with duplicate peers getting added to the
     // list.  By moving to a contains we make sure that all the peers are loaded with tolerance for
     // duplicates.  If we fix the duplication problem we should use containsExactlyInAnyOrder to
@@ -222,7 +223,7 @@ public class PeerDiscoveryAgentTest {
     final List<IncomingPacket> incomingPackets =
         testAgent.getIncomingPackets().stream()
             .filter(p -> p.packet.getType().equals(PacketType.NEIGHBORS))
-            .collect(toList());
+            .toList();
     assertThat(incomingPackets.size()).isEqualTo(1);
     final IncomingPacket neighborsPacket = incomingPackets.get(0);
     assertThat(neighborsPacket.fromAgent).isEqualTo(agent);
