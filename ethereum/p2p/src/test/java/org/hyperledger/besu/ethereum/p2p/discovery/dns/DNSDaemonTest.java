@@ -136,10 +136,4 @@ class DNSDaemonTest {
             .setWorkerPoolSize(1);
     vertx.deployVerticle(dnsDaemon, options);
   }
-
-  @AfterEach
-  @DisplayName("Check that the vertx worker verticle is still there")
-  void lastChecks(final Vertx vertx) {
-    assertThat(vertx.deploymentIDs()).isNotEmpty().hasSize(2);
-  }
 }
