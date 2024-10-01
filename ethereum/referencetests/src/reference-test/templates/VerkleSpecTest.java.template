@@ -1,9 +1,9 @@
-package org.hyperledger.besu.ethereum.vm.executionspec;
+package org.hyperledger.besu.ethereum.vm.executionspec.verkle;
 
 import static org.hyperledger.besu.ethereum.vm.BlockchainReferenceTestTools.executeTest;
 import static org.hyperledger.besu.ethereum.vm.BlockchainReferenceTestTools.generateTestParametersForConfig;
 
-import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
+import org.hyperledger.besu.ethereum.referencetests.VerkleReferenceTestCaseSpec;
 
 import java.util.stream.Stream;
 
@@ -19,7 +19,7 @@ public class %%TESTS_NAME%% {
   private static final String[] TEST_CONFIG_FILE_DIR_PATH = new String[] {%%TESTS_FILE%%};
 
   public static Stream<Arguments> getTestParametersForConfig() {
-    return generateTestParametersForConfig(TEST_CONFIG_FILE_DIR_PATH, BlockchainReferenceTestCaseSpec.class).stream().map(params ->
+    return generateTestParametersForConfig(TEST_CONFIG_FILE_DIR_PATH, VerkleReferenceTestCaseSpec.class).stream().map(params ->
         Arguments.of(params[0], params[1], params[2])
         );
   }
@@ -28,7 +28,7 @@ public class %%TESTS_NAME%% {
   @MethodSource("getTestParametersForConfig")
   public void execution(
       final String name,
-      final BlockchainReferenceTestCaseSpec spec,
+      final VerkleReferenceTestCaseSpec spec,
       final boolean runTest) {
     assumeTrue(runTest, "Test " + name + " was ignored");
     executeTest(spec);
