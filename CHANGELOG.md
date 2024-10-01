@@ -1,7 +1,7 @@
 # Changelog
 
 ## [Unreleased]
-- Added `--ephemery` network support for Ephemery Testnet [#7563](https://github.com/hyperledger/besu/pull/7563) thanks to [@gconnect](https://github.com/gconnect)
+- Add `--ephemery` network support for Ephemery Testnet [#7563](https://github.com/hyperledger/besu/pull/7563) thanks to [@gconnect](https://github.com/gconnect)
 - Add configuration of Consolidation Request Contract Address via genesis configuration [#7647](https://github.com/hyperledger/besu/pull/7647)
 
 ### Upcoming Breaking Changes
@@ -14,7 +14,10 @@
 - Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
 - Add Blob Transaction Metrics [#7622](https://github.com/hyperledger/besu/pull/7622)
 - Implemented support for emptyBlockPeriodSeconds in QBFT [#6965](https://github.com/hyperledger/besu/pull/6965)
-
+- LUKSO Cancun Hardfork [#7686](https://github.com/hyperledger/besu/pull/7686)
+- Add configuration of Consolidation Request Contract Address via genesis configuration [#7647](https://github.com/hyperledger/besu/pull/7647)
+- Interrupt pending transaction processing on block creation timeout [#7673](https://github.com/hyperledger/besu/pull/7673)
+- Align gas cap calculation for transaction simulation to Geth approach [#7703](https://github.com/hyperledger/besu/pull/7703)
 
 ### Bug fixes
 - Fix mounted data path directory permissions for besu user [#7575](https://github.com/hyperledger/besu/pull/7575)
