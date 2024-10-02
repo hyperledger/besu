@@ -32,10 +32,10 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public class DownloadReceiptsStep
@@ -62,10 +62,10 @@ public class DownloadReceiptsStep
     if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
       return CompletableFuture.supplyAsync(
           () -> {
-            final Map<BlockHeader, List<TransactionReceipt>> getReceipts =
-                new ConcurrentHashMap<BlockHeader, List<TransactionReceipt>>();
             List<BlockWithReceipts> blockWithReceiptsList = new ArrayList<>(headers.size());
             do {
+              final Map<BlockHeader, List<TransactionReceipt>> getReceipts =
+                  new HashMap<BlockHeader, List<TransactionReceipt>>();
               GetReceiptsFromPeerTask getReceiptsFromPeerTask =
                   new GetReceiptsFromPeerTask(headers, new BodyValidator());
               PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
@@ -75,13 +75,7 @@ public class DownloadReceiptsStep
                 Map<BlockHeader, List<TransactionReceipt>> receiptsResult =
                     getReceiptsResult.result().get();
                 for (BlockHeader blockHeader : receiptsResult.keySet()) {
-                  getReceipts.merge(
-                      blockHeader,
-                      receiptsResult.get(blockHeader),
-                      (initialReceipts, newReceipts) -> {
-                        throw new IllegalStateException(
-                            "Unexpectedly got receipts for block header already populated!");
-                      });
+                  getReceipts.put(blockHeader, receiptsResult.get(blockHeader));
                 }
               }
               // remove all the headers we found receipts for
@@ -91,15 +85,7 @@ public class DownloadReceiptsStep
             } while (!headers.isEmpty());
 
             // verify that all blocks have receipts
-            if (!blocks.stream()
-                .filter(
-                    (b) ->
-                        blockWithReceiptsList.stream()
-                            .map((bwr) -> bwr.getBlock())
-                            .toList()
-                            .contains(b))
-                .toList()
-                .isEmpty()) {
+            if (blocks.size() != blockWithReceiptsList.size()) {
               throw new IllegalStateException("Not all blocks have been matched to receipts!");
             }
             return blockWithReceiptsList;
@@ -115,6 +101,7 @@ public class DownloadReceiptsStep
   private List<BlockWithReceipts> combineBlocksAndReceipts(
       final List<Block> blocks, final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader) {
     return blocks.stream()
+        .filter((b) -> receiptsByHeader.keySet().contains(b.getHeader()))
         .map(
             block -> {
               final List<TransactionReceipt> receipts =
