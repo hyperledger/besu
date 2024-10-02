@@ -64,6 +64,7 @@ public class BesuNodeConfiguration {
   private final boolean secp256k1Native;
   private final boolean altbn128Native;
   private final List<String> plugins;
+  private final List<String> requestedPlugins;
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
   private final boolean isDnsEnabled;
@@ -102,6 +103,7 @@ public class BesuNodeConfiguration {
       final boolean secp256k1Native,
       final boolean altbn128Native,
       final List<String> plugins,
+      final List<String> requestedPlugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
       final boolean isDnsEnabled,
@@ -137,6 +139,7 @@ public class BesuNodeConfiguration {
     this.secp256k1Native = secp256k1Native;
     this.altbn128Native = altbn128Native;
     this.plugins = plugins;
+    this.requestedPlugins = requestedPlugins;
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
@@ -237,6 +240,10 @@ public class BesuNodeConfiguration {
 
   public List<String> getPlugins() {
     return plugins;
+  }
+
+  public List<String> getRequestedPlugins() {
+    return requestedPlugins;
   }
 
   public List<String> getExtraCLIOptions() {
