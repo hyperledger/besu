@@ -38,12 +38,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class DownloadReceiptsStep
     implements Function<List<Block>, CompletableFuture<List<BlockWithReceipts>>> {
-  private static final Logger LOG = LoggerFactory.getLogger(DownloadReceiptsStep.class);
   private final EthContext ethContext;
   private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
