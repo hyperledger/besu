@@ -1,21 +1,35 @@
-name: release
+name: Draft Release
+
+run-name: "Draft Release ${{ inputs.tag }}"
 
 on:
-  release:
-    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
 
 env:
   registry: docker.io
   GRADLE_OPTS: "-Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
 
 jobs:
-  preprocess_release:
+  validate:
     runs-on: ubuntu-22.04
+    env:
+      RELEASE_NAME: "${{ inputs.tag }}"
     steps:
+      - name: Check default branch
+        run: |
+          echo "Current Branch: ${{ github.ref_name }}"
+          echo "Default Branch: ${{ github.event.repository.default_branch }}"
+          if [[ ${{ github.ref_name }} != ${{ github.event.repository.default_branch }} ]]
+          then
+            echo "This workflow can only be run on default branch"
+            exit 1
+          fi
+       
       - name: Pre-process Release Name
         id: pre_process_release_name
-        env:
-          RELEASE_NAME: "${{ github.event.release.name }}"
         run: |
           # strip all whitespace
           RELEASE_NAME="${RELEASE_NAME//[[:space:]]/}"
@@ -24,35 +38,47 @@ jobs:
             exit 1
           fi
           echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT  # Set as output using the new syntax
+      
+      # Perform a tag checkout to ensure tag is available
+      - name: Verify tag Exist
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with: 
+          ref: ${{ steps.pre_process_release_name.outputs.release_name }}
+          fetch-depth: 1
+
     outputs:
       release_name: ${{ steps.pre_process_release_name.outputs.release_name }}
 
-  artifacts:
+  build:
     runs-on: ubuntu-22.04
-    needs: preprocess_release
+    needs: validate
     env:
-      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
-    permissions:
-      contents: write
+      RELEASE_NAME: ${{ needs.validate.outputs.release_name }}  # Use the output from the pre_process_release job
     outputs:
       tarSha: ${{steps.hashes.outputs.tarSha}}
       zipSha: ${{steps.hashes.outputs.zipSha}}
     steps:
-      - name: checkout
+      - name: Checkout tag
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          ref: ${{ env.RELEASE_NAME }}
+      
       - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
           java-version: 21
-      - name: setup gradle
+      
+      - name: Setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           cache-disabled: true
-      - name: assemble release
+      
+      - name: Assemble release
         run:
           ./gradlew -Prelease.releaseVersion=${{env.RELEASE_NAME}} -Pversion=${{env.RELEASE_NAME}} assemble
-      - name: hashes
+
+      - name: Hashes
         id: hashes
         run: |
           cd build/distributions
@@ -60,37 +86,56 @@ jobs:
           echo "tarSha=$(shasum -a 256 besu*.tar.gz)"
           echo "zipSha=$(shasum -a 256 besu*.zip)" >> $GITHUB_OUTPUT
           echo "tarSha=$(shasum -a 256 besu*.tar.gz)" >> $GITHUB_OUTPUT
-      - name: upload tarball
+          shasum -a 256 besu-${{env.RELEASE_NAME}}.tar.gz > besu-${{env.RELEASE_NAME}}.tar.gz.sha256
+          shasum -a 256 besu-${{env.RELEASE_NAME}}.zip > besu-${{env.RELEASE_NAME}}.zip.sha256
+      
+      - name: Upload tarball
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         with:
-          path: 'build/distributions/besu*.tar.gz'
+          path: 'build/distributions/besu-${{ env.RELEASE_NAME }}.tar.gz'
           name: besu-${{ env.RELEASE_NAME }}.tar.gz
           compression-level: 0
+      
       - name: upload zipfile
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         with:
-          path: 'build/distributions/besu*.zip'
+          path: 'build/distributions/besu-${{ env.RELEASE_NAME }}.zip'
           name: besu-${{ env.RELEASE_NAME }}.zip
           compression-level: 0
 
-  testWindows:
+      - name: upload checksum zip
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        with:
+          path: 'build/distributions/besu-${{ env.RELEASE_NAME }}.zip.sha256'
+          name: besu-${{ env.RELEASE_NAME }}.zip.sha256
+          compression-level: 0
+
+      - name: upload checksum tar.gz
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        with:
+          path: 'build/distributions/besu-${{ env.RELEASE_NAME }}.tar.gz.sha256'
+          name: besu-${{ env.RELEASE_NAME }}.tar.gz.sha256
+          compression-level: 0
+
+  test-windows:
     runs-on: windows-2022
-    needs: artifacts
-    timeout-minutes: 10
+    needs: ["build"]
+    timeout-minutes: 5
     steps:
       - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
           java-version: 21
+      
       - name: Download zip
         uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe
         with:
           pattern: besu-*.zip
           merge-multiple: true
-      - name: test Besu
+
+      - name: Test
         run: |
-          dir
           unzip besu-*.zip -d besu-tmp
           cd besu-tmp
           mv besu-* ../besu
@@ -98,81 +143,49 @@ jobs:
           besu\bin\besu.bat --help
           besu\bin\besu.bat --version
 
-  publish:
+  test-linux:
     runs-on: ubuntu-22.04
-    needs: [preprocess_release, testWindows, artifacts]
-    env:
-      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
-    permissions:
-      contents: write
+    needs: ["build"]
+    timeout-minutes: 5
     steps:
-      - name: Download archives
-        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe
-        with:
-          pattern: besu-*
-          merge-multiple: true
-          path: 'build/distributions'
-      - name: Upload Release assets
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
-        with:
-          append_body: true
-          files: |
-            build/distributions/besu*.tar.gz
-            build/distributions/besu*.zip
-          body: |
-            ${{needs.artifacts.outputs.tarSha}}
-            ${{needs.artifacts.outputs.zipSha}}
-
-
-
-  artifactoryPublish:
-    runs-on: ubuntu-22.04
-    needs: [preprocess_release, artifacts]
-    env:
-      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
-    steps:
-      - name: checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
       - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
           java-version: 21
-      - name: setup gradle
-        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+    
+      - name: Download tar.gz
+        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe
         with:
-          cache-disabled: true
-      - name: Artifactory Publish
-        env:
-          ARTIFACTORY_USER: ${{ secrets.BESU_ARTIFACTORY_USER }}
-          ARTIFACTORY_KEY: ${{ secrets.BESU_ARTIFACTORY_TOKEN }}
-        run: ./gradlew -Prelease.releaseVersion=${{ env.RELEASE_NAME }} -Pversion=${{env.RELEASE_NAME}} artifactoryPublish
+          pattern: besu-*.tar.gz
+          merge-multiple: true
 
-  hadolint:
+      - name: Test
+        run: |
+          tar zxvf besu-*.tar.gz
+          rm -f besu-*.tar.gz
+          mv besu-* besu-test
+          besu-test/bin/besu --help
+          besu-test/bin/besu --version
+
+  docker-lint:
     runs-on: ubuntu-22.04
+    needs: [test-linux, test-windows]
+    env:
+      RELEASE_NAME: ${{ needs.validate.outputs.release_name }}  # Use the output from the pre_process_release job
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-      - name: Set up Java
-        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
-          distribution: temurin
-          java-version: 21
-      - name: setup gradle
-        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
-        with:
-          cache-disabled: true
+          ref: ${{ env.RELEASE_NAME }}
+
       - name: hadoLint
         run: docker run --rm -i hadolint/hadolint < docker/Dockerfile
-
-  buildDocker:
-    needs: [preprocess_release, hadolint]
+        
+  docker-publish:
+    needs: [validate, docker-lint]
     env:
-      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
-    permissions:
-      contents: read
-      packages: write
-
+      RELEASE_NAME: ${{ needs.validate.outputs.release_name }}  # Use the output from the pre_process_release job
     strategy:
       fail-fast: false
       matrix:
@@ -192,30 +205,39 @@ jobs:
             echo "PLATFORM_PAIR=linux-arm64" >> $GITHUB_OUTPUT
             echo "ARCH=arm64" >> $GITHUB_OUTPUT
           fi
+
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          ref: ${{ env.RELEASE_NAME }}
+
       - name: short sha
         id: shortSha
         run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
           java-version: 21
+
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           cache-disabled: true
+          
       - name: install goss
         run: |
           mkdir -p docker/reports
           curl -L https://github.com/aelsabbahy/goss/releases/download/v0.4.4/goss-${{ steps.prep.outputs.PLATFORM_PAIR }} -o ./docker/tests/goss-${{ steps.prep.outputs.PLATFORM_PAIR }}
+
       - name: login to ${{ env.registry }}
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
           registry: ${{ env.registry }}
           username: ${{ secrets.DOCKER_USER_RW }}
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
+
       - name: build and test docker
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         env:
@@ -223,86 +245,48 @@ jobs:
         with:
           cache-disabled: true
           arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{env.RELEASE_NAME}} -Prelease.releaseVersion=${{ env.RELEASE_NAME }}
+
       - name: publish
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{env.RELEASE_NAME}} -Prelease.releaseVersion=${{ env.RELEASE_NAME }}
 
-  multiArch:
-    needs: [preprocess_release, buildDocker]
-    env:
-      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
+  docker-manifest:
+    needs: [validate, docker-publish]
     runs-on: ubuntu-22.04
-    permissions:
-      contents: read
-      packages: write
+    env:
+      RELEASE_NAME: ${{ needs.validate.outputs.release_name }}  # Use the output from the pre_process_release job
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          ref: ${{ env.RELEASE_NAME }}
+
       - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
           java-version: 21
+
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           cache-disabled: true
+
       - name: login to ${{ env.registry }}
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
           registry: ${{ env.registry }}
           username: ${{ secrets.DOCKER_USER_RW }}
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
+
       - name: multi-arch docker
         run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{env.RELEASE_NAME}} -Prelease.releaseVersion=${{ env.RELEASE_NAME }}
 
-  amendNotes:
-    needs: [preprocess_release, multiArch]
+  docker-verify:
+    needs: [validate,docker-manifest]
     env:
-      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-    steps:
-      - name: add pull command to release notes
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
-        with:
-          append_body: true
-          body: |
-            `docker pull ${{env.registry}}/${{secrets.DOCKER_ORG}}/besu:${{env.RELEASE_NAME}}`
-
-  dockerPromoteX64:
-    needs: [preprocess_release, multiArch]
-    env:
-      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-      - uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
-        with:
-          distribution: temurin
-          java-version: 21
-          cache: gradle
-      - name: login to ${{ env.registry }}
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
-        with:
-          registry: ${{ env.registry }}
-          username: ${{ secrets.DOCKER_USER_RW }}
-          password: ${{ secrets.DOCKER_PASSWORD_RW }}
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
-        with:
-          cache-disabled: true
-      - name: Docker upload
-        run: ./gradlew "-Prelease.releaseVersion=${{ env.RELEASE_NAME }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" dockerUploadRelease
-      - name: Docker manifest
-        run: ./gradlew "-Prelease.releaseVersion=${{ env.RELEASE_NAME }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" manifestDockerRelease
-
-  verifyContainer:
-    needs: [preprocess_release, dockerPromoteX64]
-    env:
-      RELEASE_NAME: ${{ needs.preprocess_release.outputs.release_name }}  # Use the output from the pre_process_release job
+      RELEASE_NAME: ${{ needs.validate.outputs.release_name }}  # Use the output from the pre_process_release job
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -310,7 +294,81 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
       - name: Trigger container verify
-        run: echo '{"version":"${{ env.RELEASE_NAME }}","verify-latest-version":"true"}' | gh workflow run container-verify.yml --json
+        run: echo '{"version":"${{ env.RELEASE_NAME }}","verify-latest-version":"false"}' | gh workflow run container-verify.yml --json
         env:
           GH_TOKEN: ${{ github.token }}
+
+  release-draft:
+    runs-on: ubuntu-22.04
+    needs: [validate, test-linux, test-windows]
+    permissions:
+      contents: write
+    env:
+      RELEASE_NAME: ${{ needs.validate.outputs.release_name }} 
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          ref: ${{ env.RELEASE_NAME }}
+
+      - name: Download Besu artifacts
+        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe
+        with:
+          pattern: besu-${{env.RELEASE_NAME}}*
+          merge-multiple: true
+
+      - name: Draft release notes
+        run: |
+          echo "## ${{env.RELEASE_NAME}}" > draft-release-notes.md
+          echo "## Upcoming Breaking Changes" >> draft-release-notes.md
+          echo "## Breaking Changes" >> draft-release-notes.md
+          echo "## Additions and Improvements" >> draft-release-notes.md
+          echo "## Bug fixes" >> draft-release-notes.md
+          echo "`$(cat besu-${{env.RELEASE_NAME}}.zip.sha256)`" >> draft-release-notes.md
+          echo "`$(cat besu-${{env.RELEASE_NAME}}.tar.gz.sha256)`" >> draft-release-notes.md
+          cat besu-${{env.RELEASE_NAME}}.zip.sha256 >> draft-release-notes.md
+          cat besu-${{env.RELEASE_NAME}}.tar.gz.sha256 >> draft-release-notes.md
+
+      - name: Draft release
+        run: |
+          gh release create \
+            --draft \
+            --title=${{env.RELEASE_NAME}} \
+            --notes-file draft-release-notes.md \
+            --verify-tag ${{env.RELEASE_NAME}} \
+            besu-${{env.RELEASE_NAME}}.tar.gz \
+            besu-${{env.RELEASE_NAME}}.zip \
+            besu-${{env.RELEASE_NAME}}.zip.sha256 \
+            besu-${{env.RELEASE_NAME}}.tar.gz.sha256
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  artifactory:
+    runs-on: ubuntu-22.04
+    needs: [validate, test-linux, test-windows]
+    env:
+      RELEASE_NAME: ${{ needs.validate.outputs.release_name }} 
+    steps:
+      - name: checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          ref: ${{ env.RELEASE_NAME }}
+
+      - name: Set up Java
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: setup gradle
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
+
+      - name: Artifactory Publish
+        env:
+          ARTIFACTORY_USER: ${{ secrets.BESU_ARTIFACTORY_USER }}
+          ARTIFACTORY_KEY: ${{ secrets.BESU_ARTIFACTORY_TOKEN }}
+        run: ./gradlew -Prelease.releaseVersion=${{ env.RELEASE_NAME }} -Pversion=${{env.RELEASE_NAME}} artifactoryPublish
