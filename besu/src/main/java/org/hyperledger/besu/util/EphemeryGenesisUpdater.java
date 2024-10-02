@@ -34,6 +34,12 @@ public class EphemeryGenesisUpdater {
   private static final long PERIOD_IN_SECONDS = (PERIOD_IN_DAYS * 24 * 60 * 60);
 
   /**
+   * Constructor for EphemeryGenesisUpdater. Initializes the genesis updater for the Ephemery
+   * network.
+   */
+  public EphemeryGenesisUpdater() {}
+
+  /**
    * Updates the Ephemery genesis configuration based on the predefined period.
    *
    * @param overrides a map of configuration overrides
