@@ -30,6 +30,7 @@ import java.util.Set;
 import picocli.CommandLine;
 
 /** Command line options for configuring metrics. */
+// TODO: implement CLIOption<MetricsConfiguration> and rename to drop the Group
 public class MetricsOptionGroup {
   @CommandLine.Option(
       names = {"--metrics-enabled"},
