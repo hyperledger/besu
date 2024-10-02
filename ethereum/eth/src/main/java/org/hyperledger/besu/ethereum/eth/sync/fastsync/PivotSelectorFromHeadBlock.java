@@ -28,10 +28,10 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PivotSelectorFromSafeBlock extends PivotSelectorFromBlock {
-  private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromSafeBlock.class);
+public class PivotSelectorFromHeadBlock extends PivotSelectorFromBlock {
+  private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromHeadBlock.class);
 
-  public PivotSelectorFromSafeBlock(
+  public PivotSelectorFromHeadBlock(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
@@ -51,8 +51,8 @@ public class PivotSelectorFromSafeBlock extends PivotSelectorFromBlock {
 
   @Override
   protected Hash getPivotHash(final ForkchoiceEvent forkchoiceEvent) {
-    Hash hash = forkchoiceEvent.getSafeBlockHash();
-    LOG.debug("Returning safe block hash {} as pivot", hash);
+    Hash hash = forkchoiceEvent.getHeadBlockHash();
+    LOG.info("Returning head block hash {} as pivot", hash);
     return hash;
   }
 }
