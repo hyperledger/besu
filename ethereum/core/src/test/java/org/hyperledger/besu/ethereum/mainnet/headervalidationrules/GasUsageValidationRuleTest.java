@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -47,5 +48,12 @@ public class GasUsageValidationRuleTest {
     final BlockHeader header = blockBuilder.buildHeader();
 
     assertThat(uut.validate(header, null)).isEqualTo(expectedResult);
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

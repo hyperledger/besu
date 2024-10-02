@@ -14,12 +14,34 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+
 public class InvalidJsonRpcRequestException extends IllegalArgumentException {
+
+  private final RpcErrorType rpcErrorType;
+
   public InvalidJsonRpcRequestException(final String message) {
     super(message);
+    rpcErrorType = RpcErrorType.INVALID_PARAMS;
+  }
+
+  public InvalidJsonRpcRequestException(final String message, final RpcErrorType rpcErrorType) {
+    super(message);
+    this.rpcErrorType = rpcErrorType;
   }
 
   public InvalidJsonRpcRequestException(final String message, final Throwable cause) {
     super(message, cause);
+    rpcErrorType = RpcErrorType.INVALID_PARAMS;
+  }
+
+  public InvalidJsonRpcRequestException(
+      final String message, final RpcErrorType rpcErrorType, final Throwable cause) {
+    super(message, cause);
+    this.rpcErrorType = rpcErrorType;
+  }
+
+  public RpcErrorType getRpcErrorType() {
+    return rpcErrorType;
   }
 }

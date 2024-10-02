@@ -90,6 +90,34 @@ public interface MetricsSystem extends BesuService {
       MetricCategory category, String name, String help, String... labelNames);
 
   /**
+   * Creates a simple Timer.
+   *
+   * @param category The {@link MetricCategory} this timer is assigned to.
+   * @param name A name for this metric.
+   * @param help A human readable description of the metric.
+   * @return The created Timer instance.
+   */
+  default OperationTimer createSimpleTimer(
+      final MetricCategory category, final String name, final String help) {
+    return createSimpleLabelledTimer(category, name, help).labels();
+  }
+
+  /**
+   * Creates a simple Timer with assigned labels.
+   *
+   * @param category The {@link MetricCategory} this timer is assigned to.
+   * @param name A name for this metric.
+   * @param help A human readable description of the metric.
+   * @param labelNames An array of labels to assign to the Timer.
+   * @return The created Timer instance.
+   */
+  LabelledMetric<OperationTimer> createSimpleLabelledTimer(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames);
+
+  /**
    * Creates a gauge for displaying double vales. A gauge is a metric to report the current value.
    * The metric value may go up or down.
    *

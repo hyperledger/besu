@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services.txselection;
 
 import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 import com.google.common.base.Stopwatch;
 
@@ -26,6 +27,13 @@ import com.google.common.base.Stopwatch;
  * @param <PT> the type of the pending transaction
  */
 public interface TransactionEvaluationContext<PT extends PendingTransaction> {
+
+  /**
+   * Gets the pending block header
+   *
+   * @return the pending block header
+   */
+  ProcessableBlockHeader getPendingBlockHeader();
 
   /**
    * Gets the pending transaction.

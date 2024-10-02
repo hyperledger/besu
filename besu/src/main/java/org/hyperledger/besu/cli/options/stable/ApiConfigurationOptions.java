@@ -85,7 +85,7 @@ public class ApiConfigurationOptions {
   @CommandLine.Option(
       names = {"--rpc-max-trace-filter-range"},
       description =
-          "Specifies the maximum number of blocks for the trace_filter method. Must be >=0. 0 specifies no limit  (default: $DEFAULT-VALUE)")
+          "Specifies the maximum number of blocks for the trace_filter method. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
   private final Long maxTraceFilterRange = 1000L;
 
   /**

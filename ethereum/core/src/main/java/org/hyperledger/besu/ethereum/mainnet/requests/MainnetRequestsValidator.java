@@ -14,23 +14,34 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.RequestType;
 
 public class MainnetRequestsValidator {
   public static RequestsValidatorCoordinator pragueRequestsValidator(
-      final Address depositContractAddress) {
+      final RequestContractAddresses requestContractAddresses) {
     return new RequestsValidatorCoordinator.Builder()
         .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
-        .addValidator(RequestType.DEPOSIT, new DepositRequestValidator(depositContractAddress))
+        .addValidator(RequestType.CONSOLIDATION, new ConsolidationRequestValidator())
+        .addValidator(
+            RequestType.DEPOSIT,
+            new DepositRequestValidator(requestContractAddresses.getDepositContractAddress()))
         .build();
   }
 
   public static RequestProcessorCoordinator pragueRequestsProcessors(
-      final Address depositContractAddress) {
+      final RequestContractAddresses requestContractAddresses) {
     return new RequestProcessorCoordinator.Builder()
-        .addProcessor(RequestType.WITHDRAWAL, new WithdrawalRequestProcessor())
-        .addProcessor(RequestType.DEPOSIT, new DepositRequestProcessor(depositContractAddress))
+        .addProcessor(
+            RequestType.WITHDRAWAL,
+            new WithdrawalRequestProcessor(
+                requestContractAddresses.getWithdrawalRequestContractAddress()))
+        .addProcessor(
+            RequestType.CONSOLIDATION,
+            new ConsolidationRequestProcessor(
+                requestContractAddresses.getConsolidationRequestContractAddress()))
+        .addProcessor(
+            RequestType.DEPOSIT,
+            new DepositRequestProcessor(requestContractAddresses.getDepositContractAddress()))
         .build();
   }
 }

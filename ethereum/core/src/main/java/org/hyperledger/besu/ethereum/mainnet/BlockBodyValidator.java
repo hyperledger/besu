@@ -59,5 +59,6 @@ public interface BlockBodyValidator {
       Block block,
       List<TransactionReceipt> receipts,
       final Optional<List<Request>> requests,
-      final HeaderValidationMode ommerValidationMode);
+      final HeaderValidationMode ommerValidationMode,
+      final BodyValidationMode bodyValidationMode);
 }

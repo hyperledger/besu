@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -38,7 +42,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mockito;
 
 public class GraphQLHttpServiceCorsTest {
   @TempDir private Path folder;
@@ -208,10 +211,11 @@ public class GraphQLHttpServiceCorsTest {
       config.setCorsAllowedDomains(Lists.newArrayList(corsAllowedDomains));
     }
 
-    final BlockchainQueries blockchainQueries = Mockito.mock(BlockchainQueries.class);
-    final Synchronizer synchronizer = Mockito.mock(Synchronizer.class);
+    final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
+    when(blockchainQueries.gasPriorityFee()).thenReturn(Wei.ONE);
+    final Synchronizer synchronizer = mock(Synchronizer.class);
 
-    final PoWMiningCoordinator miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
+    final PoWMiningCoordinator miningCoordinatorMock = mock(PoWMiningCoordinator.class);
 
     // mock graphql context
     final Map<GraphQLContextType, Object> graphQLContextMap =
@@ -219,7 +223,7 @@ public class GraphQLHttpServiceCorsTest {
             GraphQLContextType.BLOCKCHAIN_QUERIES,
             blockchainQueries,
             GraphQLContextType.TRANSACTION_POOL,
-            Mockito.mock(TransactionPool.class),
+            mock(TransactionPool.class),
             GraphQLContextType.MINING_COORDINATOR,
             miningCoordinatorMock,
             GraphQLContextType.SYNCHRONIZER,
@@ -233,7 +237,7 @@ public class GraphQLHttpServiceCorsTest {
 
     final GraphQLHttpService graphQLHttpService =
         new GraphQLHttpService(
-            vertx, folder, config, graphQL, graphQLContextMap, Mockito.mock(EthScheduler.class));
+            vertx, folder, config, graphQL, graphQLContextMap, mock(EthScheduler.class));
     graphQLHttpService.start().join();
 
     return graphQLHttpService;

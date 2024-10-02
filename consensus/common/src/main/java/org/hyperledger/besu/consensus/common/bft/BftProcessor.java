@@ -61,6 +61,9 @@ public class BftProcessor implements Runnable {
   @Override
   public void run() {
     try {
+      // Start the event queue. Until it is started it won't accept new events from peers
+      incomingQueue.start();
+
       while (!shutdown) {
         nextEvent().ifPresent(eventMultiplexer::handleBftEvent);
       }

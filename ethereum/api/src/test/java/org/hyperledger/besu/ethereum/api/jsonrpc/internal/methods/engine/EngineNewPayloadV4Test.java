@@ -111,7 +111,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     var resp =
         resp(
             mockEnginePayload(
-                mockHeader, Collections.emptyList(), null, depositRequests, null, null));
+                mockHeader, Collections.emptyList(), null, depositRequests, null, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -127,6 +127,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
                 Collections.emptyList(),
                 null,
                 depositRequests,
+                null,
                 null,
                 null));
 
@@ -155,7 +156,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     var resp =
         resp(
             mockEnginePayload(
-                mockHeader, Collections.emptyList(), null, depositRequestsParam, null, null));
+                mockHeader, Collections.emptyList(), null, depositRequestsParam, null, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -175,6 +176,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
                 Collections.emptyList(),
                 null,
                 depositRequests,
+                null,
                 null,
                 null));
 
@@ -199,7 +201,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     when(mergeCoordinator.getLatestValidAncestor(mockHeader))
         .thenReturn(Optional.of(mockHeader.getHash()));
 
-    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), null, null, null, null));
+    var resp =
+        resp(mockEnginePayload(mockHeader, Collections.emptyList(), null, null, null, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -213,6 +216,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             mockEnginePayload(
                 createBlockHeader(Optional.empty(), Optional.empty(), Optional.empty()),
                 Collections.emptyList(),
+                null,
                 null,
                 null,
                 null,
@@ -244,7 +248,13 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     var resp =
         resp(
             mockEnginePayload(
-                mockHeader, Collections.emptyList(), null, null, withdrawalRequestsParams, null));
+                mockHeader,
+                Collections.emptyList(),
+                null,
+                null,
+                withdrawalRequestsParams,
+                null,
+                null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -264,6 +274,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
                 null,
                 null,
                 withdrawalRequests,
+                null,
                 null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);

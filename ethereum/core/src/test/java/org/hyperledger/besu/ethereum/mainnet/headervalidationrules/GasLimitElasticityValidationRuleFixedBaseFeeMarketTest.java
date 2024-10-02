@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FixedBaseFeeMarket;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -71,5 +72,12 @@ public class GasLimitElasticityValidationRuleFixedBaseFeeMarketTest {
     final BlockHeader parent = blockHeaderBuilder.buildHeader();
 
     assertThat(uut.validate(header, parent)).isEqualTo(expectedResult);
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

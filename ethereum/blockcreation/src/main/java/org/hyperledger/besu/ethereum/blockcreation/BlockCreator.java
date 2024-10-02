@@ -50,15 +50,20 @@ public interface BlockCreator {
     }
   }
 
-  BlockCreationResult createBlock(final long timestamp);
+  BlockCreationResult createBlock(final long timestamp, final BlockHeader parentHeader);
 
-  BlockCreationResult createEmptyWithdrawalsBlock(final long timestamp);
+  BlockCreationResult createEmptyWithdrawalsBlock(
+      final long timestamp, final BlockHeader parentHeader);
 
   BlockCreationResult createBlock(
-      final List<Transaction> transactions, final List<BlockHeader> ommers, final long timestamp);
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final long timestamp,
+      final BlockHeader parentHeader);
 
   BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
-      final long timestamp);
+      final long timestamp,
+      final BlockHeader parentHeader);
 }

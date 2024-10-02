@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,6 +55,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -75,7 +76,6 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.assertj.core.api.Java6Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -98,7 +98,7 @@ public class CliqueBlockCreatorTest {
   private VoteProvider voteProvider;
 
   @BeforeEach
-  public void setup() {
+  void setup() {
     protocolSchedule =
         CliqueProtocolSchedule.create(
             GenesisConfigFile.DEFAULT.getConfigOptions(),
@@ -107,7 +107,9 @@ public class CliqueBlockCreatorTest {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
 
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);
@@ -154,13 +156,13 @@ public class CliqueBlockCreatorTest {
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            blockchain.getChainHeadHeader(),
             epochManager,
             ethScheduler);
 
-    final Block createdBlock = blockCreator.createBlock(5L).getBlock();
+    final Block createdBlock =
+        blockCreator.createBlock(5L, blockchain.getChainHeadHeader()).getBlock();
 
-    Java6Assertions.assertThat(CliqueHelpers.getProposerOfBlock(createdBlock.getHeader()))
+    assertThat(CliqueHelpers.getProposerOfBlock(createdBlock.getHeader()))
         .isEqualTo(proposerAddress);
   }
 
@@ -183,11 +185,11 @@ public class CliqueBlockCreatorTest {
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            blockchain.getChainHeadHeader(),
             epochManager,
             ethScheduler);
 
-    final Block createdBlock = blockCreator.createBlock(0L).getBlock();
+    final Block createdBlock =
+        blockCreator.createBlock(0L, blockchain.getChainHeadHeader()).getBlock();
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.ADD_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(a1);
   }
@@ -217,11 +219,11 @@ public class CliqueBlockCreatorTest {
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            blockchain.getChainHeadHeader(),
             epochManager,
             ethScheduler);
 
-    final Block createdBlock = blockCreator.createBlock(0L).getBlock();
+    final Block createdBlock =
+        blockCreator.createBlock(0L, blockchain.getChainHeadHeader()).getBlock();
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.DROP_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0"));
   }
@@ -244,7 +246,8 @@ public class CliqueBlockCreatorTest {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            conf);
+            conf,
+            new BlobCache());
     transactionPool.setEnabled();
     return transactionPool;
   }

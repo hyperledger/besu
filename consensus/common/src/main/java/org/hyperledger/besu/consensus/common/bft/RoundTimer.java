@@ -16,30 +16,37 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** Class for starting and keeping organised round timers */
 public class RoundTimer {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RoundTimer.class);
+
   private final BftExecutors bftExecutors;
   private Optional<ScheduledFuture<?>> currentTimerTask;
   private final BftEventQueue queue;
-  private final long baseExpiryMillis;
+  private final Duration baseExpiryPeriod;
 
   /**
    * Construct a RoundTimer with primed executor service ready to start timers
    *
    * @param queue The queue in which to put round expiry events
-   * @param baseExpirySeconds The initial round length for round 0
+   * @param baseExpiryPeriod The initial round length for round 0
    * @param bftExecutors executor service that timers can be scheduled with
    */
   public RoundTimer(
-      final BftEventQueue queue, final long baseExpirySeconds, final BftExecutors bftExecutors) {
+      final BftEventQueue queue, final Duration baseExpiryPeriod, final BftExecutors bftExecutors) {
     this.queue = queue;
     this.bftExecutors = bftExecutors;
     this.currentTimerTask = Optional.empty();
-    this.baseExpiryMillis = baseExpirySeconds * 1000;
+    this.baseExpiryPeriod = baseExpiryPeriod;
   }
 
   /** Cancels the current running round timer if there is one */
@@ -65,12 +72,23 @@ public class RoundTimer {
   public synchronized void startTimer(final ConsensusRoundIdentifier round) {
     cancelTimer();
 
-    final long expiryTime = baseExpiryMillis * (long) Math.pow(2, round.getRoundNumber());
+    final long expiryTime =
+        baseExpiryPeriod.toMillis() * (long) Math.pow(2, round.getRoundNumber());
 
     final Runnable newTimerRunnable = () -> queue.add(new RoundExpiry(round));
 
     final ScheduledFuture<?> newTimerTask =
         bftExecutors.scheduleTask(newTimerRunnable, expiryTime, TimeUnit.MILLISECONDS);
+
+    // Once we are up to round 2 start logging round expiries
+    if (round.getRoundNumber() >= 2) {
+      LOG.info(
+          "BFT round {} expired. Moved to round {} which will expire in {} seconds",
+          round.getRoundNumber() - 1,
+          round.getRoundNumber(),
+          (expiryTime / 1000));
+    }
+
     currentTimerTask = Optional.of(newTimerTask);
   }
 }

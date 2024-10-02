@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadExceptio
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 import org.hyperledger.besu.util.ExceptionUtils;
@@ -52,6 +53,7 @@ public class FastSyncDownloader<REQUEST> {
   private final WorldStateDownloader worldStateDownloader;
   private final TaskCollection<REQUEST> taskCollection;
   private final Path fastSyncDataDirectory;
+  private final SyncDurationMetrics syncDurationMetrics;
   private volatile Optional<TrailingPeerRequirements> trailingPeerRequirements = Optional.empty();
   private final AtomicBoolean running = new AtomicBoolean(false);
 
@@ -66,7 +68,8 @@ public class FastSyncDownloader<REQUEST> {
       final FastSyncStateStorage fastSyncStateStorage,
       final TaskCollection<REQUEST> taskCollection,
       final Path fastSyncDataDirectory,
-      final FastSyncState initialFastSyncState) {
+      final FastSyncState initialFastSyncState,
+      final SyncDurationMetrics syncDurationMetrics) {
     this.fastSyncActions = fastSyncActions;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.worldStateDownloader = worldStateDownloader;
@@ -74,13 +77,15 @@ public class FastSyncDownloader<REQUEST> {
     this.taskCollection = taskCollection;
     this.fastSyncDataDirectory = fastSyncDataDirectory;
     this.initialFastSyncState = initialFastSyncState;
+    this.syncDurationMetrics = syncDurationMetrics;
   }
 
   public CompletableFuture<FastSyncState> start() {
     if (!running.compareAndSet(false, true)) {
       throw new IllegalStateException("SyncDownloader already running");
     }
-    LOG.info("Starting sync");
+    LOG.info("Starting pivot-based sync");
+
     return start(initialFastSyncState);
   }
 
@@ -94,7 +99,7 @@ public class FastSyncDownloader<REQUEST> {
           onBonsai.clearFlatDatabase();
           onBonsai.clearTrieLog();
         });
-    LOG.debug("Start sync with initial sync state {}", fastSyncState);
+    LOG.debug("Start fast sync with initial sync state {}", fastSyncState);
     return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
   }
 
@@ -114,7 +119,9 @@ public class FastSyncDownloader<REQUEST> {
   protected CompletableFuture<FastSyncState> handleFailure(final Throwable error) {
     trailingPeerRequirements = Optional.empty();
     Throwable rootCause = ExceptionUtils.rootCause(error);
-    if (rootCause instanceof SyncException) {
+    if (rootCause instanceof NoSyncRequiredException) {
+      return CompletableFuture.completedFuture(new NoSyncRequiredState());
+    } else if (rootCause instanceof SyncException) {
       return CompletableFuture.failedFuture(error);
     } else if (rootCause instanceof StalledDownloadException) {
       LOG.debug("Stalled sync re-pivoting to newer block.");
@@ -187,7 +194,8 @@ public class FastSyncDownloader<REQUEST> {
       }
       final CompletableFuture<Void> worldStateFuture =
           worldStateDownloader.run(fastSyncActions, currentState);
-      final ChainDownloader chainDownloader = fastSyncActions.createChainDownloader(currentState);
+      final ChainDownloader chainDownloader =
+          fastSyncActions.createChainDownloader(currentState, syncDurationMetrics);
       final CompletableFuture<Void> chainFuture = chainDownloader.start();
 
       // If either download fails, cancel the other one.

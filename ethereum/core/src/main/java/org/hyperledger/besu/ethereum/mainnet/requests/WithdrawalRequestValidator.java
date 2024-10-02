@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class WithdrawalRequestValidator implements RequestValidator {
+
+  public static final int MAX_WITHDRAWAL_REQUESTS_PER_BLOCK = 16;
 
   private static final Logger LOG = LoggerFactory.getLogger(WithdrawalRequestValidator.class);
 
@@ -51,8 +52,7 @@ public class WithdrawalRequestValidator implements RequestValidator {
             .orElse(Collections.emptyList());
 
     // TODO Do we need to allow for customization? (e.g. if the value changes in the next fork)
-    if (withdrawalRequestsInBlock.size()
-        > WithdrawalRequestContractHelper.MAX_WITHDRAWAL_REQUESTS_PER_BLOCK) {
+    if (withdrawalRequestsInBlock.size() > MAX_WITHDRAWAL_REQUESTS_PER_BLOCK) {
       LOG.warn(
           "Block {} has more than the allowed maximum number of withdrawal requests", blockHash);
       return false;

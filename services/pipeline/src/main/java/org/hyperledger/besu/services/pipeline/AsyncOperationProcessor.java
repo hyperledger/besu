@@ -83,7 +83,11 @@ class AsyncOperationProcessor<I, O> implements Processor<I, O> {
       waitForAnyFutureToComplete();
       outputCompletedTasks(outputPipe);
     } catch (final InterruptedException e) {
-      LOG.trace("Interrupted while waiting for processing to complete", e);
+      LOG.atTrace()
+          .setMessage("Interrupted while waiting for processing to complete: Message=({})")
+          .addArgument(e.getMessage())
+          .setCause(e)
+          .log();
     } catch (final ExecutionException e) {
       throw new AsyncOperationException("Async operation failed. " + e.getMessage(), e);
     } catch (final TimeoutException e) {

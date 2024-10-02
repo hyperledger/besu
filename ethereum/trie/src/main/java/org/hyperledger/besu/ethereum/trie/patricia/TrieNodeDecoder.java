@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie.patricia;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.NullNode;
@@ -59,6 +60,9 @@ public class TrieNodeDecoder {
    * @return A list of nodes and node references embedded in the given rlp.
    */
   public static List<Node<Bytes>> decodeNodes(final Bytes location, final Bytes nodeRlp) {
+    if (nodeRlp.equals(MerkleTrie.EMPTY_TRIE_NODE)) {
+      return new ArrayList<>();
+    }
     final Node<Bytes> node = decode(location, nodeRlp);
     final List<Node<Bytes>> nodes = new ArrayList<>();
     nodes.add(node);

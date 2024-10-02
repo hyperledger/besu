@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -43,6 +44,7 @@ import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -143,6 +145,7 @@ public class PeerDiscoveryController {
   private final AtomicBoolean peerTableIsDirty = new AtomicBoolean(false);
   private OptionalLong cleanTableTimerId = OptionalLong.empty();
   private RecursivePeerRefreshState recursivePeerRefreshState;
+  private final boolean includeBootnodesOnPeerRefresh;
 
   private PeerDiscoveryController(
       final NodeKey nodeKey,
@@ -159,7 +162,8 @@ public class PeerDiscoveryController {
       final MetricsSystem metricsSystem,
       final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests,
       final boolean filterOnEnrForkId,
-      final RlpxAgent rlpxAgent) {
+      final RlpxAgent rlpxAgent,
+      final boolean includeBootnodesOnPeerRefresh) {
     this.timerUtil = timerUtil;
     this.nodeKey = nodeKey;
     this.localPeer = localPeer;
@@ -173,6 +177,7 @@ public class PeerDiscoveryController {
     this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
     this.rlpxAgent = rlpxAgent;
+    this.includeBootnodesOnPeerRefresh = includeBootnodesOnPeerRefresh;
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.NETWORK,
@@ -318,7 +323,6 @@ public class PeerDiscoveryController {
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
-          peer.setLastSeen(System.currentTimeMillis());
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           if (!PeerDiscoveryStatus.BONDED.equals(peer.getStatus())
               && (bondingPeers.getIfPresent(sender.getId()) == null)) {
@@ -335,7 +339,7 @@ public class PeerDiscoveryController {
                     requestENR(peer);
                   }
                   bondingPeers.invalidate(peerId);
-                  addToPeerTable(peer);
+                  checkBeforeAddingToPeerTable(peer);
                   recursivePeerRefreshState.onBondingComplete(peer);
                   Optional.ofNullable(cachedEnrRequests.getIfPresent(peerId))
                       .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
@@ -402,38 +406,45 @@ public class PeerDiscoveryController {
         .collect(Collectors.toList());
   }
 
-  private boolean addToPeerTable(final DiscoveryPeer peer) {
-    final PeerTable.AddResult result = peerTable.tryAdd(peer);
-    if (result.getOutcome() != PeerTable.AddResult.AddOutcome.INVALID) {
-
-      // Reset the last seen timestamp.
-      final long now = System.currentTimeMillis();
-      if (peer.getFirstDiscovered() == 0) {
-        peer.setFirstDiscovered(now);
-      }
-      peer.setLastSeen(now);
-
-      if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
-        peer.setStatus(PeerDiscoveryStatus.BONDED);
-        connectOnRlpxLayer(peer);
-      }
-
-      if (result.getOutcome() == PeerTable.AddResult.AddOutcome.ALREADY_EXISTED) {
-        // Bump peer.
-        peerTable.tryEvict(peer);
-        peerTable.tryAdd(peer);
-      } else if (result.getOutcome() == PeerTable.AddResult.AddOutcome.BUCKET_FULL) {
-        peerTable.tryEvict(result.getEvictionCandidate());
-        peerTable.tryAdd(peer);
-      }
-
-      return true;
+  private void checkBeforeAddingToPeerTable(final DiscoveryPeer peer) {
+    if (peerTable.isIpAddressInvalid(peer.getEndpoint())) {
+      return;
     }
-    return false;
+
+    if (peer.getFirstDiscovered() == 0L) {
+      connectOnRlpxLayer(peer)
+          .whenComplete(
+              (pc, th) -> {
+                if (th == null || !(th.getCause() instanceof TimeoutException)) {
+                  peer.setStatus(PeerDiscoveryStatus.BONDED);
+                  peer.setFirstDiscovered(System.currentTimeMillis());
+                  addToPeerTable(peer);
+                } else {
+                  LOG.debug("Handshake timed out with peer {}", peer.getLoggableId(), th);
+                  peerTable.invalidateIP(peer.getEndpoint());
+                }
+              });
+    } else {
+      peer.setStatus(PeerDiscoveryStatus.BONDED);
+      addToPeerTable(peer);
+    }
   }
 
-  void connectOnRlpxLayer(final DiscoveryPeer peer) {
-    rlpxAgent.connect(peer);
+  public void addToPeerTable(final DiscoveryPeer peer) {
+    final PeerTable.AddResult result = peerTable.tryAdd(peer);
+
+    if (result.getOutcome() == PeerTable.AddResult.AddOutcome.ALREADY_EXISTED) {
+      // Bump peer.
+      peerTable.tryEvict(peer);
+      peerTable.tryAdd(peer);
+    } else if (result.getOutcome() == PeerTable.AddResult.AddOutcome.BUCKET_FULL) {
+      peerTable.tryEvict(result.getEvictionCandidate());
+      peerTable.tryAdd(peer);
+    }
+  }
+
+  CompletableFuture<PeerConnection> connectOnRlpxLayer(final DiscoveryPeer peer) {
+    return rlpxAgent.connect(peer);
   }
 
   private Optional<PeerInteractionState> matchInteraction(final Packet packet) {
@@ -483,7 +494,17 @@ public class PeerDiscoveryController {
    */
   private void refreshTable() {
     final Bytes target = Peer.randomId();
+
     final List<DiscoveryPeer> initialPeers = peerTable.nearestBondedPeers(Peer.randomId(), 16);
+    if (includeBootnodesOnPeerRefresh) {
+      bootstrapNodes.stream()
+          .filter(p -> p.getStatus() != PeerDiscoveryStatus.BONDED)
+          .forEach(p -> p.setStatus(PeerDiscoveryStatus.KNOWN));
+
+      // If configured to retry bootnodes during peer table refresh, include them
+      // in the initial peers list.
+      initialPeers.addAll(bootstrapNodes);
+    }
     recursivePeerRefreshState.start(initialPeers, target);
     lastRefreshTime = System.currentTimeMillis();
   }
@@ -499,7 +520,6 @@ public class PeerDiscoveryController {
       return;
     }
 
-    peer.setFirstDiscovered(System.currentTimeMillis());
     peer.setStatus(PeerDiscoveryStatus.BONDING);
     bondingPeers.put(peer.getId(), peer);
 
@@ -706,7 +726,7 @@ public class PeerDiscoveryController {
 
   // Load the peer first from the table, then from bonding cache or use the instance that comes in.
   private DiscoveryPeer resolvePeer(final DiscoveryPeer peer) {
-    if (peerTable.ipAddressIsInvalid(peer.getEndpoint())) {
+    if (peerTable.isIpAddressInvalid(peer.getEndpoint())) {
       return null;
     }
     final Optional<DiscoveryPeer> maybeKnownPeer =
@@ -816,6 +836,7 @@ public class PeerDiscoveryController {
     private long cleanPeerTableIntervalMs = MILLISECONDS.convert(1, TimeUnit.MINUTES);
     private final List<DiscoveryPeer> bootstrapNodes = new ArrayList<>();
     private PeerTable peerTable;
+    private boolean includeBootnodesOnPeerRefresh = true;
 
     // Required dependencies
     private NodeKey nodeKey;
@@ -849,7 +870,8 @@ public class PeerDiscoveryController {
           metricsSystem,
           Optional.of(cachedEnrRequests),
           filterOnEnrForkId,
-          rlpxAgent);
+          rlpxAgent,
+          includeBootnodesOnPeerRefresh);
     }
 
     private void validate() {
@@ -951,6 +973,11 @@ public class PeerDiscoveryController {
     public Builder rlpxAgent(final RlpxAgent rlpxAgent) {
       checkNotNull(rlpxAgent);
       this.rlpxAgent = rlpxAgent;
+      return this;
+    }
+
+    public Builder includeBootnodesOnPeerRefresh(final boolean includeBootnodesOnPeerRefresh) {
+      this.includeBootnodesOnPeerRefresh = includeBootnodesOnPeerRefresh;
       return this;
     }
   }

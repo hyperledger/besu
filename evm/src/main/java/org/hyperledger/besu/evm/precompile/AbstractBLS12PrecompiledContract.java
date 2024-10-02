@@ -18,7 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
+import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 
 import java.util.Optional;
 import javax.annotation.Nonnull;
@@ -52,7 +52,7 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
 
   private final String name;
   private final byte operationId;
-  private final int inputLen;
+  private final int inputLimit;
 
   /**
    * Instantiates a new Abstract BLS12 precompiled contract.
@@ -64,7 +64,7 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
   AbstractBLS12PrecompiledContract(final String name, final byte operationId, final int inputLen) {
     this.name = name;
     this.operationId = operationId;
-    this.inputLen = inputLen + 1;
+    this.inputLimit = inputLen + 1;
   }
 
   @Override
@@ -76,16 +76,17 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
-    final byte[] result = new byte[LibEthPairings.EIP2537_PREALLOCATE_FOR_RESULT_BYTES];
-    final byte[] error = new byte[LibEthPairings.EIP2537_PREALLOCATE_FOR_ERROR_BYTES];
+    final byte[] result = new byte[LibGnarkEIP2537.EIP2537_PREALLOCATE_FOR_RESULT_BYTES];
+    final byte[] error = new byte[LibGnarkEIP2537.EIP2537_PREALLOCATE_FOR_ERROR_BYTES];
 
     final IntByReference o_len =
-        new IntByReference(LibEthPairings.EIP2537_PREALLOCATE_FOR_RESULT_BYTES);
+        new IntByReference(LibGnarkEIP2537.EIP2537_PREALLOCATE_FOR_RESULT_BYTES);
     final IntByReference err_len =
-        new IntByReference(LibEthPairings.EIP2537_PREALLOCATE_FOR_ERROR_BYTES);
-    final int inputSize = Math.min(inputLen, input.size());
+        new IntByReference(LibGnarkEIP2537.EIP2537_PREALLOCATE_FOR_ERROR_BYTES);
+
+    final int inputSize = Math.min(inputLimit, input.size());
     final int errorNo =
-        LibEthPairings.eip2537_perform_operation(
+        LibGnarkEIP2537.eip2537_perform_operation(
             operationId,
             input.slice(0, inputSize).toArrayUnsafe(),
             inputSize,
@@ -93,6 +94,7 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
             o_len,
             error,
             err_len);
+
     if (errorNo == 0) {
       return PrecompileContractResult.success(Bytes.wrap(result, 0, o_len.getValue()));
     } else {

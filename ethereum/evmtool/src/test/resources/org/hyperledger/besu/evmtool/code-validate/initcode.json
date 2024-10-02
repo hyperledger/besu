@@ -1,0 +1,7 @@
+{
+  "cli": [
+    "code-validate"
+  ],
+  "stdin": "ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+  "stdout": "err: code is valid initcode.  Runtime code expected\n"
+}

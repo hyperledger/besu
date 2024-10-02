@@ -1,0 +1,81 @@
+name: Docker Promote
+
+run-name: "Docker Promote ${{ github.event.release.name }}"
+
+on:
+  release:
+    types: [released]
+
+env:
+  registry: docker.io
+  GRADLE_OPTS: "-Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
+
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    env:
+      RELEASE_NAME: "${{ github.event.release.name }}"
+    steps:
+      - name: Pre-process Release Name
+        id: pre_process_release_name
+        run: |       
+          # strip all whitespace
+          RELEASE_NAME="${RELEASE_NAME//[[:space:]]/}"
+          if [[ ! "$RELEASE_NAME" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?(-.*)?$ ]]; then
+            echo "Release name does not conform to a valid besu release format YY.M.v[-suffix], e.g. 24.8.0-RC1."
+            exit 1
+          fi
+          echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT  # Set as output using the new syntax
+    outputs:
+      release_name: ${{ steps.pre_process_release_name.outputs.release_name }}
+
+  docker-promote:
+    needs: [validate]
+    env:
+      RELEASE_NAME: ${{ needs.validate.outputs.release_name }}  # Use the output from the pre_process_release job
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Setup Java
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Login to ${{ env.registry }}
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ env.registry }}
+          username: ${{ secrets.DOCKER_USER_RW }}
+          password: ${{ secrets.DOCKER_PASSWORD_RW }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
+
+      - name: Docker upload
+        run: ./gradlew "-Prelease.releaseVersion=${{ env.RELEASE_NAME }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" dockerUploadRelease
+
+      - name: Docker manifest
+        run: ./gradlew "-Prelease.releaseVersion=${{ env.RELEASE_NAME }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" manifestDockerRelease
+
+  docker-verify:
+    needs: [validate, docker-promote]
+    env:
+      RELEASE_NAME: ${{ needs.validate.outputs.release_name }}  # Use the output from the pre_process_release job
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Trigger container verify
+        run: echo '{"version":"${{ env.RELEASE_NAME }}","verify-latest-version":"true"}' | gh workflow run container-verify.yml --json
+        env:
+          GH_TOKEN: ${{ github.token }}

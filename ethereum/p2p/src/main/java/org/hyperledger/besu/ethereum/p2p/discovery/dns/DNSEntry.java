@@ -243,7 +243,7 @@ public interface DNSEntry {
     public ENRTreeLink(final String enrTreeLink) {
       final URI uri = URI.create(enrTreeLink);
       this.domainName = uri.getHost();
-      this.encodedPubKey = uri.getUserInfo();
+      this.encodedPubKey = uri.getUserInfo() == null ? "" : uri.getUserInfo();
       this.pubKey = fromBase32(encodedPubKey);
     }
 

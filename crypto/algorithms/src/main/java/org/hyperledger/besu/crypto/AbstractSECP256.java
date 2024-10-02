@@ -213,6 +213,12 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
   }
 
   @Override
+  public CodeDelegationSignature createCodeDelegationSignature(
+      final BigInteger r, final BigInteger s, final BigInteger yParity) {
+    return CodeDelegationSignature.create(r, s, yParity);
+  }
+
+  @Override
   public SECPSignature decodeSignature(final Bytes bytes) {
     return SECPSignature.decode(bytes, curveOrder);
   }
@@ -397,7 +403,9 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
       final Bytes32 dataHash, final SECPSignature signature) {
     final BigInteger publicKeyBI =
         recoverFromSignature(signature.getRecId(), signature.getR(), signature.getS(), dataHash);
-    return Optional.of(SECPPublicKey.create(publicKeyBI, ALGORITHM));
+    return publicKeyBI == null
+        ? Optional.empty()
+        : Optional.of(SECPPublicKey.create(publicKeyBI, ALGORITHM));
   }
 
   @Override

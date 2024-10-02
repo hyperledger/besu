@@ -35,8 +35,8 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
 
   private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromPeers.class);
 
-  private final EthContext ethContext;
-  private final SynchronizerConfiguration syncConfig;
+  protected final EthContext ethContext;
+  protected final SynchronizerConfiguration syncConfig;
   private final SyncState syncState;
   private final MetricsSystem metricsSystem;
 
@@ -66,7 +66,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
                     conservativelyEstimatedPivotBlock(), syncConfig.getMaxTrailingPeers()));
     trailingPeerLimiter.enforceTrailingPeerLimit();
 
-    return waitForPeers(syncConfig.getFastSyncMinimumPeerCount());
+    return waitForPeers(syncConfig.getSyncMinimumPeerCount());
   }
 
   @Override
@@ -74,9 +74,9 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
     return syncState.bestChainHeight();
   }
 
-  private Optional<FastSyncState> fromBestPeer(final EthPeer peer) {
+  protected Optional<FastSyncState> fromBestPeer(final EthPeer peer) {
     final long pivotBlockNumber =
-        peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
+        peer.chainState().getEstimatedHeight() - syncConfig.getSyncPivotDistance();
     if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
       // Peer's chain isn't long enough, return an empty value, so we can try again.
       LOG.info("Waiting for peers with sufficient chain height");
@@ -86,7 +86,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
     return Optional.of(new FastSyncState(pivotBlockNumber));
   }
 
-  private Optional<EthPeer> selectBestPeer() {
+  protected Optional<EthPeer> selectBestPeer() {
     return ethContext
         .getEthPeers()
         .bestPeerMatchingCriteria(this::canPeerDeterminePivotBlock)
@@ -96,7 +96,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
 
   private boolean enoughFastSyncPeersArePresent() {
     final long peerCount = countPeersThatCanDeterminePivotBlock();
-    final int minPeerCount = syncConfig.getFastSyncMinimumPeerCount();
+    final int minPeerCount = syncConfig.getSyncMinimumPeerCount();
     if (peerCount < minPeerCount) {
       LOG.info(
           "Waiting for valid peers with chain height information.  {} / {} required peers currently available.",
@@ -126,7 +126,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
 
   private long conservativelyEstimatedPivotBlock() {
     final long estimatedNextPivot =
-        syncState.getLocalChainHeight() + syncConfig.getFastSyncPivotDistance();
+        syncState.getLocalChainHeight() + syncConfig.getSyncPivotDistance();
     return Math.min(syncState.bestChainHeight(), estimatedNextPivot);
   }
 

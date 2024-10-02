@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.bft;
 
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFactory;
 
@@ -38,7 +39,9 @@ public class BftAcceptanceTestParameterization {
   @FunctionalInterface
   public interface NodeCreator {
 
-    BesuNode create(BesuNodeFactory factory, String name, boolean fixedPort) throws Exception;
+    BesuNode create(
+        BesuNodeFactory factory, String name, boolean fixedPort, DataStorageFormat storageFormat)
+        throws Exception;
   }
 
   @FunctionalInterface
@@ -64,11 +67,15 @@ public class BftAcceptanceTestParameterization {
   }
 
   public BesuNode createNode(BesuNodeFactory factory, String name) throws Exception {
-    return creatorFn.create(factory, name, false);
+    return creatorFn.create(factory, name, false, DataStorageFormat.FOREST);
   }
 
-  public BesuNode createNodeFixedPort(BesuNodeFactory factory, String name) throws Exception {
-    return creatorFn.create(factory, name, true);
+  public BesuNode createBonsaiNodeFixedPort(BesuNodeFactory factory, String name) throws Exception {
+    return creatorFn.create(factory, name, true, DataStorageFormat.BONSAI);
+  }
+
+  public BesuNode createForestNodeFixedPort(BesuNodeFactory factory, String name) throws Exception {
+    return creatorFn.create(factory, name, true, DataStorageFormat.FOREST);
   }
 
   public BesuNode createNodeWithValidators(

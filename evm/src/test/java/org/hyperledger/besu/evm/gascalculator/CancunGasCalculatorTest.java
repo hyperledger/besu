@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -42,5 +43,12 @@ public class CancunGasCalculatorTest {
         Arguments.of(1, 3, 1),
         Arguments.of(targetGasPerBlock, 1, CancunGasCalculator.BLOB_GAS_PER_BLOB),
         Arguments.of(targetGasPerBlock, 3, targetGasPerBlock));
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

@@ -66,6 +66,12 @@ public class PrivateWorldStateReader {
         .orElse(Collections.emptyList());
   }
 
+  public Optional<PrivateBlockMetadata> getPrivateBlockMetadata(
+      final String privacyGroupId, final Hash blockHash) {
+    final Bytes32 privacyGroupIdBytes = Bytes32.wrap(Bytes.fromBase64String(privacyGroupId));
+    return privateStateStorage.getPrivateBlockMetadata(blockHash, privacyGroupIdBytes);
+  }
+
   public Optional<PrivateTransactionReceipt> getPrivateTransactionReceipt(
       final Hash blockHash, final Hash transactionHash) {
     return privateStateStorage.getTransactionReceipt(blockHash, transactionHash);

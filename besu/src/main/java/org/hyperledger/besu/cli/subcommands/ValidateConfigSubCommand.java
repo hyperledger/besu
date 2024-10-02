@@ -70,7 +70,7 @@ public class ValidateConfigSubCommand implements Runnable {
     checkNotNull(parentCommand);
     try {
       TomlConfigurationDefaultProvider.fromFile(commandLine, dataPath.toFile())
-          .loadConfigurationFromFile();
+          .loadConfigurationIfNotLoaded();
     } catch (Exception e) {
       this.out.println(e);
       return;

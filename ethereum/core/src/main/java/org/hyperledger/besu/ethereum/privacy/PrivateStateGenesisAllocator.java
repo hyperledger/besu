@@ -95,13 +95,13 @@ public class PrivateStateGenesisAllocator {
       managementContract.setCode(FlexibleGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
 
       // inject proxy
-      final MutableAccount procyContract =
+      final MutableAccount proxyContract =
           privateWorldStateUpdater.createAccount(FLEXIBLE_PRIVACY_PROXY);
 
       // this is the code for the proxy contract
-      procyContract.setCode(FlexibleGroupManagement.PROXY_RUNTIME_BYTECODE);
+      proxyContract.setCode(FlexibleGroupManagement.PROXY_RUNTIME_BYTECODE);
       // manually set the management contract address so the proxy can trust it
-      procyContract.setStorageValue(
+      proxyContract.setStorageValue(
           UInt256.ZERO, UInt256.fromBytes(Bytes32.leftPad(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT)));
     }
 

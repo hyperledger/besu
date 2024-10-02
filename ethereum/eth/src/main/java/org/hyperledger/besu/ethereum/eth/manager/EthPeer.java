@@ -103,6 +103,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private final PeerReputation reputation = new PeerReputation();
   private final Map<PeerValidator, Boolean> validationStatus = new ConcurrentHashMap<>();
   private final Bytes id;
+  private boolean isServingSnap = false;
 
   private static final Map<Integer, Integer> roundMessages;
 
@@ -290,12 +291,13 @@ public class EthPeer implements Comparable<EthPeer> {
     if (messageData.getSize() > maxMessageSize) {
       // This is a bug or else a misconfiguration of the max message size.
       LOG.error(
-          "Sending {} message to peer ({}) which exceeds local message size limit of {} bytes.  Message code: {}, Message Size: {}",
+          "Dropping {} message to peer ({}) which exceeds local message size limit of {} bytes.  Message code: {}, Message Size: {}",
           protocolName,
           this,
           maxMessageSize,
           messageData.getCode(),
           messageData.getSize());
+      return null;
     }
 
     if (requestManagers.containsKey(protocolName)) {
@@ -391,6 +393,14 @@ public class EthPeer implements Comparable<EthPeer> {
     getTrieNodes.setRootHash(Optional.of(stateRoot));
     return sendRequest(
         requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_TRIE_NODES), getTrieNodes);
+  }
+
+  public void setIsServingSnap(final boolean isServingSnap) {
+    this.isServingSnap = isServingSnap;
+  }
+
+  public boolean isServingSnap() {
+    return isServingSnap;
   }
 
   private RequestManager.ResponseStream sendRequest(
@@ -582,9 +592,9 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   /**
-   * Return A read-only snapshot of this peer's current {@code chainState} }
+   * Return A read-only snapshot of this peer's current {@code chainState}
    *
-   * @return A read-only snapshot of this peer's current {@code chainState} }
+   * @return A read-only snapshot of this peer's current {@code chainState}
    */
   public ChainHeadEstimate chainStateSnapshot() {
     return chainHeadState.getSnapshot();
@@ -629,14 +639,17 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "PeerId: %s %s, validated? %s, disconnected? %s, client: %s, %s, %s",
+        "PeerId: %s %s, validated? %s, disconnected? %s, client: %s, %s, %s, isServingSnap %s, has height %s, connected for %s ms",
         getLoggableId(),
         reputation,
         isFullyValidated(),
         isDisconnected(),
         connection.getPeerInfo().getClientId(),
         connection,
-        connection.getPeer().getEnodeURLString());
+        connection.getPeer().getEnodeURLString(),
+        isServingSnap,
+        chainHeadState.getEstimatedHeight(),
+        System.currentTimeMillis() - connection.getInitiatedAt());
   }
 
   @Nonnull
@@ -698,7 +711,11 @@ public class EthPeer implements Comparable<EthPeer> {
       }
     }
     // Otherwise, keep older connection
-    LOG.trace("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
+    LOG.atTrace()
+        .setMessage("comparing timestamps {} with {}")
+        .addArgument(a.getInitiatedAt())
+        .addArgument(b.getInitiatedAt())
+        .log();
     return a.getInitiatedAt() < b.getInitiatedAt() ? -1 : 1;
   }
 

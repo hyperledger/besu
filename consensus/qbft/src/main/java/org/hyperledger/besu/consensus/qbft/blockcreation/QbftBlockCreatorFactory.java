@@ -20,10 +20,8 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -67,22 +65,6 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory<QbftConfigOp
         localAddress,
         bftExtraDataCodec,
         ethScheduler);
-  }
-
-  @Override
-  public BlockCreator create(final BlockHeader parentHeader, final int round) {
-    final BlockCreator blockCreator = super.create(parentHeader, round);
-    final QbftContext qbftContext = protocolContext.getConsensusContext(QbftContext.class);
-    if (qbftContext.getPkiBlockCreationConfiguration().isEmpty()) {
-      return blockCreator;
-    } else {
-      return new PkiQbftBlockCreator(
-          blockCreator,
-          qbftContext.getPkiBlockCreationConfiguration().get(),
-          bftExtraDataCodec,
-          parentHeader,
-          protocolSchedule);
-    }
   }
 
   @Override

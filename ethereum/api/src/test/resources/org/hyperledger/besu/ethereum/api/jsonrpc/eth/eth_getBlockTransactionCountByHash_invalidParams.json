@@ -10,7 +10,7 @@
     "id": 209,
     "error": {
       "code" : -32602,
-      "message" : "Invalid params"
+      "message" : "Invalid block hash params"
     }
   },
   "statusCode": 200

@@ -27,8 +27,6 @@ import org.apache.tuweni.toml.TomlParseResult;
 
 public class PermissioningConfigurationBuilder {
 
-  @Deprecated public static final String ACCOUNTS_WHITELIST_KEY = "accounts-whitelist";
-  @Deprecated public static final String NODES_WHITELIST_KEY = "nodes-whitelist";
   public static final String ACCOUNTS_ALLOWLIST_KEY = "accounts-allowlist";
   public static final String NODES_ALLOWLIST_KEY = "nodes-allowlist";
 
@@ -69,8 +67,7 @@ public class PermissioningConfigurationBuilder {
 
     if (localConfigNodePermissioningEnabled) {
       final TomlParseResult nodePermissioningToml = readToml(nodePermissioningConfigFilepath);
-      final TomlArray nodeAllowlistTomlArray =
-          getAllowlistArray(nodePermissioningToml, NODES_ALLOWLIST_KEY, NODES_WHITELIST_KEY);
+      final TomlArray nodeAllowlistTomlArray = getArray(nodePermissioningToml, NODES_ALLOWLIST_KEY);
 
       permissioningConfiguration.setNodePermissioningConfigFilePath(
           nodePermissioningConfigFilepath);
@@ -104,8 +101,7 @@ public class PermissioningConfigurationBuilder {
     if (localConfigAccountPermissioningEnabled) {
       final TomlParseResult accountPermissioningToml = readToml(accountPermissioningConfigFilepath);
       final TomlArray accountAllowlistTomlArray =
-          getAllowlistArray(
-              accountPermissioningToml, ACCOUNTS_ALLOWLIST_KEY, ACCOUNTS_WHITELIST_KEY);
+          getArray(accountPermissioningToml, ACCOUNTS_ALLOWLIST_KEY);
 
       permissioningConfiguration.setAccountPermissioningConfigFilePath(
           accountPermissioningConfigFilepath);
@@ -137,23 +133,14 @@ public class PermissioningConfigurationBuilder {
   }
 
   /**
-   * This method allows support for both keys for now. Whitelist TOML keys will be removed in future
-   * (breaking change)
+   * This method retrieves an array from parsed toml, using the given key.
    *
    * @param tomlParseResult result of a prior toml parse
-   * @param primaryKey key to fetch
-   * @param alternateKey alternate key to fetch
-   * @return In order: the array of the primaryKey if it exists, or the array of the alternateKey if
-   *     it exists, or null.
+   * @param key key to fetch
+   * @return The array matching the key if it exists, or null.
    */
-  private static TomlArray getAllowlistArray(
-      final TomlParseResult tomlParseResult, final String primaryKey, final String alternateKey) {
-    final TomlArray array = tomlParseResult.getArray(primaryKey);
-    if (array == null) {
-      return tomlParseResult.getArray(alternateKey);
-    } else {
-      return array;
-    }
+  private static TomlArray getArray(final TomlParseResult tomlParseResult, final String key) {
+    return tomlParseResult.getArray(key);
   }
 
   private static TomlParseResult readToml(final String filepath) throws Exception {

@@ -14,7 +14,19 @@
  */
 package org.hyperledger.besu.ethereum;
 
+/**
+ * The ConsensusContext interface defines a method for casting the consensus context to a specific
+ * class.
+ */
 @FunctionalInterface
 public interface ConsensusContext {
+
+  /**
+   * Casts the consensus context to the specified class.
+   *
+   * @param <C> the type of the class to cast the consensus context to
+   * @param klass the class to cast the consensus context to
+   * @return the consensus context cast to the specified class
+   */
   <C extends ConsensusContext> C as(final Class<C> klass);
 }

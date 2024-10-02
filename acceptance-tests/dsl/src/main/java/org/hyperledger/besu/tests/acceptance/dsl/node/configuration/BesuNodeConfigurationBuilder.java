@@ -24,6 +24,8 @@ import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ImmutableInProcessRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
@@ -41,7 +43,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.pki.PKCS11Utils;
 
@@ -71,6 +72,8 @@ public class BesuNodeConfigurationBuilder {
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration = new JsonRpcIpcConfiguration();
+  private InProcessRpcConfiguration inProcessRpcConfiguration =
+      ImmutableInProcessRpcConfiguration.builder().build();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private ApiConfiguration apiConfiguration = ImmutableApiConfiguration.builder().build();
@@ -90,13 +93,13 @@ public class BesuNodeConfigurationBuilder {
   private boolean secp256K1Native = true;
   private boolean altbn128Native = true;
   private final List<String> plugins = new ArrayList<>();
+  private final List<String> requestedPlugins = new ArrayList<>();
   private final List<String> extraCLIOptions = new ArrayList<>();
   private List<String> staticNodes = new ArrayList<>();
   private boolean isDnsEnabled = false;
   private Optional<PrivacyParameters> privacyParameters = Optional.empty();
   private List<String> runCommand = new ArrayList<>();
   private Optional<KeyPair> keyPair = Optional.empty();
-  private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
   private Boolean strictTxReplayProtectionEnabled = false;
   private Map<String, String> environment = new HashMap<>();
 
@@ -257,6 +260,12 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder jsonRpcIpcConfiguration(
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration) {
     this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder inProcessRpcConfiguration(
+      final InProcessRpcConfiguration inProcessRpcConfiguration) {
+    this.inProcessRpcConfiguration = inProcessRpcConfiguration;
     return this;
   }
 
@@ -429,13 +438,6 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder pkiBlockCreationEnabled(
-      final PkiKeyStoreConfiguration pkiKeyStoreConfiguration) {
-    this.pkiKeyStoreConfiguration = Optional.of(pkiKeyStoreConfiguration);
-
-    return this;
-  }
-
   public BesuNodeConfigurationBuilder discoveryEnabled(final boolean discoveryEnabled) {
     this.discoveryEnabled = discoveryEnabled;
     return this;
@@ -444,6 +446,12 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder plugins(final List<String> plugins) {
     this.plugins.clear();
     this.plugins.addAll(plugins);
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder requestedPlugins(final List<String> requestedPlugins) {
+    this.requestedPlugins.clear();
+    this.requestedPlugins.addAll(requestedPlugins);
     return this;
   }
 
@@ -525,6 +533,7 @@ public class BesuNodeConfigurationBuilder {
         Optional.of(engineRpcConfiguration),
         webSocketConfiguration,
         jsonRpcIpcConfiguration,
+        inProcessRpcConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
         apiConfiguration,
@@ -543,13 +552,13 @@ public class BesuNodeConfigurationBuilder {
         secp256K1Native,
         altbn128Native,
         plugins,
+        requestedPlugins,
         extraCLIOptions,
         staticNodes,
         isDnsEnabled,
         privacyParameters,
         runCommand,
         keyPair,
-        pkiKeyStoreConfiguration,
         strictTxReplayProtectionEnabled,
         environment);
   }
