@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.data.BlockContext;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.TransactionReceipt;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
@@ -106,5 +107,11 @@ public interface BlockchainService extends BesuService {
    * @throws UnsupportedOperationException if the network is a PoS network
    */
   void setSafeBlock(Hash blockHash) throws IllegalArgumentException, UnsupportedOperationException;
-  ;
+
+  /**
+   * Get the chain id
+   *
+   * @return the chain id
+   */
+  Optional<BigInteger> getChainId();
 }
