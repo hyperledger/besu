@@ -304,15 +304,7 @@ public final class GenesisState {
     if (cancunTimestamp.isPresent()) {
       return genesis.getTimestamp() >= cancunTimestamp.getAsLong();
     }
-    return isPragueAtGenesis(genesis) || isCancunEOFAtGenesis(genesis);
-  }
-
-  private static boolean isCancunEOFAtGenesis(final GenesisConfigFile genesis) {
-    final OptionalLong cancunEOFTimestamp = genesis.getConfigOptions().getCancunEOFTime();
-    if (cancunEOFTimestamp.isPresent()) {
-      return genesis.getTimestamp() >= cancunEOFTimestamp.getAsLong();
-    }
-    return isPragueEOFAtGenesis(genesis);
+    return isPragueAtGenesis(genesis) || isOsakaAtGenesis(genesis);
   }
 
   private static boolean isPragueAtGenesis(final GenesisConfigFile genesis) {
@@ -320,13 +312,13 @@ public final class GenesisState {
     if (pragueTimestamp.isPresent()) {
       return genesis.getTimestamp() >= pragueTimestamp.getAsLong();
     }
-    return isPragueEOFAtGenesis(genesis);
+    return isOsakaAtGenesis(genesis);
   }
 
-  private static boolean isPragueEOFAtGenesis(final GenesisConfigFile genesis) {
-    final OptionalLong pragueEOFTimestamp = genesis.getConfigOptions().getPragueEOFTime();
-    if (pragueEOFTimestamp.isPresent()) {
-      return genesis.getTimestamp() >= pragueEOFTimestamp.getAsLong();
+  private static boolean isOsakaAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong osakaTimestamp = genesis.getConfigOptions().getOsakaTime();
+    if (osakaTimestamp.isPresent()) {
+      return genesis.getTimestamp() >= osakaTimestamp.getAsLong();
     }
     return isFutureEipsTimeAtGenesis(genesis);
   }

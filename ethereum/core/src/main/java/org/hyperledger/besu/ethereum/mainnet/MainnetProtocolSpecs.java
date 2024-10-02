@@ -57,8 +57,8 @@ import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
@@ -736,27 +736,6 @@ public abstract class MainnetProtocolSpecs {
         .name("Cancun");
   }
 
-  static ProtocolSpecBuilder cancunEOFDefinition(
-      final Optional<BigInteger> chainId,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
-      final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
-
-    ProtocolSpecBuilder protocolSpecBuilder =
-        cancunDefinition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters,
-            isParallelTxProcessingEnabled,
-            metricsSystem);
-    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("CancunEOF");
-  }
-
   static ProtocolSpecBuilder pragueDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
@@ -815,7 +794,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Prague");
   }
 
-  static ProtocolSpecBuilder pragueEOFDefinition(
+  static ProtocolSpecBuilder osakaDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
@@ -833,21 +812,13 @@ public abstract class MainnetProtocolSpecs {
             miningParameters,
             isParallelTxProcessingEnabled,
             metricsSystem);
-    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("PragueEOF");
-  }
-
-  private static ProtocolSpecBuilder addEOF(
-      final Optional<BigInteger> chainId,
-      final EvmConfiguration evmConfiguration,
-      final ProtocolSpecBuilder protocolSpecBuilder) {
     return protocolSpecBuilder
         // EIP-7692 EOF v1 Gas calculator
-        .gasCalculator(PragueEOFGasCalculator::new)
+        .gasCalculator(OsakaGasCalculator::new)
         // EIP-7692 EOF v1 EVM and opcodes
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.pragueEOF(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+                MainnetEVMs.osaka(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         // EIP-7698 EOF v1 creation transaction
         .contractCreationProcessorBuilder(
             evm ->
@@ -856,7 +827,8 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     List.of(MaxCodeSizeRule.from(evm), EOFValidationCodeRule.from(evm)),
                     1,
-                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES));
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        .name("Osaka");
   }
 
   static ProtocolSpecBuilder futureEipsDefinition(
@@ -867,7 +839,7 @@ public abstract class MainnetProtocolSpecs {
       final MiningParameters miningParameters,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-    return pragueEOFDefinition(
+    return osakaDefinition(
             chainId,
             enableRevertReason,
             genesisConfigOptions,

@@ -243,13 +243,6 @@ public interface GenesisConfigOptions {
   OptionalLong getCancunTime();
 
   /**
-   * Gets cancun EOF time.
-   *
-   * @return the cancun EOF time
-   */
-  OptionalLong getCancunEOFTime();
-
-  /**
    * Gets prague time.
    *
    * @return the prague time
@@ -257,11 +250,11 @@ public interface GenesisConfigOptions {
   OptionalLong getPragueTime();
 
   /**
-   * Gets Prague EOF time.
+   * Gets Osaka time.
    *
-   * @return the prague time
+   * @return the osaka time
    */
-  OptionalLong getPragueEOFTime();
+  OptionalLong getOsakaTime();
 
   /**
    * Gets future eips time.

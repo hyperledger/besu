@@ -293,11 +293,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getCancunEOFTime() {
-    return getOptionalLong("cancuneoftime");
-  }
-
-  @Override
   public OptionalLong getCancunTime() {
     return getOptionalLong("cancuntime");
   }
@@ -308,8 +303,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getPragueEOFTime() {
-    return getOptionalLong("pragueeoftime");
+  public OptionalLong getOsakaTime() {
+    return getOptionalLong("osakatime");
   }
 
   @Override
@@ -484,9 +479,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
     getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
-    getCancunEOFTime().ifPresent(l -> builder.put("cancunEOFTime", l));
     getPragueTime().ifPresent(l -> builder.put("pragueTime", l));
-    getPragueEOFTime().ifPresent(l -> builder.put("pragueEOFTime", l));
+    getOsakaTime().ifPresent(l -> builder.put("osakaTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
@@ -638,9 +632,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
         Stream.of(
             getShanghaiTime(),
             getCancunTime(),
-            getCancunEOFTime(),
             getPragueTime(),
-            getPragueEOFTime(),
+            getOsakaTime(),
             getFutureEipsTime(),
             getExperimentalEipsTime());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json

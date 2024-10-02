@@ -202,17 +202,6 @@ public class MainnetProtocolSpecFactory {
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder cancunEOFDefinition(final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.cancunEOFDefinition(
-        chainId,
-        isRevertReasonEnabled,
-        genesisConfigOptions,
-        evmConfiguration,
-        miningParameters,
-        isParallelTxProcessingEnabled,
-        metricsSystem);
-  }
-
   public ProtocolSpecBuilder pragueDefinition(final GenesisConfigOptions genesisConfigOptions) {
     return MainnetProtocolSpecs.pragueDefinition(
         chainId,
@@ -224,8 +213,8 @@ public class MainnetProtocolSpecFactory {
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder pragueEOFDefinition(final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.pragueEOFDefinition(
+  public ProtocolSpecBuilder osakaDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.osakaDefinition(
         chainId,
         isRevertReasonEnabled,
         genesisConfigOptions,

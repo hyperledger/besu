@@ -48,9 +48,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
   private OptionalLong shanghaiTime = OptionalLong.empty();
   private OptionalLong cancunTime = OptionalLong.empty();
-  private OptionalLong cancunEOFTime = OptionalLong.empty();
   private OptionalLong pragueTime = OptionalLong.empty();
-  private OptionalLong pragueEOFTime = OptionalLong.empty();
+  private OptionalLong osakaTime = OptionalLong.empty();
   private OptionalLong futureEipsTime = OptionalLong.empty();
   private OptionalLong experimentalEipsTime = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
@@ -242,18 +241,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
-  public OptionalLong getCancunEOFTime() {
-    return cancunEOFTime;
-  }
-
-  @Override
   public OptionalLong getPragueTime() {
     return pragueTime;
   }
 
   @Override
-  public OptionalLong getPragueEOFTime() {
-    return pragueEOFTime;
+  public OptionalLong getOsakaTime() {
+    return osakaTime;
   }
 
   @Override
@@ -649,17 +643,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   /**
-   * Cancun EOF time.
-   *
-   * @param timestamp the timestamp
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions cancunEOFTime(final long timestamp) {
-    cancunEOFTime = OptionalLong.of(timestamp);
-    return this;
-  }
-
-  /**
    * Prague time.
    *
    * @param timestamp the timestamp
@@ -671,14 +654,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   /**
-   * PragueEOF time.
+   * Osaka time.
    *
    * @param timestamp the timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions pragueEOFTime(final long timestamp) {
-    pragueTime = OptionalLong.of(timestamp);
-    pragueEOFTime = pragueTime;
+  public StubGenesisConfigOptions osakaTime(final long timestamp) {
+    osakaTime = OptionalLong.of(timestamp);
     return this;
   }
 
