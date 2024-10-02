@@ -20,8 +20,9 @@ import static java.util.stream.Collectors.reducing;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.RECONCILED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.NEW;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.RECONCILED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -41,11 +42,12 @@ import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -98,7 +100,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
 
     try {
-      return prioritizedTransactions.add(pendingTransaction, (int) nonceDistance);
+      return prioritizedTransactions.add(pendingTransaction, (int) nonceDistance, NEW);
     } catch (final Throwable throwable) {
       return reconcileAndRetryAdd(
           pendingTransaction, stateSenderNonce, (int) nonceDistance, throwable);
@@ -121,7 +123,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .log();
     reconcileSender(pendingTransaction.getSender(), stateSenderNonce);
     try {
-      return prioritizedTransactions.add(pendingTransaction, nonceDistance);
+      return prioritizedTransactions.add(pendingTransaction, nonceDistance, NEW);
     } catch (final Throwable throwable2) {
       // the error should have been solved by the reconcile, logging at higher level now
       LOG.atWarn()
@@ -208,7 +210,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final long lowestNonce = reAddTxs.getFirst().getNonce();
       final int newNonceDistance = (int) Math.max(0, lowestNonce - stateSenderNonce);
 
-      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance));
+      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance, NEW));
     }
 
     LOG.atDebug()
@@ -313,56 +315,71 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   @Override
   public void selectTransactions(final PendingTransactions.TransactionSelector selector) {
-    final List<PendingTransaction> invalidTransactions = new ArrayList<>();
+    final Set<Address> skipSenders = new HashSet<>();
 
-    final List<SenderPendingTransactions> candidateTxsBySender;
+    final Map<Byte, List<SenderPendingTransactions>> candidateTxsByScore;
     synchronized (this) {
       // since selecting transactions for block creation is a potential long operation
       // we want to avoid to keep the lock for all the process, but we just lock to get
       // the candidate transactions
-      candidateTxsBySender = prioritizedTransactions.getBySender();
+      candidateTxsByScore = prioritizedTransactions.getByScore();
     }
 
     selection:
-    for (final var senderTxs : candidateTxsBySender) {
-      LOG.trace("highPrioSenderTxs {}", senderTxs);
+    for (final var entry : candidateTxsByScore.entrySet()) {
+      LOG.trace("Evaluating txs with score {}", entry.getKey());
 
-      for (final var candidatePendingTx : senderTxs.pendingTransactions()) {
-        final var selectionResult = selector.evaluateTransaction(candidatePendingTx);
+      for (final var senderTxs : entry.getValue()) {
+        LOG.trace("Evaluating sender txs {}", senderTxs);
 
-        LOG.atTrace()
-            .setMessage("Selection result {} for transaction {}")
-            .addArgument(selectionResult)
-            .addArgument(candidatePendingTx::toTraceLog)
-            .log();
+        if (!skipSenders.contains(senderTxs.sender())) {
 
-        if (selectionResult.discard()) {
-          invalidTransactions.add(candidatePendingTx);
-          logDiscardedTransaction(candidatePendingTx, selectionResult);
-        }
+          for (final var candidatePendingTx : senderTxs.pendingTransactions()) {
+            final var selectionResult = selector.evaluateTransaction(candidatePendingTx);
 
-        if (selectionResult.stop()) {
-          LOG.trace("Stopping selection");
-          break selection;
-        }
+            LOG.atTrace()
+                .setMessage("Selection result {} for transaction {}")
+                .addArgument(selectionResult)
+                .addArgument(candidatePendingTx::toTraceLog)
+                .log();
 
-        if (!selectionResult.selected()) {
-          // avoid processing other txs from this sender if this one is skipped
-          // since the following will not be selected due to the nonce gap
-          LOG.trace("Skipping remaining txs for sender {}", candidatePendingTx.getSender());
-          break;
+            if (selectionResult.discard()) {
+              ethScheduler.scheduleTxWorkerTask(
+                  () -> {
+                    synchronized (this) {
+                      prioritizedTransactions.remove(candidatePendingTx, INVALIDATED);
+                    }
+                  });
+              logDiscardedTransaction(candidatePendingTx, selectionResult);
+            } else if (selectionResult.penalize()) {
+              ethScheduler.scheduleTxWorkerTask(
+                  () -> {
+                    synchronized (this) {
+                      prioritizedTransactions.penalize(candidatePendingTx);
+                    }
+                  });
+              LOG.atTrace()
+                  .setMessage("Transaction {} penalized")
+                  .addArgument(candidatePendingTx::toTraceLog)
+                  .log();
+            }
+
+            if (selectionResult.stop()) {
+              LOG.trace("Stopping selection");
+              break selection;
+            }
+
+            if (!selectionResult.selected()) {
+              // avoid processing other txs from this sender if this one is skipped
+              // since the following will not be selected due to the nonce gap
+              LOG.trace("Skipping remaining txs for sender {}", candidatePendingTx.getSender());
+              skipSenders.add(candidatePendingTx.getSender());
+              break;
+            }
+          }
         }
       }
     }
-
-    ethScheduler.scheduleTxWorkerTask(
-        () ->
-            invalidTransactions.forEach(
-                invalidTx -> {
-                  synchronized (this) {
-                    prioritizedTransactions.remove(invalidTx, INVALIDATED);
-                  }
-                }));
   }
 
   @Override

@@ -23,6 +23,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -48,7 +49,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginRequestF
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolRequestFactory;
 
 import java.io.File;
@@ -109,6 +109,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
+  private final InProcessRpcConfiguration inProcessRpcConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private final DataStorageConfiguration dataStorageConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
@@ -143,6 +144,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final Optional<JsonRpcConfiguration> engineRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
+      final InProcessRpcConfiguration inProcessRpcConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final ApiConfiguration apiConfiguration,
@@ -193,6 +195,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.engineRpcConfiguration = engineRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
+    this.inProcessRpcConfiguration = inProcessRpcConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
     this.apiConfiguration = apiConfiguration;
@@ -441,7 +444,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
               new BftRequestFactory(web3jService, bftType),
               new PermissioningJsonRpcRequestFactory(web3jService),
               new AdminRequestFactory(web3jService),
-              new PrivacyRequestFactory(web3jService),
               new CustomRequestFactory(web3jService),
               new MinerRequestFactory(web3jService),
               new TxPoolRequestFactory(web3jService),
@@ -622,6 +624,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   JsonRpcIpcConfiguration jsonRpcIpcConfiguration() {
     return jsonRpcIpcConfiguration;
+  }
+
+  InProcessRpcConfiguration inProcessRpcConfiguration() {
+    return inProcessRpcConfiguration;
   }
 
   Optional<String> wsRpcListenHost() {

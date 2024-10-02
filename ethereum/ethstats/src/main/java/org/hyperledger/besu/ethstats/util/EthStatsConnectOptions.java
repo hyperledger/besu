@@ -23,24 +23,71 @@ import javax.annotation.Nullable;
 import org.immutables.value.Value;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This interface represents the connection options for Ethereum statistics. It provides methods to
+ * get the scheme, node name, secret, host, port, contact, and CA certificate.
+ */
 @Value.Immutable
 public interface EthStatsConnectOptions {
+  /**
+   * Gets the scheme of the connection.
+   *
+   * @return the scheme of the connection.
+   */
   @Nullable
   String getScheme();
 
+  /**
+   * Gets the node name of the connection.
+   *
+   * @return the node name of the connection.
+   */
   String getNodeName();
 
+  /**
+   * Gets the secret of the connection.
+   *
+   * @return the secret of the connection.
+   */
   String getSecret();
 
+  /**
+   * Gets the host of the connection.
+   *
+   * @return the host of the connection.
+   */
   String getHost();
 
+  /**
+   * Gets the port of the connection.
+   *
+   * @return the port of the connection.
+   */
   Integer getPort();
 
+  /**
+   * Gets the contact of the connection.
+   *
+   * @return the contact of the connection.
+   */
   String getContact();
 
+  /**
+   * Gets the CA certificate of the connection.
+   *
+   * @return the CA certificate of the connection.
+   */
   @Nullable
   Path getCaCert();
 
+  /**
+   * Creates an EthStatsConnectOptions from the given parameters.
+   *
+   * @param url the url of the connection
+   * @param contact the contact of the connection
+   * @param caCert the CA certificate of the connection
+   * @return the EthStatsConnectOptions
+   */
   static EthStatsConnectOptions fromParams(
       final String url, final String contact, final Path caCert) {
     try {

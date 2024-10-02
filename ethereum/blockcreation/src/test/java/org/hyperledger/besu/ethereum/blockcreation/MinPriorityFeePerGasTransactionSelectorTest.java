@@ -33,11 +33,16 @@ import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import com.google.common.base.Stopwatch;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class MinPriorityFeePerGasTransactionSelectorTest {
   private AbstractTransactionSelector transactionSelector;
 
   private final int minPriorityFeeParameter = 7;
+  @Mock private ProcessableBlockHeader pendingBlockHeader;
 
   @BeforeEach
   public void initialize() {
@@ -45,15 +50,7 @@ public class MinPriorityFeePerGasTransactionSelectorTest {
         MiningParameters.newDefault().setMinPriorityFeePerGas(Wei.of(minPriorityFeeParameter));
     BlockSelectionContext context =
         new BlockSelectionContext(
-            miningParameters,
-            null,
-            null,
-            null,
-            mock(ProcessableBlockHeader.class),
-            null,
-            null,
-            null,
-            null);
+            miningParameters, null, null, null, pendingBlockHeader, null, null, null, null);
     transactionSelector = new MinPriorityFeePerGasTransactionSelector(context);
   }
 
@@ -100,6 +97,6 @@ public class MinPriorityFeePerGasTransactionSelectorTest {
     when(pendingTransaction.getTransaction()).thenReturn(transaction);
     when(transaction.getEffectivePriorityFeePerGas(any())).thenReturn(Wei.of(priorityFeePerGas));
     return new TransactionEvaluationContext(
-        pendingTransaction, Stopwatch.createStarted(), Wei.ONE, Wei.ONE);
+        pendingBlockHeader, pendingTransaction, Stopwatch.createStarted(), Wei.ONE, Wei.ONE);
   }
 }

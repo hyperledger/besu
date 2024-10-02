@@ -32,6 +32,8 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.mockito.Mockito;
 
 public class EnodeURLImplTest {
@@ -494,6 +496,9 @@ public class EnodeURLImplTest {
   }
 
   @Test
+  @DisabledOnOs(
+      value = OS.MAC,
+      disabledReason = "canonical lookup may not match dns lookup for local machine")
   public void toURI_WithHostnameShouldWorkWhenDnsEnabledAndUpdateEnabled()
       throws UnknownHostException {
     final String enodeURLString =

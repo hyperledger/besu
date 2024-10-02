@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.MigratingContext;
 import org.hyperledger.besu.consensus.common.MigratingMiningCoordinator;
 import org.hyperledger.besu.consensus.common.MigratingProtocolContext;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -49,6 +48,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -242,7 +242,8 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final EthMessages ethMessages,
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators,
-      final Optional<MergePeerFilter> mergePeerFilter) {
+      final Optional<MergePeerFilter> mergePeerFilter,
+      final ForkIdManager forkIdManager) {
     return besuControllerBuilderSchedule
         .get(0L)
         .createEthProtocolManager(
@@ -255,7 +256,8 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
             ethMessages,
             scheduler,
             peerValidators,
-            mergePeerFilter);
+            mergePeerFilter,
+            forkIdManager);
   }
 
   @Override
@@ -328,15 +330,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   }
 
   @Override
-  public BesuControllerBuilder pkiBlockCreationConfiguration(
-      final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
-    besuControllerBuilderSchedule
-        .values()
-        .forEach(b -> b.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration));
-    return super.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration);
-  }
-
-  @Override
   public BesuControllerBuilder dataDirectory(final Path dataDirectory) {
     besuControllerBuilderSchedule.values().forEach(b -> b.dataDirectory(dataDirectory));
     return super.dataDirectory(dataDirectory);
@@ -363,6 +356,15 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
         .values()
         .forEach(b -> b.isRevertReasonEnabled(isRevertReasonEnabled));
     return super.isRevertReasonEnabled(isRevertReasonEnabled);
+  }
+
+  @Override
+  public BesuControllerBuilder isParallelTxProcessingEnabled(
+      final boolean isParallelTxProcessingEnabled) {
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled));
+    return super.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled);
   }
 
   @Override

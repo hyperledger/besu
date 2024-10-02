@@ -243,7 +243,7 @@ public class EthScheduler {
 
   public void stop() {
     if (stopped.compareAndSet(false, true)) {
-      LOG.trace("Stopping " + getClass().getSimpleName());
+      LOG.atTrace().setMessage("Stopping {}").addArgument(getClass().getSimpleName()).log();
       syncWorkerExecutor.shutdownNow();
       txWorkerExecutor.shutdownNow();
       scheduler.shutdownNow();
@@ -251,7 +251,10 @@ public class EthScheduler {
       computationExecutor.shutdownNow();
       shutdown.countDown();
     } else {
-      LOG.trace("Attempted to stop already stopped " + getClass().getSimpleName());
+      LOG.atTrace()
+          .setMessage("Attempted to stop already stopped {}")
+          .addArgument(getClass().getSimpleName())
+          .log();
     }
   }
 

@@ -126,6 +126,10 @@ class EVMExecutorTest {
     EVMExecutor cancunEVM = EVMExecutor.cancun(EvmConfiguration.DEFAULT);
     assertThat(cancunEVM.getChainId()).contains(defaultChainId);
 
+    EVMExecutor cancunEOFEVM =
+        EVMExecutor.cancunEOF(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
+    assertThat(cancunEOFEVM.getChainId()).contains(defaultChainId);
+
     EVMExecutor pragueEVM =
         EVMExecutor.pragueEOF(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
     assertThat(pragueEVM.getChainId()).contains(defaultChainId);

@@ -106,7 +106,7 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
       final OptionalLong blockNumber = blockParameterOrBlockHash.getNumber();
       if (blockNumber.isEmpty() || blockNumber.getAsLong() < 0) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+            requestContext.getRequest().getId(), RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
       } else if (blockNumber.getAsLong() > getBlockchainQueries().headBlockNumber()) {
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), RpcErrorType.BLOCK_NOT_FOUND);
@@ -123,7 +123,7 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
       Optional<Hash> blockHash = blockParameterOrBlockHash.getHash();
       if (blockHash.isEmpty()) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+            requestContext.getRequest().getId(), RpcErrorType.INVALID_BLOCK_HASH_PARAMS);
       }
 
       // return error if block hash does not find a block

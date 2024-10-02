@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.ibft;
 
 import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;

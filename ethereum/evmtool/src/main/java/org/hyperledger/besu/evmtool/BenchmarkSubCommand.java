@@ -33,13 +33,22 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
+/**
+ * This class represents the BenchmarkSubCommand. It is responsible for executing an Ethereum State
+ * Test.
+ */
 @CommandLine.Command(
     name = COMMAND_NAME,
     description = "Execute an Ethereum State Test.",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class BenchmarkSubCommand implements Runnable {
+  /**
+   * The command name for the BenchmarkSubCommand. This constant is used as the name attribute in
+   * the {@code CommandLine.Command} annotation.
+   */
   public static final String COMMAND_NAME = "benchmark";
+
   private final PrintStream output;
 
   enum Benchmark {
@@ -68,11 +77,17 @@ public class BenchmarkSubCommand implements Runnable {
 
   @ParentCommand EvmToolCommand parentCommand;
 
+  /** Default constructor for the BenchmarkSubCommand class. This is required by PicoCLI. */
   public BenchmarkSubCommand() {
     // PicoCLI requires this
     this(System.out);
   }
 
+  /**
+   * Constructs a new BenchmarkSubCommand with the given output stream.
+   *
+   * @param output the output stream to be used
+   */
   public BenchmarkSubCommand(final PrintStream output) {
     this.output = output;
   }

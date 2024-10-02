@@ -127,12 +127,19 @@ public class DataStorageOptionsTest
   }
 
   @Test
+  public void receiptCompactionCanBeEnabledWithImplicitTrueValue() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(dataStorageConfiguration.getReceiptCompactionEnabled()).isEqualTo(true),
+        "--receipt-compaction-enabled");
+  }
+
+  @Test
   public void receiptCompactionCanBeEnabled() {
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getReceiptCompactionEnabled()).isEqualTo(true),
-        "--receipt-compaction-enabled",
-        "true");
+        "--receipt-compaction-enabled=true");
   }
 
   @Test
@@ -140,8 +147,7 @@ public class DataStorageOptionsTest
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getReceiptCompactionEnabled()).isEqualTo(false),
-        "--receipt-compaction-enabled",
-        "false");
+        "--receipt-compaction-enabled=false");
   }
 
   @Override

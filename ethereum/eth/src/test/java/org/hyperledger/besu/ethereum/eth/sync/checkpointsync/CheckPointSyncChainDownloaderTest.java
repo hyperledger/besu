@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -48,6 +49,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -124,8 +126,10 @@ public class CheckPointSyncChainDownloaderTest {
   }
 
   @AfterEach
-  public void tearDown() {
-    ethProtocolManager.stop();
+  void tearDown() {
+    if (ethContext != null) {
+      ethProtocolManager.stop();
+    }
   }
 
   private ChainDownloader downloader(
@@ -138,7 +142,8 @@ public class CheckPointSyncChainDownloaderTest {
         ethContext,
         syncState,
         new NoOpMetricsSystem(),
-        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()));
+        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()),
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   @ParameterizedTest
@@ -207,5 +212,12 @@ public class CheckPointSyncChainDownloaderTest {
     assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(pivotBlockNumber);
     assertThat(localBlockchain.getChainHeadHeader())
         .isEqualTo(otherBlockchain.getBlockHeader(pivotBlockNumber).get());
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

@@ -7,13 +7,13 @@
     "--coinbase",
     "4444588443C3A91288C5002483449ABA1054192B",
     "--fork",
-    "paris"
+    "london"
   ],
   "stdin": "",
   "stdout": [
     {"pc":0,"op":65,"gas":"0x2540be400","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"COINBASE"},
     {"pc":1,"op":49,"gas":"0x2540be3fe","gasCost":"0xa28","memSize":0,"stack":["0x4444588443c3a91288c5002483449aba1054192b"],"depth":1,"refund":0,"opName":"BALANCE"},
-    {"pc":2,"op":255,"gas":"0x2540bd9d6","gasCost":"0x1388","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"SELFDESTRUCT"},
-    {"gasUser":"0x1db2","gasTotal":"0x1db2","output":"0x"}
+    {"pc":2,"op":255,"gas":"0x2540bd9d6","gasCost":"0x1db0","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"SELFDESTRUCT"},
+    {"stateRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","output":"0x","gasUsed":"0x27da","pass":true,"fork":"London"}
   ]
 }

@@ -40,6 +40,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -88,7 +89,8 @@ class MainnetTransactionProcessorTest {
         warmCoinbase,
         MAX_STACK_SIZE,
         FeeMarket.legacy(),
-        CoinbaseFeePriceCalculator.frontier());
+        CoinbaseFeePriceCalculator.frontier(),
+        new CodeDelegationProcessor(Optional.of(BigInteger.ONE)));
   }
 
   @Test

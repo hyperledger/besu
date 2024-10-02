@@ -233,7 +233,7 @@ public class EthFeeHistoryTest {
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest("0x2", "11", new double[] {100.0}))
                 .getErrorType())
-        .isEqualTo(RpcErrorType.INVALID_PARAMS);
+        .isEqualTo(RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
   }
 
   @Test
@@ -241,11 +241,11 @@ public class EthFeeHistoryTest {
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest("0x0", "latest", new double[] {100.0}))
                 .getErrorType())
-        .isEqualTo(RpcErrorType.INVALID_PARAMS);
+        .isEqualTo(RpcErrorType.INVALID_BLOCK_COUNT_PARAMS);
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest("0x401", "latest", new double[] {100.0}))
                 .getErrorType())
-        .isEqualTo(RpcErrorType.INVALID_PARAMS);
+        .isEqualTo(RpcErrorType.INVALID_BLOCK_COUNT_PARAMS);
   }
 
   @Test

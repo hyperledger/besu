@@ -115,8 +115,7 @@ public class EthCallTest {
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
     final JsonCallParameter callParameter =
-        new JsonCallParameter(
-            null, null, null, null, null, null, null, null, null, Boolean.FALSE, null, null, null);
+        new JsonCallParameter.JsonCallParameterBuilder().withStrict(Boolean.FALSE).build();
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
@@ -444,20 +443,16 @@ public class EthCallTest {
 
   private JsonCallParameter callParameter(
       final Wei gasPrice, final Wei maxFeesPerGas, final Wei maxPriorityFeesPerGas) {
-    return new JsonCallParameter(
-        Address.fromHexString("0x0"),
-        Address.fromHexString("0x0"),
-        0L,
-        gasPrice,
-        maxFeesPerGas,
-        maxPriorityFeesPerGas,
-        Wei.ZERO,
-        Bytes.EMPTY,
-        null,
-        null,
-        null,
-        null,
-        null);
+    return new JsonCallParameter.JsonCallParameterBuilder()
+        .withFrom(Address.fromHexString("0x0"))
+        .withTo(Address.fromHexString("0x0"))
+        .withGas(0L)
+        .withGasPrice(gasPrice)
+        .withMaxFeePerGas(maxFeesPerGas)
+        .withMaxPriorityFeePerGas(maxPriorityFeesPerGas)
+        .withValue(Wei.ZERO)
+        .withInput(Bytes.EMPTY)
+        .build();
   }
 
   private JsonRpcRequestContext ethCallRequest(

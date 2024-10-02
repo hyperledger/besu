@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.awaitility.Awaitility.await;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.EXECUTION_INTERRUPTED;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.NONCE_TOO_LOW;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT_INVALID_TX;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
@@ -89,6 +92,7 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -184,6 +188,14 @@ public abstract class AbstractBlockTransactionSelectorTest {
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
     when(ethScheduler.scheduleBlockCreationTask(any(Runnable.class)))
         .thenAnswer(invocation -> CompletableFuture.runAsync(invocation.getArgument(0)));
+    when(ethScheduler.scheduleFutureTask(any(Runnable.class), any(Duration.class)))
+        .thenAnswer(
+            invocation -> {
+              final Duration delay = invocation.getArgument(1);
+              CompletableFuture.delayedExecutor(delay.toMillis(), MILLISECONDS)
+                  .execute(invocation.getArgument(0));
+              return null;
+            });
   }
 
   protected abstract GenesisConfigFile getGenesisConfigFile();
@@ -223,7 +235,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
             GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
     final MainnetTransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockHeader(blockHeader(0)).getTransactionProcessor();
 
@@ -294,7 +308,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final Transaction tx = createTransaction(i, Wei.of(7), 100_000);
       transactionsToInject.add(tx);
       if (i == 1) {
-        ensureTransactionIsInvalid(tx, TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
+        ensureTransactionIsInvalid(tx, TransactionInvalidReason.NONCE_TOO_LOW);
       } else {
         ensureTransactionIsValid(tx);
       }
@@ -309,8 +323,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsOnly(
             entry(
                 invalidTx,
-                TransactionSelectionResult.invalid(
-                    TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE.name())));
+                TransactionSelectionResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW.name())));
     assertThat(results.getSelectedTransactions().size()).isEqualTo(4);
     assertThat(results.getSelectedTransactions().contains(invalidTx)).isFalse();
     assertThat(results.getReceipts().size()).isEqualTo(4);
@@ -566,8 +579,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     ensureTransactionIsValid(validTransaction, 21_000, 0);
     final Transaction invalidTransaction = createTransaction(3, Wei.of(10), 21_000);
-    ensureTransactionIsInvalid(
-        invalidTransaction, TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
+    ensureTransactionIsInvalid(invalidTransaction, TransactionInvalidReason.NONCE_TOO_LOW);
 
     transactionPool.addRemoteTransactions(List.of(validTransaction, invalidTransaction));
 
@@ -580,8 +592,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsOnly(
             entry(
                 invalidTransaction,
-                TransactionSelectionResult.invalid(
-                    TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE.name())));
+                TransactionSelectionResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW.name())));
   }
 
   @Test
@@ -946,7 +957,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   @ParameterizedTest
   @MethodSource("subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver")
-  public void pendingTransactionsThatTakesTooLongToEvaluateIsDroppedFromThePool(
+  public void pendingTransactionsThatTakesTooLongToEvaluateIsPenalized(
       final boolean isPoa,
       final boolean preProcessingTooLate,
       final boolean processingTooLate,
@@ -959,7 +970,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         postProcessingTooLate,
         900,
         TX_EVALUATION_TOO_LONG,
-        true);
+        false);
   }
 
   private void internalBlockSelectionTimeoutSimulation(
@@ -982,9 +993,17 @@ public abstract class AbstractBlockTransactionSelectorTest {
                       .TransactionEvaluationContext
                   ctx = invocation.getArgument(0);
               if (ctx.getTransaction().equals(p)) {
-                Thread.sleep(t);
+                try {
+                  Thread.sleep(t);
+                } catch (final InterruptedException e) {
+                  return TransactionSelectionResult.invalidTransient(EXECUTION_INTERRUPTED.name());
+                }
               } else {
-                Thread.sleep(fastProcessingTxTime);
+                try {
+                  Thread.sleep(fastProcessingTxTime);
+                } catch (final InterruptedException e) {
+                  return TransactionSelectionResult.invalidTransient(EXECUTION_INTERRUPTED.name());
+                }
               }
               return SELECTED;
             };
@@ -1081,18 +1100,19 @@ public abstract class AbstractBlockTransactionSelectorTest {
         processingTooLate,
         postProcessingTooLate,
         500,
-        BLOCK_SELECTION_TIMEOUT,
-        false,
-        UPFRONT_COST_EXCEEDS_BALANCE);
+        BLOCK_SELECTION_TIMEOUT_INVALID_TX,
+        true,
+        NONCE_TOO_LOW);
   }
 
   @ParameterizedTest
   @MethodSource("subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver")
-  public void invalidPendingTransactionsThatTakesTooLongToEvaluateIsDroppedFromThePool(
-      final boolean isPoa,
-      final boolean preProcessingTooLate,
-      final boolean processingTooLate,
-      final boolean postProcessingTooLate) {
+  public void
+      evaluationOfInvalidPendingTransactionThatTakesTooLongToEvaluateIsInterruptedAndPenalized(
+          final boolean isPoa,
+          final boolean preProcessingTooLate,
+          final boolean processingTooLate,
+          final boolean postProcessingTooLate) {
 
     internalBlockSelectionTimeoutSimulationInvalidTxs(
         isPoa,
@@ -1101,8 +1121,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
         postProcessingTooLate,
         900,
         TX_EVALUATION_TOO_LONG,
-        true,
-        UPFRONT_COST_EXCEEDS_BALANCE);
+        false,
+        NONCE_TOO_LOW);
   }
 
   private void internalBlockSelectionTimeoutSimulationInvalidTxs(
@@ -1128,9 +1148,17 @@ public abstract class AbstractBlockTransactionSelectorTest {
                       .TransactionEvaluationContext
                   ctx = invocation.getArgument(0);
               if (ctx.getTransaction().equals(p)) {
-                Thread.sleep(t);
+                try {
+                  Thread.sleep(t);
+                } catch (final InterruptedException e) {
+                  return TransactionSelectionResult.invalidTransient(EXECUTION_INTERRUPTED.name());
+                }
               } else {
-                Thread.sleep(fastProcessingTxTime);
+                try {
+                  Thread.sleep(fastProcessingTxTime);
+                } catch (final InterruptedException e) {
+                  return TransactionSelectionResult.invalidTransient(EXECUTION_INTERRUPTED.name());
+                }
               }
               return invalidSelectionResult;
             };
@@ -1199,7 +1227,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
-    // no tx is selected since all are invalid
+    // no tx is selected since all are invalid or late
     assertThat(results.getSelectedTransactions()).isEmpty();
 
     // all txs are not selected so wait until all are evaluated
@@ -1350,7 +1378,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .thenAnswer(
             invocation -> {
               if (processingTime > 0) {
-                Thread.sleep(processingTime);
+                try {
+                  Thread.sleep(processingTime);
+                } catch (final InterruptedException e) {
+                  return TransactionProcessingResult.invalid(
+                      ValidationResult.invalid(EXECUTION_INTERRUPTED));
+                }
               }
               return TransactionProcessingResult.successful(
                   new ArrayList<>(),
@@ -1375,7 +1408,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .thenAnswer(
             invocation -> {
               if (processingTime > 0) {
-                Thread.sleep(processingTime);
+                try {
+                  Thread.sleep(processingTime);
+                } catch (final InterruptedException e) {
+                  return TransactionProcessingResult.invalid(
+                      ValidationResult.invalid(EXECUTION_INTERRUPTED));
+                }
               }
               return TransactionProcessingResult.invalid(ValidationResult.invalid(invalidReason));
             });
@@ -1421,15 +1459,17 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   private static class PluginTransactionSelectionResult extends TransactionSelectionResult {
     private enum PluginStatus implements Status {
-      PLUGIN_INVALID(false, true),
-      PLUGIN_INVALID_TRANSIENT(false, false);
+      PLUGIN_INVALID(false, true, false),
+      PLUGIN_INVALID_TRANSIENT(false, false, true);
 
       private final boolean stop;
       private final boolean discard;
+      private final boolean penalize;
 
-      PluginStatus(final boolean stop, final boolean discard) {
+      PluginStatus(final boolean stop, final boolean discard, final boolean penalize) {
         this.stop = stop;
         this.discard = discard;
+        this.penalize = penalize;
       }
 
       @Override
@@ -1440,6 +1480,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
       @Override
       public boolean discard() {
         return discard;
+      }
+
+      @Override
+      public boolean penalize() {
+        return penalize;
       }
     }
 

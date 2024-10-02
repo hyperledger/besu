@@ -25,6 +25,7 @@ import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -37,6 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Predicates;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Json util class. */
@@ -59,11 +61,29 @@ public class JsonUtil {
    * @return a copy of the json object with all keys in lower case.
    */
   public static ObjectNode normalizeKeys(final ObjectNode objectNode) {
+    return normalizeKeys(objectNode, Predicates.alwaysTrue());
+  }
+
+  /**
+   * Converts all the object keys (but none of the string values) to lowercase for easier lookup.
+   * This is useful in cases such as the 'genesis.json' file where all keys are assumed to be case
+   * insensitive.
+   *
+   * @param objectNode The ObjectNode to be normalized
+   * @param fieldPredicate The predicate to filter the fields to normalize
+   * @return a copy of the json object with all keys in lower case.
+   */
+  public static ObjectNode normalizeKeys(
+      final ObjectNode objectNode, final Predicate<Map.Entry<String, JsonNode>> fieldPredicate) {
     final ObjectNode normalized = JsonUtil.createEmptyObjectNode();
     objectNode
         .fields()
         .forEachRemaining(
             entry -> {
+              if (!fieldPredicate.test(entry)) {
+                return;
+              }
+
               final String key = entry.getKey();
               final JsonNode value = entry.getValue();
               final String normalizedKey = normalizeKey(key);

@@ -19,15 +19,29 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
+/**
+ * This interface represents a latency report. It provides methods to get the id and latency of the
+ * latency report.
+ */
 @Value.Immutable
 @Value.Style(allParameters = true)
 @JsonSerialize(as = ImmutableLatencyReport.class)
 @JsonDeserialize(as = ImmutableLatencyReport.class)
 public interface LatencyReport {
 
+  /**
+   * Gets the id of the latency report.
+   *
+   * @return the id of the latency report.
+   */
   @JsonProperty("id")
   String getId();
 
+  /**
+   * Gets the latency of the latency report.
+   *
+   * @return the latency of the latency report.
+   */
   @JsonProperty("latency")
   String getLatency();
 }

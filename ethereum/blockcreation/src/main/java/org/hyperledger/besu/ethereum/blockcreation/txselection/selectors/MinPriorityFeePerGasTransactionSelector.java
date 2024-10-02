@@ -68,7 +68,7 @@ public class MinPriorityFeePerGasTransactionSelector extends AbstractTransaction
     Wei priorityFeePerGas =
         pendingTransaction
             .getTransaction()
-            .getEffectivePriorityFeePerGas(context.processableBlockHeader().getBaseFee());
+            .getEffectivePriorityFeePerGas(context.pendingBlockHeader().getBaseFee());
     return priorityFeePerGas.lessThan(context.miningParameters().getMinPriorityFeePerGas());
   }
 

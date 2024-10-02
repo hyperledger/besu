@@ -63,7 +63,7 @@ public class BlockMinerTest {
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
-    when(blockCreator.createBlock(anyLong()))
+    when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
                 blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
@@ -107,7 +107,7 @@ public class BlockMinerTest {
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
-    when(blockCreator.createBlock(anyLong()))
+    when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
                 blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
@@ -155,7 +155,7 @@ public class BlockMinerTest {
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
-    when(blockCreator.createBlock(anyLong()))
+    when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
                 blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));

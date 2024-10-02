@@ -18,8 +18,26 @@ import org.hyperledger.besu.BesuInfo;
 
 import picocli.CommandLine;
 
+/**
+ * The VersionProvider class is responsible for providing the version of the Hyperledger Besu EVM
+ * tool. It implements the IVersionProvider interface from the picocli library.
+ *
+ * <p>The getVersion method returns a string array containing the version of the Hyperledger Besu
+ * EVM tool.
+ */
 public class VersionProvider implements CommandLine.IVersionProvider {
 
+  /**
+   * Default constructor for the VersionProvider class. This constructor does not perform any
+   * operations.
+   */
+  public VersionProvider() {}
+
+  /**
+   * This method returns the version of the Hyperledger Besu EVM tool.
+   *
+   * @return A string array containing the version of the Hyperledger Besu EVM tool.
+   */
   @Override
   public String[] getVersion() {
     return new String[] {"Hyperledger Besu evm " + BesuInfo.shortVersion()};

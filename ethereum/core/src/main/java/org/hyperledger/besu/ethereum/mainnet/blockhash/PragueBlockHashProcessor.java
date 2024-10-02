@@ -37,7 +37,7 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
   public static final Address HISTORY_STORAGE_ADDRESS =
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe"); // should be
 
-  // 0x25a219378dad9b3503c8268c9ca836a52427a4fb
+  // 0x0aae40965e6800cd9b1f4b05ff21581047e3f91e
 
   /** The HISTORY_SERVE_WINDOW */
   public static final long HISTORY_SERVE_WINDOW = 8192;

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.network;
 
-import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
@@ -58,15 +57,6 @@ public interface ProtocolManager extends AutoCloseable {
    * @param peerConnection the new peer connection
    */
   void handleNewConnection(PeerConnection peerConnection);
-
-  /**
-   * Call this to find out whether we should try to connect to a certain peer
-   *
-   * @param peer the peer that we are trying to connect to
-   * @param incoming true if the connection is incoming
-   * @return true, if the ProtocolManager wants to connect to the peer, false otherwise
-   */
-  boolean shouldConnect(Peer peer, final boolean incoming);
 
   /**
    * Handles peer disconnects.

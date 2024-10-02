@@ -80,6 +80,8 @@ public class QbftRound {
   /** The Bft extra data codec. */
   protected final BftExtraDataCodec bftExtraDataCodec;
 
+  private final BlockHeader parentHeader;
+
   /**
    * Instantiates a new Qbft round.
    *
@@ -93,6 +95,7 @@ public class QbftRound {
    * @param transmitter the transmitter
    * @param roundTimer the round timer
    * @param bftExtraDataCodec the bft extra data codec
+   * @param parentHeader the parent header
    */
   public QbftRound(
       final RoundState roundState,
@@ -104,7 +107,8 @@ public class QbftRound {
       final MessageFactory messageFactory,
       final QbftMessageTransmitter transmitter,
       final RoundTimer roundTimer,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final BlockHeader parentHeader) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -114,7 +118,7 @@ public class QbftRound {
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
     this.bftExtraDataCodec = bftExtraDataCodec;
-
+    this.parentHeader = parentHeader;
     roundTimer.startTimer(getRoundIdentifier());
   }
 
@@ -128,16 +132,14 @@ public class QbftRound {
   }
 
   /**
-   * Create and send proposal message.
+   * Create a block
    *
-   * @param headerTimeStampSeconds the header time stamp seconds
+   * @param headerTimeStampSeconds of the block
+   * @return a Block
    */
-  public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
+  public Block createBlock(final long headerTimeStampSeconds) {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-    final Block block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
-
-    LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
-    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
+    return blockCreator.createBlock(headerTimeStampSeconds, this.parentHeader).getBlock();
   }
 
   /**
@@ -154,7 +156,7 @@ public class QbftRound {
     final Block blockToPublish;
     if (bestPreparedCertificate.isEmpty()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
-      blockToPublish = blockCreator.createBlock(headerTimestamp).getBlock();
+      blockToPublish = blockCreator.createBlock(headerTimestamp, this.parentHeader).getBlock();
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
@@ -165,6 +167,15 @@ public class QbftRound {
         blockToPublish,
         roundChangeArtifacts.getRoundChanges(),
         bestPreparedCertificate.map(PreparedCertificate::getPrepares).orElse(emptyList()));
+  }
+
+  /**
+   * Update state with proposal and transmit.
+   *
+   * @param block the block
+   */
+  protected void updateStateWithProposalAndTransmit(final Block block) {
+    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
 
   /**

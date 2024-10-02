@@ -21,17 +21,31 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import java.util.List;
 import java.util.Optional;
 
+/** Contains the outputs of processing a block. */
 public class BlockProcessingOutputs {
 
   private final MutableWorldState worldState;
   private final List<TransactionReceipt> receipts;
   private final Optional<List<Request>> maybeRequests;
 
+  /**
+   * Creates a new instance.
+   *
+   * @param worldState the world state after processing the block
+   * @param receipts the receipts produced by processing the block
+   */
   public BlockProcessingOutputs(
       final MutableWorldState worldState, final List<TransactionReceipt> receipts) {
     this(worldState, receipts, Optional.empty());
   }
 
+  /**
+   * Creates a new instance.
+   *
+   * @param worldState the world state after processing the block
+   * @param receipts the receipts produced by processing the block
+   * @param maybeRequests the requests produced by processing the block
+   */
   public BlockProcessingOutputs(
       final MutableWorldState worldState,
       final List<TransactionReceipt> receipts,
@@ -41,14 +55,29 @@ public class BlockProcessingOutputs {
     this.maybeRequests = maybeRequests;
   }
 
+  /**
+   * Returns the world state after processing the block.
+   *
+   * @return the world state after processing the block
+   */
   public MutableWorldState getWorldState() {
     return worldState;
   }
 
+  /**
+   * Returns the receipts produced by processing the block.
+   *
+   * @return the receipts produced by processing the block
+   */
   public List<TransactionReceipt> getReceipts() {
     return receipts;
   }
 
+  /**
+   * Returns the requests produced by processing the block.
+   *
+   * @return the requests produced by processing the block
+   */
   public Optional<List<Request>> getRequests() {
     return maybeRequests;
   }

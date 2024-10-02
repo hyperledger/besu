@@ -101,7 +101,10 @@ public class UpnpNatManager extends AbstractNatManager {
         new BesuUpnpRegistryListener() {
           @Override
           public void remoteDeviceAdded(final Registry registry, final RemoteDevice device) {
-            LOG.debug("UPnP Device discovered: " + device.getDetails().getFriendlyName());
+            LOG.atDebug()
+                .setMessage("UPnP Device discovered: {}")
+                .addArgument(device.getDetails().getFriendlyName())
+                .log();
             inspectDeviceRecursive(device, recognizedServices.keySet());
           }
         };

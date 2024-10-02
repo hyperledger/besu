@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.util.Collections;
 import java.util.List;
@@ -85,7 +85,7 @@ public class EngineExchangeCapabilitiesTest {
 
   @SuppressWarnings("unchecked")
   private List<String> fromSuccessResp(final JsonRpcResponse resp) {
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(resp.getType()).isEqualTo(RpcResponseType.SUCCESS);
     return Optional.of(resp)
         .map(JsonRpcSuccessResponse.class::cast)
         .map(JsonRpcSuccessResponse::getResult)

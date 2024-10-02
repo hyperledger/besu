@@ -32,6 +32,13 @@ public interface SignatureAlgorithm {
   void disableNative();
 
   /**
+   * Attempt to enable the native library.
+   *
+   * @return true if the native library was enabled
+   */
+  boolean maybeEnableNative();
+
+  /**
    * Is native enabled.
    *
    * @return the boolean
@@ -207,6 +214,17 @@ public interface SignatureAlgorithm {
    * @return the secp signature
    */
   SECPSignature createSignature(final BigInteger r, final BigInteger s, final byte recId);
+
+  /**
+   * Create code delegation signature which have different bounds than transaction signatures.
+   *
+   * @param r the r part of the signature
+   * @param s the s part of the signature
+   * @param yParity the parity of the y coordinate of the public key
+   * @return the code delegation signature
+   */
+  CodeDelegationSignature createCodeDelegationSignature(
+      final BigInteger r, final BigInteger s, final BigInteger yParity);
 
   /**
    * Decode secp signature.

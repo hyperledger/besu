@@ -17,7 +17,7 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 4,
-    "error":{"code":-32602,"message":"Invalid params"}
+    "error":{"code":-32602,"message":"Invalid call params"}
   },
   "statusCode": 200
 }

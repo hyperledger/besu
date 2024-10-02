@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -64,7 +65,9 @@ import io.vertx.core.VertxOptions;
 /** Provides a facade to construct the JSON-RPC component. */
 public class JsonRpcTestMethodsFactory {
 
-  private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
+  private static final String CLIENT_NODE_NAME = "TestClientVersion/0.1.0";
+  private static final String CLIENT_VERSION = "0.1.0";
+  private static final String CLIENT_COMMIT = "12345678";
   private static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
 
   private final BlockchainImporter importer;
@@ -162,6 +165,8 @@ public class JsonRpcTestMethodsFactory {
     final JsonRpcConfiguration jsonRpcConfiguration = mock(JsonRpcConfiguration.class);
     final WebSocketConfiguration webSocketConfiguration = mock(WebSocketConfiguration.class);
     final MetricsConfiguration metricsConfiguration = mock(MetricsConfiguration.class);
+    final GraphQLConfiguration graphQLConfiguration = mock(GraphQLConfiguration.class);
+
     final NatService natService = new NatService(Optional.empty());
 
     final List<String> apis = new ArrayList<>();
@@ -175,7 +180,9 @@ public class JsonRpcTestMethodsFactory {
 
     return new JsonRpcMethodsFactory()
         .methods(
+            CLIENT_NODE_NAME,
             CLIENT_VERSION,
+            CLIENT_COMMIT,
             NETWORK_ID,
             new StubGenesisConfigOptions(),
             peerDiscovery,
@@ -196,6 +203,7 @@ public class JsonRpcTestMethodsFactory {
             jsonRpcConfiguration,
             webSocketConfiguration,
             metricsConfiguration,
+            graphQLConfiguration,
             natService,
             new HashMap<>(),
             dataDir,

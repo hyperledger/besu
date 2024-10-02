@@ -25,8 +25,8 @@ public interface DataStorageConfiguration {
   long DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD = 512;
   boolean DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED = true;
   long MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
-  int DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE = 30_000;
-  boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = false;
+  int DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE = 5_000;
+  boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = true;
 
   DataStorageConfiguration DEFAULT_CONFIG =
       ImmutableDataStorageConfiguration.builder()
@@ -85,6 +85,8 @@ public interface DataStorageConfiguration {
     boolean DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED = true;
     boolean DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED = true;
 
+    boolean DEFAULT_PARALLEL_TRX_ENABLED = false;
+
     DataStorageConfiguration.Unstable DEFAULT =
         ImmutableDataStorageConfiguration.Unstable.builder().build();
 
@@ -99,6 +101,11 @@ public interface DataStorageConfiguration {
     @Value.Default
     default boolean getBonsaiCodeStoredByCodeHashEnabled() {
       return DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
+    }
+
+    @Value.Default
+    default boolean isParallelTxProcessingEnabled() {
+      return DEFAULT_PARALLEL_TRX_ENABLED;
     }
   }
 }

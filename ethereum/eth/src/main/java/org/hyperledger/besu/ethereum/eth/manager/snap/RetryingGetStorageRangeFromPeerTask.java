@@ -17,19 +17,20 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes32;
 
 public class RetryingGetStorageRangeFromPeerTask
-    extends AbstractRetryingPeerTask<StorageRangeMessage.SlotRangeData> {
+    extends AbstractRetryingSwitchingPeerTask<StorageRangeMessage.SlotRangeData> {
+
+  public static final int MAX_RETRIES = 4;
 
   private final EthContext ethContext;
   private final List<Bytes32> accountHashes;
@@ -45,7 +46,11 @@ public class RetryingGetStorageRangeFromPeerTask
       final Bytes32 endKeyHash,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(ethContext, 4, data -> data.proofs().isEmpty() && data.slots().isEmpty(), metricsSystem);
+    super(
+        ethContext,
+        metricsSystem,
+        data -> data.proofs().isEmpty() && data.slots().isEmpty(),
+        MAX_RETRIES);
     this.ethContext = ethContext;
     this.accountHashes = accountHashes;
     this.startKeyHash = startKeyHash;
@@ -66,17 +71,22 @@ public class RetryingGetStorageRangeFromPeerTask
   }
 
   @Override
-  protected CompletableFuture<StorageRangeMessage.SlotRangeData> executePeerTask(
-      final Optional<EthPeer> assignedPeer) {
+  protected CompletableFuture<StorageRangeMessage.SlotRangeData> executeTaskOnCurrentPeer(
+      final EthPeer peer) {
     final GetStorageRangeFromPeerTask task =
         GetStorageRangeFromPeerTask.forStorageRange(
             ethContext, accountHashes, startKeyHash, endKeyHash, blockHeader, metricsSystem);
-    assignedPeer.ifPresent(task::assignPeer);
+    task.assignPeer(peer);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {
               result.complete(peerResult.getResult());
               return peerResult.getResult();
             });
+  }
+
+  @Override
+  protected boolean isSuitablePeer(final EthPeer peer) {
+    return peer.isServingSnap();
   }
 }

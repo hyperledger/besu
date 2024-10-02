@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -75,5 +76,12 @@ class WithdrawalRequestValidatorTest {
         Arguments.of(blockWithWithdrawalRequestsWithoutWithdrawalRequestsRoot(), false),
         Arguments.of(blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot(), false),
         Arguments.of(blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot(), true));
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

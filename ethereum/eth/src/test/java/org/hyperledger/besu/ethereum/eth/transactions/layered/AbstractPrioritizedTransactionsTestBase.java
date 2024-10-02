@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.DROPPED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.NEW;
 
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
@@ -169,7 +170,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
             .mapToObj(
                 i -> {
                   final var lowPriceTx = lowValueTxSupplier.next();
-                  final var prioritizeResult = transactions.add(lowPriceTx, 0);
+                  final var prioritizeResult = transactions.add(lowPriceTx, 0, NEW);
 
                   assertThat(prioritizeResult).isEqualTo(ADDED);
                   assertThat(evictCollector.getEvictedTransactions()).isEmpty();
@@ -180,7 +181,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     assertThat(transactions.count()).isEqualTo(MAX_TRANSACTIONS);
 
     // This should kick the oldest tx with the low gas price out, namely the first one we added
-    final var highValuePrioRes = transactions.add(highValueTx, 0);
+    final var highValuePrioRes = transactions.add(highValueTx, 0, NEW);
     assertThat(highValuePrioRes).isEqualTo(ADDED);
     assertEvicted(expectedDroppedTx);
 
@@ -195,7 +196,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
   }
 
   protected TransactionAddedResult prioritizeTransaction(final PendingTransaction tx) {
-    return transactions.add(tx, 0);
+    return transactions.add(tx, 0, NEW);
   }
 
   protected void assertTransactionPrioritized(final PendingTransaction tx) {

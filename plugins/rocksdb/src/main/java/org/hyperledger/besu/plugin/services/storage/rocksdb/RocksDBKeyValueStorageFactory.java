@@ -60,12 +60,10 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBKeyValueStorageFactory.class);
   private static final EnumSet<BaseVersionedStorageFormat> SUPPORTED_VERSIONED_FORMATS =
       EnumSet.of(
-          FOREST_WITH_VARIABLES,
           FOREST_WITH_RECEIPT_COMPACTION,
-          BONSAI_WITH_VARIABLES,
           BONSAI_WITH_RECEIPT_COMPACTION,
-          VERKLE_WITH_VARIABLES,
           VERKLE_WITH_RECEIPT_COMPACTION);
+
   private static final String NAME = "rocksdb";
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
   private DatabaseMetadata databaseMetadata;
@@ -345,9 +343,14 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     // reflect the change to the runtime version, and return it.
 
     // Besu supports both formats of receipts so no upgrade is needed other than updating metadata
-    if (runtimeVersion == BONSAI_WITH_RECEIPT_COMPACTION
-        || runtimeVersion == VERKLE_WITH_RECEIPT_COMPACTION
-        || runtimeVersion == FOREST_WITH_RECEIPT_COMPACTION) {
+    final VersionedStorageFormat existingVersionedStorageFormat =
+        existingMetadata.getVersionedStorageFormat();
+    if ((existingVersionedStorageFormat == BONSAI_WITH_VARIABLES
+            && runtimeVersion == BONSAI_WITH_RECEIPT_COMPACTION)
+        || (existingVersionedStorageFormat == FOREST_WITH_VARIABLES
+            && runtimeVersion == FOREST_WITH_RECEIPT_COMPACTION)
+        || (existingVersionedStorageFormat == VERKLE_WITH_VARIABLES
+            && runtimeVersion == VERKLE_WITH_RECEIPT_COMPACTION)) {
       final DatabaseMetadata metadata = new DatabaseMetadata(runtimeVersion);
       try {
         metadata.writeToDirectory(dataDir);
@@ -363,8 +366,8 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
             "Database unsafe downgrade detect: DB at %s is %s with version %s but version %s is expected. "
                 + "Please check your config and review release notes for supported downgrade procedures.",
             dataDir,
-            existingMetadata.getVersionedStorageFormat().getFormat().name(),
-            existingMetadata.getVersionedStorageFormat().getVersion(),
+            existingVersionedStorageFormat.getFormat().name(),
+            existingVersionedStorageFormat.getVersion(),
             runtimeVersion.getVersion());
 
     throw new StorageException(error);

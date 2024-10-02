@@ -43,6 +43,13 @@ public class TransactionSelectionResult {
     boolean discard();
 
     /**
+     * Should the score of this transaction be decremented?
+     *
+     * @return yes if the score of this transaction needs to be decremented
+     */
+    boolean penalize();
+
+    /**
      * Name of this status
      *
      * @return the name
@@ -52,29 +59,35 @@ public class TransactionSelectionResult {
 
   private enum BaseStatus implements Status {
     SELECTED,
-    BLOCK_FULL(true, false),
-    BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false),
-    BLOCK_SELECTION_TIMEOUT(true, false),
-    TX_EVALUATION_TOO_LONG(false, true),
-    INVALID_TRANSIENT(false, false),
-    INVALID(false, true);
+    BLOCK_FULL(true, false, false),
+    BLOBS_FULL(false, false, false),
+    BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false, false),
+    BLOCK_SELECTION_TIMEOUT(true, false, false),
+    BLOCK_SELECTION_TIMEOUT_INVALID_TX(true, true, true),
+    TX_EVALUATION_TOO_LONG(true, false, true),
+    INVALID_TX_EVALUATION_TOO_LONG(true, true, true),
+    INVALID_TRANSIENT(false, false, true),
+    INVALID(false, true, false);
 
     private final boolean stop;
     private final boolean discard;
+    private final boolean penalize;
 
     BaseStatus() {
       this.stop = false;
       this.discard = false;
+      this.penalize = false;
     }
 
-    BaseStatus(final boolean stop, final boolean discard) {
+    BaseStatus(final boolean stop, final boolean discard, final boolean penalize) {
       this.stop = stop;
       this.discard = discard;
+      this.penalize = penalize;
     }
 
     @Override
     public String toString() {
-      return name() + " (stop=" + stop + ", discard=" + discard + ")";
+      return name() + " (stop=" + stop + ", discard=" + discard + ", penalize=" + penalize + ")";
     }
 
     @Override
@@ -86,6 +99,11 @@ public class TransactionSelectionResult {
     public boolean discard() {
       return discard;
     }
+
+    @Override
+    public boolean penalize() {
+      return penalize;
+    }
   }
 
   /** The transaction has been selected to be included in the new block */
@@ -96,13 +114,25 @@ public class TransactionSelectionResult {
   public static final TransactionSelectionResult BLOCK_FULL =
       new TransactionSelectionResult(BaseStatus.BLOCK_FULL);
 
+  /** The block already contains the max number of allowed blobs. */
+  public static final TransactionSelectionResult BLOBS_FULL =
+      new TransactionSelectionResult(BaseStatus.BLOBS_FULL);
+
   /** There was no more time to add transaction to the block */
   public static final TransactionSelectionResult BLOCK_SELECTION_TIMEOUT =
       new TransactionSelectionResult(BaseStatus.BLOCK_SELECTION_TIMEOUT);
 
-  /** Transaction took too much to evaluate */
+  /** There was no more time to add transaction to the block, and the transaction is invalid */
+  public static final TransactionSelectionResult BLOCK_SELECTION_TIMEOUT_INVALID_TX =
+      new TransactionSelectionResult(BaseStatus.BLOCK_SELECTION_TIMEOUT_INVALID_TX);
+
+  /** Transaction took too much to evaluate, but it was valid */
   public static final TransactionSelectionResult TX_EVALUATION_TOO_LONG =
       new TransactionSelectionResult(BaseStatus.TX_EVALUATION_TOO_LONG);
+
+  /** Transaction took too much to evaluate, and it was invalid */
+  public static final TransactionSelectionResult INVALID_TX_EVALUATION_TOO_LONG =
+      new TransactionSelectionResult(BaseStatus.INVALID_TX_EVALUATION_TOO_LONG);
 
   /**
    * The transaction has not been selected since too large and the occupancy of the block is enough
@@ -117,6 +147,13 @@ public class TransactionSelectionResult {
    */
   public static final TransactionSelectionResult TX_TOO_LARGE_FOR_REMAINING_GAS =
       TransactionSelectionResult.invalidTransient("TX_TOO_LARGE_FOR_REMAINING_GAS");
+
+  /**
+   * The transaction has not been selected since there is not enough remaining blob gas in the block
+   * to fit the blobs of the tx, but selection should continue.
+   */
+  public static final TransactionSelectionResult TX_TOO_LARGE_FOR_REMAINING_BLOB_GAS =
+      TransactionSelectionResult.invalidTransient("TX_TOO_LARGE_FOR_REMAINING_BLOB_GAS");
 
   /**
    * The transaction has not been selected since its current price is below the configured min
@@ -201,6 +238,15 @@ public class TransactionSelectionResult {
    */
   public boolean discard() {
     return status.discard();
+  }
+
+  /**
+   * Should the score of this transaction be decremented?
+   *
+   * @return yes if the score of this transaction needs to be decremented
+   */
+  public boolean penalize() {
+    return status.penalize();
   }
 
   /**

@@ -254,7 +254,7 @@ public class BlocksSubCommand implements Runnable {
         // Set some defaults
         return parentCommand
             .parentCommand
-            .getControllerBuilder()
+            .setupControllerBuilder()
             // set to mainnet genesis block so validation rules won't reject it.
             .clock(Clock.fixed(Instant.ofEpochSecond(startTime), ZoneOffset.UTC))
             .miningParameters(getMiningParameters())
@@ -374,7 +374,7 @@ public class BlocksSubCommand implements Runnable {
     private BesuController createBesuController() {
       return parentCommand
           .parentCommand
-          .getControllerBuilder()
+          .setupControllerBuilder()
           .miningParameters(MiningParameters.newDefault())
           .build();
     }

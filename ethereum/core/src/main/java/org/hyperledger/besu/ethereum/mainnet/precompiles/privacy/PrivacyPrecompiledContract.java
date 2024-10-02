@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVAT
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
@@ -40,6 +41,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -61,6 +63,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   final WorldStateArchive privateWorldStateArchive;
   final PrivateStateRootResolver privateStateRootResolver;
   private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
+  final boolean alwaysIncrementPrivateNonce;
   PrivateTransactionProcessor privateTransactionProcessor;
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivacyPrecompiledContract.class);
@@ -79,6 +82,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
         privacyParameters.getPrivateStateGenesisAllocator(),
+        privacyParameters.isPrivateNonceAlwaysIncrementsEnabled(),
         name);
   }
 
@@ -88,12 +92,14 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final WorldStateArchive worldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver,
       final PrivateStateGenesisAllocator privateStateGenesisAllocator,
+      final boolean alwaysIncrementPrivateNonce,
       final String name) {
     super(name, gasCalculator);
     this.enclave = enclave;
     this.privateWorldStateArchive = worldStateArchive;
     this.privateStateRootResolver = privateStateRootResolver;
     this.privateStateGenesisAllocator = privateStateGenesisAllocator;
+    this.alwaysIncrementPrivateNonce = alwaysIncrementPrivateNonce;
   }
 
   public void setPrivateTransactionProcessor(
@@ -181,18 +187,31 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
 
-    if (result.isInvalid() || !result.isSuccessful()) {
+    final Boolean isPersistingPrivateState =
+        messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false);
+
+    if (!result.isSuccessful()) {
       LOG.error(
           "Failed to process private transaction {}: {}",
           pmtHash,
           result.getValidationResult().getErrorMessage());
+      if (isPersistingPrivateState && alwaysIncrementPrivateNonce) {
+        final Address senderAddress = privateTransaction.getSender();
+        final MutableAccount senderAccount = privateWorldStateUpdater.getOrCreate(senderAddress);
+        senderAccount.incrementNonce();
+        // we can safely commit the updater here, because it is only changed if the transaction is
+        // successful,
+        // so we can be sure that the only change is the incremented nonce
+        privateWorldStateUpdater.commit();
+        disposablePrivateState.persist(null);
 
-      privateMetadataUpdater.putTransactionReceipt(pmtHash, new PrivateTransactionReceipt(result));
-
+        storePrivateMetadata(
+            pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
+      }
       return NO_RESULT;
     }
 
-    if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
+    if (isPersistingPrivateState) {
       privateWorldStateUpdater.commit();
       disposablePrivateState.persist(null);
 

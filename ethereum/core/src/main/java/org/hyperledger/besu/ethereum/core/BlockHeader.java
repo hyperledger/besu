@@ -161,29 +161,23 @@ public class BlockHeader extends SealableBlockHeader
     out.writeBytes(extraData);
     out.writeBytes(mixHashOrPrevRandao);
     out.writeLong(nonce);
-    if (baseFee != null) {
+    do {
+      if (baseFee == null) break;
       out.writeUInt256Scalar(baseFee);
-    }
-    if (withdrawalsRoot != null) {
+
+      if (withdrawalsRoot == null) break;
       out.writeBytes(withdrawalsRoot);
-    }
-    /*if (excessBlobGas != null && blobGasUsed != null) {
-          out.writeLongScalar(blobGasUsed);
-          out.writeUInt64Scalar(excessBlobGas);
-        }
-        if (parentBeaconBlockRoot != null) {
-          out.writeBytes(parentBeaconBlockRoot);
-        }
-    <<<<<<< HEAD
-        if (depositsRoot != null) {
-          out.writeBytes(depositsRoot);
-        }
-        if (exitsRoot != null) {
-          out.writeBytes(exitsRoot);
-        }
-        if (requestsRoot != null) {
-          out.writeBytes(requestsRoot);
-        }*/
+
+      /*if (excessBlobGas == null || blobGasUsed == null) break;
+      out.writeLongScalar(blobGasUsed);
+      out.writeUInt64Scalar(excessBlobGas);
+
+      if (parentBeaconBlockRoot == null) break;
+      out.writeBytes(parentBeaconBlockRoot);
+
+      if (requestsRoot == null) break;
+      out.writeBytes(requestsRoot);*/
+    } while (false);
     out.endList();
   }
 

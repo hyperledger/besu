@@ -23,4 +23,8 @@ public class MinerTransactions {
   public MinerStopTransaction minerStop() {
     return new MinerStopTransaction();
   }
+
+  public MinerGetMinGasPriceTransaction minerGetMinGasPrice() {
+    return new MinerGetMinGasPriceTransaction();
+  }
 }
