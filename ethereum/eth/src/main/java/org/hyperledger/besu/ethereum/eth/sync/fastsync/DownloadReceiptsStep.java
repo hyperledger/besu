@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -64,23 +63,16 @@ public class DownloadReceiptsStep
           () -> {
             List<BlockWithReceipts> blockWithReceiptsList = new ArrayList<>(headers.size());
             do {
-              final Map<BlockHeader, List<TransactionReceipt>> getReceipts =
-                  new HashMap<BlockHeader, List<TransactionReceipt>>();
               GetReceiptsFromPeerTask getReceiptsFromPeerTask =
                   new GetReceiptsFromPeerTask(headers, new BodyValidator());
               PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
                   peerTaskExecutor.execute(getReceiptsFromPeerTask);
               if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
                   && getReceiptsResult.result().isPresent()) {
-                Map<BlockHeader, List<TransactionReceipt>> receiptsResult =
-                    getReceiptsResult.result().get();
-                for (BlockHeader blockHeader : receiptsResult.keySet()) {
-                  getReceipts.put(blockHeader, receiptsResult.get(blockHeader));
-                }
+                  // remove all the headers we found receipts for
+                  headers.removeAll(getReceiptsResult.result().get().keySet());
+                  blockWithReceiptsList.addAll(combineBlocksAndReceipts(blocks, getReceiptsResult.result().get()));
               }
-              // remove all the headers we found receipts for
-              headers.removeAll(getReceipts.keySet());
-              blockWithReceiptsList.addAll(combineBlocksAndReceipts(blocks, getReceipts));
               // repeat until all headers have receipts
             } while (!headers.isEmpty());
 
@@ -101,7 +93,7 @@ public class DownloadReceiptsStep
   private List<BlockWithReceipts> combineBlocksAndReceipts(
       final List<Block> blocks, final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader) {
     return blocks.stream()
-        .filter((b) -> receiptsByHeader.keySet().contains(b.getHeader()))
+        .filter((b) -> receiptsByHeader.containsKey(b.getHeader()))
         .map(
             block -> {
               final List<TransactionReceipt> receipts =
