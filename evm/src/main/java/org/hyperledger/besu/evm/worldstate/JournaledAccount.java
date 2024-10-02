@@ -211,8 +211,8 @@ public class JournaledAccount implements MutableAccount, Undoable {
   }
 
   @Override
-  public Optional<Integer> getCodeSize() {
-    return Optional.of(code.get().size());
+  public Optional<Long> getCodeSize() {
+    return Optional.of((long) code.get().size());
   }
 
   @Override

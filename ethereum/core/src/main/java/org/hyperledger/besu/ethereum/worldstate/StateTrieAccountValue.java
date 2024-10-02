@@ -34,18 +34,11 @@ public class StateTrieAccountValue implements AccountValue {
   protected final Wei balance;
   protected final Hash storageRoot;
   protected final Hash codeHash;
-  protected final Optional<Integer> codeSize;
+  protected final Optional<Long> codeSize;
 
   public StateTrieAccountValue(
       final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
-    checkNotNull(balance, "balance cannot be null");
-    checkNotNull(storageRoot, "storageRoot cannot be null");
-    checkNotNull(codeHash, "codeHash cannot be null");
-    this.nonce = nonce;
-    this.balance = balance;
-    this.storageRoot = storageRoot;
-    this.codeHash = codeHash;
-    this.codeSize = Optional.empty();
+    this(nonce, balance, storageRoot, codeHash, Optional.empty());
   }
 
   public StateTrieAccountValue(
@@ -53,12 +46,24 @@ public class StateTrieAccountValue implements AccountValue {
       final Wei balance,
       final Hash storageRoot,
       final Hash codeHash,
-      final int codeSize) {
+      final long codeSize) {
+    this(nonce, balance, storageRoot, codeHash, Optional.of(codeSize));
+  }
+
+  public StateTrieAccountValue(
+      final long nonce,
+      final Wei balance,
+      final Hash storageRoot,
+      final Hash codeHash,
+      final Optional<Long> codeSize) {
+    checkNotNull(balance, "balance cannot be null");
+    checkNotNull(storageRoot, "storageRoot cannot be null");
+    checkNotNull(codeHash, "codeHash cannot be null");
     this.nonce = nonce;
     this.balance = balance;
     this.storageRoot = storageRoot;
     this.codeHash = codeHash;
-    this.codeSize = Optional.of(codeSize);
+    this.codeSize = codeSize;
   }
 
   /**
@@ -102,7 +107,7 @@ public class StateTrieAccountValue implements AccountValue {
   }
 
   @Override
-  public Optional<Integer> getCodeSize() {
+  public Optional<Long> getCodeSize() {
     return codeSize;
   }
 
@@ -110,16 +115,17 @@ public class StateTrieAccountValue implements AccountValue {
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    final StateTrieAccountValue that = (StateTrieAccountValue) o;
+    StateTrieAccountValue that = (StateTrieAccountValue) o;
     return nonce == that.nonce
-        && balance.equals(that.balance)
-        && storageRoot.equals(that.storageRoot)
-        && codeHash.equals(that.codeHash);
+        && Objects.equals(balance, that.balance)
+        && Objects.equals(storageRoot, that.storageRoot)
+        && Objects.equals(codeHash, that.codeHash)
+        && Objects.equals(codeSize, that.codeSize);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(nonce, balance, storageRoot, codeHash);
+    return Objects.hash(nonce, balance, storageRoot, codeHash, codeSize);
   }
 
   @Override
@@ -130,7 +136,7 @@ public class StateTrieAccountValue implements AccountValue {
     out.writeUInt256Scalar(balance);
     out.writeBytes(storageRoot);
     out.writeBytes(codeHash);
-
+    codeSize.ifPresent(out::writeLongScalar);
     out.endList();
   }
 
@@ -141,6 +147,7 @@ public class StateTrieAccountValue implements AccountValue {
     final Wei balance = Wei.of(in.readUInt256Scalar());
     Bytes32 storageRoot;
     Bytes32 codeHash;
+    Optional<Long> codeSize;
     if (in.nextIsNull()) {
       storageRoot = Hash.EMPTY_TRIE_HASH;
       in.skipNext();
@@ -153,9 +160,15 @@ public class StateTrieAccountValue implements AccountValue {
     } else {
       codeHash = in.readBytes32();
     }
-
+    if (in.nextIsNull()) {
+      codeSize = Optional.empty();
+      in.skipNext();
+    } else {
+      codeSize = Optional.of(in.readLongScalar());
+    }
     in.leaveList();
 
-    return new StateTrieAccountValue(nonce, balance, Hash.wrap(storageRoot), Hash.wrap(codeHash));
+    return new StateTrieAccountValue(
+        nonce, balance, Hash.wrap(storageRoot), Hash.wrap(codeHash), codeSize);
   }
 }

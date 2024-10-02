@@ -55,7 +55,7 @@ public class VerkleAccount extends DiffBasedAccount {
       final AccountValue stateTrieAccount,
       final boolean mutable) {
     super(context, address, stateTrieAccount, mutable);
-    this.codeSize = stateTrieAccount.getCodeSize().orElseThrow();
+    this.codeSize = stateTrieAccount.getCodeSize().orElse(0L);
   }
 
   public VerkleAccount(final VerkleAccount toCopy) {
@@ -78,7 +78,7 @@ public class VerkleAccount extends DiffBasedAccount {
         tracked.getBalance(),
         tracked.getCodeHash(),
         true);
-    this.codeSize = tracked.getCodeSize().orElseThrow();
+    this.codeSize = tracked.getCodeSize().orElse(0L);
     updatedStorage.putAll(tracked.getUpdatedStorage());
   }
 
@@ -93,8 +93,8 @@ public class VerkleAccount extends DiffBasedAccount {
 
     final Wei balance = Wei.of(in.readUInt256Scalar());
     final long nonce = in.readLongScalar();
-    final long codeSize = in.readLongScalar();
     final Hash codeHash = Hash.wrap(in.readBytes32());
+    final long codeSize = in.readLongScalar();
     in.leaveList();
 
     return new VerkleAccount(
@@ -160,7 +160,7 @@ public class VerkleAccount extends DiffBasedAccount {
       if (!Objects.equals(source.balance, account.getBalance())) {
         throw new IllegalStateException(context + ": balances differ");
       }
-      if (source.codeSize != account.getCodeSize().orElseThrow()) {
+      if (source.codeSize != account.getCodeSize().orElse(0L)) {
         throw new IllegalStateException(context + ": codeSize differ");
       }
     }

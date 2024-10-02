@@ -552,7 +552,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
                 false);
-
     return validationResult;
   }
 

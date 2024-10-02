@@ -216,12 +216,12 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   }
 
   @Override
-  public Optional<Integer> getCodeSize() {
+  public Optional<Long> getCodeSize() {
     if (updatedCode == null) {
       // Note that we set code for new account, so it's only null if account isn't.
-      return Optional.of(oldCodeSize);
+      return Optional.of((long) oldCodeSize);
     } else {
-      return Optional.of(updatedCode.size());
+      return Optional.of((long) updatedCode.size());
     }
   }
 

@@ -80,7 +80,7 @@ public interface MutableAccount extends Account {
    */
   void setBalance(Wei value);
 
-  Optional<Integer> getCodeSize();
+  Optional<Long> getCodeSize();
 
   /**
    * Sets the code for the account.

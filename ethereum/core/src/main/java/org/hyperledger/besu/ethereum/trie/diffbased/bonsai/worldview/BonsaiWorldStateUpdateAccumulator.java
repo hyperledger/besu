@@ -40,7 +40,14 @@ public class BonsaiWorldStateUpdateAccumulator
       final Consumer<DiffBasedValue<BonsaiAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
       final EvmConfiguration evmConfiguration) {
-    super(world, accountPreloader, storagePreloader, evmConfiguration);
+    super(
+        world,
+        accountPreloader,
+        storagePreloader,
+        (__, ___) -> {
+          /*nothing to preload for the code*/
+        },
+        evmConfiguration);
   }
 
   @Override

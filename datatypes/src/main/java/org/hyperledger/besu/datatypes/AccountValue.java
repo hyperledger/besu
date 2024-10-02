@@ -53,7 +53,7 @@ public interface AccountValue {
    *
    * @return the size of the account code (which may be {@link Optional#empty()}).
    */
-  Optional<Integer> getCodeSize();
+  Optional<Long> getCodeSize();
 
   /**
    * Writes the account value to the provided {@link RLPOutput}.

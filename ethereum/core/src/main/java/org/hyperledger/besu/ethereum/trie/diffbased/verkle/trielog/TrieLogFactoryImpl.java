@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -48,13 +49,14 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
     layer.setBlockHash(blockHeader.getBlockHash());
     layer.setBlockNumber(blockHeader.getNumber());
     for (final var updatedAccount : accumulator.getAccountsToUpdate().entrySet()) {
-      final var bonsaiValue = updatedAccount.getValue();
-      final var oldAccountValue = bonsaiValue.getPrior();
-      final var newAccountValue = bonsaiValue.getUpdated();
+      final var value = updatedAccount.getValue();
+      final var oldAccountValue = value.getPrior();
+      final var newAccountValue = value.getUpdated();
       if (oldAccountValue == null && newAccountValue == null) {
         // by default do not persist empty reads of accounts to the trie log
         continue;
       }
+      System.out.println("account " + newAccountValue.getClass());
       layer.addAccountChange(updatedAccount.getKey(), oldAccountValue, newAccountValue);
     }
 
@@ -107,7 +109,22 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
       if (accountChange == null || accountChange.isUnchanged()) {
         output.writeNull();
       } else {
-        writeRlp(accountChange, output, (o, sta) -> sta.writeTo(o));
+        writeRlp(
+            accountChange,
+            output,
+            (o, sta) -> {
+              if (sta instanceof VerkleAccount verkleAccount) {
+                new StateTrieAccountValue(
+                        verkleAccount.getNonce(),
+                        verkleAccount.getBalance(),
+                        Hash.EMPTY,
+                        verkleAccount.getCodeHash(),
+                        verkleAccount.getCodeSize())
+                    .writeTo(o);
+              } else {
+                sta.writeTo(o);
+              }
+            });
       }
 
       final TrieLog.LogTuple<Bytes> codeChange = layer.getCodeChanges().get(address);

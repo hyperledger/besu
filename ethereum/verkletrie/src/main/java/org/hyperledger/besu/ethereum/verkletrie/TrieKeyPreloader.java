@@ -72,8 +72,7 @@ public class TrieKeyPreloader {
       final List<Bytes32> codeChunkIds) {
     return new HasherContext(
         new CachedPedersenHasher(
-            10000,
-            trieKeyAdapter.manyStems(address, accountKeyIds, storageKeyIds, codeChunkIds)),
+            10000, trieKeyAdapter.manyStems(address, accountKeyIds, storageKeyIds, codeChunkIds)),
         !storageKeyIds.isEmpty(),
         !codeChunkIds.isEmpty());
   }

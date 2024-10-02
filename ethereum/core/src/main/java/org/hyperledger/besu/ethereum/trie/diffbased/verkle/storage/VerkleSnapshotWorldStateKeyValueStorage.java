@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -43,7 +41,8 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
       final VerkleWorldStateKeyValueStorage parentWorldStateStorage,
       final SnappedKeyValueStorage segmentedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
-    super(parentWorldStateStorage.flatDbStrategy, segmentedWorldStateStorage, trieLogStorage);
+    super(segmentedWorldStateStorage, trieLogStorage, parentWorldStateStorage.metricsSystem);
+    ;
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
@@ -74,8 +73,8 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
   }
 
   @Override
-  public Optional<Bytes> getAccount(final Address address) {
-    return isClosedGet() ? Optional.empty() : super.getAccount(address);
+  public Optional<Bytes> getStem(final Bytes stem) {
+    return isClosedGet() ? Optional.empty() : super.getStem(stem);
   }
 
   @Override
@@ -101,14 +100,6 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
   @Override
   public Optional<Hash> getWorldStateBlockHash() {
     return isClosedGet() ? Optional.empty() : super.getWorldStateBlockHash();
-  }
-
-  @Override
-  public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Address address, final StorageSlotKey storageSlotKey) {
-    return isClosedGet()
-        ? Optional.empty()
-        : super.getStorageValueByStorageSlotKey(address, storageSlotKey);
   }
 
   @Override

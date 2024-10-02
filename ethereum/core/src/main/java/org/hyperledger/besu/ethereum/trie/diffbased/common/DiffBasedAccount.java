@@ -205,8 +205,8 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
   }
 
   @Override
-  public Optional<Integer> getCodeSize() {
-    return Optional.of(getCode().size());
+  public Optional<Long> getCodeSize() {
+    return Optional.of((long) getCode().size());
   }
 
   @Override

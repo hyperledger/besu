@@ -67,6 +67,8 @@ public class TrieLogManager {
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
       final DiffBasedWorldState forWorldState) {
+    System.out.println(
+        "try save trielog " + forBlockHeader.getHash() + " " + forWorldStateRootHash);
     // do not overwrite a trielog layer that already exists in the database.
     // if it's only in memory we need to save it
     // for example, in case of reorg we don't replace a trielog layer
@@ -81,6 +83,8 @@ public class TrieLogManager {
         // notify trie log added observers, synchronously
         trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
 
+        System.out.println(
+            " save trielog " + forBlockHeader.getHash() + " " + forWorldStateRootHash);
         success = true;
       } finally {
         if (success) {
