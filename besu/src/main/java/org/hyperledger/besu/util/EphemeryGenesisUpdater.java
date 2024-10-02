@@ -33,6 +33,13 @@ public class EphemeryGenesisUpdater {
   private static final int PERIOD_IN_DAYS = 28;
   private static final long PERIOD_IN_SECONDS = (PERIOD_IN_DAYS * 24 * 60 * 60);
 
+  /**
+   * Updates the Ephemery genesis configuration based on the predefined period.
+   *
+   * @param overrides a map of configuration overrides
+   * @return the updated GenesisConfigFile
+   * @throws RuntimeException if an error occurs during the update process
+   */
   public static GenesisConfigFile updateGenesis(final Map<String, String> overrides)
       throws RuntimeException {
     GenesisConfigFile genesisConfigFile;
