@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -290,6 +291,23 @@ public class TransactionAdapter extends AdapterBase {
                 receipt.getStatus() == -1
                     ? Optional.empty()
                     : Optional.of((long) receipt.getStatus()));
+  }
+
+  /**
+   * Retrieves the revert reason of the transaction, if any.
+   *
+   * <p>This method uses the getReceipt method to get the receipt of the transaction. It then checks
+   * the revert reason of the receipt. It would be an empty Optional for successful transactions.
+   * Otherwise, it returns an Optional containing the revert reason.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing a Bytes object representing the revert reason of the
+   *     transaction, or an empty Optional .
+   */
+  public Optional<Bytes> getRevertReason(final DataFetchingEnvironment environment) {
+    return getReceipt(environment)
+        .map(TransactionReceiptWithMetadata::getReceipt)
+        .flatMap(TransactionReceipt::getRevertReason);
   }
 
   /**

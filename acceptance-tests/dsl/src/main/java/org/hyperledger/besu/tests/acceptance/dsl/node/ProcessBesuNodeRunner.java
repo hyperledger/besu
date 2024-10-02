@@ -451,6 +451,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--logging=" + level);
     }
 
+    if (!node.getRequestedPlugins().isEmpty()) {
+      params.add(
+          "--plugins=" + node.getRequestedPlugins().stream().collect(Collectors.joining(",")));
+    }
+
     params.addAll(node.getRunCommand());
     return params;
   }

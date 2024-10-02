@@ -230,16 +230,9 @@ public class TransactionSimulator {
     final Account sender = updater.get(senderAddress);
     final long nonce = sender != null ? sender.getNonce() : 0L;
 
-    long gasLimit =
-        callParams.getGasLimit() >= 0
-            ? callParams.getGasLimit()
-            : blockHeaderToProcess.getGasLimit();
-    if (rpcGasCap > 0) {
-      gasLimit = rpcGasCap;
-      LOG.trace(
-          "Gas limit capped at {} for transaction simulation due to provided RPC gas cap.",
-          rpcGasCap);
-    }
+    final long simulationGasCap =
+        calculateSimulationGasCap(callParams.getGasLimit(), blockHeaderToProcess.getGasLimit());
+
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
 
@@ -265,7 +258,7 @@ public class TransactionSimulator {
             header,
             senderAddress,
             nonce,
-            gasLimit,
+            simulationGasCap,
             value,
             payload,
             blobGasPrice);
@@ -289,6 +282,38 @@ public class TransactionSimulator {
             blobGasPrice);
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
+  }
+
+  private long calculateSimulationGasCap(
+      final long userProvidedGasLimit, final long blockGasLimit) {
+    final long simulationGasCap;
+
+    // when not set gas limit is -1
+    if (userProvidedGasLimit >= 0) {
+      if (rpcGasCap > 0 && userProvidedGasLimit > rpcGasCap) {
+        LOG.trace(
+            "User provided gas limit {} is bigger than the value of rpc-gas-cap {}, setting simulation gas cap to the latter",
+            userProvidedGasLimit,
+            rpcGasCap);
+        simulationGasCap = rpcGasCap;
+      } else {
+        LOG.trace("Using provided gas limit {} set as simulation gas cap", userProvidedGasLimit);
+        simulationGasCap = userProvidedGasLimit;
+      }
+    } else {
+      if (rpcGasCap > 0) {
+        LOG.trace(
+            "No user provided gas limit, setting simulation gas cap to the value of rpc-gas-cap {}",
+            rpcGasCap);
+        simulationGasCap = rpcGasCap;
+      } else {
+        simulationGasCap = blockGasLimit;
+        LOG.trace(
+            "No user provided gas limit and rpc-gas-cap options is not set, setting simulation gas cap to block gas limit {}",
+            blockGasLimit);
+      }
+    }
+    return simulationGasCap;
   }
 
   private Optional<Transaction> buildTransaction(
