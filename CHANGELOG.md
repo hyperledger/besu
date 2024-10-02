@@ -17,6 +17,7 @@
 - Interrupt pending transaction processing on block creation timeout [#7673](https://github.com/hyperledger/besu/pull/7673)
 - Align gas cap calculation for transaction simulation to Geth approach [#7703](https://github.com/hyperledger/besu/pull/7703)
 - Expose chainId in the `BlockchainService` [7702](https://github.com/hyperledger/besu/pull/7702)
+- Use head block instead of safe block for snap sync [7536](https://github.com/hyperledger/besu/issues/7536)
 
 ### Bug fixes
 - Fix mounted data path directory permissions for besu user [#7575](https://github.com/hyperledger/besu/pull/7575)
