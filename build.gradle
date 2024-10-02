@@ -46,6 +46,9 @@ sonarqube {
 }
 
 project.tasks["sonarqube"].dependsOn "jacocoRootReport"
+project.gradle.taskGraph.whenReady {
+  println project.gradle.taskGraph.getAllTasks()
+}
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
   throw new GradleException("Java 21 or later is required to build Besu.\n" +
@@ -963,12 +966,45 @@ jacocoTestReport {
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
-  dependsOn 'build'
-  dependsOn 'acceptance-tests:tests:acceptanceTestNotPrivacy'
 
-  additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
-  sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
-  classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching { exclude 'org/hyperledger/besu/tests/acceptance/**' }
+  def excludedProjects = [':ethereum:referencetests']
+  def tasksList = [
+    'classes',
+    'compileJava',
+    'compileSolidity',
+    'compileTestJava',
+    'compileTestSupportJava',
+    'evmToolStartScripts',
+    'generateContractWrappers',
+    'generateLicenseReport',
+    'javadoc',
+    'processResources',
+    'processTestResources',
+    'processTestSupportResources',
+    'spotlessCheck',
+    'startScripts',
+    'test',
+    'testClasses',
+    'testJar',
+    'testSupportClasses',
+    'testSupportJar',
+    'untunedStartScripts',
+    'validateReferenceTestSubmodule'
+  ]
+
+  subprojects {
+    if (!excludedProjects.contains(it.path)) {
+      additionalSourceDirs.from files(it.sourceSets.main.allSource.srcDirs)
+      sourceDirectories.from files(it.sourceSets.main.allSource.srcDirs)
+      classDirectories.from files(it.sourceSets.main.output).asFileTree.matching { exclude 'org/hyperledger/besu/tests/acceptance/**' }
+      tasksList.each { taskName ->
+        tasks.matching { it.name == taskName }.all {
+          jacocoRootReport.dependsOn(it)
+        }
+      }
+    }
+  }
+
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
     xml.required = true
