@@ -963,17 +963,9 @@ jacocoTestReport {
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
-  dependsOn 'acceptance-tests:test'
-  dependsOn 'acceptance-tests:spotlessGroovyGradle'
-  dependsOn 'acceptance-tests:spotlessJava'
-  dependsOn 'acceptance-tests:spotlessShellScripts'
-  dependsOn 'acceptance-tests:spotlessSolidity'
-  dependsOn 'acceptance-tests:dsl:javadoc'
-  dependsOn 'acceptance-tests:dsl:test'
-  dependsOn 'acceptance-tests:dsl:spotlessGroovyGradle'
-  dependsOn 'acceptance-tests:dsl:spotlessJava'
-  dependsOn 'acceptance-tests:dsl:spotlessShellScripts'
-  
+  dependsOn 'build'
+  dependsOn 'acceptance-tests:tests:acceptanceTestNotPrivacy'
+
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
   sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
   classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching { exclude 'org/hyperledger/besu/tests/acceptance/**' }
