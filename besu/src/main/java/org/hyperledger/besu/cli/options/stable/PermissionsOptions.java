@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import picocli.CommandLine;
 
 /** Handles configuration options for permissions in Besu. */
+// TODO: implement CLIOption<PermissioningConfiguration>
 public class PermissionsOptions {
   @CommandLine.Option(
       names = {"--permissions-nodes-config-file-enabled"},
