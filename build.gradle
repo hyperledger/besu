@@ -31,6 +31,8 @@ plugins {
   id 'me.champeau.jmh' version '0.7.2' apply false
   id 'net.ltgt.errorprone' version '4.0.1'
   id 'maven-publish'
+  id 'jacoco'
+  id 'jacoco-report-aggregation'
   id 'org.sonarqube' version '5.1.0.4882'
 }
 
@@ -40,15 +42,12 @@ sonarqube {
     property "sonar.organization", "$System.env.SONAR_ORGANIZATION"
     property "sonar.gradle.skipCompile", "true"
     property "sonar.host.url", "https://sonarcloud.io"
-    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
+    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml"
     property "sonar.coverage.exclusions", "acceptance-tests/**/*"
   }
 }
 
-project.tasks["sonarqube"].dependsOn "jacocoRootReport"
-project.gradle.taskGraph.whenReady {
-  println project.gradle.taskGraph.getAllTasks()
-}
+project.tasks["sonarqube"].dependsOn "testCodeCoverageReport"
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
   throw new GradleException("Java 21 or later is required to build Besu.\n" +
@@ -363,6 +362,7 @@ allprojects {
       }
     }
     useJUnitPlatform {}
+    finalizedBy jacocoTestReport // report is always generated after tests run
   }
 
   javadoc {
@@ -963,55 +963,6 @@ jacocoTestReport {
   reports {
     xml.required = true
   }
-}
-
-task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
-
-  def excludedProjects = [':ethereum:referencetests']
-  def tasksList = [
-    'classes',
-    'compileJava',
-    'compileSolidity',
-    'compileTestJava',
-    'compileTestSupportJava',
-    'evmToolStartScripts',
-    'generateContractWrappers',
-    'generateLicenseReport',
-    'javadoc',
-    'processResources',
-    'processTestResources',
-    'processTestSupportResources',
-    'spotlessCheck',
-    'startScripts',
-    'test',
-    'testClasses',
-    'testJar',
-    'testSupportClasses',
-    'testSupportJar',
-    'untunedStartScripts',
-    'validateReferenceTestSubmodule'
-  ]
-
-  subprojects {
-    if (!excludedProjects.contains(it.path)) {
-      additionalSourceDirs.from files(it.sourceSets.main.allSource.srcDirs)
-      sourceDirectories.from files(it.sourceSets.main.allSource.srcDirs)
-      classDirectories.from files(it.sourceSets.main.output).asFileTree.matching { exclude 'org/hyperledger/besu/tests/acceptance/**' }
-      tasksList.each { taskName ->
-        tasks.matching { it.name == taskName }.all {
-          jacocoRootReport.dependsOn(it)
-        }
-      }
-    }
-  }
-
-  executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
-  reports {
-    xml.required = true
-    csv.required = true
-    html.destination file("build/reports/jacocoHtml")
-  }
-  onlyIf = { true }
 }
 
 // http://label-schema.org/rc1/
