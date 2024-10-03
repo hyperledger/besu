@@ -2354,8 +2354,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       String chainId = genesisConfigOverrides.get("chainId");
       builder.setNetworkId(new BigInteger(chainId));
     }
-    if (p2PDiscoveryOptionGroup.discoveryDnsUrl != null) {
-      builder.setDnsDiscoveryUrl(p2PDiscoveryOptionGroup.discoveryDnsUrl);
+    if (p2PDiscoveryOptions.discoveryDnsUrl != null) {
+      builder.setDnsDiscoveryUrl(p2PDiscoveryOptions.discoveryDnsUrl);
     } else {
       final Optional<String> discoveryDnsUrlFromGenesis =
           genesisConfigOptionsSupplier.get().getDiscoveryOptions().getDiscoveryDnsUrl();
