@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.common.trielog;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -47,6 +48,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import com.google.common.cache.CacheBuilder;
@@ -66,8 +68,9 @@ public class ArchiveFreezerTests {
 
   // Number of blocks in the chain. This is different to the number of blocks
   // we have successfully frozen state for
-  static final long SHORT_TEST_CHAIN_HEIGHT = 150;
-  static final long LONG_TEST_CHAIN_HEIGHT = 2000;
+  static final long SHORT_TEST_CHAIN_HEIGHT = 151;
+  static final long LONG_TEST_CHAIN_HEIGHT =
+      2001; // We want block 2000 to be returned so set to 2001
 
   // Address used for account and storage changes
   final Address address = Address.fromHexString("0x95cD8499051f7FE6a2F53749eC1e9F4a81cafa13");
@@ -170,7 +173,27 @@ public class ArchiveFreezerTests {
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
     // If we had previously frozen up to block 100...
-    when(worldStateStorage.getLatestArchiveFrozenBlock()).thenReturn(Optional.of(100L));
+    final AtomicLong frozenBlocks = new AtomicLong(100L);
+
+    // Mock the DB setter so it updates what the getter returns
+    doAnswer(
+            invocation -> {
+              long thisValue = invocation.getArgument(0, Long.class);
+              frozenBlocks.set(thisValue);
+              return null;
+            })
+        .when(worldStateStorage)
+        .setLatestArchiveFrozenBlock(any(Long.class));
+
+    // Mock the DB getter
+    doAnswer(
+            invocation -> {
+              return Optional.of(frozenBlocks.get());
+            })
+        .when(worldStateStorage)
+        .getLatestArchiveFrozenBlock();
+
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(2000L);
 
     // When any block is asked for by the archive freezer, generate it on the fly and return it
     // unless it is > block num 2000
@@ -181,10 +204,10 @@ public class ArchiveFreezerTests {
 
     BonsaiArchiveFreezer archiveFreezer =
         new BonsaiArchiveFreezer(worldStateStorage, blockchain, executeAsync, trieLogManager);
-    archiveFreezer.initialize();
+    long caughtUpBlocks = archiveFreezer.initialize();
 
-    // Check that we will only attempt to catch up 1000 blocks worth of state/storage moves
-    assertThat(archiveFreezer.getPendingBlocksCount()).isEqualTo(1000);
+    // Check that blocks 101 to 1990 (10 before chain head 2000) have been caught up
+    assertThat(caughtUpBlocks).isEqualTo(1900);
   }
 
   @Test
@@ -204,7 +227,25 @@ public class ArchiveFreezerTests {
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
     // If we had previously frozen up to block 100...
-    when(worldStateStorage.getLatestArchiveFrozenBlock()).thenReturn(Optional.of(100L));
+    final AtomicLong frozenBlocks = new AtomicLong(100L);
+
+    // Mock the DB setter so it updates what the getter returns
+    doAnswer(
+            invocation -> {
+              long thisValue = invocation.getArgument(0, Long.class);
+              frozenBlocks.set(thisValue);
+              return null;
+            })
+        .when(worldStateStorage)
+        .setLatestArchiveFrozenBlock(any(Long.class));
+
+    // Mock the DB getter
+    doAnswer(
+            invocation -> {
+              return Optional.of(frozenBlocks.get());
+            })
+        .when(worldStateStorage)
+        .getLatestArchiveFrozenBlock();
 
     // Mock the number of changes the freeze action carries out for each relevant block
     when(worldStateStorage.freezePreviousAccountState(any(), any()))
@@ -271,7 +312,7 @@ public class ArchiveFreezerTests {
 
     // Chain height is 150, we've frozen state up to block 100, we should have initialized the next
     // 50 blocks to be archived
-    assertThat(archiveFreezer.getPendingBlocksCount()).isEqualTo(SHORT_TEST_CHAIN_HEIGHT - 100);
+    assertThat(archiveFreezer.getPendingBlocksCount()).isEqualTo(50);
 
     when(blockchain.getChainHeadBlockNumber())
         .then(requestedBlockNumber -> getCurrentBlockHeight());
@@ -311,7 +352,25 @@ public class ArchiveFreezerTests {
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
     // If we had previously frozen up to block 100...
-    when(worldStateStorage.getLatestArchiveFrozenBlock()).thenReturn(Optional.of(100L));
+    final AtomicLong frozenBlocks = new AtomicLong(100L);
+
+    // Mock the DB setter so it updates what the getter returns
+    doAnswer(
+            invocation -> {
+              long thisValue = invocation.getArgument(0, Long.class);
+              frozenBlocks.set(thisValue);
+              return null;
+            })
+        .when(worldStateStorage)
+        .setLatestArchiveFrozenBlock(any(Long.class));
+
+    // Mock the DB getter
+    doAnswer(
+            invocation -> {
+              return Optional.of(frozenBlocks.get());
+            })
+        .when(worldStateStorage)
+        .getLatestArchiveFrozenBlock();
 
     // Mock the number of changes the freeze action carries out for each relevant block
     when(worldStateStorage.freezePreviousStorageState(any(), any()))
@@ -395,7 +454,7 @@ public class ArchiveFreezerTests {
 
     // Chain height is 150, we've frozen state up to block 100, we should have initialized the next
     // 50 blocks to be archived
-    assertThat(archiveFreezer.getPendingBlocksCount()).isEqualTo(SHORT_TEST_CHAIN_HEIGHT - 100);
+    assertThat(archiveFreezer.getPendingBlocksCount()).isEqualTo(50);
 
     when(blockchain.getChainHeadBlockNumber())
         .then(requestedBlockNumber -> getCurrentBlockHeight());
@@ -436,7 +495,25 @@ public class ArchiveFreezerTests {
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
     // If we had previously frozen up to block 100...
-    when(worldStateStorage.getLatestArchiveFrozenBlock()).thenReturn(Optional.of(100L));
+    final AtomicLong frozenBlocks = new AtomicLong(100L);
+
+    // Mock the DB setter so it updates what the getter returns
+    doAnswer(
+            invocation -> {
+              long thisValue = invocation.getArgument(0, Long.class);
+              frozenBlocks.set(thisValue);
+              return null;
+            })
+        .when(worldStateStorage)
+        .setLatestArchiveFrozenBlock(any(Long.class));
+
+    // Mock the DB getter
+    doAnswer(
+            invocation -> {
+              return Optional.of(frozenBlocks.get());
+            })
+        .when(worldStateStorage)
+        .getLatestArchiveFrozenBlock();
 
     // Mock the number of changes the freeze action carries out for each relevant block
     when(worldStateStorage.freezePreviousStorageState(any(), any()))
@@ -546,7 +623,7 @@ public class ArchiveFreezerTests {
 
     // Chain height is 150, we've frozen state up to block 100, we should have initialized the next
     // 50 blocks to be archived
-    assertThat(archiveFreezer.getPendingBlocksCount()).isEqualTo(SHORT_TEST_CHAIN_HEIGHT - 100);
+    assertThat(archiveFreezer.getPendingBlocksCount()).isEqualTo(50);
 
     when(blockchain.getChainHeadBlockNumber())
         .then(requestedBlockNumber -> getCurrentBlockHeight());

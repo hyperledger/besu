@@ -26,8 +26,12 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -66,13 +70,14 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
     this.trieLogManager = trieLogManager;
   }
 
-  private void preloadCatchupBlocks() {
+  private int loadNextCatchupBlocks() {
     Optional<Long> frozenBlocksHead = Optional.empty();
 
     Optional<Long> latestFrozenBlock = rootWorldStateStorage.getLatestArchiveFrozenBlock();
 
     if (latestFrozenBlock.isPresent()) {
-      frozenBlocksHead = latestFrozenBlock;
+      // Start from the next block after the most recently frozen block
+      frozenBlocksHead = Optional.of(latestFrozenBlock.get() + 1);
     } else {
       // Start from genesis block
       if (blockchain.getBlockHashByNumber(0).isPresent()) {
@@ -80,8 +85,8 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
       }
     }
 
+    int preLoadedBlocks = 0;
     if (frozenBlocksHead.isPresent()) {
-      int preLoadedBlocks = 0;
       Optional<Block> nextBlock = blockchain.getBlockByNumber(frozenBlocksHead.get());
       for (int i = 0; i < CATCHUP_LIMIT; i++) {
         if (nextBlock.isPresent()) {
@@ -100,17 +105,21 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
           .addArgument(frozenBlocksHead.get())
           .log();
     }
+    return preLoadedBlocks;
   }
 
-  public void initialize() {
+  public long initialize() {
     // On startup there will be recent blocks whose state and storage hasn't been archived yet.
-    // Pre-load them ready for freezing state once enough new blocks have been added to the chain.
-    preloadCatchupBlocks();
-
-    // Keep catching up until we move less to the freezer than the catchup limit
-    while (moveBlockStateToFreezer() == CATCHUP_LIMIT) {
-      preloadCatchupBlocks();
+    // Pre-load them in blocks of CATCHUP_LIMIT ready for freezing state once enough new blocks have
+    // been added to the chain.
+    long totalBlocksCaughtUp = 0;
+    int catchupBlocksLoaded = CATCHUP_LIMIT;
+    while (catchupBlocksLoaded >= CATCHUP_LIMIT) {
+      catchupBlocksLoaded = loadNextCatchupBlocks();
+      moveBlockStateToFreezer();
+      totalBlocksCaughtUp += catchupBlocksLoaded;
     }
+    return totalBlocksCaughtUp;
   }
 
   public int getPendingBlocksCount() {
@@ -145,108 +154,122 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
     AtomicInteger frozenAccountStateCount = new AtomicInteger();
     AtomicInteger frozenAccountStorageCount = new AtomicInteger();
 
-    LOG.atTrace()
-        .setMessage(
-            "Moving cold state to freezer storage (chainHeadNumber: {} - numberOfBlocksToKeepInWarmStorage: {}) = {}")
-        .addArgument(blockchain::getChainHeadBlockNumber)
-        .addArgument(DISTANCE_FROM_HEAD_BEFORE_FREEZING_OLD_STATE)
-        .addArgument(retainAboveThisBlock)
-        .log();
-
     // Typically we will move all storage and state for a single block i.e. when a new block is
     // imported, move state for block-N. There are cases where we catch-up and move old state
     // for a number of blocks so we may iterate over a number of blocks freezing their state,
     // not just a single one.
+    final SortedMap<Long, Hash> blocksToFreeze;
+    synchronized (this) {
+      blocksToFreeze = new TreeMap<>();
+      pendingBlocksToArchive.entrySet().stream()
+          .filter(
+              (e) -> blocksToFreeze.size() <= CATCHUP_LIMIT && e.getKey() <= retainAboveThisBlock)
+          .forEach(
+              (e) -> {
+                blocksToFreeze.put(e.getKey(), e.getValue());
+              });
+    }
 
-    final Map<Long, Hash> blocksToFreeze = new TreeMap<>();
-    pendingBlocksToArchive.entrySet().stream()
-        .filter((e) -> e.getKey() <= retainAboveThisBlock)
-        .forEach(
-            (e) -> {
-              blocksToFreeze.put(e.getKey(), e.getValue());
-            });
+    if (blocksToFreeze.size() > 0) {
+      LOG.atInfo()
+          .setMessage("Moving cold state to freezer storage: {} to {} ")
+          .addArgument(blocksToFreeze.firstKey())
+          .addArgument(blocksToFreeze.lastKey())
+          .log();
 
-    // Determine which world state keys have changed in the last N blocks by looking at the
-    // trie logs for the blocks. Then move the old keys to the freezer segment (if and only if they
-    // have changed)
-    blocksToFreeze
-        .entrySet()
-        .forEach(
-            (block) -> {
-              if (pendingBlocksToArchive.size() > 0 && pendingBlocksToArchive.size() % 100 == 0) {
-                // Log progress in case catching up causes there to be a large number of keys
-                // to move
-                LOG.atInfo()
-                    .setMessage("state for blocks {} to {} archived")
-                    .addArgument(block.getKey())
-                    .addArgument(block.getKey() + pendingBlocksToArchive.size())
-                    .log();
-              }
-              Hash blockHash = block.getValue();
-              LOG.atDebug()
-                  .setMessage("Freezing all account state for block {}")
-                  .addArgument(block.getKey())
-                  .log();
-              Optional<TrieLog> trieLog = trieLogManager.getTrieLogLayer(blockHash);
-              if (trieLog.isPresent()) {
-                trieLog
-                    .get()
-                    .getAccountChanges()
-                    .forEach(
-                        (address, change) -> {
-                          // Move any previous state for this account
-                          frozenAccountStateCount.addAndGet(
-                              rootWorldStateStorage.freezePreviousAccountState(
-                                  blockchain.getBlockHeader(
-                                      blockchain.getBlockHeader(blockHash).get().getParentHash()),
-                                  address.addressHash()));
-                        });
+      // Vars used only for logging progress
+      final AtomicLong blocksFrozen = new AtomicLong(0);
+      final AtomicLong startBlock = new AtomicLong(-1);
+
+      // Determine which world state keys have changed in the last N blocks by looking at the
+      // trie logs for the blocks. Then move the old keys to the freezer segment (if and only if
+      // they have changed)
+      blocksToFreeze
+          .entrySet()
+          .forEach(
+              (block) -> {
+                // For logging progress
+                if (startBlock.get() < 0) {
+                  startBlock.set(block.getKey());
+                }
+                if (blocksFrozen.get() > 0 && blocksFrozen.get() % 100 == 0) {
+                  // Log progress in case catching up causes there to be a large number of keys
+                  // to move
+                  LOG.atInfo()
+                      .setMessage("archive progress: state for blocks {} to {} archived")
+                      .addArgument(startBlock.get())
+                      .addArgument(startBlock.get() + blocksFrozen.get())
+                      .log();
+                }
+                Hash blockHash = block.getValue();
                 LOG.atDebug()
-                    .setMessage("Freezing all storage state for block {}")
+                    .setMessage("Freezing all account state for block {}")
                     .addArgument(block.getKey())
                     .log();
-                trieLog
-                    .get()
-                    .getStorageChanges()
-                    .forEach(
-                        (address, storageSlotKey) -> {
-                          storageSlotKey.forEach(
-                              (slotKey, slotValue) -> {
-                                // Move any previous state for this account
-                                frozenAccountStorageCount.addAndGet(
-                                    rootWorldStateStorage.freezePreviousStorageState(
-                                        blockchain.getBlockHeader(
-                                            blockchain
-                                                .getBlockHeader(blockHash)
-                                                .get()
-                                                .getParentHash()),
-                                        Bytes.concatenate(
-                                            address.addressHash(), slotKey.getSlotHash())));
-                              });
-                        });
-              }
-              LOG.atDebug()
-                  .setMessage("All account state and storage frozen for block {}")
-                  .addArgument(block.getKey())
-                  .log();
-              rootWorldStateStorage.setLatestArchiveFrozenBlock(block.getKey());
-            });
+                Optional<TrieLog> trieLog = trieLogManager.getTrieLogLayer(blockHash);
+                if (trieLog.isPresent()) {
+                  trieLog
+                      .get()
+                      .getAccountChanges()
+                      .forEach(
+                          (address, change) -> {
+                            // Move any previous state for this account
+                            frozenAccountStateCount.addAndGet(
+                                rootWorldStateStorage.freezePreviousAccountState(
+                                    blockchain.getBlockHeader(
+                                        blockchain.getBlockHeader(blockHash).get().getParentHash()),
+                                    address.addressHash()));
+                          });
+                  LOG.atDebug()
+                      .setMessage("Freezing all storage state for block {}")
+                      .addArgument(block.getKey())
+                      .log();
+                  trieLog
+                      .get()
+                      .getStorageChanges()
+                      .forEach(
+                          (address, storageSlotKey) -> {
+                            storageSlotKey.forEach(
+                                (slotKey, slotValue) -> {
+                                  // Move any previous state for this account
+                                  frozenAccountStorageCount.addAndGet(
+                                      rootWorldStateStorage.freezePreviousStorageState(
+                                          blockchain.getBlockHeader(
+                                              blockchain
+                                                  .getBlockHeader(blockHash)
+                                                  .get()
+                                                  .getParentHash()),
+                                          Bytes.concatenate(
+                                              address.addressHash(), slotKey.getSlotHash())));
+                                });
+                          });
+                }
+                LOG.atDebug()
+                    .setMessage("All account state and storage frozen for block {}")
+                    .addArgument(block.getKey())
+                    .log();
+                rootWorldStateStorage.setLatestArchiveFrozenBlock(block.getKey());
 
-    LOG.atDebug()
-        .setMessage(
-            "finished moving cold state to freezer storage for range (chainHeadNumber: {} - numberOfBlocksToKeepInWarmStorage: {}) = {}. Froze {} account state entries, {} account storage entries from {} blocks")
-        .addArgument(blockchain::getChainHeadBlockNumber)
-        .addArgument(DISTANCE_FROM_HEAD_BEFORE_FREEZING_OLD_STATE)
-        .addArgument(retainAboveThisBlock)
-        .addArgument(frozenAccountStateCount.get())
-        .addArgument(frozenAccountStorageCount.get())
-        .addArgument(blocksToFreeze.size())
-        .log();
+                // For logging progress
+                blocksFrozen.getAndIncrement();
+              });
 
-    removeArchivedFromQueue(blocksToFreeze);
+      LOG.atDebug()
+          .setMessage(
+              "finished moving cold state for blocks {} to {}. Froze {} account state entries, {} account storage entries")
+          .addArgument(startBlock.get())
+          .addArgument(startBlock.get() + (blocksFrozen.get() - 1))
+          .addArgument(frozenAccountStateCount.get())
+          .addArgument(frozenAccountStorageCount.get())
+          .log();
+
+      removeArchivedFromQueue(blocksToFreeze);
+    }
 
     return frozenAccountStateCount.get() + frozenAccountStorageCount.get();
   }
+
+  private final Lock archiveMutex = new ReentrantLock(true);
 
   @Override
   public void onBlockAdded(final BlockAddedEvent addedBlockContext) {
@@ -254,11 +277,21 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
     final Optional<Long> blockNumber =
         Optional.of(addedBlockContext.getBlock().getHeader().getNumber());
     blockNumber.ifPresent(
-        blockNum ->
-            executeAsync.accept(
-                () -> {
-                  addToFreezerQueue(blockNum, blockHash);
-                  moveBlockStateToFreezer();
-                }));
+        blockNum -> {
+          addToFreezerQueue(blockNum, blockHash);
+
+          // Since moving blocks can be done in batches we only want
+          // one instance running at a time
+          executeAsync.accept(
+              () -> {
+                if (archiveMutex.tryLock()) {
+                  try {
+                    moveBlockStateToFreezer();
+                  } finally {
+                    archiveMutex.unlock();
+                  }
+                }
+              });
+        });
   }
 }

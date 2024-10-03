@@ -844,8 +844,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             blockchain,
             scheduler::executeServiceTask,
             trieLogManager);
-    archiveFreezer.initialize();
 
+    long archivedBlocks = archiveFreezer.initialize();
+    LOG.info("Bonsai archive initialised, caught up {} blocks", archivedBlocks);
     return archiveFreezer;
   }
 
