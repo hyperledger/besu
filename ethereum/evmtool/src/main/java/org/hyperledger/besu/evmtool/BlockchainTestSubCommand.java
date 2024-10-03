@@ -177,14 +177,13 @@ public class BlockchainTestSubCommand implements Runnable {
     final MutableBlockchain blockchain = spec.getBlockchain();
     final ProtocolContext context = spec.getProtocolContext();
 
-    for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
-        spec.getCandidateBlocks()) {
-      if (!candidateBlock.isExecutable()) {
+    for (final Block block :
+        spec.getBlocks()) {
+      if (!spec.isExecutable(block)) {
         return;
       }
 
       try {
-        final Block block = candidateBlock.getBlock();
 
         final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
@@ -198,7 +197,7 @@ public class BlockchainTestSubCommand implements Runnable {
         final BlockImportResult importResult =
             blockImporter.importBlock(context, block, validationMode, validationMode);
 
-        if (importResult.isImported() != candidateBlock.isValid()) {
+        if (importResult.isImported() != spec.isValid(block)) {
           parentCommand.out.printf(
               "Block %d (%s) %s%n",
               block.getHeader().getNumber(),
@@ -212,11 +211,11 @@ public class BlockchainTestSubCommand implements Runnable {
               importResult.isImported() ? "Imported" : "Rejected (correctly)");
         }
       } catch (final RLPException e) {
-        if (candidateBlock.isValid()) {
+        if (spec.isValid(block)) {
           parentCommand.out.printf(
               "Block %d (%s) should have imported but had an RLP exception %s%n",
-              candidateBlock.getBlock().getHeader().getNumber(),
-              candidateBlock.getBlock().getHash(),
+              block.getHeader().getNumber(),
+             block.getHash(),
               e.getMessage());
         }
       }

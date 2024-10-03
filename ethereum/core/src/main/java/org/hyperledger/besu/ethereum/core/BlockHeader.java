@@ -169,6 +169,7 @@ public class BlockHeader extends SealableBlockHeader
       out.writeBytes(withdrawalsRoot);
 
       /*if (excessBlobGas == null || blobGasUsed == null) break;
+      if (excessBlobGas == null || blobGasUsed == null) break;
       out.writeLongScalar(blobGasUsed);
       out.writeUInt64Scalar(excessBlobGas);
 
@@ -206,15 +207,12 @@ public class BlockHeader extends SealableBlockHeader
             : null;
 
     // TODO REACTIVATE
-    /*final Long blobGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
-        final BlobGas excessBlobGas =
-            !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
-        final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
-    <<<<<<< HEAD
-        final Hash depositHashRoot =
-            !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
-        final Hash exitsHashRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
-        final Hash requestsRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+    /*
+    final Long blobGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
+    final BlobGas excessBlobGas =
+        !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
+    final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
+    final Hash requestsRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
         */
 
     final ExecutionWitness executionWitness =

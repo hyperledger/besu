@@ -46,7 +46,6 @@ public class EnginePayloadParameter {
   private final List<DepositRequestParameter> depositRequests;
   private final List<WithdrawalRequestParameter> withdrawalRequests;
   private final List<ConsolidationRequestParameter> consolidationRequests;
-
   private final ExecutionWitnessParameter executionWitness;
 
   /**

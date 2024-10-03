@@ -64,8 +64,8 @@ public class ExtCodeCopyOperation extends AbstractOperation {
    * @param address to use
    * @param memOffset the mem offset
    * @param sourceOffset the code offset
-   * @param codeSize the size of the code <<<<<<< HEAD
-   * @param accountIsWarm the account is warm =======
+   * @param readSize The length of the code being copied into memory
+   * @param codeSize The size of the code to copy
    * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
    * @return the long
    */
@@ -117,6 +117,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
         && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
         && code.get(1) == 0) {
       frame.writeMemory(memOffset, sourceOffset, readSize, EOF_REPLACEMENT_CODE);
+
     } else {
       frame.writeMemory(memOffset, sourceOffset, readSize, code);
     }

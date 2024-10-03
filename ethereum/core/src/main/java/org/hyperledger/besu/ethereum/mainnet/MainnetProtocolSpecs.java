@@ -609,7 +609,6 @@ public abstract class MainnetProtocolSpecs {
       final MetricsSystem metricsSystem) {
 
     final ClearEmptyAccountStrategy clearEmptyAccountStrategy = new ClearEmptyAccount();
-
     return parisDefinition(
             chainId,
             enableRevertReason,
