@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.Collection;
+import java.util.function.Predicate;
 
 /**
  * Represents a task to be executed on an EthPeer by the PeerTaskExecutor
@@ -31,13 +33,6 @@ public interface PeerTask<T> {
    * @return the SubProtocol used for this PeerTask
    */
   SubProtocol getSubProtocol();
-
-  /**
-   * Gets the minimum required block number for a peer to have to successfully execute this task
-   *
-   * @return the minimum required block number for a peer to have to successfully execute this task
-   */
-  long getRequiredBlockNumber();
 
   /**
    * Gets the request data to send to the EthPeer
@@ -61,4 +56,11 @@ public interface PeerTask<T> {
    * @return the Collection of behaviors this task is expected to exhibit in the PeetTaskExecutor
    */
   Collection<PeerTaskRetryBehavior> getPeerTaskBehaviors();
+
+  /**
+   * Gets a Predicate that checks if an EthPeer is suitable for this PeerTask
+   *
+   * @return a Predicate that checks if an EthPeer is suitable for this PeerTask
+   */
+  Predicate<EthPeer> getPeerRequirementFilter();
 }

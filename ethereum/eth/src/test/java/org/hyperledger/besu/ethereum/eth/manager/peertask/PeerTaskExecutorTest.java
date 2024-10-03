@@ -15,16 +15,17 @@
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -37,6 +38,7 @@ import org.mockito.MockitoAnnotations;
 public class PeerTaskExecutorTest {
   private @Mock PeerSelector peerSelector;
   private @Mock PeerTaskRequestSender requestSender;
+  private @Mock EthScheduler ethScheduler;
   private @Mock PeerTask<Object> peerTask;
   private @Mock SubProtocol subprotocol;
   private @Mock MessageData requestMessageData;
@@ -50,7 +52,7 @@ public class PeerTaskExecutorTest {
   public void beforeTest() {
     mockCloser = MockitoAnnotations.openMocks(this);
     peerTaskExecutor =
-        new PeerTaskExecutor(peerSelector, requestSender, null, new NoOpMetricsSystem());
+        new PeerTaskExecutor(peerSelector, requestSender, ethScheduler, new NoOpMetricsSystem());
   }
 
   @AfterEach
@@ -202,14 +204,10 @@ public class PeerTaskExecutorTest {
           NoAvailablePeerException {
     Object responseObject = new Object();
 
-    Mockito.when(
-            peerSelector.getPeer(
-                Mockito.any(Collection.class), Mockito.eq(10L), Mockito.eq(subprotocol)))
-        .thenReturn(ethPeer);
+    Mockito.when(peerSelector.getPeer(Mockito.any(Predicate.class))).thenReturn(ethPeer);
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
     Mockito.when(peerTask.getPeerTaskBehaviors()).thenReturn(Collections.emptyList());
-    Mockito.when(peerTask.getRequiredBlockNumber()).thenReturn(10L);
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
     Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
@@ -233,22 +231,18 @@ public class PeerTaskExecutorTest {
           ExecutionException,
           InterruptedException,
           TimeoutException,
-          InvalidPeerTaskResponseException,
-          NoAvailablePeerException {
+          InvalidPeerTaskResponseException {
     Object responseObject = new Object();
     int requestMessageDataCode = 123;
     EthPeer peer2 = Mockito.mock(EthPeer.class);
 
-    Mockito.when(
-            peerSelector.getPeer(
-                Mockito.any(Collection.class), Mockito.eq(10L), Mockito.eq(subprotocol)))
+    Mockito.when(peerSelector.getPeer(Mockito.any(Predicate.class)))
         .thenReturn(ethPeer)
         .thenReturn(peer2);
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
     Mockito.when(peerTask.getPeerTaskBehaviors())
         .thenReturn(List.of(PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS));
-    Mockito.when(peerTask.getRequiredBlockNumber()).thenReturn(10L);
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenThrow(new TimeoutException());
