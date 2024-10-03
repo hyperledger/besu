@@ -52,6 +52,7 @@ import picocli.CommandLine;
  * Handles configuration options for the JSON-RPC HTTP service, including validation and creation of
  * a JSON-RPC configuration.
  */
+// TODO: implement CLIOption<JsonRpcConfiguration>
 public class JsonRpcHttpOptions {
   @CommandLine.Option(
       names = {"--rpc-http-enabled"},
@@ -265,6 +266,32 @@ public class JsonRpcHttpOptions {
   /**
    * Creates a JsonRpcConfiguration based on the provided options.
    *
+   * @return configuration populated from options or defaults
+   */
+  public JsonRpcConfiguration jsonRpcConfiguration() {
+
+    final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
+    jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
+    jsonRpcConfiguration.setPort(rpcHttpPort);
+    jsonRpcConfiguration.setMaxActiveConnections(rpcHttpMaxConnections);
+    jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
+    jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
+    jsonRpcConfiguration.setNoAuthRpcApis(
+        rpcHttpApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
+    jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
+    jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile);
+    jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
+    jsonRpcConfiguration.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
+    jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
+    jsonRpcConfiguration.setMaxBatchSize(rpcHttpMaxBatchSize);
+    jsonRpcConfiguration.setMaxRequestContentLength(rpcHttpMaxRequestContentLength);
+    jsonRpcConfiguration.setPrettyJsonEnabled(prettyJsonEnabled);
+    return jsonRpcConfiguration;
+  }
+
+  /**
+   * Creates a JsonRpcConfiguration based on the provided options.
+   *
    * @param hostsAllowlist List of hosts allowed
    * @param defaultHostAddress Default host address
    * @param timoutSec timeout in seconds
@@ -273,26 +300,13 @@ public class JsonRpcHttpOptions {
   public JsonRpcConfiguration jsonRpcConfiguration(
       final List<String> hostsAllowlist, final String defaultHostAddress, final Long timoutSec) {
 
-    final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
-    jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
+    final JsonRpcConfiguration jsonRpcConfiguration = this.jsonRpcConfiguration();
+
     jsonRpcConfiguration.setHost(
         Strings.isNullOrEmpty(rpcHttpHost) ? defaultHostAddress : rpcHttpHost);
-    jsonRpcConfiguration.setPort(rpcHttpPort);
-    jsonRpcConfiguration.setMaxActiveConnections(rpcHttpMaxConnections);
-    jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
-    jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
-    jsonRpcConfiguration.setNoAuthRpcApis(
-        rpcHttpApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
     jsonRpcConfiguration.setHostsAllowlist(hostsAllowlist);
-    jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
-    jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile);
-    jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
-    jsonRpcConfiguration.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
-    jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
+    ;
     jsonRpcConfiguration.setHttpTimeoutSec(timoutSec);
-    jsonRpcConfiguration.setMaxBatchSize(rpcHttpMaxBatchSize);
-    jsonRpcConfiguration.setMaxRequestContentLength(rpcHttpMaxRequestContentLength);
-    jsonRpcConfiguration.setPrettyJsonEnabled(prettyJsonEnabled);
     return jsonRpcConfiguration;
   }
 
