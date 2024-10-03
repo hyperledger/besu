@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -37,15 +38,18 @@ public class PeerTaskExecutor {
   public static final int NO_RETRIES = 1;
   private final PeerSelector peerSelector;
   private final PeerTaskRequestSender requestSender;
+  private final EthScheduler ethScheduler;
 
   private final LabelledMetric<OperationTimer> requestTimer;
 
   public PeerTaskExecutor(
       final PeerSelector peerSelector,
       final PeerTaskRequestSender requestSender,
+      final EthScheduler ethScheduler,
       final MetricsSystem metricsSystem) {
     this.peerSelector = peerSelector;
     this.requestSender = requestSender;
+    this.ethScheduler = ethScheduler;
     requestTimer =
         metricsSystem.createLabelledTimer(
             BesuMetricCategory.PEERS,
@@ -81,7 +85,13 @@ public class PeerTaskExecutor {
   }
 
   public <T> CompletableFuture<PeerTaskExecutorResult<T>> executeAsync(final PeerTask<T> peerTask) {
-    return CompletableFuture.supplyAsync(() -> execute(peerTask));
+    return ethScheduler.scheduleSyncWorkerTask(
+        () -> CompletableFuture.completedFuture(execute(peerTask)));
+  }
+
+  public <T> Collection<CompletableFuture<PeerTaskExecutorResult<T>>> executeBatchAsync(
+      final Collection<PeerTask<T>> peerTasks) {
+    return peerTasks.stream().map(this::executeAsync).toList();
   }
 
   public <T> PeerTaskExecutorResult<T> executeAgainstPeer(

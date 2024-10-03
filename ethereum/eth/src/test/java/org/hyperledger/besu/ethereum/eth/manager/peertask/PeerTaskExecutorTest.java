@@ -49,7 +49,8 @@ public class PeerTaskExecutorTest {
   @BeforeEach
   public void beforeTest() {
     mockCloser = MockitoAnnotations.openMocks(this);
-    peerTaskExecutor = new PeerTaskExecutor(peerSelector, requestSender, new NoOpMetricsSystem());
+    peerTaskExecutor =
+        new PeerTaskExecutor(peerSelector, requestSender, null, new NoOpMetricsSystem());
   }
 
   @AfterEach

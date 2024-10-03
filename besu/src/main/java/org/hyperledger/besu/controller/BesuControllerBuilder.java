@@ -659,7 +659,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final PeerSelector peerSelector = new DefaultPeerSelector(currentProtocolSpecSupplier);
     ethPeers.streamAllPeers().forEach(peerSelector::addPeer);
     final PeerTaskExecutor peerTaskExecutor =
-        new PeerTaskExecutor(peerSelector, new PeerTaskRequestSender(), metricsSystem);
+        new PeerTaskExecutor(peerSelector, new PeerTaskRequestSender(), scheduler, metricsSystem);
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 

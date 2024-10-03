@@ -537,7 +537,7 @@ public class FastSyncActionsTest {
         protocolSchedule,
         protocolContext,
         ethContext,
-        new PeerTaskExecutor(null, null, new NoOpMetricsSystem()),
+        new PeerTaskExecutor(null, null, null, new NoOpMetricsSystem()),
         new SyncState(blockchain, ethContext.getEthPeers(), true, Optional.empty()),
         pivotBlockSelector,
         new NoOpMetricsSystem());

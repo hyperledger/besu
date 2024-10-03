@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
@@ -32,10 +33,14 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+
+import com.google.common.collect.Lists;
 
 public class DownloadReceiptsStep
     implements Function<List<Block>, CompletableFuture<List<BlockWithReceipts>>> {
@@ -61,26 +66,46 @@ public class DownloadReceiptsStep
     if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
       return CompletableFuture.supplyAsync(
           () -> {
-            List<BlockWithReceipts> blockWithReceiptsList = new ArrayList<>(headers.size());
+            Map<BlockHeader, List<TransactionReceipt>> getReceipts = new ConcurrentHashMap<>();
             do {
-              GetReceiptsFromPeerTask getReceiptsFromPeerTask =
-                  new GetReceiptsFromPeerTask(headers, new BodyValidator());
-              PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
-                  peerTaskExecutor.execute(getReceiptsFromPeerTask);
-              if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
-                  && getReceiptsResult.result().isPresent()) {
-                  // remove all the headers we found receipts for
-                  headers.removeAll(getReceiptsResult.result().get().keySet());
-                  blockWithReceiptsList.addAll(combineBlocksAndReceipts(blocks, getReceiptsResult.result().get()));
+              List<List<BlockHeader>> blockHeaderSubLists = Lists.partition(headers, 20);
+              List<PeerTask<Map<BlockHeader, List<TransactionReceipt>>>> tasks = new ArrayList<>();
+              for (List<BlockHeader> blockHeaderSubList : blockHeaderSubLists) {
+                tasks.add(new GetReceiptsFromPeerTask(blockHeaderSubList, new BodyValidator()));
               }
+              Collection<
+                      CompletableFuture<
+                          PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>>>>
+                  taskExecutions = peerTaskExecutor.executeBatchAsync(tasks);
+              for (CompletableFuture<
+                      PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>>>
+                  taskExecution : taskExecutions) {
+                taskExecution.thenAccept(
+                    (getReceiptsResult) -> {
+                      if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
+                          && getReceiptsResult.result().isPresent()) {
+                        Map<BlockHeader, List<TransactionReceipt>> taskResult =
+                            getReceiptsResult.result().get();
+                        taskResult
+                            .keySet()
+                            .forEach(
+                                (blockHeader) ->
+                                    getReceipts.merge(
+                                        blockHeader,
+                                        taskResult.get(blockHeader),
+                                        (initialReceipts, newReceipts) -> {
+                                          throw new IllegalStateException(
+                                              "Unexpectedly got receipts for block header already populated!");
+                                        }));
+                      }
+                    });
+              }
+              taskExecutions.forEach(CompletableFuture::join);
+              // remove all the headers we found receipts for
+              headers.removeAll(getReceipts.keySet());
               // repeat until all headers have receipts
             } while (!headers.isEmpty());
-
-            // verify that all blocks have receipts
-            if (blocks.size() != blockWithReceiptsList.size()) {
-              throw new IllegalStateException("Not all blocks have been matched to receipts!");
-            }
-            return blockWithReceiptsList;
+            return combineBlocksAndReceipts(blocks, getReceipts);
           });
 
     } else {
@@ -93,11 +118,19 @@ public class DownloadReceiptsStep
   private List<BlockWithReceipts> combineBlocksAndReceipts(
       final List<Block> blocks, final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader) {
     return blocks.stream()
-        .filter((b) -> receiptsByHeader.containsKey(b.getHeader()))
         .map(
             block -> {
               final List<TransactionReceipt> receipts =
                   receiptsByHeader.getOrDefault(block.getHeader(), emptyList());
+              if (block.getBody().getTransactions().size() != receipts.size()) {
+                throw new IllegalStateException(
+                    "PeerTask response code was success, but incorrect number of receipts returned. Header hash: "
+                        + block.getHeader().getHash()
+                        + ", Transactions: "
+                        + block.getBody().getTransactions().size()
+                        + ", receipts: "
+                        + receipts.size());
+              }
               return new BlockWithReceipts(block, receipts);
             })
         .toList();

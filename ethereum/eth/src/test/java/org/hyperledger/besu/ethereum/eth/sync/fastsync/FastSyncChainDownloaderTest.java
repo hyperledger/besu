@@ -111,7 +111,7 @@ public class FastSyncChainDownloaderTest {
         protocolSchedule,
         protocolContext,
         ethContext,
-        new PeerTaskExecutor(null, null, new NoOpMetricsSystem()),
+        new PeerTaskExecutor(null, null, null, new NoOpMetricsSystem()),
         syncState,
         new NoOpMetricsSystem(),
         new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()),
