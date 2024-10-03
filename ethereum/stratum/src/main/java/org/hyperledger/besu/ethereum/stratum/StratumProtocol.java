@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.stratum;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -83,14 +84,14 @@ public interface StratumProtocol {
     final String hashRate;
     try {
       hashRate = message.getRequiredParameter(0, String.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid hash rate parameter (index 0)", RpcErrorType.INVALID_HASH_RATE_PARAMS, e);
     }
     final String id;
     try {
       id = message.getRequiredParameter(1, String.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid sealer ID parameter (index 1)", RpcErrorType.INVALID_SEALER_ID_PARAMS, e);
     }

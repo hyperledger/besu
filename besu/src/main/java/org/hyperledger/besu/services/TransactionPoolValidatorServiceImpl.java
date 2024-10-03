@@ -19,16 +19,14 @@ import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolVal
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidatorFactory;
 
 import java.util.Optional;
-import javax.inject.Inject;
 
 /** The Transaction pool validator service implementation. */
 public class TransactionPoolValidatorServiceImpl implements TransactionPoolValidatorService {
 
-  /** Default Constructor. */
-  @Inject
-  public TransactionPoolValidatorServiceImpl() {}
-
   private Optional<PluginTransactionPoolValidatorFactory> factory = Optional.empty();
+
+  /** Default Constructor. */
+  public TransactionPoolValidatorServiceImpl() {}
 
   @Override
   public PluginTransactionPoolValidator createTransactionValidator() {

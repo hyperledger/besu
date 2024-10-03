@@ -385,9 +385,7 @@ public abstract class PeerDiscoveryAgent {
             (res, err) -> {
               if (err != null) {
                 handleOutgoingPacketError(err, peer, packet);
-                return;
               }
-              peer.setLastContacted(System.currentTimeMillis());
             });
   }
 

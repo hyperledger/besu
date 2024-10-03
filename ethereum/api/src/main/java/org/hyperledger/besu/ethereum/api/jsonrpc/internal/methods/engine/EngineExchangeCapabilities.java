@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -61,8 +62,7 @@ public class EngineExchangeCapabilities extends ExecutionEngineJsonRpcMethod {
             () -> {
               try {
                 return requestContext.getRequiredParameter(0, String[].class);
-              } catch (
-                  Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+              } catch (JsonRpcParameterException e) {
                 throw new InvalidJsonRpcParameters(
                     "Invalid remote capabilities parameters (index 0)",
                     RpcErrorType.INVALID_REMOTE_CAPABILITIES_PARAMS,

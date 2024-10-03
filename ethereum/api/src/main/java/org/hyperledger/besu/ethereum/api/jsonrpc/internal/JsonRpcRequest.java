@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.util.Arrays;
@@ -132,15 +133,18 @@ public class JsonRpcRequest {
     return Objects.hash(id, method, Arrays.hashCode(params), version, isNotification);
   }
 
-  public <T> T getRequiredParameter(final int index, final Class<T> paramClass) {
+  public <T> T getRequiredParameter(final int index, final Class<T> paramClass)
+      throws JsonRpcParameterException {
     return parameterAccessor.required(params, index, paramClass);
   }
 
-  public <T> Optional<T> getOptionalParameter(final int index, final Class<T> paramClass) {
+  public <T> Optional<T> getOptionalParameter(final int index, final Class<T> paramClass)
+      throws JsonRpcParameterException {
     return parameterAccessor.optional(params, index, paramClass);
   }
 
-  public <T> Optional<List<T>> getOptionalList(final int index, final Class<T> paramClass) {
+  public <T> Optional<List<T>> getOptionalList(final int index, final Class<T> paramClass)
+      throws JsonRpcParameterException {
     return parameterAccessor.optionalList(params, index, paramClass);
   }
 

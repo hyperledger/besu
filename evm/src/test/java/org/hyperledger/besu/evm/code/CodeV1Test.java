@@ -100,7 +100,7 @@ class CodeV1Test {
 
     assertThat(validationError)
         .isEqualTo(
-            "Invalid EOF container - Code section at zero expected non-returning flag, but had return stack of 0");
+            "Invalid EOF container - invalid_first_section_type want 0x80 (non-returning flag) has 0");
   }
 
   @ParameterizedTest
@@ -751,7 +751,7 @@ class CodeV1Test {
     return Stream.of(
         Arguments.of(
             "0 outputs at section 0",
-            "EOF Layout invalid - Code section at zero expected non-returning flag, but had return stack of 0",
+            "EOF Layout invalid - invalid_first_section_type want 0x80 (non-returning flag) has 0",
             0,
             List.of(List.of("e4", 0, 0, 0), List.of("e4", 0, 0, 0))),
         Arguments.of(
@@ -766,12 +766,12 @@ class CodeV1Test {
             List.of(List.of("00", 0, 0x80, 0), List.of("e4", 1, 1, 1), List.of("e4", 0, 0, 0))),
         Arguments.of(
             "more than 0 outputs section 0",
-            "EOF Layout invalid - Code section at zero expected non-returning flag, but had return stack of 0",
+            "EOF Layout invalid - invalid_first_section_type want 0x80 (non-returning flag) has 0",
             0,
             List.of(List.of("44 50 e4", 0, 0, 1), List.of("4400", 0, 1, 1))),
         Arguments.of(
             "more than 0 outputs section 0",
-            "EOF Layout invalid - Code section at zero expected non-returning flag, but had return stack of 0",
+            "EOF Layout invalid - invalid_first_section_type want 0x80 (non-returning flag) has 0",
             1,
             List.of(List.of("00", 0, 0, 0), List.of("44 e4", 0, 1, 1))),
         Arguments.of(

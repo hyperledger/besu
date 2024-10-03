@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +48,6 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
   private Map<String, JsonRpcMethod> inProcessRpcMethods;
 
   /** Default Constructor. */
-  @Inject
   public RpcEndpointServiceImpl() {}
 
   /**

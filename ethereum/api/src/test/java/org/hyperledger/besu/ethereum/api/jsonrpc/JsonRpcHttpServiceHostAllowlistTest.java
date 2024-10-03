@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -79,7 +80,9 @@ public class JsonRpcHttpServiceHostAllowlistTest {
   private static OkHttpClient client;
   private static String baseUrl;
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-  private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
+  private static final String CLIENT_NODE_NAME = "TestClientVersion/0.1.0";
+  private static final String CLIENT_VERSION = "0.1.0";
+  private static final String CLIENT_COMMIT = "12345678";
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
 
   private final JsonRpcConfiguration jsonRpcConfig = createJsonRpcConfig();
@@ -100,7 +103,9 @@ public class JsonRpcHttpServiceHostAllowlistTest {
     rpcMethods =
         new JsonRpcMethodsFactory()
             .methods(
+                CLIENT_NODE_NAME,
                 CLIENT_VERSION,
+                CLIENT_COMMIT,
                 CHAIN_ID,
                 new StubGenesisConfigOptions(),
                 peerDiscoveryMock,
@@ -126,6 +131,7 @@ public class JsonRpcHttpServiceHostAllowlistTest {
                 mock(JsonRpcConfiguration.class),
                 mock(WebSocketConfiguration.class),
                 mock(MetricsConfiguration.class),
+                mock(GraphQLConfiguration.class),
                 natService,
                 new HashMap<>(),
                 folder,

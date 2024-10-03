@@ -43,9 +43,11 @@ public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
       final Block block,
       final List<TransactionReceipt> receipts,
       final Optional<List<Request>> requests,
-      final HeaderValidationMode ommerValidationMode) {
+      final HeaderValidationMode ommerValidationMode,
+      final BodyValidationMode bodyValidationMode) {
 
-    return super.validateBodyLight(context, block, receipts, requests, ommerValidationMode)
+    return super.validateBodyLight(
+            context, block, receipts, requests, ommerValidationMode, bodyValidationMode)
         && validateTransactionGasPrice(block);
   }
 

@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.EVICTED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.FOLLOW_INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.MOVE;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.EVICTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.FOLLOW_INVALIDATED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -44,7 +46,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
   }
 
   @Override
-  public void remove(final PendingTransaction invalidatedTx, final RemovalReason reason) {
+  public void remove(final PendingTransaction invalidatedTx, final PoolRemovalReason reason) {
     nextLayer.remove(invalidatedTx, reason);
 
     final var senderTxs = txsBySender.get(invalidatedTx.getSender());
@@ -77,7 +79,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
               senderTxs.remove(txToRemove.getNonce());
               processRemove(senderTxs, txToRemove.getTransaction(), FOLLOW_INVALIDATED);
             })
-        .forEach(followingTx -> nextLayer.add(followingTx, gap));
+        .forEach(followingTx -> nextLayer.add(followingTx, gap, MOVE));
   }
 
   @Override

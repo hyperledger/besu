@@ -203,7 +203,7 @@ public class GraphQLDataFetchers {
    *
    * <p>The DataFetcher is a functional interface. It has a single method that takes a
    * DataFetchingEnvironment object as input and returns the maximum priority fee per gas as a Wei
-   * object. If the maximum priority fee per gas is not available, it returns Wei.ZERO.
+   * object.
    *
    * @return a DataFetcher that fetches the maximum priority fee per gas of the Ethereum node
    */
@@ -211,7 +211,7 @@ public class GraphQLDataFetchers {
     return dataFetchingEnvironment -> {
       final BlockchainQueries blockchainQuery =
           dataFetchingEnvironment.getGraphQlContext().get(GraphQLContextType.BLOCKCHAIN_QUERIES);
-      return blockchainQuery.gasPriorityFee().orElse(Wei.ZERO);
+      return blockchainQuery.gasPriorityFee();
     };
   }
 

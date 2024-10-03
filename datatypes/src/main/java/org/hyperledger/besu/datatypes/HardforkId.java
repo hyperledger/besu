@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.datatypes;
 
+import java.util.Comparator;
+import java.util.stream.Stream;
+
 /** Description and metadata for a hard fork */
 public interface HardforkId {
 
@@ -111,6 +114,19 @@ public interface HardforkId {
     @Override
     public String description() {
       return description;
+    }
+
+    /**
+     * The most recent finalized mainnet hardfork Besu supports. This will change across versions
+     * and will be updated after mainnet activations.
+     *
+     * @return the most recently activated mainnet spec.
+     */
+    public static MainnetHardforkId mostRecent() {
+      return Stream.of(MainnetHardforkId.values())
+          .filter(MainnetHardforkId::finalized)
+          .max(Comparator.naturalOrder())
+          .orElseThrow();
     }
   }
 

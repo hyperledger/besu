@@ -107,7 +107,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.ethMessages = ethMessages;
     this.ethContext = ethContext;
 
-    this.blockBroadcaster = new BlockBroadcaster(ethContext);
+    this.blockBroadcaster =
+        new BlockBroadcaster(ethContext, ethereumWireProtocolConfiguration.getMaxMessageSize());
 
     this.supportedCapabilities =
         calculateCapabilities(synchronizerConfiguration, ethereumWireProtocolConfiguration);

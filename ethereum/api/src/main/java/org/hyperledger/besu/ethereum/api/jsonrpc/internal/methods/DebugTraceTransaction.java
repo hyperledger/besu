@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
@@ -53,7 +54,7 @@ public class DebugTraceTransaction implements JsonRpcMethod {
     final Hash hash;
     try {
       hash = requestContext.getRequiredParameter(0, Hash.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid transaction hash parameter (index 0)",
           RpcErrorType.INVALID_TRANSACTION_HASH_PARAMS,
@@ -69,7 +70,7 @@ public class DebugTraceTransaction implements JsonRpcMethod {
                 .getOptionalParameter(1, TransactionTraceParams.class)
                 .map(TransactionTraceParams::traceOptions)
                 .orElse(TraceOptions.DEFAULT);
-      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      } catch (JsonRpcParameterException e) {
         throw new InvalidJsonRpcParameters(
             "Invalid transaction trace parameter (index 1)",
             RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,

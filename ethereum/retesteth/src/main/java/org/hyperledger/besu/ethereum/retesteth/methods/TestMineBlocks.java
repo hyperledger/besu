@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -49,7 +50,7 @@ public class TestMineBlocks implements JsonRpcMethod {
     long blocksToMine = 0;
     try {
       blocksToMine = requestContext.getRequiredParameter(0, Long.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid blocks to mine (index 0)", RpcErrorType.INVALID_BLOCK_COUNT_PARAMS, e);
     }
@@ -77,10 +78,11 @@ public class TestMineBlocks implements JsonRpcMethod {
             protocolContext,
             protocolSchedule,
             context.getEthHashSolver(),
-            blockchain.getChainHeadHeader(),
             context.getEthScheduler());
     final Block block =
-        blockCreator.createBlock(retesethClock.instant().getEpochSecond()).getBlock();
+        blockCreator
+            .createBlock(retesethClock.instant().getEpochSecond(), blockchain.getChainHeadHeader())
+            .getBlock();
 
     // advance clock so next mine won't hit the same timestamp
     retesethClock.advanceSeconds(1);

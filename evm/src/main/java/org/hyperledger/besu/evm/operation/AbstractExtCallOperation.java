@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper.deductDelegatedCodeGasCost;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
@@ -24,6 +26,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper;
 
 import javax.annotation.Nonnull;
 
@@ -95,6 +98,11 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    Code callingCode = frame.getCode();
+    if (callingCode.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
+    }
+
     final Bytes toBytes = frame.getStackItem(STACK_TO).trimLeadingZeros();
     final Wei value = value(frame);
     final boolean zeroValue = value.isZero();
@@ -114,6 +122,16 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     }
     Address to = Words.toAddress(toBytes);
     final Account contract = frame.getWorldUpdater().get(to);
+
+    if (contract != null) {
+      final DelegatedCodeGasCostHelper.Result result =
+          deductDelegatedCodeGasCost(frame, gasCalculator(), contract);
+      if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
+        return new Operation.OperationResult(
+            result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
+      }
+    }
+
     boolean accountCreation = contract == null && !zeroValue;
     long cost =
         gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputLength)
@@ -141,7 +159,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     frame.clearReturnData();
 
     // delegate calls to prior EOF versions are prohibited
-    if (isDelegate() && frame.getCode().getEofVersion() != code.getEofVersion()) {
+    if (isDelegate() && callingCode.getEofVersion() != code.getEofVersion()) {
       return softFailure(frame, cost);
     }
 

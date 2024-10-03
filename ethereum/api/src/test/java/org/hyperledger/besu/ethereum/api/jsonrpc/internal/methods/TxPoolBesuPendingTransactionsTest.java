@@ -201,7 +201,7 @@ public class TxPoolBesuPendingTransactionsTest {
 
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid pending transactions parameter (index 1)");
+        .hasMessageContaining("Unknown field expected one of `eq`, `gt`, `lt`, `action`");
   }
 
   @Test
@@ -229,7 +229,7 @@ public class TxPoolBesuPendingTransactionsTest {
 
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid pending transactions parameter (index 1)");
+        .hasMessageContaining("Only one operator per filter type allowed");
   }
 
   @Test
@@ -256,7 +256,7 @@ public class TxPoolBesuPendingTransactionsTest {
 
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid pending transactions parameter (index 1)");
+        .hasMessageContaining("The `from` filter only supports the `eq` operator");
   }
 
   @Test
@@ -283,7 +283,7 @@ public class TxPoolBesuPendingTransactionsTest {
 
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid pending transactions parameter (index 1)");
+        .hasMessageContaining("The `to` filter only supports the `eq` or `action` operator");
   }
 
   private Set<PendingTransaction> getTransactionPool() {

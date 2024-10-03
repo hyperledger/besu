@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -75,7 +76,9 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
   protected BlockchainSetupUtil blockchainSetupUtil;
 
-  protected static String CLIENT_VERSION = "TestClientVersion/0.1.0";
+  protected static final String CLIENT_NODE_NAME = "TestClientVersion/0.1.0";
+  protected static final String CLIENT_VERSION = "0.1.0";
+  protected static final String CLIENT_COMMIT = "12345678";
   protected static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
   protected static final Collection<String> JSON_RPC_APIS =
       Arrays.asList(
@@ -168,7 +171,9 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
     return new JsonRpcMethodsFactory()
         .methods(
+            CLIENT_NODE_NAME,
             CLIENT_VERSION,
+            CLIENT_COMMIT,
             NETWORK_ID,
             new StubGenesisConfigOptions(),
             peerDiscoveryMock,
@@ -189,6 +194,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             config,
             mock(WebSocketConfiguration.class),
             mock(MetricsConfiguration.class),
+            mock(GraphQLConfiguration.class),
             natService,
             new HashMap<>(),
             folder,

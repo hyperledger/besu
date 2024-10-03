@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ConsolidationRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -109,7 +110,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final EnginePayloadParameter blockParam;
     try {
       blockParam = requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcRequestException(
           "Invalid engine payload parameter (index 0)",
           RpcErrorType.INVALID_ENGINE_NEW_PAYLOAD_PARAMS,
@@ -119,7 +120,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final Optional<List<String>> maybeVersionedHashParam;
     try {
       maybeVersionedHashParam = requestContext.getOptionalList(1, String.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcRequestException(
           "Invalid versioned hash parameters (index 1)",
           RpcErrorType.INVALID_VERSIONED_HASH_PARAMS,
@@ -131,7 +132,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     Optional<String> maybeParentBeaconBlockRootParam;
     try {
       maybeParentBeaconBlockRootParam = requestContext.getOptionalParameter(2, String.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcRequestException(
           "Invalid parent beacon block root parameters (index 2)",
           RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,

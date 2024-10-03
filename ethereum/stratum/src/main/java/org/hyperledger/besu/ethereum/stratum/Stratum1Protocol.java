@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -175,18 +176,24 @@ public class Stratum1Protocol implements StratumProtocol {
     long nonce;
     try {
       nonce = Bytes.fromHexString(message.getRequiredParameter(2, String.class)).getLong(0);
-    } catch (Exception e) {
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid nonce parameter (index 2)", RpcErrorType.INVALID_NONCE_PARAMS, e);
     }
-    Hash mixHash = null;
+    Hash mixHash;
     try {
       mixHash = Hash.fromHexString(message.getRequiredParameter(4, String.class));
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid mix hash parameter (index 4)", RpcErrorType.INVALID_MIX_HASH_PARAMS, e);
     }
-    Bytes powHash = Bytes.fromHexString(message.getRequiredParameter(3, String.class));
+    Bytes powHash;
+    try {
+      powHash = Bytes.fromHexString(message.getRequiredParameter(3, String.class));
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid PoW hash parameter (index 3)", RpcErrorType.INVALID_POW_HASH_PARAMS, e);
+    }
     boolean result = false;
     final PoWSolution solution = new PoWSolution(nonce, mixHash, null, powHash);
     if (currentInput.getPrePowHash().equals(solution.getPowHash())) {

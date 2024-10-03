@@ -22,10 +22,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -41,9 +41,27 @@ public interface TransactionsLayer {
 
   boolean contains(Transaction transaction);
 
-  TransactionAddedResult add(PendingTransaction pendingTransaction, int gap);
+  /**
+   * Try to add a pending transaction to this layer. The {@code addReason} is used to discriminate
+   * between a new tx that is added to the pool, or a tx that is already in the pool, but is moving
+   * internally between layers, for example, due to a promotion or demotion. The distinction is
+   * needed since we only need to send a notification for a new tx, and not when it is only an
+   * internal move.
+   *
+   * @param pendingTransaction the tx to try to add to this layer
+   * @param gap the nonce gap between the current sender nonce and the tx
+   * @param addReason define if it is a new tx or an internal move
+   * @return the result of the add operation
+   */
+  TransactionAddedResult add(PendingTransaction pendingTransaction, int gap, AddReason addReason);
 
-  void remove(PendingTransaction pendingTransaction, RemovalReason reason);
+  /**
+   * Remove the pending tx from the pool
+   *
+   * @param pendingTransaction the pending tx
+   * @param reason the reason it is removed from the pool
+   */
+  void remove(PendingTransaction pendingTransaction, PoolRemovalReason reason);
 
   /**
    * Penalize a pending transaction. Penalization could be applied to notify the txpool that this
@@ -107,27 +125,4 @@ public interface TransactionsLayer {
   String logStats();
 
   String logSender(Address sender);
-
-  enum RemovalReason {
-    CONFIRMED,
-    CROSS_LAYER_REPLACED,
-    EVICTED,
-    DROPPED,
-    FOLLOW_INVALIDATED,
-    INVALIDATED,
-    PROMOTED,
-    REPLACED,
-    RECONCILED,
-    BELOW_BASE_FEE;
-
-    private final String label;
-
-    RemovalReason() {
-      this.label = name().toLowerCase(Locale.ROOT);
-    }
-
-    public String label() {
-      return label;
-    }
-  }
 }

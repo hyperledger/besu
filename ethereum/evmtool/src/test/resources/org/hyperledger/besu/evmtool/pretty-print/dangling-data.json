@@ -4,5 +4,5 @@
     "ef00010100040200010001040000000080000000ff"
   ],
   "stdin": "",
-  "stdout": "EOF layout is invalid - Dangling data after end of all sections\n"
+  "stdout": "EOF layout is invalid - invalid_section_bodies_size data after end of all sections\n"
 }

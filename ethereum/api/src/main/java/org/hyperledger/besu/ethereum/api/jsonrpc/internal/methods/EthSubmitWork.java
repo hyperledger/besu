@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -54,21 +55,21 @@ public class EthSubmitWork implements JsonRpcMethod {
       try {
         nonce =
             Bytes.fromHexString(requestContext.getRequiredParameter(0, String.class)).getLong(0);
-      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      } catch (JsonRpcParameterException e) {
         throw new InvalidJsonRpcParameters(
             "Invalid nonce parameter (index 0)", RpcErrorType.INVALID_NONCE_PARAMS, e);
       }
       Hash mixHash;
       try {
         mixHash = requestContext.getRequiredParameter(2, Hash.class);
-      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      } catch (JsonRpcParameterException e) {
         throw new InvalidJsonRpcParameters(
             "Invalid mix hash parameter (index 2)", RpcErrorType.INVALID_MIX_HASH_PARAMS, e);
       }
       Bytes powHash;
       try {
         powHash = Bytes.fromHexString(requestContext.getRequiredParameter(1, String.class));
-      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      } catch (JsonRpcParameterException e) {
         throw new InvalidJsonRpcParameters(
             "Invalid PoW hash parameter (index 1)", RpcErrorType.INVALID_POW_HASH_PARAMS, e);
       }

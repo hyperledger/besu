@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer.TraceableState;
@@ -73,14 +74,14 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
     try {
       blockParameterOrBlockHash =
           requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid block or block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
     final int transactionIndex;
     try {
       transactionIndex = requestContext.getRequiredParameter(1, Integer.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid transaction index parameter (index 1)",
           RpcErrorType.INVALID_TRANSACTION_INDEX_PARAMS,
@@ -89,21 +90,21 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
     final Address accountAddress;
     try {
       accountAddress = requestContext.getRequiredParameter(2, Address.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid account address parameter (index 2)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
     final Hash startKey;
     try {
       startKey = Hash.fromHexStringLenient(requestContext.getRequiredParameter(3, String.class));
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid data start hash parameter (index 3)", RpcErrorType.INVALID_DATA_HASH_PARAMS, e);
     }
     final int limit;
     try {
       limit = requestContext.getRequiredParameter(4, Integer.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid limit parameter (index 4)", RpcErrorType.INVALID_TRANSACTION_LIMIT_PARAMS, e);
     }

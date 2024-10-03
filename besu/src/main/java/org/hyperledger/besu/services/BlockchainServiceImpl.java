@@ -30,11 +30,11 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.TransactionReceipt;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /** The Blockchain service implementation. */
 @Unstable
@@ -45,7 +45,6 @@ public class BlockchainServiceImpl implements BlockchainService {
   private MutableBlockchain blockchain;
 
   /** Instantiates a new Blockchain service implementation. */
-  @Inject
   public BlockchainServiceImpl() {}
 
   /**
@@ -183,5 +182,13 @@ public class BlockchainServiceImpl implements BlockchainService {
         return blockBodySupplier.get();
       }
     };
+  }
+
+  @Override
+  public Optional<BigInteger> getChainId() {
+    if (protocolSchedule == null) {
+      return Optional.empty();
+    }
+    return protocolSchedule.getChainId();
   }
 }

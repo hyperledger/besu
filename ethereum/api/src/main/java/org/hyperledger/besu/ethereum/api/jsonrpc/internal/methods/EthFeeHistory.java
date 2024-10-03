@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -91,7 +92,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     final int blockCount;
     try {
       blockCount = request.getRequiredParameter(0, UnsignedIntParameter.class).getValue();
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid block count parameter (index 0)", RpcErrorType.INVALID_BLOCK_COUNT_PARAMS, e);
     }
@@ -101,7 +102,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     final BlockParameter highestBlock;
     try {
       highestBlock = request.getRequiredParameter(1, BlockParameter.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid highest block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
@@ -109,7 +110,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     final Optional<List<Double>> maybeRewardPercentiles;
     try {
       maybeRewardPercentiles = request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid reward percentiles parameter (index 2)",
           RpcErrorType.INVALID_REWARD_PERCENTILES_PARAMS,

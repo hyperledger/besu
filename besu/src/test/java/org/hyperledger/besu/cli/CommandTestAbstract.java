@@ -24,7 +24,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,9 +34,9 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.options.DataStorageOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
-import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
@@ -71,6 +70,7 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
@@ -138,15 +138,18 @@ public abstract class CommandTestAbstract {
   private static final Logger TEST_LOGGER = LoggerFactory.getLogger(CommandTestAbstract.class);
 
   protected static final int POA_BLOCK_PERIOD_SECONDS = 5;
+  protected static final int POA_EMPTY_BLOCK_PERIOD_SECONDS = 50;
   protected static final JsonObject VALID_GENESIS_QBFT_POST_LONDON =
       (new JsonObject())
           .put(
               "config",
               new JsonObject()
                   .put("londonBlock", 0)
+                  .put("qbft", new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS))
                   .put(
                       "qbft",
-                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
+                      new JsonObject()
+                          .put("xemptyblockperiodseconds", POA_EMPTY_BLOCK_PERIOD_SECONDS)));
   protected static final JsonObject VALID_GENESIS_IBFT2_POST_LONDON =
       (new JsonObject())
           .put(
@@ -206,6 +209,9 @@ public abstract class CommandTestAbstract {
   @Mock(lenient = true)
   protected BesuController mockController;
 
+  @Mock(lenient = true)
+  protected BesuComponent mockBesuComponent;
+
   @Mock protected RlpBlockExporter rlpBlockExporter;
   @Mock protected JsonBlockImporter jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
@@ -228,9 +234,6 @@ public abstract class CommandTestAbstract {
   @SuppressWarnings("PrivateStaticFinalLoggers") // @Mocks are inited by JUnit
   @Mock
   protected Logger mockLogger;
-
-  @Mock(lenient = true)
-  protected BesuComponent mockBesuComponent;
 
   @Captor protected ArgumentCaptor<Collection<Bytes>> bytesCollectionCollector;
   @Captor protected ArgumentCaptor<Path> pathArgumentCaptor;
@@ -259,10 +262,8 @@ public abstract class CommandTestAbstract {
 
   @BeforeEach
   public void initMocks() throws Exception {
-    // doReturn used because of generic BesuController
-    doReturn(mockControllerBuilder)
-        .when(mockControllerBuilderFactory)
-        .fromEthNetworkConfig(any(), any());
+    when(mockControllerBuilderFactory.fromEthNetworkConfig(any(), any()))
+        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.synchronizerConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.ethProtocolConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.transactionPoolConfiguration(any()))
@@ -291,14 +292,12 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
         .thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
-        .thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.besuComponent(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.genesisStateHashCacheEnabled(any()))
         .thenReturn(mockControllerBuilder);
 
-    // doReturn used because of generic BesuController
-    doReturn(mockController).when(mockControllerBuilder).build();
+    when(mockControllerBuilder.build()).thenReturn(mockController);
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
     lenient().when(mockController.getProtocolSchedule()).thenReturn(mockProtocolSchedule);
     lenient().when(mockController.getProtocolContext()).thenReturn(mockProtocolContext);
@@ -353,6 +352,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.allowedSubnets(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.poaDiscoveryRetryBootnodes(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
+    when(mockBesuComponent.getMetricsSystem()).thenReturn(new NoOpMetricsSystem());
 
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
@@ -384,8 +384,6 @@ public abstract class CommandTestAbstract {
     lenient()
         .when(mockBesuPluginContext.getService(TransactionSelectionService.class))
         .thenReturn(Optional.of(txSelectionService));
-
-    when(mockBesuComponent.getBesuCommandLogger()).thenReturn(mockLogger);
   }
 
   @BeforeEach
@@ -462,6 +460,7 @@ public abstract class CommandTestAbstract {
         besuCommand.parameterExceptionHandler(),
         besuCommand.executionExceptionHandler(),
         in,
+        mockBesuComponent,
         args);
     return besuCommand;
   }
@@ -470,7 +469,6 @@ public abstract class CommandTestAbstract {
     switch (testType) {
       case REQUIRED_OPTION:
         return new TestBesuCommandWithRequiredOption(
-            mockBesuComponent,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -480,10 +478,10 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            privacyPluginService);
+            privacyPluginService,
+            mockLogger);
       case PORT_CHECK:
         return new TestBesuCommand(
-            mockBesuComponent,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -493,10 +491,10 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            privacyPluginService);
+            privacyPluginService,
+            mockLogger);
       default:
         return new TestBesuCommandWithoutPortCheck(
-            mockBesuComponent,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -506,7 +504,8 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            privacyPluginService);
+            privacyPluginService,
+            mockLogger);
     }
   }
 
@@ -536,7 +535,6 @@ public abstract class CommandTestAbstract {
     private Vertx vertx;
 
     TestBesuCommand(
-        final BesuComponent besuComponent,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -546,9 +544,9 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PrivacyPluginServiceImpl privacyPluginService) {
+        final PrivacyPluginServiceImpl privacyPluginService,
+        final Logger commandLogger) {
       super(
-          besuComponent,
           mockBlockImporter,
           jsonBlockImporterFactory,
           rlpBlockExporterFactory,
@@ -564,7 +562,8 @@ public abstract class CommandTestAbstract {
           new TransactionSelectionServiceImpl(),
           new TransactionPoolValidatorServiceImpl(),
           new TransactionSimulationServiceImpl(),
-          new BlockchainServiceImpl());
+          new BlockchainServiceImpl(),
+          commandLogger);
     }
 
     @Override
@@ -635,7 +634,6 @@ public abstract class CommandTestAbstract {
     private final Boolean acceptTermsAndConditions = false;
 
     TestBesuCommandWithRequiredOption(
-        final BesuComponent besuComponent,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -645,9 +643,9 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PrivacyPluginServiceImpl privacyPluginService) {
+        final PrivacyPluginServiceImpl privacyPluginService,
+        final Logger commandLogger) {
       super(
-          besuComponent,
           mockBlockImporter,
           jsonBlockImporterFactory,
           rlpBlockExporterFactory,
@@ -657,7 +655,8 @@ public abstract class CommandTestAbstract {
           environment,
           storageService,
           securityModuleService,
-          privacyPluginService);
+          privacyPluginService,
+          commandLogger);
     }
 
     public Boolean getAcceptTermsAndConditions() {
@@ -669,7 +668,6 @@ public abstract class CommandTestAbstract {
   public static class TestBesuCommandWithoutPortCheck extends TestBesuCommand {
 
     TestBesuCommandWithoutPortCheck(
-        final BesuComponent context,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -679,9 +677,9 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PrivacyPluginServiceImpl privacyPluginService) {
+        final PrivacyPluginServiceImpl privacyPluginService,
+        final Logger commandLogger) {
       super(
-          context,
           mockBlockImporter,
           jsonBlockImporterFactory,
           rlpBlockExporterFactory,
@@ -691,7 +689,8 @@ public abstract class CommandTestAbstract {
           environment,
           storageService,
           securityModuleService,
-          privacyPluginService);
+          privacyPluginService,
+          commandLogger);
     }
 
     @Override

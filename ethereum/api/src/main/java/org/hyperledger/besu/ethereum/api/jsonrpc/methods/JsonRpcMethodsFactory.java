@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -54,7 +55,9 @@ import io.vertx.core.Vertx;
 public class JsonRpcMethodsFactory {
 
   public Map<String, JsonRpcMethod> methods(
+      final String clientNodeName,
       final String clientVersion,
+      final String commit,
       final BigInteger networkId,
       final GenesisConfigOptions genesisConfigOptions,
       final P2PNetwork p2pNetwork,
@@ -75,6 +78,7 @@ public class JsonRpcMethodsFactory {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
+      final GraphQLConfiguration graphQLConfiguration,
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
@@ -89,7 +93,7 @@ public class JsonRpcMethodsFactory {
       final List<JsonRpcMethods> availableApiGroups =
           List.of(
               new AdminJsonRpcMethods(
-                  clientVersion,
+                  clientNodeName,
                   networkId,
                   genesisConfigOptions,
                   p2pNetwork,
@@ -115,7 +119,10 @@ public class JsonRpcMethodsFactory {
                   protocolSchedule,
                   protocolContext,
                   ethPeers,
-                  consensusEngineServer),
+                  consensusEngineServer,
+                  clientVersion,
+                  commit,
+                  transactionPool),
               new EthJsonRpcMethods(
                   blockchainQueries,
                   synchronizer,
@@ -130,7 +137,8 @@ public class JsonRpcMethodsFactory {
                   networkId,
                   jsonRpcConfiguration,
                   webSocketConfiguration,
-                  metricsConfiguration),
+                  metricsConfiguration,
+                  graphQLConfiguration),
               new MinerJsonRpcMethods(miningParameters, miningCoordinator),
               new PermJsonRpcMethods(accountsAllowlistController, nodeAllowlistController),
               new PrivJsonRpcMethods(
@@ -141,7 +149,7 @@ public class JsonRpcMethodsFactory {
                   filterManager),
               new PrivxJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
-              new Web3JsonRpcMethods(clientVersion),
+              new Web3JsonRpcMethods(clientNodeName),
               new TraceJsonRpcMethods(
                   blockchainQueries, protocolSchedule, protocolContext, apiConfiguration),
               new TxPoolJsonRpcMethods(transactionPool),

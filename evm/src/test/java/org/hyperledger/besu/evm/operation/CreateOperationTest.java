@@ -52,12 +52,7 @@ class CreateOperationTest {
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final MutableAccount account = mock(MutableAccount.class);
   private final MutableAccount newAccount = mock(MutableAccount.class);
-  private final CreateOperation operation =
-      new CreateOperation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
-  private final CreateOperation maxInitCodeOperation =
-      new CreateOperation(
-          new ConstantinopleGasCalculator(), MainnetEVMs.SHANGHAI_INIT_CODE_SIZE_LIMIT);
-  private final EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  private final CreateOperation operation = new CreateOperation(new ConstantinopleGasCalculator());
 
   private static final String TOPIC =
       "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // 32 FFs
@@ -82,7 +77,7 @@ class CreateOperationTest {
   @Test
   void createFromMemoryMutationSafe() {
 
-    // Given:  Execute a CREATE operation with a contract that logs in the constructor
+    // Given: Execute a CREATE operation with a contract that logs in the constructor
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
@@ -190,7 +185,7 @@ class CreateOperationTest {
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = maxInitCodeOperation.execute(messageFrame, evm);
+    var result = operation.execute(messageFrame, evm);
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
     final ContractCreationProcessor ccp =
         new ContractCreationProcessor(evm, false, List.of(), 0, List.of());
@@ -218,17 +213,18 @@ class CreateOperationTest {
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = maxInitCodeOperation.execute(messageFrame, evm);
+    var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isEqualTo(CODE_TOO_LARGE);
   }
 
   @Test
   void eofV1CannotCall() {
+    final EVM pragueEvm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
         new TestMessageFrameBuilder()
-            .code(evm.getCodeUncached(SIMPLE_EOF))
+            .code(pragueEvm.getCodeUncached(SIMPLE_EOF))
             .pushStackItem(memoryLength)
             .pushStackItem(memoryOffset)
             .pushStackItem(Bytes.EMPTY)
@@ -252,6 +248,7 @@ class CreateOperationTest {
       final UInt256 memoryLength,
       final UInt256 value,
       final int depth) {
+    final EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
