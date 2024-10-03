@@ -736,6 +736,27 @@ public abstract class MainnetProtocolSpecs {
         .name("Cancun");
   }
 
+  static ProtocolSpecBuilder cancunEOFDefinition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+
+    ProtocolSpecBuilder protocolSpecBuilder =
+        cancunDefinition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("CancunEOF");
+  }
+
   static ProtocolSpecBuilder pragueDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
@@ -812,6 +833,13 @@ public abstract class MainnetProtocolSpecs {
             miningParameters,
             isParallelTxProcessingEnabled,
             metricsSystem);
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("Osaka");
+  }
+
+  private static ProtocolSpecBuilder addEOF(
+      final Optional<BigInteger> chainId,
+      final EvmConfiguration evmConfiguration,
+      final ProtocolSpecBuilder protocolSpecBuilder) {
     return protocolSpecBuilder
         // EIP-7692 EOF v1 Gas calculator
         .gasCalculator(OsakaGasCalculator::new)
@@ -827,8 +855,7 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     List.of(MaxCodeSizeRule.from(evm), EOFValidationCodeRule.from(evm)),
                     1,
-                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
-        .name("Osaka");
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES));
   }
 
   static ProtocolSpecBuilder futureEipsDefinition(

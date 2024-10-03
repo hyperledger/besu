@@ -276,6 +276,7 @@ public class ProtocolScheduleBuilder {
     // Begin timestamp forks
     lastForkBlock = validateForkOrder("Shanghai", config.getShanghaiTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Cancun", config.getCancunTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("CancunEOF", config.getCancunEOFTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Prague", config.getPragueTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Osaka", config.getOsakaTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkBlock);
@@ -404,6 +405,10 @@ public class ProtocolScheduleBuilder {
                 HardforkId.MainnetHardforkId.CANCUN,
                 config.getCancunTime(),
                 specFactory.cancunDefinition(config)),
+            timestampMilestone(
+                HardforkId.MainnetHardforkId.CANCUN_EOF,
+                config.getCancunEOFTime(),
+                specFactory.cancunEOFDefinition(config)),
             timestampMilestone(
                 HardforkId.MainnetHardforkId.PRAGUE,
                 config.getPragueTime(),

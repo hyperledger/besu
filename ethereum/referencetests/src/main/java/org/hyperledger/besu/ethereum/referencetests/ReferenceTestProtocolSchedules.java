@@ -101,10 +101,18 @@ public class ReferenceTestProtocolSchedules {
                     "ShanghaiToCancunAtTime15k",
                     createSchedule(genesisStub.clone().shanghaiTime(0).cancunTime(15000))),
                 Map.entry("Cancun", createSchedule(genesisStub.clone().cancunTime(0))),
+                Map.entry("CancunEOF", createSchedule(genesisStub.clone().cancunEOFTime(0))),
                 Map.entry(
                     "CancunToPragueAtTime15k",
                     createSchedule(genesisStub.clone().cancunTime(0).pragueTime(15000))),
-                Map.entry("Prague", createSchedule(genesisStub.clone().pragueTime(0))),
+                Map.entry(
+                    "Prague",
+                    createSchedule(
+                        genesisStub
+                            .clone()
+                            .pragueTime(0)
+                            .osakaTime(0) // TODO remove this once osaka_devnet_0 ships
+                        )),
                 Map.entry("Osaka", createSchedule(genesisStub.clone().osakaTime(0))),
                 Map.entry("Amsterdam", createSchedule(genesisStub.clone().futureEipsTime(0))),
                 Map.entry("Bogota", createSchedule(genesisStub.clone().futureEipsTime(0))),
