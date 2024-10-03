@@ -57,7 +57,7 @@ else
 fi
 
 # For the latest tag check the version match
-if [[ ${TAG} =~ "latest" && ${CHECK_LATEST} == "true" ]]
+if [[ ${TAG} =~ ^latest && ${CHECK_LATEST} == "true" ]]
 then
   _VERSION_IN_LOG=$(docker logs ${CONTAINER_NAME} | grep "#" | grep "Besu version" | cut -d " " -f 4 | sed 's/\s//g')
   echo "Extracted version from logs [$_VERSION_IN_LOG]"
