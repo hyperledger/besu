@@ -289,7 +289,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
 
     final boolean hasBloomFilter =
         !input.nextIsList() && input.nextSize() == LogsBloomFilter.BYTE_SIZE;
-    if (!hasBloomFilter) {
+    if (hasBloomFilter) {
       // The logs below will populate the bloom filter upon construction.
       bloomFilter = LogsBloomFilter.readFrom(input);
     }
