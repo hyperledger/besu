@@ -73,21 +73,24 @@ jobs:
     strategy:
       matrix:
         combination:
-          - tag: ${{ needs.validate.outputs.release_version }}
-            platform: ''
-            runner: ubuntu-22.04
-          - tag: ${{ needs.validate.outputs.release_version }}-amd64
+          - tag: latest-amd64
             platform: 'linux/amd64'
             runner: ubuntu-22.04
           - tag: latest
             platform: ''
             runner: ubuntu-22.04
-          - tag: ${{ needs.validate.outputs.release_version }}-arm64
+          - tag: latest-arm64
             platform: ''
             runner: besu-arm64
+          - tag: latest
+            platform: ''
+            runner: besu-arm64
+
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          sparse-checkout: '.github/workflows/BesuContainerVerify.sh'
 
       - name: Start container
         run: |
