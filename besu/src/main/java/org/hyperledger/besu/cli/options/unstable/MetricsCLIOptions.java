@@ -23,6 +23,7 @@ import java.util.List;
 import picocli.CommandLine;
 
 /** The Metrics cli options. */
+// TODO: combine into MetricsOptionGroup, use Unstable inner class pattern (see MiningOptions)
 public class MetricsCLIOptions implements CLIOptions<MetricsConfiguration.Builder> {
   private static final String TIMERS_ENABLED_FLAG = "--Xmetrics-timers-enabled";
   private static final String IDLE_TIMEOUT_FLAG = "--Xmetrics-idle-timeout";
