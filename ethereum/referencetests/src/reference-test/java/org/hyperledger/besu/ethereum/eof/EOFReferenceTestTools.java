@@ -43,7 +43,7 @@ public class EOFReferenceTestTools {
 
   static {
     final String eips =
-        System.getProperty("test.ethereum.eof.eips", "Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
+        System.getProperty("test.ethereum.eof.eips", "Osaka,Amsterdam,Bogota,Polis,Bangkok");
     EIPS_TO_RUN = Arrays.asList(eips.split(","));
   }
 
@@ -81,6 +81,10 @@ public class EOFReferenceTestTools {
     if (EIPS_TO_RUN.isEmpty()) {
       params.ignoreAll();
     }
+
+    // EOF was moved from Prague to Osaka
+    params.ignore("-Prague\\[");
+
   }
 
   private EOFReferenceTestTools() {
