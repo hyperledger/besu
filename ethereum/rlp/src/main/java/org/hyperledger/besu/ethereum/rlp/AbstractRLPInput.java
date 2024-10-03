@@ -476,7 +476,7 @@ abstract class AbstractRLPInput implements RLPInput {
    *
    * @see #enterList()
    * @param skipCount true if the element count is not required.
-   * @return -1 if skipCount==true, otherwise, the number of item of the entered list.
+   * @return -1 if skipCount==true, otherwise, the number of items of the entered list.
    */
   public int enterList(final boolean skipCount) {
     if (currentItem >= size) {
