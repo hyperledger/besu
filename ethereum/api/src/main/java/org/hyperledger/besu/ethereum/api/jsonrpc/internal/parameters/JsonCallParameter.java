@@ -18,10 +18,12 @@ import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.json.ChainIdDeserializer;
 import org.hyperledger.besu.ethereum.core.json.GasDeserializer;
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +43,7 @@ import org.slf4j.LoggerFactory;
  *
  * <pre>{@code
  * JsonCallParameter param = new JsonCallParameter.JsonCallParameterBuilder()
+ *     .withChainId(Optional.of(BigInteger.ONE))
  *     .withFrom(Address.fromHexString("0x..."))
  *     .withTo(Address.fromHexString("0x..."))
  *     .withGas(21000L)
@@ -71,6 +74,7 @@ public class JsonCallParameter extends CallParameter {
   private final Optional<Boolean> strict;
 
   private JsonCallParameter(
+      final Optional<BigInteger> chainId,
       final Address from,
       final Address to,
       final Long gasLimit,
@@ -85,6 +89,7 @@ public class JsonCallParameter extends CallParameter {
       final Optional<List<VersionedHash>> blobVersionedHashes) {
 
     super(
+        chainId,
         from,
         to,
         gasLimit,
@@ -115,6 +120,7 @@ public class JsonCallParameter extends CallParameter {
    */
   public static final class JsonCallParameterBuilder {
     private Optional<Boolean> strict = Optional.empty();
+    private Optional<BigInteger> chainId = Optional.empty();
     private Address from;
     private Address to;
     private long gas = -1;
@@ -142,6 +148,18 @@ public class JsonCallParameter extends CallParameter {
      */
     public JsonCallParameterBuilder withStrict(final Boolean strict) {
       this.strict = Optional.ofNullable(strict);
+      return this;
+    }
+
+    /**
+     * Sets the optional "chainId" for the {@link JsonCallParameter}.
+     *
+     * @param chainId the chainId
+     * @return the {@link JsonCallParameterBuilder} instance for chaining
+     */
+    @JsonDeserialize(using = ChainIdDeserializer.class)
+    public JsonCallParameterBuilder withChainId(final BigInteger chainId) {
+      this.chainId = Optional.of(chainId);
       return this;
     }
 
@@ -346,6 +364,7 @@ public class JsonCallParameter extends CallParameter {
       final Bytes payload = input != null ? input : data;
 
       return new JsonCallParameter(
+          chainId,
           from,
           to,
           gas,
