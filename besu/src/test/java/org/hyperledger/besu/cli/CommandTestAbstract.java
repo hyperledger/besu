@@ -34,9 +34,9 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.options.DataStorageOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
-import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
@@ -138,15 +138,18 @@ public abstract class CommandTestAbstract {
   private static final Logger TEST_LOGGER = LoggerFactory.getLogger(CommandTestAbstract.class);
 
   protected static final int POA_BLOCK_PERIOD_SECONDS = 5;
+  protected static final int POA_EMPTY_BLOCK_PERIOD_SECONDS = 50;
   protected static final JsonObject VALID_GENESIS_QBFT_POST_LONDON =
       (new JsonObject())
           .put(
               "config",
               new JsonObject()
                   .put("londonBlock", 0)
+                  .put("qbft", new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS))
                   .put(
                       "qbft",
-                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
+                      new JsonObject()
+                          .put("xemptyblockperiodseconds", POA_EMPTY_BLOCK_PERIOD_SECONDS)));
   protected static final JsonObject VALID_GENESIS_IBFT2_POST_LONDON =
       (new JsonObject())
           .put(

@@ -579,6 +579,9 @@ type Transaction {
   BlobVersionedHashes is a set of hash outputs from the blobs in the transaction.
   """
   blobVersionedHashes: [Bytes32!]
+
+  """Reason returned when transaction fails."""
+  revertReason: Bytes
 }
 
 """EIP-4895"""

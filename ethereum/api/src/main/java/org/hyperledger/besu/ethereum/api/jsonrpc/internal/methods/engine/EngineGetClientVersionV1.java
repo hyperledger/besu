@@ -52,10 +52,12 @@ public class EngineGetClientVersionV1 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
+    String safeCommit =
+        (commit != null && commit.length() >= 8) ? commit.substring(0, 8) : "unknown";
     List<EngineGetClientVersionResultV1> versions =
         Collections.singletonList(
             new EngineGetClientVersionResultV1(
-                ENGINE_CLIENT_CODE, ENGINE_CLIENT_NAME, clientVersion, commit.substring(0, 8)));
+                ENGINE_CLIENT_CODE, ENGINE_CLIENT_NAME, clientVersion, safeCommit));
     return new JsonRpcSuccessResponse(request.getRequest().getId(), versions);
   }
 }
