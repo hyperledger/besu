@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRetryBehavior;
@@ -32,6 +33,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public class GetReceiptsFromPeerTask
     implements PeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
@@ -39,6 +41,7 @@ public class GetReceiptsFromPeerTask
   private final Collection<BlockHeader> blockHeaders;
   private final BodyValidator bodyValidator;
   private final Map<Hash, List<BlockHeader>> headersByReceiptsRoot = new HashMap<>();
+  private final long requiredBlockchainHeight;
 
   public GetReceiptsFromPeerTask(
       final Collection<BlockHeader> blockHeaders, final BodyValidator bodyValidator) {
@@ -50,19 +53,17 @@ public class GetReceiptsFromPeerTask
             headersByReceiptsRoot
                 .computeIfAbsent(header.getReceiptsRoot(), key -> new ArrayList<>())
                 .add(header));
+
+    requiredBlockchainHeight =
+        blockHeaders.stream()
+            .mapToLong(BlockHeader::getNumber)
+            .max()
+            .orElse(BlockHeader.GENESIS_BLOCK_NUMBER);
   }
 
   @Override
   public SubProtocol getSubProtocol() {
     return EthProtocol.get();
-  }
-
-  @Override
-  public long getRequiredBlockNumber() {
-    return blockHeaders.stream()
-        .mapToLong(BlockHeader::getNumber)
-        .max()
-        .orElse(BlockHeader.GENESIS_BLOCK_NUMBER);
   }
 
   @Override
@@ -105,5 +106,12 @@ public class GetReceiptsFromPeerTask
   public Collection<PeerTaskRetryBehavior> getPeerTaskBehaviors() {
     return List.of(
         PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS, PeerTaskRetryBehavior.RETRY_WITH_SAME_PEER);
+  }
+
+  @Override
+  public Predicate<EthPeer> getPeerRequirementFilter() {
+    return (ethPeer) ->
+        ethPeer.getProtocolName().equals(getSubProtocol().getName())
+            && ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight;
   }
 }

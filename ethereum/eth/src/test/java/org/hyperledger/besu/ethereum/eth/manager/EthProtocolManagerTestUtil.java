@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.DefaultPeerSelector;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
@@ -118,8 +117,7 @@ public class EthProtocolManagerTestUtil {
         mergePeerFilter,
         mock(SynchronizerConfiguration.class),
         ethScheduler,
-        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false),
-        new DefaultPeerSelector(() -> null));
+        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
   }
 
   public static EthProtocolManager create(
@@ -170,8 +168,7 @@ public class EthProtocolManagerTestUtil {
         Optional.empty(),
         mock(SynchronizerConfiguration.class),
         ethScheduler,
-        forkIdManager,
-        new DefaultPeerSelector(() -> null));
+        forkIdManager);
   }
 
   public static EthProtocolManager create(final Blockchain blockchain) {

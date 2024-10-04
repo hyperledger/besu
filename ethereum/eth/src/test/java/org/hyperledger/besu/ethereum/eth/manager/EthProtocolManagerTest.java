@@ -44,7 +44,6 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection.PeerSendHandler;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.DefaultPeerSelector;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
@@ -1244,8 +1243,7 @@ public final class EthProtocolManagerTest {
             Optional.empty(),
             syncConfig,
             mock(EthScheduler.class),
-            mock(ForkIdManager.class),
-            new DefaultPeerSelector(() -> null))) {
+            mock(ForkIdManager.class))) {
 
       return ethManager;
     }

@@ -55,8 +55,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
 import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.DefaultPeerSelector;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerSelector;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRequestSender;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
@@ -656,10 +654,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
-    final PeerSelector peerSelector = new DefaultPeerSelector(currentProtocolSpecSupplier);
-    ethPeers.streamAllPeers().forEach(peerSelector::addPeer);
     final PeerTaskExecutor peerTaskExecutor =
-        new PeerTaskExecutor(peerSelector, new PeerTaskRequestSender(), scheduler, metricsSystem);
+        new PeerTaskExecutor(ethPeers, new PeerTaskRequestSender(), scheduler, metricsSystem);
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
@@ -699,8 +695,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             scheduler,
             peerValidators,
             Optional.empty(),
-            forkIdManager,
-            peerSelector);
+            forkIdManager);
 
     final PivotBlockSelector pivotBlockSelector =
         createPivotSelector(
@@ -1035,7 +1030,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param peerValidators the peer validators
    * @param mergePeerFilter the merge peer filter
    * @param forkIdManager the fork id manager
-   * @param peerSelector the PeerSelector
    * @return the eth protocol manager
    */
   protected EthProtocolManager createEthProtocolManager(
@@ -1049,8 +1043,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
-      final ForkIdManager forkIdManager,
-      final PeerSelector peerSelector) {
+      final ForkIdManager forkIdManager) {
     return new EthProtocolManager(
         protocolContext.getBlockchain(),
         networkId,
@@ -1064,8 +1057,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         mergePeerFilter,
         synchronizerConfiguration,
         scheduler,
-        forkIdManager,
-        peerSelector);
+        forkIdManager);
   }
 
   /**

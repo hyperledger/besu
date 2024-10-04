@@ -18,6 +18,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.ChainState;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
@@ -42,14 +44,6 @@ public class GetReceiptsFromPeerTaskTest {
   public void testGetSubProtocol() {
     GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(Collections.emptyList(), null);
     Assertions.assertEquals(EthProtocol.get(), task.getSubProtocol());
-  }
-
-  @Test
-  public void testGetRequiredBlockNumber() {
-    GetReceiptsFromPeerTask task =
-        new GetReceiptsFromPeerTask(
-            List.of(mockBlockHeader(1), mockBlockHeader(2), mockBlockHeader(3)), null);
-    Assertions.assertEquals(3, task.getRequiredBlockNumber());
   }
 
   @Test
@@ -137,6 +131,24 @@ public class GetReceiptsFromPeerTaskTest {
     Assertions.assertEquals(List.of(receiptForBlock3), resultMap.get(blockHeader3));
   }
 
+  @Test
+  public void testGetPeerRequirementFilter() {
+    BlockHeader blockHeader1 = mockBlockHeader(1);
+    BlockHeader blockHeader2 = mockBlockHeader(2);
+    BlockHeader blockHeader3 = mockBlockHeader(3);
+
+    GetReceiptsFromPeerTask task =
+        new GetReceiptsFromPeerTask(List.of(blockHeader1, blockHeader2, blockHeader3), null);
+
+    EthPeer failForIncorrectProtocol = mockPeer("incorrectProtocol", 5);
+    EthPeer failForShortChainHeight = mockPeer("incorrectProtocol", 1);
+    EthPeer successfulCandidate = mockPeer(EthProtocol.NAME, 5);
+
+    Assertions.assertFalse(task.getPeerRequirementFilter().test(failForIncorrectProtocol));
+    Assertions.assertFalse(task.getPeerRequirementFilter().test(failForShortChainHeight));
+    Assertions.assertTrue(task.getPeerRequirementFilter().test(successfulCandidate));
+  }
+
   private BlockHeader mockBlockHeader(final long blockNumber) {
     BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
     Mockito.when(blockHeader.getNumber()).thenReturn(blockNumber);
@@ -148,5 +160,16 @@ public class GetReceiptsFromPeerTaskTest {
         .thenReturn(Hash.fromHexString(StringUtils.repeat("00", 31) + blockNumber + "2"));
 
     return blockHeader;
+  }
+
+  private EthPeer mockPeer(final String protocol, final long chainHeight) {
+    EthPeer ethPeer = Mockito.mock(EthPeer.class);
+    ChainState chainState = Mockito.mock(ChainState.class);
+
+    Mockito.when(ethPeer.getProtocolName()).thenReturn(protocol);
+    Mockito.when(ethPeer.chainState()).thenReturn(chainState);
+    Mockito.when(chainState.getEstimatedHeight()).thenReturn(chainHeight);
+
+    return ethPeer;
   }
 }
