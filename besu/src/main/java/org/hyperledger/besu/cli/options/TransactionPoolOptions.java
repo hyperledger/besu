@@ -61,6 +61,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       "--strict-tx-replay-protection-enabled";
   private static final String TX_POOL_PRIORITY_SENDERS = "--tx-pool-priority-senders";
   private static final String TX_POOL_MIN_GAS_PRICE = "--tx-pool-min-gas-price";
+  private static final String TX_FAST_VERIFY_SIGNATURE_ENABLED =
+      "--tx-pool-tx-fast-verify-signature-enabled";
 
   private TransactionPoolValidatorService transactionPoolValidatorService;
 
@@ -277,6 +279,16 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         arity = "1")
     private Duration eth65TrxAnnouncedBufferingPeriod =
         TransactionPoolConfiguration.Unstable.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD;
+
+    @CommandLine.Option(
+        names = {TX_FAST_VERIFY_SIGNATURE_ENABLED},
+        paramLabel = "<Boolean>",
+        hidden = true,
+        description =
+            "Efficient signature verification using transaction information in tx pool (default: true)",
+        arity = "1")
+    private boolean txFastVerifySignatureEnabled =
+        TransactionPoolConfiguration.Unstable.DEFAULT_TX_FAST_VERIFY_SIGNATURE_ENABLED;
   }
 
   private TransactionPoolOptions() {}
@@ -334,6 +346,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         config.getUnstable().getTxMessageKeepAliveSeconds();
     options.unstableOptions.eth65TrxAnnouncedBufferingPeriod =
         config.getUnstable().getEth65TrxAnnouncedBufferingPeriod();
+    options.unstableOptions.txFastVerifySignatureEnabled =
+        config.getUnstable().getTxFastVerifySignatureEnabled();
 
     return options;
   }
@@ -392,6 +406,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
             ImmutableTransactionPoolConfiguration.Unstable.builder()
                 .txMessageKeepAliveSeconds(unstableOptions.txMessageKeepAliveSeconds)
                 .eth65TrxAnnouncedBufferingPeriod(unstableOptions.eth65TrxAnnouncedBufferingPeriod)
+                .txFastVerifySignatureEnabled(unstableOptions.txFastVerifySignatureEnabled)
                 .build())
         .build();
   }

@@ -40,6 +40,7 @@ public interface TransactionPoolConfiguration {
   interface Unstable {
     Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
     int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
+    boolean DEFAULT_TX_FAST_VERIFY_SIGNATURE_ENABLED = true;
 
     TransactionPoolConfiguration.Unstable DEFAULT =
         ImmutableTransactionPoolConfiguration.Unstable.builder().build();
@@ -52,6 +53,11 @@ public interface TransactionPoolConfiguration {
     @Value.Default
     default int getTxMessageKeepAliveSeconds() {
       return DEFAULT_TX_MSG_KEEP_ALIVE;
+    }
+
+    @Value.Default
+    default boolean getTxFastVerifySignatureEnabled() {
+      return DEFAULT_TX_FAST_VERIFY_SIGNATURE_ENABLED;
     }
   }
 

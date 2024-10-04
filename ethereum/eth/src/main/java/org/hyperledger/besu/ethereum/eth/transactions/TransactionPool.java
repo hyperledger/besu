@@ -577,6 +577,10 @@ public class TransactionPool implements BlockAddedObserver {
     return pendingTransactions.logStats();
   }
 
+  public PendingTransactions getPendingTransactionsObject() {
+    return pendingTransactions;
+  }
+
   @VisibleForTesting
   Class<? extends PendingTransactions> pendingTransactionsImplementation() {
     return pendingTransactions.getClass();
@@ -685,6 +689,10 @@ public class TransactionPool implements BlockAddedObserver {
 
   public boolean isEnabled() {
     return isPoolEnabled.get();
+  }
+
+  public boolean getConfigTxFastVerifySignatureEnabled() {
+    return this.configuration.getUnstable().getTxFastVerifySignatureEnabled();
   }
 
   public int getBlobCacheSize() {
