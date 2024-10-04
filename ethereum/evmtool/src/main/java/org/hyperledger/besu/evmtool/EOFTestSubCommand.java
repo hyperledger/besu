@@ -224,7 +224,7 @@ public class EOFTestSubCommand implements Runnable {
       return failed(re.getMessage());
     }
     if (codeBytes.isEmpty()) {
-      return passed();
+      return failed("invalid_magic code is zero-length");
     }
 
     var layout = EOFLayout.parseEOF(codeBytes);
