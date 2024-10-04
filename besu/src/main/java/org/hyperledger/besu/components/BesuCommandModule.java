@@ -20,7 +20,10 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
+import org.hyperledger.besu.cli.options.stable.P2PDiscoveryOptions;
+import org.hyperledger.besu.cli.options.unstable.RPCOptions;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
@@ -53,7 +56,6 @@ public class BesuCommandModule {
             new BesuPluginContextImpl(),
             System.getenv(),
             commandLogger);
-    besuCommand.toCommandLine();
     return besuCommand;
   }
 
@@ -61,6 +63,18 @@ public class BesuCommandModule {
   @Singleton
   MetricsConfiguration provideMetricsConfiguration(final BesuCommand provideFrom) {
     return provideFrom.metricsConfiguration();
+  }
+
+  @Provides
+  @Singleton
+  RPCOptions provideRPCOptions() {
+    return RPCOptions.create();
+  }
+
+  @Provides
+  @Singleton
+  P2PDiscoveryConfiguration provideP2PDiscoveryConfiguration() {
+    return new P2PDiscoveryOptions().toDomainObject();
   }
 
   @Provides
