@@ -124,11 +124,12 @@ public abstract class PivotSelectorFromBlock implements PivotBlockSelector {
   @Override
   public Optional<FastSyncState> selectNewPivotBlock() {
     final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
-    if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidSafeBlockHash()) {
-      // return Optional.of(selectBlockAsPivot(maybeForkchoice.get().getSafeBlockHash()));
-      Hash pivotHash = getPivotHash(maybeForkchoice.get());
-      LOG.info("Selecting new pivot block: {}", pivotHash);
-      return Optional.of(new FastSyncState(pivotHash));
+    if (maybeForkchoice.isPresent()) {
+      Optional<Hash> pivotHash = getPivotHash(maybeForkchoice.get());
+      if(pivotHash.isPresent()) {
+        LOG.info("Selecting new pivot block: {}", pivotHash);
+        return Optional.of(new FastSyncState(pivotHash.get()));
+      }
     }
     if (lastNoFcuReceivedInfoLog + NO_FCU_RECEIVED_LOGGING_THRESHOLD < System.currentTimeMillis()) {
       lastNoFcuReceivedInfoLog = System.currentTimeMillis();
@@ -162,5 +163,5 @@ public abstract class PivotSelectorFromBlock implements PivotBlockSelector {
     return waitForPeersTask.run();
   }
 
-  protected abstract Hash getPivotHash(final ForkchoiceEvent forkchoiceEvent);
+  protected abstract Optional<Hash> getPivotHash(final ForkchoiceEvent forkchoiceEvent);
 }

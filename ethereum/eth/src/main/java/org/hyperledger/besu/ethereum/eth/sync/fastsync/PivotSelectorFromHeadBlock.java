@@ -50,9 +50,9 @@ public class PivotSelectorFromHeadBlock extends PivotSelectorFromBlock {
   }
 
   @Override
-  protected Hash getPivotHash(final ForkchoiceEvent forkchoiceEvent) {
+  protected Optional<Hash> getPivotHash(final ForkchoiceEvent forkchoiceEvent) {
     Hash hash = forkchoiceEvent.getHeadBlockHash();
     LOG.info("Returning head block hash {} as pivot", hash);
-    return hash;
+    return Optional.of(hash);
   }
 }

@@ -50,9 +50,14 @@ public class PivotSelectorFromSafeBlock extends PivotSelectorFromBlock {
   }
 
   @Override
-  protected Hash getPivotHash(final ForkchoiceEvent forkchoiceEvent) {
-    Hash hash = forkchoiceEvent.getSafeBlockHash();
-    LOG.debug("Returning safe block hash {} as pivot", hash);
-    return hash;
+  protected Optional<Hash> getPivotHash(final ForkchoiceEvent forkchoiceEvent) {
+    if(forkchoiceEvent.hasValidSafeBlockHash()) {
+      Hash hash = forkchoiceEvent.getSafeBlockHash();
+      LOG.debug("Returning safe block hash {} as pivot.", hash);
+      return Optional.of(hash);
+    } else {
+      LOG.debug("No safe block hash found.");
+      return Optional.empty();
+    }
   }
 }
