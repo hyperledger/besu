@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
+import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
@@ -195,6 +196,7 @@ import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
+import org.hyperledger.besu.util.EphemeryGenesisUpdater;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -1602,11 +1604,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private GenesisConfigFile readGenesisConfigFile() {
-    final GenesisConfigFile effectiveGenesisFile =
-        genesisFile != null
-            ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
-            : GenesisConfigFile.fromResource(
-                Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
+    GenesisConfigFile effectiveGenesisFile;
+    effectiveGenesisFile =
+        network.equals(EPHEMERY)
+            ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
+            : genesisFile != null
+                ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
+                : GenesisConfigFile.fromResource(
+                    Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
@@ -2333,7 +2338,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (networkId != null) {
       builder.setNetworkId(networkId);
     }
-
+    // ChainId update is required for Ephemery network
+    if (network.equals(EPHEMERY)) {
+      String chainId = genesisConfigOverrides.get("chainId");
+      builder.setNetworkId(new BigInteger(chainId));
+    }
     if (p2PDiscoveryOptions.discoveryDnsUrl != null) {
       builder.setDnsDiscoveryUrl(p2PDiscoveryOptions.discoveryDnsUrl);
     } else {
