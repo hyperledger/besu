@@ -61,6 +61,7 @@ import java.util.HashMap;
 import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -107,8 +108,8 @@ public class TransactionPool implements BlockAddedObserver {
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
   private final EthScheduler.OrderedProcessor<BlockAddedEvent> blockAddedEventOrderedProcessor;
-  private final Map<VersionedHash, BlobsWithCommitments.BlobQuad> mapOfBlobsInTransactionPool =
-      new HashMap<>();
+  private final Map<VersionedHash, List<BlobsWithCommitments.BlobQuad>>
+      mapOfBlobsInTransactionPool = new HashMap<>();
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -660,7 +661,14 @@ public class TransactionPool implements BlockAddedObserver {
     }
     final List<BlobsWithCommitments.BlobQuad> blobQuads =
         maybeBlobsWithCommitments.get().getBlobQuads();
-    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.versionedHash(), bq));
+
+    synchronized (mapOfBlobsInTransactionPool) {
+      blobQuads.forEach(
+          bq ->
+              mapOfBlobsInTransactionPool
+                  .computeIfAbsent(bq.versionedHash(), k -> new ArrayList<>())
+                  .add(bq));
+    }
   }
 
   private void unmapBlobsOnTransactionDropped(
@@ -672,15 +680,31 @@ public class TransactionPool implements BlockAddedObserver {
     }
     final List<BlobsWithCommitments.BlobQuad> blobQuads =
         maybeBlobsWithCommitments.get().getBlobQuads();
-    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.versionedHash()));
+
+    synchronized (mapOfBlobsInTransactionPool) {
+      blobQuads.forEach(
+          bq -> {
+            final List<BlobsWithCommitments.BlobQuad> blobQuadList =
+                mapOfBlobsInTransactionPool.get(bq.versionedHash());
+            blobQuadList.remove(bq);
+            if (blobQuadList.isEmpty()) {
+              mapOfBlobsInTransactionPool.remove(bq.versionedHash());
+            }
+          });
+    }
   }
 
   public BlobsWithCommitments.BlobQuad getBlobQuad(final VersionedHash vh) {
-    BlobsWithCommitments.BlobQuad blobQuad = mapOfBlobsInTransactionPool.get(vh);
-    if (blobQuad == null) {
-      blobQuad = cacheForBlobsOfTransactionsAddedToABlock.get(vh);
+    final List<BlobsWithCommitments.BlobQuad> blobQuadList;
+    blobQuadList = mapOfBlobsInTransactionPool.get(vh);
+    if (blobQuadList != null) {
+      try {
+        return blobQuadList.getFirst();
+      } catch (NoSuchElementException e) {
+        return null;
+      }
     }
-    return blobQuad;
+    return cacheForBlobsOfTransactionsAddedToABlock.get(vh);
   }
 
   public boolean isEnabled() {
