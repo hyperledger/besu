@@ -46,7 +46,7 @@ import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -164,13 +164,13 @@ public class BesuCommandTest extends CommandTestAbstract {
       // and ignore errors in case no trusted setup was already loaded
     }
 
-    MergeConfigOptions.setMergeEnabled(false);
+    MergeConfiguration.setMergeEnabled(false);
   }
 
   @AfterEach
   public void tearDown() {
 
-    MergeConfigOptions.setMergeEnabled(false);
+    MergeConfiguration.setMergeEnabled(false);
   }
 
   @Test
