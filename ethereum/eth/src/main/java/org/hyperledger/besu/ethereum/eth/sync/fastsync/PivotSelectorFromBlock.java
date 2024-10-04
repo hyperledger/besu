@@ -126,7 +126,7 @@ public abstract class PivotSelectorFromBlock implements PivotBlockSelector {
     final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
     if (maybeForkchoice.isPresent()) {
       Optional<Hash> pivotHash = getPivotHash(maybeForkchoice.get());
-      if(pivotHash.isPresent()) {
+      if (pivotHash.isPresent()) {
         LOG.info("Selecting new pivot block: {}", pivotHash);
         return Optional.of(new FastSyncState(pivotHash.get()));
       }
