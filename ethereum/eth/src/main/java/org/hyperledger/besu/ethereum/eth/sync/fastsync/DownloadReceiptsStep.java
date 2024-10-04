@@ -85,10 +85,6 @@ public class DownloadReceiptsStep
                                       throw new IllegalStateException(
                                           "Unexpectedly got receipts for block header already populated!");
                                     }));
-                  } else if (getReceiptsResult.responseCode()
-                      == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE) {
-                    throw new RuntimeException(
-                        "No peer available, unable to complete DownloadReceiptsStep");
                   }
                   // remove all the headers we found receipts for
                   headers.removeAll(getReceipts.keySet());
