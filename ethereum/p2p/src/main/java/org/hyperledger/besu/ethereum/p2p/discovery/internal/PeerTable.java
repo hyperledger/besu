@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,8 +58,8 @@ public class PeerTable {
   private int evictionCnt = 0;
   private final LinkedHashMapWithMaximumSize<String, Integer> ipAddressCheckMap =
       new LinkedHashMapWithMaximumSize<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
-  private final CircularFifoQueue<String> invalidIPs =
-      new CircularFifoQueue<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
+  private final Collection<String> invalidIPs =
+      Collections.synchronizedCollection(new CircularFifoQueue<>(DEFAULT_BUCKET_SIZE * N_BUCKETS));
 
   /**
    * Builds a new peer table, where distance is calculated using the provided nodeId as a baseline.
