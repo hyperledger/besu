@@ -2902,7 +2902,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     builder
         .setDataStorage(dataStorageOptions.normalizeDataStorageFormat())
-        .setSyncMode(syncMode.normalize());
+        .setSyncMode(syncMode.normalize())
+        .setSyncMinPeers(syncMinPeerCount);
 
     if (jsonRpcConfiguration != null && jsonRpcConfiguration.isEnabled()) {
       builder
