@@ -29,7 +29,7 @@ public interface ClearEmptyAccountStrategy {
   class NotClearEmptyAccount implements ClearEmptyAccountStrategy {
     @Override
     public void process(final WorldUpdater worldUpdater) {
-      // nothing to do
+      // nothing to do in this case
     }
   }
 
