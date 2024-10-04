@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+import static org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper.deductDelegatedCodeGasCost;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
@@ -24,6 +25,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -33,13 +35,26 @@ public class ExtCodeCopyOperation extends AbstractOperation {
   /** This is the "code" legacy contracts see when copying code from an EOF contract. */
   public static final Bytes EOF_REPLACEMENT_CODE = Bytes.fromHexString("0xef00");
 
+  private final boolean enableEIP3540;
+
   /**
    * Instantiates a new Ext code copy operation.
    *
    * @param gasCalculator the gas calculator
    */
   public ExtCodeCopyOperation(final GasCalculator gasCalculator) {
+    this(gasCalculator, false);
+  }
+
+  /**
+   * Instantiates a new Ext code copy operation.
+   *
+   * @param gasCalculator the gas calculator
+   * @param enableEIP3540 enable EIP-3540 semantics (don't copy EOF)
+   */
+  public ExtCodeCopyOperation(final GasCalculator gasCalculator, final boolean enableEIP3540) {
     super(0x3C, "EXTCODECOPY", 4, 0, gasCalculator);
+    this.enableEIP3540 = enableEIP3540;
   }
 
   /**
@@ -49,8 +64,8 @@ public class ExtCodeCopyOperation extends AbstractOperation {
    * @param address to use
    * @param memOffset the mem offset
    * @param sourceOffset the code offset
-   * @param codeSize the size of the code <<<<<<< HEAD
-   * @param accountIsWarm the account is warm =======
+   * @param readSize The length of the code being copied into memory
+   * @param codeSize The size of the code to copy
    * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
    * @return the long
    */
@@ -74,10 +89,20 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     final long sourceOffset = clampedToLong(frame.popStackItem());
     final long readSize = clampedToLong(frame.popStackItem());
 
-    final boolean isPrecompiled = gasCalculator().isPrecompile(address);
-    final boolean accountIsWarm = frame.warmUpAddress(address) || isPrecompiled;
+    final boolean accountIsWarm =
+        frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
 
     final Account account = frame.getWorldUpdater().get(address);
+
+    if (account != null) {
+      final DelegatedCodeGasCostHelper.Result result =
+          deductDelegatedCodeGasCost(frame, gasCalculator(), account);
+      if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
+        return new Operation.OperationResult(
+            result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
+      }
+    }
+
     // TODO get account and get code before cost checking only for verkle ? maybe move this call
     final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
@@ -87,7 +112,10 @@ public class ExtCodeCopyOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
+    if (enableEIP3540
+        && code.size() >= 2
+        && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
+        && code.get(1) == 0) {
       frame.writeMemory(memOffset, sourceOffset, readSize, EOF_REPLACEMENT_CODE);
     } else {
       frame.writeMemory(memOffset, sourceOffset, readSize, code);

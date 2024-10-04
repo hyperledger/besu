@@ -22,8 +22,8 @@ import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 
-import java.util.Optional;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -42,17 +42,17 @@ public class BesuCommandModule {
 
   @Provides
   @Singleton
-  BesuCommand provideBesuCommand(final BesuComponent besuComponent) {
+  BesuCommand provideBesuCommand(final @Named("besuCommandLogger") Logger commandLogger) {
     final BesuCommand besuCommand =
         new BesuCommand(
-            besuComponent,
             RlpBlockImporter::new,
             JsonBlockImporter::new,
             RlpBlockExporter::new,
             new RunnerBuilder(),
             new BesuController.Builder(),
-            Optional.ofNullable(besuComponent.getBesuPluginContext()).orElse(null),
-            System.getenv());
+            new BesuPluginContextImpl(),
+            System.getenv(),
+            commandLogger);
     besuCommand.toCommandLine();
     return besuCommand;
   }
@@ -68,5 +68,11 @@ public class BesuCommandModule {
   @Singleton
   Logger provideBesuCommandLogger() {
     return Besu.getFirstLogger();
+  }
+
+  @Provides
+  @Singleton
+  BesuPluginContextImpl provideBesuPluginContextImpl(final BesuCommand provideFrom) {
+    return provideFrom.getBesuPluginContext();
   }
 }

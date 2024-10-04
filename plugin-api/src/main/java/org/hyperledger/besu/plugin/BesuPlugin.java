@@ -105,6 +105,6 @@ public interface BesuPlugin {
         Optional.ofNullable(pluginPackage.getImplementationVersion())
             .filter(version -> !version.isBlank())
             .orElse("<Unknown Version>");
-    return implTitle + "/v" + implVersion;
+    return implTitle + "/" + implVersion;
   }
 }

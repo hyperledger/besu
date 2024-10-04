@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValu
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -43,6 +44,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -99,7 +101,8 @@ public class FastWorldDownloadStateTest {
             pendingRequests,
             MAX_REQUESTS_WITHOUT_PROGRESS,
             MIN_MILLIS_BEFORE_STALLING,
-            clock);
+            clock,
+            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
     assertThat(downloadState.isDownloading()).isTrue();
     downloadState.setRootNodeData(ROOT_NODE_DATA);
     future = downloadState.getDownloadFuture();
@@ -264,5 +267,12 @@ public class FastWorldDownloadStateTest {
     assertThatThrownBy(future::get)
         .isInstanceOf(ExecutionException.class)
         .hasRootCauseInstanceOf(StalledDownloadException.class);
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

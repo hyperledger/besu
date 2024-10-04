@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 

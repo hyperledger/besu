@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.nio.file.Path;
@@ -46,6 +46,7 @@ public class BesuNodeConfiguration {
   private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
+  private final InProcessRpcConfiguration inProcessRpcConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private final Optional<PermissioningConfiguration> permissioningConfiguration;
   private final ApiConfiguration apiConfiguration;
@@ -63,6 +64,7 @@ public class BesuNodeConfiguration {
   private final boolean secp256k1Native;
   private final boolean altbn128Native;
   private final List<String> plugins;
+  private final List<String> requestedPlugins;
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
   private final boolean isDnsEnabled;
@@ -70,7 +72,6 @@ public class BesuNodeConfiguration {
   private final List<String> runCommand;
   private final NetworkName network;
   private final Optional<KeyPair> keyPair;
-  private final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration;
   private final boolean strictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
 
@@ -83,6 +84,7 @@ public class BesuNodeConfiguration {
       final Optional<JsonRpcConfiguration> engineRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
+      final InProcessRpcConfiguration inProcessRpcConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final ApiConfiguration apiConfiguration,
@@ -101,13 +103,13 @@ public class BesuNodeConfiguration {
       final boolean secp256k1Native,
       final boolean altbn128Native,
       final List<String> plugins,
+      final List<String> requestedPlugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
       final boolean isDnsEnabled,
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
-      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
       final boolean strictTxReplayProtectionEnabled,
       final Map<String, String> environment) {
     this.name = name;
@@ -117,6 +119,7 @@ public class BesuNodeConfiguration {
     this.engineRpcConfiguration = engineRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
+    this.inProcessRpcConfiguration = inProcessRpcConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
     this.apiConfiguration = apiConfiguration;
@@ -136,13 +139,13 @@ public class BesuNodeConfiguration {
     this.secp256k1Native = secp256k1Native;
     this.altbn128Native = altbn128Native;
     this.plugins = plugins;
+    this.requestedPlugins = requestedPlugins;
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
     this.privacyParameters = privacyParameters;
     this.runCommand = runCommand;
     this.keyPair = keyPair;
-    this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
     this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
     this.environment = environment;
   }
@@ -173,6 +176,10 @@ public class BesuNodeConfiguration {
 
   public JsonRpcIpcConfiguration getJsonRpcIpcConfiguration() {
     return jsonRpcIpcConfiguration;
+  }
+
+  public InProcessRpcConfiguration getInProcessRpcConfiguration() {
+    return inProcessRpcConfiguration;
   }
 
   public MetricsConfiguration getMetricsConfiguration() {
@@ -235,6 +242,10 @@ public class BesuNodeConfiguration {
     return plugins;
   }
 
+  public List<String> getRequestedPlugins() {
+    return requestedPlugins;
+  }
+
   public List<String> getExtraCLIOptions() {
     return extraCLIOptions;
   }
@@ -273,10 +284,6 @@ public class BesuNodeConfiguration {
 
   public Optional<KeyPair> getKeyPair() {
     return keyPair;
-  }
-
-  public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
-    return pkiKeyStoreConfiguration;
   }
 
   public boolean isStrictTxReplayProtectionEnabled() {

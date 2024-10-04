@@ -27,8 +27,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
@@ -57,9 +59,16 @@ public record EOFLayout(
     String invalidReason,
     AtomicReference<EOFContainerMode> containerMode) {
 
-  enum EOFContainerMode {
+  /**
+   * Enum tracking the useage mode of an EOF container. Detected either by opcode usage or
+   * determined by the source.
+   */
+  public enum EOFContainerMode {
+    /** Usage mode is unknown */
     UNKNOWN,
+    /** Usage mode is as init code */
     INITCODE,
+    /** Usage mode is as deployed or runtime code */
     RUNTIME
   }
 
@@ -104,7 +113,14 @@ public record EOFLayout(
 
   private EOFLayout(final Bytes container, final int version, final String invalidReason) {
     this(
-        container, version, null, null, 0, Bytes.EMPTY, invalidReason, new AtomicReference<>(null));
+        container,
+        version,
+        new CodeSection[0],
+        new EOFLayout[0],
+        0,
+        Bytes.EMPTY,
+        invalidReason,
+        new AtomicReference<>(null));
   }
 
   private static EOFLayout invalidLayout(
@@ -115,10 +131,10 @@ public record EOFLayout(
   private static String readKind(final ByteArrayInputStream inputStream, final int expectedKind) {
     int kind = inputStream.read();
     if (kind == -1) {
-      return "Improper section headers";
+      return "missing_headers_terminator Improper section headers";
     }
     if (kind != expectedKind) {
-      return "Expected kind " + expectedKind + " but read kind " + kind;
+      return "unexpected_header_kind expected " + expectedKind + " actual " + kind;
     }
     return null;
   }
@@ -140,6 +156,33 @@ public record EOFLayout(
     return parseEOF(container, true);
   }
 
+  private record EOFParseStep(
+      Bytes container,
+      boolean strictSize,
+      int index,
+      EOFParseStep parent,
+      EOFLayout[] parentSubcontainers) {
+    String subcontainerIndex() {
+      if (index < 0) {
+        return "";
+      }
+      StringBuilder version = new StringBuilder();
+      EOFParseStep current = this;
+      while (current != null) {
+        var prev = current.parent;
+        if (prev == null) {
+          version.insert(0, index);
+          break;
+        } else {
+          version.insert(0, '.');
+          version.insert(1, current.index);
+        }
+        current = prev;
+      }
+      return version.toString();
+    }
+  }
+
   /**
    * Parse EOF.
    *
@@ -148,61 +191,106 @@ public record EOFLayout(
    *     strict and excess data is in the container
    * @return the eof layout
    */
+  @SuppressWarnings("ReferenceEquality")
   public static EOFLayout parseEOF(final Bytes container, final boolean strictSize) {
-    final ByteArrayInputStream inputStream = new ByteArrayInputStream(container.toArrayUnsafe());
+    Queue<EOFParseStep> parseQueue = new ArrayDeque<>();
+    parseQueue.add(new EOFParseStep(container, strictSize, -1, null, null));
+    EOFLayout result = null;
+    while (true) {
+      EOFParseStep step = parseQueue.remove();
+      var parsedContainer = parseEOF(step, parseQueue);
+      if (result == null) {
+        result = parsedContainer;
+      }
+
+      if (!parsedContainer.isValid()) {
+        return invalidLayout(
+            container,
+            result.version,
+            step.index == -1
+                ? parsedContainer.invalidReason
+                : "Invalid subcontainer "
+                    + step.subcontainerIndex()
+                    + " - "
+                    + parsedContainer.invalidReason);
+      }
+      // This ReferenceEquality check is correct
+      if ((strictSize || result != parsedContainer)
+          && step.container.size() != parsedContainer.container.size()) {
+        return invalidLayout(
+            container,
+            parsedContainer.version,
+            "invalid_section_bodies_size subcontainer size mismatch");
+      }
+      if (step.index >= 0) {
+        step.parentSubcontainers[step.index] = parsedContainer;
+      }
+      if (parseQueue.isEmpty()) {
+        return result;
+      }
+    }
+  }
+
+  private static EOFLayout parseEOF(final EOFParseStep step, final Queue<EOFParseStep> queue) {
+    final ByteArrayInputStream inputStream =
+        new ByteArrayInputStream(step.container.toArrayUnsafe());
 
     if (inputStream.available() < 3) {
-      return invalidLayout(container, -1, "EOF Container too small");
+      return invalidLayout(step.container, -1, "invalid_magic EOF Container too small");
     }
     if (inputStream.read() != 0xEF) {
-      return invalidLayout(container, -1, "EOF header byte 0 incorrect");
+      return invalidLayout(step.container, -1, "invalid_magic EOF header byte 0 incorrect");
     }
     if (inputStream.read() != 0x0) {
-      return invalidLayout(container, -1, "EOF header byte 1 incorrect");
+      return invalidLayout(step.container, -1, "invalid_magic EOF header byte 1 incorrect");
     }
 
     final int version = inputStream.read();
     if (version > MAX_SUPPORTED_VERSION || version < 1) {
-      return invalidLayout(container, version, "Unsupported EOF Version " + version);
+      return invalidLayout(step.container, version, "invalid_version " + version);
     }
 
     String error = readKind(inputStream, SECTION_TYPES);
     if (error != null) {
-      return invalidLayout(container, version, error);
+      return invalidLayout(step.container, version, error);
     }
     int typesLength = readUnsignedShort(inputStream);
-    if (typesLength <= 0 || typesLength % 4 != 0) {
-      return invalidLayout(container, version, "Invalid Types section size");
+    if (typesLength % 4 != 0) {
+      return invalidLayout(
+          step.container,
+          version,
+          "invalid_type_section_size Invalid Types section size (mod 4 != 0)");
     }
 
     error = readKind(inputStream, SECTION_CODE);
     if (error != null) {
-      return invalidLayout(container, version, error);
+      return invalidLayout(step.container, version, error);
     }
     int codeSectionCount = readUnsignedShort(inputStream);
     if (codeSectionCount <= 0) {
-      return invalidLayout(container, version, "Invalid Code section count");
-    }
-    if (codeSectionCount * 4 != typesLength) {
       return invalidLayout(
-          container,
-          version,
-          "Type section length incompatible with code section count - 0x"
-              + Integer.toHexString(codeSectionCount)
-              + " * 4 != 0x"
-              + Integer.toHexString(typesLength));
+          step.container, version, "incomplete_section_number Too few code sections");
     }
     if (codeSectionCount > 1024) {
       return invalidLayout(
-          container,
+          step.container,
           version,
-          "Too many code sections - 0x" + Integer.toHexString(codeSectionCount));
+          "too_many_code_sections - 0x" + Integer.toHexString(codeSectionCount));
+    }
+    if (codeSectionCount * 4 != typesLength) {
+      return invalidLayout(
+          step.container,
+          version,
+          "invalid_section_bodies_size Type section - 0x"
+              + Integer.toHexString(codeSectionCount)
+              + " * 4 != 0x"
+              + Integer.toHexString(typesLength));
     }
     int[] codeSectionSizes = new int[codeSectionCount];
     for (int i = 0; i < codeSectionCount; i++) {
       int size = readUnsignedShort(inputStream);
       if (size <= 0) {
-        return invalidLayout(container, version, "Invalid Code section size for section " + i);
+        return invalidLayout(step.container, version, "zero_section_size code " + i);
       }
       codeSectionSizes[i] = size;
     }
@@ -212,24 +300,24 @@ public record EOFLayout(
     if (peekKind(inputStream) == SECTION_CONTAINER) {
       error = readKind(inputStream, SECTION_CONTAINER);
       if (error != null) {
-        return invalidLayout(container, version, error);
+        return invalidLayout(step.container, version, error);
       }
       containerSectionCount = readUnsignedShort(inputStream);
       if (containerSectionCount <= 0) {
-        return invalidLayout(container, version, "Invalid container section count");
+        return invalidLayout(step.container, version, "Invalid container section count");
       }
       if (containerSectionCount > 256) {
         return invalidLayout(
-            container,
+            step.container,
             version,
-            "Too many container sections - 0x" + Integer.toHexString(containerSectionCount));
+            "too_many_containers sections - 0x" + Integer.toHexString(containerSectionCount));
       }
       containerSectionSizes = new int[containerSectionCount];
       for (int i = 0; i < containerSectionCount; i++) {
         int size = readUnsignedShort(inputStream);
         if (size <= 0) {
           return invalidLayout(
-              container, version, "Invalid container section size for section " + i);
+              step.container, version, "Invalid container section size for section " + i);
         }
         containerSectionSizes[i] = size;
       }
@@ -240,16 +328,16 @@ public record EOFLayout(
 
     error = readKind(inputStream, SECTION_DATA);
     if (error != null) {
-      return invalidLayout(container, version, error);
+      return invalidLayout(step.container, version, error);
     }
     int dataSize = readUnsignedShort(inputStream);
     if (dataSize < 0) {
-      return invalidLayout(container, version, "Invalid Data section size");
+      return invalidLayout(step.container, version, "incomplete_data_header");
     }
 
     error = readKind(inputStream, SECTION_TERMINATOR);
     if (error != null) {
-      return invalidLayout(container, version, error);
+      return invalidLayout(step.container, version, error);
     }
     int[][] typeData = new int[codeSectionCount][3];
     for (int i = 0; i < codeSectionCount; i++) {
@@ -259,11 +347,12 @@ public record EOFLayout(
       typeData[i][2] = readUnsignedShort(inputStream);
     }
     if (typeData[codeSectionCount - 1][2] == -1) {
-      return invalidLayout(container, version, "Incomplete type section");
+      return invalidLayout(
+          step.container, version, "invalid_section_bodies_size Incomplete type section");
     }
     if (typeData[0][0] != 0 || (typeData[0][1] & 0x7f) != 0) {
       return invalidLayout(
-          container, version, "Code section does not have zero inputs and outputs");
+          step.container, version, "invalid_first_section_type must be zero input non-returning");
     }
     CodeSection[] codeSections = new CodeSection[codeSectionCount];
     int pos = // calculate pos in stream...
@@ -283,75 +372,70 @@ public record EOFLayout(
     for (int i = 0; i < codeSectionCount; i++) {
       int codeSectionSize = codeSectionSizes[i];
       if (inputStream.skip(codeSectionSize) != codeSectionSize) {
-        return invalidLayout(container, version, "Incomplete code section " + i);
+        return invalidLayout(
+            step.container, version, "invalid_section_bodies_size code section " + i);
       }
       if (typeData[i][0] > 0x7f) {
         return invalidLayout(
-            container,
+            step.container,
             version,
-            "Type data input stack too large - 0x" + Integer.toHexString(typeData[i][0]));
+            "inputs_outputs_num_above_limit Type data input stack too large - 0x"
+                + Integer.toHexString(typeData[i][0]));
       }
       if (typeData[i][1] > 0x80) {
         return invalidLayout(
-            container,
+            step.container,
             version,
-            "Type data output stack too large - 0x" + Integer.toHexString(typeData[i][1]));
+            "inputs_outputs_num_above_limit - 0x" + Integer.toHexString(typeData[i][1]));
       }
       if (typeData[i][2] > 0x3ff) {
         return invalidLayout(
-            container,
+            step.container,
             version,
-            "Type data max stack too large - 0x" + Integer.toHexString(typeData[i][2]));
+            "max_stack_height_above_limit Type data max stack too large - 0x"
+                + Integer.toHexString(typeData[i][2]));
       }
       codeSections[i] =
           new CodeSection(codeSectionSize, typeData[i][0], typeData[i][1], typeData[i][2], pos);
       if (i == 0 && typeData[0][1] != 0x80) {
         return invalidLayout(
-            container,
+            step.container,
             version,
-            "Code section at zero expected non-returning flag, but had return stack of "
-                + typeData[0][1]);
+            "invalid_first_section_type want 0x80 (non-returning flag) has " + typeData[0][1]);
       }
       pos += codeSectionSize;
     }
 
     EOFLayout[] subContainers = new EOFLayout[containerSectionCount];
     for (int i = 0; i < containerSectionCount; i++) {
-      int subcontianerSize = containerSectionSizes[i];
-      if (subcontianerSize != inputStream.skip(subcontianerSize)) {
-        return invalidLayout(container, version, "incomplete subcontainer");
+      int subcontainerSize = containerSectionSizes[i];
+      if (subcontainerSize != inputStream.skip(subcontainerSize)) {
+        return invalidLayout(step.container, version, "invalid_section_bodies_size");
       }
-      Bytes subcontainer = container.slice(pos, subcontianerSize);
-      pos += subcontianerSize;
-      EOFLayout subLayout = EOFLayout.parseEOF(subcontainer, false);
-      if (!subLayout.isValid()) {
-        String invalidSubReason = subLayout.invalidReason;
-        return invalidLayout(
-            container,
-            version,
-            invalidSubReason.contains("invalid subcontainer")
-                ? invalidSubReason
-                : "invalid subcontainer - " + invalidSubReason);
-      }
-      subContainers[i] = subLayout;
+      Bytes subcontainer = step.container.slice(pos, subcontainerSize);
+      pos += subcontainerSize;
+      queue.add(new EOFParseStep(subcontainer, false, i, step, subContainers));
     }
 
     long loadedDataCount = inputStream.skip(dataSize);
-    Bytes data = container.slice(pos, (int) loadedDataCount);
+    Bytes data = step.container.slice(pos, (int) loadedDataCount);
 
     Bytes completeContainer;
     if (inputStream.read() != -1) {
-      if (strictSize) {
-        return invalidLayout(container, version, "Dangling data after end of all sections");
+      if (step.strictSize) {
+        return invalidLayout(
+            step.container, version, "invalid_section_bodies_size data after end of all sections");
       } else {
-        completeContainer = container.slice(0, pos + dataSize);
+        completeContainer = step.container.slice(0, pos + dataSize);
       }
     } else {
-      completeContainer = container;
+      completeContainer = step.container;
     }
-    if (strictSize && dataSize != data.size()) {
+    if (step.strictSize && dataSize != data.size()) {
       return invalidLayout(
-          container, version, "Truncated data section when a complete section was required");
+          step.container,
+          version,
+          "toplevel_container_truncated Truncated data section when a complete section was required");
     }
 
     return new EOFLayout(completeContainer, version, codeSections, subContainers, dataSize, data);
@@ -656,35 +740,59 @@ public record EOFLayout(
         OpcodeInfo ci = V1_OPCODES[byteCode[pc] & 0xff];
 
         if (ci.opcode() == RelativeJumpVectorOperation.OPCODE) {
-          int tableSize = byteCode[pc + 1] & 0xff;
-          out.printf("%02x%02x", byteCode[pc], byteCode[pc + 1]);
-          for (int j = 0; j <= tableSize; j++) {
-            out.printf("%02x%02x", byteCode[pc + j * 2 + 2], byteCode[pc + j * 2 + 3]);
-          }
-          out.printf(" # [%d] %s(", pc, ci.name());
-          for (int j = 0; j <= tableSize; j++) {
-            if (j != 0) {
-              out.print(',');
+          if (byteCode.length <= pc + 1) {
+            out.printf(
+                "    %02x # [%d] %s(<truncated instruction>)%n", byteCode[pc], pc, ci.name());
+            pc++;
+          } else {
+            int tableSize = byteCode[pc + 1] & 0xff;
+            out.printf("%02x%02x", byteCode[pc], byteCode[pc + 1]);
+            int calculatedTableEnd = pc + tableSize * 2 + 4;
+            int lastTableEntry = Math.min(byteCode.length, calculatedTableEnd);
+            for (int j = pc + 2; j < lastTableEntry; j++) {
+              out.printf("%02x", byteCode[j]);
             }
-            int b0 = byteCode[pc + j * 2 + 2]; // we want the sign extension, so no `& 0xff`
-            int b1 = byteCode[pc + j * 2 + 3] & 0xff;
-            out.print(b0 << 8 | b1);
+            out.printf(" # [%d] %s(", pc, ci.name());
+            for (int j = pc + 3; j < lastTableEntry; j += 2) {
+              // j indexes to the second byte of the word, to handle mid-word truncation
+              if (j != pc + 3) {
+                out.print(',');
+              }
+              int b0 = byteCode[j - 1]; // we want the sign extension, so no `& 0xff`
+              int b1 = byteCode[j] & 0xff;
+              out.print(b0 << 8 | b1);
+            }
+            if (byteCode.length < calculatedTableEnd) {
+              out.print("<truncated immediate>");
+            }
+            pc += tableSize * 2 + 4;
+            out.print(")\n");
           }
-          pc += tableSize * 2 + 4;
-          out.print(")\n");
         } else if (ci.opcode() == RelativeJumpOperation.OPCODE
             || ci.opcode() == RelativeJumpIfOperation.OPCODE) {
-          int b0 = byteCode[pc + 1] & 0xff;
-          int b1 = byteCode[pc + 2] & 0xff;
-          short delta = (short) (b0 << 8 | b1);
-          out.printf("%02x%02x%02x # [%d] %s(%d)", byteCode[pc], b0, b1, pc, ci.name(), delta);
+          if (pc + 1 >= byteCode.length) {
+            out.printf("    %02x # [%d] %s(<truncated immediate>)", byteCode[pc], pc, ci.name());
+          } else if (pc + 2 >= byteCode.length) {
+            out.printf(
+                "  %02x%02x # [%d] %s(<truncated immediate>)",
+                byteCode[pc], byteCode[pc + 1], pc, ci.name());
+          } else {
+            int b0 = byteCode[pc + 1] & 0xff;
+            int b1 = byteCode[pc + 2] & 0xff;
+            short delta = (short) (b0 << 8 | b1);
+            out.printf("%02x%02x%02x # [%d] %s(%d)", byteCode[pc], b0, b1, pc, ci.name(), delta);
+          }
           pc += 3;
           out.printf("%n");
         } else if (ci.opcode() == ExchangeOperation.OPCODE) {
-          int imm = byteCode[pc + 1] & 0xff;
-          out.printf(
-              "  %02x%02x # [%d] %s(%d, %d)",
-              byteCode[pc], imm, pc, ci.name(), imm >> 4, imm & 0x0F);
+          if (pc + 1 >= byteCode.length) {
+            out.printf("    %02x # [%d] %s(<truncated immediate>)", byteCode[pc], pc, ci.name());
+          } else {
+            int imm = byteCode[pc + 1] & 0xff;
+            out.printf(
+                "  %02x%02x # [%d] %s(%d, %d)",
+                byteCode[pc], imm, pc, ci.name(), imm >> 4, imm & 0x0F);
+          }
           pc += 2;
           out.printf("%n");
         } else {
@@ -695,16 +803,23 @@ public record EOFLayout(
             out.print("  ");
           }
           out.printf("%02x", byteCode[pc]);
-          for (int j = 1; j < advance; j++) {
+          for (int j = 1; j < advance && (pc + j) < byteCode.length; j++) {
             out.printf("%02x", byteCode[pc + j]);
           }
           out.printf(" # [%d] %s", pc, ci.name());
           if (advance == 2) {
-            out.printf("(%d)", byteCode[pc + 1] & 0xff);
+            if (byteCode.length <= pc + 1) {
+              out.print("(<truncated immediate>)");
+            } else {
+              out.printf("(%d)", byteCode[pc + 1] & 0xff);
+            }
           } else if (advance > 2) {
             out.print("(0x");
-            for (int j = 1; j < advance; j++) {
+            for (int j = 1; j < advance && (pc + j) < byteCode.length; j++) {
               out.printf("%02x", byteCode[pc + j]);
+            }
+            if ((pc + advance) >= byteCode.length) {
+              out.print(" <truncated immediate>");
             }
             out.print(")");
           }

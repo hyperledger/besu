@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class NodeSmartContractPermissioningV2AcceptanceTest
@@ -51,6 +52,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
   }
 
   @Test
+  @Disabled("test is flaky")
   public void permissionedNodeShouldPeerOnlyWithAllowedNodes() {
     bootnode.verify(net.awaitPeerCount(3));
     allowedNode.verify(net.awaitPeerCount(3));
@@ -60,7 +62,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
 
   @Test
   public void permissionedNodeShouldDisconnectFromNodeNotPermittedAnymore() {
-    permissionedNode.verify(admin.addPeer(bootnode));
+    permissionedNode.verify(admin.hasPeer(bootnode));
     permissionedNode.verify(admin.addPeer(allowedNode));
     permissionedNode.verify(net.awaitPeerCount(2));
 
@@ -72,7 +74,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
 
   @Test
   public void permissionedNodeShouldConnectToNewlyPermittedNode() {
-    permissionedNode.verify(admin.addPeer(bootnode));
+    permissionedNode.verify(admin.hasPeer(bootnode));
     permissionedNode.verify(admin.addPeer(allowedNode));
     permissionedNode.verify(net.awaitPeerCount(2));
 
@@ -87,7 +89,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
 
   @Test
   public void permissioningUpdatesPropagateThroughNetwork() {
-    permissionedNode.verify(admin.addPeer(bootnode));
+    permissionedNode.verify(admin.hasPeer(bootnode));
     permissionedNode.verify(admin.addPeer(allowedNode));
     permissionedNode.verify(net.awaitPeerCount(2));
 

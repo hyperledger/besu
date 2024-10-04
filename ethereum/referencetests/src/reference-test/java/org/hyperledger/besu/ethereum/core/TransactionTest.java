@@ -50,11 +50,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class TransactionTest {
 
-  private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES =
-      ReferenceTestProtocolSchedules.create();
-
   private static TransactionValidator transactionValidator(final String name) {
-    return REFERENCE_TEST_PROTOCOL_SCHEDULES
+    return ReferenceTestProtocolSchedules.getInstance()
         .getByName(name)
         .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader())
         .getTransactionValidatorFactory()

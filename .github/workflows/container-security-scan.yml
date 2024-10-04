@@ -8,7 +8,7 @@ on:
         required: false
         default: 'develop'      
   schedule:
-    # Start of the hour is the busy time. Scheule it to run 8:17am UTC
+    # Start of the hour is the busy time. Schedule it to run 8:17am UTC
     - cron:  '17 8 * * *'
 
 jobs:

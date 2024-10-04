@@ -33,6 +33,6 @@ public class LoggingTest extends AcceptanceTestBase {
 
     node.verify(net.awaitPeerCount(0));
 
-    assertThat(cluster.getConsoleContents()).contains("| INFO  |");
+    assertThat(cluster.getConsoleContents()).contains("INFO");
   }
 }

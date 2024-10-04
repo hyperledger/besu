@@ -152,7 +152,8 @@ public class AdminLogsRemoveCacheTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_logsRemoveCache", new String[] {"0x20", "0x1"}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
 
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.of(block));

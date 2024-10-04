@@ -24,9 +24,24 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 
+/**
+ * This class, ProtocolModule, is a Dagger module that provides dependencies for the ProtocolSpec
+ * and EVM. It includes the GenesisFileModule, which provides the genesis configuration for the
+ * blockchain.
+ *
+ * <p>The class uses Dagger annotations to define these dependencies, which can be provided via the
+ * command line when running the EVM tool. Each dependency has a corresponding provider method that
+ * Dagger uses to inject the dependency's value where needed.
+ */
 @SuppressWarnings("WeakerAccess")
 @Module(includes = GenesisFileModule.class)
 public class ProtocolModule {
+
+  /**
+   * Default constructor for the ProtocolModule class. This constructor doesn't take any arguments
+   * and doesn't perform any initialization.
+   */
+  public ProtocolModule() {}
 
   @Provides
   @Singleton

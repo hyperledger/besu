@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.IOException;
 import java.net.URI;
@@ -56,6 +57,8 @@ public interface MergeGenesisConfigHelper {
         getPosGenesisConfigFile().getConfigOptions(),
         false,
         MiningParameters.MINING_DISABLED,
-        new BadBlockManager());
+        new BadBlockManager(),
+        false,
+        new NoOpMetricsSystem());
   }
 }

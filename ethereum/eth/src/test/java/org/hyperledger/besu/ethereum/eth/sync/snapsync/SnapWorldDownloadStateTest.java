@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValu
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -62,6 +63,7 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -136,7 +138,8 @@ public class SnapWorldDownloadStateTest {
             MIN_MILLIS_BEFORE_STALLING,
             metricsManager,
             clock,
-            ethContext);
+            ethContext,
+            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
     final DynamicPivotBlockSelector dynamicPivotBlockManager =
         mock(DynamicPivotBlockSelector.class);
     doAnswer(
@@ -492,5 +495,12 @@ public class SnapWorldDownloadStateTest {
     assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
         .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

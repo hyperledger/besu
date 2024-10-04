@@ -14,8 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.response;
 
+/**
+ * This class represents a GraphQL response with no content.
+ *
+ * <p>It extends the GraphQLResponse class and overrides the getType method to return
+ * GraphQLResponseType.NONE.
+ */
 public class GraphQLNoResponse extends GraphQLResponse {
 
+  /**
+   * Default constructor for GraphQLNoResponse.
+   *
+   * <p>It calls the parent constructor with null as the argument, indicating no content for this
+   * response.
+   */
   public GraphQLNoResponse() {
     super(null);
   }

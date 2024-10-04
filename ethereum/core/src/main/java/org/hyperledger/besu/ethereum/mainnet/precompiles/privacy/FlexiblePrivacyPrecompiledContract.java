@@ -70,13 +70,15 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver,
-      final PrivateStateGenesisAllocator privateStateGenesisAllocator) {
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator,
+      final boolean alwaysIncrementPrivateNonce) {
     super(
         gasCalculator,
         enclave,
         worldStateArchive,
         privateStateRootResolver,
         privateStateGenesisAllocator,
+        alwaysIncrementPrivateNonce,
         "FlexiblePrivacy");
   }
 
@@ -87,7 +89,8 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
-        privacyParameters.getPrivateStateGenesisAllocator());
+        privacyParameters.getPrivateStateGenesisAllocator(),
+        privacyParameters.isPrivateNonceAlwaysIncrementsEnabled());
   }
 
   public long addPrivateTransactionObserver(final PrivateTransactionObserver observer) {

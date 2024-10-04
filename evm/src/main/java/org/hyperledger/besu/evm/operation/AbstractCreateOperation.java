@@ -45,9 +45,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected static final OperationResult INVALID_OPERATION =
       new OperationResult(0L, ExceptionalHaltReason.INVALID_OPERATION);
 
-  /** The maximum init code size */
-  protected final int maxInitcodeSize;
-
   /** The EOF Version this create operation requires initcode to be in */
   protected final int eofVersion;
 
@@ -59,7 +56,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param stackItemsConsumed the stack items consumed
    * @param stackItemsProduced the stack items produced
    * @param gasCalculator the gas calculator
-   * @param maxInitcodeSize Maximum init code size
    * @param eofVersion the EOF version this create operation is valid in
    */
   protected AbstractCreateOperation(
@@ -68,10 +64,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       final int stackItemsConsumed,
       final int stackItemsProduced,
       final GasCalculator gasCalculator,
-      final int maxInitcodeSize,
       final int eofVersion) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator);
-    this.maxInitcodeSize = maxInitcodeSize;
     this.eofVersion = eofVersion;
   }
 
@@ -103,7 +97,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     Code code = codeSupplier.get();
 
-    if (code != null && code.getSize() > maxInitcodeSize) {
+    if (code != null && code.getSize() > evm.getMaxInitcodeSize()) {
       frame.popStackItems(getStackItemsConsumed());
       return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
     }
@@ -120,11 +114,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       if (!code.isValid()) {
         fail(frame);
       } else {
-        final Wei contractValue = Wei.wrap(frame.getStackItem(0));
-        final Address contractAddress = targetContractAddress(frame, code);
-        frame.decrementRemainingGas(statelessCost(frame, contractAddress, contractValue));
         frame.decrementRemainingGas(cost);
-        spawnChildMessage(frame, contractAddress, contractValue, code, evm);
+        spawnChildMessage(frame, code, evm);
         frame.incrementRemainingGas(cost);
       }
     }
@@ -160,7 +151,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param initcode the initcode for the new contract.
    * @return the address
    */
-  protected abstract Address targetContractAddress(MessageFrame frame, Code initcode);
+  protected abstract Address generateTargetContractAddress(MessageFrame frame, Code initcode);
 
   /**
    * Gets the initcode that will be run.
@@ -179,12 +170,10 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
   }
 
-  private void spawnChildMessage(
-      final MessageFrame parent,
-      final Address contractAddress,
-      final Wei contractValue,
-      final Code code,
-      final EVM evm) {
+  private void spawnChildMessage(final MessageFrame parent, final Code code, final EVM evm) {
+    final Wei value = Wei.wrap(parent.getStackItem(0));
+
+    final Address contractAddress = generateTargetContractAddress(parent, code);
     final Bytes inputData = getInputData(parent);
 
     final long childGasStipend =
@@ -200,8 +189,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         .contract(contractAddress)
         .inputData(inputData)
         .sender(parent.getRecipientAddress())
-        .value(contractValue)
-        .apparentValue(contractValue)
+        .value(value)
+        .apparentValue(value)
         .code(code)
         .accessWitness(parent.getAccessWitness())
         .completer(child -> complete(parent, child, evm))
@@ -224,32 +213,32 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   private void complete(final MessageFrame frame, final MessageFrame childFrame, final EVM evm) {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
-    Code outputCode =
-        (childFrame.getCreatedCode() != null)
-            ? childFrame.getCreatedCode()
-            : evm.getCodeForCreation(childFrame.getOutputData());
+    frame.incrementRemainingGas(childFrame.getRemainingGas());
+    frame.addLogs(childFrame.getLogs());
+    frame.addSelfDestructs(childFrame.getSelfDestructs());
+    frame.addCreates(childFrame.getCreates());
     frame.popStackItems(getStackItemsConsumed());
 
-    if (outputCode.isValid()) {
-      frame.incrementRemainingGas(childFrame.getRemainingGas());
-      frame.addLogs(childFrame.getLogs());
-      frame.addSelfDestructs(childFrame.getSelfDestructs());
-      frame.addCreates(childFrame.getCreates());
-
-      if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+    if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+      Code outputCode =
+          (childFrame.getCreatedCode() != null)
+              ? childFrame.getCreatedCode()
+              : evm.getCodeForCreation(childFrame.getOutputData());
+      if (outputCode.isValid()) {
         Address createdAddress = childFrame.getContractAddress();
         frame.pushStackItem(Words.fromAddress(createdAddress));
+        frame.setReturnData(Bytes.EMPTY);
         onSuccess(frame, createdAddress);
       } else {
+        frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
         frame.setReturnData(childFrame.getOutputData());
         frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
-        onFailure(frame, childFrame.getExceptionalHaltReason());
+        onInvalid(frame, (CodeInvalid) outputCode);
       }
     } else {
-      frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
       frame.setReturnData(childFrame.getOutputData());
       frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
-      onInvalid(frame, (CodeInvalid) outputCode);
+      onFailure(frame, childFrame.getExceptionalHaltReason());
     }
 
     final int currentPC = frame.getPC();

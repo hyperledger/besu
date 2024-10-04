@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+import static org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper.deductDelegatedCodeGasCost;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -190,6 +192,15 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Account contract = frame.getWorldUpdater().get(to);
 
+    if (contract != null) {
+      final DelegatedCodeGasCostHelper.Result result =
+          deductDelegatedCodeGasCost(frame, gasCalculator(), contract);
+      if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
+        return new Operation.OperationResult(
+            result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
+      }
+    }
+
     final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
     // If the call is sending more value than the account has or the message frame is to deep
@@ -197,7 +208,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     if (value(frame).compareTo(balance) > 0 || frame.getDepth() >= 1024) {
       frame.expandMemory(inputDataOffset(frame), inputDataLength(frame));
       frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
-      // For the following, we either increment the gas or return zero so weo don't get double
+      // For the following, we either increment the gas or return zero, so we don't get double
       // charged. If we return zero then the traces don't have the right per-opcode cost.
       frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
       frame.popStackItems(getStackItemsConsumed());

@@ -59,6 +59,19 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
+/**
+ * The T8nSubCommand class is responsible for executing an Ethereum State Test. It reads the initial
+ * state, transactions, and environment from input files or stdin, executes the transactions in the
+ * Ethereum Virtual Machine (EVM), and writes the final state, transaction results, and traces to
+ * output files or stdout.
+ *
+ * <p>The class uses the picocli library for command line argument parsing and includes options for
+ * specifying the input and output files, the fork to run the transition against, the chain ID, and
+ * the block reward.
+ *
+ * <p>The class also includes a TracerManager for managing OperationTracer instances, which are used
+ * to trace EVM operations when the --json flag is specified.
+ */
 @Command(
     name = COMMAND_NAME,
     aliases = COMMAND_ALIAS,
@@ -154,12 +167,22 @@ public class T8nSubCommand implements Runnable {
     }
   }
 
+  /**
+   * Default constructor for the T8nSubCommand class. This constructor is required by PicoCLI and
+   * assigns parent command to 'null'.
+   */
   @SuppressWarnings("unused")
   public T8nSubCommand() {
     // PicoCLI requires this
     parentCommand = null;
   }
 
+  /**
+   * Constructor for the T8nSubCommand class with a parent command. This constructor is required by
+   * PicoCLI.
+   *
+   * @param parentCommand The parent command for this sub command.
+   */
   @SuppressWarnings("unused")
   public T8nSubCommand(final EvmToolCommand parentCommand) {
     // PicoCLI requires this too

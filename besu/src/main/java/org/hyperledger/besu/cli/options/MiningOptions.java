@@ -59,7 +59,10 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
   @Option(
       names = {"--miner-stratum-enabled"},
-      description = "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})")
+      description =
+          "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})."
+              + " Compatible with Proof of Work (PoW) only."
+              + " Requires the network option (--network) to be set to CLASSIC.")
   private Boolean iStratumMiningEnabled = false;
 
   @Option(

@@ -147,12 +147,6 @@ public class MainnetEVMs {
   /** The constant DEV_NET_CHAIN_ID. */
   public static final BigInteger DEV_NET_CHAIN_ID = BigInteger.valueOf(1337);
 
-  /** The constant SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT. */
-  public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 0x6000;
-
-  /** The constant SHANGHAI_INIT_CODE_SIZE_LIMIT. */
-  public static final int SHANGHAI_INIT_CODE_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
-
   private MainnetEVMs() {
     // utility class
   }
@@ -240,8 +234,8 @@ public class MainnetEVMs {
     registry.put(new CodeSizeOperation(gasCalculator));
     registry.put(new CodeCopyOperation(gasCalculator));
     registry.put(new GasPriceOperation(gasCalculator));
-    registry.put(new ExtCodeCopyOperation(gasCalculator));
-    registry.put(new ExtCodeSizeOperation(gasCalculator));
+    registry.put(new ExtCodeCopyOperation(gasCalculator, false));
+    registry.put(new ExtCodeSizeOperation(gasCalculator, false));
     registry.put(new BlockHashOperation(gasCalculator));
     registry.put(new CoinbaseOperation(gasCalculator));
     registry.put(new TimestampOperation(gasCalculator));
@@ -264,7 +258,7 @@ public class MainnetEVMs {
     registry.put(new InvalidOperation(gasCalculator));
     registry.put(new StopOperation(gasCalculator));
     registry.put(new SelfDestructOperation(gasCalculator));
-    registry.put(new CreateOperation(gasCalculator, Integer.MAX_VALUE));
+    registry.put(new CreateOperation(gasCalculator));
     registry.put(new CallOperation(gasCalculator));
     registry.put(new CallCodeOperation(gasCalculator));
 
@@ -474,11 +468,11 @@ public class MainnetEVMs {
   public static void registerConstantinopleOperations(
       final OperationRegistry registry, final GasCalculator gasCalculator) {
     registerByzantiumOperations(registry, gasCalculator);
-    registry.put(new Create2Operation(gasCalculator, Integer.MAX_VALUE));
+    registry.put(new Create2Operation(gasCalculator));
     registry.put(new SarOperation(gasCalculator));
     registry.put(new ShlOperation(gasCalculator));
     registry.put(new ShrOperation(gasCalculator));
-    registry.put(new ExtCodeHashOperation(gasCalculator));
+    registry.put(new ExtCodeHashOperation(gasCalculator, false));
   }
 
   /**
@@ -809,8 +803,6 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerParisOperations(registry, gasCalculator, chainID);
     registry.put(new Push0Operation(gasCalculator));
-    registry.put(new CreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
-    registry.put(new Create2Operation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
   }
 
   /**
@@ -895,6 +887,76 @@ public class MainnetEVMs {
 
     // EIP-7516 BLOBBASEFEE
     registry.put(new BlobBaseFeeOperation(gasCalculator));
+  }
+
+  /**
+   * CancunEOF evm.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM cancunEOF(final EvmConfiguration evmConfiguration) {
+    return cancunEOF(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
+  /**
+   * CancunEOF evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM cancunEOF(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return cancunEOF(new CancunGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * CancunEOF evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM cancunEOF(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        cancunEOFOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.CANCUN_EOF);
+  }
+
+  /**
+   * Operation registry for PragueEOF's operations.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry cancunEOFOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerCancunEOFOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register CancunEOF's operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerCancunEOFOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerCancunOperations(registry, gasCalculator, chainID);
+
+    registerEOFOperations(registry, gasCalculator);
   }
 
   /**
@@ -1034,10 +1096,20 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerPragueOperations(registry, gasCalculator, chainID);
 
+    registerEOFOperations(registry, gasCalculator);
+  }
+
+  private static void registerEOFOperations(
+      final OperationRegistry registry, final GasCalculator gasCalculator) {
     // EIP-663 Unlimited Swap and Dup
     registry.put(new DupNOperation(gasCalculator));
     registry.put(new SwapNOperation(gasCalculator));
     registry.put(new ExchangeOperation(gasCalculator));
+
+    // EIP-3540 EOF Aware EXTCODE* operations
+    registry.put(new ExtCodeCopyOperation(gasCalculator, true));
+    registry.put(new ExtCodeHashOperation(gasCalculator, true));
+    registry.put(new ExtCodeSizeOperation(gasCalculator, true));
 
     // EIP-4200 relative jump
     registry.put(new RelativeJumpOperation(gasCalculator));

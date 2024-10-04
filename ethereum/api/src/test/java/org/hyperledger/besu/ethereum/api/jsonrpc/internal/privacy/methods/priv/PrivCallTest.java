@@ -75,20 +75,13 @@ public class PrivCallTest {
   @Test
   public void shouldThrowInvalidJsonRpcParametersExceptionWhenMissingToField() {
     final JsonCallParameter callParameter =
-        new JsonCallParameter(
-            Address.fromHexString("0x0"),
-            null,
-            0L,
-            Wei.ZERO,
-            null,
-            null,
-            Wei.ZERO,
-            Bytes.EMPTY,
-            null,
-            null,
-            null,
-            null,
-            null);
+        new JsonCallParameter.JsonCallParameterBuilder()
+            .withFrom(Address.fromHexString("0x0"))
+            .withGas(0L)
+            .withGasPrice(Wei.ZERO)
+            .withValue(Wei.ZERO)
+            .withInput(Bytes.EMPTY)
+            .build();
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter, "latest");
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
@@ -113,20 +106,9 @@ public class PrivCallTest {
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
     final JsonCallParameter callParameter =
-        new JsonCallParameter(
-            null,
-            Address.fromHexString("0x0"),
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null);
+        new JsonCallParameter.JsonCallParameterBuilder()
+            .withTo(Address.fromHexString("0x0"))
+            .build();
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
@@ -191,25 +173,18 @@ public class PrivCallTest {
 
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasNoCause()
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid privacy group ID parameter (index 0)");
   }
 
   private JsonCallParameter callParameter() {
-    return new JsonCallParameter(
-        Address.fromHexString("0x0"),
-        Address.fromHexString("0x0"),
-        0L,
-        Wei.ZERO,
-        null,
-        null,
-        Wei.ZERO,
-        Bytes.EMPTY,
-        null,
-        null,
-        null,
-        null,
-        null);
+    return new JsonCallParameter.JsonCallParameterBuilder()
+        .withFrom(Address.fromHexString("0x0"))
+        .withTo(Address.fromHexString("0x0"))
+        .withGas(0L)
+        .withGasPrice(Wei.ZERO)
+        .withValue(Wei.ZERO)
+        .withInput(Bytes.EMPTY)
+        .build();
   }
 
   private JsonRpcRequestContext ethCallRequest(

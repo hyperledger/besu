@@ -51,7 +51,7 @@ public class LoadLocalDataStepTest {
   private final Task<NodeDataRequest> task = new StubTask(request);
 
   private final Pipe<Task<NodeDataRequest>> completedTasks =
-      new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
+      new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER, "test_pipe");
   private final LoadLocalDataStep loadLocalDataStep =
       new LoadLocalDataStep(
           new WorldStateStorageCoordinator(worldStateKeyValueStorage), new NoOpMetricsSystem());

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import static java.util.Collections.emptyList;
 
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -74,7 +75,9 @@ public class OperationBenchmarkHelper {
             KeyValueSegmentIdentifier.BLOCKCHAIN, optimisticRocksDBColumnarKeyValueStorage);
 
     final ExecutionContextTestFixture executionContext =
-        ExecutionContextTestFixture.builder().blockchainKeyValueStorage(keyValueStorage).build();
+        ExecutionContextTestFixture.builder(GenesisConfigFile.fromResource("/genesis-jmh.json"))
+            .blockchainKeyValueStorage(keyValueStorage)
+            .build();
     final MutableBlockchain blockchain = executionContext.getBlockchain();
 
     for (int i = 1; i < 256; i++) {

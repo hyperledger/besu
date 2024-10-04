@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
@@ -51,6 +52,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
 
   private final AtomicReference<FastWorldDownloadState> downloadState = new AtomicReference<>();
+  private final SyncDurationMetrics syncDurationMetrics;
 
   private Optional<CompleteTaskStep> maybeCompleteTask = Optional.empty();
 
@@ -63,7 +65,8 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
       final int maxNodeRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SyncDurationMetrics syncDurationMetrics) {
     this.ethContext = ethContext;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.taskCollection = taskCollection;
@@ -73,6 +76,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
     this.minMillisBeforeStalling = minMillisBeforeStalling;
     this.clock = clock;
     this.metricsSystem = metricsSystem;
+    this.syncDurationMetrics = syncDurationMetrics;
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.SYNCHRONIZER,
@@ -137,7 +141,8 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
               taskCollection,
               maxNodeRequestsWithoutProgress,
               minMillisBeforeStalling,
-              clock);
+              clock,
+              syncDurationMetrics);
       this.downloadState.set(newDownloadState);
 
       if (!newDownloadState.downloadWasResumed()) {

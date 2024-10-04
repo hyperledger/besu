@@ -64,7 +64,7 @@ public class ReturnContractOperation extends AbstractOperation {
     }
 
     Bytes auxData = frame.readMemory(from, length);
-    if (code.getDataSize() + auxData.size() > evm.getEvmVersion().getMaxCodeSize()) {
+    if (code.getDataSize() + auxData.size() > evm.getMaxCodeSize()) {
       return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
     }
     if (code.getDataSize() + auxData.size() < code.getDeclaredDataSize()) {

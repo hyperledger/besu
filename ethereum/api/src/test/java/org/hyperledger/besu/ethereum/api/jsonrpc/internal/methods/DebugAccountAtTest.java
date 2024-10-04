@@ -113,7 +113,7 @@ class DebugAccountAtTest {
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     Assertions.assertThat(((JsonRpcErrorResponse) response).getErrorType())
-        .isEqualByComparingTo(RpcErrorType.INVALID_PARAMS);
+        .isEqualByComparingTo(RpcErrorType.INVALID_TRANSACTION_PARAMS);
   }
 
   @Test
@@ -129,7 +129,7 @@ class DebugAccountAtTest {
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     Assertions.assertThat(((JsonRpcErrorResponse) response).getErrorType())
-        .isEqualByComparingTo(RpcErrorType.INVALID_PARAMS);
+        .isEqualByComparingTo(RpcErrorType.INVALID_TRANSACTION_PARAMS);
   }
 
   @Test
@@ -145,7 +145,7 @@ class DebugAccountAtTest {
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     Assertions.assertThat(((JsonRpcErrorResponse) response).getErrorType())
-        .isEqualByComparingTo(RpcErrorType.INVALID_PARAMS);
+        .isEqualByComparingTo(RpcErrorType.INVALID_TRANSACTION_PARAMS);
   }
 
   @Test

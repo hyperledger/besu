@@ -29,6 +29,7 @@ nat-method="NONE"
 Xnat-kube-service-name="besu"
 Xnat-method-fallback-enabled=true
 discovery-enabled=false
+poa-discovery-retry-bootnodes=true
 bootnodes=[
   "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
   "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
@@ -172,6 +173,7 @@ privacy-multi-tenancy-enabled=true
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
 privacy-flexible-groups-enabled=false
+privacy-nonce-always-increments=false
 
 # Transaction Pool
 tx-pool="layered"
@@ -193,6 +195,7 @@ tx-pool-retention-hours=999
 tx-pool-max-size=1234
 tx-pool-limit-by-account-percentage=0.017
 tx-pool-min-gas-price=1000
+tx-pool-min-score=100
 
 # Revert Reason
 revert-reason-enabled=false
@@ -223,6 +226,7 @@ Xsecp256k1-native-enabled=false
 Xaltbn128-native-enabled=false
 Xsnapsync-server-enabled=true
 Xbonsai-full-flat-db-enabled=true
+Xpeertask-system-enabled=false
 
 # compatibility flags
 compatibility-eth64-forkid-enabled=false
@@ -240,3 +244,8 @@ Xp2p-tls-clienthello-sni=false
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000
+
+# plugins
+Xplugins-external-enabled=true
+plugins=["none"]
+plugin-continue-on-error=false

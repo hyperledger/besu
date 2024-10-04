@@ -56,6 +56,7 @@ public class BftMiningCoordinatorTest {
 
   @BeforeEach
   public void setup() {
+    eventQueue.start();
     bftMiningCoordinator =
         new BftMiningCoordinator(
             bftExecutors, controller, bftProcessor, bftBlockCreatorFactory, blockChain, eventQueue);

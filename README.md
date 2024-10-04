@@ -1,6 +1,6 @@
 # Besu Ethereum Client
  [![CircleCI](https://circleci.com/gh/hyperledger/besu/tree/main.svg?style=svg)](https://circleci.com/gh/hyperledger/besu/tree/main)
- [![Documentation Status](https://readthedocs.org/projects/hyperledger-besu/badge/?version=latest)](https://besu.hyperledger.org/en/latest/?badge=latest)
+ [![Documentation](https://img.shields.io/github/actions/workflow/status/hyperledger/besu-docs/publish-main-docs.yml?branch=main&label=docs)](https://github.com/hyperledger/besu-docs/actions/workflows/publish-main-docs.yml)
  [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3174/badge)](https://bestpractices.coreinfrastructure.org/projects/3174)
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/hyperledger/besu/blob/main/LICENSE)
  [![Discord](https://img.shields.io/discord/905194001349627914?logo=Hyperledger&style=plastic)](https://discord.gg/hyperledger)
@@ -14,7 +14,7 @@ Besu is an Apache 2.0 licensed, MainNet compatible, Ethereum client written in J
 
 * [Besu User Documentation]
 * [Besu Issues]
-* [Besu Wiki](https://wiki.hyperledger.org/display/BESU/Hyperledger+Besu)
+* [Besu Wiki](https://wiki.hyperledger.org/display/BESU/Besu)
 * [How to Contribute to Besu](https://wiki.hyperledger.org/display/BESU/How+to+Contribute)
 * [Besu Roadmap & Planning](https://wiki.hyperledger.org/pages/viewpage.action?pageId=24781786)
 
@@ -24,7 +24,7 @@ Besu is an Apache 2.0 licensed, MainNet compatible, Ethereum client written in J
 Besu issues are tracked [in the github issues tab][Besu Issues].
 See our [guidelines](https://wiki.hyperledger.org/display/BESU/Issues) for more details on searching and creating issues.
 
-If you have any questions, queries or comments, [Besu channel on Hyperledger Discord] is the place to find us.
+If you have any questions, queries or comments, [Besu channel on Discord] is the place to find us.
 
 
 ## Besu Users
@@ -68,5 +68,5 @@ and <a href="https://www.yourkit.com/youmonitor/">YourKit YouMonitor</a>.
 
 [Besu Issues]: https://github.com/hyperledger/besu/issues
 [Besu User Documentation]: https://besu.hyperledger.org
-[Besu channel on Hyperledger Discord]: https://discord.gg/hyperledger
+[Besu channel on Discord]: https://discord.gg/hyperledger
 [Contributing Guidelines]: CONTRIBUTING.md

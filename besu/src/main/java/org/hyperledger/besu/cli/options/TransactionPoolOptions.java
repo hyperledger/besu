@@ -160,6 +160,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     private static final String TX_POOL_MAX_PRIORITIZED_BY_TYPE =
         "--tx-pool-max-prioritized-by-type";
     private static final String TX_POOL_MAX_FUTURE_BY_SENDER = "--tx-pool-max-future-by-sender";
+    private static final String TX_POOL_MIN_SCORE = "--tx-pool-min-score";
 
     @CommandLine.Option(
         names = {TX_POOL_LAYER_MAX_CAPACITY},
@@ -196,6 +197,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
             "Max number of future pending transactions allowed for a single sender (default: ${DEFAULT-VALUE})",
         arity = "1")
     Integer txPoolMaxFutureBySender = TransactionPoolConfiguration.DEFAULT_MAX_FUTURE_BY_SENDER;
+
+    @CommandLine.Option(
+        names = {TX_POOL_MIN_SCORE},
+        paramLabel = "<Byte>",
+        description =
+            "Remove a pending transaction from the txpool if its score is lower than this value."
+                + "Accepts values between -128 and 127 (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    Byte minScore = TransactionPoolConfiguration.DEFAULT_TX_POOL_MIN_SCORE;
   }
 
   @CommandLine.ArgGroup(
@@ -314,6 +324,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     options.layeredOptions.txPoolMaxPrioritizedByType =
         config.getMaxPrioritizedTransactionsByType();
     options.layeredOptions.txPoolMaxFutureBySender = config.getMaxFutureBySender();
+    options.layeredOptions.minScore = config.getMinScore();
     options.sequencedOptions.txPoolLimitByAccountPercentage =
         config.getTxPoolLimitByAccountPercentage();
     options.sequencedOptions.txPoolMaxSize = config.getTxPoolMaxSize();
@@ -372,6 +383,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)
         .maxPrioritizedTransactionsByType(layeredOptions.txPoolMaxPrioritizedByType)
         .maxFutureBySender(layeredOptions.txPoolMaxFutureBySender)
+        .minScore(layeredOptions.minScore)
         .txPoolLimitByAccountPercentage(sequencedOptions.txPoolLimitByAccountPercentage)
         .txPoolMaxSize(sequencedOptions.txPoolMaxSize)
         .pendingTxRetentionPeriod(sequencedOptions.pendingTxRetentionPeriod)

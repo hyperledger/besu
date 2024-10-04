@@ -146,6 +146,11 @@ public class T8nBlockchain implements Blockchain {
   }
 
   @Override
+  public synchronized Optional<BlockBody> getBlockBodySafe(final Hash blockHeaderHash) {
+    return getBlockBody(blockHeaderHash);
+  }
+
+  @Override
   public Optional<List<TransactionReceipt>> getTxReceipts(final Hash blockHeaderHash) {
     // Deterministic, but just not implemented.
     throw new UnsupportedOperationException();

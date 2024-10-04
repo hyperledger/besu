@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.PrivateWorldStateReader;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 
 import java.util.Collection;
@@ -41,6 +42,11 @@ public class PrivacyQueries {
       final PrivateWorldStateReader privateWorldStateReader) {
     this.blockchainQueries = blockchainQueries;
     this.privateWorldStateReader = privateWorldStateReader;
+  }
+
+  public Optional<PrivateBlockMetadata> getPrivateBlockMetaData(
+      final String privacyGroupId, final Hash blockHash) {
+    return privateWorldStateReader.getPrivateBlockMetadata(privacyGroupId, blockHash);
   }
 
   public List<LogWithMetadata> matchingLogs(

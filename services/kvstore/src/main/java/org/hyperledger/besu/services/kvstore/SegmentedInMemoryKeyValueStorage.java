@@ -15,6 +15,7 @@
 package org.hyperledger.besu.services.kvstore;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.hyperledger.besu.services.kvstore.KeyComparator.compareKeyLeftToRight;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -39,6 +40,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -143,26 +145,67 @@ public class SegmentedInMemoryKeyValueStorage
   }
 
   @Override
-  public Optional<NearestKeyValue> getNearestTo(
+  public Optional<NearestKeyValue> getNearestBefore(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+    return getNearest(
+        segmentIdentifier,
+        e ->
+            compareKeyLeftToRight(e.getKey(), key) <= 0
+                && e.getKey().commonPrefixLength(key) >= e.getKey().size(),
+        e -> compareKeyLeftToRight(e.getKey(), key) < 0,
+        false);
+  }
+
+  @Override
+  public Optional<NearestKeyValue> getNearestAfter(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+    return getNearest(
+        segmentIdentifier,
+        e ->
+            compareKeyLeftToRight(e.getKey(), key) >= 0
+                && e.getKey().commonPrefixLength(key) >= e.getKey().size(),
+        e -> compareKeyLeftToRight(e.getKey(), key) >= 0,
+        true);
+  }
+
+  private Optional<NearestKeyValue> getNearest(
+      final SegmentIdentifier segmentIdentifier,
+      final Predicate<Map.Entry<Bytes, Optional<byte[]>>> samePrefixPredicate,
+      final Predicate<Map.Entry<Bytes, Optional<byte[]>>> fallbackPredicate,
+      final boolean useMin)
+      throws StorageException {
 
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      // TODO: revisit this for sort performance
-      Comparator<Map.Entry<Bytes, Optional<byte[]>>> comparing =
-          Comparator.comparing(
-                  (Map.Entry<Bytes, Optional<byte[]>> a) -> a.getKey().commonPrefixLength(key))
-              .thenComparing(Map.Entry.comparingByKey());
-      return this.hashValueStore
-          .computeIfAbsent(segmentIdentifier, s -> newSegmentMap())
-          .entrySet()
-          .stream()
-          // only return keys equal to or less than
-          .filter(e -> e.getKey().compareTo(key) <= 0)
-          .sorted(comparing.reversed())
-          .findFirst()
-          .map(z -> new NearestKeyValue(z.getKey(), z.getValue()));
+      final Map<Bytes, Optional<byte[]>> segmentMap =
+          this.hashValueStore.computeIfAbsent(segmentIdentifier, s -> newSegmentMap());
+
+      final Function<Predicate<Map.Entry<Bytes, Optional<byte[]>>>, Optional<NearestKeyValue>>
+          findNearest =
+              (predicate) -> {
+                final Stream<Map.Entry<Bytes, Optional<byte[]>>> filteredStream =
+                    segmentMap.entrySet().stream().filter(predicate);
+                // Depending on the useMin flag, find either the minimum or maximum entry according
+                // to key order
+                final Optional<Map.Entry<Bytes, Optional<byte[]>>> sortedStream =
+                    useMin
+                        ? filteredStream.min(
+                            (t1, t2) -> compareKeyLeftToRight(t1.getKey(), t2.getKey()))
+                        : filteredStream.max(
+                            (t1, t2) -> compareKeyLeftToRight(t1.getKey(), t2.getKey()));
+                return sortedStream.map(
+                    entry -> new NearestKeyValue(entry.getKey(), entry.getValue()));
+              };
+
+      // First, attempt to find a key-value pair that matches the same prefix
+      final Optional<NearestKeyValue> withSamePrefix = findNearest.apply(samePrefixPredicate);
+      if (withSamePrefix.isPresent()) {
+        return withSamePrefix;
+      }
+      // If a matching entry with a common prefix is not found, the next step is to search for the
+      // nearest key that comes after or before the requested one.
+      return findNearest.apply(fallbackPredicate);
     } finally {
       lock.unlock();
     }

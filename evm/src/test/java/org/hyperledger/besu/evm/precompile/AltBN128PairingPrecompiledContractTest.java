@@ -22,6 +22,8 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -36,8 +38,14 @@ class AltBN128PairingPrecompiledContractTest {
   private final AltBN128PairingPrecompiledContract istanbulContract =
       AltBN128PairingPrecompiledContract.istanbul(gasCalculator);
 
-  @Test
-  void compute_validPoints() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void compute_validPoints(final boolean useNative) {
+    if (useNative) {
+      AbstractAltBnPrecompiledContract.maybeEnableNative();
+    } else {
+      AbstractAltBnPrecompiledContract.disableNative();
+    }
     final Bytes input = validPointBytes();
     final Bytes result = byzantiumContract.computePrecompile(input, messageFrame).getOutput();
     assertThat(result).isEqualTo(AltBN128PairingPrecompiledContract.TRUE);
@@ -80,8 +88,14 @@ class AltBN128PairingPrecompiledContractTest {
     return Bytes.concatenate(g1Point0, g2Point0, g1Point1, g2Point1);
   }
 
-  @Test
-  void compute_invalidPointsOutsideSubgroupG2() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void compute_invalidPointsOutsideSubgroupG2(final boolean useNative) {
+    if (useNative) {
+      AbstractAltBnPrecompiledContract.maybeEnableNative();
+    } else {
+      AbstractAltBnPrecompiledContract.disableNative();
+    }
     final Bytes g1Point0 =
         Bytes.concatenate(
             Bytes.fromHexString(
@@ -122,11 +136,13 @@ class AltBN128PairingPrecompiledContractTest {
 
   @Test
   void gasPrice_byzantium() {
+    // gas calculation is java only
     assertThat(byzantiumContract.gasRequirement(validPointBytes())).isEqualTo(260_000L);
   }
 
   @Test
   void gasPrice_istanbul() {
+    // gas calculation is java only
     assertThat(istanbulContract.gasRequirement(validPointBytes())).isEqualTo(113_000L);
   }
 }

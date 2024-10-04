@@ -44,8 +44,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 
 public class BlockchainReferenceTestTools {
-  private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES =
-      ReferenceTestProtocolSchedules.create();
 
   private static final List<String> NETWORKS_TO_RUN;
 
@@ -88,10 +86,10 @@ public class BlockchainReferenceTestTools {
       .ignore(
         "UncleFromSideChain_(Merge|Paris|Shanghai|Cancun|Prague|Osaka|Amsterdam|Bogota|Polis|Bangkok)")
 
-      // EOF tests don't have Prague stuff like deopsits right now
+      // EOF tests don't have Prague stuff like deposits right now
       .ignore("/stEOF/")
 
-      // None of the Prague tests have withdrawls and deposits handling
+      // None of the Prague tests have withdrawals and deposits handling
       .ignore("\\[Prague\\]");
 
     if (NETWORKS_TO_RUN.isEmpty()) {
@@ -110,7 +108,7 @@ public class BlockchainReferenceTestTools {
             .orElseThrow();
 
     final ProtocolSchedule schedule =
-        REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(testCase.getNetwork());
+        ReferenceTestProtocolSchedules.getInstance().getByName(testCase.getNetwork());
 
     final MutableBlockchain blockchain = testCase.getBlockchain();
     final ProtocolContext context = testCase.getProtocolContext();

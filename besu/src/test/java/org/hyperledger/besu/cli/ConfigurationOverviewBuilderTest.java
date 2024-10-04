@@ -20,7 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.SEQUENCED;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.cli.config.ProfileName;
+import org.hyperledger.besu.cli.config.InternalProfileName;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -213,7 +213,7 @@ class ConfigurationOverviewBuilderTest {
 
   @Test
   void setProfile() {
-    builder.setProfile(ProfileName.DEV.name());
+    builder.setProfile(InternalProfileName.DEV.name());
     final String profileSelected = builder.build();
     assertThat(profileSelected).contains("Profile: DEV");
   }

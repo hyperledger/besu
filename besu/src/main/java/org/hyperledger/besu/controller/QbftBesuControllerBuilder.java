@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
@@ -44,7 +45,6 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
@@ -52,7 +52,6 @@ import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.protocol.Istanbul100SubProtocol;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
@@ -85,6 +84,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,6 +105,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private ForksSchedule<QbftConfigOptions> qbftForksSchedule;
   private ValidatorPeers peers;
   private TransactionValidatorProvider transactionValidatorProvider;
+  private BftConfigOptions bftConfigOptions;
 
   /** Default Constructor. */
   public QbftBesuControllerBuilder() {}
@@ -113,11 +114,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected Supplier<BftExtraDataCodec> bftExtraDataCodec() {
     return Suppliers.memoize(
         () -> {
-          if (pkiBlockCreationConfiguration.isPresent()) {
-            return new PkiQbftExtraDataCodec();
-          } else {
-            return new QbftExtraDataCodec();
-          }
+          return new QbftExtraDataCodec();
         });
   }
 
@@ -126,6 +123,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     qbftConfig = genesisConfigOptions.getQbftConfigOptions();
     bftEventQueue = new BftEventQueue(qbftConfig.getMessageQueueLimit());
     qbftForksSchedule = QbftForksSchedulesFactory.create(genesisConfigOptions);
+    bftConfigOptions = qbftConfig;
   }
 
   @Override
@@ -138,7 +136,8 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         protocolContext,
         protocolSchedule,
         miningParameters,
-        createReadOnlyValidatorProvider(protocolContext.getBlockchain()));
+        createReadOnlyValidatorProvider(protocolContext.getBlockchain()),
+        bftConfigOptions);
   }
 
   private ValidatorProvider createReadOnlyValidatorProvider(final Blockchain blockchain) {
@@ -224,7 +223,10 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             uniqueMessageMulticaster,
-            new RoundTimer(bftEventQueue, qbftConfig.getRequestTimeoutSeconds(), bftExecutors),
+            new RoundTimer(
+                bftEventQueue,
+                Duration.ofSeconds(qbftConfig.getRequestTimeoutSeconds()),
+                bftExecutors),
             new BlockTimer(bftEventQueue, qbftForksSchedule, bftExecutors, clock),
             blockCreatorFactory,
             clock);
@@ -286,12 +288,18 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     protocolContext
         .getBlockchain()
         .observeBlockAdded(
-            o ->
-                miningParameters.setBlockPeriodSeconds(
-                    qbftForksSchedule
-                        .getFork(o.getBlock().getHeader().getNumber() + 1)
-                        .getValue()
-                        .getBlockPeriodSeconds()));
+            o -> {
+              miningParameters.setBlockPeriodSeconds(
+                  qbftForksSchedule
+                      .getFork(o.getBlock().getHeader().getNumber() + 1)
+                      .getValue()
+                      .getBlockPeriodSeconds());
+              miningParameters.setEmptyBlockPeriodSeconds(
+                  qbftForksSchedule
+                      .getFork(o.getBlock().getHeader().getNumber() + 1)
+                      .getValue()
+                      .getEmptyBlockPeriodSeconds());
+            });
 
     if (syncState.isInitialSyncPhaseDone()) {
       miningCoordinator.enable();
@@ -335,7 +343,9 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         bftExtraDataCodec().get(),
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   @Override
@@ -393,8 +403,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         new ForkingValidatorProvider(
             blockchain, qbftForksSchedule, blockValidatorProvider, transactionValidatorProvider);
 
-    return new QbftContext(
-        validatorProvider, epochManager, bftBlockInterface().get(), pkiBlockCreationConfiguration);
+    return new BftContext(validatorProvider, epochManager, bftBlockInterface().get());
   }
 
   private BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {
@@ -419,8 +428,9 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     return block ->
         LOG.info(
             String.format(
-                "%s #%,d / %d tx / %d pending / %,d (%01.1f%%) gas / (%s)",
+                "%s %s #%,d / %d tx / %d pending / %,d (%01.1f%%) gas / (%s)",
                 block.getHeader().getCoinbase().equals(localAddress) ? "Produced" : "Imported",
+                block.getBody().getTransactions().size() == 0 ? "empty block" : "block",
                 block.getHeader().getNumber(),
                 block.getBody().getTransactions().size(),
                 transactionPool.count(),

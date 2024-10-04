@@ -16,12 +16,33 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+/**
+ * This class represents a successful GraphQL response.
+ *
+ * <p>It extends the GraphQLResponse class and overrides the getType method to return
+ * GraphQLResponseType.SUCCESS.
+ */
 public class GraphQLSuccessResponse extends GraphQLResponse {
 
+  /**
+   * Constructor for GraphQLSuccessResponse.
+   *
+   * <p>It calls the parent constructor with the provided data as the argument.
+   *
+   * @param data the data to be included in the successful response.
+   */
   public GraphQLSuccessResponse(final Object data) {
     super(data);
   }
 
+  /**
+   * Returns the type of the GraphQL response.
+   *
+   * <p>This method is overridden to return GraphQLResponseType.SUCCESS, indicating a successful
+   * response.
+   *
+   * @return GraphQLResponseType.SUCCESS
+   */
   @Override
   @JsonIgnore
   public GraphQLResponseType getType() {

@@ -103,7 +103,6 @@ public class StateTestVersionedTransaction {
       @JsonDeserialize(using = StateTestAccessListDeserializer.class) @JsonProperty("accessLists")
           final List<List<AccessListEntry>> maybeAccessLists,
       @JsonProperty("maxFeePerBlobGas") final String maxFeePerBlobGas,
-      @JsonProperty("maxFeePerDataGas") final String maxFeePerDataGas,
       @JsonProperty("blobVersionedHashes") final List<String> blobVersionedHashes) {
 
     this.nonce = Bytes.fromHexStringLenient(nonce).toLong();
@@ -123,9 +122,7 @@ public class StateTestVersionedTransaction {
     this.payloads = parseArray(data, Bytes::fromHexString);
     this.maybeAccessLists = Optional.ofNullable(maybeAccessLists);
     this.maxFeePerBlobGas =
-        Optional.ofNullable(maxFeePerBlobGas == null ? maxFeePerDataGas : maxFeePerBlobGas)
-            .map(Wei::fromHexString)
-            .orElse(null);
+        Optional.ofNullable(maxFeePerBlobGas).map(Wei::fromHexString).orElse(null);
     this.blobVersionedHashes = blobVersionedHashes;
   }
 

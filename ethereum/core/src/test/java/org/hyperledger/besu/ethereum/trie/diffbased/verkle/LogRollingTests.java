@@ -84,7 +84,7 @@ class LogRollingTests {
           Hash.ZERO,
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x4a5e0191f58b8c79ed86ac489d0e54709ae8ea089c491dd1f204212b8fb43abd"),
+          Hash.fromHexString("0x53e60a2f62d8fef81d9e86d494663b8b22474a781473ff25b9fd9a1091e1ab1a"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -109,7 +109,7 @@ class LogRollingTests {
           headerOne.getHash(),
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x2499426e9eae43d5fdefe22a184f6f3de51e6c0ea1b41a2aab53a031e99fb49e"),
+          Hash.fromHexString("0x220f34325ea9e65112d550de55af91214b23e74aa01cf23b692d5b63b2a6af1d"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -134,7 +134,7 @@ class LogRollingTests {
           headerOne.getHash(),
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x4186e2e00886884e95dcdd7ef1803e2fdab3918e89d811e56f52e2f077b804ec"),
+          Hash.fromHexString("0x2d75bdb04215c65a2b0393293272eedb6d47676c9997e5894dbf3d8be4273f9a"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -160,7 +160,7 @@ class LogRollingTests {
           headerOne.getHash(),
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x4a5e0191f58b8c79ed86ac489d0e54709ae8ea089c491dd1f204212b8fb43abd"),
+          Hash.fromHexString("0x53e60a2f62d8fef81d9e86d494663b8b22474a781473ff25b9fd9a1091e1ab1a"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -474,10 +474,9 @@ class LogRollingTests {
     worldState.persist(headerThree);
     final TrieLogLayer layerThree = getTrieLogLayer(trieLogStorage, headerThree.getHash());
 
-    System.out.println(layerThree.dump());
     final WorldUpdater updater4 = worldState.updater();
     final MutableAccount mutableAccount4 = updater4.getAccount(addressOne);
-    mutableAccount4.setStorageValue(UInt256.ONE, UInt256.valueOf(1));
+    mutableAccount4.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater4.commit();
 
     worldState.persist(headerFour);
@@ -528,32 +527,34 @@ class LogRollingTests {
 
     worldState.persist(headerOne);
 
-    /*final WorldUpdater updater2 = worldState.updater();
+    final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, headerOne.getBlockHash());
+
+    final WorldUpdater updater2 = worldState.updater();
     final MutableAccount mutableAccount2 = updater2.getAccount(addressOne);
     mutableAccount2.setStorageValue(UInt256.ONE, UInt256.ZERO);
     updater2.commit();
 
-    blockHeaderTestFixture.stateRoot(Hash.fromHexString("0x1879f69465e8ef937ce1f13cb5b328437239a2764982cea5e337cd5d217a2866"));
+    blockHeaderTestFixture.stateRoot(
+        Hash.fromHexString("0x2d75bdb04215c65a2b0393293272eedb6d47676c9997e5894dbf3d8be4273f9a"));
     blockHeaderTestFixture.number(2);
-    final BlockHeader blockHeaderTwo = blockHeaderTestFixture.buildHeader();
-    worldState.persist(blockHeaderTwo);
+    final BlockHeader customHeaderTwo = blockHeaderTestFixture.buildHeader();
+    worldState.persist(customHeaderTwo);
 
     final VerkleWorldStateUpdateAccumulator firstRollbackUpdater =
-            (VerkleWorldStateUpdateAccumulator) worldState.updater();
+        (VerkleWorldStateUpdateAccumulator) worldState.updater();
 
-    final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, blockHeaderTwo.getBlockHash());
+    final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, customHeaderTwo.getBlockHash());
     firstRollbackUpdater.rollBack(layerTwo);
-    System.out.println("rollback");
 
-    worldState.persist(null);
-    assertThat(worldState.rootHash()).isEqualTo(blockHeaderOne.getStateRoot());*/
+    worldState.persist(headerOne);
+    assertThat(worldState.rootHash()).isEqualTo(headerOne.getStateRoot());
 
     final VerkleWorldStateUpdateAccumulator secondRollbackUpdater =
         (VerkleWorldStateUpdateAccumulator) worldState.updater();
 
-    final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, headerOne.getBlockHash());
     secondRollbackUpdater.rollBack(layerOne);
 
+    assertThat(worldState.rootHash()).isEqualTo(headerOne.getStateRoot());
     worldState.persist(null);
     assertThat(worldState.rootHash()).isEqualTo(Bytes32.ZERO);
   }

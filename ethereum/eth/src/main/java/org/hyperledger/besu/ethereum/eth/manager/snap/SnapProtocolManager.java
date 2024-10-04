@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
-import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -85,7 +84,7 @@ public class SnapProtocolManager implements ProtocolManager {
   public void awaitStop() throws InterruptedException {}
 
   /**
-   * This function is called by the P2P framework when an "SNAP message has been received.
+   * This function is called by the P2P framework when a SNAP message has been received.
    *
    * @param cap The capability under which the message was transmitted.
    * @param message The message to be decoded.
@@ -98,7 +97,7 @@ public class SnapProtocolManager implements ProtocolManager {
     final EthPeer ethPeer = ethPeers.peer(message.getConnection());
     if (ethPeer == null) {
       LOG.debug(
-          "Ignoring message received from unknown peer connection: " + message.getConnection());
+          "Ignoring message received from unknown peer connection: {}", message.getConnection());
       return;
     }
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
@@ -133,20 +132,16 @@ public class SnapProtocolManager implements ProtocolManager {
           try {
             ethPeer.send(responseData, getSupportedProtocol());
           } catch (final PeerConnection.PeerNotConnected error) {
-            // Peer disconnected before we could respond - nothing to do
-            LOG.trace(
-                "Peer disconnected before we could respond - nothing to do " + error.getMessage());
+            LOG.atTrace()
+                .setMessage("Peer disconnected before we could respond - nothing to do {}")
+                .addArgument(error.getMessage())
+                .log();
           }
         });
   }
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {}
-
-  @Override
-  public boolean shouldConnect(final Peer peer, final boolean incoming) {
-    return false; // EthManager is taking care of this for now
-  }
 
   @Override
   public void handleDisconnect(
