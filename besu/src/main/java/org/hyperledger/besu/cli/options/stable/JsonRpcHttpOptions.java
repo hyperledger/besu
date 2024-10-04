@@ -65,7 +65,7 @@ public class JsonRpcHttpOptions {
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
       description = "Host for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private String rpcHttpHost;
+  private String rpcHttpHost = "127.0.0.1";
 
   @CommandLine.Option(
       names = {"--rpc-http-port"},
