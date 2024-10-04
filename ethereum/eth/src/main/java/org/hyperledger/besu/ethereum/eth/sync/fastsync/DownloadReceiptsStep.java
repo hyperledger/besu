@@ -31,10 +31,10 @@ import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public class DownloadReceiptsStep
@@ -64,7 +64,7 @@ public class DownloadReceiptsStep
           .getScheduler()
           .scheduleSyncWorkerTask(
               () -> {
-                Map<BlockHeader, List<TransactionReceipt>> getReceipts = new ConcurrentHashMap<>();
+                Map<BlockHeader, List<TransactionReceipt>> getReceipts = new HashMap<>();
                 do {
                   GetReceiptsFromPeerTask task =
                       new GetReceiptsFromPeerTask(headers, new BodyValidator());
