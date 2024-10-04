@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.security.Security;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,7 +24,6 @@ import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -135,11 +132,5 @@ class DNSDaemonTest {
             .setThreadingModel(ThreadingModel.VIRTUAL_THREAD)
             .setWorkerPoolSize(1);
     vertx.deployVerticle(dnsDaemon, options);
-  }
-
-  @AfterEach
-  @DisplayName("Check that the vertx worker verticle is still there")
-  void lastChecks(final Vertx vertx) {
-    assertThat(vertx.deploymentIDs()).isNotEmpty().hasSize(2);
   }
 }

@@ -18,7 +18,7 @@ import static java.util.Collections.unmodifiableList;
 import static org.apache.tuweni.io.file.Files.copyResource;
 
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.datatypes.Address;
@@ -128,6 +128,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private boolean useWsForJsonRpc = false;
   private String token = null;
   private final List<String> plugins = new ArrayList<>();
+  private final List<String> requestedPlugins;
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
   private boolean isDnsEnabled = false;
@@ -163,6 +164,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final boolean secp256k1Native,
       final boolean altbn128Native,
       final List<String> plugins,
+      final List<String> requestedPlugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
       final boolean isDnsEnabled,
@@ -224,8 +226,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
             LOG.error("Could not find plugin \"{}\" in resources", pluginName);
           }
         });
+    this.requestedPlugins = requestedPlugins;
     engineRpcConfiguration.ifPresent(
-        config -> MergeConfigOptions.setMergeEnabled(config.isEnabled()));
+        config -> MergeConfiguration.setMergeEnabled(config.isEnabled()));
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
@@ -736,6 +739,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public List<String> getPlugins() {
     return plugins;
+  }
+
+  public List<String> getRequestedPlugins() {
+    return requestedPlugins;
   }
 
   @Override
