@@ -858,6 +858,7 @@ public class TransactionSimulatorTest {
       final int numberOfBlobs) {
     BlobsWithCommitments bwc = new BlobTestFixture().createBlobsWithCommitments(numberOfBlobs);
     return new CallParameter(
+        Optional.of(BigInteger.ONE),
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
         gasLimit,
