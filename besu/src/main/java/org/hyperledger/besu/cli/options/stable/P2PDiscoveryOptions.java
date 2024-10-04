@@ -52,20 +52,7 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       arity = "1")
   public final Boolean p2pEnabled = true;
 
-  /**
-   * Boolean option to indicate if peers should NOT be discovered, default to false indicates that
-   * the peers should be discovered by default.
-   */
-  //
-  // This negative option is required because of the nature of the option that is
-  // true when
-  // added on the command line. You can't do --option=false, so false is set as
-  // default
-  // and you have not to set the option at all if you want it false.
-  // This seems to be the only way it works with Picocli.
-  // Also many other software use the same negative option scheme for false
-  // defaults
-  // meaning that it's probably the right way to handle disabling options.
+  /** Boolean option to indicate if peers should be discovered. */
   @CommandLine.Option(
       names = {"--discovery-enabled"},
       description = "Enable P2P discovery (default: ${DEFAULT-VALUE})",

@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+- Add `--ephemery` network support for Ephemery Testnet [#7563](https://github.com/hyperledger/besu/pull/7563) thanks to [@gconnect](https://github.com/gconnect)
+- Add configuration of Consolidation Request Contract Address via genesis configuration [#7647](https://github.com/hyperledger/besu/pull/7647)
 
 ### Upcoming Breaking Changes
 - k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
@@ -4461,7 +4463,6 @@ Specify `*` or `all` for `--host-whitelist` to effectively disable host protecti
  - Added `--banned-nodeids` option to prevent connection to specific nodes (PR [#254](https://github.com/PegaSysEng/pantheon/pull/254))
  - Send client quitting disconnect message to peers on shutdown (PR [#253](https://github.com/PegaSysEng/pantheon/pull/253))
  - Improved error message for port conflict error (PR [#232](https://github.com/PegaSysEng/pantheon/pull/232))
-
 
  ### Technical Improvements
  - Upgraded Ethereum reference tests to 6.0 beta 2. (thanks to [@jvirtanen](https://github.com/jvirtanen) for the initial upgrade to beta 1)

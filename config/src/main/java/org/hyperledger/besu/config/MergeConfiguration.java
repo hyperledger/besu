@@ -16,14 +16,14 @@ package org.hyperledger.besu.config;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** The Merge config options. */
-// TODO: naming this with Options as the suffix is misleading, it should be MergeConfig - doesn't
+/** The Merge configuration. */
+
 // use picocli
-public class MergeConfigOptions {
+public class MergeConfiguration {
   private static final AtomicBoolean mergeEnabled = new AtomicBoolean(false);
 
   /** Default constructor. */
-  private MergeConfigOptions() {}
+  private MergeConfiguration() {}
 
   /**
    * Enables merge.
