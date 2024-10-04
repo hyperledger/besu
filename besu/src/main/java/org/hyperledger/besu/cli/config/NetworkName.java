@@ -31,6 +31,12 @@ public enum NetworkName {
   /** LUKSO mainnet network name. */
   LUKSO("/lukso.json", BigInteger.valueOf(42)),
 
+  /**
+   * EPHEMERY network name. The actual networkId used is calculated based on this default value and
+   * the current time. https://ephemery.dev/
+   */
+  EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135)),
+
   /** Dev network name. */
   DEV("/dev.json", BigInteger.valueOf(2018), false),
   /** Future EIPs network name. */
