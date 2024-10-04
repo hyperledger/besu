@@ -31,9 +31,13 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
+import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,6 +107,102 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
     return accountFound;
   }
 
+  @Override
+  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+      final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
+    final Stream<Pair<Bytes32, Bytes>> stream =
+        storage
+            .streamFromKey(
+                ACCOUNT_INFO_STATE,
+                calculateArchiveKeyNoContextMinSuffix(startKeyHash.toArrayUnsafe()),
+                calculateArchiveKeyNoContextMaxSuffix(endKeyHash.toArrayUnsafe()))
+            .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))
+            .distinct()
+            .map(
+                e ->
+                    new Pair<>(
+                        Bytes32.wrap(trimSuffix(e.toArrayUnsafe())),
+                        Bytes.of(
+                            storage.getNearestBefore(ACCOUNT_INFO_STATE, e).get().value().get())));
+    return stream;
+  }
+
+  @Override
+  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+      final SegmentedKeyValueStorage storage, final Bytes startKeyHash) {
+    final Stream<Pair<Bytes32, Bytes>> stream =
+        storage
+            .streamFromKey(
+                ACCOUNT_INFO_STATE,
+                calculateArchiveKeyNoContextMinSuffix(startKeyHash.toArrayUnsafe()))
+            .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))
+            .distinct()
+            .map(
+                e ->
+                    new Pair<Bytes32, Bytes>(
+                        Bytes32.wrap(trimSuffix(e.toArrayUnsafe())),
+                        Bytes.of(
+                            storage.getNearestBefore(ACCOUNT_INFO_STATE, e).get().value().get())));
+    return stream;
+  }
+
+  @Override
+  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+      final SegmentedKeyValueStorage storage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Function<Bytes, Bytes> valueMapper) {
+    return storage
+        .streamFromKey(
+            ACCOUNT_STORAGE_STORAGE,
+            calculateArchiveKeyNoContextMinSuffix(
+                calculateNaturalSlotKey(accountHash, Hash.wrap(Bytes32.wrap(startKeyHash)))))
+        .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))
+        .distinct()
+        .map(
+            key ->
+                new Pair<>(
+                    Bytes32.wrap(trimSuffix(key.slice(Hash.SIZE).toArrayUnsafe())),
+                    valueMapper.apply(
+                        Bytes.of(
+                                storage
+                                    .getNearestBefore(ACCOUNT_STORAGE_STORAGE, key)
+                                    .get()
+                                    .value()
+                                    .get())
+                            .trimLeadingZeros())));
+  }
+
+  @Override
+  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+      final SegmentedKeyValueStorage storage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final Function<Bytes, Bytes> valueMapper) {
+    return storage
+        .streamFromKey(
+            ACCOUNT_STORAGE_STORAGE,
+            calculateArchiveKeyNoContextMinSuffix(
+                calculateNaturalSlotKey(accountHash, Hash.wrap(Bytes32.wrap(startKeyHash)))),
+            calculateArchiveKeyNoContextMaxSuffix(
+                calculateNaturalSlotKey(accountHash, Hash.wrap(endKeyHash))))
+        .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))
+        .distinct()
+        .map(
+            key ->
+                new Pair<>(
+                    Bytes32.wrap(trimSuffix(key.slice(Hash.SIZE).toArrayUnsafe())),
+                    valueMapper.apply(
+                        Bytes.of(
+                                storage
+                                    .getNearestBefore(ACCOUNT_STORAGE_STORAGE, key)
+                                    .get()
+                                    .value()
+                                    .get())
+                            .trimLeadingZeros())));
+  }
+
   /*
    * Puts the account data for the given account hash and block context.
    */
@@ -126,6 +226,10 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
     byte[] keySuffixed = calculateArchiveKeyWithMinSuffix(context, accountHash.toArrayUnsafe());
 
     transaction.put(ACCOUNT_INFO_STATE, keySuffixed, DELETED_ACCOUNT_VALUE);
+  }
+
+  private byte[] trimSuffix(final byte[] suffixedAddress) {
+    return Arrays.copyOfRange(suffixedAddress, 0, suffixedAddress.length - 8);
   }
 
   /*
@@ -230,6 +334,14 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
   public static byte[] calculateArchiveKeyWithMinSuffix(
       final BonsaiContext context, final byte[] naturalKey) {
     return calculateArchiveKeyWithSuffix(context, naturalKey, MIN_BLOCK_SUFFIX);
+  }
+
+  public static byte[] calculateArchiveKeyNoContextMinSuffix(final byte[] naturalKey) {
+    return Arrays.concatenate(naturalKey, MIN_BLOCK_SUFFIX);
+  }
+
+  public static byte[] calculateArchiveKeyNoContextMaxSuffix(final byte[] naturalKey) {
+    return Arrays.concatenate(naturalKey, MAX_BLOCK_SUFFIX);
   }
 
   public static Bytes calculateArchiveKeyWithMaxSuffix(

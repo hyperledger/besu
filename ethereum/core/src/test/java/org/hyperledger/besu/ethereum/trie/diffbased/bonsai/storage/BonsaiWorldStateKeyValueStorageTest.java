@@ -445,6 +445,306 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   @ParameterizedTest
   @MethodSource("flatDbMode")
+  void clear_streamFlatAccounts(final FlatDbMode flatDbMode) {
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
+
+    // save world state root hash
+    BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+
+    // Put 3 accounts
+    Address account1 =
+        Address.fromHexString(
+            "0x1111111111111111111111111111111111111111"); // 3rd entry in DB after hashing
+    updater.putAccountInfoState(account1.addressHash(), Bytes32.random()).commit();
+    updater = storage.updater();
+    Address account2 =
+        Address.fromHexString(
+            "0x2222222222222222222222222222222222222222"); // 1st entry in the DB after hashing
+    updater.putAccountInfoState(account2.addressHash(), Bytes32.random()).commit();
+    updater = storage.updater();
+    Address account3 =
+        Address.fromHexString(
+            "0x3333333333333333333333333333333333333333"); // 2nd entry in the DB after hashing
+    updater.putAccountInfoState(account3.addressHash(), Bytes32.random()).commit();
+
+    // Streaming the entire range to ensure we get all 3 accounts back
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .size())
+        .isEqualTo(3);
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .firstEntry()
+                .getKey())
+        .isEqualTo(account2.addressHash()); // NB: Account 2 hash is first in the DB
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .lastEntry()
+                .getKey())
+        .isEqualTo(account1.addressHash()); // NB: Account 1 hash is 3rd/last in the DB
+
+    // clear
+    storage.clear();
+
+    assertThat(storage.getFlatDbStrategy()).isNotNull();
+
+    assertThat(storage.getAccount(account1.addressHash())).isEmpty();
+    assertThat(storage.getAccount(account2.addressHash())).isEmpty();
+    assertThat(storage.getAccount(account3.addressHash())).isEmpty();
+  }
+
+  @ParameterizedTest
+  @MethodSource("flatDbMode")
+  void clear_streamFlatAccountsMultipleStateChanges(final FlatDbMode flatDbMode) {
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
+
+    // save world state root hash
+    BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+
+    // Put 3 accounts
+    Address account1 =
+        Address.fromHexString(
+            "0x1111111111111111111111111111111111111111"); // 3rd entry in DB after hashing
+    updater.putAccountInfoState(account1.addressHash(), Bytes32.random()).commit();
+    updater = storage.updater();
+    Address account2 =
+        Address.fromHexString(
+            "0x2222222222222222222222222222222222222222"); // 1st entry in the DB after hashing
+    updater.putAccountInfoState(account2.addressHash(), Bytes32.random()).commit();
+    updater = storage.updater();
+    Address account3 =
+        Address.fromHexString(
+            "0x3333333333333333333333333333333333333333"); // 2nd entry in the DB after hashing
+    updater.putAccountInfoState(account3.addressHash(), Bytes32.random()).commit();
+
+    // Update the middle account several times. For an archive mode DB this will result in N
+    // additional entries in the DB, but streaming the accounts should only return the most recent
+    // entry
+
+    // Update the account at block 2
+    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(2));
+    updater = storage.updater();
+    updater.putAccountInfoState(account3.addressHash(), Bytes32.random()).commit();
+
+    // Update the account at block 3
+    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(3));
+    updater = storage.updater();
+    updater.putAccountInfoState(account3.addressHash(), Bytes32.random()).commit();
+
+    // Update the account at block 4
+    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(4));
+    Bytes32 finalStateUpdate = Bytes32.random();
+    updater = storage.updater();
+    updater.putAccountInfoState(account3.addressHash(), finalStateUpdate).commit();
+
+    // Streaming the entire range to ensure we only get 3 accounts back
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .size())
+        .isEqualTo(3);
+
+    // Check that account 2 is the first entry (as per its hash)
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .firstEntry()
+                .getKey())
+        .isEqualTo(account2.addressHash()); // NB: Account 2 hash is first in the DB
+
+    // Check that account 1 is the last entry (as per its hash)
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .lastEntry()
+                .getKey())
+        .isEqualTo(account1.addressHash()); // NB: Account 1 hash is 3rd/last in the DB
+
+    // Check the state for account 3 is the final state update at block 4, not an earlier state
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .get(account3.addressHash()))
+        .isEqualTo(finalStateUpdate);
+
+    // clear
+    storage.clear();
+
+    assertThat(storage.getFlatDbStrategy()).isNotNull();
+
+    assertThat(storage.getAccount(account1.addressHash())).isEmpty();
+    assertThat(storage.getAccount(account2.addressHash())).isEmpty();
+    assertThat(storage.getAccount(account3.addressHash())).isEmpty();
+  }
+
+  @ParameterizedTest
+  @MethodSource("flatDbMode")
+  void clear_streamFlatStorageMultipleStateChanges(final FlatDbMode flatDbMode) {
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
+
+    // save world state root hash
+    BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+
+    // Put 3 accounts
+    Address account1 =
+        Address.fromHexString(
+            "0x1111111111111111111111111111111111111111"); // 3rd entry in DB after hashing
+    updater
+        .putStorageValueBySlotHash(
+            account1.addressHash(),
+            new StorageSlotKey(UInt256.ONE).getSlotHash(),
+            UInt256.fromHexString("0x11"))
+        .commit();
+
+    updater = storage.updater();
+    Address account2 =
+        Address.fromHexString(
+            "0x2222222222222222222222222222222222222222"); // 1st entry in the DB after hashing
+    updater
+        .putStorageValueBySlotHash(
+            account2.addressHash(),
+            new StorageSlotKey(UInt256.ONE).getSlotHash(),
+            UInt256.fromHexString("0x22"))
+        .commit();
+
+    updater = storage.updater();
+    Address account3 =
+        Address.fromHexString(
+            "0x3333333333333333333333333333333333333333"); // 2nd entry in the DB after hashing
+    final StorageSlotKey slot1 = new StorageSlotKey(UInt256.ONE);
+    updater
+        .putStorageValueBySlotHash(
+            account3.addressHash(),
+            new StorageSlotKey(UInt256.ONE).getSlotHash(),
+            UInt256.fromHexString("0x33"))
+        .commit();
+
+    // Update the middle account several times. For an archive mode DB this will result in N
+    // additional entries in the DB, but streaming the accounts should only return the most recent
+    // entry
+
+    // Update the storage at block 2
+    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(2));
+    updater = storage.updater();
+    updater
+        .putStorageValueBySlotHash(
+            account3.addressHash(), slot1.getSlotHash(), UInt256.fromHexString("0x12"))
+        .commit();
+
+    // Update the account at block 3
+    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(3));
+    updater = storage.updater();
+    updater
+        .putStorageValueBySlotHash(
+            account3.addressHash(), slot1.getSlotHash(), UInt256.fromHexString("0x13"))
+        .commit();
+
+    // Update the account at block 4
+    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(4));
+    updater = storage.updater();
+    updater
+        .putStorageValueBySlotHash(
+            account3.addressHash(), slot1.getSlotHash(), UInt256.fromHexString("0x14"))
+        .commit();
+
+    // Check that every account only has 1 entry for slot 1 (even account 3 which updated the same
+    // slot 4 times)
+    assertThat(
+            storage
+                .streamFlatStorages(
+                    account1.addressHash(),
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .size())
+        .isEqualTo(1);
+
+    assertThat(
+            storage
+                .streamFlatStorages(
+                    account2.addressHash(),
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .size())
+        .isEqualTo(1);
+
+    assertThat(
+            storage
+                .streamFlatStorages(
+                    account3.addressHash(),
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .size())
+        .isEqualTo(1);
+
+    // Check that the storage state for account 3's storage slot 1 is the latest value that was
+    // stored
+    assertThat(
+            storage
+                .streamFlatStorages(
+                    account3.addressHash(),
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .get(slot1.getSlotHash()))
+        .isEqualTo(Bytes.fromHexString("0x14"));
+
+    // clear
+    storage.clear();
+
+    assertThat(storage.getFlatDbStrategy()).isNotNull();
+  }
+
+  @ParameterizedTest
+  @MethodSource("flatDbMode")
   void reconcilesNonConflictingUpdaters(final FlatDbMode flatDbMode) {
     setUp(flatDbMode);
     final Hash accountHashA = Address.fromHexString("0x1").addressHash();

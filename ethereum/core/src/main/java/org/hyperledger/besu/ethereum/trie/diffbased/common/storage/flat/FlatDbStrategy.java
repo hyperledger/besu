@@ -250,7 +250,7 @@ public abstract class FlatDbStrategy {
             .takeWhile(takeWhile));
   }
 
-  private static Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
       final SegmentedKeyValueStorage storage,
       final Hash accountHash,
       final Bytes startKeyHash,
@@ -267,7 +267,7 @@ public abstract class FlatDbStrategy {
                     valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
   }
 
-  private static Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
       final SegmentedKeyValueStorage storage,
       final Hash accountHash,
       final Bytes startKeyHash,
@@ -286,14 +286,14 @@ public abstract class FlatDbStrategy {
                     valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
   }
 
-  private static Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
       final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
     return storage
         .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
         .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
   }
 
-  private static Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
       final SegmentedKeyValueStorage storage, final Bytes startKeyHash) {
     return storage
         .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe())
