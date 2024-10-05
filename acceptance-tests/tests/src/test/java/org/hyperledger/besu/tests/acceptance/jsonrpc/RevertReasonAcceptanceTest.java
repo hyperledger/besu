@@ -17,7 +17,6 @@ package org.hyperledger.besu.tests.acceptance.jsonrpc;
 import static org.hyperledger.besu.tests.web3j.generated.RevertReason.FUNC_REVERTWITHOUTREVERTREASON;
 import static org.hyperledger.besu.tests.web3j.generated.RevertReason.FUNC_REVERTWITHREVERTREASON;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.web3j.generated.RevertReason;
 
