@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;

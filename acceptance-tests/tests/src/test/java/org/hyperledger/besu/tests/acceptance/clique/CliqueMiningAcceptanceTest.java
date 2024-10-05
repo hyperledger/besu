@@ -18,9 +18,12 @@ import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.data.Percentage.withPercentage;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
+import org.assertj.core.api.Assertions;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory.CliqueOptions;
 
 import java.io.IOException;
@@ -32,7 +35,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.web3j.protocol.core.DefaultBlockParameter;
 
-public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
+public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldMineTransactionsOnSingleNode() throws IOException {
@@ -121,7 +124,12 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
     cluster.start(minerNode1, minerNode2, minerNode3);
 
     // verify that we have started producing blocks
-    waitForBlockHeight(minerNode1, 1);
+    WaitUtils.waitFor(
+            120,
+            () ->
+                    Assertions.assertThat(((Node) minerNode1).execute(ethTransactions.blockNumber()))
+                            .isGreaterThanOrEqualTo(BigInteger.valueOf(1))
+    );
     final var minerChainHead = minerNode1.execute(ethTransactions.block());
     minerNode2.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
     minerNode3.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));

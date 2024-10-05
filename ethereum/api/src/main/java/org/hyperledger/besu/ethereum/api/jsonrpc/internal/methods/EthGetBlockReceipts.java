@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import com.google.common.base.Suppliers;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -36,69 +37,65 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Suppliers;
-
 public class EthGetBlockReceipts extends AbstractBlockParameterOrBlockHashMethod {
 
-  private final ProtocolSchedule protocolSchedule;
+    private final ProtocolSchedule protocolSchedule;
 
-  public EthGetBlockReceipts(
-      final BlockchainQueries blockchain, final ProtocolSchedule protocolSchedule) {
-    super(Suppliers.ofInstance(blockchain));
-    this.protocolSchedule = protocolSchedule;
-  }
-
-  @Override
-  public String getName() {
-    return RpcMethod.ETH_GET_BLOCK_RECEIPTS.getMethodName();
-  }
-
-  @Override
-  protected BlockParameterOrBlockHash blockParameterOrBlockHash(
-      final JsonRpcRequestContext request) {
-    try {
-      return request.getRequiredParameter(0, BlockParameterOrBlockHash.class);
-    } catch (JsonRpcParameterException e) {
-      throw new InvalidJsonRpcParameters(
-          "Invalid block or block hash parameters (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    public EthGetBlockReceipts(
+            final BlockchainQueries blockchain, final ProtocolSchedule protocolSchedule) {
+        super(Suppliers.ofInstance(blockchain));
+        this.protocolSchedule = protocolSchedule;
     }
-  }
 
-  @Override
-  protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
-    return getBlockReceiptsResult(blockHash);
-  }
-
-  /*
-   * For a given transaction, get its receipt and if it exists, wrap in a transaction receipt of the correct type
-   */
-  private Optional<TransactionReceiptResult> txReceipt(final TransactionWithMetadata tx) {
-    Optional<TransactionReceiptWithMetadata> receipt =
-        blockchainQueries
-            .get()
-            .transactionReceiptByTransactionHash(tx.getTransaction().getHash(), protocolSchedule);
-    if (receipt.isPresent()) {
-      if (receipt.get().getReceipt().getTransactionReceiptType() == TransactionReceiptType.ROOT) {
-        return Optional.of(new TransactionReceiptRootResult(receipt.get()));
-      } else {
-        return Optional.of(new TransactionReceiptStatusResult(receipt.get()));
-      }
+    @Override
+    public String getName() {
+        return RpcMethod.ETH_GET_BLOCK_RECEIPTS.getMethodName();
     }
-    return Optional.empty();
-  }
 
-  private BlockReceiptsResult getBlockReceiptsResult(final Hash blockHash) {
-    final List<TransactionReceiptResult> receiptList =
-        blockchainQueries
-            .get()
-            .blockByHash(blockHash)
-            .map(
-                block ->
-                    block.getTransactions().stream()
-                        .map(tx -> txReceipt(tx).get())
-                        .collect(Collectors.toList()))
-            .orElse(new ArrayList<>());
+    @Override
+    protected BlockParameterOrBlockHash blockParameterOrBlockHash(
+            final JsonRpcRequestContext request) {
+        try {
+            return request.getRequiredParameter(0, BlockParameterOrBlockHash.class);
+        } catch (JsonRpcParameterException e) {
+            throw new InvalidJsonRpcParameters(
+                    "Invalid block or block hash parameters (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+        }
+    }
 
-    return new BlockReceiptsResult(receiptList);
-  }
+    @Override
+    protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
+        return getBlockReceiptsResult(blockHash);
+    }
+
+    /*
+     * For a given transaction, get its receipt and if it exists, wrap in a transaction receipt of the correct type
+     */
+    private Optional<TransactionReceiptResult> txReceipt(final TransactionWithMetadata tx) {
+        Optional<TransactionReceiptWithMetadata> receipt =
+                blockchainQueries
+                        .get()
+                        .transactionReceiptByTransactionHash(tx.getTransaction().getHash(), protocolSchedule);
+        if (receipt.isPresent()) {
+            if (receipt.get().getReceipt().getTransactionReceiptType() == TransactionReceiptType.ROOT) {
+                return Optional.of(new TransactionReceiptRootResult(receipt.get()));
+            } else {
+                return Optional.of(new TransactionReceiptStatusResult(receipt.get()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    private BlockReceiptsResult getBlockReceiptsResult(final Hash blockHash) {
+        final List<TransactionReceiptResult> receiptList =
+                blockchainQueries.get()
+                        .blockByHash(blockHash)
+                        .map(block ->
+                                block.getTransactions().stream()
+                                        .map(tx -> txReceipt(tx).get())
+                                        .collect(Collectors.toList()))
+                        .orElse(new ArrayList<>());
+
+        return new BlockReceiptsResult(receiptList);
+    }
 }
