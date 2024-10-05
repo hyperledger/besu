@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTransaction;

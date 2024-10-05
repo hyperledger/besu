@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import org.awaitility.Awaitility;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,67 +29,64 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import org.awaitility.Awaitility;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
-  private BesuNode node;
+    private BesuNode node;
 
-  // context: https://en.wikipedia.org/wiki/The_Magic_Words_are_Squeamish_Ossifrage
-  private static final String MAGIC_WORDS = "Squemish Ossifrage";
+    // context: https://en.wikipedia.org/wiki/The_Magic_Words_are_Squeamish_Ossifrage
+    private static final String MAGIC_WORDS = "Squemish Ossifrage";
 
-  @BeforeEach
-  public void setUp() throws Exception {
-    node =
-        besu.createPluginsNode(
-            "node1",
-            Collections.singletonList("testPlugins"),
-            Collections.singletonList("--Xplugin-test-option=" + MAGIC_WORDS));
-    cluster.start(node);
-  }
+    @BeforeEach
+    public void setUp() throws Exception {
+        node =
+                besu.createPluginsNode(
+                        "node1",
+                        Collections.singletonList("testPlugins"),
+                        Collections.singletonList("--Xplugin-test-option=" + MAGIC_WORDS));
+        cluster.start(node);
+    }
 
-  @Test
-  public void shouldRegister() throws IOException {
-    final Path registrationFile =
-        node.homeDirectory().resolve("plugins/pluginLifecycle.registered");
-    waitForFile(registrationFile);
+    @Test
+    public void shouldRegister() throws IOException {
+        final Path registrationFile =
+                node.homeDirectory().resolve("plugins/pluginLifecycle.registered");
+        waitForFile(registrationFile);
 
-    // this assert is false as CLI will not be parsed at this point
-    assertThat(Files.readAllLines(registrationFile).stream().anyMatch(s -> s.contains(MAGIC_WORDS)))
-        .isFalse();
-  }
+        // this assert is false as CLI will not be parsed at this point
+        assertThat(Files.readAllLines(registrationFile).stream().anyMatch(s -> s.contains(MAGIC_WORDS)))
+                .isFalse();
+    }
 
-  @Test
-  public void shouldStart() throws IOException {
-    final Path registrationFile = node.homeDirectory().resolve("plugins/pluginLifecycle.started");
-    waitForFile(registrationFile);
+    @Test
+    public void shouldStart() throws IOException {
+        final Path registrationFile = node.homeDirectory().resolve("plugins/pluginLifecycle.started");
+        waitForFile(registrationFile);
 
-    // this assert is true as CLI will be parsed at this point
-    assertThat(Files.readAllLines(registrationFile).stream().anyMatch(s -> s.contains(MAGIC_WORDS)))
-        .isTrue();
-  }
+        // this assert is true as CLI will be parsed at this point
+        assertThat(Files.readAllLines(registrationFile).stream().anyMatch(s -> s.contains(MAGIC_WORDS)))
+                .isTrue();
+    }
 
-  @Test
-  @Disabled("No way to do a graceful shutdown of Besu at the moment.")
-  public void shouldStop() {
-    cluster.stopNode(node);
-    waitForFile(node.homeDirectory().resolve("plugins/pluginLifecycle.stopped"));
-  }
+    @Test
+    @Disabled("No way to do a graceful shutdown of Besu at the moment.")
+    public void shouldStop() {
+        cluster.stopNode(node);
+        waitForFile(node.homeDirectory().resolve("plugins/pluginLifecycle.stopped"));
+    }
 
-  private void waitForFile(final Path path) {
-    final File file = path.toFile();
-    Awaitility.waitAtMost(30, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              if (file.exists()) {
-                try (final Stream<String> s = Files.lines(path)) {
-                  return s.count() > 0;
-                }
-              } else {
-                return false;
-              }
-            });
-  }
+    private void waitForFile(final Path path) {
+        final File file = path.toFile();
+        Awaitility.waitAtMost(30, TimeUnit.SECONDS)
+                .until(
+                        () -> {
+                            if (file.exists()) {
+                                try (final Stream<String> s = Files.lines(path)) {
+                                    return s.count() > 0;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+    }
 }
