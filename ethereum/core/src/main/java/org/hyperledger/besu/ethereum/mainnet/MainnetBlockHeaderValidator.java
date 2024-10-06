@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -130,7 +130,7 @@ public final class MainnetBlockHeaderValidator {
 
   public static BlockHeaderValidator.Builder createBaseFeeMarketValidator(
       final BaseFeeMarket baseFeeMarket) {
-    return createBaseFeeMarketValidator(baseFeeMarket, MergeConfigOptions.isMergeEnabled());
+    return createBaseFeeMarketValidator(baseFeeMarket, MergeConfiguration.isMergeEnabled());
   }
 
   @VisibleForTesting
