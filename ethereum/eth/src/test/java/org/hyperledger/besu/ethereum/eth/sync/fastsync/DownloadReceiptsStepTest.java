@@ -124,8 +124,8 @@ public class DownloadReceiptsStepTest {
     PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> peerTaskResult =
         new PeerTaskExecutorResult<>(
             Optional.of(receiptsMap), PeerTaskExecutorResponseCode.SUCCESS);
-    Mockito.when(peerTaskExecutor.executeAsync(Mockito.any(GetReceiptsFromPeerTask.class)))
-        .thenReturn(CompletableFuture.completedFuture(peerTaskResult));
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetReceiptsFromPeerTask.class)))
+        .thenReturn(peerTaskResult);
 
     final CompletableFuture<List<BlockWithReceipts>> result = downloadReceiptsStep.apply(blocks);
 
