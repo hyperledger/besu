@@ -103,7 +103,7 @@ public class GetReceiptsFromPeerTask
   }
 
   @Override
-  public Collection<PeerTaskRetryBehavior> getPeerTaskBehaviors() {
+  public Collection<PeerTaskRetryBehavior> getPeerTaskRetryBehaviors() {
     return List.of(
         PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS, PeerTaskRetryBehavior.RETRY_WITH_SAME_PEER);
   }

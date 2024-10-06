@@ -159,7 +159,7 @@ public final class RunnerTest {
   @Test
   public void fullSyncFromGenesisUsingPeerTaskSystem() throws Exception {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
-    MergeConfigOptions.setMergeEnabled(false);
+    MergeConfiguration.setMergeEnabled(false);
 
     syncFromGenesis(SyncMode.FULL, getFastSyncGenesis(), true);
   }
@@ -175,7 +175,7 @@ public final class RunnerTest {
   @Test
   public void fastSyncFromGenesisUsingPeerTaskSystem() throws Exception {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
-    MergeConfigOptions.setMergeEnabled(false);
+    MergeConfiguration.setMergeEnabled(false);
 
     syncFromGenesis(SyncMode.FAST, getFastSyncGenesis(), true);
   }
