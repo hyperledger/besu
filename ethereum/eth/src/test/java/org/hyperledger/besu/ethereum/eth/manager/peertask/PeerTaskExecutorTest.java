@@ -200,8 +200,7 @@ public class PeerTaskExecutorTest {
           ExecutionException,
           InterruptedException,
           TimeoutException,
-          InvalidPeerTaskResponseException,
-          NoAvailablePeerException {
+          InvalidPeerTaskResponseException {
     Object responseObject = new Object();
 
     Mockito.when(peerSelector.getPeer(Mockito.any(Predicate.class))).thenReturn(ethPeer);
