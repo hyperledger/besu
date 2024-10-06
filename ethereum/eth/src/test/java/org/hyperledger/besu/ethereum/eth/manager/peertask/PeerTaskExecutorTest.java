@@ -71,7 +71,7 @@ public class PeerTaskExecutorTest {
     Object responseObject = new Object();
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
-    Mockito.when(peerTask.getPeerTaskBehaviors()).thenReturn(Collections.emptyList());
+    Mockito.when(peerTask.getPeerTaskRetryBehaviors()).thenReturn(Collections.emptyList());
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
     Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
@@ -99,7 +99,7 @@ public class PeerTaskExecutorTest {
     int requestMessageDataCode = 123;
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
-    Mockito.when(peerTask.getPeerTaskBehaviors())
+    Mockito.when(peerTask.getPeerTaskRetryBehaviors())
         .thenReturn(List.of(PeerTaskRetryBehavior.RETRY_WITH_SAME_PEER));
 
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
@@ -129,7 +129,7 @@ public class PeerTaskExecutorTest {
           TimeoutException {
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
-    Mockito.when(peerTask.getPeerTaskBehaviors()).thenReturn(Collections.emptyList());
+    Mockito.when(peerTask.getPeerTaskRetryBehaviors()).thenReturn(Collections.emptyList());
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
     Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
@@ -151,7 +151,7 @@ public class PeerTaskExecutorTest {
     int requestMessageDataCode = 123;
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
-    Mockito.when(peerTask.getPeerTaskBehaviors()).thenReturn(Collections.emptyList());
+    Mockito.when(peerTask.getPeerTaskRetryBehaviors()).thenReturn(Collections.emptyList());
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
     Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
@@ -176,7 +176,7 @@ public class PeerTaskExecutorTest {
           InvalidPeerTaskResponseException {
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
-    Mockito.when(peerTask.getPeerTaskBehaviors()).thenReturn(Collections.emptyList());
+    Mockito.when(peerTask.getPeerTaskRetryBehaviors()).thenReturn(Collections.emptyList());
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
     Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
@@ -200,14 +200,13 @@ public class PeerTaskExecutorTest {
           ExecutionException,
           InterruptedException,
           TimeoutException,
-          InvalidPeerTaskResponseException,
-          NoAvailablePeerException {
+          InvalidPeerTaskResponseException {
     Object responseObject = new Object();
 
     Mockito.when(peerSelector.getPeer(Mockito.any(Predicate.class))).thenReturn(ethPeer);
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
-    Mockito.when(peerTask.getPeerTaskBehaviors()).thenReturn(Collections.emptyList());
+    Mockito.when(peerTask.getPeerTaskRetryBehaviors()).thenReturn(Collections.emptyList());
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
     Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
@@ -241,7 +240,7 @@ public class PeerTaskExecutorTest {
         .thenReturn(peer2);
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
-    Mockito.when(peerTask.getPeerTaskBehaviors())
+    Mockito.when(peerTask.getPeerTaskRetryBehaviors())
         .thenReturn(List.of(PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS));
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))

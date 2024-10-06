@@ -34,9 +34,9 @@ import java.util.concurrent.TimeoutException;
 /** Manages the execution of PeerTasks, respecting their PeerTaskRetryBehavior */
 public class PeerTaskExecutor {
 
-  public static final int RETRIES_WITH_SAME_PEER = 3;
-  public static final int RETRIES_WITH_OTHER_PEER = 3;
-  public static final int NO_RETRIES = 1;
+  public static final int RETRIES_WITH_SAME_PEER = 2;
+  public static final int RETRIES_WITH_OTHER_PEER = 2;
+  public static final int NO_RETRIES = 0;
   private final PeerSelector peerSelector;
   private final PeerTaskRequestSender requestSender;
   private final EthScheduler ethScheduler;
@@ -61,8 +61,8 @@ public class PeerTaskExecutor {
 
   public <T> PeerTaskExecutorResult<T> execute(final PeerTask<T> peerTask) {
     PeerTaskExecutorResult<T> executorResult;
-    int triesRemaining =
-        peerTask.getPeerTaskBehaviors().contains(PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS)
+    int retriesRemaining =
+        peerTask.getPeerTaskRetryBehaviors().contains(PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS)
             ? RETRIES_WITH_OTHER_PEER
             : NO_RETRIES;
     final Collection<EthPeer> usedEthPeers = new HashSet<>();
@@ -81,7 +81,7 @@ public class PeerTaskExecutor {
             new PeerTaskExecutorResult<>(
                 Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE);
       }
-    } while (--triesRemaining > 0
+    } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS);
 
     return executorResult;
@@ -96,8 +96,8 @@ public class PeerTaskExecutor {
       final PeerTask<T> peerTask, final EthPeer peer) {
     MessageData requestMessageData = peerTask.getRequestMessage();
     PeerTaskExecutorResult<T> executorResult;
-    int triesRemaining =
-        peerTask.getPeerTaskBehaviors().contains(PeerTaskRetryBehavior.RETRY_WITH_SAME_PEER)
+    int retriesRemaining =
+        peerTask.getPeerTaskRetryBehaviors().contains(PeerTaskRetryBehavior.RETRY_WITH_SAME_PEER)
             ? RETRIES_WITH_SAME_PEER
             : NO_RETRIES;
     do {
@@ -136,7 +136,7 @@ public class PeerTaskExecutor {
             new PeerTaskExecutorResult<>(
                 Optional.empty(), PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR);
       }
-    } while (--triesRemaining > 0
+    } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.PEER_DISCONNECTED
         && sleepBetweenRetries());
