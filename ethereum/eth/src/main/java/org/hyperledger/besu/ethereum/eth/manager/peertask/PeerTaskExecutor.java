@@ -62,7 +62,7 @@ public class PeerTaskExecutor {
   public <T> PeerTaskExecutorResult<T> execute(final PeerTask<T> peerTask) {
     PeerTaskExecutorResult<T> executorResult;
     int triesRemaining =
-        peerTask.getPeerTaskBehaviors().contains(PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS)
+        peerTask.getPeerTaskRetryBehaviors().contains(PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS)
             ? RETRIES_WITH_OTHER_PEER
             : NO_RETRIES;
     final Collection<EthPeer> usedEthPeers = new HashSet<>();
@@ -97,7 +97,7 @@ public class PeerTaskExecutor {
     MessageData requestMessageData = peerTask.getRequestMessage();
     PeerTaskExecutorResult<T> executorResult;
     int triesRemaining =
-        peerTask.getPeerTaskBehaviors().contains(PeerTaskRetryBehavior.RETRY_WITH_SAME_PEER)
+        peerTask.getPeerTaskRetryBehaviors().contains(PeerTaskRetryBehavior.RETRY_WITH_SAME_PEER)
             ? RETRIES_WITH_SAME_PEER
             : NO_RETRIES;
     do {

@@ -55,7 +55,7 @@ public interface PeerTask<T> {
    *
    * @return the Collection of behaviors this task is expected to exhibit in the PeetTaskExecutor
    */
-  Collection<PeerTaskRetryBehavior> getPeerTaskBehaviors();
+  Collection<PeerTaskRetryBehavior> getPeerTaskRetryBehaviors();
 
   /**
    * Gets a Predicate that checks if an EthPeer is suitable for this PeerTask
