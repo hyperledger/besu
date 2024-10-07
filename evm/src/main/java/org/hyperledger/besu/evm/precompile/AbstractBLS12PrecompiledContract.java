@@ -18,6 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 
 import java.util.Optional;
@@ -66,6 +67,21 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     this.operationId = operationId;
     this.inputLimit = inputLen + 1;
   }
+
+  /**
+   * Is bls12 supported on this platform
+   *
+   * @return true if the native library was loaded.
+   */
+  public static boolean isAvailable() {
+    try {
+      return LibGnarkEIP2537.ENABLED;
+    } catch (UnsatisfiedLinkError | NoClassDefFoundError ule) {
+      LOG.info("bls12-381 native precompile not available: {}", ule.getMessage());
+    }
+    return false;
+  }
+
 
   @Override
   public String getName() {
