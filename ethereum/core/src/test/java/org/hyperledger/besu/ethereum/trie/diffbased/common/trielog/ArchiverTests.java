@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiArchiveFreezer;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiArchiver;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
@@ -64,10 +64,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class ArchiveFreezerTests {
+public class ArchiverTests {
 
   // Number of blocks in the chain. This is different to the number of blocks
-  // we have successfully frozen state for
+  // we have successfully archived state for
   static final long SHORT_TEST_CHAIN_HEIGHT = 151;
   static final long LONG_TEST_CHAIN_HEIGHT =
       2001; // We want block 2000 to be returned so set to 2001
@@ -107,7 +107,7 @@ public class ArchiveFreezerTests {
   @SuppressWarnings("BannedMethod")
   @BeforeEach
   public void setup() {
-    Configurator.setLevel(LogManager.getLogger(ArchiveFreezerTests.class).getName(), Level.TRACE);
+    Configurator.setLevel(LogManager.getLogger(ArchiverTests.class).getName(), Level.TRACE);
     worldStateStorage = Mockito.mock(BonsaiWorldStateKeyValueStorage.class);
     blockchain = Mockito.mock(Blockchain.class);
     trieLogManager = Mockito.mock(TrieLogManager.class);
@@ -157,7 +157,7 @@ public class ArchiveFreezerTests {
   }
 
   @Test
-  public void archiveFreezerLimitsInitialArchiveBlocks() {
+  public void archiveLimitsInitialArchiveBlocks() {
 
     blockNumberCache =
         CacheBuilder.newBuilder()
@@ -172,46 +172,47 @@ public class ArchiveFreezerTests {
 
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
-    // If we had previously frozen up to block 100...
-    final AtomicLong frozenBlocks = new AtomicLong(100L);
+    // If we had previously archived up to block 100...
+    final AtomicLong archivedBlocks = new AtomicLong(100L);
 
     // Mock the DB setter so it updates what the getter returns
     doAnswer(
             invocation -> {
               long thisValue = invocation.getArgument(0, Long.class);
-              frozenBlocks.set(thisValue);
+              archivedBlocks.set(thisValue);
               return null;
             })
         .when(worldStateStorage)
-        .setLatestArchiveFrozenBlock(any(Long.class));
+        .setLatestArchivedBlock(any(Long.class));
 
     // Mock the DB getter
     doAnswer(
             invocation -> {
-              return Optional.of(frozenBlocks.get());
+              return Optional.of(archivedBlocks.get());
             })
         .when(worldStateStorage)
-        .getLatestArchiveFrozenBlock();
+        .getLatestArchivedBlock();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(2000L);
 
-    // When any block is asked for by the archive freezer, generate it on the fly and return it
+    // When any block is asked for during the test, generate it on the fly and return it
     // unless it is > block num 2000
     when(blockchain.getBlockByNumber(anyLong()))
         .then(
             requestedBlockNumber ->
                 blockNumberCache.getUnchecked(requestedBlockNumber.getArgument(0, Long.class)));
 
-    BonsaiArchiveFreezer archiveFreezer =
-        new BonsaiArchiveFreezer(worldStateStorage, blockchain, executeAsync, trieLogManager);
-    long caughtUpBlocks = archiveFreezer.initialize();
+    BonsaiArchiver archiver =
+        new BonsaiArchiver(
+            worldStateStorage, blockchain, executeAsync, trieLogManager, new NoOpMetricsSystem());
+    long caughtUpBlocks = archiver.initialize();
 
     // Check that blocks 101 to 1990 (10 before chain head 2000) have been caught up
     assertThat(caughtUpBlocks).isEqualTo(1900);
   }
 
   @Test
-  public void archiveFreezerMoves1AccountStateChangeToFreezerSegment() {
+  public void archiverMoves1AccountStateChangeToArchiveSegment() {
     // Set up the block cache
     blockNumberCache =
         CacheBuilder.newBuilder()
@@ -226,29 +227,29 @@ public class ArchiveFreezerTests {
 
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
-    // If we had previously frozen up to block 100...
-    final AtomicLong frozenBlocks = new AtomicLong(100L);
+    // If we had previously archived up to block 100...
+    final AtomicLong archivedBlocks = new AtomicLong(100L);
 
     // Mock the DB setter so it updates what the getter returns
     doAnswer(
             invocation -> {
               long thisValue = invocation.getArgument(0, Long.class);
-              frozenBlocks.set(thisValue);
+              archivedBlocks.set(thisValue);
               return null;
             })
         .when(worldStateStorage)
-        .setLatestArchiveFrozenBlock(any(Long.class));
+        .setLatestArchivedBlock(any(Long.class));
 
     // Mock the DB getter
     doAnswer(
             invocation -> {
-              return Optional.of(frozenBlocks.get());
+              return Optional.of(archivedBlocks.get());
             })
         .when(worldStateStorage)
-        .getLatestArchiveFrozenBlock();
+        .getLatestArchivedBlock();
 
-    // Mock the number of changes the freeze action carries out for each relevant block
-    when(worldStateStorage.freezePreviousAccountState(any(), any()))
+    // Mock the number of changes the archive action carries out for each relevant block
+    when(worldStateStorage.archivePreviousAccountState(any(), any()))
         .then(
             request -> {
               Object objHeader = request.getArgument(0, Optional.class).get();
@@ -256,8 +257,8 @@ public class ArchiveFreezerTests {
                 BlockHeader blockHeader = (BlockHeader) objHeader;
                 if (blockHeader.getNumber() == 101) {
                   // Mock 1 state change when block 102 is being processed, because state changes in
-                  // block 101 can be frozen NB: the trie log in this test for block 102 isn't
-                  // frozen because no further changes to that account are made
+                  // block 101 can be archived NB: the trie log in this test for block 102 isn't
+                  // archived because no further changes to that account are made
                   return 1;
                 }
                 return 0;
@@ -265,8 +266,8 @@ public class ArchiveFreezerTests {
               return 0;
             });
 
-    // When any block is asked for by the archive freezer, generate it on the fly, cache it, and
-    // return it unless it
+    // When any block is asked for by the archiver during the test, generate it on the fly, cache
+    // it, and return it unless it exceeds the max block for the test
     when(blockchain.getBlockByNumber(anyLong()))
         .then(
             requestedBlockNumber ->
@@ -281,8 +282,8 @@ public class ArchiveFreezerTests {
 
     // Generate some trie logs to return for a specific block
 
-    // Simulate an account change in block 101. This state will be frozen because block 102 updates
-    // the same account (see below)
+    // Simulate an account change in block 101. This state will be archived because block 102
+    // updates the same account (see below)
     TrieLogLayer block101TrieLogs = new TrieLogLayer();
     StateTrieAccountValue oldValue =
         new StateTrieAccountValue(12, Wei.fromHexString("0x123"), Hash.EMPTY, Hash.EMPTY);
@@ -291,7 +292,7 @@ public class ArchiveFreezerTests {
     block101TrieLogs.addAccountChange(address, oldValue, newValue);
 
     // Simulate another change to the same account, this time in block 102. This change won't be
-    // frozen during the test because it is the current state of the account.
+    // archived during the test because it is the current state of the account.
     TrieLogLayer block102TrieLogs = new TrieLogLayer();
     oldValue = new StateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
     newValue = new StateTrieAccountValue(14, Wei.fromHexString("0x345"), Hash.EMPTY, Hash.EMPTY);
@@ -305,14 +306,15 @@ public class ArchiveFreezerTests {
                 "0x0d22db864d4effa62b640de645bffd44fb5d130578fbea4399f9abf8d7ac7789")))
         .thenReturn(Optional.of(block102TrieLogs));
 
-    // Initialize the archive freezer
-    BonsaiArchiveFreezer archiveFreezer =
-        new BonsaiArchiveFreezer(worldStateStorage, blockchain, executeAsync, trieLogManager);
-    archiveFreezer.initialize();
+    // Initialize the archiver
+    BonsaiArchiver archiver =
+        new BonsaiArchiver(
+            worldStateStorage, blockchain, executeAsync, trieLogManager, new NoOpMetricsSystem());
+    archiver.initialize();
 
-    // Chain height is 150, we've frozen state up to block 100, we should have initialized the next
-    // 50 blocks to be archived
-    assertThat(archiveFreezer.getPendingBlocksCount()).isEqualTo(50);
+    // Chain height is 150, we've archived state up to block 100, we should have initialized the
+    // next 50 blocks to be archived
+    assertThat(archiver.getPendingBlocksCount()).isEqualTo(50);
 
     when(blockchain.getChainHeadBlockNumber())
         .then(requestedBlockNumber -> getCurrentBlockHeight());
@@ -322,21 +324,21 @@ public class ArchiveFreezerTests {
     for (long nextBlock = 101; nextBlock < 150; nextBlock++) {
       currentBlockHeight = nextBlock;
       if (nextBlock == 112) {
-        archiveFreezer.addToFreezerQueue(
+        archiver.addToArchivingQueue(
             nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
-        int accountsMoved = archiveFreezer.moveBlockStateToFreezer();
+        int accountsMoved = archiver.moveBlockStateToArchive();
         assertThat(accountsMoved).isEqualTo(1);
       } else {
-        archiveFreezer.addToFreezerQueue(
+        archiver.addToArchivingQueue(
             nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
-        int accountsMoved = archiveFreezer.moveBlockStateToFreezer();
+        int accountsMoved = archiver.moveBlockStateToArchive();
         assertThat(accountsMoved).isEqualTo(0);
       }
     }
   }
 
   @Test
-  public void archiveFreezerMoves2StorageChangesToFreezerSegment() {
+  public void archiverMoves2StorageChangesToArchiveSegment() {
     // Set up the block cache
     blockNumberCache =
         CacheBuilder.newBuilder()
@@ -351,29 +353,29 @@ public class ArchiveFreezerTests {
 
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
-    // If we had previously frozen up to block 100...
-    final AtomicLong frozenBlocks = new AtomicLong(100L);
+    // If we had previously archived up to block 100...
+    final AtomicLong archivedBlocks = new AtomicLong(100L);
 
     // Mock the DB setter so it updates what the getter returns
     doAnswer(
             invocation -> {
               long thisValue = invocation.getArgument(0, Long.class);
-              frozenBlocks.set(thisValue);
+              archivedBlocks.set(thisValue);
               return null;
             })
         .when(worldStateStorage)
-        .setLatestArchiveFrozenBlock(any(Long.class));
+        .setLatestArchivedBlock(any(Long.class));
 
     // Mock the DB getter
     doAnswer(
             invocation -> {
-              return Optional.of(frozenBlocks.get());
+              return Optional.of(archivedBlocks.get());
             })
         .when(worldStateStorage)
-        .getLatestArchiveFrozenBlock();
+        .getLatestArchivedBlock();
 
-    // Mock the number of changes the freeze action carries out for each relevant block
-    when(worldStateStorage.freezePreviousStorageState(any(), any()))
+    // Mock the number of changes the archive action carries out for each relevant block
+    when(worldStateStorage.archivePreviousStorageState(any(), any()))
         .then(
             request -> {
               Object objHeader = request.getArgument(0, Optional.class).get();
@@ -381,9 +383,10 @@ public class ArchiveFreezerTests {
                 BlockHeader blockHeader = (BlockHeader) objHeader;
                 if (blockHeader.getNumber() == 101 || blockHeader.getNumber() == 102) {
                   // Mock 1 state change when block 102 is being processed, because state changes in
-                  // block 101 can be frozen (and likewise for block 103). NB: the trie log in this
-                  // test for block 103 isn't frozen because no further changes to that storage are
-                  // made
+                  // block 101 can be archived (and likewise for block 103). NB: the trie log in
+                  // this test for block 103 isn't archived because no further changes to that
+                  // storage
+                  // are made
                   return 1;
                 }
                 return 0;
@@ -391,7 +394,7 @@ public class ArchiveFreezerTests {
               return 0;
             });
 
-    // When any block is asked for by the archive freezer, generate it on the fly, cache it, and
+    // When any block is asked for by the archiver, generate it on the fly, cache it, and
     // return it unless it
     when(blockchain.getBlockByNumber(anyLong()))
         .then(
@@ -407,7 +410,7 @@ public class ArchiveFreezerTests {
 
     // Generate some trie logs to return for a specific block
 
-    // Simulate a storage change in block 101. This state will be frozen because block 102 updates
+    // Simulate a storage change in block 101. This state will be archived because block 102 updates
     // the same storage (see below)
     TrieLogLayer block101TrieLogs = new TrieLogLayer();
     UInt256 oldValue = UInt256.ZERO;
@@ -416,7 +419,7 @@ public class ArchiveFreezerTests {
     StorageSlotKey storageSlotKey = new StorageSlotKey(slot);
     block101TrieLogs.addStorageChange(address, storageSlotKey, oldValue, newValue);
 
-    // Simulate a storage change in block 102. This state will also be frozen because block 102
+    // Simulate a storage change in block 102. This state will also be archived because block 102
     // updates the same storage (see below)
     TrieLogLayer block102TrieLogs = new TrieLogLayer();
     oldValue = UInt256.ONE;
@@ -425,8 +428,8 @@ public class ArchiveFreezerTests {
     storageSlotKey = new StorageSlotKey(slot);
     block102TrieLogs.addStorageChange(address, storageSlotKey, oldValue, newValue);
 
-    // Simulate a storage change in block 103. This state will not be frozen because it refers to a
-    // different slot
+    // Simulate a storage change in block 103. This state will not be archived because it refers to
+    // a different slot
     TrieLogLayer block103TrieLogs = new TrieLogLayer();
     oldValue = UInt256.ZERO;
     newValue = UInt256.ONE;
@@ -447,26 +450,27 @@ public class ArchiveFreezerTests {
                 "0x96440b533326c26f4611e4c0b123ce732aa7a68e3b275f4a5a2ea9bc4b089c73")))
         .thenReturn(Optional.of(block103TrieLogs));
 
-    // Initialize the archive freezer
-    BonsaiArchiveFreezer archiveFreezer =
-        new BonsaiArchiveFreezer(worldStateStorage, blockchain, executeAsync, trieLogManager);
-    archiveFreezer.initialize();
+    // Initialize the archiver
+    BonsaiArchiver archiver =
+        new BonsaiArchiver(
+            worldStateStorage, blockchain, executeAsync, trieLogManager, new NoOpMetricsSystem());
+    archiver.initialize();
 
-    // Chain height is 150, we've frozen state up to block 100, we should have initialized the next
-    // 50 blocks to be archived
-    assertThat(archiveFreezer.getPendingBlocksCount()).isEqualTo(50);
+    // Chain height is 150, we've archived state up to block 100, we should have initialized the
+    // next 50 blocks to be archived
+    assertThat(archiver.getPendingBlocksCount()).isEqualTo(50);
 
     when(blockchain.getChainHeadBlockNumber())
         .then(requestedBlockNumber -> getCurrentBlockHeight());
 
     int totalStorageMoved = 0;
-    // Process the next 50 blocks. 2 storage changes should be frozen during this time should happen
-    // during this processing since there are only trie logs for blocks 101 and 102
+    // Process the next 50 blocks. 2 storage changes should be archived during this time should
+    // happen during this processing since there are only trie logs for blocks 101 and 102
     for (long nextBlock = 101; nextBlock < 150; nextBlock++) {
       currentBlockHeight = nextBlock;
-      archiveFreezer.addToFreezerQueue(
+      archiver.addToArchivingQueue(
           nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
-      int storageMoved = archiveFreezer.moveBlockStateToFreezer();
+      int storageMoved = archiver.moveBlockStateToArchive();
       totalStorageMoved += storageMoved;
       if (nextBlock == 112 || nextBlock == 113) {
         assertThat(storageMoved).isEqualTo(1);
@@ -479,7 +483,7 @@ public class ArchiveFreezerTests {
   }
 
   @Test
-  public void archiveFreezerMoves1AccountAnd2StorageChangesToFreezerSegment() {
+  public void archiverMoves1AccountAnd2StorageChangesToArchiveSegment() {
     // Set up the block cache
     blockNumberCache =
         CacheBuilder.newBuilder()
@@ -494,29 +498,29 @@ public class ArchiveFreezerTests {
 
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
-    // If we had previously frozen up to block 100...
-    final AtomicLong frozenBlocks = new AtomicLong(100L);
+    // If we had previously archived up to block 100...
+    final AtomicLong archivedBlocks = new AtomicLong(100L);
 
     // Mock the DB setter so it updates what the getter returns
     doAnswer(
             invocation -> {
               long thisValue = invocation.getArgument(0, Long.class);
-              frozenBlocks.set(thisValue);
+              archivedBlocks.set(thisValue);
               return null;
             })
         .when(worldStateStorage)
-        .setLatestArchiveFrozenBlock(any(Long.class));
+        .setLatestArchivedBlock(any(Long.class));
 
     // Mock the DB getter
     doAnswer(
             invocation -> {
-              return Optional.of(frozenBlocks.get());
+              return Optional.of(archivedBlocks.get());
             })
         .when(worldStateStorage)
-        .getLatestArchiveFrozenBlock();
+        .getLatestArchivedBlock();
 
-    // Mock the number of changes the freeze action carries out for each relevant block
-    when(worldStateStorage.freezePreviousStorageState(any(), any()))
+    // Mock the number of changes the archive action carries out for each relevant block
+    when(worldStateStorage.archivePreviousStorageState(any(), any()))
         .then(
             request -> {
               Object objHeader = request.getArgument(0, Optional.class).get();
@@ -524,8 +528,9 @@ public class ArchiveFreezerTests {
                 BlockHeader blockHeader = (BlockHeader) objHeader;
                 if (blockHeader.getNumber() == 101 || blockHeader.getNumber() == 102) {
                   // Mock 1 storage change when block 102 is being processed, because state changes
-                  // in block 101 can be frozen (and likewise for block 103). NB: the trie log in
-                  // this test for block 103 isn't frozen because no further changes to that storage
+                  // in block 101 can be archived (and likewise for block 103). NB: the trie log in
+                  // this test for block 103 isn't archived because no further changes to that
+                  // storage
                   // are made
                   return 1;
                 }
@@ -533,8 +538,8 @@ public class ArchiveFreezerTests {
               return 0;
             });
 
-    // Mock the number of changes the freeze action carries out for each relevant block
-    when(worldStateStorage.freezePreviousAccountState(any(), any()))
+    // Mock the number of changes the archive action carries out for each relevant block
+    when(worldStateStorage.archivePreviousAccountState(any(), any()))
         .then(
             request -> {
               Object objHeader = request.getArgument(0, Optional.class).get();
@@ -542,14 +547,14 @@ public class ArchiveFreezerTests {
                 BlockHeader blockHeader = (BlockHeader) objHeader;
                 if (blockHeader.getNumber() == 101) {
                   // Mock 1 state change when block 102 is being processed, because state changes in
-                  // block 101 can be frozen
+                  // block 101 can be archived
                   return 1;
                 }
               }
               return 0;
             });
 
-    // When any block is asked for by the archive freezer, generate it on the fly, cache it, and
+    // When any block is asked for by the archiver, generate it on the fly, cache it, and
     // return it unless it
     when(blockchain.getBlockByNumber(anyLong()))
         .then(
@@ -568,7 +573,7 @@ public class ArchiveFreezerTests {
     Address address = Address.fromHexString("0x95cD8499051f7FE6a2F53749eC1e9F4a81cafa13");
 
     // Simulate a storage change AND an account change in block 101. This state and storage will be
-    // frozen because block 102 updates both again (see below)
+    // archived because block 102 updates both again (see below)
     TrieLogLayer block101TrieLogs = new TrieLogLayer();
     UInt256 oldStorageValue = UInt256.ZERO;
     UInt256 newStorageValue = UInt256.ONE;
@@ -594,8 +599,8 @@ public class ArchiveFreezerTests {
         new StateTrieAccountValue(14, Wei.fromHexString("0x345"), Hash.EMPTY, Hash.EMPTY);
     block102TrieLogs.addAccountChange(address, oldAccountValue, newAccountValue);
 
-    // Simulate a storage change in block 103. This state will not be frozen because it refers to a
-    // different slot
+    // Simulate a storage change in block 103. This state will not be archived because it refers to
+    // a different slot
     TrieLogLayer block103TrieLogs = new TrieLogLayer();
     oldStorageValue = UInt256.ZERO;
     newStorageValue = UInt256.ONE;
@@ -616,26 +621,27 @@ public class ArchiveFreezerTests {
                 "0x96440b533326c26f4611e4c0b123ce732aa7a68e3b275f4a5a2ea9bc4b089c73")))
         .thenReturn(Optional.of(block103TrieLogs));
 
-    // Initialize the archive freezer
-    BonsaiArchiveFreezer archiveFreezer =
-        new BonsaiArchiveFreezer(worldStateStorage, blockchain, executeAsync, trieLogManager);
-    archiveFreezer.initialize();
+    // Initialize the archiver
+    BonsaiArchiver archiver =
+        new BonsaiArchiver(
+            worldStateStorage, blockchain, executeAsync, trieLogManager, new NoOpMetricsSystem());
+    archiver.initialize();
 
-    // Chain height is 150, we've frozen state up to block 100, we should have initialized the next
-    // 50 blocks to be archived
-    assertThat(archiveFreezer.getPendingBlocksCount()).isEqualTo(50);
+    // Chain height is 150, we've archived state up to block 100, we should have initialized the
+    // next 50 blocks to be archived
+    assertThat(archiver.getPendingBlocksCount()).isEqualTo(50);
 
     when(blockchain.getChainHeadBlockNumber())
         .then(requestedBlockNumber -> getCurrentBlockHeight());
 
     int totalStorageMoved = 0;
-    // Process the next 50 blocks. 2 storage changes should be frozen during this time should happen
-    // during this processing since there are only trie logs for blocks 101 and 102
+    // Process the next 50 blocks. 2 storage changes should be archived during this time should
+    // happen during this processing since there are only trie logs for blocks 101 and 102
     for (long nextBlock = 101; nextBlock < 150; nextBlock++) {
       currentBlockHeight = nextBlock;
-      archiveFreezer.addToFreezerQueue(
+      archiver.addToArchivingQueue(
           nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
-      int storageAndAccountsMoved = archiveFreezer.moveBlockStateToFreezer();
+      int storageAndAccountsMoved = archiver.moveBlockStateToArchive();
       if (nextBlock == 112) {
         assertThat(storageAndAccountsMoved).isEqualTo(2);
       } else if (nextBlock == 113) {
@@ -650,7 +656,7 @@ public class ArchiveFreezerTests {
   }
 
   @Test
-  public void archiveFreezerInMemoryDBFreezesAccountStateCorrectly() {
+  public void archiveInMemoryDBArchivesAccountStateCorrectly() {
     final BonsaiPreImageProxy preImageProxy =
         new BonsaiPreImageProxy.BonsaiReferenceTestPreImageProxy();
 
@@ -667,7 +673,7 @@ public class ArchiveFreezerTests {
 
     // Assume we've archived up to block 150L i.e. we're up to date with the chain head
     // (SHORT_TEST_CHAIN_HEIGHT)
-    testWorldStateStorage.setLatestArchiveFrozenBlock(150L);
+    testWorldStateStorage.setLatestArchivedBlock(150L);
 
     // Set up the block cache
     blockNumberCache =
@@ -681,7 +687,7 @@ public class ArchiveFreezerTests {
                   }
                 });
 
-    // When any block is asked for by the archive freezer, generate it on the fly, cache it, and
+    // When any block is asked for by the archiver, generate it on the fly, cache it, and
     // return it unless it
     when(blockchain.getBlockByNumber(anyLong()))
         .then(
@@ -698,8 +704,7 @@ public class ArchiveFreezerTests {
     // Generate some trie logs to return for a specific block
 
     // For state to be moved from the primary DB segment to the archive DB segment, we need the
-    // primary DB segment
-    // to have the account in already
+    // primary DB segment to have the account in already
     SegmentedKeyValueStorageTransaction tx =
         testWorldStateStorage.getComposedWorldStateStorage().startTransaction();
     final BonsaiAccount block150Account =
@@ -760,8 +765,8 @@ public class ArchiveFreezerTests {
         out.encoded().toArrayUnsafe());
     tx.commit();
 
-    // Simulate an account change in block 151. This state will be frozen because block 152 updates
-    // the same account (see below)
+    // Simulate an account change in block 151. This state will be archived because block 152
+    // updates the same account (see below)
     TrieLogLayer block151TrieLogs = new TrieLogLayer();
     StateTrieAccountValue oldValue =
         new StateTrieAccountValue(12, Wei.fromHexString("0x123"), Hash.EMPTY, Hash.EMPTY);
@@ -770,7 +775,7 @@ public class ArchiveFreezerTests {
     block151TrieLogs.addAccountChange(address, oldValue, newValue);
 
     // Simulate another change to the same account, this time in block 152. This change won't be
-    // frozen during the test because it is the current state of the account.
+    // archived during the test because it is the current state of the account.
     TrieLogLayer block152TrieLogs = new TrieLogLayer();
     oldValue = new StateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
     newValue = new StateTrieAccountValue(14, Wei.fromHexString("0x345"), Hash.EMPTY, Hash.EMPTY);
@@ -784,16 +789,21 @@ public class ArchiveFreezerTests {
                 "0x8d6a523f547ee224ba533b34034a3056838f2dab3daf0ffbf75713daf18bf885"))) // Block 152
         .thenReturn(Optional.of(block152TrieLogs));
 
-    // Initialize the archive freezer
-    BonsaiArchiveFreezer archiveFreezer =
-        new BonsaiArchiveFreezer(testWorldStateStorage, blockchain, executeAsync, trieLogManager);
-    archiveFreezer.initialize();
+    // Initialize the archiver
+    BonsaiArchiver archiver =
+        new BonsaiArchiver(
+            testWorldStateStorage,
+            blockchain,
+            executeAsync,
+            trieLogManager,
+            new NoOpMetricsSystem());
+    archiver.initialize();
 
-    // Chain height is 150, we've frozen state up to block 150
+    // Chain height is 150, we've archived state up to block 150
     currentBlockHeight = SHORT_TEST_CHAIN_HEIGHT;
     when(blockchain.getChainHeadBlockNumber())
         .then(requestedBlockNumber -> getCurrentBlockHeight());
-    assertThat(archiveFreezer.getPendingBlocksCount()).isEqualTo(0);
+    assertThat(archiver.getPendingBlocksCount()).isEqualTo(0);
 
     // Process the next 50 blocks 150-200 and count the archive changes. We'll recreate the
     // block cache so we can generate blocks beyond 150
@@ -826,16 +836,16 @@ public class ArchiveFreezerTests {
                   }
                 });
 
-    // By default we freeze state for chainheight - 10 blocks, so importing up to block 210 whould
+    // By default we archive state for chainheight - 10 blocks, so importing up to block 210 whould
     // cause blocks up to 200 to be archived
     for (long nextBlock = 151; nextBlock <= 210; nextBlock++) {
       currentBlockHeight = nextBlock;
-      archiveFreezer.onBlockAdded(
+      archiver.onBlockAdded(
           BlockAddedEvent.createForStoredOnly(blockNumberCache.getUnchecked(nextBlock).get()));
     }
 
     // We should have marked up to block 200 as archived
-    assertThat(testWorldStateStorage.getLatestArchiveFrozenBlock().get()).isEqualTo(200);
+    assertThat(testWorldStateStorage.getLatestArchivedBlock().get()).isEqualTo(200);
 
     // Only the latest/current state of the account should be in the primary DB segment
     assertThat(
@@ -844,11 +854,11 @@ public class ArchiveFreezerTests {
                 .count())
         .isEqualTo(1);
 
-    // Both the previous account states should be in the freezer segment, plus the special key that
-    // records the latest frozen block
+    // Both the previous account states should be in the archive segment, plus the special key that
+    // records the latest archived block
     assertThat(
             testWorldStateStorage.getComposedWorldStateStorage().stream(
-                    KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER)
+                    KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE)
                 .count())
         .isEqualTo(3);
 
@@ -857,7 +867,7 @@ public class ArchiveFreezerTests {
             testWorldStateStorage
                 .getComposedWorldStateStorage()
                 .containsKey(
-                    KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER,
+                    KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE,
                     Arrays.concatenate(
                         address.addressHash().toArrayUnsafe(),
                         Bytes.fromHexString("0x0000000000000096").toArrayUnsafe())))
@@ -866,7 +876,7 @@ public class ArchiveFreezerTests {
             testWorldStateStorage
                 .getComposedWorldStateStorage()
                 .containsKey(
-                    KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER,
+                    KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE,
                     Arrays.concatenate(
                         address.addressHash().toArrayUnsafe(),
                         Bytes.fromHexString("0x0000000000000097").toArrayUnsafe())))
@@ -883,7 +893,7 @@ public class ArchiveFreezerTests {
   }
 
   @Test
-  public void archiveFreezerInMemoryDBFreezesStorageStateCorrectly() {
+  public void archiverInMemoryDBArchivesStorageStateCorrectly() {
     final BonsaiPreImageProxy preImageProxy =
         new BonsaiPreImageProxy.BonsaiReferenceTestPreImageProxy();
 
@@ -900,7 +910,7 @@ public class ArchiveFreezerTests {
 
     // Assume we've archived up to block 150L i.e. we're up to date with the chain head
     // (SHORT_TEST_CHAIN_HEIGHT)
-    testWorldStateStorage.setLatestArchiveFrozenBlock(150L);
+    testWorldStateStorage.setLatestArchivedBlock(150L);
 
     // Set up the block cache
     blockNumberCache =
@@ -914,7 +924,7 @@ public class ArchiveFreezerTests {
                   }
                 });
 
-    // When any block is asked for by the archive freezer, generate it on the fly, cache it, and
+    // When any block is asked for by the archiver, generate it on the fly, cache it, and
     // return it unless it
     when(blockchain.getBlockByNumber(anyLong()))
         .then(
@@ -967,7 +977,7 @@ public class ArchiveFreezerTests {
         Bytes.fromHexString("0x0456").toArrayUnsafe());
     tx.commit();
 
-    // Simulate a storage change in block 151. This state will be frozen because block 152 updates
+    // Simulate a storage change in block 151. This state will be archived because block 152 updates
     // the same storage (see below)
     TrieLogLayer block151TrieLogs = new TrieLogLayer();
     UInt256 oldValue = UInt256.fromHexString("0x123");
@@ -976,7 +986,7 @@ public class ArchiveFreezerTests {
     StorageSlotKey storageSlotKey = new StorageSlotKey(slot);
     block151TrieLogs.addStorageChange(address, storageSlotKey, oldValue, newValue);
 
-    // Simulate a storage change in block 152. This state will also be frozen because block 152
+    // Simulate a storage change in block 152. This state will also be archived because block 152
     // updates the same storage (see below)
     TrieLogLayer block152TrieLogs = new TrieLogLayer();
     oldValue = UInt256.fromHexString("0x234");
@@ -985,7 +995,8 @@ public class ArchiveFreezerTests {
     storageSlotKey = new StorageSlotKey(slot);
     block152TrieLogs.addStorageChange(address, storageSlotKey, oldValue, newValue);
 
-    // Simulate a storage change in block 153. This state will not be frozen because it refers to a
+    // Simulate a storage change in block 153. This state will not be archived because it refers to
+    // a
     // different slot
     TrieLogLayer block153TrieLogs = new TrieLogLayer();
     oldValue = UInt256.fromHexString("0x345");
@@ -1007,16 +1018,21 @@ public class ArchiveFreezerTests {
                 "0xffce5e5e58cc2737a50076e4dce8c7c715968b98a52942dc2072df4b6941d1ca"))) // Block 153
         .thenReturn(Optional.of(block153TrieLogs));
 
-    // Initialize the archive freezer
-    BonsaiArchiveFreezer archiveFreezer =
-        new BonsaiArchiveFreezer(testWorldStateStorage, blockchain, executeAsync, trieLogManager);
-    archiveFreezer.initialize();
+    // Initialize the archiver
+    BonsaiArchiver archiver =
+        new BonsaiArchiver(
+            testWorldStateStorage,
+            blockchain,
+            executeAsync,
+            trieLogManager,
+            new NoOpMetricsSystem());
+    archiver.initialize();
 
-    // Chain height is 150, we've frozen state up to block 150
+    // Chain height is 150, we've archived state up to block 150
     currentBlockHeight = SHORT_TEST_CHAIN_HEIGHT;
     when(blockchain.getChainHeadBlockNumber())
         .then(requestedBlockNumber -> getCurrentBlockHeight());
-    assertThat(archiveFreezer.getPendingBlocksCount()).isEqualTo(0);
+    assertThat(archiver.getPendingBlocksCount()).isEqualTo(0);
 
     // Process the next 50 blocks 150-200 and count the archive changes. We'll recreate the
     // block cache so we can generate blocks beyond 150
@@ -1049,16 +1065,16 @@ public class ArchiveFreezerTests {
                   }
                 });
 
-    // By default we freeze state for chainheight - 10 blocks, so importing up to block 210 whould
+    // By default we archive state for chainheight - 10 blocks, so importing up to block 210 whould
     // cause blocks up to 200 to be archived
     for (long nextBlock = 151; nextBlock <= 210; nextBlock++) {
       currentBlockHeight = nextBlock;
-      archiveFreezer.onBlockAdded(
+      archiver.onBlockAdded(
           BlockAddedEvent.createForStoredOnly(blockNumberCache.getUnchecked(nextBlock).get()));
     }
 
     // We should have marked up to block 200 as archived
-    assertThat(testWorldStateStorage.getLatestArchiveFrozenBlock().get()).isEqualTo(200);
+    assertThat(testWorldStateStorage.getLatestArchivedBlock().get()).isEqualTo(200);
 
     // Only the latest/current state of the account should be in the primary DB segment
     assertThat(
@@ -1067,10 +1083,10 @@ public class ArchiveFreezerTests {
                 .count())
         .isEqualTo(1);
 
-    // All 3 previous storage states should be in the storage freezer
+    // All 3 previous storage states should be in the storage archiver
     assertThat(
             testWorldStateStorage.getComposedWorldStateStorage().stream(
-                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER)
+                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE)
                 .count())
         .isEqualTo(3);
 
@@ -1079,7 +1095,7 @@ public class ArchiveFreezerTests {
             testWorldStateStorage
                 .getComposedWorldStateStorage()
                 .containsKey(
-                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER,
+                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE,
                     Arrays.concatenate(
                         address.addressHash().toArrayUnsafe(),
                         slotKey.getSlotHash().toArrayUnsafe(),
@@ -1089,7 +1105,7 @@ public class ArchiveFreezerTests {
             testWorldStateStorage
                 .getComposedWorldStateStorage()
                 .containsKey(
-                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER,
+                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE,
                     Arrays.concatenate(
                         address.addressHash().toArrayUnsafe(),
                         slotKey.getSlotHash().toArrayUnsafe(),
@@ -1099,7 +1115,7 @@ public class ArchiveFreezerTests {
             testWorldStateStorage
                 .getComposedWorldStateStorage()
                 .containsKey(
-                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER,
+                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE,
                     Arrays.concatenate(
                         address.addressHash().toArrayUnsafe(),
                         slotKey.getSlotHash().toArrayUnsafe(),

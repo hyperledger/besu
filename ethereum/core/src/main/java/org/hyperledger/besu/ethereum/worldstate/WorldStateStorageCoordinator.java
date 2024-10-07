@@ -86,7 +86,7 @@ public class WorldStateStorageCoordinator {
   public void applyOnMatchingFlatMode(
       final FlatDbMode flatDbMode, final Consumer<BonsaiWorldStateKeyValueStorage> onStrategy) {
     applyOnMatchingStrategies(
-        List.of(DataStorageFormat.BONSAI, DataStorageFormat.BONSAI_ARCHIVE),
+        List.of(DataStorageFormat.BONSAI, DataStorageFormat.X_BONSAI_ARCHIVE),
         worldStateKeyValueStorage -> {
           final BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorageStrategy =
               (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage();
@@ -98,7 +98,7 @@ public class WorldStateStorageCoordinator {
 
   public void applyWhenFlatModeEnabled(final Consumer<BonsaiWorldStateKeyValueStorage> onStrategy) {
     applyOnMatchingStrategies(
-        List.of(DataStorageFormat.BONSAI, DataStorageFormat.BONSAI_ARCHIVE),
+        List.of(DataStorageFormat.BONSAI, DataStorageFormat.X_BONSAI_ARCHIVE),
         worldStateKeyValueStorage -> {
           final BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorageStrategy =
               (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage();

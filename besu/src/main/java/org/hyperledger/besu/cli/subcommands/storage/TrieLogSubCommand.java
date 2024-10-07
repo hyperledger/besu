@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -39,7 +40,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.rocksdb.RocksDBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -323,7 +323,7 @@ public class TrieLogSubCommand implements Runnable {
     final DataStorageConfiguration config = besuController.getDataStorageConfiguration();
     checkArgument(
         config.getDataStorageFormat().isBonsaiFormat(),
-        "Subcommand only works with data-storage-format=BONSAI or BONSAI_ARCHIVE");
+        "Subcommand only works with data-storage-format=BONSAI or X_BONSAI_ARCHIVE");
 
     final StorageProvider storageProvider = besuController.getStorageProvider();
     final BonsaiWorldStateKeyValueStorage rootWorldStateStorage =

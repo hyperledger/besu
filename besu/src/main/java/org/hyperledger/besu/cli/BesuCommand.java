@@ -1939,8 +1939,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (getDataStorageConfiguration().getDataStorageFormat() == DataStorageFormat.BONSAI) {
         throw new ParameterException(commandLine, String.format("%s %s", "Bonsai", errorSuffix));
       }
-      if (getDataStorageConfiguration().getDataStorageFormat() == DataStorageFormat.BONSAI_ARCHIVE) {
-        throw new ParameterException(commandLine, String.format("%s %s", "Bonsai archive", errorSuffix));
+      if (getDataStorageConfiguration().getDataStorageFormat()
+          == DataStorageFormat.X_BONSAI_ARCHIVE) {
+        throw new ParameterException(
+            commandLine, String.format("%s %s", "Bonsai archive", errorSuffix));
       }
 
       if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)

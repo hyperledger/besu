@@ -49,7 +49,7 @@ public class GenesisWorldStateProvider {
         == DataStorageFormat.BONSAI) {
       return createGenesisBonsaiWorldState(false);
     } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
-        == DataStorageFormat.BONSAI_ARCHIVE) {
+        == DataStorageFormat.X_BONSAI_ARCHIVE) {
       return createGenesisBonsaiWorldState(true);
     } else {
       return createGenesisForestWorldState();

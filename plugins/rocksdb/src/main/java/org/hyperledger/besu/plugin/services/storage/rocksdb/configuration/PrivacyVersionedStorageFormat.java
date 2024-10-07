@@ -72,7 +72,7 @@ public enum PrivacyVersionedStorageFormat implements VersionedStorageFormat {
     return switch (configuration.getDatabaseFormat()) {
       case FOREST -> FOREST_WITH_RECEIPT_COMPACTION;
       case BONSAI -> BONSAI_WITH_RECEIPT_COMPACTION;
-      case BONSAI_ARCHIVE -> BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION;
+      case X_BONSAI_ARCHIVE -> BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION;
     };
   }
 

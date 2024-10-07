@@ -855,7 +855,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
             new InMemoryKeyValueStorageProvider(),
             new NoOpMetricsSystem(),
             ImmutableDataStorageConfiguration.builder()
-                .dataStorageFormat(DataStorageFormat.BONSAI_ARCHIVE)
+                .dataStorageFormat(DataStorageFormat.X_BONSAI_ARCHIVE)
                 .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
                 .unstable(
                     ImmutableDataStorageConfiguration.Unstable.builder()

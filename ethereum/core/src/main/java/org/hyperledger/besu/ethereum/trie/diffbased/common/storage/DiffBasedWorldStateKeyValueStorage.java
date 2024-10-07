@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.common.storage;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
@@ -66,9 +66,8 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
-  // 0x61726368697665426C6F636B7346726F7A656E
-  public static final byte[] ARCHIVE_BLOCKS_FROZEN =
-      "archiveBlocksFrozen".getBytes(StandardCharsets.UTF_8);
+  // 0x6172636869766564426C6F636B73
+  public static final byte[] ARCHIVED_BLOCKS = "archivedBlocks".getBytes(StandardCharsets.UTF_8);
 
   private final AtomicBoolean shouldClose = new AtomicBoolean(false);
 
@@ -205,18 +204,18 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   }
 
   /**
-   * Move old account state from the primary DB segments to "freezer" segments that will only be
+   * Move old account state from the primary DB segment to the archive segment that will only be
    * used for historic state queries. This prevents performance degradation over time for writes to
    * the primary DB segments.
    *
    * @param previousBlockHeader the block header for the previous block, used to get the "nearest
    *     before" state
-   * @param accountHash the account to freeze old state for
-   * @return the number of account states that were moved to frozen storage
+   * @param accountHash the account to archive old state for
+   * @return the number of account states that were moved to the archive
    */
-  public int freezePreviousAccountState(
+  public int archivePreviousAccountState(
       final Optional<BlockHeader> previousBlockHeader, final Hash accountHash) {
-    AtomicInteger frozenStateCount = new AtomicInteger();
+    AtomicInteger archivedStateCount = new AtomicInteger();
     if (previousBlockHeader.isPresent()) {
       try {
         // Get the key for the previous block
@@ -229,7 +228,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
 
         Optional<SegmentedKeyValueStorage.NearestKeyValue> nextMatch;
 
-        // Move all entries that match this address hash to the freezer DB segment
+        // Move all entries that match this address hash to the archive DB segment
         while ((nextMatch =
                 composedWorldStateStorage
                     .getNearestBefore(ACCOUNT_INFO_STATE, previousKey)
@@ -244,14 +243,14 @@ public abstract class DiffBasedWorldStateKeyValueStorage
                   (nearestKey) -> {
                     moveDBEntry(
                         ACCOUNT_INFO_STATE,
-                        ACCOUNT_INFO_STATE_FREEZER,
+                        ACCOUNT_INFO_STATE_ARCHIVE,
                         nearestKey.key().toArrayUnsafe(),
                         nearestKey.value().get());
-                    frozenStateCount.getAndIncrement();
+                    archivedStateCount.getAndIncrement();
                   });
         }
 
-        if (frozenStateCount.get() == 0) {
+        if (archivedStateCount.get() == 0) {
           // A lot of entries will have no previous history, so use trace to log when no previous
           // storage was found
           LOG.atTrace()
@@ -261,33 +260,33 @@ public abstract class DiffBasedWorldStateKeyValueStorage
               .log();
         } else {
           LOG.atDebug()
-              .setMessage("{} storage entries frozen for block {}, address hash {}")
-              .addArgument(frozenStateCount.get())
+              .setMessage("{} storage entries archived for block {}, address hash {}")
+              .addArgument(archivedStateCount.get())
               .addArgument(previousBlockHeader.get().getNumber())
               .addArgument(accountHash)
               .log();
         }
       } catch (Exception e) {
-        LOG.error("Error moving account state for account {} to cold storage", accountHash, e);
+        LOG.error("Error moving account state for account {} to archived storage", accountHash, e);
       }
     }
 
-    return frozenStateCount.get();
+    return archivedStateCount.get();
   }
 
   /**
-   * Move old storage state from the primary DB segments to "cold" segments that will only be used
-   * for historic state queries. This prevents performance degradation over time for writes to the
-   * primary DB segments.
+   * Move old storage state from the primary DB segment to the archive segment that will only be
+   * used for historic state queries. This prevents performance degradation over time for writes to
+   * the primary DB segments.
    *
    * @param previousBlockHeader the block header for the previous block, used to get the "nearest
    *     before" state
-   * @param storageSlotKey the storage slot to freeze old state for
-   * @return the number of storage states that were moved to frozen storage
+   * @param storageSlotKey the storage slot to archive old state for
+   * @return the number of storage states that were moved to archive storage
    */
-  public int freezePreviousStorageState(
+  public int archivePreviousStorageState(
       final Optional<BlockHeader> previousBlockHeader, final Bytes storageSlotKey) {
-    AtomicInteger frozenStorageCount = new AtomicInteger();
+    AtomicInteger archivedStorageCount = new AtomicInteger();
     if (previousBlockHeader.isPresent()) {
       try {
         // Get the key for the previous block
@@ -301,7 +300,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
         Optional<SegmentedKeyValueStorage.NearestKeyValue> nextMatch;
 
         // Move all entries that match the storage hash for this address & slot
-        // to the freezer DB segment
+        // to the archive DB segment
         while ((nextMatch =
                 composedWorldStateStorage
                     .getNearestBefore(ACCOUNT_STORAGE_STORAGE, previousKey)
@@ -314,13 +313,13 @@ public abstract class DiffBasedWorldStateKeyValueStorage
           nextMatch.stream()
               .forEach(
                   (nearestKey) -> {
-                    if (frozenStorageCount.get() > 0 && frozenStorageCount.get() % 100 == 0) {
+                    if (archivedStorageCount.get() > 0 && archivedStorageCount.get() % 100 == 0) {
                       // Log progress in case catching up causes there to be a large number of keys
                       // to move
                       LOG.atDebug()
                           .setMessage(
-                              "{} storage entries frozen for block {}, slot hash {}, latest key {}")
-                          .addArgument(frozenStorageCount.get())
+                              "{} storage entries archived for block {}, slot hash {}, latest key {}")
+                          .addArgument(archivedStorageCount.get())
                           .addArgument(previousBlockHeader.get().getNumber())
                           .addArgument(storageSlotKey)
                           .addArgument(nearestKey.key())
@@ -328,14 +327,14 @@ public abstract class DiffBasedWorldStateKeyValueStorage
                     }
                     moveDBEntry(
                         ACCOUNT_STORAGE_STORAGE,
-                        ACCOUNT_STORAGE_FREEZER,
+                        ACCOUNT_STORAGE_ARCHIVE,
                         nearestKey.key().toArrayUnsafe(),
                         nearestKey.value().get());
-                    frozenStorageCount.getAndIncrement();
+                    archivedStorageCount.getAndIncrement();
                   });
         }
 
-        if (frozenStorageCount.get() == 0) {
+        if (archivedStorageCount.get() == 0) {
           // A lot of entries will have no previous history, so use trace to log when no previous
           // storage was found
           LOG.atTrace()
@@ -345,18 +344,18 @@ public abstract class DiffBasedWorldStateKeyValueStorage
               .log();
         } else {
           LOG.atDebug()
-              .setMessage("{} storage entries frozen for block {}, slot hash {}")
-              .addArgument(frozenStorageCount.get())
+              .setMessage("{} storage entries archived for block {}, slot hash {}")
+              .addArgument(archivedStorageCount.get())
               .addArgument(previousBlockHeader.get().getNumber())
               .addArgument(storageSlotKey)
               .log();
         }
       } catch (Exception e) {
-        LOG.error("Error moving storage state for slot {} to cold storage", storageSlotKey, e);
+        LOG.error("Error moving storage state for slot {} to archived storage", storageSlotKey, e);
       }
     }
 
-    return frozenStorageCount.get();
+    return archivedStorageCount.get();
   }
 
   private void moveDBEntry(
@@ -382,18 +381,18 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     }
   }
 
-  public Optional<Long> getLatestArchiveFrozenBlock() {
+  public Optional<Long> getLatestArchivedBlock() {
     return composedWorldStateStorage
-        .get(ACCOUNT_INFO_STATE_FREEZER, ARCHIVE_BLOCKS_FROZEN)
+        .get(ACCOUNT_INFO_STATE_ARCHIVE, ARCHIVED_BLOCKS)
         .map(Bytes::wrap)
         .map(Bytes::toLong);
   }
 
-  public void setLatestArchiveFrozenBlock(final Long blockNumber) {
+  public void setLatestArchivedBlock(final Long blockNumber) {
     SegmentedKeyValueStorageTransaction tx = composedWorldStateStorage.startTransaction();
     tx.put(
-        ACCOUNT_INFO_STATE_FREEZER,
-        ARCHIVE_BLOCKS_FROZEN,
+        ACCOUNT_INFO_STATE_ARCHIVE,
+        ARCHIVED_BLOCKS,
         Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
     tx.commit();
   }

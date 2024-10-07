@@ -128,7 +128,7 @@ class FlatDbStrategyProviderTest {
   void emptyDbCreatesArchiveFlatDbStrategyUsingCodeByHashConfig(final boolean codeByHashEnabled) {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
-            .dataStorageFormat(DataStorageFormat.BONSAI_ARCHIVE)
+            .dataStorageFormat(DataStorageFormat.X_BONSAI_ARCHIVE)
             .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
@@ -183,7 +183,7 @@ class FlatDbStrategyProviderTest {
   void existingAccountHashArchiveDbUsesAccountHash(final boolean codeByHashEnabled) {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
-            .dataStorageFormat(DataStorageFormat.BONSAI_ARCHIVE)
+            .dataStorageFormat(DataStorageFormat.X_BONSAI_ARCHIVE)
             .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
@@ -242,7 +242,7 @@ class FlatDbStrategyProviderTest {
   void existingCodeHashArchiveDbUsesCodeHash(final boolean codeByHashEnabled) {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
-            .dataStorageFormat(DataStorageFormat.BONSAI_ARCHIVE)
+            .dataStorageFormat(DataStorageFormat.X_BONSAI_ARCHIVE)
             .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()

@@ -83,7 +83,7 @@ public class FlatDbStrategyProvider {
         dataStorageConfiguration.getUnstable().getBonsaiFullFlatDbEnabled()
             ? (dataStorageConfiguration
                     .getDataStorageFormat()
-                    .equals(DataStorageFormat.BONSAI_ARCHIVE)
+                    .equals(DataStorageFormat.X_BONSAI_ARCHIVE)
                 ? FlatDbMode.ARCHIVE
                 : FlatDbMode.FULL)
             : FlatDbMode.PARTIAL;
@@ -167,7 +167,7 @@ public class FlatDbStrategyProvider {
       transaction.put(
           TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
     } else if (dataStorageConfiguration.getDataStorageFormat()
-        == DataStorageFormat.BONSAI_ARCHIVE) {
+        == DataStorageFormat.X_BONSAI_ARCHIVE) {
       LOG.info("setting FlatDbStrategy to ARCHIVE");
       transaction.put(
           TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.ARCHIVE.getVersion().toArrayUnsafe());

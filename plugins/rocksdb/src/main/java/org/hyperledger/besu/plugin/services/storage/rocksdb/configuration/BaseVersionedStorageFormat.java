@@ -49,12 +49,12 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
    * Current Bonsai version, with blockchain variables in a dedicated column family, in order to
    * make BlobDB more effective
    */
-  BONSAI_ARCHIVE_WITH_VARIABLES(DataStorageFormat.BONSAI_ARCHIVE, 1),
+  BONSAI_ARCHIVE_WITH_VARIABLES(DataStorageFormat.X_BONSAI_ARCHIVE, 1),
   /**
    * Current Bonsai version, with receipts using compaction, in order to make Receipts use less disk
    * space
    */
-  BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION(DataStorageFormat.BONSAI_ARCHIVE, 2);
+  BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION(DataStorageFormat.X_BONSAI_ARCHIVE, 2);
 
   private final DataStorageFormat format;
   private final int version;
@@ -75,7 +75,7 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
     return switch (configuration.getDatabaseFormat()) {
       case FOREST -> FOREST_WITH_RECEIPT_COMPACTION;
       case BONSAI -> BONSAI_WITH_RECEIPT_COMPACTION;
-      case BONSAI_ARCHIVE -> BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION;
+      case X_BONSAI_ARCHIVE -> BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION;
     };
   }
 

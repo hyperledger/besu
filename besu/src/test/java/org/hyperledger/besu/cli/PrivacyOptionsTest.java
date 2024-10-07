@@ -218,10 +218,10 @@ public class PrivacyOptionsTest extends CommandTestAbstract {
   @Test
   public void privacyWithBonsaiArchiveExplicitMustError() {
     // bypass overridden parseCommand method which specifies bonsai
-    super.parseCommand("--privacy-enabled", "--data-storage-format", "BONSAI_ARCHIVE");
+    super.parseCommand("--privacy-enabled", "--data-storage-format", "X_BONSAI_ARCHIVE");
 
     assertThat(commandErrorOutput.toString(UTF_8))
-            .contains("Bonsai archive cannot be enabled with privacy.");
+        .contains("Bonsai archive cannot be enabled with privacy.");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 

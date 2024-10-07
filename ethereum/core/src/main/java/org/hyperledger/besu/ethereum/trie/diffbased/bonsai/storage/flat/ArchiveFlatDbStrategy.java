@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -25,8 +25,10 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
@@ -46,12 +48,27 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
   private final BonsaiContext context;
   private static final Logger LOG = LoggerFactory.getLogger(ArchiveFlatDbStrategy.class);
 
+  protected final Counter getAccountFromArchiveCounter;
+  protected final Counter getStorageFromArchiveCounter;
+
   public ArchiveFlatDbStrategy(
       final BonsaiContext context,
       final MetricsSystem metricsSystem,
       final CodeStorageStrategy codeStorageStrategy) {
     super(metricsSystem, codeStorageStrategy);
     this.context = context;
+
+    getAccountFromArchiveCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_account_from_archive_counter",
+            "Total number of calls to get account that were from archived state");
+
+    getStorageFromArchiveCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_storage_from_archive_counter",
+            "Total number of calls to get storage that were from archived state");
   }
 
   static final byte[] MAX_BLOCK_SUFFIX = Bytes.ofUnsignedLong(Long.MAX_VALUE).toArrayUnsafe();
@@ -79,13 +96,17 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
             .getNearestBefore(ACCOUNT_INFO_STATE, keyNearest)
             .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size());
 
-    // If there isn't a match look in the freezer DB segment
+    // If there isn't a match look in the archive DB segment
     if (nearestAccount.isEmpty()) {
       accountFound =
           storage
-              .getNearestBefore(ACCOUNT_INFO_STATE_FREEZER, keyNearest)
+              .getNearestBefore(ACCOUNT_INFO_STATE_ARCHIVE, keyNearest)
               .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size())
               .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+
+      if (accountFound.isPresent()) {
+        getAccountFromArchiveCounter.inc();
+      }
     } else {
       accountFound =
           nearestAccount
@@ -95,13 +116,12 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
                           DELETED_ACCOUNT_VALUE, found.value().orElse(DELETED_ACCOUNT_VALUE)))
               // return empty when we find a "deleted value key"
               .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
-    }
 
-    if (accountFound.isPresent()) {
-      // TODO - different metric for frozen lookups?
-      getAccountFoundInFlatDatabaseCounter.inc();
-    } else {
-      getAccountNotFoundInFlatDatabaseCounter.inc();
+      if (accountFound.isPresent()) {
+        getAccountFoundInFlatDatabaseCounter.inc();
+      } else {
+        getAccountNotFoundInFlatDatabaseCounter.inc();
+      }
     }
 
     return accountFound;
@@ -261,17 +281,21 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
             .filter(
                 found -> Bytes.of(naturalKey).commonPrefixLength(found.key()) >= naturalKey.length);
 
-    // If there isn't a match look in the freezer DB segment
+    // If there isn't a match look in the archive DB segment
     if (nearestStorage.isEmpty()) {
-      // Check the frozen storage as old state is moved out of the primary DB segment
+      // Check the archived storage as old state is moved out of the primary DB segment
       storageFound =
           storage
-              .getNearestBefore(ACCOUNT_STORAGE_FREEZER, keyNearest)
+              .getNearestBefore(ACCOUNT_STORAGE_ARCHIVE, keyNearest)
               // don't return accounts that do not have a matching account hash
               .filter(
                   found ->
                       Bytes.of(naturalKey).commonPrefixLength(found.key()) >= naturalKey.length)
               .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+
+      if (storageFound.isPresent()) {
+        getStorageFromArchiveCounter.inc();
+      }
     } else {
       storageFound =
           nearestStorage
@@ -284,7 +308,6 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
               .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
 
       if (storageFound.isPresent()) {
-        // TODO - different metric for frozen lookups?
         getStorageValueFlatDatabaseCounter.inc();
       } else {
         getStorageValueNotFoundInFlatDatabaseCounter.inc();
