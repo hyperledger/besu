@@ -47,7 +47,7 @@ sonarqube {
   }
 }
 
-project.tasks["sonarqube"].dependsOn "testCodeCoverageReport"
+project.tasks["sonar"].dependsOn "testCodeCoverageReport"
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
   throw new GradleException("Java 21 or later is required to build Besu.\n" +
