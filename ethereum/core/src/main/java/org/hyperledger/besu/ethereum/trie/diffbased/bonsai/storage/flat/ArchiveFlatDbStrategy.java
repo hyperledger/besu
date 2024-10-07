@@ -158,6 +158,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
             calculateArchiveKeyNoContextMinSuffix(
                 calculateNaturalSlotKey(accountHash, Hash.wrap(Bytes32.wrap(startKeyHash)))))
         .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))
+        .takeWhile(pair -> pair.slice(0, Hash.SIZE).equals(accountHash))
         .distinct()
         .map(
             key ->
@@ -188,6 +189,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
             calculateArchiveKeyNoContextMaxSuffix(
                 calculateNaturalSlotKey(accountHash, Hash.wrap(endKeyHash))))
         .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))
+        .takeWhile(pair -> pair.slice(0, Hash.SIZE).equals(accountHash))
         .distinct()
         .map(
             key ->
