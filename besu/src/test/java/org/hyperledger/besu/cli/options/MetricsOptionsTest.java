@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.cli.options;
 
-import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
+import org.hyperledger.besu.cli.options.stable.MetricsOptions;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class MetricsCLIOptionsTest
-    extends AbstractCLIOptionsTest<MetricsConfiguration.Builder, MetricsCLIOptions> {
+public class MetricsOptionsTest
+    extends AbstractCLIOptionsTest<MetricsConfiguration.Builder, MetricsOptions> {
 
   @Override
   protected MetricsConfiguration.Builder createDefaultDomainObject() {
@@ -37,13 +37,13 @@ public class MetricsCLIOptionsTest
   }
 
   @Override
-  protected MetricsCLIOptions optionsFromDomainObject(
+  protected MetricsOptions optionsFromDomainObject(
       final MetricsConfiguration.Builder domainObject) {
-    return MetricsCLIOptions.fromConfiguration(domainObject.build());
+    return MetricsOptions.fromConfiguration(domainObject.build());
   }
 
   @Override
-  protected MetricsCLIOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
-    return besuCommand.getMetricsCLIOptions();
+  protected MetricsOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
+    return besuCommand.getMetricsOptions();
   }
 }

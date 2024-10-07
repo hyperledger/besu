@@ -25,10 +25,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -112,6 +117,7 @@ public class EthEstimateGasIntegrationTest {
   public void shouldReturnExpectedValueForContractDeploy_WithAccessList() {
     final JsonCallParameter callParameter =
         new JsonCallParameter.JsonCallParameterBuilder()
+            .withChainId(BLOCKCHAIN.getChainId())
             .withFrom(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
             .withInput(
                 Bytes.fromHexString(
@@ -121,6 +127,30 @@ public class EthEstimateGasIntegrationTest {
 
     final JsonRpcResponse response = method.response(requestWithParams(callParameter));
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x2014d");
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnErrorWithInvalidChainId() {
+    final JsonCallParameter callParameter =
+        new JsonCallParameter.JsonCallParameterBuilder()
+            .withChainId(BLOCKCHAIN.getChainId().add(BigInteger.ONE))
+            .withFrom(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
+            .withTo(Address.fromHexString("0x8888f1f195afa192cfee860698584c030f4c9db1"))
+            .withValue(Wei.ONE)
+            .build();
+
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            null,
+            JsonRpcError.from(
+                ValidationResult.invalid(
+                    TransactionInvalidReason.WRONG_CHAIN_ID,
+                    "transaction was meant for chain id 1983 and not this chain id 1982")));
+
+    final JsonRpcResponse response = method.response(request);
+
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
