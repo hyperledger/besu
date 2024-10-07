@@ -65,6 +65,7 @@ import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromHeadBlock;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromPeers;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromSafeBlock;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
@@ -890,14 +891,27 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             LOG.info("Initial sync done, unsubscribe forkchoice supplier");
           };
 
-      return new PivotSelectorFromSafeBlock(
-          protocolContext,
-          protocolSchedule,
-          ethContext,
-          metricsSystem,
-          genesisConfigOptions,
-          unverifiedForkchoiceSupplier,
-          unsubscribeForkchoiceListener);
+      if (syncConfig.getSnapSyncConfiguration().isSnapSyncToHeadEnabled()) {
+        LOG.info("Using head block for sync.");
+        return new PivotSelectorFromHeadBlock(
+            protocolContext,
+            protocolSchedule,
+            ethContext,
+            metricsSystem,
+            genesisConfigOptions,
+            unverifiedForkchoiceSupplier,
+            unsubscribeForkchoiceListener);
+      } else {
+        LOG.info("Using safe block for sync.");
+        return new PivotSelectorFromSafeBlock(
+            protocolContext,
+            protocolSchedule,
+            ethContext,
+            metricsSystem,
+            genesisConfigOptions,
+            unverifiedForkchoiceSupplier,
+            unsubscribeForkchoiceListener);
+      }
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
       return new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem);
