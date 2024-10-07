@@ -88,7 +88,6 @@ public class FlatDbStrategyProvider {
                 : FlatDbMode.FULL)
             : FlatDbMode.PARTIAL;
 
-    // TODO: commented out for archive testing
     final var existingTrieData =
         composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).isPresent();
 
@@ -100,23 +99,12 @@ public class FlatDbStrategyProvider {
                 .orElseGet(
                     () -> {
                       // if we do not have a db-supplied config for flatdb, derive it:
-                      // default to partial if trie data exists, but the flat config does not,
-                      // and default to the storage config otherwise
-
-                      // TODO: temporarily hard code ARCHIVE mode for testing
-                      /*var flatDbModeVal =
-                      dataStorageConfiguration
-                              .getDataStorageFormat()
-                              .equals(DataStorageFormat.BONSAI_ARCHIVE)
-                          ? FlatDbMode.ARCHIVE.getVersion()
-                          : FlatDbMode.FULL.getVersion();*/
+                      //  - default to partial if trie data exists but the flat config does not,
+                      //  - otherwise go with the requested mode
                       var flatDbModeVal =
                           existingTrieData
-                              ? FlatDbMode.ARCHIVE.getVersion()
+                              ? FlatDbMode.PARTIAL.getVersion()
                               : requestedFlatDbMode.getVersion();
-
-                      // MRW TODO - If there is archive data in the freezer segment, we can assume
-                      // archive mode
 
                       // persist this config in the db
                       var setDbModeTx = composedWorldStateStorage.startTransaction();
@@ -126,6 +114,7 @@ public class FlatDbStrategyProvider {
 
                       return flatDbModeVal;
                     }));
+
     LOG.info("Bonsai flat db mode found {}", flatDbMode);
 
     return flatDbMode;
