@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
@@ -303,6 +304,12 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
+    @Named("RequestedPlugins")
+    public List<String> provideRequestedPlugins() {
+      return toProvide.getRequestedPlugins();
+    }
+
+    @Provides
     Path provideDataDir() {
       return toProvide.homeDirectory();
     }
@@ -469,7 +476,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final RpcEndpointServiceImpl rpcEndpointServiceImpl,
         final BesuConfiguration commonPluginConfiguration,
         final PermissioningServiceImpl permissioningService,
-        final @Named("ExtraCLIOptions") List<String> extraCLIOptions) {
+        final @Named("ExtraCLIOptions") List<String> extraCLIOptions,
+        final @Named("RequestedPlugins") List<String> requestedPlugins) {
       final CommandLine commandLine = new CommandLine(CommandSpec.create());
       final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
       besuPluginContext.addService(StorageService.class, storageService);
@@ -504,7 +512,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       besuPluginContext.addService(PrivacyPluginService.class, new PrivacyPluginServiceImpl());
 
       besuPluginContext.initialize(
-          new PluginConfiguration.Builder().pluginsDir(pluginsPath).build());
+          new PluginConfiguration.Builder()
+              .pluginsDir(pluginsPath)
+              .requestedPlugins(requestedPlugins.stream().map(PluginInfo::new).toList())
+              .build());
       besuPluginContext.registerPlugins();
       commandLine.parseArgs(extraCLIOptions.toArray(new String[0]));
 

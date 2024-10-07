@@ -218,11 +218,13 @@ public class SnapSyncMetricsManager {
 
   public void notifySnapSyncCompleted() {
     final Duration duration = Duration.ofMillis(System.currentTimeMillis() - startSyncTime);
+    final long hours = (duration.toDaysPart() * 24) + duration.toHoursPart();
+
     LOG.info(
         "Finished worldstate snapsync with nodes {} (healed={}) duration {}{}:{},{}.",
         nbTrieNodesGenerated.addAndGet(nbTrieNodesHealed.get()),
         nbTrieNodesHealed,
-        duration.toHoursPart() > 0 ? (duration.toHoursPart() + ":") : "",
+        hours > 0 ? (hours + ":") : "",
         duration.toMinutesPart(),
         duration.toSecondsPart(),
         duration.toMillisPart());
