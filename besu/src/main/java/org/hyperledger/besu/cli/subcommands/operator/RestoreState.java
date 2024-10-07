@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.validation.constraints.NotBlank;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -64,6 +65,7 @@ public class RestoreState implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(RestoreState.class);
 
+  @NotBlank
   @Option(
       names = "--backup-path",
       required = true,
