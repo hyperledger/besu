@@ -37,6 +37,9 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DownloadReceiptsStep
     implements Function<List<Block>, CompletableFuture<List<BlockWithReceipts>>> {
 
@@ -62,7 +65,7 @@ public class DownloadReceiptsStep
     if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
       return ethContext
           .getScheduler()
-          .scheduleSyncWorkerTask(
+          .scheduleServiceTask(
               () -> {
                 Map<BlockHeader, List<TransactionReceipt>> getReceipts = new HashMap<>();
                 do {
