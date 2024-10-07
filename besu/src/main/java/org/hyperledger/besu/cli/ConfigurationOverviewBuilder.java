@@ -46,6 +46,7 @@ public class ConfigurationOverviewBuilder {
   private String customGenesisFileName;
   private String dataStorage;
   private String syncMode;
+  private Integer syncMinPeers;
   private Integer rpcPort;
   private Collection<String> rpcHttpApis;
   private Integer enginePort;
@@ -146,6 +147,17 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setSyncMode(final String syncMode) {
     this.syncMode = syncMode;
+    return this;
+  }
+
+  /**
+   * Sets sync min peers.
+   *
+   * @param syncMinPeers number of min peers for sync
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setSyncMinPeers(final int syncMinPeers) {
+    this.syncMinPeers = syncMinPeers;
     return this;
   }
 
@@ -351,6 +363,10 @@ public class ConfigurationOverviewBuilder {
 
     if (syncMode != null) {
       lines.add("Sync mode: " + syncMode);
+    }
+
+    if (syncMinPeers != null) {
+      lines.add("Sync min peers: " + syncMinPeers);
     }
 
     if (rpcHttpApis != null) {
