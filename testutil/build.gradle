@@ -28,6 +28,10 @@ jar {
   }
 }
 
+sonarqube {
+  skipProject = true
+}
+
 dependencies {
   implementation project(':ethereum:eth')
   implementation project(':plugin-api')
