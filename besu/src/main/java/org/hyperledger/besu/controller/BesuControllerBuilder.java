@@ -656,7 +656,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
     final PeerTaskExecutor peerTaskExecutor =
-        new PeerTaskExecutor(ethPeers, new PeerTaskRequestSender(), scheduler, metricsSystem);
+        new PeerTaskExecutor(ethPeers, new PeerTaskRequestSender(), metricsSystem);
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
