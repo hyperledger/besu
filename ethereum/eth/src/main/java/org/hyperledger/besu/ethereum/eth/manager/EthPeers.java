@@ -470,7 +470,10 @@ public class EthPeers implements PeerSelector {
   // Part of the PeerSelector interface, to be split apart later
   @Override
   public Optional<EthPeer> getPeer(final Predicate<EthPeer> filter) {
-    return streamBestPeers().filter(filter).filter(EthPeer::hasAvailableRequestCapacity).findFirst();
+    return streamAvailablePeers()
+        .filter(filter)
+        .filter(EthPeer::hasAvailableRequestCapacity)
+        .min(LEAST_TO_MOST_BUSY);
   }
 
   // Part of the PeerSelector interface, to be split apart later
