@@ -85,7 +85,6 @@ public class BftMiningCoordinatorTest {
 
   @Test
   public void restartsMiningAfterStop() {
-    // Shouldn't stop without first starting
     assertThat(bftMiningCoordinator.isMining()).isFalse();
     bftMiningCoordinator.stop();
     verify(bftProcessor, never()).stop();
@@ -101,7 +100,7 @@ public class BftMiningCoordinatorTest {
     bftMiningCoordinator.start();
     assertThat(bftMiningCoordinator.isMining()).isTrue();
 
-    // BFT process should be started once for every time the mining
+    // BFT processor should be started once for every time the mining
     // coordinator is restarted
     verify(bftProcessor, times(2)).start();
   }
