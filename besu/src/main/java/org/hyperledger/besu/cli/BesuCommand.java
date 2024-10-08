@@ -2701,7 +2701,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     builder
         .setDataStorage(dataStorageOptions.normalizeDataStorageFormat())
-        .setSyncMode(syncMode.normalize());
+        .setSyncMode(syncMode.normalize())
+        .setSyncMinPeers(syncMinPeerCount);
 
     if (jsonRpcConfiguration != null && jsonRpcConfiguration.isEnabled()) {
       builder
@@ -2738,6 +2739,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());
     builder.setSnapSyncBftEnabled(this.unstableSynchronizerOptions.isSnapSyncBftEnabled());
+    builder.setSnapSyncToHeadEnabled(this.unstableSynchronizerOptions.isSnapSyncToHeadEnabled());
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
     builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());

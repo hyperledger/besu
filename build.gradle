@@ -937,19 +937,6 @@ jacocoTestReport {
   }
 }
 
-task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
-  additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
-  sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
-  classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching { exclude 'org/hyperledger/besu/tests/acceptance/**' }
-  executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
-  reports {
-    xml.required = true
-    csv.required = true
-    html.destination file("build/reports/jacocoHtml")
-  }
-  onlyIf = { true }
-}
-
 // http://label-schema.org/rc1/
 // using the RFC3339 format "2016-04-12T23:20:50.52Z"
 def buildTime() {

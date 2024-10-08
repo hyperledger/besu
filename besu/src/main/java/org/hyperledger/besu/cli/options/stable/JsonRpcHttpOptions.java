@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static java.util.Arrays.asList;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_HOST;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_PRETTY_JSON_ENABLED;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
@@ -65,7 +66,7 @@ public class JsonRpcHttpOptions {
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
       description = "Host for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private String rpcHttpHost;
+  private String rpcHttpHost = DEFAULT_JSON_RPC_HOST;
 
   @CommandLine.Option(
       names = {"--rpc-http-port"},
