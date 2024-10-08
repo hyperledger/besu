@@ -157,7 +157,7 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.1'
 
-    dependencySet(group: 'org.hyperledger.besu', version: '0.9.6') {
+    dependencySet(group: 'org.hyperledger.besu', version: '0.9.7') {
       entry 'arithmetic'
       entry 'ipa-multipoint'
       entry 'bls12-381'
