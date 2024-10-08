@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRetryBehavior;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
@@ -34,19 +35,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class GetReceiptsFromPeerTask
     implements PeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
 
   private final Collection<BlockHeader> blockHeaders;
   private final BodyValidator bodyValidator;
+  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final Map<Hash, List<BlockHeader>> headersByReceiptsRoot = new HashMap<>();
   private final long requiredBlockchainHeight;
 
   public GetReceiptsFromPeerTask(
-      final Collection<BlockHeader> blockHeaders, final BodyValidator bodyValidator) {
+      final Collection<BlockHeader> blockHeaders,
+      final BodyValidator bodyValidator,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier) {
     this.blockHeaders = blockHeaders;
     this.bodyValidator = bodyValidator;
+    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
 
     blockHeaders.forEach(
         header ->
@@ -112,6 +118,7 @@ public class GetReceiptsFromPeerTask
   public Predicate<EthPeer> getPeerRequirementFilter() {
     return (ethPeer) ->
         ethPeer.getProtocolName().equals(getSubProtocol().getName())
-            && ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight;
+            && (currentProtocolSpecSupplier.get().isPoS()
+                || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight);
   }
 }

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.util.ArrayList;
@@ -42,7 +43,8 @@ public class GetReceiptsFromPeerTaskTest {
 
   @Test
   public void testGetSubProtocol() {
-    GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(Collections.emptyList(), null);
+    GetReceiptsFromPeerTask task =
+        new GetReceiptsFromPeerTask(Collections.emptyList(), null, () -> null);
     Assertions.assertEquals(EthProtocol.get(), task.getSubProtocol());
   }
 
@@ -50,7 +52,7 @@ public class GetReceiptsFromPeerTaskTest {
   public void testGetRequestMessage() {
     GetReceiptsFromPeerTask task =
         new GetReceiptsFromPeerTask(
-            List.of(mockBlockHeader(1), mockBlockHeader(2), mockBlockHeader(3)), null);
+            List.of(mockBlockHeader(1), mockBlockHeader(2), mockBlockHeader(3)), null, () -> null);
 
     MessageData messageData = task.getRequestMessage();
     GetReceiptsMessage getReceiptsMessage = GetReceiptsMessage.readFrom(messageData);
@@ -72,7 +74,8 @@ public class GetReceiptsFromPeerTaskTest {
 
   @Test
   public void testParseResponseWithNullResponseMessage() {
-    GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(Collections.emptyList(), null);
+    GetReceiptsFromPeerTask task =
+        new GetReceiptsFromPeerTask(Collections.emptyList(), null, () -> null);
     Assertions.assertThrows(InvalidPeerTaskResponseException.class, () -> task.parseResponse(null));
   }
 
@@ -80,7 +83,7 @@ public class GetReceiptsFromPeerTaskTest {
   public void testParseResponseForInvalidResponse() {
     GetReceiptsFromPeerTask task =
         new GetReceiptsFromPeerTask(
-            List.of(mockBlockHeader(1), mockBlockHeader(2), mockBlockHeader(3)), null);
+            List.of(mockBlockHeader(1), mockBlockHeader(2), mockBlockHeader(3)), null, () -> null);
     ReceiptsMessage receiptsMessage =
         ReceiptsMessage.create(
             List.of(
@@ -103,7 +106,7 @@ public class GetReceiptsFromPeerTaskTest {
 
     GetReceiptsFromPeerTask task =
         new GetReceiptsFromPeerTask(
-            List.of(blockHeader1, blockHeader2, blockHeader3), bodyValidator);
+            List.of(blockHeader1, blockHeader2, blockHeader3), bodyValidator, () -> null);
 
     TransactionReceipt receiptForBlock1 =
         new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
@@ -137,8 +140,12 @@ public class GetReceiptsFromPeerTaskTest {
     BlockHeader blockHeader2 = mockBlockHeader(2);
     BlockHeader blockHeader3 = mockBlockHeader(3);
 
+    ProtocolSpec protocolSpec = Mockito.mock(ProtocolSpec.class);
+    Mockito.when(protocolSpec.isPoS()).thenReturn(false);
+
     GetReceiptsFromPeerTask task =
-        new GetReceiptsFromPeerTask(List.of(blockHeader1, blockHeader2, blockHeader3), null);
+        new GetReceiptsFromPeerTask(
+            List.of(blockHeader1, blockHeader2, blockHeader3), null, () -> protocolSpec);
 
     EthPeer failForIncorrectProtocol = mockPeer("incorrectProtocol", 5);
     EthPeer failForShortChainHeight = mockPeer("incorrectProtocol", 1);

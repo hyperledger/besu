@@ -30,16 +30,19 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 public class CheckpointDownloadBlockStep {
 
   private final ProtocolSchedule protocolSchedule;
+  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final EthContext ethContext;
   private final PeerTaskExecutor peerTaskExecutor;
   private final Checkpoint checkpoint;
@@ -48,12 +51,14 @@ public class CheckpointDownloadBlockStep {
 
   public CheckpointDownloadBlockStep(
       final ProtocolSchedule protocolSchedule,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final EthContext ethContext,
       final PeerTaskExecutor peerTaskExecutor,
       final Checkpoint checkpoint,
       final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem) {
     this.protocolSchedule = protocolSchedule;
+    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.ethContext = ethContext;
     this.peerTaskExecutor = peerTaskExecutor;
     this.checkpoint = checkpoint;
@@ -81,7 +86,8 @@ public class CheckpointDownloadBlockStep {
     if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
       CompletableFuture<Optional<BlockWithReceipts>> futureReceipts = new CompletableFuture<>();
       GetReceiptsFromPeerTask task =
-          new GetReceiptsFromPeerTask(List.of(block.getHeader()), new BodyValidator());
+          new GetReceiptsFromPeerTask(
+              List.of(block.getHeader()), new BodyValidator(), currentProtocolSpecSupplier);
       PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> executorResult =
           peerTaskExecutor.execute(task);
 

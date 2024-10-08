@@ -157,7 +157,7 @@ public class CheckPointSyncChainDownloaderTest {
               }
             });
 
-    when(peerTaskExecutor.executeAsync(any(GetReceiptsFromPeerTask.class)))
+    when(peerTaskExecutor.execute(any(GetReceiptsFromPeerTask.class)))
         .thenAnswer(
             new Answer<
                 CompletableFuture<
@@ -207,6 +207,7 @@ public class CheckPointSyncChainDownloaderTest {
         syncConfig,
         worldStateStorageCoordinator,
         protocolSchedule,
+        () -> null,
         protocolContext,
         ethContext,
         peerTaskExecutor,

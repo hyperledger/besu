@@ -87,6 +87,7 @@ public class DownloadReceiptsStepTest {
   public void shouldDownloadReceiptsForBlocks() {
     DownloadReceiptsStep downloadReceiptsStep =
         new DownloadReceiptsStep(
+            () -> null,
             ethProtocolManager.ethContext(),
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
@@ -112,6 +113,7 @@ public class DownloadReceiptsStepTest {
       throws ExecutionException, InterruptedException {
     DownloadReceiptsStep downloadReceiptsStep =
         new DownloadReceiptsStep(
+            () -> null,
             ethProtocolManager.ethContext(),
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
