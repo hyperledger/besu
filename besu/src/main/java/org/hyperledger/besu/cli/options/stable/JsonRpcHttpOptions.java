@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static java.util.Arrays.asList;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_HOST;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_PRETTY_JSON_ENABLED;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
@@ -52,6 +53,7 @@ import picocli.CommandLine;
  * Handles configuration options for the JSON-RPC HTTP service, including validation and creation of
  * a JSON-RPC configuration.
  */
+// TODO: implement CLIOption<JsonRpcConfiguration>
 public class JsonRpcHttpOptions {
   @CommandLine.Option(
       names = {"--rpc-http-enabled"},
@@ -64,7 +66,7 @@ public class JsonRpcHttpOptions {
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
       description = "Host for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private String rpcHttpHost;
+  private String rpcHttpHost = DEFAULT_JSON_RPC_HOST;
 
   @CommandLine.Option(
       names = {"--rpc-http-port"},
@@ -265,6 +267,32 @@ public class JsonRpcHttpOptions {
   /**
    * Creates a JsonRpcConfiguration based on the provided options.
    *
+   * @return configuration populated from options or defaults
+   */
+  public JsonRpcConfiguration jsonRpcConfiguration() {
+
+    final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
+    jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
+    jsonRpcConfiguration.setPort(rpcHttpPort);
+    jsonRpcConfiguration.setMaxActiveConnections(rpcHttpMaxConnections);
+    jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
+    jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
+    jsonRpcConfiguration.setNoAuthRpcApis(
+        rpcHttpApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
+    jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
+    jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile);
+    jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
+    jsonRpcConfiguration.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
+    jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
+    jsonRpcConfiguration.setMaxBatchSize(rpcHttpMaxBatchSize);
+    jsonRpcConfiguration.setMaxRequestContentLength(rpcHttpMaxRequestContentLength);
+    jsonRpcConfiguration.setPrettyJsonEnabled(prettyJsonEnabled);
+    return jsonRpcConfiguration;
+  }
+
+  /**
+   * Creates a JsonRpcConfiguration based on the provided options.
+   *
    * @param hostsAllowlist List of hosts allowed
    * @param defaultHostAddress Default host address
    * @param timoutSec timeout in seconds
@@ -273,26 +301,13 @@ public class JsonRpcHttpOptions {
   public JsonRpcConfiguration jsonRpcConfiguration(
       final List<String> hostsAllowlist, final String defaultHostAddress, final Long timoutSec) {
 
-    final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
-    jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
+    final JsonRpcConfiguration jsonRpcConfiguration = this.jsonRpcConfiguration();
+
     jsonRpcConfiguration.setHost(
         Strings.isNullOrEmpty(rpcHttpHost) ? defaultHostAddress : rpcHttpHost);
-    jsonRpcConfiguration.setPort(rpcHttpPort);
-    jsonRpcConfiguration.setMaxActiveConnections(rpcHttpMaxConnections);
-    jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
-    jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
-    jsonRpcConfiguration.setNoAuthRpcApis(
-        rpcHttpApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
     jsonRpcConfiguration.setHostsAllowlist(hostsAllowlist);
-    jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
-    jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile);
-    jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
-    jsonRpcConfiguration.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
-    jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
+    ;
     jsonRpcConfiguration.setHttpTimeoutSec(timoutSec);
-    jsonRpcConfiguration.setMaxBatchSize(rpcHttpMaxBatchSize);
-    jsonRpcConfiguration.setMaxRequestContentLength(rpcHttpMaxRequestContentLength);
-    jsonRpcConfiguration.setPrettyJsonEnabled(prettyJsonEnabled);
     return jsonRpcConfiguration;
   }
 

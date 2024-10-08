@@ -85,6 +85,7 @@ public class SynchronizerConfiguration {
   private final int maxTrailingPeers;
   private final long worldStateMinMillisBeforeStalling;
   private final long propagationManagerGetBlockTimeoutMillis;
+  private final boolean isPeerTaskSystemEnabled;
 
   private SynchronizerConfiguration(
       final int syncPivotDistance,
@@ -108,7 +109,8 @@ public class SynchronizerConfiguration {
       final int computationParallelism,
       final int maxTrailingPeers,
       final long propagationManagerGetBlockTimeoutMillis,
-      final boolean checkpointPostMergeEnabled) {
+      final boolean checkpointPostMergeEnabled,
+      final boolean isPeerTaskSystemEnabled) {
     this.syncPivotDistance = syncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.syncMinimumPeerCount = syncMinimumPeerCount;
@@ -131,6 +133,7 @@ public class SynchronizerConfiguration {
     this.maxTrailingPeers = maxTrailingPeers;
     this.propagationManagerGetBlockTimeoutMillis = propagationManagerGetBlockTimeoutMillis;
     this.checkpointPostMergeEnabled = checkpointPostMergeEnabled;
+    this.isPeerTaskSystemEnabled = isPeerTaskSystemEnabled;
   }
 
   public static Builder builder() {
@@ -256,6 +259,10 @@ public class SynchronizerConfiguration {
     return propagationManagerGetBlockTimeoutMillis;
   }
 
+  public boolean isPeerTaskSystemEnabled() {
+    return isPeerTaskSystemEnabled;
+  }
+
   public static class Builder {
     private SyncMode syncMode = SyncMode.FULL;
     private int syncMinimumPeerCount = DEFAULT_SYNC_MINIMUM_PEERS;
@@ -280,6 +287,7 @@ public class SynchronizerConfiguration {
         DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS;
     private long worldStateMinMillisBeforeStalling = DEFAULT_WORLD_STATE_MIN_MILLIS_BEFORE_STALLING;
     private int worldStateTaskCacheSize = DEFAULT_WORLD_STATE_TASK_CACHE_SIZE;
+    private boolean isPeerTaskSystemEnabled = false;
 
     private long propagationManagerGetBlockTimeoutMillis =
         DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
@@ -406,6 +414,11 @@ public class SynchronizerConfiguration {
       return this;
     }
 
+    public Builder isPeerTaskSystemEnabled(final boolean isPeerTaskSystemEnabled) {
+      this.isPeerTaskSystemEnabled = isPeerTaskSystemEnabled;
+      return this;
+    }
+
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
           syncPivotDistance,
@@ -429,7 +442,8 @@ public class SynchronizerConfiguration {
           computationParallelism,
           maxTrailingPeers,
           propagationManagerGetBlockTimeoutMillis,
-          checkpointPostMergeEnabled);
+          checkpointPostMergeEnabled,
+          isPeerTaskSystemEnabled);
     }
   }
 }

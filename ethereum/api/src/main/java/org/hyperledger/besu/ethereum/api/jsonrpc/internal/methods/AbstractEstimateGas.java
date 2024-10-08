@@ -103,6 +103,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   protected CallParameter overrideGasLimitAndPrice(
       final JsonCallParameter callParams, final long gasLimit) {
     return new CallParameter(
+        callParams.getChainId(),
         callParams.getFrom(),
         callParams.getTo(),
         gasLimit,
@@ -111,7 +112,9 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
         callParams.getMaxFeePerGas(),
         callParams.getValue(),
         callParams.getPayload(),
-        callParams.getAccessList());
+        callParams.getAccessList(),
+        callParams.getMaxFeePerBlobGas(),
+        callParams.getBlobVersionedHashes());
   }
 
   /**
