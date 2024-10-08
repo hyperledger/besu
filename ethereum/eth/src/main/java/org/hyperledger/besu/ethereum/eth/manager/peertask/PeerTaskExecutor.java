@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -62,20 +61,19 @@ public class PeerTaskExecutor {
             : NO_RETRIES;
     final Collection<EthPeer> usedEthPeers = new HashSet<>();
     do {
-      EthPeer peer;
-      try {
-        peer =
-            peerSelector.getPeer(
-                (candidatePeer) ->
-                    peerTask.getPeerRequirementFilter().test(candidatePeer)
-                        && !usedEthPeers.contains(candidatePeer));
-        usedEthPeers.add(peer);
-        executorResult = executeAgainstPeer(peerTask, peer);
-      } catch (NoAvailablePeersException e) {
+      Optional<EthPeer> peer =
+          peerSelector.getPeer(
+              (candidatePeer) ->
+                  peerTask.getPeerRequirementFilter().test(candidatePeer)
+                      && !usedEthPeers.contains(candidatePeer));
+      if (peer.isEmpty()) {
         executorResult =
             new PeerTaskExecutorResult<>(
                 Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE);
+        continue;
       }
+      usedEthPeers.add(peer.get());
+      executorResult = executeAgainstPeer(peerTask, peer.get());
     } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS);
 

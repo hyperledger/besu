@@ -22,6 +22,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
@@ -49,8 +50,7 @@ public class PeerTaskExecutorTest {
   @BeforeEach
   public void beforeTest() {
     mockCloser = MockitoAnnotations.openMocks(this);
-    peerTaskExecutor =
-        new PeerTaskExecutor(peerSelector, requestSender, new NoOpMetricsSystem());
+    peerTaskExecutor = new PeerTaskExecutor(peerSelector, requestSender, new NoOpMetricsSystem());
   }
 
   @AfterEach
@@ -201,7 +201,8 @@ public class PeerTaskExecutorTest {
           InvalidPeerTaskResponseException {
     Object responseObject = new Object();
 
-    Mockito.when(peerSelector.getPeer(Mockito.any(Predicate.class))).thenReturn(ethPeer);
+    Mockito.when(peerSelector.getPeer(Mockito.any(Predicate.class)))
+        .thenReturn(Optional.of(ethPeer));
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
     Mockito.when(peerTask.getPeerTaskRetryBehaviors()).thenReturn(Collections.emptyList());
@@ -234,8 +235,8 @@ public class PeerTaskExecutorTest {
     EthPeer peer2 = Mockito.mock(EthPeer.class);
 
     Mockito.when(peerSelector.getPeer(Mockito.any(Predicate.class)))
-        .thenReturn(ethPeer)
-        .thenReturn(peer2);
+        .thenReturn(Optional.of(ethPeer))
+        .thenReturn(Optional.of(peer2));
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
     Mockito.when(peerTask.getPeerTaskRetryBehaviors())
