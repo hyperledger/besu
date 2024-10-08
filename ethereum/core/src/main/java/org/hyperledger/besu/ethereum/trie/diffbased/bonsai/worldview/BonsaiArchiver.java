@@ -80,17 +80,9 @@ public class BonsaiArchiver implements BlockAddedObserver {
             "Total number of blocks for which state has been archived");
   }
 
-  public long initialize() {
-    // On startup there will be recent blocks whose state and storage hasn't been archived yet.
-    // Start archiving them straight away to catch up with the chain head.
-    // long totalBlocksCaughtUp = 0;
+  public void initialize() {
+    // Read from the DB where we got to previously
     latestArchivedBlock.set(rootWorldStateStorage.getLatestArchivedBlock().orElse(0L));
-    long startingBlock = latestArchivedBlock.get();
-    while (blockchain.getChainHeadBlockNumber() - latestArchivedBlock.get()
-        > DISTANCE_FROM_HEAD_BEFORE_ARCHIVING_OLD_STATE) {
-      moveBlockStateToArchive();
-    }
-    return latestArchivedBlock.get() - startingBlock;
   }
 
   public long getPendingBlocksCount() {
@@ -232,6 +224,7 @@ public class BonsaiArchiver implements BlockAddedObserver {
 
   @Override
   public void onBlockAdded(final BlockAddedEvent addedBlockContext) {
+    initialize();
     final Optional<Long> blockNumber =
         Optional.of(addedBlockContext.getBlock().getHeader().getNumber());
     blockNumber.ifPresent(

@@ -847,8 +847,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             trieLogManager,
             metricsSystem);
 
-    long archivedBlocks = archiver.initialize();
-    LOG.info("Bonsai archiver initialised, caught up {} blocks", archivedBlocks);
+    archiver.initialize();
+    LOG.info("Bonsai archiver initialised");
     return archiver;
   }
 
