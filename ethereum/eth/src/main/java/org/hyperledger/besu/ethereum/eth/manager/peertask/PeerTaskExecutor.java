@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -103,7 +103,7 @@ public class PeerTaskExecutor {
             new PeerTaskExecutorResult<>(
                 Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS);
 
-      } catch (PeerConnection.PeerNotConnected e) {
+      } catch (PeerNotConnected e) {
         executorResult =
             new PeerTaskExecutorResult<>(
                 Optional.empty(), PeerTaskExecutorResponseCode.PEER_DISCONNECTED);
