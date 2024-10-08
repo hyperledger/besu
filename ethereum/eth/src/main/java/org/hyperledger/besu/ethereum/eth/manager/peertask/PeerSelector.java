@@ -29,7 +29,7 @@ public interface PeerSelector {
    * @param filter a Predicate\<EthPeer\> matching desirable peers
    * @return a peer matching the supplied conditions
    */
-  EthPeer getPeer(final Predicate<EthPeer> filter);
+  Optional<EthPeer> getPeer(final Predicate<EthPeer> filter);
 
   /**
    * Attempts to get the EthPeer identified by peerId

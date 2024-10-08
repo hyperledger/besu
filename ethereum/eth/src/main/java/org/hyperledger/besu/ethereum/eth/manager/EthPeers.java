@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
-import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerSelector;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
@@ -470,8 +469,8 @@ public class EthPeers implements PeerSelector {
 
   // Part of the PeerSelector interface, to be split apart later
   @Override
-  public EthPeer getPeer(final Predicate<EthPeer> filter) {
-    return streamBestPeers().filter(filter).findFirst().orElseThrow(NoAvailablePeersException::new);
+  public Optional<EthPeer> getPeer(final Predicate<EthPeer> filter) {
+    return bestPeerMatchingCriteria(filter);
   }
 
   // Part of the PeerSelector interface, to be split apart later
