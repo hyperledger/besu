@@ -1049,7 +1049,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final String host = "1.2.3.4";
     final int port = 1234;
-    parseCommand("--p2p-host", host, "--p2p-port", String.valueOf(port), "--metrics-push-enabled");
+    parseCommand("--p2p-host", host, "--p2p-port", String.valueOf(port), "--metrics-enabled");
 
     verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
     verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
