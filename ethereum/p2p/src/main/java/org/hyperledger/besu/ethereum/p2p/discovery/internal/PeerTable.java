@@ -26,18 +26,18 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.BloomFilter;
-import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -56,10 +56,7 @@ public class PeerTable {
   private final Map<Bytes, Integer> distanceCache;
   private BloomFilter<Bytes> idBloom;
   private int evictionCnt = 0;
-  private final LinkedHashMapWithMaximumSize<String, Integer> ipAddressCheckMap =
-      new LinkedHashMapWithMaximumSize<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
-  private final Collection<String> invalidIPs =
-      Collections.synchronizedCollection(new CircularFifoQueue<>(DEFAULT_BUCKET_SIZE * N_BUCKETS));
+  private final Cache<String, Integer> unresponsiveIPs;
 
   /**
    * Builds a new peer table, where distance is calculated using the provided nodeId as a baseline.
@@ -74,6 +71,11 @@ public class PeerTable {
             .toArray(Bucket[]::new);
     this.distanceCache = new ConcurrentHashMap<>();
     this.maxEntriesCnt = N_BUCKETS * DEFAULT_BUCKET_SIZE;
+    this.unresponsiveIPs =
+        CacheBuilder.newBuilder()
+            .maximumSize(maxEntriesCnt)
+            .expireAfterWrite(15L, TimeUnit.MINUTES)
+            .build();
 
     // A bloom filter with 4096 expected insertions of 64-byte keys with a 0.1% false positive
     // probability yields a memory footprint of ~7.5kb.
@@ -142,7 +144,6 @@ public class PeerTable {
     if (!res.isPresent()) {
       idBloom.put(id);
       distanceCache.put(id, distance);
-      ipAddressCheckMap.put(getKey(peer.getEndpoint()), peer.getEndpoint().getUdpPort());
       return AddResult.added();
     }
 
@@ -216,26 +217,12 @@ public class PeerTable {
 
   public boolean isIpAddressInvalid(final Endpoint endpoint) {
     final String key = getKey(endpoint);
-    if (invalidIPs.contains(key)) {
-      return true;
-    }
-    if (ipAddressCheckMap.containsKey(key) && ipAddressCheckMap.get(key) != endpoint.getUdpPort()) {
-      // This peer has multiple discovery services on the same IP address + TCP port.
-      invalidIPs.add(key);
-      for (final Bucket bucket : table) {
-        bucket.getPeers().stream()
-            .filter(p -> p.getEndpoint().getHost().equals(endpoint.getHost()))
-            .forEach(bucket::evict);
-      }
-      return true;
-    } else {
-      return false;
-    }
+    return unresponsiveIPs.getIfPresent(key) != null;
   }
 
   public void invalidateIP(final Endpoint endpoint) {
     final String key = getKey(endpoint);
-    invalidIPs.add(key);
+    unresponsiveIPs.put(key, Integer.MAX_VALUE);
   }
 
   private static String getKey(final Endpoint endpoint) {
