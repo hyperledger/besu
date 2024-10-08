@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -299,20 +298,6 @@ public class PeerTable {
 
     public Peer getEvictionCandidate() {
       return evictionCandidate;
-    }
-  }
-
-  private static class LinkedHashMapWithMaximumSize<K, V> extends LinkedHashMap<K, V> {
-    private final int maxSize;
-
-    public LinkedHashMapWithMaximumSize(final int maxSize) {
-      super(maxSize, 0.75f, false);
-      this.maxSize = maxSize;
-    }
-
-    @Override
-    protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
-      return size() > maxSize;
     }
   }
 
