@@ -21,6 +21,7 @@
 - Expose chainId in the `BlockchainService` [7702](https://github.com/hyperledger/besu/pull/7702)
 - Use head block instead of safe block for snap sync [7536](https://github.com/hyperledger/besu/issues/7536)
 - Add support for `chainId` in `CallParameters` [#7720](https://github.com/hyperledger/besu/pull/7720)
+- Experimental Bonsai Archive support [#7475](https://github.com/hyperledger/besu/pull/7475)
 
 ### Bug fixes
 - Fix mounted data path directory permissions for besu user [#7575](https://github.com/hyperledger/besu/pull/7575)
