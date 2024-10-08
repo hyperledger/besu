@@ -1029,6 +1029,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    // rpc host should remain default ie 127.0.0.1
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo("127.0.0.1");
   }
 
   @Test
