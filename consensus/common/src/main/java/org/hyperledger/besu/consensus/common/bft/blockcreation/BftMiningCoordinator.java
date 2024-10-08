@@ -147,7 +147,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
 
   @Override
   public boolean isMining() {
-    return true;
+    return state.get() == State.RUNNING;
   }
 
   @Override
