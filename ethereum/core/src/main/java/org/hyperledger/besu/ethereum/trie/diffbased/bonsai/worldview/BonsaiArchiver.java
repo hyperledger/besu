@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -26,8 +25,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -61,9 +58,6 @@ public class BonsaiArchiver implements BlockAddedObserver {
   protected final MetricsSystem metricsSystem;
   protected final Counter archivedBlocksCounter;
 
-  private final Map<Long, Hash> pendingBlocksToArchive =
-      Collections.synchronizedMap(new TreeMap<>());
-
   // For logging progress. Saves doing a DB read just to record our progress
   final AtomicLong latestArchivedBlock = new AtomicLong(0);
 
@@ -86,80 +80,26 @@ public class BonsaiArchiver implements BlockAddedObserver {
             "Total number of blocks for which state has been archived");
   }
 
-  private int loadNextCatchupBlocks() {
-    Optional<Long> archivedBlocksHead = Optional.empty();
-
-    Optional<Long> latestArchivedBlock = rootWorldStateStorage.getLatestArchivedBlock();
-
-    if (latestArchivedBlock.isPresent()) {
-      // Start from the next block after the most recently archived block
-      archivedBlocksHead = Optional.of(latestArchivedBlock.get() + 1);
-    } else {
-      // Start from genesis block
-      if (blockchain.getBlockHashByNumber(0).isPresent()) {
-        archivedBlocksHead = Optional.of(0L);
-      }
-    }
-
-    int preLoadedBlocks = 0;
-    if (archivedBlocksHead.isPresent()) {
-      Optional<Block> nextBlock = blockchain.getBlockByNumber(archivedBlocksHead.get());
-      for (int i = 0; i < CATCHUP_LIMIT; i++) {
-        if (nextBlock.isPresent()) {
-          addToArchivingQueue(
-              nextBlock.get().getHeader().getNumber(), nextBlock.get().getHeader().getHash());
-          preLoadedBlocks++;
-          nextBlock = blockchain.getBlockByNumber(nextBlock.get().getHeader().getNumber() + 1);
-        } else {
-          break;
-        }
-      }
-      LOG.atInfo()
-          .setMessage("Preloaded {} blocks from {} to move their state and storage to the archive")
-          .addArgument(preLoadedBlocks)
-          .addArgument(archivedBlocksHead.get())
-          .log();
-    }
-    return preLoadedBlocks;
-  }
-
   public long initialize() {
     // On startup there will be recent blocks whose state and storage hasn't been archived yet.
-    // Pre-load them in blocks of CATCHUP_LIMIT ready for archiving state once enough new blocks
-    // have
-    // been added to the chain.
-    long totalBlocksCaughtUp = 0;
-    int catchupBlocksLoaded = CATCHUP_LIMIT;
-    while (catchupBlocksLoaded >= CATCHUP_LIMIT) {
-      catchupBlocksLoaded = loadNextCatchupBlocks();
+    // Start archiving them straight away to catch up with the chain head.
+    // long totalBlocksCaughtUp = 0;
+    latestArchivedBlock.set(rootWorldStateStorage.getLatestArchivedBlock().orElse(0L));
+    long startingBlock = latestArchivedBlock.get();
+    while (blockchain.getChainHeadBlockNumber() - latestArchivedBlock.get()
+        > DISTANCE_FROM_HEAD_BEFORE_ARCHIVING_OLD_STATE) {
       moveBlockStateToArchive();
-      totalBlocksCaughtUp += catchupBlocksLoaded;
     }
-    return totalBlocksCaughtUp;
+    return latestArchivedBlock.get() - startingBlock;
   }
 
-  public int getPendingBlocksCount() {
-    return pendingBlocksToArchive.size();
-  }
-
-  public synchronized void addToArchivingQueue(final long blockNumber, final Hash blockHash) {
-    LOG.atDebug()
-        .setMessage(
-            "Adding block to archiving queue for moving to cold storage, blockNumber {}; blockHash {}")
-        .addArgument(blockNumber)
-        .addArgument(blockHash)
-        .log();
-    pendingBlocksToArchive.put(blockNumber, blockHash);
-  }
-
-  private synchronized void removeArchivedFromQueue(final Map<Long, Hash> archivedBlocks) {
-    archivedBlocks.keySet().forEach(e -> pendingBlocksToArchive.remove(e));
+  public long getPendingBlocksCount() {
+    return blockchain.getChainHeadBlockNumber() - latestArchivedBlock.get();
   }
 
   // Move state and storage entries from their primary DB segments to their archive DB segments.
-  // This is
-  // intended to maintain good performance for new block imports by keeping the primary DB segments
-  // to live state only. Returns the number of state and storage entries moved.
+  // This is intended to maintain good performance for new block imports by keeping the primary
+  // DB segments to live state only. Returns the number of state and storage entries moved.
   public int moveBlockStateToArchive() {
     final long retainAboveThisBlock =
         blockchain.getChainHeadBlockNumber() - DISTANCE_FROM_HEAD_BEFORE_ARCHIVING_OLD_STATE;
@@ -178,18 +118,27 @@ public class BonsaiArchiver implements BlockAddedObserver {
     final SortedMap<Long, Hash> blocksToArchive;
     synchronized (this) {
       blocksToArchive = new TreeMap<>();
-      pendingBlocksToArchive.entrySet().stream()
-          .filter(
-              (e) -> blocksToArchive.size() <= CATCHUP_LIMIT && e.getKey() <= retainAboveThisBlock)
-          .forEach(
-              (e) -> {
-                blocksToArchive.put(e.getKey(), e.getValue());
-              });
+
+      long nextToArchive = latestArchivedBlock.get() + 1;
+      while (blocksToArchive.size() <= CATCHUP_LIMIT && nextToArchive < retainAboveThisBlock) {
+        blocksToArchive.put(
+            nextToArchive, blockchain.getBlockByNumber(nextToArchive).get().getHash());
+
+        if (!blockchain.blockIsOnCanonicalChain(
+            blockchain.getBlockHashByNumber(nextToArchive).orElse(Hash.EMPTY))) {
+          LOG.error(
+              "Attempted to archive a non-canonical block: {} / {}",
+              nextToArchive,
+              blockchain.getBlockByNumber(nextToArchive).get().getHash());
+        }
+
+        nextToArchive++;
+      }
     }
 
     if (blocksToArchive.size() > 0) {
       LOG.atDebug()
-          .setMessage("Moving cold state to archive storage: {} to {} ")
+          .setMessage("Moving state to archive storage: {} to {} ")
           .addArgument(blocksToArchive.firstKey())
           .addArgument(blocksToArchive.lastKey())
           .log();
@@ -274,8 +223,6 @@ public class BonsaiArchiver implements BlockAddedObserver {
           .addArgument(archivedAccountStateCount.get())
           .addArgument(archivedAccountStorageCount.get())
           .log();
-
-      removeArchivedFromQueue(blocksToArchive);
     }
 
     return archivedAccountStateCount.get() + archivedAccountStorageCount.get();
@@ -285,13 +232,10 @@ public class BonsaiArchiver implements BlockAddedObserver {
 
   @Override
   public void onBlockAdded(final BlockAddedEvent addedBlockContext) {
-    final Hash blockHash = addedBlockContext.getBlock().getHeader().getBlockHash();
     final Optional<Long> blockNumber =
         Optional.of(addedBlockContext.getBlock().getHeader().getNumber());
     blockNumber.ifPresent(
         blockNum -> {
-          addToArchivingQueue(blockNum, blockHash);
-
           // Since moving blocks can be done in batches we only want
           // one instance running at a time
           executeAsync.accept(
