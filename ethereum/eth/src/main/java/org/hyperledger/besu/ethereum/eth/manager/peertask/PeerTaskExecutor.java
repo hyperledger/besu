@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -27,7 +26,6 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -39,18 +37,15 @@ public class PeerTaskExecutor {
   public static final int NO_RETRIES = 0;
   private final PeerSelector peerSelector;
   private final PeerTaskRequestSender requestSender;
-  private final EthScheduler ethScheduler;
 
   private final LabelledMetric<OperationTimer> requestTimer;
 
   public PeerTaskExecutor(
       final PeerSelector peerSelector,
       final PeerTaskRequestSender requestSender,
-      final EthScheduler ethScheduler,
       final MetricsSystem metricsSystem) {
     this.peerSelector = peerSelector;
     this.requestSender = requestSender;
-    this.ethScheduler = ethScheduler;
     requestTimer =
         metricsSystem.createLabelledTimer(
             BesuMetricCategory.PEERS,
@@ -85,11 +80,6 @@ public class PeerTaskExecutor {
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS);
 
     return executorResult;
-  }
-
-  public <T> CompletableFuture<PeerTaskExecutorResult<T>> executeAsync(final PeerTask<T> peerTask) {
-    return ethScheduler.scheduleSyncWorkerTask(
-        () -> CompletableFuture.completedFuture(execute(peerTask)));
   }
 
   public <T> PeerTaskExecutorResult<T> executeAgainstPeer(
@@ -142,12 +132,6 @@ public class PeerTaskExecutor {
         && sleepBetweenRetries());
 
     return executorResult;
-  }
-
-  public <T> CompletableFuture<PeerTaskExecutorResult<T>> executeAgainstPeerAsync(
-      final PeerTask<T> peerTask, final EthPeer peer) {
-    return ethScheduler.scheduleSyncWorkerTask(
-        () -> CompletableFuture.completedFuture(executeAgainstPeer(peerTask, peer)));
   }
 
   private boolean sleepBetweenRetries() {

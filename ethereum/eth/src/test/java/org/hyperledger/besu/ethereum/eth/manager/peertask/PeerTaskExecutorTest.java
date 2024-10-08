@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
@@ -38,7 +37,6 @@ import org.mockito.MockitoAnnotations;
 public class PeerTaskExecutorTest {
   private @Mock PeerSelector peerSelector;
   private @Mock PeerTaskRequestSender requestSender;
-  private @Mock EthScheduler ethScheduler;
   private @Mock PeerTask<Object> peerTask;
   private @Mock SubProtocol subprotocol;
   private @Mock MessageData requestMessageData;
@@ -52,7 +50,7 @@ public class PeerTaskExecutorTest {
   public void beforeTest() {
     mockCloser = MockitoAnnotations.openMocks(this);
     peerTaskExecutor =
-        new PeerTaskExecutor(peerSelector, requestSender, ethScheduler, new NoOpMetricsSystem());
+        new PeerTaskExecutor(peerSelector, requestSender, new NoOpMetricsSystem());
   }
 
   @AfterEach
