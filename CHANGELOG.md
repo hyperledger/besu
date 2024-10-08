@@ -18,7 +18,8 @@
 - Add configuration of Consolidation Request Contract Address via genesis configuration [#7647](https://github.com/hyperledger/besu/pull/7647)
 - Interrupt pending transaction processing on block creation timeout [#7673](https://github.com/hyperledger/besu/pull/7673)
 - Align gas cap calculation for transaction simulation to Geth approach [#7703](https://github.com/hyperledger/besu/pull/7703)
-- Expose chainId in the `BlockchainService` [#7702](https://github.com/hyperledger/besu/pull/7702)
+- Expose chainId in the `BlockchainService` [7702](https://github.com/hyperledger/besu/pull/7702)
+- Use head block instead of safe block for snap sync [7536](https://github.com/hyperledger/besu/issues/7536)
 - Add support for `chainId` in `CallParameters` [#7720](https://github.com/hyperledger/besu/pull/7720)
 
 ### Bug fixes
