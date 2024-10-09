@@ -29,19 +29,25 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -63,7 +69,8 @@ import org.mockito.Mockito;
 public class BonsaiWorldStateKeyValueStorageTest {
 
   public static Collection<Object[]> flatDbMode() {
-    return Arrays.asList(new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.PARTIAL}});
+    return Arrays.asList(
+        new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.PARTIAL}, {FlatDbMode.ARCHIVE}});
   }
 
   public static Collection<Object[]> flatDbModeAndCodeStorageMode() {
@@ -71,8 +78,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
         new Object[][] {
           {FlatDbMode.FULL, false},
           {FlatDbMode.PARTIAL, false},
+          {FlatDbMode.ARCHIVE, false},
           {FlatDbMode.FULL, true},
-          {FlatDbMode.PARTIAL, true}
+          {FlatDbMode.PARTIAL, true},
+          {FlatDbMode.ARCHIVE, true}
         });
   }
 
@@ -84,10 +93,14 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   public BonsaiWorldStateKeyValueStorage setUp(
       final FlatDbMode flatDbMode, final boolean useCodeHashStorage) {
-    storage = emptyStorage(useCodeHashStorage);
-    if (flatDbMode.equals(FlatDbMode.FULL)) {
+    if (flatDbMode.equals(FlatDbMode.ARCHIVE)) {
+      storage = emptyArchiveStorage(useCodeHashStorage);
+      storage.upgradeToFullFlatDbMode();
+    } else if (flatDbMode.equals(FlatDbMode.FULL)) {
+      storage = emptyStorage(useCodeHashStorage);
       storage.upgradeToFullFlatDbMode();
     } else if (flatDbMode.equals(FlatDbMode.PARTIAL)) {
+      storage = emptyStorage(useCodeHashStorage);
       storage.downgradeToPartialFlatDbMode();
     }
     return storage;
@@ -394,6 +407,344 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   @ParameterizedTest
   @MethodSource("flatDbMode")
+  void clear_putGetAccountFlatDbStrategy(final FlatDbMode flatDbMode) {
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
+
+    // save world state root hash
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+
+    Address account = Address.fromHexString("0x1cda99fb95e5418ae3bdc3bab5c4efa4a5a58a7c");
+
+    // RLP encoded account: address = 0x1cda99fb95e5418ae3bdc3bab5c4efa4a5a58a7c, balance =
+    // 0x0000000000000000000000000000000000000000000000007b5e41a364ea8bfc, nonce = 15768
+    updater
+        .putAccountInfoState(
+            account.addressHash(),
+            Bytes.fromHexString(
+                "0xF84E823D98887B5E41A364EA8BFCA056E81F171BCC55A6FF8345E692C0F86E5B48E01B996CADC001622FB5E363B421A0C5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470"))
+        .commit();
+
+    assertThat(storage.getAccount(account.addressHash())).isNotEmpty();
+
+    BonsaiAccount retrievedAccount =
+        BonsaiAccount.fromRLP(
+            null, account, storage.getAccount(account.addressHash()).get(), false);
+    assertThat(retrievedAccount.getBalance())
+        .isEqualTo(
+            Wei.fromHexString(
+                "0x0000000000000000000000000000000000000000000000007b5e41a364ea8bfc"));
+    assertThat(retrievedAccount.getNonce()).isEqualTo(15768);
+
+    // clear
+    storage.clear();
+
+    assertThat(storage.getFlatDbStrategy()).isNotNull();
+
+    assertThat(storage.getAccount(account.addressHash())).isEmpty();
+  }
+
+  @ParameterizedTest
+  @MethodSource("flatDbMode")
+  void clear_streamFlatAccounts(final FlatDbMode flatDbMode) {
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
+
+    // save world state root hash
+    BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+
+    // Put 3 accounts
+    Address account1 =
+        Address.fromHexString(
+            "0x1111111111111111111111111111111111111111"); // 3rd entry in DB after hashing
+    updater.putAccountInfoState(account1.addressHash(), Bytes32.random()).commit();
+    updater = storage.updater();
+    Address account2 =
+        Address.fromHexString(
+            "0x2222222222222222222222222222222222222222"); // 1st entry in the DB after hashing
+    updater.putAccountInfoState(account2.addressHash(), Bytes32.random()).commit();
+    updater = storage.updater();
+    Address account3 =
+        Address.fromHexString(
+            "0x3333333333333333333333333333333333333333"); // 2nd entry in the DB after hashing
+    updater.putAccountInfoState(account3.addressHash(), Bytes32.random()).commit();
+
+    // Streaming the entire range to ensure we get all 3 accounts back
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .size())
+        .isEqualTo(3);
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .firstEntry()
+                .getKey())
+        .isEqualTo(account2.addressHash()); // NB: Account 2 hash is first in the DB
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .lastEntry()
+                .getKey())
+        .isEqualTo(account1.addressHash()); // NB: Account 1 hash is 3rd/last in the DB
+
+    // clear
+    storage.clear();
+
+    assertThat(storage.getFlatDbStrategy()).isNotNull();
+
+    assertThat(storage.getAccount(account1.addressHash())).isEmpty();
+    assertThat(storage.getAccount(account2.addressHash())).isEmpty();
+    assertThat(storage.getAccount(account3.addressHash())).isEmpty();
+  }
+
+  @ParameterizedTest
+  @MethodSource("flatDbMode")
+  void clear_streamFlatAccountsMultipleStateChanges(final FlatDbMode flatDbMode) {
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
+
+    // save world state root hash
+    BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+
+    // Put 3 accounts
+    Address account1 =
+        Address.fromHexString(
+            "0x1111111111111111111111111111111111111111"); // 3rd entry in DB after hashing
+    updater.putAccountInfoState(account1.addressHash(), Bytes32.random()).commit();
+    updater = storage.updater();
+    Address account2 =
+        Address.fromHexString(
+            "0x2222222222222222222222222222222222222222"); // 1st entry in the DB after hashing
+    updater.putAccountInfoState(account2.addressHash(), Bytes32.random()).commit();
+    updater = storage.updater();
+    Address account3 =
+        Address.fromHexString(
+            "0x3333333333333333333333333333333333333333"); // 2nd entry in the DB after hashing
+    updater.putAccountInfoState(account3.addressHash(), Bytes32.random()).commit();
+
+    // Update the middle account several times. For an archive mode DB this will result in N
+    // additional entries in the DB, but streaming the accounts should only return the most recent
+    // entry
+
+    // Update the account at block 2
+    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(2));
+    updater = storage.updater();
+    updater.putAccountInfoState(account3.addressHash(), Bytes32.random()).commit();
+
+    // Update the account at block 3
+    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(3));
+    updater = storage.updater();
+    updater.putAccountInfoState(account3.addressHash(), Bytes32.random()).commit();
+
+    // Update the account at block 4
+    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(4));
+    Bytes32 finalStateUpdate = Bytes32.random();
+    updater = storage.updater();
+    updater.putAccountInfoState(account3.addressHash(), finalStateUpdate).commit();
+
+    // Streaming the entire range to ensure we only get 3 accounts back
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .size())
+        .isEqualTo(3);
+
+    // Check that account 2 is the first entry (as per its hash)
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .firstEntry()
+                .getKey())
+        .isEqualTo(account2.addressHash()); // NB: Account 2 hash is first in the DB
+
+    // Check that account 1 is the last entry (as per its hash)
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .lastEntry()
+                .getKey())
+        .isEqualTo(account1.addressHash()); // NB: Account 1 hash is 3rd/last in the DB
+
+    // Check the state for account 3 is the final state update at block 4, not an earlier state
+    assertThat(
+            storage
+                .streamFlatAccounts(
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .get(account3.addressHash()))
+        .isEqualTo(finalStateUpdate);
+
+    // clear
+    storage.clear();
+
+    assertThat(storage.getFlatDbStrategy()).isNotNull();
+
+    assertThat(storage.getAccount(account1.addressHash())).isEmpty();
+    assertThat(storage.getAccount(account2.addressHash())).isEmpty();
+    assertThat(storage.getAccount(account3.addressHash())).isEmpty();
+  }
+
+  @ParameterizedTest
+  @MethodSource("flatDbMode")
+  void clear_streamFlatStorageMultipleStateChanges(final FlatDbMode flatDbMode) {
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
+
+    // save world state root hash
+    BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+
+    // Put 3 accounts
+    Address account1 =
+        Address.fromHexString(
+            "0x1111111111111111111111111111111111111111"); // 3rd entry in DB after hashing
+    updater
+        .putStorageValueBySlotHash(
+            account1.addressHash(),
+            new StorageSlotKey(UInt256.ONE).getSlotHash(),
+            UInt256.fromHexString("0x11"))
+        .commit();
+
+    updater = storage.updater();
+    Address account2 =
+        Address.fromHexString(
+            "0x2222222222222222222222222222222222222222"); // 1st entry in the DB after hashing
+    updater
+        .putStorageValueBySlotHash(
+            account2.addressHash(),
+            new StorageSlotKey(UInt256.ONE).getSlotHash(),
+            UInt256.fromHexString("0x22"))
+        .commit();
+
+    updater = storage.updater();
+    Address account3 =
+        Address.fromHexString(
+            "0x3333333333333333333333333333333333333333"); // 2nd entry in the DB after hashing
+    final StorageSlotKey slot1 = new StorageSlotKey(UInt256.ONE);
+    updater
+        .putStorageValueBySlotHash(
+            account3.addressHash(),
+            new StorageSlotKey(UInt256.ONE).getSlotHash(),
+            UInt256.fromHexString("0x33"))
+        .commit();
+
+    // Update the middle account several times. For an archive mode DB this will result in N
+    // additional entries in the DB, but streaming the accounts should only return the most recent
+    // entry
+
+    // Update the storage at block 2
+    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(2));
+    updater = storage.updater();
+    updater
+        .putStorageValueBySlotHash(
+            account3.addressHash(), slot1.getSlotHash(), UInt256.fromHexString("0x12"))
+        .commit();
+
+    // Update the account at block 3
+    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(3));
+    updater = storage.updater();
+    updater
+        .putStorageValueBySlotHash(
+            account3.addressHash(), slot1.getSlotHash(), UInt256.fromHexString("0x13"))
+        .commit();
+
+    // Update the account at block 4
+    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(4));
+    updater = storage.updater();
+    updater
+        .putStorageValueBySlotHash(
+            account3.addressHash(), slot1.getSlotHash(), UInt256.fromHexString("0x14"))
+        .commit();
+
+    // Check that every account only has 1 entry for slot 1 (even account 3 which updated the same
+    // slot 4 times)
+    assertThat(
+            storage
+                .streamFlatStorages(
+                    account1.addressHash(),
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .size())
+        .isEqualTo(1);
+
+    assertThat(
+            storage
+                .streamFlatStorages(
+                    account2.addressHash(),
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .size())
+        .isEqualTo(1);
+
+    assertThat(
+            storage
+                .streamFlatStorages(
+                    account3.addressHash(),
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .size())
+        .isEqualTo(1);
+
+    // Check that the storage state for account 3's storage slot 1 is the latest value that was
+    // stored
+    assertThat(
+            storage
+                .streamFlatStorages(
+                    account3.addressHash(),
+                    Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
+                    Hash.fromHexString(
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    1000)
+                .get(slot1.getSlotHash()))
+        .isEqualTo(Bytes.fromHexString("0x14"));
+
+    // clear
+    storage.clear();
+
+    assertThat(storage.getFlatDbStrategy()).isNotNull();
+  }
+
+  @ParameterizedTest
+  @MethodSource("flatDbMode")
   void reconcilesNonConflictingUpdaters(final FlatDbMode flatDbMode) {
     setUp(flatDbMode);
     final Hash accountHashA = Address.fromHexString("0x1").addressHash();
@@ -422,7 +773,12 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @MethodSource("flatDbMode")
   void isWorldStateAvailable_defaultIsFalse(final FlatDbMode flatDbMode) {
     setUp(flatDbMode);
-    assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY)).isFalse();
+    if (flatDbMode.equals(FlatDbMode.ARCHIVE)) {
+      assertThat(emptyArchiveStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY))
+          .isFalse();
+    } else {
+      assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY)).isFalse();
+    }
   }
 
   @ParameterizedTest
@@ -466,6 +822,19 @@ public class BonsaiWorldStateKeyValueStorageTest {
         DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
   }
 
+  private BonsaiWorldStateKeyValueStorage emptyArchiveStorage() {
+    final BonsaiWorldStateKeyValueStorage archiveStorage =
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(),
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG);
+    archiveStorage
+        .getFlatDbStrategy()
+        .updateBlockContext(
+            getArchiveBlockContext(1)); // Do all archive calls under the context of block 1
+    return archiveStorage;
+  }
+
   private BonsaiWorldStateKeyValueStorage emptyStorage(final boolean useCodeHashStorage) {
     return new BonsaiWorldStateKeyValueStorage(
         new InMemoryKeyValueStorageProvider(),
@@ -478,6 +847,26 @@ public class BonsaiWorldStateKeyValueStorageTest {
                     .bonsaiCodeStoredByCodeHashEnabled(useCodeHashStorage)
                     .build())
             .build());
+  }
+
+  private BonsaiWorldStateKeyValueStorage emptyArchiveStorage(final boolean useCodeHashStorage) {
+    final BonsaiWorldStateKeyValueStorage archiveStorage =
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(),
+            new NoOpMetricsSystem(),
+            ImmutableDataStorageConfiguration.builder()
+                .dataStorageFormat(DataStorageFormat.X_BONSAI_ARCHIVE)
+                .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+                .unstable(
+                    ImmutableDataStorageConfiguration.Unstable.builder()
+                        .bonsaiCodeStoredByCodeHashEnabled(useCodeHashStorage)
+                        .build())
+                .build());
+    archiveStorage
+        .getFlatDbStrategy()
+        .updateBlockContext(
+            getArchiveBlockContext(1)); // Do all archive calls under the context of block 1
+    return archiveStorage;
   }
 
   @Test
@@ -515,5 +904,33 @@ public class BonsaiWorldStateKeyValueStorageTest {
         mockStorageProvider,
         new NoOpMetricsSystem(),
         DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+  }
+
+  private static BlockHeader getArchiveBlockContext(final long blockNumber) {
+    final BlockHeader header =
+        new BlockHeader(
+            Hash.EMPTY,
+            Hash.EMPTY_TRIE_HASH,
+            Address.ZERO,
+            Hash.EMPTY_TRIE_HASH,
+            Hash.EMPTY_TRIE_HASH,
+            Hash.EMPTY_TRIE_HASH,
+            LogsBloomFilter.builder().build(),
+            Difficulty.ONE,
+            blockNumber,
+            0,
+            0,
+            0,
+            Bytes.of(0x00),
+            Wei.ZERO,
+            Hash.EMPTY,
+            0,
+            null,
+            null,
+            null,
+            null,
+            null,
+            new MainnetBlockHeaderFunctions());
+    return header;
   }
 }

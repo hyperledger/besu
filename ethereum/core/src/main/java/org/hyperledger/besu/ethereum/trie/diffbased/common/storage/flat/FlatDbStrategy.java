@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -249,7 +250,7 @@ public abstract class FlatDbStrategy {
             .takeWhile(takeWhile));
   }
 
-  private static Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
       final SegmentedKeyValueStorage storage,
       final Hash accountHash,
       final Bytes startKeyHash,
@@ -266,7 +267,7 @@ public abstract class FlatDbStrategy {
                     valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
   }
 
-  private static Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
       final SegmentedKeyValueStorage storage,
       final Hash accountHash,
       final Bytes startKeyHash,
@@ -285,14 +286,14 @@ public abstract class FlatDbStrategy {
                     valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
   }
 
-  private static Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
       final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
     return storage
         .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
         .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
   }
 
-  private static Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
       final SegmentedKeyValueStorage storage, final Bytes startKeyHash) {
     return storage
         .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe())
@@ -310,5 +311,14 @@ public abstract class FlatDbStrategy {
                 () -> new TreeMap<>(Comparator.comparing(Bytes::toHexString))));
     pairStream.close();
     return collected;
+  }
+
+  public void updateBlockContext(final BlockHeader blockHeader) {
+    // default no-op for strategies that do not care about bonsai context
+  }
+
+  public FlatDbStrategy contextSafeClone() {
+    // FlatDBStrategies that care about bonsai context changes should override this
+    return this;
   }
 }
