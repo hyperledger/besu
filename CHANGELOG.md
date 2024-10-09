@@ -9,6 +9,7 @@
 ### Additions and Improvements
 
 ### Bug fixes
+- Fix eth_feeHistory rewards when bounded by configuration [#7750](https://github.com/hyperledger/besu/pull/7750)
 
 ## 24.10.0
 
