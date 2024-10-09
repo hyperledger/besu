@@ -325,15 +325,10 @@ public class ArchiverTests {
     for (long nextBlock = 101; nextBlock < 150; nextBlock++) {
       currentBlockHeight = nextBlock;
       if (nextBlock == 113) {
-        // archiver.addToArchivingQueue(
-        //   nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
         int accountsMoved = archiver.moveBlockStateToArchive();
         assertThat(accountsMoved).isEqualTo(1);
       } else {
-        // archiver.addToArchivingQueue(
-        //    nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
         int accountsMoved = archiver.moveBlockStateToArchive();
-        System.out.println("nextBlock = " + nextBlock + ". Accounts moved = " + accountsMoved);
         assertThat(accountsMoved).isEqualTo(0);
       }
     }
@@ -473,8 +468,6 @@ public class ArchiverTests {
     // happen during this processing since there are only trie logs for blocks 101 and 102
     for (long nextBlock = 101; nextBlock < 150; nextBlock++) {
       currentBlockHeight = nextBlock;
-      // archiver.addToArchivingQueue(
-      //  nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
       int storageMoved = archiver.moveBlockStateToArchive();
       totalStorageMoved += storageMoved;
       if (nextBlock == 113 || nextBlock == 114) {
@@ -535,8 +528,7 @@ public class ArchiverTests {
                   // Mock 1 storage change when block 102 is being processed, because state changes
                   // in block 101 can be archived (and likewise for block 103). NB: the trie log in
                   // this test for block 103 isn't archived because no further changes to that
-                  // storage
-                  // are made
+                  // storage are made
                   return 1;
                 }
               }
@@ -647,8 +639,6 @@ public class ArchiverTests {
     // happen during this processing since there are only trie logs for blocks 101 and 102
     for (long nextBlock = 101; nextBlock < 150; nextBlock++) {
       currentBlockHeight = nextBlock;
-      // archiver.addToArchivingQueue(
-      //  nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
       int storageAndAccountsMoved = archiver.moveBlockStateToArchive();
       if (nextBlock == 113) {
         assertThat(storageAndAccountsMoved).isEqualTo(2);
@@ -1004,8 +994,7 @@ public class ArchiverTests {
     block152TrieLogs.addStorageChange(address, storageSlotKey, oldValue, newValue);
 
     // Simulate a storage change in block 153. This state will not be archived because it refers to
-    // a
-    // different slot
+    // a different slot
     TrieLogLayer block153TrieLogs = new TrieLogLayer();
     oldValue = UInt256.fromHexString("0x345");
     newValue = UInt256.fromHexString("0x456");
