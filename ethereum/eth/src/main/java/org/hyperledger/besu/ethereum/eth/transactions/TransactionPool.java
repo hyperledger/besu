@@ -113,7 +113,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final ListMultimap<VersionedHash, BlobsWithCommitments.BlobQuad>
       mapOfBlobsInTransactionPool =
           Multimaps.synchronizedListMultimap(
-              Multimaps.newListMultimap(new HashMap<>(), ArrayList::new));
+              Multimaps.newListMultimap(new HashMap<>(), () -> new ArrayList<>(1)));
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
