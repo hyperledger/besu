@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
-import java.util.Collection;
 import java.util.function.Predicate;
 
 /**
@@ -51,11 +50,22 @@ public interface PeerTask<T> {
   T parseResponse(MessageData messageData) throws InvalidPeerTaskResponseException;
 
   /**
-   * Gets the Collection of behaviors this task is expected to exhibit in the PeetTaskExecutor
+   * Gets the number of times this task may be attempted against other peers
    *
-   * @return the Collection of behaviors this task is expected to exhibit in the PeetTaskExecutor
+   * @return the number of times this task may be attempted against other peers
    */
-  Collection<PeerTaskRetryBehavior> getPeerTaskRetryBehaviors();
+  default int getRetriesWithOtherPeer() {
+    return 5;
+  }
+
+  /**
+   * Gets the number of times this task may be attempted against the same peer
+   *
+   * @return the number of times this task may be attempted against the same peer
+   */
+  default int getRetriesWithSamePeer() {
+    return 5;
+  }
 
   /**
    * Gets a Predicate that checks if an EthPeer is suitable for this PeerTask
