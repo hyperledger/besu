@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRetryBehavior;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
@@ -106,12 +105,6 @@ public class GetReceiptsFromPeerTask
       blockHeaders.forEach(header -> receiptsByHeader.put(header, receiptsInBlock));
     }
     return receiptsByHeader;
-  }
-
-  @Override
-  public Collection<PeerTaskRetryBehavior> getPeerTaskRetryBehaviors() {
-    return List.of(
-        PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS, PeerTaskRetryBehavior.RETRY_WITH_SAME_PEER);
   }
 
   @Override
