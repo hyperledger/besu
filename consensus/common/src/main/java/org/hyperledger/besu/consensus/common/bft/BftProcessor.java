@@ -44,7 +44,7 @@ public class BftProcessor implements Runnable {
     this.eventMultiplexer = eventMultiplexer;
   }
 
-  /** Indicate to the processor that it should can be started */
+  /** Indicate to the processor that it can be started */
   public synchronized void start() {
     shutdown = false;
   }
