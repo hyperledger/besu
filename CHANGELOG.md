@@ -30,6 +30,7 @@
 - Fix reading `tx-pool-min-score` option from configuration file [#7623](https://github.com/hyperledger/besu/pull/7623)
 - Fix an unhandled PeerTable exception [#7733](https://github.com/hyperledger/besu/issues/7733)
 - Fix RocksDBException: Busy leading to MerkleTrieException: Unable to load trie node value [#7745](https://github.com/hyperledger/besu/pull/7745)
+- If a BFT validator node is syncing, pause block production until sync has completed [#7657](https://github.com/hyperledger/besu/pull/7657)
 
 ## 24.9.1
 
