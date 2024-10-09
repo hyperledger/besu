@@ -156,22 +156,6 @@ public class CheckPointSyncChainDownloaderTest {
                 return processTask(task);
               }
             });
-
-    when(peerTaskExecutor.execute(any(GetReceiptsFromPeerTask.class)))
-        .thenAnswer(
-            new Answer<
-                CompletableFuture<
-                    PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>>>>() {
-              @Override
-              public CompletableFuture<
-                      PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>>>
-                  answer(final InvocationOnMock invocationOnMock) throws Throwable {
-                GetReceiptsFromPeerTask task =
-                    invocationOnMock.getArgument(0, GetReceiptsFromPeerTask.class);
-
-                return CompletableFuture.completedFuture(processTask(task));
-              }
-            });
   }
 
   @SuppressWarnings("unchecked")
