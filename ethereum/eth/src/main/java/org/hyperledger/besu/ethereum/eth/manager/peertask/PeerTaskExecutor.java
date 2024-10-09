@@ -31,9 +31,6 @@ import java.util.concurrent.TimeoutException;
 /** Manages the execution of PeerTasks, respecting their PeerTaskRetryBehavior */
 public class PeerTaskExecutor {
 
-  public static final int RETRIES_WITH_SAME_PEER = 2;
-  public static final int RETRIES_WITH_OTHER_PEER = 2;
-  public static final int NO_RETRIES = 0;
   private final PeerSelector peerSelector;
   private final PeerTaskRequestSender requestSender;
 
@@ -55,10 +52,7 @@ public class PeerTaskExecutor {
 
   public <T> PeerTaskExecutorResult<T> execute(final PeerTask<T> peerTask) {
     PeerTaskExecutorResult<T> executorResult;
-    int retriesRemaining =
-        peerTask.getPeerTaskRetryBehaviors().contains(PeerTaskRetryBehavior.RETRY_WITH_OTHER_PEERS)
-            ? RETRIES_WITH_OTHER_PEER
-            : NO_RETRIES;
+    int retriesRemaining = peerTask.getRetriesWithOtherPeer();
     final Collection<EthPeer> usedEthPeers = new HashSet<>();
     do {
       Optional<EthPeer> peer =
@@ -84,10 +78,7 @@ public class PeerTaskExecutor {
       final PeerTask<T> peerTask, final EthPeer peer) {
     MessageData requestMessageData = peerTask.getRequestMessage();
     PeerTaskExecutorResult<T> executorResult;
-    int retriesRemaining =
-        peerTask.getPeerTaskRetryBehaviors().contains(PeerTaskRetryBehavior.RETRY_WITH_SAME_PEER)
-            ? RETRIES_WITH_SAME_PEER
-            : NO_RETRIES;
+    int retriesRemaining = peerTask.getRetriesWithSamePeer();
     do {
       try {
         T result;
