@@ -19,6 +19,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.DelegatedCodeAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.account.MutableDelegatedCodeAccount;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -27,8 +28,16 @@ public class DelegatedCodeService {
   private static final Bytes DELEGATED_CODE_PREFIX = Bytes.fromHexString("ef0100");
   private static final int DELEGATED_CODE_SIZE = DELEGATED_CODE_PREFIX.size() + Address.SIZE;
 
-  /** Creates a new DelegatedCodeService. */
-  public DelegatedCodeService() {}
+  private final GasCalculator gasCalculator;
+
+  /**
+   * Creates a new DelegatedCodeService.
+   *
+   * @param gasCalculator the gas calculator to check for pre compiles.
+   */
+  public DelegatedCodeService(final GasCalculator gasCalculator) {
+    this.gasCalculator = gasCalculator;
+  }
 
   /**
    * Add the delegated code to the given account.
@@ -64,7 +73,7 @@ public class DelegatedCodeService {
     }
 
     return new DelegatedCodeAccount(
-        worldUpdater, account, resolveDelegatedAddress(account.getCode()));
+        worldUpdater, account, resolveDelegatedAddress(account.getCode()), gasCalculator);
   }
 
   /**
@@ -82,7 +91,7 @@ public class DelegatedCodeService {
     }
 
     return new MutableDelegatedCodeAccount(
-        worldUpdater, account, resolveDelegatedAddress(account.getCode()));
+        worldUpdater, account, resolveDelegatedAddress(account.getCode()), gasCalculator);
   }
 
   /**

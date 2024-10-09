@@ -666,14 +666,4 @@ public interface GasCalculator {
   default long calculateDelegateCodeGasRefund(final long alreadyExistingAccountSize) {
     return 0L;
   }
-
-  /**
-   * Returns the gas cost for resolving the code of a delegate account.
-   *
-   * @param isWarm whether the account is warm
-   * @return the gas cost
-   */
-  default long delegatedCodeResolutionGasCost(final boolean isWarm) {
-    return 0L;
-  }
 }
