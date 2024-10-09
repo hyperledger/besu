@@ -80,12 +80,7 @@ public class VerkleEntryFactory {
     nonStorageKeyValuesForUpdate.put(basicDataKey, basicDataValue);
   }
 
-  public void generateCodeHashKeyValueForUpdate(final Address address, final Hash codeHash) {
-    nonStorageKeyValuesForUpdate.put(trieKeyAdapter.codeHashKey(address), codeHash);
-  }
-
-  public void generateCodeKeyValuesForUpdate(
-      final Address address, final Bytes code, final Hash codeHash) {
+  public void generateCodeSizeKeyValueForUpdate(final Address address, final int size) {
     Bytes32 basicDataKey = trieKeyAdapter.basicDataKey(address);
     Bytes32 basicDataValue;
     if ((basicDataValue = nonStorageKeyValuesForUpdate.get(basicDataKey)) == null) {
@@ -96,9 +91,17 @@ public class VerkleEntryFactory {
         SuffixTreeEncoder.setCodeSizeInValue(
             basicDataValue,
             // code size is exactly 3 bytes
-            Bytes.ofUnsignedInt(code.size()).slice(1));
+            Bytes.ofUnsignedInt(size).slice(1));
     nonStorageKeyValuesForUpdate.put(basicDataKey, basicDataValue);
+  }
 
+  public void generateCodeHashKeyValueForUpdate(final Address address, final Hash codeHash) {
+    nonStorageKeyValuesForUpdate.put(trieKeyAdapter.codeHashKey(address), codeHash);
+  }
+
+  public void generateCodeKeyValuesForUpdate(
+      final Address address, final Bytes code, final Hash codeHash) {
+    generateCodeSizeKeyValueForUpdate(address, code.size());
     generateCodeHashKeyValueForUpdate(address, codeHash);
 
     List<UInt256> codeChunks = trieKeyAdapter.chunkifyCode(code);

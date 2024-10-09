@@ -221,16 +221,33 @@ public class VerkleWorldState extends DiffBasedWorldState {
           bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
       return;
     }
+
+    handleCoupledCodeAccountUpdates(accountKey, verkleEntryFactory, accountUpdate);
+
     final VerkleAccount updatedAcount = accountUpdate.getUpdated();
-    if (accountUpdate.getPrior() == null) {
-      verkleEntryFactory.generateCodeHashKeyValueForUpdate(accountKey, updatedAcount.getCodeHash());
-    }
     verkleEntryFactory.generateAccountKeyValueForUpdate(
         accountKey, updatedAcount.getNonce(), updatedAcount.getBalance());
     maybeStateUpdater.ifPresent(
         bonsaiUpdater ->
             bonsaiUpdater.putAccountInfoState(
                 hashAndSavePreImage(accountKey), updatedAcount.serializeAccount()));
+  }
+
+  private void handleCoupledCodeAccountUpdates(
+      final Address accountKey,
+      final VerkleEntryFactory verkleEntryFactory,
+      final DiffBasedValue<VerkleAccount> accountUpdate) {
+    final VerkleAccount priorAccount = accountUpdate.getPrior();
+    final VerkleAccount updatedAccount = accountUpdate.getUpdated();
+    if (priorAccount == null) {
+      verkleEntryFactory.generateCodeHashKeyValueForUpdate(
+          accountKey, updatedAccount.getCodeHash());
+      return;
+    }
+    Bytes currentCode = get(accountKey).getCode();
+    if (currentCode != null) {
+      verkleEntryFactory.generateCodeSizeKeyValueForUpdate(accountKey, currentCode.size());
+    }
   }
 
   private void generateCodeValues(
