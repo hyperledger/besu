@@ -40,6 +40,8 @@ public class SnapSyncConfiguration {
 
   public static final Boolean DEFAULT_SNAP_SYNC_BFT_ENABLED = Boolean.FALSE;
 
+  public static final Boolean DEFAULT_SNAP_SYNC_TO_HEAD_ENABLED_FLAG = Boolean.TRUE;
+
   public static SnapSyncConfiguration getDefault() {
     return ImmutableSnapSyncConfiguration.builder().build();
   }
@@ -87,5 +89,10 @@ public class SnapSyncConfiguration {
   @Value.Default
   public Boolean isSnapSyncBftEnabled() {
     return DEFAULT_SNAP_SYNC_BFT_ENABLED;
+  }
+
+  @Value.Default
+  public Boolean isSnapSyncToHeadEnabled() {
+    return DEFAULT_SNAP_SYNC_TO_HEAD_ENABLED_FLAG;
   }
 }
