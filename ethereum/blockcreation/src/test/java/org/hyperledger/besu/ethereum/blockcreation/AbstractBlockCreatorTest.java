@@ -176,8 +176,8 @@ abstract class AbstractBlockCreatorTest {
             miningOn.parentHeader);
 
     List<Request> depositRequests = emptyList();
-    final Hash requestsRoot = BodyValidation.requestsRoot(depositRequests);
-    assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).hasValue(requestsRoot);
+    final Hash requestsHash = BodyValidation.requestsHash(depositRequests);
+    assertThat(blockCreationResult.getBlock().getHeader().getRequestsHash()).hasValue(requestsHash);
     assertThat(blockCreationResult.getBlock().getBody().getRequests()).hasValue(depositRequests);
   }
 
@@ -196,7 +196,7 @@ abstract class AbstractBlockCreatorTest {
             false,
             miningOn.parentHeader);
 
-    assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).isEmpty();
+    assertThat(blockCreationResult.getBlock().getHeader().getRequestsHash()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getRequests()).isEmpty();
   }
 
@@ -216,7 +216,7 @@ abstract class AbstractBlockCreatorTest {
             false,
             miningOn.parentHeader);
 
-    assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).isEmpty();
+    assertThat(blockCreationResult.getBlock().getHeader().getRequestsHash()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getRequests()).isEmpty();
   }
 

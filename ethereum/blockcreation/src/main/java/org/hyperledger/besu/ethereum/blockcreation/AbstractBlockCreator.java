@@ -304,7 +304,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   withdrawalsCanBeProcessed
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
-              .requestsRoot(maybeRequests.map(BodyValidation::requestsRoot).orElse(null));
+              .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null));
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
       }

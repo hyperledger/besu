@@ -89,12 +89,12 @@ public final class BodyValidation {
   }
 
   /**
-   * Generates the requests root for a list of requests
+   * Generates the requests hash for a list of requests
    *
    * @param requests list of request
    * @return the requests root
    */
-  public static Hash requestsRoot(final List<Request> requests) {
+  public static Hash requestsHash(final List<Request> requests) {
     final MerkleTrie<Bytes, Bytes> trie = trie();
     IntStream.range(0, requests.size())
         .forEach(i -> trie.put(indexKey(i), RequestEncoder.encodeOpaqueBytes(requests.get(i))));

@@ -35,14 +35,14 @@ public class ConsolidationRequestValidatorTestFixtures {
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   static ConsolidationRequestTestParameter
-      blockWithConsolidationRequestsAndWithdrawalRequestsRoot() {
+      blockWithConsolidationRequestsAndWithdrawalRequestsHash() {
     final ConsolidationRequest consolidationRequest = createConsolidationRequest();
     final Optional<List<Request>> maybeConsolidationRequests =
         Optional.of(List.of(consolidationRequest));
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setRequestsRoot(BodyValidation.requestsRoot(maybeConsolidationRequests.get()))
+            .setRequestsHash(BodyValidation.requestsHash(maybeConsolidationRequests.get()))
             .setRequests(maybeConsolidationRequests);
     final Block block = blockDataGenerator.block(blockOptions);
 
@@ -60,7 +60,7 @@ public class ConsolidationRequestValidatorTestFixtures {
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setRequestsRoot(BodyValidation.requestsRoot(requests.get()))
+            .setRequestsHash(BodyValidation.requestsHash(requests.get()))
             .setRequests(requests);
     final Block block = blockDataGenerator.block(blockOptions);
 
@@ -84,7 +84,7 @@ public class ConsolidationRequestValidatorTestFixtures {
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setRequestsRoot(BodyValidation.requestsRoot(maybeRequests.get()))
+            .setRequestsHash(BodyValidation.requestsHash(maybeRequests.get()))
             .setRequests(maybeRequests);
     final Block block = blockDataGenerator.block(blockOptions);
 

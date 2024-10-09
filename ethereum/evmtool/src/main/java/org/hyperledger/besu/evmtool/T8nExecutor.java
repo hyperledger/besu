@@ -531,9 +531,9 @@ public class T8nExecutor {
               new CachingBlockHashLookup(blockHeader, blockchain),
               OperationTracer.NO_TRACING);
       Optional<List<Request>> maybeRequests = rpc.process(context);
-      Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
+      Hash requestRoot = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
 
-      resultObject.put("requestsRoot", requestRoot.toHexString());
+      resultObject.put("requestsHash", requestRoot.toHexString());
       var deposits = resultObject.putArray("depositRequests");
       RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), DepositRequest.class)
           .forEach(

@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithWithdrawalRequestsAndWithdrawalRequestsRoot;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithWithdrawalRequestsWithoutWithdrawalRequestsRoot;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot;
+import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithWithdrawalRequestsAndWithdrawalRequestsHash;
+import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithWithdrawalRequestsWithoutWithdrawalRequestsHash;
+import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsAndWithdrawalRequestsHash;
+import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsWithWithdrawalRequestsHash;
 
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.WithdrawalRequestTestParameter;
@@ -72,10 +72,10 @@ class WithdrawalRequestValidatorTest {
 
   private static Stream<Arguments> validateWithdrawalRequestsInBlockParamsForProhibited() {
     return Stream.of(
-        Arguments.of(blockWithWithdrawalRequestsAndWithdrawalRequestsRoot(), false),
-        Arguments.of(blockWithWithdrawalRequestsWithoutWithdrawalRequestsRoot(), false),
-        Arguments.of(blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot(), false),
-        Arguments.of(blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot(), true));
+        Arguments.of(blockWithWithdrawalRequestsAndWithdrawalRequestsHash(), false),
+        Arguments.of(blockWithWithdrawalRequestsWithoutWithdrawalRequestsHash(), false),
+        Arguments.of(blockWithoutWithdrawalRequestsWithWithdrawalRequestsHash(), false),
+        Arguments.of(blockWithoutWithdrawalRequestsAndWithdrawalRequestsHash(), true));
   }
 
   @Test

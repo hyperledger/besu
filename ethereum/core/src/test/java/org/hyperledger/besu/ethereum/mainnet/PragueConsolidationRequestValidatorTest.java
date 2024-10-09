@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.ConsolidationRequestValidatorTestFixtures.blockWithConsolidationRequestsAndWithdrawalRequestsRoot;
+import static org.hyperledger.besu.ethereum.mainnet.ConsolidationRequestValidatorTestFixtures.blockWithConsolidationRequestsAndWithdrawalRequestsHash;
 import static org.hyperledger.besu.ethereum.mainnet.ConsolidationRequestValidatorTestFixtures.blockWithConsolidationRequestsMismatch;
 import static org.hyperledger.besu.ethereum.mainnet.ConsolidationRequestValidatorTestFixtures.blockWithMoreThanMaximumConsolidationRequests;
 
@@ -69,7 +69,7 @@ class PragueConsolidationRequestValidatorTest {
 
   private static Stream<Arguments> validateConsolidationRequestsInBlockParamsForPrague() {
     return Stream.of(
-        Arguments.of(blockWithConsolidationRequestsAndWithdrawalRequestsRoot(), true),
+        Arguments.of(blockWithConsolidationRequestsAndWithdrawalRequestsHash(), true),
         Arguments.of(blockWithConsolidationRequestsMismatch(), false),
         Arguments.of(blockWithMoreThanMaximumConsolidationRequests(), false));
   }

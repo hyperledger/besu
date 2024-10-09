@@ -303,7 +303,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
-            .requestsRoot(maybeRequests.map(BodyValidation::requestsRoot).orElse(null))
+            .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null))
             .parentBeaconBlockRoot(
                 maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
             .buildHeader();

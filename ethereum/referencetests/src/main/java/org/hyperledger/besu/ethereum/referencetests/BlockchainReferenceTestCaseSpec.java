@@ -164,7 +164,7 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
-        @JsonProperty("requestsRoot") final String requestsRoot,
+        @JsonProperty("requestsHash") final String requestsHash,
         @JsonProperty("blobGasUsed") final String blobGasUsed,
         @JsonProperty("excessBlobGas") final String excessBlobGas,
         @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
@@ -194,7 +194,7 @@ public class BlockchainReferenceTestCaseSpec {
           blobGasUsed != null ? Long.decode(blobGasUsed) : 0,
           excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
-          requestsRoot != null ? Hash.fromHexString(requestsRoot) : null,
+          requestsHash != null ? Hash.fromHexString(requestsHash) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {

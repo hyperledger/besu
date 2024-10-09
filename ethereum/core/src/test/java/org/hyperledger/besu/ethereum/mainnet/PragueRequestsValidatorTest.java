@@ -90,11 +90,11 @@ class PragueRequestsValidatorTest {
 
     Optional<List<Request>> blockRequests = Optional.of(List.of(request));
     Optional<List<Request>> expectedRequests = Optional.of(List.of(requestTwo));
-    Hash requestsRoot = BodyValidation.requestsRoot(blockRequests.get());
+    Hash requestsHash = BodyValidation.requestsHash(blockRequests.get());
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setRequestsRoot(requestsRoot)
+            .setRequestsHash(requestsHash)
             .setRequests(blockRequests)
             .setGasUsed(0)
             .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))

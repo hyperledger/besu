@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithMoreThanMaximumWithdrawalRequests;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithWithdrawalRequestsAndWithdrawalRequestsRoot;
+import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithWithdrawalRequestsAndWithdrawalRequestsHash;
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithWithdrawalRequestsMismatch;
 
 import org.hyperledger.besu.ethereum.core.Request;
@@ -69,7 +69,7 @@ class PragueWithdrawalRequestValidatorTest {
 
   private static Stream<Arguments> validateWithdrawalRequestsInBlockParamsForPrague() {
     return Stream.of(
-        Arguments.of(blockWithWithdrawalRequestsAndWithdrawalRequestsRoot(), true),
+        Arguments.of(blockWithWithdrawalRequestsAndWithdrawalRequestsHash(), true),
         Arguments.of(blockWithWithdrawalRequestsMismatch(), false),
         Arguments.of(blockWithMoreThanMaximumWithdrawalRequests(), false));
   }

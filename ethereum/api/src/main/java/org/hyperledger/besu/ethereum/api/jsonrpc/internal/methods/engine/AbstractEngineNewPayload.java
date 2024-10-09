@@ -289,7 +289,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 ? null
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
-            maybeRequests.map(BodyValidation::requestsRoot).orElse(null),
+            maybeRequests.map(BodyValidation::requestsHash).orElse(null),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash

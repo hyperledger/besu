@@ -151,17 +151,17 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     private final Bytes32 transactionsRoot;
     private final Bytes32 ommersHash;
     private final Bytes32 withdrawalsRoot;
-    private final Bytes32 requestsRoot;
+    private final Bytes32 requestsHash;
 
     public BodyIdentifier(
         final Bytes32 transactionsRoot,
         final Bytes32 ommersHash,
         final Bytes32 withdrawalsRoot,
-        final Bytes32 requestsRoot) {
+        final Bytes32 requestsHash) {
       this.transactionsRoot = transactionsRoot;
       this.ommersHash = ommersHash;
       this.withdrawalsRoot = withdrawalsRoot;
-      this.requestsRoot = requestsRoot;
+      this.requestsHash = requestsHash;
     }
 
     public BodyIdentifier(final BlockBody body) {
@@ -177,7 +177,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
           BodyValidation.transactionsRoot(transactions),
           BodyValidation.ommersHash(ommers),
           withdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
-          requests.map(BodyValidation::requestsRoot).orElse(null));
+          requests.map(BodyValidation::requestsHash).orElse(null));
     }
 
     public BodyIdentifier(final BlockHeader header) {
@@ -185,7 +185,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
           header.getTransactionsRoot(),
           header.getOmmersHash(),
           header.getWithdrawalsRoot().orElse(null),
-          header.getRequestsRoot().orElse(null));
+          header.getRequestsHash().orElse(null));
     }
 
     @Override
@@ -196,12 +196,12 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
       return Objects.equals(transactionsRoot, that.transactionsRoot)
           && Objects.equals(ommersHash, that.ommersHash)
           && Objects.equals(withdrawalsRoot, that.withdrawalsRoot)
-          && Objects.equals(requestsRoot, that.requestsRoot);
+          && Objects.equals(requestsHash, that.requestsHash);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(transactionsRoot, ommersHash, withdrawalsRoot, requestsRoot);
+      return Objects.hash(transactionsRoot, ommersHash, withdrawalsRoot, requestsHash);
     }
   }
 }

@@ -36,14 +36,14 @@ public class WithdrawalRequestValidatorTestFixtures {
 
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
-  static WithdrawalRequestTestParameter blockWithWithdrawalRequestsAndWithdrawalRequestsRoot() {
+  static WithdrawalRequestTestParameter blockWithWithdrawalRequestsAndWithdrawalRequestsHash() {
     final WithdrawalRequest withdrawalRequest = createWithdrawalRequest();
     final Optional<List<Request>> maybeWithdrawalRequests =
         Optional.of(java.util.List.of(withdrawalRequest));
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setRequestsRoot(BodyValidation.requestsRoot(maybeWithdrawalRequests.get()))
+            .setRequestsHash(BodyValidation.requestsHash(maybeWithdrawalRequests.get()))
             .setRequests(maybeWithdrawalRequests);
     final Block block = blockDataGenerator.block(blockOptions);
 
@@ -53,10 +53,10 @@ public class WithdrawalRequestValidatorTestFixtures {
         Optional.of(java.util.List.of(withdrawalRequest)));
   }
 
-  static WithdrawalRequestTestParameter blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot() {
+  static WithdrawalRequestTestParameter blockWithoutWithdrawalRequestsWithWithdrawalRequestsHash() {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setRequestsRoot(Hash.EMPTY)
+            .setRequestsHash(Hash.EMPTY)
             .setRequests(Optional.empty());
     final Block block = blockDataGenerator.block(blockOptions);
 
@@ -66,7 +66,7 @@ public class WithdrawalRequestValidatorTestFixtures {
         Optional.empty());
   }
 
-  static WithdrawalRequestTestParameter blockWithWithdrawalRequestsWithoutWithdrawalRequestsRoot() {
+  static WithdrawalRequestTestParameter blockWithWithdrawalRequestsWithoutWithdrawalRequestsHash() {
     final WithdrawalRequest withdrawalRequest = createWithdrawalRequest();
     final Optional<List<Request>> requests = Optional.of(java.util.List.of(withdrawalRequest));
 
@@ -80,7 +80,7 @@ public class WithdrawalRequestValidatorTestFixtures {
         Optional.of(java.util.List.of(withdrawalRequest)));
   }
 
-  static WithdrawalRequestTestParameter blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot() {
+  static WithdrawalRequestTestParameter blockWithoutWithdrawalRequestsAndWithdrawalRequestsHash() {
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create().setRequests(Optional.empty());
@@ -90,13 +90,13 @@ public class WithdrawalRequestValidatorTestFixtures {
         "Block without withdrawal requests and withdrawal_requests_root", block, Optional.empty());
   }
 
-  static WithdrawalRequestTestParameter blockWithWithdrawalRequestsRootMismatch() {
+  static WithdrawalRequestTestParameter blockWithWithdrawalRequestsHashMismatch() {
     final WithdrawalRequest withdrawalRequest = createWithdrawalRequest();
 
     final Optional<List<Request>> requests = Optional.of(java.util.List.of(withdrawalRequest));
 
     final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create().setRequestsRoot(Hash.EMPTY).setRequests(requests);
+        BlockDataGenerator.BlockOptions.create().setRequestsHash(Hash.EMPTY).setRequests(requests);
     final Block block = blockDataGenerator.block(blockOptions);
 
     return new WithdrawalRequestTestParameter(
@@ -113,7 +113,7 @@ public class WithdrawalRequestValidatorTestFixtures {
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setRequestsRoot(BodyValidation.requestsRoot(requests.get()))
+            .setRequestsHash(BodyValidation.requestsHash(requests.get()))
             .setRequests(requests);
     final Block block = blockDataGenerator.block(blockOptions);
 
@@ -136,7 +136,7 @@ public class WithdrawalRequestValidatorTestFixtures {
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setRequestsRoot(BodyValidation.requestsRoot(maybeRequests.get()))
+            .setRequestsHash(BodyValidation.requestsHash(maybeRequests.get()))
             .setRequests(maybeRequests);
     final Block block = blockDataGenerator.block(blockOptions);
 

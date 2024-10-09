@@ -102,7 +102,7 @@ public class DepositRequestValidatorTest {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
             .setRequests(Optional.of(request))
-            .setRequestsRoot(BodyValidation.requestsRoot(request));
+            .setRequestsHash(BodyValidation.requestsHash(request));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt =
@@ -120,7 +120,7 @@ public class DepositRequestValidatorTest {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
             .setRequests(Optional.of(requests))
-            .setRequestsRoot(BodyValidation.requestsRoot(requests));
+            .setRequestsHash(BodyValidation.requestsHash(requests));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt1 =

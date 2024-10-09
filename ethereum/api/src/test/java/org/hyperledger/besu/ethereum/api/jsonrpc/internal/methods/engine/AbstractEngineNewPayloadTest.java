@@ -512,7 +512,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         .timestamp(parentBlockHeader.getTimestamp() + 1)
         .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
         .parentBeaconBlockRoot(maybeParentBeaconBlockRoot)
-        .requestsRoot(maybeRequests.map(BodyValidation::requestsRoot).orElse(null));
+        .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null));
   }
 
   protected void assertValidResponse(final BlockHeader mockHeader, final JsonRpcResponse resp) {

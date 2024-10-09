@@ -74,7 +74,7 @@ public class RequestsValidatorCoordinator {
       return isRequestsEmpty(block, maybeRequests);
     }
 
-    if (!isRequestsRootValid(block, maybeRequests)) {
+    if (!isRequestsHashValid(block, maybeRequests)) {
       return false;
     }
 
@@ -101,11 +101,11 @@ public class RequestsValidatorCoordinator {
         .allMatch(type -> validateRequestOfType(type, block, requests, receipts));
   }
 
-  private boolean isRequestsRootValid(final Block block, final Optional<List<Request>> requests) {
+  private boolean isRequestsHashValid(final Block block, final Optional<List<Request>> requests) {
     final Hash blockHash = block.getHash();
-    final Optional<Hash> maybeRequestsRoot = block.getHeader().getRequestsRoot();
+    final Optional<Hash> maybeRequestsHash = block.getHeader().getRequestsHash();
 
-    if (maybeRequestsRoot.isEmpty()) {
+    if (maybeRequestsHash.isEmpty()) {
       LOG.warn("Block {} must contain requests root", blockHash);
       return false;
     }
@@ -120,8 +120,8 @@ public class RequestsValidatorCoordinator {
       return false;
     }
 
-    final Hash expectedRequestsRoot = BodyValidation.requestsRoot(requests.get());
-    if (!expectedRequestsRoot.equals(maybeRequestsRoot.get())) {
+    final Hash expectedRequestsHash = BodyValidation.requestsHash(requests.get());
+    if (!expectedRequestsHash.equals(maybeRequestsHash.get())) {
       LOG.warn(
           "Block {} requests root does not match expected hash root for requests in block",
           blockHash);
@@ -132,9 +132,9 @@ public class RequestsValidatorCoordinator {
 
   private boolean isRequestsEmpty(final Block block, final Optional<List<Request>> requests) {
     final Hash blockHash = block.getHash();
-    final Optional<Hash> maybeRequestsRoot = block.getHeader().getRequestsRoot();
+    final Optional<Hash> maybeRequestsHash = block.getHeader().getRequestsHash();
 
-    if (maybeRequestsRoot.isPresent()) {
+    if (maybeRequestsHash.isPresent()) {
       LOG.warn("Block {} must not contain requests root", blockHash);
       return false;
     }
