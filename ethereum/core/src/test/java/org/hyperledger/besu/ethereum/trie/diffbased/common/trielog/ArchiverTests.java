@@ -68,9 +68,9 @@ public class ArchiverTests {
 
   // Number of blocks in the chain. This is different to the number of blocks
   // we have successfully archived state for
-  static final long SHORT_TEST_CHAIN_HEIGHT = 151;
+  static final long SHORT_TEST_CHAIN_HEIGHT = 150;
   static final long LONG_TEST_CHAIN_HEIGHT =
-      2001; // We want block 2000 to be returned so set to 2001
+      2000; // We want block 2000 to be returned so set to 2001
 
   // Address used for account and storage changes
   final Address address = Address.fromHexString("0x95cD8499051f7FE6a2F53749eC1e9F4a81cafa13");
@@ -86,7 +86,7 @@ public class ArchiverTests {
                 @Override
                 public Optional<Block> load(final Hash blockHash) {
                   Optional<Block> foundBlock;
-                  for (long i = 0; i < SHORT_TEST_CHAIN_HEIGHT; i++) {
+                  for (long i = 0; i <= SHORT_TEST_CHAIN_HEIGHT; i++) {
                     if ((foundBlock = blockNumberCache.getUnchecked(i)).isPresent()
                         && foundBlock.get().getHash().equals(blockHash)) {
                       return foundBlock;
@@ -157,7 +157,7 @@ public class ArchiverTests {
   }
 
   @Test
-  public void archiveLimitsInitialArchiveBlocks() {
+  public void archiveInitialisesAndSetsPendingBlockCount() {
 
     blockNumberCache =
         CacheBuilder.newBuilder()
@@ -205,10 +205,11 @@ public class ArchiverTests {
     BonsaiArchiver archiver =
         new BonsaiArchiver(
             worldStateStorage, blockchain, executeAsync, trieLogManager, new NoOpMetricsSystem());
-    long caughtUpBlocks = archiver.initialize();
+    archiver.getPendingBlocksCount();
+    archiver.initialize();
 
     // Check that blocks 101 to 1990 (10 before chain head 2000) have been caught up
-    assertThat(caughtUpBlocks).isEqualTo(1900);
+    assertThat(archiver.getPendingBlocksCount()).isEqualTo(1900);
   }
 
   @Test
@@ -312,26 +313,27 @@ public class ArchiverTests {
             worldStateStorage, blockchain, executeAsync, trieLogManager, new NoOpMetricsSystem());
     archiver.initialize();
 
-    // Chain height is 150, we've archived state up to block 100, we should have initialized the
-    // next 50 blocks to be archived
-    assertThat(archiver.getPendingBlocksCount()).isEqualTo(50);
-
+    currentBlockHeight = 100L;
     when(blockchain.getChainHeadBlockNumber())
         .then(requestedBlockNumber -> getCurrentBlockHeight());
+
+    // No new blocks yet, no pending blocks to archive
+    assertThat(archiver.getPendingBlocksCount()).isEqualTo(0);
 
     // Process the next 50 blocks. Only 1 account state change should happen during this processing
     // since there are only trie logs for blocks 101 and 102
     for (long nextBlock = 101; nextBlock < 150; nextBlock++) {
       currentBlockHeight = nextBlock;
-      if (nextBlock == 112) {
-        archiver.addToArchivingQueue(
-            nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
+      if (nextBlock == 113) {
+        // archiver.addToArchivingQueue(
+        //   nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
         int accountsMoved = archiver.moveBlockStateToArchive();
         assertThat(accountsMoved).isEqualTo(1);
       } else {
-        archiver.addToArchivingQueue(
-            nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
+        // archiver.addToArchivingQueue(
+        //    nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
         int accountsMoved = archiver.moveBlockStateToArchive();
+        System.out.println("nextBlock = " + nextBlock + ". Accounts moved = " + accountsMoved);
         assertThat(accountsMoved).isEqualTo(0);
       }
     }
@@ -456,9 +458,12 @@ public class ArchiverTests {
             worldStateStorage, blockchain, executeAsync, trieLogManager, new NoOpMetricsSystem());
     archiver.initialize();
 
-    // Chain height is 150, we've archived state up to block 100, we should have initialized the
-    // next 50 blocks to be archived
-    assertThat(archiver.getPendingBlocksCount()).isEqualTo(50);
+    currentBlockHeight = 100L;
+    when(blockchain.getChainHeadBlockNumber())
+        .then(requestedBlockNumber -> getCurrentBlockHeight());
+
+    // No new blocks yet, no pending blocks to archive
+    assertThat(archiver.getPendingBlocksCount()).isEqualTo(0);
 
     when(blockchain.getChainHeadBlockNumber())
         .then(requestedBlockNumber -> getCurrentBlockHeight());
@@ -468,11 +473,11 @@ public class ArchiverTests {
     // happen during this processing since there are only trie logs for blocks 101 and 102
     for (long nextBlock = 101; nextBlock < 150; nextBlock++) {
       currentBlockHeight = nextBlock;
-      archiver.addToArchivingQueue(
-          nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
+      // archiver.addToArchivingQueue(
+      //  nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
       int storageMoved = archiver.moveBlockStateToArchive();
       totalStorageMoved += storageMoved;
-      if (nextBlock == 112 || nextBlock == 113) {
+      if (nextBlock == 113 || nextBlock == 114) {
         assertThat(storageMoved).isEqualTo(1);
       } else {
         assertThat(storageMoved).isEqualTo(0);
@@ -627,9 +632,12 @@ public class ArchiverTests {
             worldStateStorage, blockchain, executeAsync, trieLogManager, new NoOpMetricsSystem());
     archiver.initialize();
 
-    // Chain height is 150, we've archived state up to block 100, we should have initialized the
-    // next 50 blocks to be archived
-    assertThat(archiver.getPendingBlocksCount()).isEqualTo(50);
+    currentBlockHeight = 100L;
+    when(blockchain.getChainHeadBlockNumber())
+        .then(requestedBlockNumber -> getCurrentBlockHeight());
+
+    // No new blocks yet, no pending blocks to archive
+    assertThat(archiver.getPendingBlocksCount()).isEqualTo(0);
 
     when(blockchain.getChainHeadBlockNumber())
         .then(requestedBlockNumber -> getCurrentBlockHeight());
@@ -639,12 +647,12 @@ public class ArchiverTests {
     // happen during this processing since there are only trie logs for blocks 101 and 102
     for (long nextBlock = 101; nextBlock < 150; nextBlock++) {
       currentBlockHeight = nextBlock;
-      archiver.addToArchivingQueue(
-          nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
+      // archiver.addToArchivingQueue(
+      //  nextBlock, blockNumberCache.getUnchecked(nextBlock).get().getHash());
       int storageAndAccountsMoved = archiver.moveBlockStateToArchive();
-      if (nextBlock == 112) {
+      if (nextBlock == 113) {
         assertThat(storageAndAccountsMoved).isEqualTo(2);
-      } else if (nextBlock == 113) {
+      } else if (nextBlock == 114) {
         assertThat(storageAndAccountsMoved).isEqualTo(1);
       } else {
         assertThat(storageAndAccountsMoved).isEqualTo(0);
@@ -805,7 +813,7 @@ public class ArchiverTests {
         .then(requestedBlockNumber -> getCurrentBlockHeight());
     assertThat(archiver.getPendingBlocksCount()).isEqualTo(0);
 
-    // Process the next 50 blocks 150-200 and count the archive changes. We'll recreate the
+    // Process the next 50 blocks 151-200 and count the archive changes. We'll recreate the
     // block cache so we can generate blocks beyond 150
     blockNumberCache =
         CacheBuilder.newBuilder()
@@ -826,7 +834,7 @@ public class ArchiverTests {
                   @Override
                   public Optional<Block> load(final Hash blockHash) {
                     Optional<Block> foundBlock;
-                    for (long i = 0; i < LONG_TEST_CHAIN_HEIGHT; i++) {
+                    for (long i = 0; i <= LONG_TEST_CHAIN_HEIGHT; i++) {
                       if ((foundBlock = blockNumberCache.getUnchecked(i)).isPresent()
                           && foundBlock.get().getHash().equals(blockHash)) {
                         return foundBlock;
@@ -838,7 +846,7 @@ public class ArchiverTests {
 
     // By default we archive state for chainheight - 10 blocks, so importing up to block 210 whould
     // cause blocks up to 200 to be archived
-    for (long nextBlock = 151; nextBlock <= 210; nextBlock++) {
+    for (long nextBlock = 151; nextBlock <= 211; nextBlock++) {
       currentBlockHeight = nextBlock;
       archiver.onBlockAdded(
           BlockAddedEvent.createForStoredOnly(blockNumberCache.getUnchecked(nextBlock).get()));
@@ -1067,7 +1075,7 @@ public class ArchiverTests {
 
     // By default we archive state for chainheight - 10 blocks, so importing up to block 210 whould
     // cause blocks up to 200 to be archived
-    for (long nextBlock = 151; nextBlock <= 210; nextBlock++) {
+    for (long nextBlock = 151; nextBlock <= 211; nextBlock++) {
       currentBlockHeight = nextBlock;
       archiver.onBlockAdded(
           BlockAddedEvent.createForStoredOnly(blockNumberCache.getUnchecked(nextBlock).get()));
