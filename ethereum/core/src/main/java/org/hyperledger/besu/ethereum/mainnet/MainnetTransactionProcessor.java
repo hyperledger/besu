@@ -415,7 +415,6 @@ public class MainnetTransactionProcessor {
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .contextVariables(contextVariablesBuilder.build())
-              .accessListWarmAddresses(warmAddressList)
               .accessListWarmStorage(storageList);
 
       if (transaction.getVersionedHashes().isPresent()) {
@@ -439,11 +438,16 @@ public class MainnetTransactionProcessor {
                 .contract(contractAddress)
                 .inputData(initCodeBytes.slice(code.getSize()))
                 .code(code)
+                .accessListWarmAddresses(warmAddressList)
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
         final Optional<Account> maybeContract = Optional.ofNullable(evmWorldUpdater.get(to));
+
+        if (maybeContract.isPresent() && maybeContract.get().hasDelegatedCode()) {
+          warmAddressList.add(maybeContract.get().delegatedCodeAddress().get());
+        }
 
         initialFrame =
             commonMessageFrameBuilder
@@ -455,6 +459,7 @@ public class MainnetTransactionProcessor {
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
                         .orElse(CodeV0.EMPTY_CODE))
+                .accessListWarmAddresses(warmAddressList)
                 .build();
       }
       Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
