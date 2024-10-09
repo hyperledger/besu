@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorl
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.Optional;
@@ -56,7 +55,6 @@ public class BonsaiArchiver implements BlockAddedObserver {
   private static final int DISTANCE_FROM_HEAD_BEFORE_ARCHIVING_OLD_STATE = 10;
   private final TrieLogManager trieLogManager;
   protected final MetricsSystem metricsSystem;
-  protected final Counter archivedBlocksCounter;
 
   // For logging progress. Saves doing a DB read just to record our progress
   final AtomicLong latestArchivedBlock = new AtomicLong(0);
@@ -73,11 +71,11 @@ public class BonsaiArchiver implements BlockAddedObserver {
     this.trieLogManager = trieLogManager;
     this.metricsSystem = metricsSystem;
 
-    archivedBlocksCounter =
-        metricsSystem.createCounter(
-            BesuMetricCategory.BLOCKCHAIN,
-            "archived_blocks_state_total",
-            "Total number of blocks for which state has been archived");
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.BLOCKCHAIN,
+        "archived_blocks_state_total",
+        "Total number of blocks for which state has been archived",
+        () -> latestArchivedBlock.get());
   }
 
   public void initialize() {
@@ -190,7 +188,6 @@ public class BonsaiArchiver implements BlockAddedObserver {
                     .addArgument(block.getKey())
                     .log();
                 rootWorldStateStorage.setLatestArchivedBlock(block.getKey());
-                archivedBlocksCounter.inc();
 
                 // Update local var for logging progress
                 latestArchivedBlock.set(block.getKey());
