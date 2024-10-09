@@ -78,6 +78,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimaps;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,8 +110,10 @@ public class TransactionPool implements BlockAddedObserver {
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
   private final EthScheduler.OrderedProcessor<BlockAddedEvent> blockAddedEventOrderedProcessor;
-  private final Map<VersionedHash, List<BlobsWithCommitments.BlobQuad>>
-      mapOfBlobsInTransactionPool = new HashMap<>();
+  private final ListMultimap<VersionedHash, BlobsWithCommitments.BlobQuad>
+      mapOfBlobsInTransactionPool =
+          Multimaps.synchronizedListMultimap(
+              Multimaps.newListMultimap(new HashMap<>(), ArrayList::new));
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -662,13 +666,7 @@ public class TransactionPool implements BlockAddedObserver {
     final List<BlobsWithCommitments.BlobQuad> blobQuads =
         maybeBlobsWithCommitments.get().getBlobQuads();
 
-    synchronized (mapOfBlobsInTransactionPool) {
-      blobQuads.forEach(
-          bq ->
-              mapOfBlobsInTransactionPool
-                  .computeIfAbsent(bq.versionedHash(), k -> new ArrayList<>())
-                  .add(bq));
-    }
+    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.versionedHash(), bq));
   }
 
   private void unmapBlobsOnTransactionDropped(
@@ -681,28 +679,15 @@ public class TransactionPool implements BlockAddedObserver {
     final List<BlobsWithCommitments.BlobQuad> blobQuads =
         maybeBlobsWithCommitments.get().getBlobQuads();
 
-    synchronized (mapOfBlobsInTransactionPool) {
-      blobQuads.forEach(
-          bq -> {
-            final List<BlobsWithCommitments.BlobQuad> blobQuadList =
-                mapOfBlobsInTransactionPool.get(bq.versionedHash());
-            blobQuadList.remove(bq);
-            if (blobQuadList.isEmpty()) {
-              mapOfBlobsInTransactionPool.remove(bq.versionedHash());
-            }
-          });
-    }
+    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.versionedHash(), bq));
   }
 
   public BlobsWithCommitments.BlobQuad getBlobQuad(final VersionedHash vh) {
-    final List<BlobsWithCommitments.BlobQuad> blobQuadList;
-    blobQuadList = mapOfBlobsInTransactionPool.get(vh);
-    if (blobQuadList != null) {
-      try {
-        return blobQuadList.getFirst();
-      } catch (NoSuchElementException e) {
-        return null;
-      }
+    try {
+      // returns an empty list if the key is not present, so getFirst() will throw
+      return mapOfBlobsInTransactionPool.get(vh).getFirst();
+    } catch (NoSuchElementException e) {
+      // do nothing
     }
     return cacheForBlobsOfTransactionsAddedToABlock.get(vh);
   }
