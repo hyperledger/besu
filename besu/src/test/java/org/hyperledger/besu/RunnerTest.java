@@ -119,7 +119,7 @@ public final class RunnerTest {
   private Vertx vertx;
 
   @BeforeEach
-  public void initVertx() {
+  public void initVertx() throws IllegalAccessException {
     vertx = Vertx.vertx();
   }
 
@@ -131,7 +131,7 @@ public final class RunnerTest {
   @TempDir private Path temp;
 
   @Test
-  public void getFixedNodes() {
+  public void getFixedNodes() throws IllegalAccessException {
     final EnodeURL staticNode =
         EnodeURLImpl.fromString(
             "enode://8f4b88336cc40ef2516d8b27df812e007fb2384a61e93635f1899051311344f3dcdbb49a4fe49a79f66d2f589a9f282e8cc4f1d7381e8ef7e4fcc6b0db578c77@127.0.0.1:30301");
@@ -153,7 +153,15 @@ public final class RunnerTest {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
     MergeConfiguration.setMergeEnabled(false);
 
-    syncFromGenesis(SyncMode.FULL, getFastSyncGenesis());
+    syncFromGenesis(SyncMode.FULL, getFastSyncGenesis(), false);
+  }
+
+  @Test
+  public void fullSyncFromGenesisUsingPeerTaskSystem() throws Exception {
+    // set merge flag to false, otherwise this test can fail if a merge test runs first
+    MergeConfiguration.setMergeEnabled(false);
+
+    syncFromGenesis(SyncMode.FULL, getFastSyncGenesis(), true);
   }
 
   @Test
@@ -161,10 +169,21 @@ public final class RunnerTest {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
     MergeConfiguration.setMergeEnabled(false);
 
-    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis());
+    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis(), false);
   }
 
-  private void syncFromGenesis(final SyncMode mode, final GenesisConfigFile genesisConfig)
+  @Test
+  public void fastSyncFromGenesisUsingPeerTaskSystem() throws Exception {
+    // set merge flag to false, otherwise this test can fail if a merge test runs first
+    MergeConfiguration.setMergeEnabled(false);
+
+    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis(), true);
+  }
+
+  private void syncFromGenesis(
+      final SyncMode mode,
+      final GenesisConfigFile genesisConfig,
+      final boolean isPeerTaskSystemEnabled)
       throws Exception {
     final Path dataDirAhead = Files.createTempDirectory(temp, "db-ahead");
     final Path dbAhead = dataDirAhead.resolve("database");
@@ -172,7 +191,10 @@ public final class RunnerTest {
     final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dataDirAhead));
     final NodeKey behindDbNodeKey = NodeKeyUtils.generate();
     final SynchronizerConfiguration syncConfigAhead =
-        SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
+        SynchronizerConfiguration.builder()
+            .syncMode(SyncMode.FULL)
+            .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
+            .build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
     final var miningParameters = MiningParameters.newDefault();
     final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_FOREST_CONFIG;

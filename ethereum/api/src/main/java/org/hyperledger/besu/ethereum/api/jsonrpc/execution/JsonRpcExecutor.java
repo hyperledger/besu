@@ -104,9 +104,9 @@ public class JsonRpcExecutor {
   private Optional<RpcErrorType> validateMethodAvailability(final JsonRpcRequest request) {
     final String name = request.getMethod();
 
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isTraceEnabled()) {
       final JsonArray params = JsonObject.mapFrom(request).getJsonArray("params");
-      LOG.debug("JSON-RPC request -> {} {}", name, params);
+      LOG.trace("JSON-RPC request -> {} {}", name, params);
     }
 
     final JsonRpcMethod method = rpcMethods.get(name);
