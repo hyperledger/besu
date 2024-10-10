@@ -431,21 +431,42 @@ public class EthPeers {
         .anyMatch(c -> !c.isDisconnected() && (!inbound || (inbound && c.inboundInitiated())));
   }
 
-  public void disconnectWorstUselessPeer() {
-    streamAvailablePeers()
-        .filter(p -> !canExceedPeerLimits(p.getId()))
-        .min(getBestPeerComparator())
-        .ifPresent(
-            peer -> {
-              LOG.atDebug()
-                  .setMessage(
-                      "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
-                  .addArgument(peer::getLoggableId)
-                  .addArgument(this::peerCount)
-                  .addArgument(this::getMaxPeers)
-                  .log();
-              peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_BY_CHAIN_COMPARATOR);
-            });
+  public void disconnectWorstUselessPeerIfAtCapacityIncludingConnectingPeer(
+      final EthPeer connectingPeer) {
+    if (peerCount() >= getMaxPeers()) {
+      streamAvailablePeers()
+          .filter(p -> !canExceedPeerLimits(p.getId()))
+          .min(getBestPeerComparator())
+          .ifPresent(
+              worstCurrentPeer -> {
+                // TODO remove this debug log
+                LOG.atDebug()
+                    .setMessage("comparing worstCurrentPeer {} with connectingPeer {}")
+                    .addArgument(worstCurrentPeer)
+                    .addArgument(connectingPeer)
+                    .log();
+                if (getBestPeerComparator().compare(worstCurrentPeer, connectingPeer) < 0) {
+                  LOG.atDebug()
+                      .setMessage(
+                          "disconnecting current peer {}. Waiting for better peers. Current {} of max {}")
+                      .addArgument(worstCurrentPeer::getLoggableId)
+                      .addArgument(this::peerCount)
+                      .addArgument(this::getMaxPeers)
+                      .log();
+                  worstCurrentPeer.disconnect(
+                      DisconnectMessage.DisconnectReason.USELESS_PEER_BY_CHAIN_COMPARATOR);
+                } else {
+                  LOG.atDebug()
+                      .setMessage(
+                          "disconnecting connecting peer {}. Waiting for better peers. Current {} of max {}")
+                      .addArgument(connectingPeer::getLoggableId)
+                      .addArgument(this::peerCount)
+                      .addArgument(this::getMaxPeers)
+                      .log();
+                  connectingPeer.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+                }
+              });
+    }
   }
 
   public void setChainHeadTracker(final ChainHeadTracker tracker) {
@@ -739,14 +760,8 @@ public class EthPeers {
                                     .log();
                               }));
         } else {
-          LOG.atTrace()
-              .setMessage(
-                  "Too many peers. Disconnect peer {} with connection: {}, max connections {}")
-              .addArgument(peer.getLoggableId())
-              .addArgument(connection)
-              .addArgument(peerUpperBound)
-              .log();
-          connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+          // Compare the incoming peer to the worst current peer and disconnect worst of those
+          disconnectWorstUselessPeerIfAtCapacityIncludingConnectingPeer(peer);
           return false;
         }
       }

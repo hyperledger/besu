@@ -19,6 +19,7 @@
 - k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
 
 ### Additions and Improvements
+- Peering - compare incoming peer with current peers before deciding which to keep [#6968](https://github.com/hyperledger/besu/pull/6968)
 - Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
 - Add Blob Transaction Metrics [#7622](https://github.com/hyperledger/besu/pull/7622)
 - Implemented support for emptyBlockPeriodSeconds in QBFT [#6965](https://github.com/hyperledger/besu/pull/6965)
