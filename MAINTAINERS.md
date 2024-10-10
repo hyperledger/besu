@@ -9,6 +9,7 @@
 | Name             | Github           | LFID             |
 | ---------------- | ---------------- | ---------------- |
 | Ameziane Hamlat   | ahamlat         | ahamlat          |
+| Chaminda Divitotawela | cdivitotawela    | cdivitotawela    |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
@@ -18,7 +19,7 @@
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
-| Luis Pinto       | lu-pinto         | lu-pinto
+| Luis Pinto       | lu-pinto         | lu-pinto         |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
 | Sally MacFarlane | macfarla         | macfarla         |
 | Karim Taam       | matkt            | matkt            |
