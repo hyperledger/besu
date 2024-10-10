@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.acceptance.clique;
 
 import static org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions.LATEST;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @Disabled("flaky test due to hardcoded block numbers")
-public class CliqueGetSignersRpcAcceptanceTest extends AcceptanceTestBaseJunit5 {
+public class CliqueGetSignersRpcAcceptanceTest extends AcceptanceTestBase {
   private BesuNode minerNode1;
   private BesuNode minerNode2;
 
