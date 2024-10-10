@@ -450,14 +450,18 @@ public class ConfigurationOverviewBuilder {
   private void detectJemalloc(final List<String> lines) {
     Optional.ofNullable(Objects.isNull(environment) ? null : environment.get("BESU_USING_JEMALLOC"))
         .ifPresentOrElse(
-            t -> {
+            jemallocEnabled -> {
               try {
-                final String version = PlatformDetector.getJemalloc();
-                lines.add("jemalloc: " + version);
+                if (Boolean.parseBoolean(jemallocEnabled)) {
+                  final String version = PlatformDetector.getJemalloc();
+                  lines.add("jemalloc: " + version);
+                } else {
+                  logger.info(
+                      "BESU_USING_JEMALLOC is present but is not set to true, jemalloc library not loaded");
+                }
               } catch (final Throwable throwable) {
                 logger.warn(
-                    "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version",
-                    throwable);
+                    "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version");
               }
             },
             () -> {
