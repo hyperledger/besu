@@ -829,6 +829,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * Create synchronizer synchronizer.
    *
    * @param protocolSchedule the protocol schedule
+   * @param currentProtocolSpecSupplier the protocol spec supplier
    * @param worldStateStorageCoordinator the world state storage
    * @param protocolContext the protocol context
    * @param ethContext the eth context
