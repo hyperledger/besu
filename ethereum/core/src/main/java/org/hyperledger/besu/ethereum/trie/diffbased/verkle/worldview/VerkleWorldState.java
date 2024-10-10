@@ -210,7 +210,8 @@ public class VerkleWorldState extends DiffBasedWorldState {
       final Address accountKey,
       final VerkleEntryFactory verkleEntryFactory,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
-      final DiffBasedValue<VerkleAccount> accountUpdate) {
+      final VerkleWorldStateUpdateAccumulator worldStateUpdater) {
+    var accountUpdate = worldStateUpdater.getAccountsToUpdate().get(accountKey);
     if (accountUpdate == null || accountUpdate.isUnchanged()) {
       return;
     }
@@ -221,16 +222,35 @@ public class VerkleWorldState extends DiffBasedWorldState {
           bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
       return;
     }
+
+    handleCoupledCodeAccountUpdates(
+        accountKey, verkleEntryFactory, accountUpdate, worldStateUpdater);
+
     final VerkleAccount updatedAcount = accountUpdate.getUpdated();
-    if (accountUpdate.getPrior() == null) {
-      verkleEntryFactory.generateCodeHashKeyValueForUpdate(accountKey, updatedAcount.getCodeHash());
-    }
     verkleEntryFactory.generateAccountKeyValueForUpdate(
         accountKey, updatedAcount.getNonce(), updatedAcount.getBalance());
     maybeStateUpdater.ifPresent(
         bonsaiUpdater ->
             bonsaiUpdater.putAccountInfoState(
                 hashAndSavePreImage(accountKey), updatedAcount.serializeAccount()));
+  }
+
+  private void handleCoupledCodeAccountUpdates(
+      final Address accountKey,
+      final VerkleEntryFactory verkleEntryFactory,
+      final DiffBasedValue<VerkleAccount> accountUpdate,
+      final VerkleWorldStateUpdateAccumulator worldStateUpdater) {
+    final VerkleAccount priorAccount = accountUpdate.getPrior();
+    final VerkleAccount updatedAccount = accountUpdate.getUpdated();
+    if (priorAccount == null) {
+      verkleEntryFactory.generateCodeHashKeyValueForUpdate(
+          accountKey, updatedAccount.getCodeHash());
+      return;
+    }
+    Optional<Bytes> currentCode =
+        worldStateUpdater.getCode(accountKey, updatedAccount.getCodeHash());
+    currentCode.ifPresent(
+        code -> verkleEntryFactory.generateCodeSizeKeyValueForUpdate(accountKey, code.size()));
   }
 
   private void generateCodeValues(
@@ -305,11 +325,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
     final VerkleEntryFactory verkleEntryFactory = new VerkleEntryFactory(hasherContext.hasher());
 
-    generateAccountValues(
-        accountKey,
-        verkleEntryFactory,
-        maybeStateUpdater,
-        worldStateUpdater.getAccountsToUpdate().get(accountKey));
+    generateAccountValues(accountKey, verkleEntryFactory, maybeStateUpdater, worldStateUpdater);
 
     generateCodeValues(
         accountKey,
