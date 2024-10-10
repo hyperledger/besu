@@ -18,6 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.SequencedRemovalReason.EVICTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.SequencedRemovalReason.INVALID;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.SequencedRemovalReason.REPLACED;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.SequencedRemovalReason.TIMED_EVICTION;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -292,9 +296,9 @@ public abstract class AbstractPendingTransactionsTestBase {
 
     transactions.subscribeDroppedTransactions(droppedListener);
 
-    transactions.removeTransaction(transaction1);
+    transactions.removeTransaction(transaction1, TIMED_EVICTION);
 
-    verify(droppedListener).onTransactionDropped(transaction1);
+    verify(droppedListener).onTransactionDropped(transaction1, TIMED_EVICTION);
   }
 
   @Test
@@ -304,13 +308,13 @@ public abstract class AbstractPendingTransactionsTestBase {
 
     final long id = transactions.subscribeDroppedTransactions(droppedListener);
 
-    transactions.removeTransaction(transaction1);
+    transactions.removeTransaction(transaction1, EVICTED);
 
-    verify(droppedListener).onTransactionDropped(transaction1);
+    verify(droppedListener).onTransactionDropped(transaction1, EVICTED);
 
     transactions.unsubscribeDroppedTransactions(id);
 
-    transactions.removeTransaction(transaction2);
+    transactions.removeTransaction(transaction2, EVICTED);
 
     verifyNoMoreInteractions(droppedListener);
   }
@@ -321,9 +325,9 @@ public abstract class AbstractPendingTransactionsTestBase {
 
     transactions.subscribeDroppedTransactions(droppedListener);
 
-    transactions.removeTransaction(transaction1);
+    transactions.removeTransaction(transaction1, REPLACED);
 
-    verify(droppedListener).onTransactionDropped(transaction1);
+    verify(droppedListener).onTransactionDropped(transaction1, REPLACED);
   }
 
   @Test
@@ -473,7 +477,7 @@ public abstract class AbstractPendingTransactionsTestBase {
   public void shouldReturnEmptyOptionalAsMaximumNonceWhenLastTransactionForSenderRemoved() {
     final Transaction transaction = transactionWithNonceAndSender(1, KEYS1);
     transactions.addTransaction(createRemotePendingTransaction(transaction), Optional.empty());
-    transactions.removeTransaction(transaction);
+    transactions.removeTransaction(transaction, INVALID);
     assertThat(transactions.getNextNonceForSender(SENDER1)).isEmpty();
   }
 
@@ -822,6 +826,8 @@ public abstract class AbstractPendingTransactionsTestBase {
                 .build(),
             Optional.of(clock));
 
+    twoHourEvictionTransactionPool.subscribeDroppedTransactions(droppedListener);
+
     twoHourEvictionTransactionPool.addTransaction(
         createRemotePendingTransaction(transaction1, clock.millis()), Optional.empty());
     assertThat(twoHourEvictionTransactionPool.size()).isEqualTo(1);
@@ -832,6 +838,7 @@ public abstract class AbstractPendingTransactionsTestBase {
     twoHourEvictionTransactionPool.evictOldTransactions();
     assertThat(twoHourEvictionTransactionPool.size()).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
+    verify(droppedListener).onTransactionDropped(transaction1, TIMED_EVICTION);
   }
 
   @Test
@@ -949,7 +956,8 @@ public abstract class AbstractPendingTransactionsTestBase {
   public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
     // Make sure the 100 gas price TX isn't dropped
     transactions.subscribeDroppedTransactions(
-        transaction -> assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100));
+        (transaction, reason) ->
+            assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100));
 
     // Fill the pool with transactions from random senders
     final List<Transaction> lowGasPriceTransactions =

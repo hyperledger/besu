@@ -18,6 +18,10 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.SequencedRemovalReason.EVICTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.SequencedRemovalReason.INVALID;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.SequencedRemovalReason.REPLACED;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.SequencedRemovalReason.TIMED_EVICTION;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -160,7 +164,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
                   .setMessage("Evicted {} due to age")
                   .addArgument(transactionInfo::toTraceLog)
                   .log();
-              removeTransaction(transactionInfo.getTransaction());
+              removeTransaction(transactionInfo.getTransaction(), TIMED_EVICTION);
             });
   }
 
@@ -196,9 +200,9 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
     return transactionAddedStatus;
   }
 
-  void removeTransaction(final Transaction transaction) {
+  void removeTransaction(final Transaction transaction, final SequencedRemovalReason reason) {
     removeTransaction(transaction, false);
-    notifyTransactionDropped(transaction);
+    notifyTransactionDropped(transaction, reason);
   }
 
   @Override
@@ -256,12 +260,12 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
           }
 
           if (result.stop()) {
-            transactionsToRemove.forEach(this::removeTransaction);
+            transactionsToRemove.forEach(tx -> removeTransaction(tx, INVALID));
             return;
           }
         }
       }
-      transactionsToRemove.forEach(this::removeTransaction);
+      transactionsToRemove.forEach(tx -> removeTransaction(tx, INVALID));
     }
   }
 
@@ -324,7 +328,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         .setMessage("Tracked transaction by sender {}")
         .addArgument(pendingTxsForSender::toTraceLog)
         .log();
-    maybeReplacedTransaction.ifPresent(this::removeTransaction);
+    maybeReplacedTransaction.ifPresent(tx -> removeTransaction(tx, REPLACED));
     return ADDED;
   }
 
@@ -354,8 +358,10 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
     pendingTransactionSubscribers.forEach(listener -> listener.onTransactionAdded(transaction));
   }
 
-  private void notifyTransactionDropped(final Transaction transaction) {
-    transactionDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction));
+  private void notifyTransactionDropped(
+      final Transaction transaction, final SequencedRemovalReason reason) {
+    transactionDroppedListeners.forEach(
+        listener -> listener.onTransactionDropped(transaction, reason));
   }
 
   @Override
@@ -491,7 +497,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
     // remove backward to avoid gaps
     for (int i = txsToEvict.size() - 1; i >= 0; i--) {
-      removeTransaction(txsToEvict.get(i).getTransaction());
+      removeTransaction(txsToEvict.get(i).getTransaction(), EVICTED);
     }
   }
 

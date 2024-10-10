@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,10 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.ethereum.core.Transaction;
+/** The reason why a pending tx has been removed */
+public interface RemovalReason {
+  /**
+   * Return a label that identify this reason to be used in the metric system.
+   *
+   * @return a label
+   */
+  String label();
 
-@FunctionalInterface
-public interface PendingTransactionDroppedListener {
-
-  void onTransactionDropped(Transaction transaction, final RemovalReason reason);
+  /**
+   * Return true if we should stop tracking the tx as already seen
+   *
+   * @return true if no more tracking is needed
+   */
+  boolean stopTracking();
 }
