@@ -55,8 +55,6 @@ public enum EvmSpecVersion {
   CANCUN_EOF(MainnetHardforkId.CANCUN_EOF, 0x6000, 0xc000, 1),
   /** Prague evm spec version. */
   PRAGUE(MainnetHardforkId.PRAGUE, 0x6000, 0xc000, 0),
-  /** PragueEOF evm spec version. */
-  PRAGUE_EOF(MainnetHardforkId.PRAGUE_EOF, 0x6000, 0xc000, 1),
   /** Osaka evm spec version. */
   OSAKA(MainnetHardforkId.OSAKA, 0x6000, 0xc000, 1),
   /** Amsterdam evm spec version. */
@@ -183,11 +181,11 @@ public enum EvmSpecVersion {
    * @return the EVM spec version for that fork, or null if no fork matched.
    */
   public static EvmSpecVersion fromName(final String name) {
-    // TODO remove once PragueEOF settles
+    // TODO remove once CancunEOF tests are removed from EEST
     if ("prague".equalsIgnoreCase(name)) {
-      return EvmSpecVersion.PRAGUE_EOF;
+      return EvmSpecVersion.OSAKA;
     }
-    // TODO remove once PragueEOF settles
+    // TODO remove once CancunEOF tests are removed from EEST
     if ("cancuneof".equalsIgnoreCase(name)) {
       return EvmSpecVersion.CANCUN_EOF;
     }
