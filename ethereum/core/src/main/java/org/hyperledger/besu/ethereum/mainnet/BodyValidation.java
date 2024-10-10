@@ -112,12 +112,15 @@ public final class BodyValidation {
 
     IntStream.range(0, receipts.size())
         .forEach(
-            i ->
-                trie.put(
-                    indexKey(i),
-                    RLP.encode(
-                        rlpOutput ->
-                            receipts.get(i).writeToForReceiptTrie(rlpOutput, false, false))));
+            i -> {
+              final TransactionReceipt receipt = receipts.get(i);
+              trie.put(
+                  indexKey(i),
+                  receipt.getRlp().isPresent()
+                      ? receipt.getRlp().get()
+                      : RLP.encode(
+                          rlpOutput -> receipt.writeToForReceiptTrie(rlpOutput, false, false)));
+            });
 
     return Hash.wrap(trie.getRootHash());
   }
