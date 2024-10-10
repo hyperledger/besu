@@ -68,7 +68,7 @@ public class PersistDataStepTest {
 
   @Test
   public void shouldPersistDataWhenPresent() {
-    final List<Task<SnapDataRequest>> tasks = TaskGenerator.createAccountRequest(true);
+    final List<Task<SnapDataRequest>> tasks = TaskGenerator.createAccountRequest(true, false);
     final List<Task<SnapDataRequest>> result = persistDataStep.persist(tasks);
 
     assertThat(result).isSameAs(tasks);
@@ -105,7 +105,7 @@ public class PersistDataStepTest {
 
   @Test
   public void shouldSkipPersistDataWhenNoData() {
-    final List<Task<SnapDataRequest>> tasks = TaskGenerator.createAccountRequest(false);
+    final List<Task<SnapDataRequest>> tasks = TaskGenerator.createAccountRequest(false, false);
     final List<Task<SnapDataRequest>> result = persistDataStep.persist(tasks);
 
     assertThat(result).isSameAs(tasks);
@@ -114,6 +114,25 @@ public class PersistDataStepTest {
                 .getStrategy(BonsaiWorldStateKeyValueStorage.class)
                 .getTrieNodeUnsafe(tasks.get(0).getData().getRootHash()))
         .isEmpty();
+  }
+
+  @Test
+  public void shouldHandleNullTaskElementInTrie() {
+    // Create a StorageRangeDataRequest where taskElement might be null or incomplete
+    List<Task<SnapDataRequest>> tasks = TaskGenerator.createAccountRequest(false, true);
+
+    try {
+      List<Task<SnapDataRequest>> result = persistDataStep.persist(tasks);
+
+      // check for proper handling of null taskElement
+      assertThat(result).isSameAs(tasks);
+      assertThat(result)
+          .isNotNull(); // Make sure the result isn't null even with the bad taskElement
+    } catch (NullPointerException e) {
+      fail(
+          "NullPointerException occurred during persist step, taskElement might be null: "
+              + e.getMessage());
+    }
   }
 
   private void assertDataPersisted(final List<Task<SnapDataRequest>> tasks) {
