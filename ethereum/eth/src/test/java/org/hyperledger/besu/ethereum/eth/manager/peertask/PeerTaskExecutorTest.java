@@ -73,7 +73,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenReturn(responseMessageData);
     Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
-    Mockito.when(peerTask.isPartialSuccessTest(responseObject)).thenReturn(false);
+    Mockito.when(peerTask.isPartialSuccess(responseObject)).thenReturn(false);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
 
@@ -102,7 +102,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenReturn(responseMessageData);
     Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
-    Mockito.when(peerTask.isPartialSuccessTest(responseObject)).thenReturn(true);
+    Mockito.when(peerTask.isPartialSuccess(responseObject)).thenReturn(true);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
 
@@ -132,7 +132,7 @@ public class PeerTaskExecutorTest {
         .thenReturn(responseMessageData);
     Mockito.when(requestMessageData.getCode()).thenReturn(requestMessageDataCode);
     Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
-    Mockito.when(peerTask.isPartialSuccessTest(responseObject)).thenReturn(false);
+    Mockito.when(peerTask.isPartialSuccess(responseObject)).thenReturn(false);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
 
@@ -238,7 +238,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenReturn(responseMessageData);
     Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
-    Mockito.when(peerTask.isPartialSuccessTest(responseObject)).thenReturn(false);
+    Mockito.when(peerTask.isPartialSuccess(responseObject)).thenReturn(false);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
 
@@ -276,7 +276,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, peer2))
         .thenReturn(responseMessageData);
     Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
-    Mockito.when(peerTask.isPartialSuccessTest(responseObject)).thenReturn(false);
+    Mockito.when(peerTask.isPartialSuccess(responseObject)).thenReturn(false);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.execute(peerTask);
 

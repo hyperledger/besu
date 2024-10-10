@@ -113,7 +113,7 @@ public class PeerTaskExecutor {
           result = peerTask.parseResponse(responseMessageData);
         }
 
-        if (peerTask.isPartialSuccessTest(result)) {
+        if (peerTask.isPartialSuccess(result)) {
           executorResult =
               new PeerTaskExecutorResult<>(
                   Optional.ofNullable(result), PeerTaskExecutorResponseCode.PARTIAL_SUCCESS);

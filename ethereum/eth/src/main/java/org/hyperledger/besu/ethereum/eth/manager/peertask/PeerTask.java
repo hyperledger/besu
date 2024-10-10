@@ -79,5 +79,5 @@ public interface PeerTask<T> {
    *
    * @return true if the supplied result is considered a partial success
    */
-  boolean isPartialSuccessTest(T result);
+  boolean isPartialSuccess(T result);
 }
