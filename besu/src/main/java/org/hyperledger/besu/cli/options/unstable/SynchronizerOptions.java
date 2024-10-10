@@ -87,6 +87,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--Xsnapsync-bft-enabled";
 
+  private static final String SNAP_SYNC_TO_HEAD_ENABLED_FLAG = "--Xsnapsync-to-head-enabled";
+
   /**
    * Parse block propagation range.
    *
@@ -315,6 +317,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean snapsyncBftEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED;
 
   @CommandLine.Option(
+      names = SNAP_SYNC_TO_HEAD_ENABLED_FLAG,
+      hidden = true,
+      paramLabel = "<Boolean>",
+      arity = "0..1",
+      description = "Snap sync to head enabled (default: ${DEFAULT-VALUE})")
+  private Boolean snapsyncToHeadEnabled =
+      SnapSyncConfiguration.DEFAULT_SNAP_SYNC_TO_HEAD_ENABLED_FLAG;
+
+  @CommandLine.Option(
       names = {"--Xpeertask-system-enabled"},
       hidden = true,
       description =
@@ -339,6 +350,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
    */
   public boolean isSnapSyncBftEnabled() {
     return snapsyncBftEnabled;
+  }
+
+  /**
+   * Flag to know if Snap sync should sync to head instead of safe block
+   *
+   * @return true if snap sync should sync to head
+   */
+  public boolean isSnapSyncToHeadEnabled() {
+    return snapsyncToHeadEnabled;
   }
 
   /**
@@ -401,6 +421,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
     options.snapsyncBftEnabled = config.getSnapSyncConfiguration().isSnapSyncBftEnabled();
+    options.snapsyncToHeadEnabled = config.getSnapSyncConfiguration().isSnapSyncToHeadEnabled();
     return options;
   }
 
@@ -434,6 +455,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
             .isSnapServerEnabled(snapsyncServerEnabled)
             .isSnapSyncBftEnabled(snapsyncBftEnabled)
+            .isSnapSyncToHeadEnabled(snapsyncToHeadEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
     builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
@@ -493,7 +515,9 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             SNAP_SERVER_ENABLED_FLAG,
             OptionParser.format(snapsyncServerEnabled),
             SNAP_SYNC_BFT_ENABLED_FLAG,
-            OptionParser.format(snapsyncBftEnabled));
+            OptionParser.format(snapsyncBftEnabled),
+            SNAP_SYNC_TO_HEAD_ENABLED_FLAG,
+            OptionParser.format(snapsyncToHeadEnabled));
     return value;
   }
 }

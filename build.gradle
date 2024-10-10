@@ -31,6 +31,8 @@ plugins {
   id 'me.champeau.jmh' version '0.7.2' apply false
   id 'net.ltgt.errorprone' version '4.0.1'
   id 'maven-publish'
+  id 'jacoco'
+  id 'jacoco-report-aggregation'
   id 'org.sonarqube' version '5.1.0.4882'
 }
 
@@ -40,12 +42,12 @@ sonarqube {
     property "sonar.organization", "$System.env.SONAR_ORGANIZATION"
     property "sonar.gradle.skipCompile", "true"
     property "sonar.host.url", "https://sonarcloud.io"
-    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
+    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml"
     property "sonar.coverage.exclusions", "acceptance-tests/**/*"
   }
 }
 
-project.tasks["sonarqube"].dependsOn "jacocoRootReport"
+project.tasks["sonar"].dependsOn "testCodeCoverageReport"
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
   throw new GradleException("Java 21 or later is required to build Besu.\n" +
@@ -360,6 +362,7 @@ allprojects {
       }
     }
     useJUnitPlatform {}
+    finalizedBy jacocoTestReport // report is always generated after tests run
   }
 
   javadoc {
@@ -960,19 +963,6 @@ jacocoTestReport {
   reports {
     xml.required = true
   }
-}
-
-task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
-  additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
-  sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
-  classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching { exclude 'org/hyperledger/besu/tests/acceptance/**' }
-  executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
-  reports {
-    xml.required = true
-    csv.required = true
-    html.destination file("build/reports/jacocoHtml")
-  }
-  onlyIf = { true }
 }
 
 // http://label-schema.org/rc1/

@@ -46,6 +46,7 @@ public class ConfigurationOverviewBuilder {
   private String customGenesisFileName;
   private String dataStorage;
   private String syncMode;
+  private Integer syncMinPeers;
   private Integer rpcPort;
   private Collection<String> rpcHttpApis;
   private Integer enginePort;
@@ -57,6 +58,7 @@ public class ConfigurationOverviewBuilder {
   private Integer trieLogsPruningWindowSize = null;
   private boolean isSnapServerEnabled = false;
   private boolean isSnapSyncBftEnabled = false;
+  private boolean isSnapSyncToHeadEnabled = true;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
@@ -145,6 +147,17 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setSyncMode(final String syncMode) {
     this.syncMode = syncMode;
+    return this;
+  }
+
+  /**
+   * Sets sync min peers.
+   *
+   * @param syncMinPeers number of min peers for sync
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setSyncMinPeers(final int syncMinPeers) {
+    this.syncMinPeers = syncMinPeers;
     return this;
   }
 
@@ -246,6 +259,18 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets snap sync to head enabled/disabled
+   *
+   * @param snapSyncToHeadEnabled bool to indicate if snap sync to head is enabled
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setSnapSyncToHeadEnabled(
+      final boolean snapSyncToHeadEnabled) {
+    isSnapSyncToHeadEnabled = snapSyncToHeadEnabled;
+    return this;
+  }
+
+  /**
    * Sets trie logs pruning window size
    *
    * @param size the max number of blocks to load and prune trie logs for at startup
@@ -340,6 +365,10 @@ public class ConfigurationOverviewBuilder {
       lines.add("Sync mode: " + syncMode);
     }
 
+    if (syncMinPeers != null) {
+      lines.add("Sync min peers: " + syncMinPeers);
+    }
+
     if (rpcHttpApis != null) {
       lines.add("RPC HTTP APIs: " + String.join(",", rpcHttpApis));
     }
@@ -371,6 +400,10 @@ public class ConfigurationOverviewBuilder {
 
     if (isSnapSyncBftEnabled) {
       lines.add("Experimental Snap Sync for BFT enabled");
+    }
+
+    if (isSnapSyncToHeadEnabled) {
+      lines.add("Snap Sync to Head enabled");
     }
 
     if (isBonsaiLimitTrieLogsEnabled) {
