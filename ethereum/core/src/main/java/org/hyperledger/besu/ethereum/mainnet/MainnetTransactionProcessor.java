@@ -290,18 +290,21 @@ public class MainnetTransactionProcessor {
     try {
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
-      ValidationResult<TransactionInvalidReason> validationResult =
-          transactionValidator.validate(
-              transaction,
-              blockHeader.getBaseFee(),
-              Optional.ofNullable(blobGasPrice),
-              transactionValidationParams);
-      // Make sure the transaction is intrinsically valid before trying to
-      // compare against a sender account (because the transaction may not
-      // be signed correctly to extract the sender).
-      if (!validationResult.isValid()) {
-        LOG.debug("Invalid transaction: {}", validationResult.getErrorMessage());
-        return TransactionProcessingResult.invalid(validationResult);
+      ValidationResult<TransactionInvalidReason> validationResult;
+      if (transaction.getSender() == null) {
+        validationResult =
+            transactionValidator.validate(
+                transaction,
+                blockHeader.getBaseFee(),
+                Optional.ofNullable(blobGasPrice),
+                transactionValidationParams);
+        // Make sure the transaction is intrinsically valid before trying to
+        // compare against a sender account (because the transaction may not
+        // be signed correctly to extract the sender).
+        if (!validationResult.isValid()) {
+          LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
+          return TransactionProcessingResult.invalid(validationResult);
+        }
       }
 
       final Address senderAddress = transaction.getSender();
