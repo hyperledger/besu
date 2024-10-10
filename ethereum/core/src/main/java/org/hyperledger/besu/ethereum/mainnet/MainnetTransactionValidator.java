@@ -177,12 +177,6 @@ public class MainnetTransactionValidator implements TransactionValidator {
                           "Invalid signature for code delegation. S value must be less or equal than the half curve order.");
                     }
 
-                    if (codeDelegation.nonce() == MAX_NONCE) {
-                      return ValidationResult.invalid(
-                          TransactionInvalidReason.NONCE_OVERFLOW,
-                          "Nonce of code delegation must be less than 2^64-1");
-                    }
-
                     if (codeDelegation.signature().getRecId() != 0
                         && codeDelegation.signature().getRecId() != 1) {
                       return ValidationResult.invalid(

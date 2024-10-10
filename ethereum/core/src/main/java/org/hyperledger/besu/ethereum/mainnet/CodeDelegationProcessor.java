@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.CodeDelegation;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -89,6 +91,11 @@ public class CodeDelegationProcessor {
       return;
     }
 
+    if (codeDelegation.nonce() == MAX_NONCE) {
+      LOG.trace("Nonce of code delegation must be less than 2^64-1");
+      return;
+    }
+
     final Optional<Address> authorizer = codeDelegation.authorizer();
     if (authorizer.isEmpty()) {
       LOG.trace("Invalid signature for code delegation");
@@ -128,7 +135,9 @@ public class CodeDelegationProcessor {
       result.incremenentAlreadyExistingDelegators();
     }
 
-    evmWorldUpdater.authorizedCodeService().addDelegatedCode(authority, codeDelegation.address());
+    evmWorldUpdater
+        .authorizedCodeService()
+        .processDelegatedCodeAuthorization(authority, codeDelegation.address());
     authority.incrementNonce();
   }
 }

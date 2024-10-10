@@ -40,12 +40,20 @@ public class DelegatedCodeService {
   }
 
   /**
-   * Add the delegated code to the given account.
+   * Process the delegated code authorization. It will set the code to 0x ef0100 + delegated code
+   * address. If the address is 0, it will set the code to empty.
    *
    * @param account the account to which the delegated code is added.
-   * @param delegatedCodeAddress the address of the delegated code.
+   * @param delegatedCodeAddress the address of the target of the authorization.
    */
-  public void addDelegatedCode(final MutableAccount account, final Address delegatedCodeAddress) {
+  public void processDelegatedCodeAuthorization(
+      final MutableAccount account, final Address delegatedCodeAddress) {
+    // authorization to zero address removes any delegated code
+    if (delegatedCodeAddress.equals(Address.ZERO)) {
+      account.setCode(Bytes.EMPTY);
+      return;
+    }
+
     account.setCode(Bytes.concatenate(DELEGATED_CODE_PREFIX, delegatedCodeAddress));
   }
 
