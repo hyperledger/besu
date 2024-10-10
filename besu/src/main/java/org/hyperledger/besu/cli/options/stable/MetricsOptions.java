@@ -22,19 +22,80 @@ import static org.hyperledger.besu.metrics.MetricsProtocol.PROMETHEUS;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
 
+import org.hyperledger.besu.cli.options.CLIOptions;
+import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.metrics.MetricsProtocol;
+import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
+import java.util.List;
 import java.util.Set;
 
 import picocli.CommandLine;
 
 /** Command line options for configuring metrics. */
-public class MetricsOptionGroup {
+// TODO: implement CLIOption<MetricsConfiguration>
+public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> {
+
+  /**
+   * Returns a MetricsConfiguration.Builder because fields are often overridden from other domains,
+   * like using P2P settings as defaults.
+   *
+   * @return a newly created {@link MetricsOptions} with default values
+   */
+  @Override
+  public MetricsConfiguration.Builder toDomainObject() {
+    MetricsConfiguration.Builder builder = MetricsConfiguration.builder();
+    builder
+        .timersEnabled(unstableOptions.timersEnabled)
+        .idleTimeout(unstableOptions.idleTimeout)
+        .enabled(getMetricsEnabled())
+        .host(getMetricsHost())
+        .port(getMetricsPort())
+        .protocol(getMetricsProtocol())
+        .metricCategories(getMetricCategories())
+        .pushEnabled(getMetricsPushEnabled())
+        .pushHost(getMetricsPushHost())
+        .pushPort(getMetricsPushPort())
+        .pushInterval(getMetricsPushInterval())
+        .prometheusJob(getMetricsPrometheusJob());
+    return builder;
+  }
+
+  // TODO: why do we need to be able to reverse this?
+  /**
+   * Returns a newly created {@link MetricsOptions} reversed from the supplied MetricsConfiguration
+   *
+   * @param config the metrics configuration
+   * @return a newly created {@link MetricsOptions} reversed from the supplied MetricsConfiguration
+   */
+  public static MetricsOptions fromConfiguration(final MetricsConfiguration config) {
+    final MetricsOptions metricsOptions = create();
+    metricsOptions.unstableOptions.timersEnabled = config.isTimersEnabled();
+    metricsOptions.unstableOptions.idleTimeout = config.getIdleTimeout();
+    metricsOptions.isMetricsEnabled = config.isEnabled();
+    metricsOptions.metricsHost = config.getHost();
+    metricsOptions.metricsPort = config.getPort();
+    metricsOptions.metricsProtocol = config.getProtocol();
+    metricsOptions.metricCategories = config.getMetricCategories();
+    metricsOptions.metricsPrometheusJob = config.getPrometheusJob();
+    metricsOptions.isMetricsPushEnabled = config.isPushEnabled();
+    metricsOptions.metricsPushHost = config.getPushHost();
+    metricsOptions.metricsPushPort = config.getPushPort();
+    metricsOptions.metricsPushInterval = config.getPushInterval();
+
+    return metricsOptions;
+  }
+
+  @Override
+  public List<String> getCLIOptions() {
+    return CommandLineUtils.getCLIOptions(this, new MetricsOptions());
+  }
+
   @CommandLine.Option(
       names = {"--metrics-enabled"},
       description = "Set to start the metrics exporter (default: ${DEFAULT-VALUE})")
-  private final Boolean isMetricsEnabled = false;
+  private Boolean isMetricsEnabled = false;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
@@ -49,14 +110,14 @@ public class MetricsOptionGroup {
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
       description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private String metricsHost;
+  private String metricsHost = MetricsConfiguration.DEFAULT_METRICS_HOST;
 
   @CommandLine.Option(
       names = {"--metrics-port"},
       paramLabel = MANDATORY_PORT_FORMAT_HELP,
       description = "Port for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Integer metricsPort = DEFAULT_METRICS_PORT;
+  private Integer metricsPort = DEFAULT_METRICS_PORT;
 
   @CommandLine.Option(
       names = {"--metrics-category", "--metrics-categories"},
@@ -65,12 +126,12 @@ public class MetricsOptionGroup {
       arity = "1..*",
       description =
           "Comma separated list of categories to track metrics for (default: ${DEFAULT-VALUE})")
-  private final Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
+  private Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
 
   @CommandLine.Option(
       names = {"--metrics-push-enabled"},
       description = "Enable the metrics push gateway integration (default: ${DEFAULT-VALUE})")
-  private final Boolean isMetricsPushEnabled = false;
+  private Boolean isMetricsPushEnabled = false;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
@@ -78,14 +139,14 @@ public class MetricsOptionGroup {
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
       description = "Host of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private String metricsPushHost;
+  private String metricsPushHost = MetricsConfiguration.DEFAULT_METRICS_PUSH_HOST;
 
   @CommandLine.Option(
       names = {"--metrics-push-port"},
       paramLabel = MANDATORY_PORT_FORMAT_HELP,
       description = "Port of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Integer metricsPushPort = DEFAULT_METRICS_PUSH_PORT;
+  private Integer metricsPushPort = DEFAULT_METRICS_PUSH_PORT;
 
   @CommandLine.Option(
       names = {"--metrics-push-interval"},
@@ -93,7 +154,7 @@ public class MetricsOptionGroup {
       description =
           "Interval in seconds to push metrics when in push mode (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Integer metricsPushInterval = 15;
+  private Integer metricsPushInterval = 15;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
@@ -102,8 +163,16 @@ public class MetricsOptionGroup {
       arity = "1")
   private String metricsPrometheusJob = "besu-client";
 
-  /** Returns a newly created {@link MetricsOptionGroup} with default values. */
-  public MetricsOptionGroup() {}
+  /**
+   * Returns a newly created {@link MetricsOptions} with default values.
+   *
+   * @return new instance
+   */
+  public static MetricsOptions create() {
+    return new MetricsOptions();
+  }
+
+  private MetricsOptions() {}
 
   /**
    * Returns whether metrics are enabled.
@@ -193,5 +262,27 @@ public class MetricsOptionGroup {
    */
   public String getMetricsPrometheusJob() {
     return metricsPrometheusJob;
+  }
+
+  @CommandLine.ArgGroup(validate = false)
+  private final MetricsOptions.Unstable unstableOptions = new MetricsOptions.Unstable();
+
+  static class Unstable {
+    private static final String TIMERS_ENABLED_FLAG = "--Xmetrics-timers-enabled";
+    private static final String IDLE_TIMEOUT_FLAG = "--Xmetrics-idle-timeout";
+
+    @CommandLine.Option(
+        names = TIMERS_ENABLED_FLAG,
+        hidden = true,
+        description = "Whether to enable timer metrics (default: ${DEFAULT-VALUE}).")
+    private Boolean timersEnabled = MetricsConfiguration.DEFAULT_METRICS_TIMERS_ENABLED;
+
+    @CommandLine.Option(
+        hidden = true,
+        names = {IDLE_TIMEOUT_FLAG},
+        paramLabel = "<INTEGER>",
+        description = "Timeout for metrics TCP connections, in seconds (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private int idleTimeout = MetricsConfiguration.DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS;
   }
 }

@@ -36,7 +36,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 class DataCopyOperationTest {
 
-  static EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  static EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
 
   static Collection<Object[]> datacopyTestVector() {
     return Arrays.asList(
