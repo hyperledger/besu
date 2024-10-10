@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscrip
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
+import org.hyperledger.besu.ethereum.eth.transactions.RemovalReason;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class PendingTransactionDroppedSubscriptionService
   }
 
   @Override
-  public void onTransactionDropped(final Transaction transaction) {
+  public void onTransactionDropped(final Transaction transaction, final RemovalReason reason) {
     notifySubscribers(transaction.getHash());
   }
 

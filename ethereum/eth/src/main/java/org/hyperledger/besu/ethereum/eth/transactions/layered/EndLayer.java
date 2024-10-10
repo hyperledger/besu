@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.DROPPED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.DROPPED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedLis
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
-import org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -78,7 +78,7 @@ public class EndLayer implements TransactionsLayer {
   @Override
   public TransactionAddedResult add(
       final PendingTransaction pendingTransaction, final int gap, final AddReason reason) {
-    notifyTransactionDropped(pendingTransaction);
+    notifyTransactionDropped(pendingTransaction, DROPPED);
     metrics.incrementRemoved(pendingTransaction, DROPPED.label(), name());
     ++droppedCount;
     return TransactionAddedResult.DROPPED;
@@ -152,9 +152,10 @@ public class EndLayer implements TransactionsLayer {
     onDroppedListeners.unsubscribe(id);
   }
 
-  protected void notifyTransactionDropped(final PendingTransaction pendingTransaction) {
+  protected void notifyTransactionDropped(
+      final PendingTransaction pendingTransaction, final LayeredRemovalReason reason) {
     onDroppedListeners.forEach(
-        listener -> listener.onTransactionDropped(pendingTransaction.getTransaction()));
+        listener -> listener.onTransactionDropped(pendingTransaction.getTransaction(), reason));
   }
 
   @Override

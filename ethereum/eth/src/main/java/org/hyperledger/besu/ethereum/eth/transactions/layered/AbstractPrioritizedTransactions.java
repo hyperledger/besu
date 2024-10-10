@@ -137,7 +137,7 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   protected void internalRemove(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final PendingTransaction removedTx,
-      final RemovalReason removalReason) {
+      final LayeredRemovalReason removalReason) {
     orderByFee.remove(removedTx);
   }
 
