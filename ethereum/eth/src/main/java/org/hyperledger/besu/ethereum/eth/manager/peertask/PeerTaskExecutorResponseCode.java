@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 public enum PeerTaskExecutorResponseCode {
   SUCCESS,
+  PARTIAL_SUCCESS,
   NO_PEER_AVAILABLE,
   PEER_DISCONNECTED,
   INTERNAL_SERVER_ERROR,

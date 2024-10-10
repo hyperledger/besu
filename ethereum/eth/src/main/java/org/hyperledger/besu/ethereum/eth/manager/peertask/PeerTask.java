@@ -73,4 +73,11 @@ public interface PeerTask<T> {
    * @return a Predicate that checks if an EthPeer is suitable for this PeerTask
    */
   Predicate<EthPeer> getPeerRequirementFilter();
+
+  /**
+   * Checks if the supplied result is considered a partial success
+   *
+   * @return true if the supplied result is considered a partial success
+   */
+  boolean isPartialSuccessTest(T result);
 }

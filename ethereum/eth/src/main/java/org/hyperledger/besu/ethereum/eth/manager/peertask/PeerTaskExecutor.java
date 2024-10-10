@@ -112,10 +112,17 @@ public class PeerTaskExecutor {
 
           result = peerTask.parseResponse(responseMessageData);
         }
-        peer.recordUsefulResponse();
-        executorResult =
-            new PeerTaskExecutorResult<>(
-                Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS);
+
+        if (peerTask.isPartialSuccessTest(result)) {
+          executorResult =
+              new PeerTaskExecutorResult<>(
+                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.PARTIAL_SUCCESS);
+        } else {
+          peer.recordUsefulResponse();
+          executorResult =
+              new PeerTaskExecutorResult<>(
+                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS);
+        }
 
       } catch (PeerNotConnected e) {
         executorResult =
