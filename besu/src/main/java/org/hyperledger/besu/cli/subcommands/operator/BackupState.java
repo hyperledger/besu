@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
+import jakarta.validation.constraints.NotBlank;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -55,6 +56,7 @@ public class BackupState implements Runnable {
       arity = "1..1")
   private final Long block = Long.MAX_VALUE;
 
+  @NotBlank
   @Option(
       names = "--backup-path",
       required = true,
