@@ -57,7 +57,7 @@ public class PeerTaskExecutorTest {
   }
 
   @Test
-  public void testExecuteAgainstPeerWithNoPeerTaskBehaviorsAndSuccessfulFlow()
+  public void testExecuteAgainstPeerWithNoRetriesAndSuccessfulFlow()
       throws PeerConnection.PeerNotConnected,
           ExecutionException,
           InterruptedException,
@@ -73,6 +73,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenReturn(responseMessageData);
     Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.isPartialSuccessTest(responseObject)).thenReturn(false);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
 
@@ -85,7 +86,34 @@ public class PeerTaskExecutorTest {
   }
 
   @Test
-  public void testExecuteAgainstPeerWithRetryBehaviorsAndSuccessfulFlowAfterFirstFailure()
+  public void testExecuteAgainstPeerWithNoRetriesAndPartialSuccessfulFlow()
+      throws PeerConnection.PeerNotConnected,
+          ExecutionException,
+          InterruptedException,
+          TimeoutException,
+          InvalidPeerTaskResponseException {
+
+    Object responseObject = new Object();
+
+    Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
+    Mockito.when(peerTask.getRetriesWithSamePeer()).thenReturn(0);
+    Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
+    Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
+    Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
+        .thenReturn(responseMessageData);
+    Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.isPartialSuccessTest(responseObject)).thenReturn(true);
+
+    PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
+
+    Assertions.assertNotNull(result);
+    Assertions.assertTrue(result.result().isPresent());
+    Assertions.assertSame(responseObject, result.result().get());
+    Assertions.assertEquals(PeerTaskExecutorResponseCode.PARTIAL_SUCCESS, result.responseCode());
+  }
+
+  @Test
+  public void testExecuteAgainstPeerWithRetriesAndSuccessfulFlowAfterFirstFailure()
       throws PeerConnection.PeerNotConnected,
           ExecutionException,
           InterruptedException,
@@ -104,6 +132,7 @@ public class PeerTaskExecutorTest {
         .thenReturn(responseMessageData);
     Mockito.when(requestMessageData.getCode()).thenReturn(requestMessageDataCode);
     Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.isPartialSuccessTest(responseObject)).thenReturn(false);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
 
@@ -117,7 +146,7 @@ public class PeerTaskExecutorTest {
   }
 
   @Test
-  public void testExecuteAgainstPeerWithNoPeerTaskBehaviorsAndPeerNotConnected()
+  public void testExecuteAgainstPeerWithNoRetriesAndPeerNotConnected()
       throws PeerConnection.PeerNotConnected,
           ExecutionException,
           InterruptedException,
@@ -138,7 +167,7 @@ public class PeerTaskExecutorTest {
   }
 
   @Test
-  public void testExecuteAgainstPeerWithNoPeerTaskBehaviorsAndTimeoutException()
+  public void testExecuteAgainstPeerWithNoRetriesAndTimeoutException()
       throws PeerConnection.PeerNotConnected,
           ExecutionException,
           InterruptedException,
@@ -163,7 +192,7 @@ public class PeerTaskExecutorTest {
   }
 
   @Test
-  public void testExecuteAgainstPeerWithNoPeerTaskBehaviorsAndInvalidResponseMessage()
+  public void testExecuteAgainstPeerWithNoRetriesAndInvalidResponseMessage()
       throws PeerConnection.PeerNotConnected,
           ExecutionException,
           InterruptedException,
@@ -190,7 +219,7 @@ public class PeerTaskExecutorTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testExecuteWithNoPeerTaskBehaviorsAndSuccessFlow()
+  public void testExecuteWithNoRetriesAndSuccessFlow()
       throws PeerConnection.PeerNotConnected,
           ExecutionException,
           InterruptedException,
@@ -209,6 +238,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenReturn(responseMessageData);
     Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.isPartialSuccessTest(responseObject)).thenReturn(false);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
 
@@ -246,6 +276,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, peer2))
         .thenReturn(responseMessageData);
     Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.isPartialSuccessTest(responseObject)).thenReturn(false);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.execute(peerTask);
 
