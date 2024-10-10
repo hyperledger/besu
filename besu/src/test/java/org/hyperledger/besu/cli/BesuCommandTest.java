@@ -1014,7 +1014,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void p2pHostAndPortOptionsAreRespected() {
+  public void p2pHostAndPortOptionsAreRespectedAndNotLeaked() {
 
     final String host = "1.2.3.4";
     final int port = 1234;
@@ -1022,6 +1022,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
     verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
@@ -1030,11 +1032,47 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    // rpc host should remain default ie 127.0.0.1
+    // all other port values remain default
+    assertThat(metricsConfigArgumentCaptor.getValue().getPort()).isEqualTo(9545);
+    assertThat(metricsConfigArgumentCaptor.getValue().getPushPort()).isEqualTo(9001);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(8545);
+
+    // all other host values remain default
+    final String defaultHost = "127.0.0.1";
+    assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
+    assertThat(metricsConfigArgumentCaptor.getValue().getPushHost()).isEqualTo(defaultHost);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
+  }
+
+  @Test
+  public void p2pHostAndPortOptionsAreRespectedAndNotLeakedWithMetricsEnabled() {
+
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    parseCommand("--p2p-host", host, "--p2p-port", String.valueOf(port), "--metrics-enabled");
+
+    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo("127.0.0.1");
+    assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(port);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    // all other port values remain default
+    assertThat(metricsConfigArgumentCaptor.getValue().getPort()).isEqualTo(9545);
+    assertThat(metricsConfigArgumentCaptor.getValue().getPushPort()).isEqualTo(9001);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(8545);
+
+    // all other host values remain default
+    final String defaultHost = "127.0.0.1";
+    assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
+    assertThat(metricsConfigArgumentCaptor.getValue().getPushHost()).isEqualTo(defaultHost);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
   }
 
   @Test
@@ -2285,7 +2323,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void staticNodesFileOptionValidParamenter() throws IOException {
+  public void staticNodesFileOptionValidParameter() throws IOException {
     final Path staticNodeTempFile =
         createTempFile(
             "static-nodes-goodformat.json",
