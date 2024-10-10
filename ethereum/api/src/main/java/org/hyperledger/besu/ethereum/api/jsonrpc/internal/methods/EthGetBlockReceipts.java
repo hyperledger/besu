@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import com.google.common.base.Suppliers;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -36,6 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.google.common.base.Suppliers;
 
 public class EthGetBlockReceipts extends AbstractBlockParameterOrBlockHashMethod {
 
@@ -94,9 +95,9 @@ public class EthGetBlockReceipts extends AbstractBlockParameterOrBlockHashMethod
             .map(
                 block ->
                     block.getTransactions().stream()
-                            .map(this::txReceipt)
-                            .flatMap(Optional::stream)
-                            .collect(Collectors.toList()))
+                        .map(this::txReceipt)
+                        .flatMap(Optional::stream)
+                        .collect(Collectors.toList()))
             .orElse(new ArrayList<>());
 
     return new BlockReceiptsResult(receiptList);
