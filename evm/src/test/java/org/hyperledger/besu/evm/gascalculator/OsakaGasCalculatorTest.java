@@ -20,11 +20,11 @@ import org.hyperledger.besu.datatypes.Address;
 
 import org.junit.jupiter.api.Test;
 
-class PragueEOFGasCalculatorTest {
+class OsakaGasCalculatorTest {
 
   @Test
   void testPrecompileSize() {
-    PragueEOFGasCalculator subject = new PragueEOFGasCalculator();
+    OsakaGasCalculator subject = new OsakaGasCalculator();
     assertThat(subject.isPrecompile(Address.precompiled(0x14))).isFalse();
     assertThat(subject.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
   }
@@ -32,7 +32,7 @@ class PragueEOFGasCalculatorTest {
   @Test
   void testNewConstants() {
     CancunGasCalculator cancunGas = new CancunGasCalculator();
-    PragueEOFGasCalculator praugeGasCalculator = new PragueEOFGasCalculator();
+    OsakaGasCalculator praugeGasCalculator = new OsakaGasCalculator();
 
     assertThat(praugeGasCalculator.getMinCalleeGas()).isGreaterThan(cancunGas.getMinCalleeGas());
     assertThat(praugeGasCalculator.getMinRetainedGas())

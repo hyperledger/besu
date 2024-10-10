@@ -27,7 +27,7 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -44,7 +44,7 @@ public class ExtStaticCallOperationTest {
 
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final MutableAccount account = mock(MutableAccount.class);
-  private static final EVM EOF_EVM = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  private static final EVM EOF_EVM = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
   public static final Code LEGACY_CODE =
       EOF_EVM.getCodeUncached(Bytes.of(ExtStaticCallOperation.OPCODE, 1));
   public static final Code SIMPLE_EOF =
@@ -115,8 +115,7 @@ public class ExtStaticCallOperationTest {
       final Bytes stackItem,
       final boolean validCode,
       final boolean warmAddress) {
-    final ExtStaticCallOperation operation =
-        new ExtStaticCallOperation(new PragueEOFGasCalculator());
+    final ExtStaticCallOperation operation = new ExtStaticCallOperation(new OsakaGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()
@@ -152,8 +151,7 @@ public class ExtStaticCallOperationTest {
 
   @Test
   void overflowTest() {
-    final ExtStaticCallOperation operation =
-        new ExtStaticCallOperation(new PragueEOFGasCalculator());
+    final ExtStaticCallOperation operation = new ExtStaticCallOperation(new OsakaGasCalculator());
     final var messageFrame =
         new TestMessageFrameBuilder()
             .initialGas(400000)
@@ -190,8 +188,7 @@ public class ExtStaticCallOperationTest {
 
   @Test
   void legacyTest() {
-    final ExtStaticCallOperation operation =
-        new ExtStaticCallOperation(new PragueEOFGasCalculator());
+    final ExtStaticCallOperation operation = new ExtStaticCallOperation(new OsakaGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()

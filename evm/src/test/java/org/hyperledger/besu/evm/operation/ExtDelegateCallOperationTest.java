@@ -27,7 +27,7 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -45,7 +45,7 @@ public class ExtDelegateCallOperationTest {
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final MutableAccount account = mock(MutableAccount.class);
   //  private final MutableAccount targetAccount = mock(MutableAccount.class);
-  private static final EVM EOF_EVM = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  private static final EVM EOF_EVM = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
   public static final Code LEGACY_CODE =
       EOF_EVM.getCodeUncached(Bytes.of(ExtDelegateCallOperation.OPCODE, 1));
   public static final Code SIMPLE_EOF =
@@ -119,7 +119,7 @@ public class ExtDelegateCallOperationTest {
       final boolean validCode,
       final boolean warmAddress) {
     final ExtDelegateCallOperation operation =
-        new ExtDelegateCallOperation(new PragueEOFGasCalculator());
+        new ExtDelegateCallOperation(new OsakaGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()
@@ -180,7 +180,7 @@ public class ExtDelegateCallOperationTest {
       final ExceptionalHaltReason haltReason,
       final Bytes stackItem) {
     final ExtDelegateCallOperation operation =
-        new ExtDelegateCallOperation(new PragueEOFGasCalculator());
+        new ExtDelegateCallOperation(new OsakaGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()
@@ -227,7 +227,7 @@ public class ExtDelegateCallOperationTest {
   @Test
   void overflowTest() {
     final ExtDelegateCallOperation operation =
-        new ExtDelegateCallOperation(new PragueEOFGasCalculator());
+        new ExtDelegateCallOperation(new OsakaGasCalculator());
     final var messageFrame =
         new TestMessageFrameBuilder()
             .initialGas(400000)
@@ -265,7 +265,7 @@ public class ExtDelegateCallOperationTest {
   @Test
   void legacyTest() {
     final ExtDelegateCallOperation operation =
-        new ExtDelegateCallOperation(new PragueEOFGasCalculator());
+        new ExtDelegateCallOperation(new OsakaGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()

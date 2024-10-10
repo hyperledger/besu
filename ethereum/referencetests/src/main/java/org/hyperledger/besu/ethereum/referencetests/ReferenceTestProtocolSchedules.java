@@ -105,8 +105,15 @@ public class ReferenceTestProtocolSchedules {
                 Map.entry(
                     "CancunToPragueAtTime15k",
                     createSchedule(genesisStub.clone().cancunTime(0).pragueTime(15000))),
-                Map.entry("Prague", createSchedule(genesisStub.clone().pragueEOFTime(0))),
-                Map.entry("Osaka", createSchedule(genesisStub.clone().futureEipsTime(0))),
+                Map.entry(
+                    "Prague",
+                    createSchedule(
+                        genesisStub
+                            .clone()
+                            .pragueTime(0)
+                            .osakaTime(0) // TODO remove this once osaka_devnet_0 ships
+                        )),
+                Map.entry("Osaka", createSchedule(genesisStub.clone().osakaTime(0))),
                 Map.entry("Amsterdam", createSchedule(genesisStub.clone().futureEipsTime(0))),
                 Map.entry("Bogota", createSchedule(genesisStub.clone().futureEipsTime(0))),
                 Map.entry("Polis", createSchedule(genesisStub.clone().futureEipsTime(0))),

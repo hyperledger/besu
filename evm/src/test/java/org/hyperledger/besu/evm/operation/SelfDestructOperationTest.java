@@ -55,7 +55,7 @@ public class SelfDestructOperationTest {
   @Mock private WorldUpdater worldUpdater;
   @Mock private MutableAccount accountOriginator;
   @Mock private MutableAccount accountBeneficiary;
-  private final EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  private final EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
 
   private final SelfDestructOperation frontierOperation =
       new SelfDestructOperation(new ConstantinopleGasCalculator());

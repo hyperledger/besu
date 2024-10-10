@@ -62,7 +62,7 @@ class EofCreateOperationTest {
 
   @Test
   void innerContractIsCorrect() {
-    final EVM evm = MainnetEVMs.cancunEOF(EvmConfiguration.DEFAULT);
+    final EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
     Code code = evm.getCodeUncached(INNER_CONTRACT);
     assertThat(code.isValid()).isTrue();
 
@@ -92,7 +92,7 @@ class EofCreateOperationTest {
   @Test
   void eofCreatePassesInCallData() {
     Bytes outerContract = EOF_CREATE_CONTRACT;
-    final EVM evm = MainnetEVMs.cancunEOF(EvmConfiguration.DEFAULT);
+    final EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
 
     Code code = evm.getCodeUncached(outerContract);
     if (!code.isValid()) {

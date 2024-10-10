@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eof;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedul
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.code.CodeInvalid;
+import org.hyperledger.besu.evm.code.CodeV1;
 import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
@@ -41,7 +43,7 @@ public class EOFReferenceTestTools {
 
   static {
     final String eips =
-        System.getProperty("test.ethereum.eof.eips", "Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
+        System.getProperty("test.ethereum.eof.eips", "Osaka,Amsterdam,Bogota,Polis,Bangkok");
     EIPS_TO_RUN = Arrays.asList(eips.split(","));
   }
 
@@ -79,6 +81,10 @@ public class EOFReferenceTestTools {
     if (EIPS_TO_RUN.isEmpty()) {
       params.ignoreAll();
     }
+
+    // EOF was moved from Prague to Osaka
+    params.ignore("-Prague\\[");
+
   }
 
   private EOFReferenceTestTools() {
@@ -132,28 +138,37 @@ public class EOFReferenceTestTools {
         } else {
           parsedCode = evm.getCodeUncached(code);
         }
+
         if (expected.result()) {
           assertThat(parsedCode.isValid())
               .withFailMessage(
                   () -> "Valid code failed with " + ((CodeInvalid) parsedCode).getInvalidReason())
               .isTrue();
-        } else {
-          assertThat(parsedCode.isValid())
-              .withFailMessage("Invalid code expected " + expected.exception() + " but was valid")
-              .isFalse();
-          if (name.contains("eip7692")) {
-            // if the test is from EEST, validate the exception name.
-            assertThat(((CodeInvalid) parsedCode).getInvalidReason())
-                .withFailMessage(
-                    () ->
-                        "Expected exception :%s actual exception: %s"
-                            .formatted(
-                                expected.exception(),
-                                (parsedCode.isValid()
-                                    ? null
-                                    : ((CodeInvalid) parsedCode).getInvalidReason())))
-                .containsIgnoringCase(expected.exception().replace("EOFException.", ""));
+        } else if (parsedCode.isValid()) {
+          if (parsedCode instanceof CodeV1 codeV1
+              && expected.exception().contains("EOF_IncompatibleContainerKind")) {
+            // one last container type check
+            var parsedMode = codeV1.getEofLayout().containerMode().get();
+            String actual = parsedMode == null ? "RUNTIME" : parsedMode.toString();
+            String expectedContainerKind = containerKind == null ? "RUNTIME" : containerKind;
+            assertThat(actual)
+                .withFailMessage("EOF_IncompatibleContainerKind expected")
+                .isNotEqualTo(expectedContainerKind);
+          } else {
+            fail("Invalid code expected " + expected.exception() + " but was valid");
           }
+        } else if (name.contains("eip7692")) {
+          // if the test is from EEST, validate the exception name.
+          assertThat(((CodeInvalid) parsedCode).getInvalidReason())
+              .withFailMessage(
+                  () ->
+                      "Expected exception :%s actual exception: %s"
+                          .formatted(
+                              expected.exception(),
+                              (parsedCode.isValid()
+                                  ? null
+                                  : ((CodeInvalid) parsedCode).getInvalidReason())))
+              .containsIgnoringCase(expected.exception().replace("EOFException.", ""));
         }
       } else {
         assertThat(false)
