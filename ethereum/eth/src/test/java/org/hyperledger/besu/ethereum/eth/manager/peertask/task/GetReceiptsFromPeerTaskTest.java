@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -154,6 +155,25 @@ public class GetReceiptsFromPeerTaskTest {
     Assertions.assertFalse(task.getPeerRequirementFilter().test(failForIncorrectProtocol));
     Assertions.assertFalse(task.getPeerRequirementFilter().test(failForShortChainHeight));
     Assertions.assertTrue(task.getPeerRequirementFilter().test(successfulCandidate));
+  }
+
+  @Test
+  public void testIsPartialSuccessForPartialSuccess() {
+    GetReceiptsFromPeerTask task =
+        new GetReceiptsFromPeerTask(Collections.emptyList(), null, () -> null);
+
+    Assertions.assertTrue(task.isPartialSuccess(Collections.emptyMap()));
+  }
+
+  @Test
+  public void testIsPartialSuccessForFullSuccess() {
+    GetReceiptsFromPeerTask task =
+        new GetReceiptsFromPeerTask(Collections.emptyList(), null, () -> null);
+
+    Map<BlockHeader, List<TransactionReceipt>> map = new HashMap<>();
+    map.put(mockBlockHeader(1), null);
+
+    Assertions.assertFalse(task.isPartialSuccess(map));
   }
 
   private BlockHeader mockBlockHeader(final long blockNumber) {

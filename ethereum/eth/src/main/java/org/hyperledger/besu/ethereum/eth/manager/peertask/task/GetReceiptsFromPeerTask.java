@@ -114,4 +114,9 @@ public class GetReceiptsFromPeerTask
             && (currentProtocolSpecSupplier.get().isPoS()
                 || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight);
   }
+
+  @Override
+  public boolean isPartialSuccess(final Map<BlockHeader, List<TransactionReceipt>> result) {
+    return result.isEmpty();
+  }
 }
