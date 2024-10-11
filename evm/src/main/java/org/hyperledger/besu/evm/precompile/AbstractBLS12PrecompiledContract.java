@@ -18,7 +18,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 
 import java.util.Optional;
@@ -81,7 +80,6 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     }
     return false;
   }
-
 
   @Override
   public String getName() {
