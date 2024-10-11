@@ -120,10 +120,13 @@ public class PeerTaskExecutor {
       final PeerTask<T> peerTask, final EthPeer peer) {
     String taskClassName = peerTask.getClass().getSimpleName();
     AtomicInteger inflightRequestCountForThisTaskClass =
-            inflightRequestCountByClassName.getOrDefault(taskClassName, new AtomicInteger(0));
-    if (!inflightRequestGauge.isLabelsObserved(taskClassName)) {
-      inflightRequestGauge.labels(inflightRequestCountForThisTaskClass::get, taskClassName);
-    }
+        inflightRequestCountByClassName.computeIfAbsent(
+            taskClassName,
+            (k) -> {
+              AtomicInteger inflightRequests = new AtomicInteger(0);
+              inflightRequestGauge.labels(inflightRequests::get, taskClassName);
+              return inflightRequests;
+            });
     MessageData requestMessageData = peerTask.getRequestMessage();
     PeerTaskExecutorResult<T> executorResult;
     int retriesRemaining = peerTask.getRetriesWithSamePeer();
