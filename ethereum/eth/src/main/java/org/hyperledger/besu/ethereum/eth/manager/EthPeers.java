@@ -473,6 +473,7 @@ public class EthPeers implements PeerSelector {
     return streamAvailablePeers()
         .filter(filter)
         .filter(EthPeer::hasAvailableRequestCapacity)
+        .filter(EthPeer::isFullyValidated)
         .min(LEAST_TO_MOST_BUSY);
   }
 
