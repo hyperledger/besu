@@ -25,4 +25,6 @@ public interface LabelledGauge {
    * @param labelValues the label values
    */
   void labels(final DoubleSupplier valueSupplier, final String... labelValues);
+
+  boolean isLabelsObserved(final String... labelValues);
 }
