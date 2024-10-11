@@ -1,14 +1,23 @@
 # Changelog
 
 ## [Unreleased]
-- Add `--ephemery` network support for Ephemery Testnet [#7563](https://github.com/hyperledger/besu/pull/7563) thanks to [@gconnect](https://github.com/gconnect)
-- Add configuration of Consolidation Request Contract Address via genesis configuration [#7647](https://github.com/hyperledger/besu/pull/7647)
+
+### Breaking Changes
 
 ### Upcoming Breaking Changes
-- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
+
+### Additions and Improvements
+
+### Bug fixes
+- Fix eth_feeHistory rewards when bounded by configuration [#7750](https://github.com/hyperledger/besu/pull/7750)
+
+## 24.10.0
 
 ### Breaking Changes
 - Besu will now fail to start if any plugins encounter errors during initialization. To allow Besu to continue running despite plugin errors, use the `--plugin-continue-on-error` option. [#7662](https://github.com/hyperledger/besu/pull/7662)
+
+### Upcoming Breaking Changes
+- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
 
 ### Additions and Improvements
 - Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
@@ -21,6 +30,8 @@
 - Expose chainId in the `BlockchainService` [7702](https://github.com/hyperledger/besu/pull/7702)
 - Use head block instead of safe block for snap sync [7536](https://github.com/hyperledger/besu/issues/7536)
 - Add support for `chainId` in `CallParameters` [#7720](https://github.com/hyperledger/besu/pull/7720)
+- Add `--ephemery` network support for Ephemery Testnet [#7563](https://github.com/hyperledger/besu/pull/7563) thanks to [@gconnect](https://github.com/gconnect)
+- Add configuration of Consolidation Request Contract Address via genesis configuration [#7647](https://github.com/hyperledger/besu/pull/7647)
 
 ### Bug fixes
 - Fix mounted data path directory permissions for besu user [#7575](https://github.com/hyperledger/besu/pull/7575)
@@ -28,6 +39,9 @@
 - Corrects a regression where custom plugin services are not initialized correctly. [#7625](https://github.com/hyperledger/besu/pull/7625)
 - Fix for IBFT2 chains using the BONSAI DB format [#7631](https://github.com/hyperledger/besu/pull/7631)
 - Fix reading `tx-pool-min-score` option from configuration file [#7623](https://github.com/hyperledger/besu/pull/7623)
+- Fix an unhandled PeerTable exception [#7733](https://github.com/hyperledger/besu/issues/7733)
+- Fix RocksDBException: Busy leading to MerkleTrieException: Unable to load trie node value [#7745](https://github.com/hyperledger/besu/pull/7745)
+- If a BFT validator node is syncing, pause block production until sync has completed [#7657](https://github.com/hyperledger/besu/pull/7657)
 
 ## 24.9.1
 

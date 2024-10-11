@@ -224,8 +224,8 @@ public class MainnetProtocolSpecFactory {
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder pragueEOFDefinition(final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.pragueEOFDefinition(
+  public ProtocolSpecBuilder osakaDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.osakaDefinition(
         chainId,
         isRevertReasonEnabled,
         genesisConfigOptions,
