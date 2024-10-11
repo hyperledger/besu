@@ -101,7 +101,7 @@ public class PrettyPrintSubCommand implements Runnable {
             "Pretty printing of legacy EVM is not supported. Patches welcome!");
 
       } else {
-        String fork = EvmSpecVersion.PRAGUE.getName();
+        String fork = EvmSpecVersion.OSAKA.getName();
         if (parentCommand.hasFork()) {
           fork = parentCommand.getFork();
         }

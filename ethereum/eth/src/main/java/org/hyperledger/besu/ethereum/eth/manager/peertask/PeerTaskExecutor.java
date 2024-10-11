@@ -20,14 +20,18 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** Manages the execution of PeerTasks, respecting their PeerTaskRetryBehavior */
 public class PeerTaskExecutor {
@@ -36,9 +40,12 @@ public class PeerTaskExecutor {
   private final PeerTaskRequestSender requestSender;
 
   private final LabelledMetric<OperationTimer> requestTimer;
+  private final LabelledMetric<Counter> partialSuccessCounter;
   private final LabelledMetric<Counter> timeoutCounter;
   private final LabelledMetric<Counter> invalidResponseCounter;
   private final LabelledMetric<Counter> internalExceptionCounter;
+  private final LabelledGauge inflightRequestGauge;
+  private final Map<String, AtomicInteger> inflightRequestCountByClassName;
 
   public PeerTaskExecutor(
       final PeerSelector peerSelector,
@@ -51,6 +58,12 @@ public class PeerTaskExecutor {
             BesuMetricCategory.PEERS,
             "PeerTaskExecutor:RequestTime",
             "Time taken to send a request and receive a response",
+            "className");
+    partialSuccessCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.PEERS,
+            "PeerTaskExecutor:PartialSuccessCounter",
+            "Counter of the number of partial success occurred",
             "className");
     timeoutCounter =
         metricsSystem.createLabelledCounter(
@@ -70,6 +83,13 @@ public class PeerTaskExecutor {
             "PeerTaskExecutor:InternalExceptionCounter",
             "Counter of the number of internal exceptions occurred",
             "className");
+    inflightRequestGauge =
+        metricsSystem.createLabelledGauge(
+            BesuMetricCategory.PEERS,
+            "PeerTaskExecutor:InflightRequestGauge",
+            "Gauge of the number of inflight requests",
+            "className");
+    inflightRequestCountByClassName = new ConcurrentHashMap<>();
   }
 
   public <T> PeerTaskExecutorResult<T> execute(final PeerTask<T> peerTask) {
@@ -98,22 +118,32 @@ public class PeerTaskExecutor {
 
   public <T> PeerTaskExecutorResult<T> executeAgainstPeer(
       final PeerTask<T> peerTask, final EthPeer peer) {
+    String taskClassName = peerTask.getClass().getSimpleName();
+    AtomicInteger inflightRequestCountForThisTaskClass =
+            inflightRequestCountByClassName.getOrDefault(taskClassName, new AtomicInteger(0));
+    if (!inflightRequestGauge.isLabelsObserved(taskClassName)) {
+      inflightRequestGauge.labels(inflightRequestCountForThisTaskClass::get, taskClassName);
+    }
     MessageData requestMessageData = peerTask.getRequestMessage();
     PeerTaskExecutorResult<T> executorResult;
     int retriesRemaining = peerTask.getRetriesWithSamePeer();
     do {
-
       try {
         T result;
         try (final OperationTimer.TimingContext ignored =
-            requestTimer.labels(peerTask.getClass().getSimpleName()).startTimer()) {
+            requestTimer.labels(taskClassName).startTimer()) {
+          inflightRequestCountForThisTaskClass.incrementAndGet();
+
           MessageData responseMessageData =
               requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
 
           result = peerTask.parseResponse(responseMessageData);
+        } finally {
+          inflightRequestCountForThisTaskClass.decrementAndGet();
         }
 
         if (peerTask.isPartialSuccess(result)) {
+          partialSuccessCounter.labels(taskClassName).inc();
           executorResult =
               new PeerTaskExecutorResult<>(
                   Optional.ofNullable(result), PeerTaskExecutorResponseCode.PARTIAL_SUCCESS);
@@ -131,19 +161,19 @@ public class PeerTaskExecutor {
 
       } catch (InterruptedException | TimeoutException e) {
         peer.recordRequestTimeout(requestMessageData.getCode());
-        timeoutCounter.labels(peerTask.getClass().getSimpleName()).inc();
+        timeoutCounter.labels(taskClassName).inc();
         executorResult =
             new PeerTaskExecutorResult<>(Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT);
 
       } catch (InvalidPeerTaskResponseException e) {
         peer.recordUselessResponse(e.getMessage());
-        invalidResponseCounter.labels(peerTask.getClass().getSimpleName()).inc();
+        invalidResponseCounter.labels(taskClassName).inc();
         executorResult =
             new PeerTaskExecutorResult<>(
                 Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE);
 
       } catch (ExecutionException e) {
-        internalExceptionCounter.labels(peerTask.getClass().getSimpleName()).inc();
+        internalExceptionCounter.labels(taskClassName).inc();
         executorResult =
             new PeerTaskExecutorResult<>(
                 Optional.empty(), PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR);
