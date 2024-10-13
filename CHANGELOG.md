@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Breaking Changes
+- Added isLabelsObserved to LabelledGauge in plugin-api. Implementing classes will need to also implement this method
 
 ### Upcoming Breaking Changes
 
