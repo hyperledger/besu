@@ -30,5 +30,10 @@ public interface Request {
    */
   RequestType getType();
 
+  /**
+   * Retrieves the data of this request.
+   *
+   * @return The data {@link Bytes} of this request.
+   */
   Bytes getData();
 }
