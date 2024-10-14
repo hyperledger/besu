@@ -14,10 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
-import org.hyperledger.besu.ethereum.core.ConsolidationRequest;
-import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,21 +38,6 @@ public class RequestUtil {
       return Collections.emptyList();
     }
     return requests.stream().filter(requestType::isInstance).map(requestType::cast).toList();
-  }
-
-  public static Optional<List<DepositRequest>> getDepositRequests(
-      final Optional<List<Request>> requests) {
-    return requests.map(r -> filterRequestsOfType(r, DepositRequest.class));
-  }
-
-  public static Optional<List<WithdrawalRequest>> getWithdrawalRequests(
-      final Optional<List<Request>> requests) {
-    return requests.map(r -> filterRequestsOfType(r, WithdrawalRequest.class));
-  }
-
-  public static Optional<List<ConsolidationRequest>> getConsolidationRequests(
-      final Optional<List<Request>> requests) {
-    return requests.map(r -> filterRequestsOfType(r, ConsolidationRequest.class));
   }
 
   /**

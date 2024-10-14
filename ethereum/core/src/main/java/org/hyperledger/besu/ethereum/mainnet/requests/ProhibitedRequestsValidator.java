@@ -31,19 +31,14 @@ public class ProhibitedRequestsValidator implements RequestValidator {
   @Override
   public boolean validate(
       final Block block, final List<Request> request, final List<TransactionReceipt> receipts) {
-    boolean hasRequests = block.getBody().getRequests().isPresent();
     boolean hasRequestsHash = block.getHeader().getRequestsHash().isPresent();
-
-    if (hasRequests) {
-      LOG.warn("Block {} contains requests but requests are prohibited", block.getHash());
-    }
 
     if (hasRequestsHash) {
       LOG.warn(
           "Block {} header contains requests_root but requests are prohibited", block.getHash());
     }
 
-    return !(hasRequests || hasRequestsHash);
+    return !hasRequestsHash;
   }
 
   @Override

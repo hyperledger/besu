@@ -789,7 +789,7 @@ public abstract class MainnetProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
 
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
-        .requestsValidator(pragueRequestsValidator(requestContractAddresses))
+        .requestsValidator(pragueRequestsValidator())
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestProcessorCoordinator(pragueRequestsProcessors(requestContractAddresses))
 

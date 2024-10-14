@@ -17,6 +17,8 @@ package org.hyperledger.besu.plugin.data;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.plugin.Unstable;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /** A request is an operation sent to the Beacon Node */
 @Unstable
 public interface Request {
@@ -27,4 +29,6 @@ public interface Request {
    * @return The {@link RequestType} representing the type of this request.
    */
   RequestType getType();
+
+  Bytes getData();
 }

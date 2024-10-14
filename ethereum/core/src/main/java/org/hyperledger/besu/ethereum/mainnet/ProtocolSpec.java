@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -78,7 +78,7 @@ public class ProtocolSpec {
 
   private final WithdrawalsValidator withdrawalsValidator;
   private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
-  private final RequestsValidatorCoordinator requestsValidatorCoordinator;
+  private final RequestsValidator requestsValidatorCoordinator;
   private final Optional<RequestProcessorCoordinator> requestProcessorCoordinator;
   private final BlockHashProcessor blockHashProcessor;
   private final boolean isPoS;
@@ -142,7 +142,7 @@ public class ProtocolSpec {
       final Optional<PoWHasher> powHasher,
       final WithdrawalsValidator withdrawalsValidator,
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
-      final RequestsValidatorCoordinator requestsValidatorCoordinator,
+      final RequestsValidator requestsValidatorCoordinator,
       final Optional<RequestProcessorCoordinator> requestProcessorCoordinator,
       final BlockHashProcessor blockHashProcessor,
       final boolean isPoS,
@@ -375,7 +375,7 @@ public class ProtocolSpec {
     return withdrawalsProcessor;
   }
 
-  public RequestsValidatorCoordinator getRequestsValidatorCoordinator() {
+  public RequestsValidator getRequestsValidatorCoordinator() {
     return requestsValidatorCoordinator;
   }
 

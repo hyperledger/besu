@@ -144,7 +144,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
         method.validateParameters(
             payload,
             Optional.of(List.of()),
-            Optional.of("0x0000000000000000000000000000000000000000000000000000000000000000"));
+            Optional.of("0x0000000000000000000000000000000000000000000000000000000000000000"),
+            Optional.empty());
     assertThat(res.isValid()).isTrue();
   }
 

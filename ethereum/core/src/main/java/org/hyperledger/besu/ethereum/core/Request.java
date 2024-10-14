@@ -15,27 +15,25 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.RequestType;
-import org.hyperledger.besu.ethereum.core.encoding.RequestDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.RequestEncoder;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public abstract class Request implements org.hyperledger.besu.plugin.data.Request {
+public class Request implements org.hyperledger.besu.plugin.data.Request {
+  private final RequestType type;
+  private final Bytes data;
+
+  public Request(final RequestType type, final Bytes data) {
+    this.type = type;
+    this.data = data;
+  }
+
   @Override
-  public abstract RequestType getType();
-
-  public static Request readFrom(final Bytes rlpBytes) {
-    return readFrom(RLP.input(rlpBytes));
+  public RequestType getType() {
+    return type;
   }
 
-  public static Request readFrom(final RLPInput rlpInput) {
-    return RequestDecoder.decode(rlpInput);
-  }
-
-  public void writeTo(final RLPOutput out) {
-    RequestEncoder.encode(this, out);
+  @Override
+  public Bytes getData() {
+    return data;
   }
 }

@@ -84,7 +84,7 @@ import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -381,7 +381,7 @@ abstract class AbstractBlockCreatorTest {
             specBuilder ->
                 specBuilder
                     .requestsValidator(
-                        new RequestsValidatorCoordinator.Builder()
+                        new RequestsValidator.Builder()
                             .addValidator(
                                 RequestType.DEPOSIT,
                                 new DepositRequestValidator((depositContractAddress)))

@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
-import org.hyperledger.besu.ethereum.core.encoding.RequestEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -95,10 +94,17 @@ public final class BodyValidation {
    * @return the requests root
    */
   public static Hash requestsHash(final List<Request> requests) {
-    final MerkleTrie<Bytes, Bytes> trie = trie();
-    IntStream.range(0, requests.size())
-        .forEach(i -> trie.put(indexKey(i), RequestEncoder.encodeOpaqueBytes(requests.get(i))));
-    return Hash.wrap(trie.getRootHash());
+    final Bytes concatenatedHashes =
+        Bytes.concatenate(
+            requests.stream()
+                .map(
+                    request ->
+                        keccak256(
+                            Bytes.concatenate(
+                                Bytes.of(request.getType().getSerializedType()),
+                                request.getData())))
+                .toArray(Bytes[]::new));
+    return Hash.wrap(keccak256(concatenatedHashes));
   }
 
   /**

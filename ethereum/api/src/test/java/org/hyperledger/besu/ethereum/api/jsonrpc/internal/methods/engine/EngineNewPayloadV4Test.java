@@ -46,7 +46,7 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestValidator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestValidator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
@@ -165,7 +165,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     final List<DepositRequestParameter> depositRequests = List.of();
     lenient()
         .when(protocolSpec.getRequestsValidatorCoordinator())
-        .thenReturn(RequestsValidatorCoordinator.empty());
+        .thenReturn(RequestsValidator.empty());
 
     var resp =
         resp(
@@ -321,13 +321,13 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   }
 
   private void mockProhibitedRequestsValidator() {
-    var validator = RequestsValidatorCoordinator.empty();
+    var validator = RequestsValidator.empty();
     when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
   }
 
   private void mockAllowedDepositRequestsRequestValidator() {
     var validator =
-        new RequestsValidatorCoordinator.Builder()
+        new RequestsValidator.Builder()
             .addValidator(RequestType.DEPOSIT, new DepositRequestValidator(depositContractAddress))
             .build();
     when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
@@ -335,7 +335,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   private void mockAllowedWithdrawalsRequestValidator() {
     var validator =
-        new RequestsValidatorCoordinator.Builder()
+        new RequestsValidator.Builder()
             .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
             .build();
     when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);

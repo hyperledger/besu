@@ -329,10 +329,7 @@ public class BlockDataGenerator {
     }
 
     return new BlockBody(
-        options.getTransactions(defaultTxs),
-        ommers,
-        options.getWithdrawals(Optional.empty()),
-        options.getRequests(Optional.empty()));
+        options.getTransactions(defaultTxs), ommers, options.getWithdrawals(Optional.empty()));
   }
 
   private BlockHeader ommer() {

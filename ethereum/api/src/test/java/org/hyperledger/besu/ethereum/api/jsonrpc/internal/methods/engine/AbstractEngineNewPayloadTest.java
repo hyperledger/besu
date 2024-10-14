@@ -62,7 +62,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
@@ -431,10 +431,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         txs,
         withdrawals,
         header.getBlobGasUsed().map(UnsignedLongParameter::new).orElse(null),
-        header.getExcessBlobGas().map(BlobGas::toHexString).orElse(null),
-        depositRequests,
-        withdrawalRequests,
-        consolidationRequests);
+        header.getExcessBlobGas().map(BlobGas::toHexString).orElse(null));
   }
 
   protected BlockHeader setupValidPayload(
@@ -524,7 +521,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
   }
 
   private void mockProhibitedRequestsValidator() {
-    var validator = RequestsValidatorCoordinator.empty();
+    var validator = RequestsValidator.empty();
     when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
   }
 }

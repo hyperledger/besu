@@ -120,7 +120,7 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
         case INVALID_TRANSACTION_INDEX_PARAMS:
         case INVALID_TRANSACTION_LIMIT_PARAMS:
         case INVALID_TRANSACTION_TRACE_PARAMS:
-        case INVALID_VERSIONED_HASH_PARAMS:
+        case INVALID_REQUESTS_PARAMS:
         case INVALID_VOTE_TYPE_PARAMS:
         case INVALID_WITHDRAWALS_PARAMS:
           metricSpan.setStatus(StatusCode.ERROR, "Invalid Params");

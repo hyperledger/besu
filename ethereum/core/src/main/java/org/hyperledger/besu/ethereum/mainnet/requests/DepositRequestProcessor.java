@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.DepositRequestDecoder;
@@ -42,13 +41,12 @@ public class DepositRequestProcessor implements RequestProcessor {
     if (depositContractAddress.isEmpty()) {
       return Optional.empty();
     }
-    List<DepositRequest> depositRequests =
-        findDepositRequestsFromReceipts(context.transactionReceipts());
+    List<Request> depositRequests = findDepositRequestsFromReceipts(context.transactionReceipts());
     return Optional.of(depositRequests);
   }
 
   @VisibleForTesting
-  List<DepositRequest> findDepositRequestsFromReceipts(
+  List<Request> findDepositRequestsFromReceipts(
       final List<TransactionReceipt> transactionReceipts) {
     return depositContractAddress
         .map(

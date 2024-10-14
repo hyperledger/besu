@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -282,10 +281,7 @@ public class BlockchainReferenceTestCaseSpec {
               input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
               input.isEndOfCurrentList()
                   ? Optional.empty()
-                  : Optional.of(input.readList(Withdrawal::readFrom)),
-              input.isEndOfCurrentList()
-                  ? Optional.empty()
-                  : Optional.of(input.readList(Request::readFrom)));
+                  : Optional.of(input.readList(Withdrawal::readFrom)));
       return new Block(header, body);
     }
   }

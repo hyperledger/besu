@@ -80,7 +80,7 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
     final BlockBody emptyBodyBlock = BlockBody.empty();
     // Block with no tx, no ommers, 1 withdrawal
     final BlockBody bodyBlockWithWithdrawal =
-        new BlockBody(emptyList(), emptyList(), Optional.of(List.of(withdrawal)), Optional.empty());
+        new BlockBody(emptyList(), emptyList(), Optional.of(List.of(withdrawal)));
 
     assertThat(
             new GetBodiesFromPeerTask.BodyIdentifier(emptyBodyBlock)
@@ -105,7 +105,7 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
     final BlockBody emptyBodyBlock = BlockBody.empty();
     // Block with no tx, no ommers, 1 deposit
     final BlockBody bodyBlockWithDeposit =
-        new BlockBody(emptyList(), emptyList(), Optional.empty(), Optional.of(List.of(deposit)));
+        new BlockBody(emptyList(), emptyList(), Optional.empty());
 
     assertThat(
             new GetBodiesFromPeerTask.BodyIdentifier(emptyBodyBlock)
@@ -126,8 +126,7 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
     final BlockBody emptyBodyBlock = BlockBody.empty();
     // Block with no tx, no ommers, 1 validator exit
     final BlockBody bodyBlockWithValidatorExit =
-        new BlockBody(
-            emptyList(), emptyList(), Optional.empty(), Optional.of(List.of(withdrawalRequest)));
+        new BlockBody(emptyList(), emptyList(), Optional.empty());
 
     assertThat(
             new GetBodiesFromPeerTask.BodyIdentifier(emptyBodyBlock)

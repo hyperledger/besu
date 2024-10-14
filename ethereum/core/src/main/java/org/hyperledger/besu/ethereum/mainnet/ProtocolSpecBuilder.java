@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacy
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.EVM;
@@ -80,8 +80,7 @@ public class ProtocolSpecBuilder {
   private WithdrawalsValidator withdrawalsValidator =
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
-  private RequestsValidatorCoordinator requestsValidatorCoordinator =
-      RequestsValidatorCoordinator.empty();
+  private RequestsValidator requestsValidator;
   private RequestProcessorCoordinator requestProcessorCoordinator;
   protected BlockHashProcessor blockHashProcessor;
   private FeeMarket feeMarket = FeeMarket.legacy();
@@ -268,8 +267,8 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder requestsValidator(
-      final RequestsValidatorCoordinator requestsValidatorCoordinator) {
-    this.requestsValidatorCoordinator = requestsValidatorCoordinator;
+      final RequestsValidator requestsValidatorCoordinator) {
+    this.requestsValidator = requestsValidatorCoordinator;
     return this;
   }
 
@@ -402,7 +401,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(powHasher),
         withdrawalsValidator,
         Optional.ofNullable(withdrawalsProcessor),
-        requestsValidatorCoordinator,
+        requestsValidator,
         Optional.ofNullable(requestProcessorCoordinator),
         blockHashProcessor,
         isPoS,
