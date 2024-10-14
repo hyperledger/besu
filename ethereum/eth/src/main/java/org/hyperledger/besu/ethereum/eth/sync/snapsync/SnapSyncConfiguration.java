@@ -40,7 +40,7 @@ public class SnapSyncConfiguration {
 
   public static final Boolean DEFAULT_SNAP_SYNC_BFT_ENABLED = Boolean.FALSE;
 
-  public static final Boolean DEFAULT_SNAP_SYNC_TO_HEAD_ENABLED_FLAG = Boolean.TRUE;
+  public static final Boolean DEFAULT_SNAP_SYNC_TO_HEAD_ENABLED_FLAG = Boolean.FALSE;
 
   public static SnapSyncConfiguration getDefault() {
     return ImmutableSnapSyncConfiguration.builder().build();
