@@ -18,6 +18,7 @@
 
 ### Upcoming Breaking Changes
 - k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
+- `--host-whitelist` has been deprecated in favor of `--host-allowlist` since 2020 and will be removed in a future release
 
 ### Additions and Improvements
 - Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
