@@ -341,10 +341,10 @@ public class JsonTestParameters<S, T> {
     }
   }
 
-  private static class JsonTestCaseReader<T> {
+  public static class JsonTestCaseReader<T> {
 
     /** The Test case specs. */
-    final Map<String, T> testCaseSpecs;
+    public final Map<String, T> testCaseSpecs;
 
     /**
      * Public constructor.
