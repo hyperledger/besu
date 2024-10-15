@@ -341,6 +341,12 @@ public class JsonTestParameters<S, T> {
     }
   }
 
+
+  /**
+   * Parameterized wrapper for deserialization.
+   *
+   * @param <T> the type parameter
+   */
   public static class JsonTestCaseReader<T> {
 
     /** The Test case specs. */
