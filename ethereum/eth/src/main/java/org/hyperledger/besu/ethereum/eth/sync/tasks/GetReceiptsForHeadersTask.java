@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 public class GetReceiptsForHeadersTask
     extends AbstractRetryingPeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
   private static final Logger LOG = LoggerFactory.getLogger(GetReceiptsForHeadersTask.class);
-  private static final int DEFAULT_RETRIES = 5;
+  protected static final int DEFAULT_RETRIES = 5;
 
   private final EthContext ethContext;
 
@@ -66,14 +66,6 @@ public class GetReceiptsForHeadersTask
   }
 
   // TODO: This is only used in test code and should be removed
-  public static GetReceiptsForHeadersTask forHeaders(
-      final EthContext ethContext,
-      final List<BlockHeader> headers,
-      final int maxRetries,
-      final MetricsSystem metricsSystem) {
-    return new GetReceiptsForHeadersTask(ethContext, headers, maxRetries, metricsSystem);
-  }
-
   public static GetReceiptsForHeadersTask forHeaders(
       final EthContext ethContext,
       final List<BlockHeader> headers,
