@@ -18,6 +18,7 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -156,6 +157,7 @@ public class DownloadReceiptsStepTest {
     final Block block = Mockito.mock(Block.class);
     final BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
     Mockito.when(block.getHeader()).thenAnswer((invocationOnMock) -> blockHeader);
+    Mockito.when(blockHeader.getReceiptsRoot()).thenReturn(Hash.fromHexStringLenient("DEADBEEF"));
     final BlockBody blockBody = Mockito.mock(BlockBody.class);
     Mockito.when(block.getBody()).thenAnswer((invocationOnMock) -> blockBody);
     Mockito.when(blockBody.getTransactions())

@@ -18,18 +18,36 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
+import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PivotSelectorFromSafeBlock extends PivotSelectorFromBlock {
+public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
+
   private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromSafeBlock.class);
+  private final ProtocolContext protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final EthContext ethContext;
+  private final MetricsSystem metricsSystem;
+  private final GenesisConfigOptions genesisConfig;
+  private final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier;
+  private final Runnable cleanupAction;
+
+  private long lastNoFcuReceivedInfoLog = System.currentTimeMillis();
+  private static final long NO_FCU_RECEIVED_LOGGING_THRESHOLD = 60000L;
+  private volatile Optional<BlockHeader> maybeCachedHeadBlockHeader = Optional.empty();
 
   public PivotSelectorFromSafeBlock(
       final ProtocolContext protocolContext,
@@ -39,25 +57,111 @@ public class PivotSelectorFromSafeBlock extends PivotSelectorFromBlock {
       final GenesisConfigOptions genesisConfig,
       final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier,
       final Runnable cleanupAction) {
-    super(
-        protocolContext,
-        protocolSchedule,
-        ethContext,
-        metricsSystem,
-        genesisConfig,
-        forkchoiceStateSupplier,
-        cleanupAction);
+    this.protocolContext = protocolContext;
+    this.protocolSchedule = protocolSchedule;
+    this.ethContext = ethContext;
+    this.metricsSystem = metricsSystem;
+    this.genesisConfig = genesisConfig;
+    this.forkchoiceStateSupplier = forkchoiceStateSupplier;
+    this.cleanupAction = cleanupAction;
   }
 
   @Override
-  protected Optional<Hash> getPivotHash(final ForkchoiceEvent forkchoiceEvent) {
-    if (forkchoiceEvent.hasValidSafeBlockHash()) {
-      Hash hash = forkchoiceEvent.getSafeBlockHash();
-      LOG.debug("Returning safe block hash {} as pivot.", hash);
-      return Optional.of(hash);
-    } else {
-      LOG.debug("No safe block hash found.");
-      return Optional.empty();
+  public Optional<FastSyncState> selectNewPivotBlock() {
+    final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
+    if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidSafeBlockHash()) {
+      return Optional.of(selectLastSafeBlockAsPivot(maybeForkchoice.get().getSafeBlockHash()));
     }
+    if (lastNoFcuReceivedInfoLog + NO_FCU_RECEIVED_LOGGING_THRESHOLD < System.currentTimeMillis()) {
+      lastNoFcuReceivedInfoLog = System.currentTimeMillis();
+      LOG.info(
+          "Waiting for consensus client, this may be because your consensus client is still syncing");
+    }
+    LOG.debug("No finalized block hash announced yet");
+    return Optional.empty();
+  }
+
+  @Override
+  public CompletableFuture<Void> prepareRetry() {
+    // nothing to do
+    return CompletableFuture.completedFuture(null);
+  }
+
+  private FastSyncState selectLastSafeBlockAsPivot(final Hash safeHash) {
+    LOG.debug("Returning safe block hash {} as pivot", safeHash);
+    return new FastSyncState(safeHash);
+  }
+
+  @Override
+  public void close() {
+    cleanupAction.run();
+  }
+
+  @Override
+  public long getMinRequiredBlockNumber() {
+    return genesisConfig.getTerminalBlockNumber().orElse(0L);
+  }
+
+  @Override
+  public long getBestChainHeight() {
+    final long localChainHeight = protocolContext.getBlockchain().getChainHeadBlockNumber();
+
+    return Math.max(
+        forkchoiceStateSupplier
+            .get()
+            .map(ForkchoiceEvent::getHeadBlockHash)
+            .map(
+                headBlockHash ->
+                    maybeCachedHeadBlockHeader
+                        .filter(
+                            cachedBlockHeader -> cachedBlockHeader.getHash().equals(headBlockHash))
+                        .map(BlockHeader::getNumber)
+                        .orElseGet(
+                            () -> {
+                              LOG.debug(
+                                  "Downloading chain head block header by hash {}", headBlockHash);
+                              try {
+                                return waitForPeers(1)
+                                    .thenCompose(unused -> downloadBlockHeader(headBlockHash))
+                                    .thenApply(
+                                        blockHeader -> {
+                                          maybeCachedHeadBlockHeader = Optional.of(blockHeader);
+                                          return blockHeader.getNumber();
+                                        })
+                                    .get(20, TimeUnit.SECONDS);
+                              } catch (Throwable t) {
+                                LOG.debug(
+                                    "Error trying to download chain head block header by hash {}",
+                                    headBlockHash,
+                                    t);
+                              }
+                              return null;
+                            }))
+            .orElse(0L),
+        localChainHeight);
+  }
+
+  private CompletableFuture<BlockHeader> downloadBlockHeader(final Hash hash) {
+    return RetryingGetHeaderFromPeerByHashTask.byHash(
+            protocolSchedule, ethContext, hash, 0, metricsSystem)
+        .getHeader()
+        .whenComplete(
+            (blockHeader, throwable) -> {
+              if (throwable != null) {
+                LOG.debug("Error downloading block header by hash {}", hash);
+              } else {
+                LOG.atDebug()
+                    .setMessage("Successfully downloaded pivot block header by hash {}")
+                    .addArgument(blockHeader::toLogString)
+                    .log();
+              }
+            });
+  }
+
+  private CompletableFuture<Void> waitForPeers(final int count) {
+
+    final WaitForPeersTask waitForPeersTask =
+        WaitForPeersTask.create(ethContext, count, metricsSystem);
+    return waitForPeersTask.run();
   }
 }
