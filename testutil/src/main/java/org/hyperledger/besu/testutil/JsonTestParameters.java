@@ -341,7 +341,6 @@ public class JsonTestParameters<S, T> {
     }
   }
 
-
   /**
    * Parameterized wrapper for deserialization.
    *
