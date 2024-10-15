@@ -47,7 +47,7 @@ class CodeV0Test {
 
   @BeforeEach
   void startUp() {
-    evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
   }
 
   @Test

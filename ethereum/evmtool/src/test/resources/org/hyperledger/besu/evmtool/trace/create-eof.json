@@ -8,7 +8,7 @@
     "--coinbase",
     "4444588443C3A91288C5002483449ABA1054192B",
     "--fork",
-    "CancunEOF"
+    "Osaka"
   ],
   "stdin": "",
   "stdout": [
@@ -20,6 +20,6 @@
     {"pc":5,"section":0,"op":95,"gas":"0x2540be109","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
     {"pc":6,"section":0,"op":95,"gas":"0x2540be107","gasCost":"0x2","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
     {"pc":7,"section":0,"op":238,"immediate":"0x00","gas":"0x2540be105","gasCost":"0x0","memSize":0,"stack":["0x0","0x0"],"depth":1,"refund":0,"opName":"RETURNCONTRACT"},
-    {"stateRoot":"0x9790b070a5749acec6a7252a867f795df3c2cb5b800fb509ea259a1c0b5d96c1","output":"0x","gasUsed":"0x129b","pass":true,"fork":"CancunEOF"}
+    {"stateRoot":"0x9790b070a5749acec6a7252a867f795df3c2cb5b800fb509ea259a1c0b5d96c1","output":"0x","gasUsed":"0x129b","pass":true,"fork":"Osaka"}
   ]
 }

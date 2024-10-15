@@ -56,7 +56,7 @@ public class Create2OperationTest {
   private MessageFrame messageFrame;
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final MutableAccount account = mock(MutableAccount.class);
-  private final EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  private final EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
   private final MutableAccount newAccount = mock(MutableAccount.class);
 
   private final Create2Operation operation =
