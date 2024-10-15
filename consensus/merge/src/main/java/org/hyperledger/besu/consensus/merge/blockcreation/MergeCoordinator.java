@@ -300,7 +300,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             .getBlock();
 
     BlockProcessingResult result = validateProposedBlock(emptyBlock);
-    // TODO include the requests in the payload wrapper
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           new PayloadWrapper(

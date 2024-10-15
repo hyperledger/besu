@@ -474,7 +474,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     if (maybeVersionedHashes.isEmpty() && !transactionVersionedHashes.isEmpty()) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_REQUESTS_PARAMS,
+          RpcErrorType.INVALID_VERSIONED_HASH_PARAMS,
           "Payload must contain versioned hashes for transactions");
     }
 
@@ -482,7 +482,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (maybeVersionedHashes.isPresent()
         && !maybeVersionedHashes.get().equals(transactionVersionedHashes)) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_REQUESTS_PARAMS,
+          RpcErrorType.INVALID_VERSIONED_HASH_PARAMS,
           "Versioned hashes from blob transactions do not match expected values");
     }
 
