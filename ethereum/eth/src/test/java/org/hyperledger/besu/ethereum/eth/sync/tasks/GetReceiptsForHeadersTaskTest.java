@@ -31,6 +31,7 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class GetReceiptsForHeadersTaskTest
@@ -73,5 +74,14 @@ public class GetReceiptsForHeadersTaskTest
         ImmutableMap.of(header1, emptyList(), header2, emptyList(), header3, emptyList());
 
     assertThat(createTask(expected).run()).isCompletedWithValue(expected);
+  }
+
+  @Override
+  @Test
+  @Disabled
+  public void failsWhenPeerReturnsPartialResultThenStops() {
+    // Test is not valid when more than 4 retries are allowed, as is always the case with
+    // GetReceiptsForHeadersTask, because the peer is forcefully disconnected after failing
+    // too many times
   }
 }
