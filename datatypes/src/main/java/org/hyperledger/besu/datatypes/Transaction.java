@@ -234,4 +234,18 @@ public interface Transaction {
    * @return the size in bytes of the encoded transaction.
    */
   int getSize();
+
+  /**
+   * Returns the code delegations if this transaction is a 7702 transaction.
+   *
+   * @return the code delegations
+   */
+  Optional<List<CodeDelegation>> getCodeDelegationList();
+
+  /**
+   * Returns the size of the authorization list.
+   *
+   * @return the size of the authorization list
+   */
+  int codeDelegationListSize();
 }

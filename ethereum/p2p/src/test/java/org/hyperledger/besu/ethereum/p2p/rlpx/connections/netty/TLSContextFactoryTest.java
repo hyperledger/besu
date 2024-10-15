@@ -48,6 +48,7 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -492,5 +493,12 @@ class TLSContextFactoryTest {
     Optional<Throwable> getCause() {
       return messageHandler != null ? messageHandler.getCause() : Optional.empty();
     }
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

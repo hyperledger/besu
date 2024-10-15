@@ -94,7 +94,7 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
 
   @Override
   public int hashCode() {
-    return Objects.hash(slotHash.hashCode());
+    return slotHash.hashCode();
   }
 
   @Override

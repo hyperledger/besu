@@ -23,10 +23,10 @@ import java.util.Optional;
 /** The Transaction Selection service implementation. */
 public class TransactionSelectionServiceImpl implements TransactionSelectionService {
 
-  private Optional<PluginTransactionSelectorFactory> factory = Optional.empty();
-
   /** Default Constructor. */
   public TransactionSelectionServiceImpl() {}
+
+  private Optional<PluginTransactionSelectorFactory> factory = Optional.empty();
 
   @Override
   public PluginTransactionSelector createPluginTransactionSelector() {

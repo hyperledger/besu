@@ -128,87 +128,58 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
     storage.clear(ACCOUNT_STORAGE_STORAGE);
   }
 
-  public NavigableMap<Bytes32, Bytes> streamAccountFlatDatabase(
-      final SegmentedKeyValueStorage storage,
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final long max) {
-
-    return toNavigableMap(accountsToPairStream(storage, startKeyHash, endKeyHash).limit(max));
-  }
-
-  public NavigableMap<Bytes32, Bytes> streamAccountFlatDatabase(
-      final SegmentedKeyValueStorage storage,
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
-
-    return toNavigableMap(
-        accountsToPairStream(storage, startKeyHash, endKeyHash).takeWhile(takeWhile));
-  }
-
-  /** streams RLP encoded storage values using a specified stream limit. */
-  public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
-      final SegmentedKeyValueStorage storage,
-      final Hash accountHash,
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final long max) {
-
-    return toNavigableMap(
-        storageToPairStream(storage, accountHash, startKeyHash, endKeyHash, RLP::encodeValue)
-            .limit(max));
-  }
-
-  /** streams raw storage Bytes using a specified predicate filter and value mapper. */
-  public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
-      final SegmentedKeyValueStorage storage,
-      final Hash accountHash,
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
-
-    return toNavigableMap(
-        storageToPairStream(storage, accountHash, startKeyHash, endKeyHash, RLP::encodeValue)
-            .takeWhile(takeWhile));
-  }
-
-  private static Stream<Pair<Bytes32, Bytes>> storageToPairStream(
-      final SegmentedKeyValueStorage storage,
-      final Hash accountHash,
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final Function<Bytes, Bytes> valueMapper) {
+  @Override
+  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+          final SegmentedKeyValueStorage storage,
+          final Hash accountHash,
+          final Bytes startKeyHash,
+          final Function<Bytes, Bytes> valueMapper) {
 
     return storage
-        .streamFromKey(
-            ACCOUNT_STORAGE_STORAGE,
-            Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
-            Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
-        .map(
-            pair ->
-                new Pair<>(
-                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                    valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
+            .streamFromKey(
+                    ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
+            .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
+            .map(
+                    pair ->
+                            new Pair<>(
+                                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
+                                    valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
   }
 
-  private static Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
-      final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
+  @Override
+  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+          final SegmentedKeyValueStorage storage,
+          final Hash accountHash,
+          final Bytes startKeyHash,
+          final Bytes32 endKeyHash,
+          final Function<Bytes, Bytes> valueMapper) {
+
     return storage
-        .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
-        .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
+            .streamFromKey(
+                    ACCOUNT_STORAGE_STORAGE,
+                    Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
+                    Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
+            .map(
+                    pair ->
+                            new Pair<>(
+                                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
+                                    valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
   }
 
-  private static NavigableMap<Bytes32, Bytes> toNavigableMap(
-      final Stream<Pair<Bytes32, Bytes>> pairStream) {
-    final TreeMap<Bytes32, Bytes> collected =
-        pairStream.collect(
-            Collectors.toMap(
-                Pair::getFirst,
-                Pair::getSecond,
-                (v1, v2) -> v1,
-                () -> new TreeMap<>(Comparator.comparing(Bytes::toHexString))));
-    pairStream.close();
-    return collected;
+  @Override
+  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+          final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
+    return storage
+            .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
+            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
   }
+
+  @Override
+  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+          final SegmentedKeyValueStorage storage, final Bytes startKeyHash) {
+    return storage
+            .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe())
+            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
+  }
+
 }

@@ -14,11 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages.snap;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.ArrayList;
@@ -28,7 +32,6 @@ import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public final class AccountRangeMessageTest {
@@ -51,7 +54,81 @@ public final class AccountRangeMessageTest {
 
     // check match originals.
     final AccountRangeMessage.AccountRangeData range = message.accountData(false);
-    Assertions.assertThat(range.accounts()).isEqualTo(keys);
-    Assertions.assertThat(range.proofs()).isEqualTo(proofs);
+    assertThat(range.accounts()).isEqualTo(keys);
+    assertThat(range.proofs()).isEqualTo(proofs);
+  }
+
+  @Test
+  public void toSlimAccountTest() {
+    // Initialize nonce and balance
+    long nonce = 1L;
+    Wei balance = Wei.of(2L);
+
+    // Create a StateTrieAccountValue with the given nonce and balance
+    final StateTrieAccountValue accountValue =
+        new StateTrieAccountValue(nonce, balance, Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
+
+    // Encode the account value to RLP
+    final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
+    accountValue.writeTo(rlpOut);
+
+    // Convert the encoded account value to a slim account representation
+    Bytes slimAccount = AccountRangeMessage.toSlimAccount(RLP.input(rlpOut.encoded()));
+
+    // Read the slim account RLP input
+    RLPInput in = RLP.input(slimAccount);
+    in.enterList();
+
+    // Verify the nonce and balance
+    final long expectedNonce = in.readLongScalar();
+    final Wei expectedWei = Wei.of(in.readUInt256Scalar());
+    assertThat(expectedNonce).isEqualTo(nonce);
+    assertThat(expectedWei).isEqualTo(balance);
+
+    // Check that the storageRoot is empty
+    assertThat(in.nextIsNull()).isTrue();
+    in.skipNext();
+
+    // Check that the codeHash is empty
+    assertThat(in.nextIsNull()).isTrue();
+    in.skipNext();
+
+    // Exit the list
+    in.leaveList();
+  }
+
+  @Test
+  public void toFullAccountTest() {
+    // Initialize nonce and balance
+    long nonce = 1L;
+    Wei balance = Wei.of(2L);
+
+    // Create a StateTrieAccountValue with the given nonce and balance
+    final StateTrieAccountValue accountValue =
+        new StateTrieAccountValue(nonce, balance, Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
+
+    // Encode the account value to RLP
+    final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
+    accountValue.writeTo(rlpOut);
+
+    // Convert the encoded account value to a full account representation
+    Bytes fullAccount = AccountRangeMessage.toFullAccount(RLP.input(rlpOut.encoded()));
+
+    // Read the full account RLP input
+    RLPInput in = RLP.input(fullAccount);
+    in.enterList();
+
+    // Verify the nonce and balance
+    final long expectedNonce = in.readLongScalar();
+    final Wei expectedWei = Wei.of(in.readUInt256Scalar());
+    assertThat(expectedNonce).isEqualTo(nonce);
+    assertThat(expectedWei).isEqualTo(balance);
+
+    // Verify the storageRoot and codeHash
+    assertThat(in.readBytes32()).isEqualTo(Hash.EMPTY_TRIE_HASH);
+    assertThat(in.readBytes32()).isEqualTo(Hash.EMPTY);
+
+    // Exit the list
+    in.leaveList();
   }
 }

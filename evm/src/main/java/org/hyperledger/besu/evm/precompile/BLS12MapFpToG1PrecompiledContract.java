@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
-import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
+import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -27,7 +27,7 @@ public class BLS12MapFpToG1PrecompiledContract extends AbstractBLS12PrecompiledC
   public BLS12MapFpToG1PrecompiledContract() {
     super(
         "BLS12_MAP_FIELD_TO_CURVE",
-        LibEthPairings.BLS12_MAP_FP_TO_G1_OPERATION_RAW_VALUE,
+        LibGnarkEIP2537.BLS12_MAP_FP_TO_G1_OPERATION_SHIM_VALUE,
         PARAMETER_LENGTH);
   }
 

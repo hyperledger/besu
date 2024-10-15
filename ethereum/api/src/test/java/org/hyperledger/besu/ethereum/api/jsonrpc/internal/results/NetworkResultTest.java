@@ -26,9 +26,22 @@ public class NetworkResultTest {
   @Test
   public void localAndRemoteAddressShouldNotStartWithForwardSlash() {
     final SocketAddress socketAddress = new InetSocketAddress("1.2.3.4", 7890);
-    final NetworkResult networkResult = new NetworkResult(socketAddress, socketAddress);
+    final NetworkResult networkResult = new NetworkResult(socketAddress, socketAddress, true);
 
     assertThat(networkResult.getLocalAddress()).isEqualTo("1.2.3.4:7890");
     assertThat(networkResult.getRemoteAddress()).isEqualTo("1.2.3.4:7890");
+    assertThat(networkResult.isInbound()).isTrue();
+  }
+
+  @Test
+  public void inboundFieldShouldReflectConnectionDirection() {
+    final SocketAddress localAddress = new InetSocketAddress("192.168.0.1", 30303);
+    final SocketAddress remoteAddress = new InetSocketAddress("10.0.0.1", 30303);
+
+    final NetworkResult inboundConnection = new NetworkResult(localAddress, remoteAddress, true);
+    assertThat(inboundConnection.isInbound()).isTrue();
+
+    final NetworkResult outboundConnection = new NetworkResult(localAddress, remoteAddress, false);
+    assertThat(outboundConnection.isInbound()).isFalse();
   }
 }

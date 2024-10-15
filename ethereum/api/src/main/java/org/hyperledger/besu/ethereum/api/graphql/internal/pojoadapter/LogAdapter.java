@@ -28,27 +28,62 @@ import java.util.Optional;
 import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * This class is an adapter for the LogWithMetadata class.
+ *
+ * <p>It extends the AdapterBase class and provides methods to get the index, topics, data,
+ * transaction, and account associated with a log.
+ */
 @SuppressWarnings("unused") // reflected by GraphQL
 public class LogAdapter extends AdapterBase {
   private final LogWithMetadata logWithMetadata;
 
+  /**
+   * Constructor for LogAdapter.
+   *
+   * <p>It initializes the logWithMetadata field with the provided argument.
+   *
+   * @param logWithMetadata the log with metadata to be adapted.
+   */
   public LogAdapter(final LogWithMetadata logWithMetadata) {
     this.logWithMetadata = logWithMetadata;
   }
 
+  /**
+   * Returns the index of the log.
+   *
+   * @return the index of the log.
+   */
   public Integer getIndex() {
     return logWithMetadata.getLogIndex();
   }
 
+  /**
+   * Returns the topics of the log.
+   *
+   * @return a list of topics of the log.
+   */
   public List<LogTopic> getTopics() {
     final List<LogTopic> topics = logWithMetadata.getTopics();
     return new ArrayList<>(topics);
   }
 
+  /**
+   * Returns the data of the log.
+   *
+   * @return the data of the log.
+   */
   public Bytes getData() {
     return logWithMetadata.getData();
   }
 
+  /**
+   * Returns the transaction associated with the log.
+   *
+   * @param environment the data fetching environment.
+   * @return a TransactionAdapter for the transaction associated with the log.
+   * @throws java.util.NoSuchElementException if the transaction is not found.
+   */
   public TransactionAdapter getTransaction(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Hash hash = logWithMetadata.getTransactionHash();
@@ -56,6 +91,12 @@ public class LogAdapter extends AdapterBase {
     return tran.map(TransactionAdapter::new).orElseThrow();
   }
 
+  /**
+   * Returns the account associated with the log.
+   *
+   * @param environment the data fetching environment.
+   * @return an AccountAdapter for the account associated with the log.
+   */
   public AccountAdapter getAccount(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     long blockNumber = logWithMetadata.getBlockNumber();

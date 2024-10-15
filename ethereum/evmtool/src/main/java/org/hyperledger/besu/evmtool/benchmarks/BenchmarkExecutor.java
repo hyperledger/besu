@@ -113,12 +113,12 @@ public abstract class BenchmarkExecutor {
     }
     timer.stop();
 
-    if (executions < 1) {
+    if (executions > 0) {
+      final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
+      return elapsed / executions;
+    } else {
       return Double.NaN;
     }
-
-    final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-    return elapsed / executions;
   }
 
   /**
@@ -143,7 +143,15 @@ public abstract class BenchmarkExecutor {
       case SHANGHAI -> new ShanghaiGasCalculator();
       case CANCUN -> new CancunGasCalculator();
       case PRAGUE -> new PragueGasCalculator();
-      case PRAGUE_EOF, OSAKA, AMSTERDAM, BOGOTA, POLIS, BANGKOK, FUTURE_EIPS, EXPERIMENTAL_EIPS ->
+      case CANCUN_EOF,
+              PRAGUE_EOF,
+              OSAKA,
+              AMSTERDAM,
+              BOGOTA,
+              POLIS,
+              BANGKOK,
+              FUTURE_EIPS,
+              EXPERIMENTAL_EIPS ->
           new PragueEOFGasCalculator();
     };
   }

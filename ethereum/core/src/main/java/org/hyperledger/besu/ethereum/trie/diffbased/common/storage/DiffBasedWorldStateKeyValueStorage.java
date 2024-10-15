@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
+import kotlin.Pair;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -35,8 +36,10 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -117,6 +120,34 @@ public abstract class DiffBasedWorldStateKeyValueStorage
         .get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY)
         .map(Bytes32::wrap)
         .map(Hash::wrap);
+  }
+
+
+  public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
+      final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
+    return getFlatDbStrategy()
+        .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, max);
+  }
+
+  public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
+      final Bytes startKeyHash, final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+    return getFlatDbStrategy()
+        .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, takeWhile);
+  }
+
+  public NavigableMap<Bytes32, Bytes> streamFlatStorages(
+      final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
+    return getFlatDbStrategy()
+        .streamStorageFlatDatabase(
+            composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, max);
+  }
+
+  public NavigableMap<Bytes32, Bytes> streamFlatStorages(
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+    return getFlatDbStrategy()
+        .streamStorageFlatDatabase(composedWorldStateStorage, accountHash, startKeyHash, takeWhile);
   }
 
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {

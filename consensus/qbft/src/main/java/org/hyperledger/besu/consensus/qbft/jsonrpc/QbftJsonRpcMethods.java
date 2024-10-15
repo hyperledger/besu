@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.consensus.qbft.jsonrpc;
 
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftDiscardValidatorVote;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetPendingVotes;
+import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetRequestTimeoutSeconds;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetSignerMetrics;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetValidatorsByBlockHash;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetValidatorsByBlockNumber;
@@ -40,6 +42,7 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ValidatorProvider readOnlyValidatorProvider;
   private final ProtocolSchedule protocolSchedule;
   private final MiningParameters miningParameters;
+  private final BftConfigOptions bftConfig;
 
   /**
    * Instantiates a new Qbft json rpc methods.
@@ -48,16 +51,19 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
    * @param protocolSchedule the protocol schedule
    * @param miningParameters the mining parameters
    * @param readOnlyValidatorProvider the read only validator provider
+   * @param bftConfig the BFT config options, containing QBFT-specific settings
    */
   public QbftJsonRpcMethods(
       final ProtocolContext context,
       final ProtocolSchedule protocolSchedule,
       final MiningParameters miningParameters,
-      final ValidatorProvider readOnlyValidatorProvider) {
+      final ValidatorProvider readOnlyValidatorProvider,
+      final BftConfigOptions bftConfig) {
     this.context = context;
     this.readOnlyValidatorProvider = readOnlyValidatorProvider;
     this.protocolSchedule = protocolSchedule;
     this.miningParameters = miningParameters;
+    this.bftConfig = bftConfig;
   }
 
   @Override
@@ -77,12 +83,16 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final BlockInterface blockInterface = bftContext.getBlockInterface();
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
 
-    return mapOf(
-        new QbftProposeValidatorVote(validatorProvider),
-        new QbftGetValidatorsByBlockNumber(blockchainQueries, readOnlyValidatorProvider),
-        new QbftDiscardValidatorVote(validatorProvider),
-        new QbftGetValidatorsByBlockHash(context.getBlockchain(), readOnlyValidatorProvider),
-        new QbftGetSignerMetrics(readOnlyValidatorProvider, blockInterface, blockchainQueries),
-        new QbftGetPendingVotes(validatorProvider));
+    Map<String, JsonRpcMethod> methods =
+        mapOf(
+            new QbftProposeValidatorVote(validatorProvider),
+            new QbftGetValidatorsByBlockNumber(blockchainQueries, readOnlyValidatorProvider),
+            new QbftDiscardValidatorVote(validatorProvider),
+            new QbftGetValidatorsByBlockHash(context.getBlockchain(), readOnlyValidatorProvider),
+            new QbftGetSignerMetrics(readOnlyValidatorProvider, blockInterface, blockchainQueries),
+            new QbftGetPendingVotes(validatorProvider),
+            new QbftGetRequestTimeoutSeconds(bftConfig));
+
+    return methods;
   }
 }

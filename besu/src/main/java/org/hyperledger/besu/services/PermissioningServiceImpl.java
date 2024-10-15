@@ -19,6 +19,7 @@ import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissi
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.util.List;
+import javax.inject.Inject;
 
 import com.google.common.collect.Lists;
 
@@ -29,6 +30,7 @@ public class PermissioningServiceImpl implements PermissioningService {
       Lists.newArrayList();
 
   /** Default Constructor. */
+  @Inject
   public PermissioningServiceImpl() {}
 
   @Override

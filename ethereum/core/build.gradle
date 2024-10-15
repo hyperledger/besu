@@ -22,7 +22,8 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
       )
   }
 }
@@ -62,7 +63,6 @@ dependencies {
   implementation 'io.tmio:tuweni-concurrent'
   implementation 'io.tmio:tuweni-units'
   implementation 'io.tmio:tuweni-rlp'
-  implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.hyperledger.besu:besu-verkle-trie'
   implementation 'org.immutables:value-annotations'
   implementation 'tech.pegasys:jc-kzg-4844'

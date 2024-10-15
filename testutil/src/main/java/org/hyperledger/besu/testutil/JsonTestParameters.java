@@ -96,6 +96,7 @@ public class JsonTestParameters<S, T> {
      * @param fullPath the full path of the test
      * @param fork the fork to be tested
      * @param code the code to be tested
+     * @param containerKind the containerKind, if specified
      * @param value the value
      * @param runTest the run test
      */
@@ -104,10 +105,13 @@ public class JsonTestParameters<S, T> {
         final String fullPath,
         final String fork,
         final Bytes code,
+        final String containerKind,
         final S value,
         final boolean runTest) {
       testParameters.add(
-          new Object[] {name, fork, code, value, runTest && includes(name) && includes(fullPath)});
+          new Object[] {
+            name, fork, code, containerKind, value, runTest && includes(name) && includes(fullPath)
+          });
     }
 
     private boolean includes(final String name) {
@@ -304,7 +308,7 @@ public class JsonTestParameters<S, T> {
     final List<File> files = new ArrayList<>();
     for (final String path : paths) {
       final URL url = classLoader.getResource(path);
-      checkState(url != null, "Cannot find test directory " + path);
+      checkState(url != null, "Cannot find test directory %s", path);
       final Path dir;
       try {
         dir = Paths.get(url.toURI());

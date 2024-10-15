@@ -17,10 +17,12 @@ package org.hyperledger.besu.evm.precompile;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.crypto.Blake2bfMessageDigest.Blake2bfDigest;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -66,14 +68,36 @@ class BLAKE2BFPrecompileContractTest {
 
   @ParameterizedTest
   @MethodSource("parameters")
-  void shouldRunFCompression(
+  void shouldRunFCompressionNative(
       final String inputString, final String expectedResult, final long expectedGasUsed) {
+    Blake2bfDigest.maybeEnableNative();
 
+    testFCompression(inputString, expectedResult, expectedGasUsed);
+  }
+
+  @ParameterizedTest
+  @MethodSource("parameters")
+  void shouldRunFCompressionJava(
+      final String inputString, final String expectedResult, final long expectedGasUsed) {
+    Blake2bfDigest.disableNative();
+
+    testFCompression(inputString, expectedResult, expectedGasUsed);
+  }
+
+  private void testFCompression(
+      final String inputString, final String expectedResult, final long expectedGasUsed) {
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expectedComputation =
         expectedResult == null ? null : Bytes.fromHexString(expectedResult);
     assertThat(contract.computePrecompile(input, messageFrame).getOutput())
         .isEqualTo(expectedComputation);
     assertThat(contract.gasRequirement(input)).isEqualTo(expectedGasUsed);
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

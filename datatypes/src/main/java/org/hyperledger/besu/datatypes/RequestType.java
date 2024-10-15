@@ -19,7 +19,9 @@ public enum RequestType {
   /** DEPOSITS */
   DEPOSIT(0x00),
   /** WITHDRAWAL */
-  WITHDRAWAL(0x01);
+  WITHDRAWAL(0x01),
+  /** CONSOLIDATION */
+  CONSOLIDATION(0x02);
 
   private final int typeValue;
 
@@ -48,6 +50,7 @@ public enum RequestType {
     return switch (serializedTypeValue) {
       case 0x00 -> DEPOSIT;
       case 0x01 -> WITHDRAWAL;
+      case 0x02 -> CONSOLIDATION;
       default ->
           throw new IllegalArgumentException(
               String.format("Unsupported request type: 0x%02X", serializedTypeValue));

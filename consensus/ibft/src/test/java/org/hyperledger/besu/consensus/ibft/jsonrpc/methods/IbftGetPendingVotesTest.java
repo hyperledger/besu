@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.jsonrpc.AbstractVoteProposerMethod;
 import org.hyperledger.besu.consensus.common.jsonrpc.AbstractVoteProposerMethodTest;

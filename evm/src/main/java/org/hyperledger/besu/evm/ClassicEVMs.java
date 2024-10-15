@@ -14,13 +14,10 @@
  */
 package org.hyperledger.besu.evm;
 
-import static org.hyperledger.besu.evm.MainnetEVMs.SHANGHAI_INIT_CODE_SIZE_LIMIT;
 import static org.hyperledger.besu.evm.MainnetEVMs.registerIstanbulOperations;
 
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.operation.Create2Operation;
-import org.hyperledger.besu.evm.operation.CreateOperation;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.operation.Push0Operation;
 
@@ -62,8 +59,6 @@ public class ClassicEVMs {
     OperationRegistry registry = new OperationRegistry();
     registerIstanbulOperations(registry, gasCalculator, chainId);
     registry.put(new Push0Operation(gasCalculator));
-    registry.put(new CreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
-    registry.put(new Create2Operation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
     return registry;
   }
 }

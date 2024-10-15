@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.verkletrie;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.trie.verkle.StoredBatchedVerkleTrie;
-import org.hyperledger.besu.ethereum.trie.verkle.VerkleTrieNodeTracker;
+import org.hyperledger.besu.ethereum.trie.verkle.VerkleTrieBatchHasher;
 import org.hyperledger.besu.ethereum.trie.verkle.factory.StoredNodeFactory;
 
 import java.util.Optional;
@@ -34,7 +34,7 @@ public class VerkleTrie {
 
   public VerkleTrie(final NodeLoader nodeLoader) {
     nodeFactory = new StoredNodeFactory<>(nodeLoader, value -> value);
-    verkleTrie = new StoredBatchedVerkleTrie<>(new VerkleTrieNodeTracker<>(), nodeFactory);
+    verkleTrie = new StoredBatchedVerkleTrie<>(new VerkleTrieBatchHasher(), nodeFactory);
   }
 
   public Optional<Bytes> get(final Bytes key) {

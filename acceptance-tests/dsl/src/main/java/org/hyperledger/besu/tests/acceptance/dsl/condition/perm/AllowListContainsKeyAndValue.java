@@ -24,10 +24,15 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import java.nio.file.Path;
 import java.util.Collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class AllowListContainsKeyAndValue implements Condition {
   private final ALLOWLIST_TYPE allowlistType;
   private final Collection<String> allowlistValues;
   private final Path configFilePath;
+
+  private static final Logger LOG = LoggerFactory.getLogger(AllowListContainsKeyAndValue.class);
 
   public AllowListContainsKeyAndValue(
       final ALLOWLIST_TYPE allowlistType,
@@ -47,6 +52,7 @@ public class AllowListContainsKeyAndValue implements Condition {
               allowlistType, allowlistValues, configFilePath);
     } catch (final Exception e) {
       result = false;
+      LOG.error("Error verifying allowlist contains key and value", e);
     }
     assertThat(result).isTrue();
   }

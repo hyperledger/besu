@@ -91,7 +91,7 @@ class CliqueBlockMinerTest {
     final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
     final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
-    when(blockCreator.createBlock(anyLong()))
+    when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreator.BlockCreationResult(
                 blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
@@ -147,7 +147,7 @@ class CliqueBlockMinerTest {
     final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
     final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
-    when(blockCreator.createBlock(anyLong()))
+    when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreator.BlockCreationResult(
                 blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));

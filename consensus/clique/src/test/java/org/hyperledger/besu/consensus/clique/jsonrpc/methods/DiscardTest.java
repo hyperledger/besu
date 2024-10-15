@@ -28,9 +28,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +61,7 @@ public class DiscardTest {
 
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0)).isNull();
@@ -77,7 +77,7 @@ public class DiscardTest {
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0)).isNull();
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
   }
@@ -92,7 +92,7 @@ public class DiscardTest {
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0)).isNull();
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
   }
@@ -111,7 +111,7 @@ public class DiscardTest {
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0)).isNull();
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a1))
         .isEqualTo(VoteType.ADD);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
   }
@@ -121,7 +121,7 @@ public class DiscardTest {
     final Discard discard = new Discard(validatorProvider);
 
     assertThatThrownBy(() -> discard.response(requestWithParams()))
-        .hasMessage("Missing required json rpc parameter at index 0")
+        .hasMessage("Invalid address parameter (index 0)")
         .isInstanceOf(InvalidJsonRpcParameters.class);
   }
 

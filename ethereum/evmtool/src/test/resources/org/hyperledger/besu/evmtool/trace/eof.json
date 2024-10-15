@@ -1,0 +1,17 @@
+{
+  "cli": [
+    "--notime",
+    "--json",
+    "--code",
+    "ef00010100040200010001040000000080000000",
+    "--coinbase",
+    "4444588443C3A91288C5002483449ABA1054192B",
+    "--fork",
+    "PragueEOF"
+  ],
+  "stdin": "",
+  "stdout": [
+    {"pc":0,"section":0,"op":0,"gas":"0x2540be400","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"STOP"},
+    {"stateRoot":"0xdae5f2c233bf9fbb7413d06ce744a3345dbf971b5bb5638736c0388f43a61a4b","output":"0x","gasUsed":"0x0","pass":true,"fork":"PragueEOF"}
+  ]
+}

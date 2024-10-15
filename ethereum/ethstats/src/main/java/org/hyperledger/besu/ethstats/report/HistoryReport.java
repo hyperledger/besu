@@ -23,15 +23,29 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
+/**
+ * This interface represents a history report. It provides methods to get the id and history of the
+ * history report.
+ */
 @Value.Immutable
 @Value.Style(allParameters = true)
 @JsonSerialize(as = ImmutableHistoryReport.class)
 @JsonDeserialize(as = ImmutableHistoryReport.class)
 public interface HistoryReport {
 
+  /**
+   * Gets the id of the history report.
+   *
+   * @return the id of the history report.
+   */
   @JsonProperty(value = "id")
   String getId();
 
+  /**
+   * Gets the block results of the history report.
+   *
+   * @return the list of block results of the history report.
+   */
   @JsonProperty("history")
   List<BlockResult> getHistory();
 }

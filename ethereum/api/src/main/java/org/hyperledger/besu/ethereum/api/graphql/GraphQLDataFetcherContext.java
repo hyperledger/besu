@@ -21,18 +21,56 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+/**
+ * Interface representing the context for a GraphQL data fetcher.
+ *
+ * <p>This context provides access to various components of the system such as the transaction pool,
+ * blockchain queries, mining coordinator, synchronizer, and protocol schedule.
+ */
 public interface GraphQLDataFetcherContext {
 
+  /**
+   * Retrieves the transaction pool.
+   *
+   * @return the transaction pool
+   */
   TransactionPool getTransactionPool();
 
+  /**
+   * Retrieves the blockchain queries.
+   *
+   * @return the blockchain queries
+   */
   BlockchainQueries getBlockchainQueries();
 
+  /**
+   * Retrieves the mining coordinator.
+   *
+   * @return the mining coordinator
+   */
   MiningCoordinator getMiningCoordinator();
 
+  /**
+   * Retrieves the synchronizer.
+   *
+   * @return the synchronizer
+   */
   Synchronizer getSynchronizer();
 
+  /**
+   * Retrieves the protocol schedule.
+   *
+   * @return the protocol schedule
+   */
   ProtocolSchedule getProtocolSchedule();
 
+  /**
+   * Retrieves the is alive handler.
+   *
+   * <p>By default, this method returns a new IsAliveHandler instance with a status of true.
+   *
+   * @return the is alive handler
+   */
   default IsAliveHandler getIsAliveHandler() {
     return new IsAliveHandler(true);
   }

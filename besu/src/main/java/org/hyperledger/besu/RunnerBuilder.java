@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetchers;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.EngineJsonRpcService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
@@ -178,6 +179,7 @@ public class RunnerBuilder {
   private Optional<JsonRpcConfiguration> engineJsonRpcConfiguration = Optional.empty();
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
+  private InProcessRpcConfiguration inProcessRpcConfiguration;
   private ApiConfiguration apiConfiguration;
   private Path dataDir;
   private Optional<Path> pidPath = Optional.empty();
@@ -195,6 +197,7 @@ public class RunnerBuilder {
   private boolean legacyForkIdEnabled;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
   private List<SubnetInfo> allowedSubnets = new ArrayList<>();
+  private boolean poaDiscoveryRetryBootnodes = true;
 
   /** Instantiates a new Runner builder. */
   public RunnerBuilder() {}
@@ -414,6 +417,18 @@ public class RunnerBuilder {
   }
 
   /**
+   * Add In-Process RPC configuration.
+   *
+   * @param inProcessRpcConfiguration the in-process RPC configuration
+   * @return the runner builder
+   */
+  public RunnerBuilder inProcessRpcConfiguration(
+      final InProcessRpcConfiguration inProcessRpcConfiguration) {
+    this.inProcessRpcConfiguration = inProcessRpcConfiguration;
+    return this;
+  }
+
+  /**
    * Add Api configuration.
    *
    * @param apiConfiguration the api configuration
@@ -604,6 +619,17 @@ public class RunnerBuilder {
   }
 
   /**
+   * Flag to indicate if peer table refreshes should always query bootnodes
+   *
+   * @param poaDiscoveryRetryBootnodes whether to always query bootnodes
+   * @return the runner builder
+   */
+  public RunnerBuilder poaDiscoveryRetryBootnodes(final boolean poaDiscoveryRetryBootnodes) {
+    this.poaDiscoveryRetryBootnodes = poaDiscoveryRetryBootnodes;
+    return this;
+  }
+
+  /**
    * Build Runner instance.
    *
    * @return the runner
@@ -625,6 +651,8 @@ public class RunnerBuilder {
         bootstrap = ethNetworkConfig.bootNodes();
       }
       discoveryConfiguration.setBootnodes(bootstrap);
+      discoveryConfiguration.setIncludeBootnodesOnPeerRefresh(
+          besuController.getGenesisConfigOptions().isPoa() && poaDiscoveryRetryBootnodes);
       LOG.info("Resolved {} bootnodes.", bootstrap.size());
       LOG.debug("Bootnodes = {}", bootstrap);
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.dnsDiscoveryUrl());
@@ -688,13 +716,15 @@ public class RunnerBuilder {
             .map(nodePerms -> PeerPermissions.combine(nodePerms, defaultPeerPermissions))
             .orElse(defaultPeerPermissions);
 
+    final EthPeers ethPeers = besuController.getEthPeers();
+
     LOG.info("Detecting NAT service.");
     final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;
     final NatService natService = new NatService(buildNatManager(natMethod), fallbackEnabled);
     final NetworkBuilder inactiveNetwork = caps -> new NoopP2PNetwork();
+
     final NetworkBuilder activeNetwork =
         caps -> {
-          final EthPeers ethPeers = besuController.getEthPeers();
           return DefaultP2PNetwork.builder()
               .vertx(vertx)
               .nodeKey(nodeKey)
@@ -709,8 +739,8 @@ public class RunnerBuilder {
               .blockchain(context.getBlockchain())
               .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
               .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
-              .allConnectionsSupplier(ethPeers::getAllConnections)
-              .allActiveConnectionsSupplier(ethPeers::getAllActiveConnections)
+              .allConnectionsSupplier(ethPeers::streamAllConnections)
+              .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
               .maxPeers(ethPeers.getMaxPeers())
               .build();
         };
@@ -721,9 +751,10 @@ public class RunnerBuilder {
             .subProtocols(subProtocols)
             .network(p2pEnabled ? activeNetwork : inactiveNetwork)
             .metricsSystem(metricsSystem)
+            .ethPeersShouldConnect(ethPeers::shouldTryToConnect)
             .build();
 
-    besuController.getEthPeers().setRlpxAgent(networkRunner.getRlpxAgent());
+    ethPeers.setRlpxAgent(networkRunner.getRlpxAgent());
 
     final P2PNetwork network = networkRunner.getNetwork();
     // ForkId in Ethereum Node Record needs updating when we transition to a new protocol spec
@@ -774,7 +805,7 @@ public class RunnerBuilder {
     if (miningParameters.isStratumMiningEnabled()) {
       if (!(miningCoordinator instanceof PoWMiningCoordinator powMiningCoordinator)) {
         throw new IllegalArgumentException(
-            "Stratum server requires an PoWMiningCoordinator not "
+            "Stratum mining requires the network option(--network) to be set to CLASSIC. Stratum server requires a PoWMiningCoordinator not "
                 + ((miningCoordinator == null) ? "null" : miningCoordinator.getClass().getName()));
       }
       stratumServer =
@@ -832,6 +863,7 @@ public class RunnerBuilder {
               jsonRpcConfiguration,
               webSocketConfiguration,
               metricsConfiguration,
+              graphQLConfiguration,
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
@@ -876,6 +908,7 @@ public class RunnerBuilder {
               engineJsonRpcConfiguration.get(),
               webSocketConfiguration,
               metricsConfiguration,
+              graphQLConfiguration,
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
@@ -970,6 +1003,7 @@ public class RunnerBuilder {
               jsonRpcConfiguration,
               webSocketConfiguration,
               metricsConfiguration,
+              graphQLConfiguration,
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
@@ -1050,6 +1084,7 @@ public class RunnerBuilder {
               jsonRpcConfiguration,
               webSocketConfiguration,
               metricsConfiguration,
+              graphQLConfiguration,
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
@@ -1065,6 +1100,38 @@ public class RunnerBuilder {
       jsonRpcIpcService = Optional.empty();
     }
 
+    final Map<String, JsonRpcMethod> inProcessRpcMethods;
+    if (inProcessRpcConfiguration.isEnabled()) {
+      inProcessRpcMethods =
+          jsonRpcMethods(
+              protocolSchedule,
+              context,
+              besuController,
+              peerNetwork,
+              blockchainQueries,
+              synchronizer,
+              transactionPool,
+              miningParameters,
+              miningCoordinator,
+              metricsSystem,
+              supportedCapabilities,
+              inProcessRpcConfiguration.getInProcessRpcApis(),
+              filterManager,
+              accountLocalConfigPermissioningController,
+              nodeLocalConfigPermissioningController,
+              privacyParameters,
+              jsonRpcConfiguration,
+              webSocketConfiguration,
+              metricsConfiguration,
+              graphQLConfiguration,
+              natService,
+              besuPluginContext.getNamedPlugins(),
+              dataDir,
+              rpcEndpointServiceImpl);
+    } else {
+      inProcessRpcMethods = Map.of();
+    }
+
     return new Runner(
         vertx,
         networkRunner,
@@ -1074,6 +1141,7 @@ public class RunnerBuilder {
         graphQLHttpService,
         webSocketService,
         jsonRpcIpcService,
+        inProcessRpcMethods,
         stratumServer,
         metricsService,
         ethStatsService,
@@ -1217,6 +1285,7 @@ public class RunnerBuilder {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
+      final GraphQLConfiguration graphQLConfiguration,
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
@@ -1228,6 +1297,8 @@ public class RunnerBuilder {
         new JsonRpcMethodsFactory()
             .methods(
                 BesuInfo.nodeName(identityString),
+                BesuInfo.shortVersion(),
+                BesuInfo.commit(),
                 ethNetworkConfig.networkId(),
                 besuController.getGenesisConfigOptions(),
                 network,
@@ -1248,6 +1319,7 @@ public class RunnerBuilder {
                 jsonRpcConfiguration,
                 webSocketConfiguration,
                 metricsConfiguration,
+                graphQLConfiguration,
                 natService,
                 namedPlugins,
                 dataDir,

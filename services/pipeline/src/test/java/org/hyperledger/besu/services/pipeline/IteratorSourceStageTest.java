@@ -22,7 +22,8 @@ import org.junit.jupiter.api.Test;
 
 public class IteratorSourceStageTest {
 
-  private final Pipe<String> output = new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
+  private final Pipe<String> output =
+      new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER, "output_pipe");
 
   private final IteratorSourceStage<String> stage =
       new IteratorSourceStage<>("name", Iterators.forArray("a", "b", "c", "d"), output);

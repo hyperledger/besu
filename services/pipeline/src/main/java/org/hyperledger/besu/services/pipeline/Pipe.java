@@ -44,6 +44,7 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
   private final Counter abortedItemCounter;
   private final AtomicBoolean closed = new AtomicBoolean();
   private final AtomicBoolean aborted = new AtomicBoolean();
+  private String pipeName = "";
 
   /**
    * Instantiates a new Pipe.
@@ -52,16 +53,28 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
    * @param inputCounter the input counter
    * @param outputCounter the output counter
    * @param abortedItemCounter the aborted item counter
+   * @param pipeName the name of the pipe
    */
   public Pipe(
       final int capacity,
       final Counter inputCounter,
       final Counter outputCounter,
-      final Counter abortedItemCounter) {
+      final Counter abortedItemCounter,
+      final String pipeName) {
     queue = new ArrayBlockingQueue<>(capacity);
     this.inputCounter = inputCounter;
     this.outputCounter = outputCounter;
     this.abortedItemCounter = abortedItemCounter;
+    this.pipeName = pipeName;
+  }
+
+  /**
+   * Get the name of this pipe
+   *
+   * @return the name of the pipe
+   */
+  public String getPipeName() {
+    return pipeName;
   }
 
   @Override
@@ -110,7 +123,7 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
         }
       }
     } catch (final InterruptedException e) {
-      LOG.trace("Interrupted while waiting for next item", e);
+      LOG.trace("Interrupted while waiting for next item from pipe {}", pipeName);
     }
     return null;
   }
@@ -140,7 +153,7 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
           return;
         }
       } catch (final InterruptedException e) {
-        LOG.trace("Interrupted while waiting to add to output", e);
+        LOG.trace("Interrupted while waiting to add to output to pipe {}", pipeName);
       }
     }
   }

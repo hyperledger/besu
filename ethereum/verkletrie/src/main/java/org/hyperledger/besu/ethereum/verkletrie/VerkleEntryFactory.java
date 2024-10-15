@@ -20,11 +20,13 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyBatchAdapter;
 import org.hyperledger.besu.ethereum.trie.verkle.hasher.Hasher;
+import org.hyperledger.besu.ethereum.trie.verkle.util.SuffixTreeEncoder;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
@@ -34,64 +36,98 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class VerkleEntryFactory {
 
   private final TrieKeyBatchAdapter trieKeyAdapter;
+  private final HashSet<Bytes32> keysForRemoval = new HashSet<>();
+  private final HashMap<Bytes32, Bytes32> nonStorageKeyValuesForUpdate = new HashMap<>();
+  private final HashMap<StorageSlotKey, Pair<Bytes32, Bytes32>> storageKeyValuesForUpdate =
+      new HashMap<>();
 
   public VerkleEntryFactory(final Hasher hasher) {
     trieKeyAdapter = new TrieKeyBatchAdapter(hasher);
   }
 
-  public Map<Bytes, Bytes> generateKeyValuesForAccount(
-      final Address address, final long nonce, final Wei balance, final Hash codeHash) {
-    final Map<Bytes, Bytes> keyValues = new HashMap<>();
-    keyValues.put(trieKeyAdapter.versionKey(address), Bytes32.ZERO);
-    keyValues.put(trieKeyAdapter.balanceKey(address), toLittleEndian(balance));
-    keyValues.put(trieKeyAdapter.nonceKey(address), toLittleEndian(UInt256.valueOf(nonce)));
-    keyValues.put(trieKeyAdapter.codeKeccakKey(address), codeHash);
-    return keyValues;
+  public void generateAccountKeyForRemoval(final Address address) {
+    keysForRemoval.add(trieKeyAdapter.basicDataKey(address));
   }
 
-  public List<Bytes> generateKeysForAccount(final Address address) {
-    final List<Bytes> keys = new ArrayList<>();
-    keys.add(trieKeyAdapter.versionKey(address));
-    keys.add(trieKeyAdapter.balanceKey(address));
-    keys.add(trieKeyAdapter.nonceKey(address));
-    keys.add(trieKeyAdapter.codeKeccakKey(address));
-    return keys;
-  }
-
-  public Map<Bytes, Bytes> generateKeyValuesForCode(final Address address, final Bytes code) {
-    final Map<Bytes, Bytes> keyValues = new HashMap<>();
-    keyValues.put(
-        trieKeyAdapter.codeSizeKey(address), toLittleEndian(UInt256.valueOf(code.size())));
+  public void generateCodeKeysForRemoval(final Address address, final Bytes code) {
+    keysForRemoval.add(trieKeyAdapter.basicDataKey(address));
+    keysForRemoval.add(trieKeyAdapter.codeHashKey(address));
     List<UInt256> codeChunks = trieKeyAdapter.chunkifyCode(code);
     for (int i = 0; i < codeChunks.size(); i++) {
-      keyValues.put(trieKeyAdapter.codeChunkKey(address, UInt256.valueOf(i)), codeChunks.get(i));
+      keysForRemoval.add(trieKeyAdapter.codeChunkKey(address, UInt256.valueOf(i)));
     }
-    return keyValues;
   }
 
-  public List<Bytes> generateKeysForCode(final Address address, final Bytes code) {
-    final List<Bytes> keys = new ArrayList<>();
-    keys.add(trieKeyAdapter.codeKeccakKey(address));
-    keys.add(trieKeyAdapter.codeSizeKey(address));
+  public void generateStorageKeyForRemoval(final Address address, final StorageSlotKey storageKey) {
+    keysForRemoval.add(trieKeyAdapter.storageKey(address, storageKey.getSlotKey().orElseThrow()));
+  }
+
+  public void generateAccountKeyValueForUpdate(
+      final Address address, final long nonce, final Wei balance) {
+    Bytes32 basicDataKey = trieKeyAdapter.basicDataKey(address);
+    Bytes32 basicDataValue;
+    if ((basicDataValue = nonStorageKeyValuesForUpdate.get(basicDataKey)) == null) {
+      basicDataValue = Bytes32.ZERO;
+    }
+
+    basicDataValue = SuffixTreeEncoder.setVersionInValue(basicDataValue, Bytes.of(0));
+    basicDataValue = SuffixTreeEncoder.setNonceInValue(basicDataValue, Bytes.ofUnsignedLong(nonce));
+    basicDataValue =
+        SuffixTreeEncoder.setBalanceInValue(
+            basicDataValue,
+            // balance size is exactly 16 bytes
+            balance.slice(16));
+    nonStorageKeyValuesForUpdate.put(basicDataKey, basicDataValue);
+  }
+
+  public void generateCodeSizeKeyValueForUpdate(final Address address, final int size) {
+    Bytes32 basicDataKey = trieKeyAdapter.basicDataKey(address);
+    Bytes32 basicDataValue;
+    if ((basicDataValue = nonStorageKeyValuesForUpdate.get(basicDataKey)) == null) {
+      basicDataValue = Bytes32.ZERO;
+    }
+
+    basicDataValue =
+        SuffixTreeEncoder.setCodeSizeInValue(
+            basicDataValue,
+            // code size is exactly 3 bytes
+            Bytes.ofUnsignedInt(size).slice(1));
+    nonStorageKeyValuesForUpdate.put(basicDataKey, basicDataValue);
+  }
+
+  public void generateCodeHashKeyValueForUpdate(final Address address, final Hash codeHash) {
+    nonStorageKeyValuesForUpdate.put(trieKeyAdapter.codeHashKey(address), codeHash);
+  }
+
+  public void generateCodeKeyValuesForUpdate(
+      final Address address, final Bytes code, final Hash codeHash) {
+    generateCodeSizeKeyValueForUpdate(address, code.size());
+    generateCodeHashKeyValueForUpdate(address, codeHash);
+
     List<UInt256> codeChunks = trieKeyAdapter.chunkifyCode(code);
     for (int i = 0; i < codeChunks.size(); i++) {
-      keys.add(trieKeyAdapter.codeChunkKey(address, UInt256.valueOf(i)));
+      nonStorageKeyValuesForUpdate.put(
+          trieKeyAdapter.codeChunkKey(address, UInt256.valueOf(i)), codeChunks.get(i));
     }
-    return keys;
   }
 
-  public Pair<Bytes, Bytes> generateKeyValuesForStorage(
-      final Address address, final StorageSlotKey storageKey, final Bytes value) {
-    return new Pair<>(
-        trieKeyAdapter.storageKey(address, storageKey.getSlotKey().orElseThrow()), value);
+  public void generateStorageKeyValueForUpdate(
+      final Address address, final StorageSlotKey storageSlotKey, final Bytes32 value) {
+    storageKeyValuesForUpdate.put(
+        storageSlotKey,
+        new Pair<>(
+            trieKeyAdapter.storageKey(address, storageSlotKey.getSlotKey().orElseThrow()), value));
   }
 
-  public List<Bytes> generateKeysForStorage(
-      final Address address, final StorageSlotKey storageKey) {
-    return List.of(trieKeyAdapter.storageKey(address, storageKey.getSlotKey().orElseThrow()));
+  public Set<Bytes32> getKeysForRemoval() {
+    return keysForRemoval;
   }
 
-  private static Bytes toLittleEndian(final Bytes originalValue) {
-    return originalValue.reverse();
+  public Map<Bytes32, Bytes32> getNonStorageKeyValuesForUpdate() {
+    return nonStorageKeyValuesForUpdate;
+  }
+
+  public Map<StorageSlotKey, Pair<Bytes32, Bytes32>> getStorageKeyValuesForUpdate() {
+    return storageKeyValuesForUpdate;
   }
 }

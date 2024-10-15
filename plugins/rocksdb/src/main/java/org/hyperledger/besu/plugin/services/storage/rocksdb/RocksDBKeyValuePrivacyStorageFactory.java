@@ -45,9 +45,7 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
       LoggerFactory.getLogger(RocksDBKeyValuePrivacyStorageFactory.class);
   private static final Set<PrivacyVersionedStorageFormat> SUPPORTED_VERSIONS =
       EnumSet.of(
-          PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES,
           PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION,
-          PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES,
           PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION);
   private static final String PRIVATE_DATABASE_PATH = "private";
   private final RocksDBKeyValueStorageFactory publicFactory;
@@ -230,8 +228,12 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
     // reflect the change to the runtime version, and return it.
 
     // Besu supports both formats of receipts so no upgrade is needed other than updating metadata
-    if (runtimeVersion == PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
-        || runtimeVersion == PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION) {
+    final VersionedStorageFormat existingVersionedStorageFormat =
+        existingPrivacyMetadata.getVersionedStorageFormat();
+    if ((existingVersionedStorageFormat == PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES
+            && runtimeVersion == PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION)
+        || (existingVersionedStorageFormat == PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES
+            && runtimeVersion == PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION)) {
       final DatabaseMetadata metadata = new DatabaseMetadata(runtimeVersion);
       try {
         metadata.writeToDirectory(dataDir);
@@ -247,8 +249,8 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
             "Database unsafe upgrade detect: DB at %s is %s with version %s but version %s is expected. "
                 + "Please check your config and review release notes for supported upgrade procedures.",
             dataDir,
-            existingPrivacyMetadata.getVersionedStorageFormat().getFormat().name(),
-            existingPrivacyMetadata.getVersionedStorageFormat().getVersion(),
+            existingVersionedStorageFormat.getFormat().name(),
+            existingVersionedStorageFormat.getVersion(),
             runtimeVersion.getVersion());
 
     throw new StorageException(error);

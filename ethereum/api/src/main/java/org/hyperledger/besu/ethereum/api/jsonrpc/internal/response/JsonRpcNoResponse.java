@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
+
 public class JsonRpcNoResponse implements JsonRpcResponse {
 
   @Override
-  public JsonRpcResponseType getType() {
-    return JsonRpcResponseType.NONE;
+  public RpcResponseType getType() {
+    return RpcResponseType.NONE;
   }
 }

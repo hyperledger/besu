@@ -243,6 +243,13 @@ public interface GenesisConfigOptions {
   OptionalLong getCancunTime();
 
   /**
+   * Gets cancun EOF time.
+   *
+   * @return the cancun EOF time
+   */
+  OptionalLong getCancunEOFTime();
+
+  /**
    * Gets prague time.
    *
    * @return the prague time
@@ -519,10 +526,24 @@ public interface GenesisConfigOptions {
   boolean isFixedBaseFee();
 
   /**
+   * The withdrawal request predeploy address
+   *
+   * @return the withdrawal request predeploy address
+   */
+  Optional<Address> getWithdrawalRequestContractAddress();
+
+  /**
    * The deposit contract address that should be in the logger field in Receipt of Deposit
    * transaction
    *
    * @return the deposit address
    */
   Optional<Address> getDepositContractAddress();
+
+  /**
+   * The consolidation request contract address
+   *
+   * @return the consolidation request contract address
+   */
+  Optional<Address> getConsolidationRequestContractAddress();
 }

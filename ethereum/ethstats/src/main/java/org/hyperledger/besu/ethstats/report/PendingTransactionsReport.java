@@ -19,24 +19,44 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
+/**
+ * This interface represents a pending transactions report. It provides methods to get the id and
+ * stats of the pending transactions report.
+ */
 @Value.Immutable
 @Value.Style(deepImmutablesDetection = true, depluralize = true)
 @JsonSerialize(as = ImmutablePendingTransactionsReport.class)
 @JsonDeserialize(as = ImmutablePendingTransactionsReport.class)
 public interface PendingTransactionsReport {
 
+  /**
+   * Gets the id of the pending transactions report.
+   *
+   * @return the id of the pending transactions report.
+   */
   @JsonProperty("id")
   String getId();
 
+  /**
+   * Gets the stats of the pending transactions report.
+   *
+   * @return the stats of the pending transactions report.
+   */
   @JsonProperty("stats")
   PStats getStats();
 
+  /** This interface represents the stats of a pending transactions report. */
   @Value.Immutable
   @Value.Style(allParameters = true)
   @JsonSerialize(as = ImmutablePStats.class)
   @JsonDeserialize(as = ImmutablePStats.class)
   interface PStats {
 
+    /**
+     * Gets the number of pending transactions.
+     *
+     * @return the number of pending transactions.
+     */
     @JsonProperty("pending")
     int getPending();
   }

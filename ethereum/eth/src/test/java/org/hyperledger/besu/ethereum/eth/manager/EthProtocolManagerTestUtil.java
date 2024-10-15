@@ -16,12 +16,15 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
@@ -29,6 +32,8 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
@@ -46,8 +51,10 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.mockito.Mockito;
 
 public class EthProtocolManagerTestUtil {
 
@@ -86,7 +93,13 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            false);
+            false,
+            SyncMode.FAST,
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
+
+    final ChainHeadTracker chainHeadTrackerMock = getChainHeadTrackerMock();
+    peers.setChainHeadTracker(chainHeadTrackerMock);
+
     final EthMessages messages = new EthMessages();
     final EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
     final EthContext ethContext = new EthContext(peers, messages, ethScheduler);
@@ -138,6 +151,8 @@ public class EthProtocolManagerTestUtil {
       final EthMessages ethMessages,
       final EthContext ethContext,
       final ForkIdManager forkIdManager) {
+
+    ethPeers.setChainHeadTracker(getChainHeadTrackerMock());
 
     final BigInteger networkId = BigInteger.ONE;
     return new EthProtocolManager(
@@ -205,8 +220,14 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            false);
+            false,
+            SyncMode.FAST,
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
     final EthMessages messages = new EthMessages();
+
+    final ChainHeadTracker chtMock = getChainHeadTrackerMock();
+
+    peers.setChainHeadTracker(chtMock);
 
     return create(
         blockchain,
@@ -217,6 +238,17 @@ public class EthProtocolManagerTestUtil {
         peers,
         messages,
         new EthContext(peers, messages, ethScheduler));
+  }
+
+  public static ChainHeadTracker getChainHeadTrackerMock() {
+    final ChainHeadTracker chtMock = mock(ChainHeadTracker.class);
+    final BlockHeader blockHeaderMock = mock(BlockHeader.class);
+    Mockito.lenient()
+        .when(chtMock.getBestHeaderFromPeer(any()))
+        .thenReturn(CompletableFuture.completedFuture(blockHeaderMock));
+    Mockito.lenient().when(blockHeaderMock.getNumber()).thenReturn(0L);
+    Mockito.lenient().when(blockHeaderMock.getStateRoot()).thenReturn(Hash.ZERO);
+    return chtMock;
   }
 
   public static EthProtocolManager create(
@@ -239,7 +271,9 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            false);
+            false,
+            SyncMode.FAST,
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
     final EthMessages messages = new EthMessages();
 
     return create(
@@ -258,7 +292,7 @@ public class EthProtocolManagerTestUtil {
       final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final EthScheduler ethScheduler) {
-    final EthPeers peers =
+    final EthPeers ethPeers =
         new EthPeers(
             EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
@@ -269,7 +303,13 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            false);
+            false,
+            SyncMode.FAST,
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
+
+    final ChainHeadTracker chainHeadTrackerMock = getChainHeadTrackerMock();
+    ethPeers.setChainHeadTracker(chainHeadTrackerMock);
+
     final EthMessages messages = new EthMessages();
 
     return create(
@@ -278,9 +318,9 @@ public class EthProtocolManagerTestUtil {
         BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST).getWorldArchive(),
         mock(TransactionPool.class),
         EthProtocolConfiguration.defaultConfig(),
-        peers,
+        ethPeers,
         messages,
-        new EthContext(peers, messages, ethScheduler));
+        new EthContext(ethPeers, messages, ethScheduler));
   }
 
   public static EthProtocolManager create() {
@@ -444,6 +484,21 @@ public class EthProtocolManagerTestUtil {
         .totalDifficulty(head.getTotalDifficulty())
         .chainHeadHash(head.getHash())
         .estimatedHeight(blockchain.getChainHeadBlockNumber())
+        .build();
+  }
+
+  public static RespondingEthPeer createPeer(
+      final EthProtocolManager ethProtocolManager,
+      final Difficulty td,
+      final int estimatedHeight,
+      final boolean isServingSnap,
+      final boolean addToEthPeers) {
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .totalDifficulty(td)
+        .estimatedHeight(estimatedHeight)
+        .isServingSnap(isServingSnap)
+        .addToEthPeers(addToEthPeers)
         .build();
   }
 }

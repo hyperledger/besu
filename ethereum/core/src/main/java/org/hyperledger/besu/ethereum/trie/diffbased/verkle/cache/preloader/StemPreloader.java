@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.trie.verkle.hasher.CachedPedersenHasher;
 import org.hyperledger.besu.ethereum.trie.verkle.hasher.Hasher;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -37,6 +39,8 @@ import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.ethereum.trie.verkle.hasher.PedersenHasher;
+import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 
 /**
  * Preloads stems for accounts, storage slots, and code. This class is designed to optimize block
@@ -68,9 +72,7 @@ public class StemPreloader {
   private final TrieKeyAdapter trieKeyAdapter;
 
   public StemPreloader() {
-    this.trieKeyAdapter = new TrieKeyAdapter();
-    this.trieKeyAdapter.versionKey(
-        Address.ZERO); // TODO REMOVE is just to preload the native library for performance check
+    this.trieKeyAdapter = new TrieKeyAdapter(new PedersenHasher());
   }
 
   /**
@@ -83,16 +85,12 @@ public class StemPreloader {
    * need for on-the-fly stem generation.
    *
    * @param address the address for which to preload trie stems
-   * @param storageSlotKeys a map of storage slot keys to their updated values
-   * @param codeUpdate the updated code value, encapsulated in a {@link DiffBasedValue}
+   * @param keys a list of keys to use for stem generation
    * @return the preloaded stems
    */
   public Map<Bytes32, Bytes> preloadStemIds(
       final Address address,
-      final Set<StorageSlotKey> storageSlotKeys,
-      final Optional<Bytes> codeUpdate) {
-
-    final List<Bytes32> keys = generateKeys(storageSlotKeys, codeUpdate);
+      final Set<Bytes32> keys) {
     return getHasherByAddress(address).manyStems(address, new ArrayList<>(keys));
   }
 
@@ -108,44 +106,8 @@ public class StemPreloader {
   }
 
   public Map<Bytes32, Bytes> preloadStemIds(
-      final Address address, final Optional<Bytes> codeUpdate) {
-    return preloadStemIds(address, Collections.emptySet(), codeUpdate);
-  }
-
-  private List<Bytes32> generateKeys(
-      final Set<StorageSlotKey> storageSlotKeys, final Optional<Bytes> codeUpdate) {
-
-    final Set<Bytes32> keys = new HashSet<>();
-    // generate account triekeys
-    keys.add(UInt256.ZERO);
-
-    // generate storage triekeys
-    boolean isStorageUpdateNeeded = !storageSlotKeys.isEmpty();
-    if (isStorageUpdateNeeded) {
-      storageSlotKeys.forEach(
-          storageSlotKey ->
-              keys.add(
-                  trieKeyAdapter.getStorageKeyTrieIndex(
-                      storageSlotKey.getSlotKey().orElseThrow())));
-      System.out.println("trie index " + keys);
-    }
-
-    // generate code triekeys
-    boolean isCodeUpdateNeeded = codeUpdate.isPresent();
-    if (isCodeUpdateNeeded) {
-      final List<Bytes32> chunks = generateCodeChunkKeyIds(codeUpdate.get());
-      chunks.forEach(
-          chunk -> {
-            keys.add(trieKeyAdapter.getCodeChunkKeyTrieIndex(chunk));
-          });
-    }
-
-    return new ArrayList<>(keys);
-  }
-
-  private List<Bytes32> generateCodeChunkKeyIds(final Bytes code) {
-    return new ArrayList<>(
-        IntStream.range(0, trieKeyAdapter.getNbChunk(code)).mapToObj(UInt256::valueOf).toList());
+      final Address address, final Bytes codeUpdate) {
+    return getHasherByAddress(address).manyStems(address, generateCodeChunkKeyIds(codeUpdate));
   }
 
   /**
@@ -177,4 +139,22 @@ public class StemPreloader {
   public void reset() {
     pedersenHasherCache.invalidateAll();
   }
+
+  public Bytes32 generateAccountKeyId() {
+    return Parameters.BASIC_DATA_LEAF_KEY;
+  }
+
+  public List<Bytes32> generateCodeChunkKeyIds(final Bytes code) {
+    return IntStream.range(0, trieKeyAdapter.getNbChunk(code))
+            .mapToObj(UInt256::valueOf)
+            .collect(Collectors.toUnmodifiableList());
+  }
+
+  public List<Bytes32> generateStorageKeyIds(final Set<StorageSlotKey> storageSlotKeys) {
+    return storageSlotKeys.stream()
+            .map(storageSlotKey -> trieKeyAdapter.getStorageKeyTrieIndex(storageSlotKey.getSlotKey().orElseThrow()))
+            .map(Bytes32::wrap)
+            .toList();
+  }
+
 }

@@ -130,6 +130,7 @@ public class BftProcessorTest {
   @Test
   public void drainEventsIntoStateMachine() throws InterruptedException {
     final BftEventQueue queue = new BftEventQueue(1000);
+    queue.start();
     final BftProcessor processor = new BftProcessor(queue, mockeEventMultiplexer);
 
     // Start the BftProcessor

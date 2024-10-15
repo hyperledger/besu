@@ -41,7 +41,10 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -51,7 +54,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BlockchainReferenceTestCaseSpec {
+public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestCase {
 
   private final String network;
 
@@ -111,34 +114,60 @@ public class BlockchainReferenceTestCaseSpec {
         new ProtocolContext(this.blockchain, this.worldStateArchive, null, new BadBlockManager());
   }
 
+  @Override
   public String getNetwork() {
     return network;
   }
 
-  public CandidateBlock[] getCandidateBlocks() {
-    return candidateBlocks;
+  @Override
+  public List<Block> getBlocks() {
+    return Arrays.stream(candidateBlocks).map(CandidateBlock::getBlock).toList();
   }
 
+  @Override
+  public boolean isExecutable(final Block block) {
+    Optional<CandidateBlock> candidateBlock =
+        Arrays.stream(candidateBlocks)
+            .filter(cb -> Objects.equals(cb.getBlock(), block))
+            .findFirst();
+    return candidateBlock.isPresent() && candidateBlock.get().rlp != null;
+  }
+
+  @Override
+  public boolean isValid(final Block block) {
+    Optional<CandidateBlock> candidateBlock =
+        Arrays.stream(candidateBlocks)
+            .filter(cb -> Objects.equals(cb.getBlock(), block))
+            .findFirst();
+    return candidateBlock.isPresent() && candidateBlock.get().valid;
+  }
+
+  @Override
   public WorldStateArchive getWorldStateArchive() {
     return worldStateArchive;
   }
 
+  @Override
   public BlockHeader getGenesisBlockHeader() {
     return genesisBlockHeader;
   }
 
+  @Override
   public MutableBlockchain getBlockchain() {
     return blockchain;
   }
 
+  @Override
   public ProtocolContext getProtocolContext() {
     return protocolContext;
   }
 
+  @Override
   public Hash getLastBlockHash() {
     return lastBlockHash;
   }
 
+  @Override
   public String getSealEngine() {
     return sealEngine;
   }
@@ -165,10 +194,6 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
         @JsonProperty("requestsRoot") final String requestsRoot,
-        @JsonProperty("dataGasUsed")
-            final String dataGasUsed, // TODO: remove once reference tests have been updated
-        @JsonProperty("excessDataGas")
-            final String excessDataGas, // TODO: remove once reference tests have been updated
         @JsonProperty("blobGasUsed") final String blobGasUsed,
         @JsonProperty("excessBlobGas") final String excessBlobGas,
         @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
@@ -195,12 +220,8 @@ public class BlockchainReferenceTestCaseSpec {
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
-          dataGasUsed != null
-              ? Long.decode(dataGasUsed)
-              : blobGasUsed != null ? Long.decode(blobGasUsed) : 0,
-          excessDataGas != null
-              ? BlobGas.fromHexString(excessDataGas)
-              : excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
+          blobGasUsed != null ? Long.decode(blobGasUsed) : 0,
+          excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           requestsRoot != null ? Hash.fromHexString(requestsRoot) : null,
           null, // TODO MANAGE THAT
@@ -250,7 +271,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("uncleHeaders") final Object uncleHeaders,
         @JsonProperty("withdrawals") final Object withdrawals,
         @JsonProperty("depositRequests") final Object depositRequests,
-        @JsonProperty("withdrawalRequests") final Object withdrawalRequests) {
+        @JsonProperty("withdrawalRequests") final Object withdrawalRequests,
+        @JsonProperty("consolidationRequests") final Object consolidationRequests) {
       boolean blockVaid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
@@ -269,14 +291,6 @@ public class BlockchainReferenceTestCaseSpec {
       }
 
       this.valid = blockVaid;
-    }
-
-    public boolean isValid() {
-      return valid;
-    }
-
-    public boolean isExecutable() {
-      return rlp != null;
     }
 
     public Block getBlock() {

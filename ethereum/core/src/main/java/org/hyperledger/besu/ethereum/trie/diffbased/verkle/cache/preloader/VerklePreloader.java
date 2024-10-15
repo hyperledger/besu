@@ -75,7 +75,7 @@ public class VerklePreloader {
     CompletableFuture.runAsync(
         () -> {
           stemPreloader
-              .preloadStemIds(account, Optional.of(code))
+              .preloadStemIds(account, code)
               .forEach(
                   (key, stem) -> {
                     trieNodePreLoader.cacheNodes(stem);

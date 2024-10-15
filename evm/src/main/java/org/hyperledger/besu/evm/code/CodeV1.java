@@ -111,7 +111,7 @@ public class CodeV1 implements Code {
       codeToLoad = subcontainerLayout.container();
     }
 
-    Code subContainerCode = evm.getCodeForCreation(codeToLoad);
+    Code subContainerCode = evm.getCodeUncached(codeToLoad);
 
     return subContainerCode.isValid() && subContainerCode.getEofVersion() > 0
         ? Optional.of(subContainerCode)

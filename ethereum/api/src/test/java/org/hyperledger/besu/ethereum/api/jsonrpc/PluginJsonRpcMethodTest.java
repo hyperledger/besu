@@ -104,7 +104,7 @@ public class PluginJsonRpcMethodTest extends JsonRpcHttpServiceTestBase {
       try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
         assertThat(resp.code()).isEqualTo(200);
         final JsonObject json = new JsonObject(resp.body().string());
-        final JsonRpcError expectedError = new JsonRpcError(RpcErrorType.INVALID_PARAMS);
+        final JsonRpcError expectedError = new JsonRpcError(RpcErrorType.INVALID_PARAM_COUNT);
         testHelper.assertValidJsonRpcError(
             json, 1, expectedError.getCode(), expectedError.getMessage());
       }
@@ -173,7 +173,8 @@ public class PluginJsonRpcMethodTest extends JsonRpcHttpServiceTestBase {
   private static Object echoPluginRpcMethod(final PluginRpcRequest request) {
     final var params = request.getParams();
     if (params.length == 0) {
-      throw new InvalidJsonRpcParameters("parameter is mandatory");
+      throw new InvalidJsonRpcParameters(
+          "parameter is mandatory", RpcErrorType.INVALID_PARAM_COUNT);
     }
     final var input = params[0];
     if (input.toString().isBlank()) {

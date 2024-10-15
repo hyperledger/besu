@@ -24,13 +24,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
@@ -102,8 +102,7 @@ public class ProposalValidatorTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(
-                QbftContext.class, emptyList(), bftExtraDataEncoder),
+            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataEncoder),
             new BadBlockManager());
 
     // typically tests require the blockValidation to be successful

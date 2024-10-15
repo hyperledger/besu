@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.util.number.ByteUnits;
 
 import java.util.Collections;
 import java.util.stream.Stream;
@@ -37,6 +38,8 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 public class BlockBroadcasterTest {
+
+  final int maxMessageSize = 10 * ByteUnits.MEGABYTE;
 
   @Test
   public void blockPropagationUnitTest() throws PeerConnection.PeerNotConnected {
@@ -47,10 +50,10 @@ public class BlockBroadcasterTest {
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
 
-    final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext);
+    final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext, maxMessageSize);
     final Block block = generateBlock();
     final NewBlockMessage newBlockMessage =
-        NewBlockMessage.create(block, block.getHeader().getDifficulty());
+        NewBlockMessage.create(block, block.getHeader().getDifficulty(), maxMessageSize);
 
     blockBroadcaster.propagate(block, Difficulty.ZERO);
 
@@ -70,10 +73,10 @@ public class BlockBroadcasterTest {
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
 
-    final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext);
+    final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext, maxMessageSize);
     final Block block = generateBlock();
     final NewBlockMessage newBlockMessage =
-        NewBlockMessage.create(block, block.getHeader().getDifficulty());
+        NewBlockMessage.create(block, block.getHeader().getDifficulty(), maxMessageSize);
 
     blockBroadcaster.propagate(block, Difficulty.ZERO);
 

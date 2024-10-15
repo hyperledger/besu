@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
+
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -74,8 +76,8 @@ public class MutableJsonRpcSuccessResponse {
   }
 
   @JsonIgnore
-  public JsonRpcResponseType getType() {
-    return JsonRpcResponseType.SUCCESS;
+  public RpcResponseType getType() {
+    return RpcResponseType.SUCCESS;
   }
 
   @Override

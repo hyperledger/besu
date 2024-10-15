@@ -51,6 +51,7 @@ public class ProtocolSpecBuilder {
   private Function<FeeMarket, GasLimitCalculator> gasLimitCalculatorBuilder;
   private Wei blockReward;
   private boolean skipZeroBlockRewards;
+
   private BlockHeaderFunctions blockHeaderFunctions;
   private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private DifficultyCalculator difficultyCalculator;
@@ -66,9 +67,11 @@ public class ProtocolSpecBuilder {
   private BiFunction<EVM, PrecompileContractRegistry, AbstractMessageProcessor>
       messageCallProcessorBuilder;
   private TransactionProcessorBuilder transactionProcessorBuilder;
+
   private BlockProcessorBuilder blockProcessorBuilder;
   private BlockValidatorBuilder blockValidatorBuilder;
   private BlockImporterBuilder blockImporterBuilder;
+
   private String name;
   private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private PrivacyParameters privacyParameters;

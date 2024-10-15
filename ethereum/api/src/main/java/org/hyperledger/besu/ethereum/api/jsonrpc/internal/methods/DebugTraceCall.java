@@ -18,26 +18,27 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class DebugTraceCall extends AbstractTraceCall {
-  private static final Logger LOG = LoggerFactory.getLogger(DebugTraceCall.class);
 
   public DebugTraceCall(
       final BlockchainQueries blockchainQueries,
@@ -53,16 +54,28 @@ public class DebugTraceCall extends AbstractTraceCall {
 
   @Override
   protected TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext) {
-    return requestContext
-        .getOptionalParameter(2, TransactionTraceParams.class)
-        .map(TransactionTraceParams::traceOptions)
-        .orElse(TraceOptions.DEFAULT);
+    try {
+      return requestContext
+          .getOptionalParameter(2, TransactionTraceParams.class)
+          .map(TransactionTraceParams::traceOptions)
+          .orElse(TraceOptions.DEFAULT);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction trace parameter (index 2)",
+          RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
+          e);
+    }
   }
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    final Optional<BlockParameter> maybeBlockParameter =
-        request.getOptionalParameter(1, BlockParameter.class);
+    final Optional<BlockParameter> maybeBlockParameter;
+    try {
+      maybeBlockParameter = request.getOptionalParameter(1, BlockParameter.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
 
     return maybeBlockParameter.orElse(BlockParameter.LATEST);
   }
@@ -74,7 +87,6 @@ public class DebugTraceCall extends AbstractTraceCall {
         maybeSimulatorResult.map(
             result -> {
               if (result.isInvalid()) {
-                LOG.error("Invalid simulator result {}", result);
                 final JsonRpcError error =
                     new JsonRpcError(
                         INTERNAL_ERROR, result.getValidationResult().getErrorMessage());
@@ -87,5 +99,14 @@ public class DebugTraceCall extends AbstractTraceCall {
 
               return new DebugTraceTransactionResult(transactionTrace);
             });
+  }
+
+  @Override
+  protected TransactionValidationParams buildTransactionValidationParams() {
+    return ImmutableTransactionValidationParams.builder()
+        .from(TransactionValidationParams.transactionSimulator())
+        .isAllowExceedingBalance(true)
+        .allowUnderpriced(true)
+        .build();
   }
 }

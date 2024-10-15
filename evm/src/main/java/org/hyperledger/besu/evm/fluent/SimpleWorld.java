@@ -29,10 +29,10 @@ import java.util.Optional;
 public class SimpleWorld implements WorldUpdater {
 
   /** The Parent. */
-  SimpleWorld parent;
+  private final SimpleWorld parent;
 
   /** The Accounts. */
-  Map<Address, SimpleAccount> accounts = new HashMap<>();
+  private Map<Address, Optional<SimpleAccount>> accounts = new HashMap<>();
 
   /** Instantiates a new Simple world. */
   public SimpleWorld() {
@@ -55,13 +55,15 @@ public class SimpleWorld implements WorldUpdater {
 
   @Override
   public Account get(final Address address) {
+    Optional<SimpleAccount> account = Optional.empty();
     if (accounts.containsKey(address)) {
-      return accounts.get(address);
+      account = accounts.get(address);
     } else if (parent != null) {
-      return parent.get(address);
-    } else {
-      return null;
+      if (parent.get(address) instanceof SimpleAccount accountFromParent) {
+        account = Optional.of(accountFromParent);
+      }
     }
+    return account.orElse(null);
   }
 
   @Override
@@ -70,45 +72,46 @@ public class SimpleWorld implements WorldUpdater {
       throw new IllegalStateException("Cannot create an account when one already exists");
     }
     SimpleAccount account = new SimpleAccount(address, nonce, balance);
-    accounts.put(address, account);
+    accounts.put(address, Optional.of(account));
     return account;
   }
 
   @Override
   public MutableAccount getAccount(final Address address) {
-    SimpleAccount account = accounts.get(address);
+    Optional<SimpleAccount> account = accounts.get(address);
     if (account != null) {
-      return account;
+      return account.orElse(null);
     }
     Account parentAccount = parent == null ? null : parent.getAccount(address);
     if (parentAccount != null) {
       account =
-          new SimpleAccount(
-              parentAccount,
-              parentAccount.getAddress(),
-              parentAccount.getNonce(),
-              parentAccount.getBalance(),
-              parentAccount.getCode());
+          Optional.of(
+              new SimpleAccount(
+                  parentAccount,
+                  parentAccount.getAddress(),
+                  parentAccount.getNonce(),
+                  parentAccount.getBalance(),
+                  parentAccount.getCode()));
       accounts.put(address, account);
-      return account;
+      return account.get();
     }
     return null;
   }
 
   @Override
   public void deleteAccount(final Address address) {
-    accounts.put(address, null);
+    accounts.put(address, Optional.empty());
   }
 
   @Override
   public Collection<? extends Account> getTouchedAccounts() {
-    return accounts.values();
+    return accounts.values().stream().filter(Optional::isPresent).map(Optional::get).toList();
   }
 
   @Override
   public Collection<Address> getDeletedAccountAddresses() {
     return accounts.entrySet().stream()
-        .filter(e -> e.getValue() == null)
+        .filter(e -> e.getValue().isEmpty())
         .map(Map.Entry::getKey)
         .toList();
   }
@@ -122,8 +125,10 @@ public class SimpleWorld implements WorldUpdater {
   public void commit() {
     accounts.forEach(
         (address, account) -> {
-          if (!account.updateParent()) {
-            parent.accounts.put(address, account);
+          if (account.isEmpty() || !account.get().commit()) {
+            if (parent != null) {
+              parent.accounts.put(address, account);
+            }
           }
         });
   }

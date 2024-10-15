@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -33,6 +35,7 @@ import java.util.Optional;
 import io.vertx.core.Vertx;
 
 public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
+  private final Optional<Long> cancunMilestone;
 
   public EngineNewPayloadV2(
       final Vertx vertx,
@@ -42,6 +45,7 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
       final EthPeers ethPeers,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
+    cancunMilestone = protocolSchedule.milestoneFor(CANCUN);
   }
 
   @Override
@@ -56,11 +60,11 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
       final Optional<String> maybeBeaconBlockRootParam) {
     if (payloadParameter.getBlobGasUsed() != null) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "non-null BlobGasUsed pre-cancun");
+          RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS, "Missing blob gas used field");
     }
     if (payloadParameter.getExcessBlobGas() != null) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "non-null ExcessBlobGas pre-cancun");
+          RpcErrorType.INVALID_EXCESS_BLOB_GAS_PARAMS, "Missing excess blob gas field");
     }
     return ValidationResult.valid();
   }
@@ -72,6 +76,15 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
       final Optional<BlockHeader> maybeParentHeader,
       final Optional<List<VersionedHash>> maybeVersionedHashParam,
       final ProtocolSpec protocolSpec) {
+    return ValidationResult.valid();
+  }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    if (cancunMilestone.isPresent() && blockTimestamp >= cancunMilestone.get()) {
+      return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK);
+    }
+
     return ValidationResult.valid();
   }
 }

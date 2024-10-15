@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -68,7 +69,9 @@ public class TraceTransactionIntegrationTest {
 
   @BeforeEach
   public void setUp() {
-    final ExecutionContextTestFixture contextTestFixture = ExecutionContextTestFixture.create();
+    final ExecutionContextTestFixture contextTestFixture =
+        ExecutionContextTestFixture.builder(GenesisConfigFile.fromResource("/genesis-it.json"))
+            .build();
     genesisBlock = contextTestFixture.getGenesis();
     blockchain = contextTestFixture.getBlockchain();
     worldStateArchive = contextTestFixture.getStateArchive();

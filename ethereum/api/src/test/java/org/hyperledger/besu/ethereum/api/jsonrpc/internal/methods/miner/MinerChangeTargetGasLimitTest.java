@@ -50,7 +50,8 @@ public class MinerChangeTargetGasLimitTest {
 
     assertThat(minerChangeTargetGasLimit.response(request))
         .isEqualTo(
-            new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS));
+            new JsonRpcErrorResponse(
+                request.getRequest().getId(), RpcErrorType.INVALID_TARGET_GAS_LIMIT_PARAMS));
   }
 
   @Test

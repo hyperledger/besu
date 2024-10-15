@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
+import kotlin.Pair;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
@@ -25,6 +27,8 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -71,5 +75,25 @@ public class VerkleFlatDbStrategy extends FlatDbStrategy {
   public void resetOnResync(final SegmentedKeyValueStorage storage) {
     // NOOP
     // not need to reset anything in full mode
+  }
+
+  @Override
+  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(final SegmentedKeyValueStorage storage, final Hash accountHash, final Bytes startKeyHash, final Function<Bytes, Bytes> valueMapper) {
+    return Stream.empty();
+  }
+
+  @Override
+  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(final SegmentedKeyValueStorage storage, final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final Function<Bytes, Bytes> valueMapper) {
+    return Stream.empty();
+  }
+
+  @Override
+  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
+    return Stream.empty();
+  }
+
+  @Override
+  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(final SegmentedKeyValueStorage storage, final Bytes startKeyHash) {
+    return Stream.empty();
   }
 }

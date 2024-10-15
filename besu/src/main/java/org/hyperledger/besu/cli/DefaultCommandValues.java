@@ -128,6 +128,12 @@ public interface DefaultCommandValues {
   /** The constant DEFAULT_PLUGINS_OPTION_NAME. */
   String DEFAULT_PLUGINS_OPTION_NAME = "--plugins";
 
+  /** The constant DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME. */
+  String DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME = "--plugin-continue-on-error";
+
+  /** The constant DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME. */
+  String DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME = "--Xplugins-external-enabled";
+
   /**
    * Gets default besu data path.
    *

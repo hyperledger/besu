@@ -18,6 +18,7 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -58,6 +59,9 @@ public class DataCopyOperation extends AbstractOperation {
     final int sourceOffset = clampedToInt(frame.popStackItem());
     final int length = clampedToInt(frame.popStackItem());
     final long cost = cost(frame, memOffset, length);
+    if (cost > frame.getRemainingGas()) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
 
     final Bytes data = code.getData(sourceOffset, length);
     frame.writeMemory(memOffset, length, data);

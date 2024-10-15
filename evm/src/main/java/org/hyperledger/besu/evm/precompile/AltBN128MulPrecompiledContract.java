@@ -19,7 +19,7 @@ import org.hyperledger.besu.crypto.altbn128.Fq;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
+import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -38,13 +38,14 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
       new BigInteger(
           "115792089237316195423570985008687907853269984665640564039457584007913129639935");
 
+  private static final Bytes POINT_AT_INFINITY = Bytes.repeat((byte) 0, 64);
   private final long gasCost;
 
   private AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(
         "AltBN128Mul",
         gasCalculator,
-        LibEthPairings.EIP196_MUL_OPERATION_RAW_VALUE,
+        LibGnarkEIP196.EIP196_MUL_OPERATION_RAW_VALUE,
         PARAMETER_LENGTH);
     this.gasCost = gasCost;
   }
@@ -78,6 +79,12 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
+
+    if (input.size() >= 64 && input.slice(0, 64).equals(POINT_AT_INFINITY)) {
+      return new PrecompileContractResult(
+          POINT_AT_INFINITY, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
+    }
+
     if (useNative) {
       return computeNative(input, messageFrame);
     } else {

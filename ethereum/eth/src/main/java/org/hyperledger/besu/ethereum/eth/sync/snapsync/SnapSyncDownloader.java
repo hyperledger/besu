@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.nio.file.Path;
@@ -35,7 +36,8 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
       final FastSyncStateStorage fastSyncStateStorage,
       final TaskCollection<SnapDataRequest> taskCollection,
       final Path fastSyncDataDirectory,
-      final FastSyncState initialFastSyncState) {
+      final FastSyncState initialFastSyncState,
+      final SyncDurationMetrics syncDurationMetrics) {
     super(
         fastSyncActions,
         worldStateStorageCoordinator,
@@ -43,7 +45,8 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
         fastSyncStateStorage,
         taskCollection,
         fastSyncDataDirectory,
-        initialFastSyncState);
+        initialFastSyncState,
+        syncDurationMetrics);
   }
 
   @Override

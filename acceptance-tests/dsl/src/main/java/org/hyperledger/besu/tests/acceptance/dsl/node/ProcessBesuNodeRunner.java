@@ -24,8 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.tests.acceptance.dsl.StaticNodesUtils;
@@ -77,6 +75,70 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     final Path dataDir = node.homeDirectory();
 
+    final List<String> params = commandlineArgs(node, dataDir);
+
+    LOG.info("Creating besu process with params {}", params);
+    final ProcessBuilder processBuilder =
+        new ProcessBuilder(params)
+            .directory(new File(System.getProperty("user.dir")).getParentFile().getParentFile())
+            .redirectErrorStream(true)
+            .redirectInput(Redirect.INHERIT);
+    if (!node.getPlugins().isEmpty()) {
+      processBuilder
+          .environment()
+          .put(
+              "BESU_OPTS",
+              "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath().toString());
+    }
+    // Use non-blocking randomness for acceptance tests
+    processBuilder
+        .environment()
+        .put(
+            "JAVA_OPTS",
+            "-Djava.security.properties="
+                + "acceptance-tests/tests/build/resources/test/acceptanceTesting.security");
+    // add additional environment variables
+    processBuilder.environment().putAll(node.getEnvironment());
+
+    try {
+      int debugPort = Integer.parseInt(System.getenv("BESU_DEBUG_CHILD_PROCESS_PORT"));
+      LOG.warn("Waiting for debugger to attach to SUSPENDED child process");
+      String debugOpts =
+          " -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:" + debugPort;
+      String prevJavaOpts = processBuilder.environment().get("JAVA_OPTS");
+      if (prevJavaOpts == null) {
+        processBuilder.environment().put("JAVA_OPTS", debugOpts);
+      } else {
+        processBuilder.environment().put("JAVA_OPTS", prevJavaOpts + debugOpts);
+      }
+
+    } catch (NumberFormatException e) {
+      LOG.debug(
+          "Child process may be attached to by exporting BESU_DEBUG_CHILD_PROCESS_PORT=<port> to env");
+    }
+
+    try {
+      checkState(
+          isNotAliveOrphan(node.getName()),
+          "A live process with name: %s, already exists. Cannot create another with the same name as it would orphan the first",
+          node.getName());
+
+      final Process process = processBuilder.start();
+      process.onExit().thenRun(() -> node.setExitCode(process.exitValue()));
+      outputProcessorExecutor.execute(() -> printOutput(node, process));
+      besuProcesses.put(node.getName(), process);
+    } catch (final IOException e) {
+      LOG.error("Error starting BesuNode process", e);
+    }
+
+    if (node.getRunCommand().isEmpty()) {
+      waitForFile(dataDir, "besu.ports");
+      waitForFile(dataDir, "besu.networks");
+    }
+    MDC.remove("node");
+  }
+
+  private List<String> commandlineArgs(final BesuNode node, final Path dataDir) {
     final List<String> params = new ArrayList<>();
     params.add("build/install/besu/bin/besu");
 
@@ -113,11 +175,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
             .getCLIOptions());
 
     params.addAll(
-        DataStorageOptions.fromConfig(
-                ImmutableDataStorageConfiguration.builder()
-                    .from(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
-                    .build())
-            .getCLIOptions());
+        DataStorageOptions.fromConfig(node.getDataStorageConfiguration()).getCLIOptions());
 
     if (node.getMiningParameters().isMiningEnabled()) {
       params.add("--miner-enabled");
@@ -165,6 +223,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
       if (node.getPrivacyParameters().isPrivacyPluginEnabled()) {
         params.add("--Xprivacy-plugin-enabled");
+      }
+      if (node.getPrivacyParameters().isPrivateNonceAlwaysIncrementsEnabled()) {
+        params.add("privacy-nonce-always-increments");
       }
     }
 
@@ -390,67 +451,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--logging=" + level);
     }
 
+    if (!node.getRequestedPlugins().isEmpty()) {
+      params.add(
+          "--plugins=" + node.getRequestedPlugins().stream().collect(Collectors.joining(",")));
+    }
+
     params.addAll(node.getRunCommand());
-
-    LOG.info("Creating besu process with params {}", params);
-    final ProcessBuilder processBuilder =
-        new ProcessBuilder(params)
-            .directory(new File(System.getProperty("user.dir")).getParentFile().getParentFile())
-            .redirectErrorStream(true)
-            .redirectInput(Redirect.INHERIT);
-    if (!node.getPlugins().isEmpty()) {
-      processBuilder
-          .environment()
-          .put(
-              "BESU_OPTS",
-              "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath().toString());
-    }
-    // Use non-blocking randomness for acceptance tests
-    processBuilder
-        .environment()
-        .put(
-            "JAVA_OPTS",
-            "-Djava.security.properties="
-                + "acceptance-tests/tests/build/resources/test/acceptanceTesting.security");
-    // add additional environment variables
-    processBuilder.environment().putAll(node.getEnvironment());
-
-    try {
-      int debugPort = Integer.parseInt(System.getenv("BESU_DEBUG_CHILD_PROCESS_PORT"));
-      LOG.warn("Waiting for debugger to attach to SUSPENDED child process");
-      String debugOpts =
-          " -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:" + debugPort;
-      String prevJavaOpts = processBuilder.environment().get("JAVA_OPTS");
-      if (prevJavaOpts == null) {
-        processBuilder.environment().put("JAVA_OPTS", debugOpts);
-      } else {
-        processBuilder.environment().put("JAVA_OPTS", prevJavaOpts + debugOpts);
-      }
-
-    } catch (NumberFormatException e) {
-      LOG.debug(
-          "Child process may be attached to by exporting BESU_DEBUG_CHILD_PROCESS_PORT=<port> to env");
-    }
-
-    try {
-      checkState(
-          isNotAliveOrphan(node.getName()),
-          "A live process with name: %s, already exists. Cannot create another with the same name as it would orphan the first",
-          node.getName());
-
-      final Process process = processBuilder.start();
-      process.onExit().thenRun(() -> node.setExitCode(process.exitValue()));
-      outputProcessorExecutor.execute(() -> printOutput(node, process));
-      besuProcesses.put(node.getName(), process);
-    } catch (final IOException e) {
-      LOG.error("Error starting BesuNode process", e);
-    }
-
-    if (node.getRunCommand().isEmpty()) {
-      waitForFile(dataDir, "besu.ports");
-      waitForFile(dataDir, "besu.networks");
-    }
-    MDC.remove("node");
+    return params;
   }
 
   private boolean isNotAliveOrphan(final String name) {

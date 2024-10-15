@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
+import org.hyperledger.besu.plugin.services.rpc.RpcResponse;
+
 import com.fasterxml.jackson.annotation.JsonGetter;
 
-public interface JsonRpcResponse {
+public interface JsonRpcResponse extends RpcResponse {
 
   @JsonGetter("jsonrpc")
   default String getVersion() {
     return "2.0";
   }
-
-  JsonRpcResponseType getType();
 }
