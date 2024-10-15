@@ -30,10 +30,17 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class GetReceiptsForHeadersTaskTest
     extends RetryingMessageTaskTest<Map<BlockHeader, List<TransactionReceipt>>> {
+
+  @BeforeEach
+  @Override
+  public void resetMaxRetries() {
+    maxRetries = GetReceiptsForHeadersTask.DEFAULT_RETRIES;
+  }
 
   @Override
   protected Map<BlockHeader, List<TransactionReceipt>> generateDataToBeRequested() {
@@ -50,8 +57,7 @@ public class GetReceiptsForHeadersTaskTest
   protected EthTask<Map<BlockHeader, List<TransactionReceipt>>> createTask(
       final Map<BlockHeader, List<TransactionReceipt>> requestedData) {
     final List<BlockHeader> headersToComplete = new ArrayList<>(requestedData.keySet());
-    return GetReceiptsForHeadersTask.forHeaders(
-        ethContext, headersToComplete, maxRetries, metricsSystem);
+    return GetReceiptsForHeadersTask.forHeaders(ethContext, headersToComplete, metricsSystem);
   }
 
   @Test
