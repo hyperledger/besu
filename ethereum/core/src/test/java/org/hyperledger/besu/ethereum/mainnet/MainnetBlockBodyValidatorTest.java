@@ -70,7 +70,7 @@ class MainnetBlockBodyValidatorTest {
     lenient().when(withdrawalsValidator.validateWithdrawals(any())).thenReturn(true);
     lenient().when(withdrawalsValidator.validateWithdrawalsRoot(any())).thenReturn(true);
 
-    lenient().when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(requestValidator);
+    lenient().when(protocolSpec.getRequestsValidator()).thenReturn(requestValidator);
     lenient().when(requestValidator.validate(any(), any(), any())).thenReturn(true);
   }
 
@@ -147,34 +147,6 @@ class MainnetBlockBodyValidatorTest {
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
     when(withdrawalsValidator.validateWithdrawalsRoot(block)).thenReturn(false);
-
-    assertThat(
-            new MainnetBlockBodyValidator(protocolSchedule)
-                .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(),
-                    block,
-                    emptyList(),
-                    NONE,
-                    BodyValidationMode.FULL))
-        .isFalse();
-  }
-
-  @Test
-  public void validationFailsIfWithdrawalRequestsValidationFails() {
-    final Block block =
-        blockDataGenerator.block(
-            new BlockOptions()
-                .setBlockNumber(1)
-                .setGasUsed(0)
-                .hasTransactions(false)
-                .hasOmmers(false)
-                .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
-                .setRequests(Optional.of(List.of())));
-    blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
-
-    when(requestValidator.validate(any(), any(), any())).thenReturn(false);
 
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)

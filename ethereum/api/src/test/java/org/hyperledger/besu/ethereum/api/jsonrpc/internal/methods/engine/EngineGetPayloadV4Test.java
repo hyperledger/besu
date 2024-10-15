@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -46,7 +47,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -128,13 +128,9 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
     BlockWithReceipts block =
         new BlockWithReceipts(
             new Block(
-                header,
-                new BlockBody(
-                    List.of(blobTx),
-                    Collections.emptyList(),
-                    Optional.of(Collections.emptyList()))),
+                header, new BlockBody(List.of(blobTx), emptyList(), Optional.of(emptyList()))),
             List.of(blobReceipt));
-    PayloadWrapper payload = new PayloadWrapper(payloadIdentifier, block);
+    PayloadWrapper payload = new PayloadWrapper(payloadIdentifier, block, Optional.of(emptyList()));
 
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 
@@ -147,9 +143,7 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
               assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV4.class);
               final EngineGetPayloadResultV4 res = (EngineGetPayloadResultV4) r.getResult();
               assertThat(res.getExecutionPayload().getWithdrawals()).isNotNull();
-              assertThat(res.getExecutionPayload().getDepositRequests()).isNotNull();
-              assertThat(res.getExecutionPayload().getWithdrawalRequests()).isNotNull();
-              assertThat(res.getExecutionPayload().getConsolidationRequests()).isNotNull();
+              assertThat(res.getExecutionRequests()).isEqualTo(emptyList());
               assertThat(res.getExecutionPayload().getHash())
                   .isEqualTo(header.getHash().toString());
               assertThat(res.getBlockValue()).isEqualTo(Quantity.create(0));

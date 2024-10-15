@@ -28,24 +28,32 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes32;
 
-@JsonPropertyOrder({"executionPayload", "blockValue", "blobsBundle", "shouldOverrideBuilder"})
+@JsonPropertyOrder({
+  "executionPayload",
+  "blockValue",
+  "blobsBundle",
+  "shouldOverrideBuilder",
+  "executionRequests"
+})
 public class EngineGetPayloadResultV4 {
   protected final PayloadResult executionPayload;
   private final String blockValue;
   private final BlobsBundleV1 blobsBundle;
   private final boolean shouldOverrideBuilder;
+  private final List<Request> executionRequests;
 
   public EngineGetPayloadResultV4(
       final BlockHeader header,
       final List<String> transactions,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<List<Request>> requests,
+      final Optional<List<Request>> executionRequests,
       final String blockValue,
       final BlobsBundleV1 blobsBundle) {
-    this.executionPayload = new PayloadResult(header, transactions, withdrawals, requests);
+    this.executionPayload = new PayloadResult(header, transactions, withdrawals);
     this.blockValue = blockValue;
     this.blobsBundle = blobsBundle;
     this.shouldOverrideBuilder = false;
+    this.executionRequests = executionRequests.orElse(null);
   }
 
   @JsonGetter(value = "executionPayload")
@@ -68,6 +76,11 @@ public class EngineGetPayloadResultV4 {
     return shouldOverrideBuilder;
   }
 
+  @JsonGetter(value = "executionRequests")
+  public List<Request> getExecutionRequests() {
+    return executionRequests;
+  }
+
   public static class PayloadResult {
 
     protected final String blockHash;
@@ -86,7 +99,6 @@ public class EngineGetPayloadResultV4 {
     private final String excessBlobGas;
     private final String blobGasUsed;
     private final String parentBeaconBlockRoot;
-    private final List<Request> requests;
 
     protected final List<String> transactions;
     private final List<WithdrawalParameter> withdrawals;
@@ -94,8 +106,7 @@ public class EngineGetPayloadResultV4 {
     public PayloadResult(
         final BlockHeader header,
         final List<String> transactions,
-        final Optional<List<Withdrawal>> withdrawals,
-        final Optional<List<Request>> requests) {
+        final Optional<List<Withdrawal>> withdrawals) {
       this.blockNumber = Quantity.create(header.getNumber());
       this.blockHash = header.getHash().toString();
       this.parentHash = header.getParentHash().toString();
@@ -118,7 +129,6 @@ public class EngineGetPayloadResultV4 {
                           .map(WithdrawalParameter::fromWithdrawal)
                           .collect(Collectors.toList()))
               .orElse(null);
-      this.requests = requests.orElse(null);
       this.blobGasUsed = header.getBlobGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
       this.excessBlobGas =
           header.getExcessBlobGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
@@ -194,11 +204,6 @@ public class EngineGetPayloadResultV4 {
     @JsonGetter(value = "withdrawals")
     public List<WithdrawalParameter> getWithdrawals() {
       return withdrawals;
-    }
-
-    @JsonGetter(value = "requests")
-    public List<Request> getRequest() {
-      return requests;
     }
 
     @JsonGetter(value = "feeRecipient")

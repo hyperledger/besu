@@ -22,7 +22,7 @@ import org.hyperledger.besu.evm.log.Log;
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.tx.Contract;
 
-public class DepositRequestDecoder {
+public class DepositLogDecoder {
 
   public static Request decodeFromLog(final Log log) {
     Contract.EventValuesWithLog eventValues = DepositContract.staticExtractDepositEventWithLog(log);

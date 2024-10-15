@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.DepositRequestDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.DepositLogDecoder;
 
 import java.util.Collections;
 import java.util.List;
@@ -54,7 +54,7 @@ public class DepositRequestProcessor implements RequestProcessor {
                 transactionReceipts.stream()
                     .flatMap(receipt -> receipt.getLogsList().stream())
                     .filter(log -> address.equals(log.getLogger()))
-                    .map(DepositRequestDecoder::decodeFromLog)
+                    .map(DepositLogDecoder::decodeFromLog)
                     .toList())
         .orElse(Collections.emptyList());
   }

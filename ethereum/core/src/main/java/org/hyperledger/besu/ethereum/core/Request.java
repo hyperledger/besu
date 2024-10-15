@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.RequestType;
 
+import java.util.Objects;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class Request implements org.hyperledger.besu.plugin.data.Request {
@@ -35,5 +37,22 @@ public class Request implements org.hyperledger.besu.plugin.data.Request {
   @Override
   public Bytes getData() {
     return data;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof Request request)) return false;
+    return type == request.type && Objects.equals(data, request.data);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(type, data);
+  }
+
+  @Override
+  public String toString() {
+    return "Request{" + "type=" + type + ", data=" + data + '}';
   }
 }

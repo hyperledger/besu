@@ -194,7 +194,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     final Optional<List<Request>> maybeRequests;
     try {
-      maybeRequests = extractRequests(maybeVersionedHashParam);
+      maybeRequests = extractRequests(maybeRequestsParam);
     } catch (RuntimeException ex) {
       return respondWithInvalid(
           reqId,
@@ -204,44 +204,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           "Invalid requests");
     }
 
-    // TODO re-enable validation with requests validation verifying
-    //  that request_hash = sha256(sha256(0x00 || request_data_00) || sha256(0x01 ||
-    // request_data_01) || ...)
-    //    final Optional<List<Request>> maybeDepositRequests =
-    //        Optional.ofNullable(blockParam.getDepositRequests())
-    //            .map(ds -> ds.stream().map(DepositRequestParameter::toDeposit).collect(toList()));
-    //    if (!getDepositRequestValidator(
-    //            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
-    //        .validateParameter(maybeDepositRequests)) {
-    //      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_DEPOSIT_REQUEST_PARAMS);
-    //    }
-    //
-    //    final Optional<List<Request>> maybeWithdrawalRequests =
-    //        Optional.ofNullable(blockParam.getWithdrawalRequests())
-    //            .map(
-    //                withdrawalRequest ->
-    //                    withdrawalRequest.stream()
-    //                        .map(WithdrawalRequestParameter::toWithdrawalRequest)
-    //                        .collect(toList()));
-    //    if (!getWithdrawalRequestValidator(
-    //            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
-    //        .validateParameter(maybeWithdrawalRequests)) {
-    //      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_WITHDRAWALS_PARAMS);
-    //    }
-    //
-    //    final Optional<List<Request>> maybeConsolidationRequests =
-    //        Optional.ofNullable(blockParam.getConsolidationRequests())
-    //            .map(
-    //                consolidationRequest ->
-    //                    consolidationRequest.stream()
-    //                        .map(ConsolidationRequestParameter::toConsolidationRequest)
-    //                        .collect(toList()));
-    //    if (!getConsolidationRequestValidator(
-    //            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
-    //        .validateParameter(maybeConsolidationRequests)) {
-    //      return new JsonRpcErrorResponse(reqId,
-    // RpcErrorType.INVALID_CONSOLIDATION_REQUEST_PARAMS);
-    //    }
+    // TODO JF validate requests
 
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");

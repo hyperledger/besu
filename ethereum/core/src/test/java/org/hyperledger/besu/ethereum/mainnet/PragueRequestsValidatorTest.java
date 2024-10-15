@@ -41,7 +41,7 @@ class PragueRequestsValidatorTest {
     lenient().when(protocolSpec.getWithdrawalsValidator()).thenReturn(withdrawalsValidator);
     lenient().when(withdrawalsValidator.validateWithdrawals(any())).thenReturn(true);
     lenient().when(withdrawalsValidator.validateWithdrawalsRoot(any())).thenReturn(true);
-    lenient().when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(requestValidator);
+    lenient().when(protocolSpec.getRequestsValidator()).thenReturn(requestValidator);
   }
 
   //  private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
