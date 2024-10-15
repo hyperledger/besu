@@ -139,12 +139,11 @@ abstract class AbstractBlockCreatorTest {
             RequestType.DEPOSIT,
             Bytes.fromHexString(
                 "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e0017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa355894830040597307000000a889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb53f3d080000000000"));
-    final List<Request> expectedDepositRequests = List.of(expectedDepositRequest);
 
     var depositRequestsFromReceipts =
         new DepositRequestProcessor(DEFAULT_DEPOSIT_CONTRACT_ADDRESS)
             .process(new ProcessRequestContext(null, null, null, receipts, null, null));
-    assertThat(depositRequestsFromReceipts.get()).isEqualTo(expectedDepositRequests);
+    assertThat(depositRequestsFromReceipts.get()).isEqualTo(expectedDepositRequest);
   }
 
   @Test
