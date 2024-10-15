@@ -301,9 +301,18 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
                       .getEmptyBlockPeriodSeconds());
             });
 
-    if (syncState.isInitialSyncPhaseDone()) {
-      miningCoordinator.enable();
-    }
+    syncState.subscribeSyncStatus(
+        syncStatus -> {
+          if (syncState.syncTarget().isPresent()) {
+            // We're syncing so stop doing other stuff
+            LOG.info("Stopping QBFT mining coordinator while we are syncing");
+            miningCoordinator.stop();
+          } else {
+            LOG.info("Starting QBFT mining coordinator following sync");
+            miningCoordinator.enable();
+            miningCoordinator.start();
+          }
+        });
 
     syncState.subscribeCompletionReached(
         new BesuEvents.InitialSyncCompletionListener() {

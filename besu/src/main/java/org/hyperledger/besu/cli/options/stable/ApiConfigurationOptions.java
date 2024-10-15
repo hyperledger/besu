@@ -28,6 +28,7 @@ import picocli.CommandLine;
  * Handles configuration options for the API in Besu, including gas price settings, RPC log range,
  * and trace filter range.
  */
+// TODO: implement CLIOption<ApiConfiguration>
 public class ApiConfigurationOptions {
   /** Default constructor. */
   public ApiConfigurationOptions() {}

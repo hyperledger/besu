@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
+import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
 import static org.hyperledger.besu.cli.config.NetworkName.EXPERIMENTAL_EIPS;
 import static org.hyperledger.besu.cli.config.NetworkName.FUTURE_EIPS;
 import static org.hyperledger.besu.cli.config.NetworkName.HOLESKY;
@@ -43,8 +44,9 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -162,13 +164,13 @@ public class BesuCommandTest extends CommandTestAbstract {
       // and ignore errors in case no trusted setup was already loaded
     }
 
-    MergeConfigOptions.setMergeEnabled(false);
+    MergeConfiguration.setMergeEnabled(false);
   }
 
   @AfterEach
   public void tearDown() {
 
-    MergeConfigOptions.setMergeEnabled(false);
+    MergeConfiguration.setMergeEnabled(false);
   }
 
   @Test
@@ -1012,7 +1014,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void p2pHostAndPortOptionsAreRespected() {
+  public void p2pHostAndPortOptionsAreRespectedAndNotLeaked() {
 
     final String host = "1.2.3.4";
     final int port = 1234;
@@ -1020,6 +1022,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
     verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
@@ -1027,6 +1031,48 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    // all other port values remain default
+    assertThat(metricsConfigArgumentCaptor.getValue().getPort()).isEqualTo(9545);
+    assertThat(metricsConfigArgumentCaptor.getValue().getPushPort()).isEqualTo(9001);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(8545);
+
+    // all other host values remain default
+    final String defaultHost = "127.0.0.1";
+    assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
+    assertThat(metricsConfigArgumentCaptor.getValue().getPushHost()).isEqualTo(defaultHost);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
+  }
+
+  @Test
+  public void p2pHostAndPortOptionsAreRespectedAndNotLeakedWithMetricsEnabled() {
+
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    parseCommand("--p2p-host", host, "--p2p-port", String.valueOf(port), "--metrics-enabled");
+
+    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(port);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    // all other port values remain default
+    assertThat(metricsConfigArgumentCaptor.getValue().getPort()).isEqualTo(9545);
+    assertThat(metricsConfigArgumentCaptor.getValue().getPushPort()).isEqualTo(9001);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(8545);
+
+    // all other host values remain default
+    final String defaultHost = "127.0.0.1";
+    assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
+    assertThat(metricsConfigArgumentCaptor.getValue().getPushHost()).isEqualTo(defaultHost);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
   }
 
   @Test
@@ -1864,6 +1910,20 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void ephemeryValuesAreUsed() {
+    parseCommand("--network", "ephemery");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+    assertThat(NetworkName.valueOf(String.valueOf(EPHEMERY))).isEqualTo(EPHEMERY);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void classicValuesAreUsed() {
     parseCommand("--network", "classic");
 
@@ -2263,7 +2323,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void staticNodesFileOptionValidParamenter() throws IOException {
+  public void staticNodesFileOptionValidParameter() throws IOException {
     final Path staticNodeTempFile =
         createTempFile(
             "static-nodes-goodformat.json",
