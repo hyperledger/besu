@@ -15,15 +15,16 @@
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.DepositLogDecoder;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.tuweni.bytes.Bytes;
 
 public class DepositRequestProcessor implements RequestProcessor {
 
@@ -37,25 +38,22 @@ public class DepositRequestProcessor implements RequestProcessor {
   }
 
   @Override
-  public Optional<List<? extends Request>> process(final ProcessRequestContext context) {
+  public Optional<Request> process(final ProcessRequestContext context) {
     if (depositContractAddress.isEmpty()) {
       return Optional.empty();
     }
-    List<Request> depositRequests = findDepositRequestsFromReceipts(context.transactionReceipts());
-    return Optional.of(depositRequests);
+    Optional<Bytes> depositRequests = getDepositRequestData(context.transactionReceipts());
+    return depositRequests.map(requestData -> new Request(RequestType.DEPOSIT, requestData));
   }
 
   @VisibleForTesting
-  List<Request> findDepositRequestsFromReceipts(
-      final List<TransactionReceipt> transactionReceipts) {
-    return depositContractAddress
-        .map(
-            address ->
-                transactionReceipts.stream()
-                    .flatMap(receipt -> receipt.getLogsList().stream())
-                    .filter(log -> address.equals(log.getLogger()))
-                    .map(DepositLogDecoder::decodeFromLog)
-                    .toList())
-        .orElse(Collections.emptyList());
+  Optional<Bytes> getDepositRequestData(final List<TransactionReceipt> transactionReceipts) {
+    return depositContractAddress.flatMap(
+        address ->
+            transactionReceipts.stream()
+                .flatMap(receipt -> receipt.getLogsList().stream())
+                .filter(log -> address.equals(log.getLogger()))
+                .map(DepositLogDecoder::decodeFromLog)
+                .reduce(Bytes::concatenate));
   }
 }

@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.DepositContract;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.evm.log.Log;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -24,7 +22,7 @@ import org.web3j.tx.Contract;
 
 public class DepositLogDecoder {
 
-  public static Request decodeFromLog(final Log log) {
+  public static Bytes decodeFromLog(final Log log) {
     Contract.EventValuesWithLog eventValues = DepositContract.staticExtractDepositEventWithLog(log);
     final Bytes rawPublicKey =
         Bytes.wrap((byte[]) eventValues.getNonIndexedValues().get(0).getValue());
@@ -36,8 +34,7 @@ public class DepositLogDecoder {
         Bytes.wrap((byte[]) eventValues.getNonIndexedValues().get(3).getValue());
     final Bytes rawIndex = Bytes.wrap((byte[]) eventValues.getNonIndexedValues().get(4).getValue());
 
-    final Bytes data =
-        Bytes.concatenate(rawPublicKey, rawWithdrawalCredential, rawAmount, rawSignature, rawIndex);
-    return new Request(RequestType.DEPOSIT, data);
+    return Bytes.concatenate(
+        rawPublicKey, rawWithdrawalCredential, rawAmount, rawSignature, rawIndex);
   }
 }

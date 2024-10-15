@@ -24,10 +24,6 @@ public class ConsolidationRequestProcessor extends AbstractSystemCallRequestProc
   public static final Address CONSOLIDATION_REQUEST_CONTRACT_ADDRESS =
       Address.fromHexString("0x00b42dbF2194e931E80326D950320f7d9Dbeac02");
 
-  private static final int ADDRESS_BYTES = 20;
-  private static final int PUBLIC_KEY_BYTES = 48;
-  private static final int CONSOLIDATION_REQUEST_BYTES_SIZE =
-      ADDRESS_BYTES + PUBLIC_KEY_BYTES + PUBLIC_KEY_BYTES;
   private final Address consolidationRequestContractAddress;
 
   public ConsolidationRequestProcessor(final Address consolidationRequestContractAddress) {
@@ -42,16 +38,6 @@ public class ConsolidationRequestProcessor extends AbstractSystemCallRequestProc
   @Override
   protected Address getCallAddress() {
     return consolidationRequestContractAddress;
-  }
-
-  /**
-   * Gets the size of the bytes representing a single consolidation request.
-   *
-   * @return The size of the bytes representing a single consolidation request.
-   */
-  @Override
-  protected int getRequestBytesSize() {
-    return CONSOLIDATION_REQUEST_BYTES_SIZE;
   }
 
   /**

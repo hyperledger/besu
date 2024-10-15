@@ -26,12 +26,6 @@ public class WithdrawalRequestProcessor extends AbstractSystemCallRequestProcess
   public static final Address DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS =
       Address.fromHexString("0x00A3ca265EBcb825B45F985A16CEFB49958cE017");
 
-  private static final int ADDRESS_BYTES = 20;
-  private static final int PUBLIC_KEY_BYTES = 48;
-  private static final int AMOUNT_BYTES = 8;
-  private static final int WITHDRAWAL_REQUEST_BYTES_SIZE =
-      ADDRESS_BYTES + PUBLIC_KEY_BYTES + AMOUNT_BYTES;
-
   private final Address withdrawalRequestContractAddress;
 
   public WithdrawalRequestProcessor(final Address withdrawalRequestContractAddress) {
@@ -46,16 +40,6 @@ public class WithdrawalRequestProcessor extends AbstractSystemCallRequestProcess
   @Override
   protected Address getCallAddress() {
     return withdrawalRequestContractAddress;
-  }
-
-  /**
-   * Gets the size of the bytes representing a single withdrawal request.
-   *
-   * @return The size of the bytes representing a single withdrawal request.
-   */
-  @Override
-  protected int getRequestBytesSize() {
-    return WITHDRAWAL_REQUEST_BYTES_SIZE;
   }
 
   /**

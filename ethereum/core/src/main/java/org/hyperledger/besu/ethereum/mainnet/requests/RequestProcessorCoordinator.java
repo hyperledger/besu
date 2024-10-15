@@ -45,7 +45,7 @@ public class RequestProcessorCoordinator {
         if (requests == null) {
           requests = new ArrayList<>();
         }
-        requests.addAll(r.get());
+        requests.add(r.get());
       }
     }
     return Optional.ofNullable(requests);
