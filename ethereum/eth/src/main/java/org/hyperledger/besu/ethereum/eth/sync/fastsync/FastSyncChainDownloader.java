@@ -53,6 +53,8 @@ public class FastSyncChainDownloader {
             protocolSchedule,
             protocolContext,
             ethContext,
+            peerTaskExecutor,
+            currentProtocolSpecSupplier,
             metricsSystem,
             fastSyncState);
     return new PipelineChainDownloader(

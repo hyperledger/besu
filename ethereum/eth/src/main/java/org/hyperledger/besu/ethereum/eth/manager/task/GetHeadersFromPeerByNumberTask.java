@@ -43,6 +43,7 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
     this.blockNumber = blockNumber;
   }
 
+  // TODO: only used in test, should be removed
   public static AbstractGetHeadersFromPeerTask startingAtNumber(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
