@@ -65,6 +65,7 @@ public class GetReceiptsForHeadersTask
     completeEmptyReceipts(headers);
   }
 
+  // TODO: This is only used in test code and should be removed
   public static GetReceiptsForHeadersTask forHeaders(
       final EthContext ethContext,
       final List<BlockHeader> headers,
