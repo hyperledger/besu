@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.util.List;
@@ -40,13 +39,13 @@ public class EngineGetPayloadResultV4 {
   private final String blockValue;
   private final BlobsBundleV1 blobsBundle;
   private final boolean shouldOverrideBuilder;
-  private final List<Request> executionRequests;
+  private final List<String> executionRequests;
 
   public EngineGetPayloadResultV4(
       final BlockHeader header,
       final List<String> transactions,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<List<Request>> executionRequests,
+      final Optional<List<String>> executionRequests,
       final String blockValue,
       final BlobsBundleV1 blobsBundle) {
     this.executionPayload = new PayloadResult(header, transactions, withdrawals);
@@ -77,7 +76,7 @@ public class EngineGetPayloadResultV4 {
   }
 
   @JsonGetter(value = "executionRequests")
-  public List<Request> getExecutionRequests() {
+  public List<String> getExecutionRequests() {
     return executionRequests;
   }
 
