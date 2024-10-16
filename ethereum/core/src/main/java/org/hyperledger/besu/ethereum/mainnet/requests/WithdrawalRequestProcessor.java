@@ -24,7 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class WithdrawalRequestProcessor extends AbstractSystemCallRequestProcessor<Request> {
 
   public static final Address DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS =
-      Address.fromHexString("0x00A3ca265EBcb825B45F985A16CEFB49958cE017");
+      Address.fromHexString("0x09FC772D0857550724B07B850A4323F39112AAAA");
 
   private final Address withdrawalRequestContractAddress;
 

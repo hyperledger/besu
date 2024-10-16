@@ -22,7 +22,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class ConsolidationRequestProcessor extends AbstractSystemCallRequestProcessor<Request> {
   public static final Address CONSOLIDATION_REQUEST_CONTRACT_ADDRESS =
-      Address.fromHexString("0x00b42dbF2194e931E80326D950320f7d9Dbeac02");
+      Address.fromHexString("0x01ABEA29659E5E97C95107F20BB753CD3E09BBBB");
 
   private final Address consolidationRequestContractAddress;
 
