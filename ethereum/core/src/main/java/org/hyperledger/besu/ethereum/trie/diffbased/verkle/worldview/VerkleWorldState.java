@@ -51,6 +51,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -301,8 +302,6 @@ public class VerkleWorldState extends DiffBasedWorldState {
         // for manicured tries and composting, collect branches here (not implemented)
         for (final Map.Entry<StorageSlotKey, DiffBasedValue<UInt256>> storageUpdate :
                 storageAccountUpdate.entrySet()) {
-            final Hash slotHash = storageUpdate.getKey().getSlotHash();
-
             if (!storageUpdate.getValue().isUnchanged()) {
                 final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
                 if (updatedStorage == null) {
@@ -395,19 +394,17 @@ public class VerkleWorldState extends DiffBasedWorldState {
     @Override
     public Account get(final Address address) {
         final Bytes preloadedStemId = verklePreloader.getStemPreloader().preloadAccountStemId(address);
-        final Optional<List<Bytes32>> stem = verklePreloader.getTrieNodePreLoader().getDecodedStem(preloadedStemId);
-        return stem.map(
-                        values -> {
-                            return new VerkleAccount(
-                                    accumulator,
-                                    address,
-                                    address.addressHash(),
-                                    SuffixTreeDecoder.decodeNonce(values.get(0)),
-                                    Wei.of(SuffixTreeDecoder.decodeBalance(values.get(0))),
-                                            SuffixTreeDecoder.decodeCodeSize(values.get(0)),
-                                    Hash.wrap(values.get(1)),
-                                    true);
-                        })
+        final Optional<List<Optional<Bytes32>>> stem = verklePreloader.getTrieNodePreLoader().getDecodedStem(preloadedStemId);
+        return stem.flatMap(
+                        values -> values.getFirst().map(basicDataLeaf -> new VerkleAccount(
+                                accumulator,
+                                address,
+                                address.addressHash(),
+                                SuffixTreeDecoder.decodeNonce(basicDataLeaf),
+                                Wei.of(SuffixTreeDecoder.decodeBalance(basicDataLeaf)),
+                                SuffixTreeDecoder.decodeCodeSize(basicDataLeaf),
+                                Hash.wrap(values.get(1).orElse(Hash.EMPTY_TRIE_HASH)),
+                                true)))
                 .orElse(null);
     }
 
@@ -427,9 +424,9 @@ public class VerkleWorldState extends DiffBasedWorldState {
             final Address address, final StorageSlotKey storageSlotKey) {
         final Bytes preloadSlotStemId =
                 verklePreloader.getStemPreloader().preloadSlotStemId(address, storageSlotKey);
-        final Optional<List<Bytes32>> stem =
+        final Optional<List<Optional<Bytes32>>> stem =
                 verklePreloader.getTrieNodePreLoader().getDecodedStem(preloadSlotStemId);
-        return stem.map(
+        return stem.flatMap(
                 values ->
                         values.get(
                                 verklePreloader
@@ -445,7 +442,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
     @Override
     public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
-        throw new UnsupportedOperationException("getAllAccountStorage not yet available for verkle");
+        return Collections.emptyMap();
     }
 
     private VerkleTrie createTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {
@@ -479,4 +476,6 @@ public class VerkleWorldState extends DiffBasedWorldState {
     protected Hash getEmptyTrieHash() {
         return Hash.wrap(Bytes32.ZERO);
     }
+
 }
+

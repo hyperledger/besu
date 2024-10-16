@@ -105,7 +105,7 @@ public class VerkleAccount extends DiffBasedAccount {
 
   @Override
   public Hash getStorageRoot() {
-    throw new RuntimeException("No storage root with Verkle trie.");
+    return Hash.EMPTY_TRIE_HASH;
   }
 
   @Override

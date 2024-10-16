@@ -76,7 +76,7 @@ public class TrieNodePreLoader implements StorageSubscriber {
     }
   }
 
-  public Optional<List<Bytes32>> getDecodedStem(final Bytes stem) {
+  public Optional<List<Optional<Bytes32>>> getDecodedStem(final Bytes stem) {
     return getStem(stem).map(this::decodeStemNode);
   }
 
@@ -89,7 +89,7 @@ public class TrieNodePreLoader implements StorageSubscriber {
     reset();
   }
 
-  private List<Bytes32> decodeStemNode(final Bytes encodedValues) {
+  private List<Optional<Bytes32>> decodeStemNode(final Bytes encodedValues) {
     RLPInput input = new BytesValueRLPInput(encodedValues, false);
     input.enterList();
     input.skipNext(); // depth
@@ -98,8 +98,14 @@ public class TrieNodePreLoader implements StorageSubscriber {
     input.skipNext(); // rightCommitment
     input.skipNext(); // leftScalar
     input.skipNext(); // rightScalar
-    return input.readList(
-            rlpInput -> Bytes32.leftPad(rlpInput.readBytes()));
+    return input.readList(rlpInput -> {
+      Bytes bytes = rlpInput.readBytes();
+      if(bytes.isEmpty()){
+        return Optional.empty();
+      } else {
+        return Optional.of(Bytes32.leftPad(bytes));
+      }
+    });
   }
 
 }
