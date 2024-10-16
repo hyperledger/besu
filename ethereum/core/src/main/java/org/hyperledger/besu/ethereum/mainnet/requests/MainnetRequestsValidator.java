@@ -17,15 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.RequestType;
 
 public class MainnetRequestsValidator {
-  public static RequestsValidatorCoordinator pragueRequestsValidator(
-      final RequestContractAddresses requestContractAddresses) {
-    return new RequestsValidatorCoordinator.Builder()
-        .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
-        .addValidator(RequestType.CONSOLIDATION, new ConsolidationRequestValidator())
-        .addValidator(
-            RequestType.DEPOSIT,
-            new DepositRequestValidator(requestContractAddresses.getDepositContractAddress()))
-        .build();
+
+  public static RequestsValidator pragueRequestsValidator() {
+    return new RequestsValidator();
   }
 
   public static RequestProcessorCoordinator pragueRequestsProcessors(

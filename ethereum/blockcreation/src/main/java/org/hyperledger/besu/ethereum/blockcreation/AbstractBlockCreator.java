@@ -304,7 +304,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   withdrawalsCanBeProcessed
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
-              .requestsRoot(maybeRequests.map(BodyValidation::requestsRoot).orElse(null));
+              .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null));
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
       }
@@ -316,8 +316,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Withdrawal>> withdrawals =
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
       final BlockBody blockBody =
-          new BlockBody(
-              transactionResults.getSelectedTransactions(), ommers, withdrawals, maybeRequests);
+          new BlockBody(transactionResults.getSelectedTransactions(), ommers, withdrawals);
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);

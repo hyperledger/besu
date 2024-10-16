@@ -15,25 +15,16 @@
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BLSPublicKey;
-import org.hyperledger.besu.datatypes.GWei;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
+import org.hyperledger.besu.datatypes.RequestType;
+import org.hyperledger.besu.ethereum.core.Request;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
 
 /** Processor for handling withdrawal requests. */
-public class WithdrawalRequestProcessor
-    extends AbstractSystemCallRequestProcessor<WithdrawalRequest> {
+public class WithdrawalRequestProcessor extends AbstractSystemCallRequestProcessor<Request> {
 
   public static final Address DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS =
-      Address.fromHexString("0x00A3ca265EBcb825B45F985A16CEFB49958cE017");
-
-  private static final int ADDRESS_BYTES = 20;
-  private static final int PUBLIC_KEY_BYTES = 48;
-  private static final int AMOUNT_BYTES = 8;
-  private static final int WITHDRAWAL_REQUEST_BYTES_SIZE =
-      ADDRESS_BYTES + PUBLIC_KEY_BYTES + AMOUNT_BYTES;
+      Address.fromHexString("0x09FC772D0857550724B07B850A4323F39112AAAA");
 
   private final Address withdrawalRequestContractAddress;
 
@@ -52,28 +43,13 @@ public class WithdrawalRequestProcessor
   }
 
   /**
-   * Gets the size of the bytes representing a single withdrawal request.
-   *
-   * @return The size of the bytes representing a single withdrawal request.
-   */
-  @Override
-  protected int getRequestBytesSize() {
-    return WITHDRAWAL_REQUEST_BYTES_SIZE;
-  }
-
-  /**
    * Parses a single withdrawal request from the provided bytes.
    *
    * @param requestBytes The bytes representing a single withdrawal request.
-   * @return A parsed {@link WithdrawalRequest} object.
+   * @return A parsed {@link Request} object.
    */
   @Override
-  protected WithdrawalRequest parseRequest(final Bytes requestBytes) {
-    final Address sourceAddress = Address.wrap(requestBytes.slice(0, ADDRESS_BYTES));
-    final BLSPublicKey validatorPublicKey =
-        BLSPublicKey.wrap(requestBytes.slice(ADDRESS_BYTES, PUBLIC_KEY_BYTES));
-    final UInt64 amount =
-        UInt64.fromBytes(requestBytes.slice(ADDRESS_BYTES + PUBLIC_KEY_BYTES, AMOUNT_BYTES));
-    return new WithdrawalRequest(sourceAddress, validatorPublicKey, GWei.of(amount));
+  protected Request parseRequest(final Bytes requestBytes) {
+    return new Request(RequestType.WITHDRAWAL, requestBytes);
   }
 }

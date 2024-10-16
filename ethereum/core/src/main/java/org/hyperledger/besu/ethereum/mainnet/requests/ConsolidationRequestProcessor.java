@@ -15,20 +15,15 @@
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BLSPublicKey;
-import org.hyperledger.besu.ethereum.core.ConsolidationRequest;
+import org.hyperledger.besu.datatypes.RequestType;
+import org.hyperledger.besu.ethereum.core.Request;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class ConsolidationRequestProcessor
-    extends AbstractSystemCallRequestProcessor<ConsolidationRequest> {
+public class ConsolidationRequestProcessor extends AbstractSystemCallRequestProcessor<Request> {
   public static final Address CONSOLIDATION_REQUEST_CONTRACT_ADDRESS =
-      Address.fromHexString("0x00b42dbF2194e931E80326D950320f7d9Dbeac02");
+      Address.fromHexString("0x01ABEA29659E5E97C95107F20BB753CD3E09BBBB");
 
-  private static final int ADDRESS_BYTES = 20;
-  private static final int PUBLIC_KEY_BYTES = 48;
-  private static final int CONSOLIDATION_REQUEST_BYTES_SIZE =
-      ADDRESS_BYTES + PUBLIC_KEY_BYTES + PUBLIC_KEY_BYTES;
   private final Address consolidationRequestContractAddress;
 
   public ConsolidationRequestProcessor(final Address consolidationRequestContractAddress) {
@@ -46,28 +41,13 @@ public class ConsolidationRequestProcessor
   }
 
   /**
-   * Gets the size of the bytes representing a single consolidation request.
-   *
-   * @return The size of the bytes representing a single consolidation request.
-   */
-  @Override
-  protected int getRequestBytesSize() {
-    return CONSOLIDATION_REQUEST_BYTES_SIZE;
-  }
-
-  /**
    * Parses a single consolidation request from the provided bytes.
    *
    * @param requestBytes The bytes representing a single consolidation request.
-   * @return A parsed {@link ConsolidationRequest} object.
+   * @return A parsed {@link Request} object.
    */
   @Override
-  protected ConsolidationRequest parseRequest(final Bytes requestBytes) {
-    final Address sourceAddress = Address.wrap(requestBytes.slice(0, ADDRESS_BYTES));
-    final BLSPublicKey sourcePublicKey =
-        BLSPublicKey.wrap(requestBytes.slice(ADDRESS_BYTES, PUBLIC_KEY_BYTES));
-    final BLSPublicKey targetPublicKey =
-        BLSPublicKey.wrap(requestBytes.slice(ADDRESS_BYTES + PUBLIC_KEY_BYTES, PUBLIC_KEY_BYTES));
-    return new ConsolidationRequest(sourceAddress, sourcePublicKey, targetPublicKey);
+  protected Request parseRequest(final Bytes requestBytes) {
+    return new Request(RequestType.CONSOLIDATION, requestBytes);
   }
 }

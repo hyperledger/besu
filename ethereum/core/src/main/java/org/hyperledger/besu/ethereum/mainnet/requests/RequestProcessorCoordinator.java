@@ -41,12 +41,10 @@ public class RequestProcessorCoordinator {
     List<Request> requests = null;
     for (RequestProcessor requestProcessor : processors.values()) {
       var r = requestProcessor.process(context);
-      if (r.isPresent()) {
-        if (requests == null) {
-          requests = new ArrayList<>();
-        }
-        requests.addAll(r.get());
+      if (requests == null) {
+        requests = new ArrayList<>();
       }
+      requests.add(r);
     }
     return Optional.ofNullable(requests);
   }

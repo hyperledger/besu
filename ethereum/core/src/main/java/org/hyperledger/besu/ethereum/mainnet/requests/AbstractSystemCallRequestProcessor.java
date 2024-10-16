@@ -18,8 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.mainnet.SystemCallProcessor;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -39,7 +37,7 @@ public abstract class AbstractSystemCallRequestProcessor<T extends Request>
    * @return An {@link Optional} containing a list of {@link T} objects if any are found
    */
   @Override
-  public Optional<List<? extends Request>> process(final ProcessRequestContext context) {
+  public Request process(final ProcessRequestContext context) {
 
     SystemCallProcessor systemCallProcessor =
         new SystemCallProcessor(context.protocolSpec().getTransactionProcessor());
@@ -52,30 +50,7 @@ public abstract class AbstractSystemCallRequestProcessor<T extends Request>
             context.operationTracer(),
             context.blockHashLookup());
 
-    List<T> requests = parseRequests(systemCallOutput);
-    return Optional.ofNullable(requests);
-  }
-
-  /**
-   * Parses the provided bytes into a list of {@link T} objects.
-   *
-   * @param bytes The bytes representing requests.
-   * @return A list of parsed {@link T} objects.
-   */
-  protected List<T> parseRequests(final Bytes bytes) {
-    if (bytes == null) {
-      return null;
-    }
-    final List<T> requests = new ArrayList<>();
-    if (bytes.isEmpty()) {
-      return requests;
-    }
-    int count = bytes.size() / getRequestBytesSize();
-    for (int i = 0; i < count; i++) {
-      Bytes requestBytes = bytes.slice(i * getRequestBytesSize(), getRequestBytesSize());
-      requests.add(parseRequest(requestBytes));
-    }
-    return requests;
+    return parseRequest(systemCallOutput == null ? Bytes.EMPTY : systemCallOutput);
   }
 
   /**
@@ -92,11 +67,4 @@ public abstract class AbstractSystemCallRequestProcessor<T extends Request>
    * @return The call address.
    */
   protected abstract Address getCallAddress();
-
-  /**
-   * Gets the size of the bytes representing a single request.
-   *
-   * @return The size of the bytes representing a single request.
-   */
-  protected abstract int getRequestBytesSize();
 }
