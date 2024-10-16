@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
@@ -56,7 +57,9 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
     this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
 
     requiredBlockchainHeight =
-        direction == Direction.FORWARD ? blockNumber + (long) (maxHeaders - 1) * skip : blockNumber;
+        direction == Direction.FORWARD
+            ? blockNumber + (long) (maxHeaders - 1) * skip + 1
+            : blockNumber;
   }
 
   public GetHeadersFromPeerTask(
@@ -99,7 +102,11 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   }
 
   @Override
-  public List<BlockHeader> parseResponse(final MessageData messageData) {
+  public List<BlockHeader> parseResponse(final MessageData messageData)
+      throws InvalidPeerTaskResponseException {
+    if (messageData == null) {
+      throw new InvalidPeerTaskResponseException();
+    }
     return BlockHeadersMessage.readFrom(messageData).getHeaders(protocolSchedule);
   }
 

@@ -131,24 +131,33 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     }
 
     if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      do {
-        PeerTaskExecutorResult<List<BlockHeader>> taskResult = requestHeadersUsingPeerTaskSystem();
-        if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
-          result.completeExceptionally(new PeerDisconnectedException(peer));
-        } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-            || taskResult.result().isEmpty()) {
-          result.completeExceptionally(
-              new RuntimeException("Peer failed to successfully return requested block headers"));
-        }
-        processHeaders(taskResult.result().get());
-        if (maximumPossibleCommonAncestorNumber == minimumPossibleCommonAncestorNumber) {
-          // Bingo, we found our common ancestor.
-          result.complete(commonAncestorCandidate);
-        } else if (maximumPossibleCommonAncestorNumber < BlockHeader.GENESIS_BLOCK_NUMBER
-            && !result.isDone()) {
-          result.completeExceptionally(new IllegalStateException("No common ancestor."));
-        }
-      } while (!result.isDone());
+      ethContext
+          .getScheduler()
+          .scheduleServiceTask(
+              () -> {
+                do {
+                  PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                      requestHeadersUsingPeerTaskSystem();
+                  if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
+                    result.completeExceptionally(new PeerDisconnectedException(peer));
+                    continue;
+                  } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                      || taskResult.result().isEmpty()) {
+                    result.completeExceptionally(
+                        new RuntimeException(
+                            "Peer failed to successfully return requested block headers"));
+                    continue;
+                  }
+                  processHeaders(taskResult.result().get());
+                  if (maximumPossibleCommonAncestorNumber == minimumPossibleCommonAncestorNumber) {
+                    // Bingo, we found our common ancestor.
+                    result.complete(commonAncestorCandidate);
+                  } else if (maximumPossibleCommonAncestorNumber < BlockHeader.GENESIS_BLOCK_NUMBER
+                      && !result.isDone()) {
+                    result.completeExceptionally(new IllegalStateException("No common ancestor."));
+                  }
+                } while (!result.isDone());
+              });
 
     } else {
       requestHeaders()
