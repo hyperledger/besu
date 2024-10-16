@@ -44,6 +44,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -435,7 +436,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
   @Override
   public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
-    throw new UnsupportedOperationException("getAllAccountStorage not yet available for verkle");
+    return Collections.emptyMap();
   }
 
   private VerkleTrie createTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {
