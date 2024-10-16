@@ -530,7 +530,10 @@ public class T8nExecutor {
       Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
 
       resultObject.put("requestsHash", requestsHash.toHexString());
-      // TODO JF add requests to resultObject?
+      ArrayNode requests = resultObject.putArray("requests");
+      maybeRequests
+          .orElseGet(List::of)
+          .forEach(request -> requests.add(request.getData().toHexString()));
     }
 
     worldState.persist(blockHeader);
