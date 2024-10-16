@@ -231,10 +231,14 @@ public class T8nExecutor {
                 final long authorizationNonce =
                     Bytes.fromHexStringLenient(entryAsJson.get("nonce").textValue()).toLong();
 
-                final byte authorizationV =
+                final BigInteger authorizationV =
                     Bytes.fromHexStringLenient(entryAsJson.get("v").textValue())
-                        .toUnsignedBigInteger()
-                        .byteValueExact();
+                        .toUnsignedBigInteger();
+                if (authorizationV.compareTo(BigInteger.valueOf(256)) >= 0) {
+                  throw new IllegalArgumentException(
+                      "Invalid authorizationV value. Must be less than 256");
+                }
+
                 final BigInteger authorizationR =
                     Bytes.fromHexStringLenient(entryAsJson.get("r").textValue())
                         .toUnsignedBigInteger();
@@ -243,7 +247,7 @@ public class T8nExecutor {
                         .toUnsignedBigInteger();
 
                 final SECPSignature authorizationSignature =
-                    new SECPSignature(authorizationR, authorizationS, authorizationV);
+                    new SECPSignature(authorizationR, authorizationS, authorizationV.byteValue());
 
                 authorizations.add(
                     new org.hyperledger.besu.ethereum.core.CodeDelegation(

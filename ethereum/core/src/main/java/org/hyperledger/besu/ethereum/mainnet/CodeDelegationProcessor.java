@@ -32,9 +32,12 @@ public class CodeDelegationProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(CodeDelegationProcessor.class);
 
   private final Optional<BigInteger> maybeChainId;
+  private final BigInteger halfCurveOrder;
 
-  public CodeDelegationProcessor(final Optional<BigInteger> maybeChainId) {
+  public CodeDelegationProcessor(
+      final Optional<BigInteger> maybeChainId, final BigInteger halfCurveOrder) {
     this.maybeChainId = maybeChainId;
+    this.halfCurveOrder = halfCurveOrder;
   }
 
   /**
@@ -93,6 +96,17 @@ public class CodeDelegationProcessor {
 
     if (codeDelegation.nonce() == MAX_NONCE) {
       LOG.trace("Nonce of code delegation must be less than 2^64-1");
+      return;
+    }
+
+    if (codeDelegation.signature().getS().compareTo(halfCurveOrder) > 0) {
+      LOG.trace(
+          "Invalid signature for code delegation. S value must be less or equal than the half curve order.");
+      return;
+    }
+
+    if (codeDelegation.signature().getRecId() != 0 && codeDelegation.signature().getRecId() != 1) {
+      LOG.trace("Invalid signature for code delegation. RecId must be 0 or 1.");
       return;
     }
 

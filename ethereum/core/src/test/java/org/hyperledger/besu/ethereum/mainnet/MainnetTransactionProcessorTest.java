@@ -89,7 +89,7 @@ class MainnetTransactionProcessorTest {
         MAX_STACK_SIZE,
         FeeMarket.legacy(),
         CoinbaseFeePriceCalculator.frontier(),
-        new CodeDelegationProcessor(Optional.of(BigInteger.ONE)));
+        new CodeDelegationProcessor(Optional.of(BigInteger.ONE), BigInteger.TEN));
   }
 
   @Test

@@ -49,7 +49,7 @@ public class CodeDelegationTransactionEncoder {
       final CodeDelegation payload, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     encodeAuthorizationDetails(payload, rlpOutput);
-    rlpOutput.writeUnsignedByte(payload.signature().getRecId());
+    rlpOutput.writeUnsignedByte(payload.signature().getRecId() & 0xFF);
     rlpOutput.writeBigIntegerScalar(payload.signature().getR());
     rlpOutput.writeBigIntegerScalar(payload.signature().getS());
     rlpOutput.endList();

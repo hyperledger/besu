@@ -112,7 +112,10 @@ public class EVMWorldUpdater implements WorldUpdater {
 
   @Override
   public Optional<WorldUpdater> parentUpdater() {
-    return rootWorldUpdater.parentUpdater();
+    return rootWorldUpdater.parentUpdater().isPresent()
+        ? Optional.of(
+            new EVMWorldUpdater(rootWorldUpdater.parentUpdater().get(), delegatedCodeService))
+        : Optional.empty();
   }
 
   @Override
