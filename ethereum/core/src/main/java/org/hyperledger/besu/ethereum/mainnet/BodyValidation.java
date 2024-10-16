@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.crypto.Hash.sha256;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -94,17 +96,18 @@ public final class BodyValidation {
    * @return the requests root
    */
   public static Hash requestsHash(final List<Request> requests) {
-    final Bytes concatenatedHashes =
-        Bytes.concatenate(
-            requests.stream()
-                .map(
-                    request ->
-                        keccak256(
-                            Bytes.concatenate(
-                                Bytes.of(request.getType().getSerializedType()),
-                                request.getData())))
-                .toArray(Bytes[]::new));
-    return Hash.wrap(keccak256(concatenatedHashes));
+    List<Bytes> requestHashes = new ArrayList<>();
+    IntStream.range(0, requests.size())
+        .forEach(
+            i -> {
+              final Request request = requests.get(i);
+              final Bytes requestBytes =
+                  Bytes.concatenate(
+                      Bytes.of(request.getType().getSerializedType()), request.getData());
+              requestHashes.add(sha256(requestBytes));
+            });
+
+    return Hash.wrap(sha256(Bytes.wrap(requestHashes)));
   }
 
   /**
