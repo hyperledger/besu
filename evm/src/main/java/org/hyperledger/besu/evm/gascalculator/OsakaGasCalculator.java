@@ -26,13 +26,13 @@ import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
  *   <LI>TBD
  * </UL>
  */
-public class PragueEOFGasCalculator extends PragueGasCalculator {
+public class OsakaGasCalculator extends PragueGasCalculator {
 
   static final long MIN_RETAINED_GAS = 5_000;
   static final long MIN_CALLEE_GAS = 2300;
 
   /** Instantiates a new Prague Gas Calculator. */
-  public PragueEOFGasCalculator() {
+  public OsakaGasCalculator() {
     this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
   }
 
@@ -41,7 +41,7 @@ public class PragueEOFGasCalculator extends PragueGasCalculator {
    *
    * @param maxPrecompile the max precompile
    */
-  protected PragueEOFGasCalculator(final int maxPrecompile) {
+  protected OsakaGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
   }
 
