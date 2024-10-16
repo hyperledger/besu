@@ -62,25 +62,25 @@ public class PeerTaskExecutor {
     partialSuccessCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.PEERS,
-            "partial_success_counter",
+            "partial_success_total",
             "Counter of the number of partial success occurred",
             "taskName");
     timeoutCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.PEERS,
-            "timeout_counter",
+            "timeout_total",
             "Counter of the number of timeouts occurred",
             "taskName");
     invalidResponseCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.PEERS,
-            "invalid_response_counter",
+            "invalid_response_total",
             "Counter of the number of invalid responses received",
             "taskName");
     internalExceptionCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.PEERS,
-            "internal_exception_counter",
+            "internal_exception_total",
             "Counter of the number of internal exceptions occurred",
             "taskName");
     inflightRequestGauge =
