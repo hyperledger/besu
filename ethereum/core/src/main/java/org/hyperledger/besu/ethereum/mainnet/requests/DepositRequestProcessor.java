@@ -38,12 +38,12 @@ public class DepositRequestProcessor implements RequestProcessor {
   }
 
   @Override
-  public Optional<Request> process(final ProcessRequestContext context) {
+  public Request process(final ProcessRequestContext context) {
     if (depositContractAddress.isEmpty()) {
-      return Optional.empty();
+      throw new IllegalStateException("Deposit contract address is not set.");
     }
     Optional<Bytes> depositRequests = getDepositRequestData(context.transactionReceipts());
-    return depositRequests.map(requestData -> new Request(RequestType.DEPOSIT, requestData));
+    return new Request(RequestType.DEPOSIT, depositRequests.orElse(Bytes.EMPTY));
   }
 
   @VisibleForTesting

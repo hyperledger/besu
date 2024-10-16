@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.ethereum.core.Request;
 
-import java.util.Optional;
-
 public interface RequestProcessor {
-  Optional<Request> process(final ProcessRequestContext context);
+  Request process(final ProcessRequestContext context);
 }

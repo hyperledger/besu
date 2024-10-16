@@ -37,7 +37,7 @@ public abstract class AbstractSystemCallRequestProcessor<T extends Request>
    * @return An {@link Optional} containing a list of {@link T} objects if any are found
    */
   @Override
-  public Optional<Request> process(final ProcessRequestContext context) {
+  public Request process(final ProcessRequestContext context) {
 
     SystemCallProcessor systemCallProcessor =
         new SystemCallProcessor(context.protocolSpec().getTransactionProcessor());
@@ -50,11 +50,7 @@ public abstract class AbstractSystemCallRequestProcessor<T extends Request>
             context.operationTracer(),
             context.blockHashLookup());
 
-    if (systemCallOutput == null) {
-      return Optional.empty();
-    }
-
-    return Optional.ofNullable(parseRequest(systemCallOutput));
+    return parseRequest(systemCallOutput == null ? Bytes.EMPTY : systemCallOutput);
   }
 
   /**
