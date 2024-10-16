@@ -56,37 +56,37 @@ public class PeerTaskExecutor {
     requestTimer =
         metricsSystem.createLabelledTimer(
             BesuMetricCategory.PEERS,
-            "PeerTaskExecutor:RequestTime",
+            "request_time",
             "Time taken to send a request and receive a response",
             "taskName");
     partialSuccessCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.PEERS,
-            "PeerTaskExecutor:PartialSuccessCounter",
+            "partial_success_counter",
             "Counter of the number of partial success occurred",
             "taskName");
     timeoutCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.PEERS,
-            "PeerTaskExecutor:TimeoutCounter",
+            "timeout_counter",
             "Counter of the number of timeouts occurred",
             "taskName");
     invalidResponseCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.PEERS,
-            "PeerTaskExecutor:InvalidResponseCounter",
+            "invalid_response_counter",
             "Counter of the number of invalid responses received",
             "taskName");
     internalExceptionCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.PEERS,
-            "PeerTaskExecutor:InternalExceptionCounter",
+            "internal_exception_counter",
             "Counter of the number of internal exceptions occurred",
             "taskName");
     inflightRequestGauge =
         metricsSystem.createLabelledGauge(
             BesuMetricCategory.PEERS,
-            "PeerTaskExecutor:InflightRequestGauge",
+            "inflight_request_gauge",
             "Gauge of the number of inflight requests",
             "taskName");
     inflightRequestCountByClassName = new ConcurrentHashMap<>();
