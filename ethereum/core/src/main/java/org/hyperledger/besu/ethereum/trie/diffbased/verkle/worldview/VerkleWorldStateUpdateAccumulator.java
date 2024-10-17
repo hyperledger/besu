@@ -30,8 +30,10 @@ import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+@SuppressWarnings("unchecked")
 public class VerkleWorldStateUpdateAccumulator
     extends DiffBasedWorldStateUpdateAccumulator<VerkleAccount> {
 
@@ -39,8 +41,9 @@ public class VerkleWorldStateUpdateAccumulator
       final DiffBasedWorldView world,
       final Consumer<DiffBasedValue<VerkleAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
+      final Consumer<Bytes> codePreloader,
       final EvmConfiguration evmConfiguration) {
-    super(world, accountPreloader, storagePreloader, evmConfiguration);
+    super(world, accountPreloader, storagePreloader, codePreloader, evmConfiguration);
   }
 
   @Override
@@ -50,6 +53,7 @@ public class VerkleWorldStateUpdateAccumulator
             wrappedWorldView(),
             getAccountPreloader(),
             getStoragePreloader(),
+            getCodePreloader(),
             getEvmConfiguration());
     copy.cloneFromUpdater(this);
     return copy;
@@ -72,6 +76,7 @@ public class VerkleWorldStateUpdateAccumulator
       final Address address,
       final AccountValue stateTrieAccount,
       final boolean mutable) {
+    System.out.println("create account " + stateTrieAccount.getClass());
     return new VerkleAccount(context, address, stateTrieAccount, mutable);
   }
 
@@ -82,11 +87,8 @@ public class VerkleWorldStateUpdateAccumulator
       final Hash addressHash,
       final long nonce,
       final Wei balance,
-      final Hash storageRoot,
-      final Hash codeHash,
       final boolean mutable) {
-    return new VerkleAccount(
-        context, address, addressHash, nonce, balance, storageRoot, codeHash, mutable);
+    return new VerkleAccount(context, address, addressHash, nonce, balance, 0, Hash.EMPTY, mutable);
   }
 
   @Override

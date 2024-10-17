@@ -386,7 +386,7 @@ public class MainnetTransactionProcessor {
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
       final long accessEventCost =
-          gasCalculator.computeBaseAccessEventsCost(accessWitness, transaction, sender);
+          gasCalculator.computeBaseAccessEventsCost(accessWitness, transaction);
       final long codeDelegationGas =
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
       final long gasAvailable =

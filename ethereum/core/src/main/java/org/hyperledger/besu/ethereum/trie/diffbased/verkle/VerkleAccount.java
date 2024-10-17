@@ -22,10 +22,8 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
-import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
@@ -36,7 +34,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class VerkleAccount extends DiffBasedAccount {
-  private Hash storageRoot; // TODO REMOVE AS USELESS
+
+  private final long codeSize;
   private int hashCode;
 
   public VerkleAccount(
@@ -45,11 +44,11 @@ public class VerkleAccount extends DiffBasedAccount {
       final Hash addressHash,
       final long nonce,
       final Wei balance,
-      final Hash storageRoot,
+      final long codeSize,
       final Hash codeHash,
       final boolean mutable) {
     super(context, address, addressHash, nonce, balance, codeHash, mutable);
-    this.storageRoot = storageRoot;
+    this.codeSize = codeSize;
   }
 
   public VerkleAccount(
@@ -58,7 +57,7 @@ public class VerkleAccount extends DiffBasedAccount {
       final AccountValue stateTrieAccount,
       final boolean mutable) {
     super(context, address, stateTrieAccount, mutable);
-    this.storageRoot = stateTrieAccount.getStorageRoot();
+    this.codeSize = stateTrieAccount.getCodeSize().orElse(0L);
   }
 
   public VerkleAccount(final VerkleAccount toCopy) {
@@ -68,7 +67,7 @@ public class VerkleAccount extends DiffBasedAccount {
   public VerkleAccount(
       final VerkleAccount toCopy, final DiffBasedWorldView context, final boolean mutable) {
     super(toCopy, context, mutable);
-    this.storageRoot = toCopy.storageRoot;
+    this.codeSize = toCopy.codeSize;
   }
 
   public VerkleAccount(
@@ -81,11 +80,11 @@ public class VerkleAccount extends DiffBasedAccount {
         tracked.getBalance(),
         tracked.getCodeHash(),
         true);
-    this.storageRoot = Hash.EMPTY_TRIE_HASH;
+    this.codeSize = tracked.getCodeSize().orElse(0L);
     updatedStorage.putAll(tracked.getUpdatedStorage());
   }
 
-  public static VerkleAccount fromRLP(
+  public static VerkleAccount fromLegacyFormat(
       final DiffBasedWorldView context,
       final Address address,
       final Bytes encoded,
@@ -94,46 +93,38 @@ public class VerkleAccount extends DiffBasedAccount {
     final RLPInput in = RLP.input(encoded);
     in.enterList();
 
-    final long nonce = in.readLongScalar();
     final Wei balance = Wei.of(in.readUInt256Scalar());
-    final Hash storageRoot = Hash.wrap(in.readBytes32());
+    final long nonce = in.readLongScalar();
     final Hash codeHash = Hash.wrap(in.readBytes32());
-
+    final long codeSize = in.readLongScalar();
     in.leaveList();
 
     return new VerkleAccount(
-        context, address, address.addressHash(), nonce, balance, storageRoot, codeHash, mutable);
+        context, address, address.addressHash(), nonce, balance, codeSize, codeHash, mutable);
+  }
+
+  @Override
+  public Hash getStorageRoot() {
+    return Hash.EMPTY_TRIE_HASH;
   }
 
   @Override
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
-    return ((BonsaiWorldStateKeyValueStorage) context.getWorldStateStorage())
-        .storageEntriesFrom(this.addressHash, startKeyHash, limit);
+    throw new RuntimeException(
+        "The method storageEntriesFrom is not supported when using Verkle tries. Verkle tries manage storage differently");
   }
 
   @Override
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-    out.writeLongScalar(nonce);
     out.writeUInt256Scalar(balance);
-    out.writeBytes(storageRoot);
+    out.writeLongScalar(nonce);
     out.writeBytes(codeHash);
+    out.writeLongScalar(codeSize);
 
     out.endList();
-  }
-
-  @Override
-  public Hash getStorageRoot() {
-    return storageRoot;
-  }
-
-  public void setStorageRoot(final Hash storageRoot) {
-    if (immutable) {
-      throw new ModificationNotAllowedException();
-    }
-    this.storageRoot = storageRoot;
   }
 
   @Override
@@ -145,8 +136,8 @@ public class VerkleAccount extends DiffBasedAccount {
         + nonce
         + ", balance="
         + balance
-        + ", storageRoot="
-        + storageRoot
+        + ", codeSize="
+        + codeSize
         + ", codeHash="
         + codeHash
         + '}';
@@ -171,8 +162,8 @@ public class VerkleAccount extends DiffBasedAccount {
       if (!Objects.equals(source.balance, account.getBalance())) {
         throw new IllegalStateException(context + ": balances differ");
       }
-      if (!Objects.equals(source.storageRoot, account.getStorageRoot())) {
-        throw new IllegalStateException(context + ": Storage Roots differ");
+      if (source.codeSize != account.getCodeSize().orElse(0L)) {
+        throw new IllegalStateException(context + ": codeSize differ");
       }
     }
   }

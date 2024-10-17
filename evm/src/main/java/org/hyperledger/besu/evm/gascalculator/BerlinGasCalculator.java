@@ -49,7 +49,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   protected static final long ACCESS_LIST_STORAGE_COST = 1900L;
 
   // redefinitions for EIP-2929
-  private static final long SLOAD_GAS = WARM_STORAGE_READ_COST;
+  protected static final long SLOAD_GAS = WARM_STORAGE_READ_COST;
 
   /** The constant SSTORE_RESET_GAS. */
   protected static final long SSTORE_RESET_GAS = 5000L - COLD_SLOAD_COST;
