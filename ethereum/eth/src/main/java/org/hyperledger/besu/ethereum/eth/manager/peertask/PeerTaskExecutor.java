@@ -40,7 +40,6 @@ public class PeerTaskExecutor {
   private final PeerTaskRequestSender requestSender;
 
   private final LabelledMetric<OperationTimer> requestTimer;
-  private final LabelledMetric<Counter> partialSuccessCounter;
   private final LabelledMetric<Counter> timeoutCounter;
   private final LabelledMetric<Counter> invalidResponseCounter;
   private final LabelledMetric<Counter> internalExceptionCounter;
@@ -58,12 +57,6 @@ public class PeerTaskExecutor {
             BesuMetricCategory.PEERS,
             "request_time",
             "Time taken to send a request and receive a response",
-            "taskName");
-    partialSuccessCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.PEERS,
-            "partial_success_total",
-            "Counter of the number of partial success occurred",
             "taskName");
     timeoutCounter =
         metricsSystem.createLabelledCounter(
@@ -145,16 +138,18 @@ public class PeerTaskExecutor {
           inflightRequestCountForThisTaskClass.decrementAndGet();
         }
 
-        if (peerTask.isPartialSuccess(result)) {
-          partialSuccessCounter.labels(taskClassName).inc();
-          executorResult =
-              new PeerTaskExecutorResult<>(
-                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.PARTIAL_SUCCESS);
-        } else {
+        if (peerTask.isSuccess(result)) {
           peer.recordUsefulResponse();
           executorResult =
               new PeerTaskExecutorResult<>(
                   Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS);
+        } else {
+          // At this point, the result is most likely empty. Technically, this is a valid result, so
+          // we don't penalise the peer, but it's also a useless result, so we return
+          // INVALID_RESPONSE code
+          executorResult =
+              new PeerTaskExecutorResult<>(
+                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.INVALID_RESPONSE);
         }
 
       } catch (PeerNotConnected e) {
