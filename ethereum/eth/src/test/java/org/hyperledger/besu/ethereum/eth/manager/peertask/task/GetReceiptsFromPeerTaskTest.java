@@ -158,22 +158,22 @@ public class GetReceiptsFromPeerTaskTest {
   }
 
   @Test
-  public void testIsPartialSuccessForPartialSuccess() {
+  public void testIsSuccessForPartialSuccess() {
     GetReceiptsFromPeerTask task =
         new GetReceiptsFromPeerTask(Collections.emptyList(), null, () -> null);
 
-    Assertions.assertTrue(task.isPartialSuccess(Collections.emptyMap()));
+    Assertions.assertFalse(task.isSuccess(Collections.emptyMap()));
   }
 
   @Test
-  public void testIsPartialSuccessForFullSuccess() {
+  public void testIsSuccessForFullSuccess() {
     GetReceiptsFromPeerTask task =
         new GetReceiptsFromPeerTask(Collections.emptyList(), null, () -> null);
 
     Map<BlockHeader, List<TransactionReceipt>> map = new HashMap<>();
     map.put(mockBlockHeader(1), null);
 
-    Assertions.assertFalse(task.isPartialSuccess(map));
+    Assertions.assertTrue(task.isSuccess(map));
   }
 
   private BlockHeader mockBlockHeader(final long blockNumber) {

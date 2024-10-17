@@ -116,7 +116,7 @@ public class GetReceiptsFromPeerTask
   }
 
   @Override
-  public boolean isPartialSuccess(final Map<BlockHeader, List<TransactionReceipt>> result) {
-    return result.isEmpty();
+  public boolean isSuccess(final Map<BlockHeader, List<TransactionReceipt>> result) {
+    return !result.isEmpty();
   }
 }
