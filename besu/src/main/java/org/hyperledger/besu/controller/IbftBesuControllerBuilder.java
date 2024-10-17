@@ -70,7 +70,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -320,9 +319,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected BftContext createConsensusContext(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolContext protocolContext, final ProtocolSchedule protocolSchedule) {
     final BftConfigOptions ibftConfig = genesisConfigOptions.getBftConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
 
@@ -331,7 +328,10 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
     return new BftContext(
         BlockValidatorProvider.forkingValidatorProvider(
-            blockchain, epochManager, bftBlockInterface().get(), validatorOverrides),
+            protocolContext.getBlockchain(),
+            epochManager,
+            bftBlockInterface().get(),
+            validatorOverrides),
         epochManager,
         bftBlockInterface().get());
   }

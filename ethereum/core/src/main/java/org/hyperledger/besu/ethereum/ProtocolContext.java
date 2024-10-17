@@ -31,7 +31,7 @@ public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final BadBlockManager badBlockManager;
-  private final ConsensusContext consensusContext;
+  private ConsensusContext consensusContext;
 
   private Optional<Synchronizer> synchronizer;
 
@@ -41,43 +41,43 @@ public class ProtocolContext {
    *
    * @param blockchain the blockchain of the protocol context
    * @param worldStateArchive the world state archive of the protocol context
-   * @param consensusContext the consensus context of the protocol context
    * @param badBlockManager the bad block manager of the protocol context
    */
-  public ProtocolContext(
+  protected ProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ConsensusContext consensusContext,
       final BadBlockManager badBlockManager) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
-    this.consensusContext = consensusContext;
     this.synchronizer = Optional.empty();
     this.badBlockManager = badBlockManager;
   }
 
   /**
-   * Initializes a new ProtocolContext with the given blockchain, world state archive, protocol
-   * schedule, consensus context factory, and bad block manager.
+   * Create a new ProtocolContext with the given blockchain, world state archive, protocol schedule,
+   * consensus context factory, and bad block manager.
    *
    * @param blockchain the blockchain of the protocol context
    * @param worldStateArchive the world state archive of the protocol context
    * @param protocolSchedule the protocol schedule of the protocol context
    * @param consensusContextFactory the consensus context factory of the protocol context
    * @param badBlockManager the bad block manager of the protocol context
-   * @return the initialized ProtocolContext
+   * @return the new ProtocolContext
    */
-  public static ProtocolContext init(
+  public static ProtocolContext create(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory,
       final BadBlockManager badBlockManager) {
-    return new ProtocolContext(
-        blockchain,
-        worldStateArchive,
-        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule),
-        badBlockManager);
+    final var protocolContext = new ProtocolContext(blockchain, worldStateArchive, badBlockManager);
+    protocolContext.setConsensusContext(
+        consensusContextFactory.create(protocolContext, protocolSchedule));
+    return protocolContext;
+  }
+
+  private void setConsensusContext(final ConsensusContext consensusContext) {
+    this.consensusContext = consensusContext;
   }
 
   /**

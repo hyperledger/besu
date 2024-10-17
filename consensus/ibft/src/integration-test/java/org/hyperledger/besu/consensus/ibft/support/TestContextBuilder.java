@@ -350,10 +350,11 @@ public class TestContextBuilder {
             blockChain, epochManager, blockInterface);
 
     final ProtocolContext protocolContext =
-        new ProtocolContext(
+        ProtocolContext.create(
             blockChain,
             worldStateArchive,
-            new BftContext(validatorProvider, epochManager, blockInterface),
+            null,
+            (pc, ps) -> new BftContext(validatorProvider, epochManager, blockInterface),
             new BadBlockManager());
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();

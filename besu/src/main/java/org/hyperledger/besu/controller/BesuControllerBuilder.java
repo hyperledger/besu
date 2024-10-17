@@ -989,15 +989,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Create consensus context consensus context.
    *
-   * @param blockchain the blockchain
-   * @param worldStateArchive the world state archive
+   * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @return the consensus context
    */
   protected abstract ConsensusContext createConsensusContext(
-      Blockchain blockchain,
-      WorldStateArchive worldStateArchive,
-      ProtocolSchedule protocolSchedule);
+      ProtocolContext protocolContext, ProtocolSchedule protocolSchedule);
 
   /**
    * Gets supported protocol.
@@ -1066,7 +1063,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory) {
-    return ProtocolContext.init(
+    return ProtocolContext.create(
         blockchain, worldStateArchive, protocolSchedule, consensusContextFactory, badBlockManager);
   }
 

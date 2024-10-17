@@ -1247,6 +1247,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolContext().getBlockchain(),
             besuController.getProtocolContext().getWorldStateArchive(),
             besuController.getProtocolSchedule(),
+            miningParametersSupplier.get(),
             apiConfiguration.getGasCap()));
     rpcEndpointServiceImpl.init(runner.getInProcessRpcMethods());
 

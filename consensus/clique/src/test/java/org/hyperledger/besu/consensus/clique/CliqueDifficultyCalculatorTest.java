@@ -23,8 +23,6 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -32,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,9 +42,8 @@ public class CliqueDifficultyCalculatorTest {
   private Address localAddr;
 
   private final List<Address> validatorList = Lists.newArrayList();
-  private ProtocolContext cliqueProtocolContext;
+  private Supplier<ValidatorProvider> validatorProviderSupplier;
   private BlockHeaderTestFixture blockHeaderBuilder;
-  private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   @BeforeEach
   public void setup() {
@@ -56,29 +54,27 @@ public class CliqueDifficultyCalculatorTest {
 
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
-
-    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
+    validatorProviderSupplier = () -> validatorProvider;
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
 
   @Test
   public void inTurnValidatorProducesDifficultyOfTwo() {
-    final CliqueDifficultyCalculator calculator = new CliqueDifficultyCalculator(localAddr);
+    final CliqueDifficultyCalculator calculator =
+        new CliqueDifficultyCalculator(localAddr, validatorProviderSupplier);
 
     final BlockHeader parentHeader = blockHeaderBuilder.number(1).buildHeader();
 
-    assertThat(calculator.nextDifficulty(0, parentHeader, cliqueProtocolContext))
-        .isEqualTo(BigInteger.valueOf(2));
+    assertThat(calculator.nextDifficulty(0, parentHeader)).isEqualTo(BigInteger.valueOf(2));
   }
 
   @Test
   public void outTurnValidatorProducesDifficultyOfOne() {
-    final CliqueDifficultyCalculator calculator = new CliqueDifficultyCalculator(localAddr);
+    final CliqueDifficultyCalculator calculator =
+        new CliqueDifficultyCalculator(localAddr, validatorProviderSupplier);
 
     final BlockHeader parentHeader = blockHeaderBuilder.number(2).buildHeader();
 
-    assertThat(calculator.nextDifficulty(0, parentHeader, cliqueProtocolContext))
-        .isEqualTo(BigInteger.valueOf(1));
+    assertThat(calculator.nextDifficulty(0, parentHeader)).isEqualTo(BigInteger.valueOf(1));
   }
 }

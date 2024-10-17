@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -109,7 +110,12 @@ public class BlockchainReferenceTestCaseSpec {
     this.blockchain = buildBlockchain(genesisBlockHeader);
     this.sealEngine = sealEngine;
     this.protocolContext =
-        new ProtocolContext(this.blockchain, this.worldStateArchive, null, new BadBlockManager());
+        ProtocolContext.create(
+            this.blockchain,
+            this.worldStateArchive,
+            null,
+            ConsensusContextFactory.NULL,
+            new BadBlockManager());
   }
 
   public String getNetwork() {

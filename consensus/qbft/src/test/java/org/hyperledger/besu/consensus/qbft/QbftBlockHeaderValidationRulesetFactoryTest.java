@@ -44,10 +44,13 @@ import org.junit.jupiter.api.Test;
 public class QbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
-    return new ProtocolContext(
+    return ProtocolContext.create(
         null,
         null,
-        setupContextWithBftExtraDataEncoder(BftContext.class, validators, new QbftExtraDataCodec()),
+        null,
+        (pc, ps) ->
+            setupContextWithBftExtraDataEncoder(
+                BftContext.class, validators, new QbftExtraDataCodec()),
         new BadBlockManager());
   }
 

@@ -30,14 +30,12 @@ import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordina
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -173,16 +171,14 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     besuControllerBuilderSchedule.put(0L, besuControllerBuilder1);
     besuControllerBuilderSchedule.put(10L, besuControllerBuilder2);
 
-    when(besuControllerBuilder1.createConsensusContext(any(), any(), any())).thenReturn(context1);
-    when(besuControllerBuilder2.createConsensusContext(any(), any(), any())).thenReturn(context2);
+    when(besuControllerBuilder1.createConsensusContext(any(), any())).thenReturn(context1);
+    when(besuControllerBuilder2.createConsensusContext(any(), any())).thenReturn(context2);
 
     final ConsensusScheduleBesuControllerBuilder controllerBuilder =
         new ConsensusScheduleBesuControllerBuilder(besuControllerBuilderSchedule);
     final ConsensusContext consensusContext =
         controllerBuilder.createConsensusContext(
-            Mockito.mock(Blockchain.class),
-            Mockito.mock(WorldStateArchive.class),
-            Mockito.mock(ProtocolSchedule.class));
+            Mockito.mock(ProtocolContext.class), Mockito.mock(ProtocolSchedule.class));
 
     assertThat(consensusContext).isInstanceOf(MigratingContext.class);
     final MigratingContext migratingContext = (MigratingContext) consensusContext;

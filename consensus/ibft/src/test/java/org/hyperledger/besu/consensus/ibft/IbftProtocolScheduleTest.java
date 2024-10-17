@@ -123,10 +123,12 @@ public class IbftProtocolScheduleTest {
   }
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
-    return new ProtocolContext(
+    return ProtocolContext.create(
         null,
         null,
-        setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec),
+        null,
+        (pc, ps) ->
+            setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec),
         new BadBlockManager());
   }
 }

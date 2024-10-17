@@ -52,6 +52,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -99,18 +100,6 @@ public class CliqueBlockCreatorTest {
 
   @BeforeEach
   void setup() {
-    protocolSchedule =
-        CliqueProtocolSchedule.create(
-            GenesisConfigFile.DEFAULT.getConfigOptions(),
-            new ForksSchedule<>(List.of()),
-            proposerNodeKey,
-            false,
-            EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
-            new BadBlockManager(),
-            false,
-            new NoOpMetricsSystem());
-
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);
 
@@ -118,13 +107,29 @@ public class CliqueBlockCreatorTest {
     voteProvider = mock(VoteProvider.class);
     when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
+
+    protocolSchedule =
+        CliqueProtocolSchedule.create(
+            GenesisConfigFile.DEFAULT.getConfigOptions(),
+            new ForksSchedule<>(List.of()),
+            proposerNodeKey,
+            PrivacyParameters.DEFAULT,
+            false,
+            EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem(),
+            () -> validatorProvider);
+
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
 
     final Block genesis =
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
     blockchain = createInMemoryBlockchain(genesis);
     protocolContext =
-        new ProtocolContext(blockchain, stateArchive, cliqueContext, new BadBlockManager());
+        ProtocolContext.create(
+            blockchain, stateArchive, null, (pc, ps) -> cliqueContext, new BadBlockManager());
     epochManager = new EpochManager(10);
 
     // Add a block above the genesis

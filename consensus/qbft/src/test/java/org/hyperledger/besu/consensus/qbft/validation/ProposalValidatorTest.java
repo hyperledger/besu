@@ -99,10 +99,13 @@ public class ProposalValidatorTest {
   @BeforeEach
   public void setup() {
     protocolContext =
-        new ProtocolContext(
+        ProtocolContext.create(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataEncoder),
+            protocolSchedule,
+            (pc, ps) ->
+                setupContextWithBftExtraDataEncoder(
+                    BftContext.class, emptyList(), bftExtraDataEncoder),
             new BadBlockManager());
 
     // typically tests require the blockValidation to be successful

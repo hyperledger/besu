@@ -18,6 +18,7 @@ import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -43,8 +44,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-
-import com.google.common.annotations.VisibleForTesting;
+import java.util.function.Supplier;
 
 /** Defines the protocol behaviours for a blockchain using Clique. */
 public class CliqueProtocolSchedule {
@@ -68,6 +68,7 @@ public class CliqueProtocolSchedule {
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
+   * @param validatorProviderSupplier the validator provider supplier
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -80,7 +81,8 @@ public class CliqueProtocolSchedule {
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Supplier<ValidatorProvider> validatorProviderSupplier) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
 
@@ -105,6 +107,7 @@ public class CliqueProtocolSchedule {
                             forkSpec.getValue().getBlockPeriodSeconds(),
                             forkSpec.getValue().getCreateEmptyBlocks(),
                             localNodeAddress,
+                            validatorProviderSupplier,
                             builder)));
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
@@ -122,50 +125,12 @@ public class CliqueProtocolSchedule {
         .createProtocolSchedule();
   }
 
-  /**
-   * Create protocol schedule.
-   *
-   * @param config the config
-   * @param forksSchedule the transitions
-   * @param nodeKey the node key
-   * @param isRevertReasonEnabled the is revert reason enabled
-   * @param evmConfiguration the evm configuration
-   * @param miningParameters the mining parameters
-   * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
-   * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
-   *     calls
-   * @return the protocol schedule
-   */
-  @VisibleForTesting
-  public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
-      final ForksSchedule<CliqueConfigOptions> forksSchedule,
-      final NodeKey nodeKey,
-      final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
-    return create(
-        config,
-        forksSchedule,
-        nodeKey,
-        PrivacyParameters.DEFAULT,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        miningParameters,
-        badBlockManager,
-        isParallelTxProcessingEnabled,
-        metricsSystem);
-  }
-
   private static ProtocolSpecBuilder applyCliqueSpecificModifications(
       final EpochManager epochManager,
       final long secondsBetweenBlocks,
       final boolean createEmptyBlocks,
       final Address localNodeAddress,
+      final Supplier<ValidatorProvider> validatorProviderSupplier,
       final ProtocolSpecBuilder specBuilder) {
 
     return specBuilder
@@ -180,7 +145,8 @@ public class CliqueProtocolSchedule {
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
-        .difficultyCalculator(new CliqueDifficultyCalculator(localNodeAddress))
+        .difficultyCalculator(
+            new CliqueDifficultyCalculator(localNodeAddress, validatorProviderSupplier))
         .blockReward(Wei.ZERO)
         .skipZeroBlockRewards(true)
         .miningBeneficiaryCalculator(CliqueHelpers::getProposerOfBlock)

@@ -42,5 +42,8 @@ public enum GraphQLContextType {
   CHAIN_ID,
 
   /** Represents gas cap context. */
-  GAS_CAP
+  GAS_CAP,
+
+  /** Represents the transaction simulator. */
+  TRANSACTION_SIMULATOR
 }

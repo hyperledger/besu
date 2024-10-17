@@ -188,7 +188,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .thenReturn(genesisState.getBlock().getHeader().getDifficulty().plus(1L));
 
     protocolContext =
-        new ProtocolContext(blockchain, worldStateArchive, mergeContext, badBlockManager);
+        ProtocolContext.create(
+            blockchain,
+            worldStateArchive,
+            protocolSchedule,
+            (pc, ps) -> mergeContext,
+            badBlockManager);
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);

@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -66,12 +67,14 @@ public class CliqueProtocolScheduleTest {
             config,
             new ForksSchedule<>(List.of()),
             NODE_KEY,
+            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            () -> null);
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
     final ProtocolSpec tangerineWhistleSpec = protocolSchedule.getByBlockHeader(blockHeader(2));
@@ -92,12 +95,14 @@ public class CliqueProtocolScheduleTest {
                 GenesisConfigFile.DEFAULT.getConfigOptions(),
                 forksSchedule,
                 NODE_KEY,
+                PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningParameters.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                new NoOpMetricsSystem())
+                new NoOpMetricsSystem(),
+                () -> null)
             .getByBlockHeader(blockHeader(0));
 
     assertThat(homestead.getName()).isEqualTo("Frontier");
@@ -118,12 +123,14 @@ public class CliqueProtocolScheduleTest {
                     genesisConfig,
                     new ForksSchedule<>(List.of()),
                     NODE_KEY,
+                    PrivacyParameters.DEFAULT,
                     false,
                     EvmConfiguration.DEFAULT,
                     MiningParameters.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    new NoOpMetricsSystem()))
+                    new NoOpMetricsSystem(),
+                    () -> null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -140,12 +147,14 @@ public class CliqueProtocolScheduleTest {
                     genesisConfig,
                     new ForksSchedule<>(List.of()),
                     NODE_KEY,
+                    PrivacyParameters.DEFAULT,
                     false,
                     EvmConfiguration.DEFAULT,
                     MiningParameters.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    new NoOpMetricsSystem()))
+                    new NoOpMetricsSystem(),
+                    () -> null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -166,12 +175,14 @@ public class CliqueProtocolScheduleTest {
             config,
             forksSchedule,
             NODE_KEY,
+            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            () -> null);
 
     BlockHeader emptyFrontierParent =
         headerBuilder

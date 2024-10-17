@@ -101,10 +101,11 @@ public class MessageValidatorTest {
     lenient().when(mockBftCtx.as(Mockito.any())).thenReturn(mockBftCtx);
 
     protocolContext =
-        new ProtocolContext(
+        ProtocolContext.create(
             mock(MutableBlockchain.class),
             mock(WorldStateArchive.class),
-            mockBftCtx,
+            protocolSchedule,
+            (pc, ps) -> mockBftCtx,
             new BadBlockManager());
 
     lenient()

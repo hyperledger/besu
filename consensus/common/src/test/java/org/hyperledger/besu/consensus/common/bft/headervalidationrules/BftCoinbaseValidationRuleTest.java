@@ -51,8 +51,12 @@ public class BftCoinbaseValidationRuleTest {
     final List<Address> validators = Lists.newArrayList(proposerAddress);
 
     final ProtocolContext context =
-        new ProtocolContext(
-            null, null, setupContextWithValidators(validators), new BadBlockManager());
+        ProtocolContext.create(
+            null,
+            null,
+            null,
+            (pc, ps) -> setupContextWithValidators(validators),
+            new BadBlockManager());
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
@@ -72,8 +76,12 @@ public class BftCoinbaseValidationRuleTest {
     final List<Address> validators = Lists.newArrayList(otherValidatorNodeAddress);
 
     final ProtocolContext context =
-        new ProtocolContext(
-            null, null, setupContextWithValidators(validators), new BadBlockManager());
+        ProtocolContext.create(
+            null,
+            null,
+            null,
+            (pc, ps) -> setupContextWithValidators(validators),
+            new BadBlockManager());
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 

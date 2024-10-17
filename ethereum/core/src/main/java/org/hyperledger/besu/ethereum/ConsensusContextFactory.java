@@ -14,25 +14,21 @@
  */
 package org.hyperledger.besu.ethereum;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 /** The ConsensusContextFactory interface defines a method for creating a consensus context. */
 @FunctionalInterface
 public interface ConsensusContextFactory {
+  /** Helper for when you do not need a consensus context */
+  ConsensusContextFactory NULL = (pc, ps) -> null;
 
   /**
    * Creates a consensus context with the given blockchain, world state archive, and protocol
    * schedule.
    *
-   * @param blockchain the blockchain
-   * @param worldStateArchive the world state archive
+   * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @return the created consensus context
    */
-  ConsensusContext create(
-      Blockchain blockchain,
-      WorldStateArchive worldStateArchive,
-      ProtocolSchedule protocolSchedule);
+  ConsensusContext create(ProtocolContext protocolContext, ProtocolSchedule protocolSchedule);
 }

@@ -126,11 +126,13 @@ public class QbftRoundIntegrationTest {
     when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
 
     protocolContext =
-        new ProtocolContext(
+        ProtocolContext.create(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(
-                BftContext.class, emptyList(), qbftExtraDataEncoder),
+            null,
+            (pc, ps) ->
+                setupContextWithBftExtraDataEncoder(
+                    BftContext.class, emptyList(), qbftExtraDataEncoder),
             new BadBlockManager());
   }
 

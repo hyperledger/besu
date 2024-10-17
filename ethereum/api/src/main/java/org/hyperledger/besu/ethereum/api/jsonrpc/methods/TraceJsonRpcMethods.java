@@ -38,19 +38,21 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
-
   private final ApiConfiguration apiConfiguration;
   private final ProtocolContext protocolContext;
+  private final TransactionSimulator transactionSimulator;
 
   TraceJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final ApiConfiguration apiConfiguration) {
+      final ApiConfiguration apiConfiguration,
+      final TransactionSimulator transactionSimulator) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.apiConfiguration = apiConfiguration;
+    this.transactionSimulator = transactionSimulator;
   }
 
   @Override
@@ -73,29 +75,8 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new TraceTransaction(
             () -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
         new TraceBlock(protocolSchedule, blockchainQueries),
-        new TraceCall(
-            blockchainQueries,
-            protocolSchedule,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())),
-        new TraceCallMany(
-            blockchainQueries,
-            protocolSchedule,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())),
-        new TraceRawTransaction(
-            protocolSchedule,
-            blockchainQueries,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())));
+        new TraceCall(blockchainQueries, protocolSchedule, transactionSimulator),
+        new TraceCallMany(blockchainQueries, protocolSchedule, transactionSimulator),
+        new TraceRawTransaction(protocolSchedule, blockchainQueries, transactionSimulator));
   }
 }

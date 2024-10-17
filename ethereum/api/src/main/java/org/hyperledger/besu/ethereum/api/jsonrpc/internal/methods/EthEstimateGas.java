@@ -16,14 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -48,27 +44,17 @@ public class EthEstimateGas extends AbstractEstimateGas {
   }
 
   @Override
-  protected Object resultByBlockHeader(
+  protected Object simulate(
       final JsonRpcRequestContext requestContext,
-      final JsonCallParameter callParams,
-      final BlockHeader blockHeader) {
-
-    final CallParameter modifiedCallParams =
-        overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
-
-    final boolean isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
+      final CallParameter callParams,
+      final long gasLimit,
+      final TransactionSimulationFunction simulationFunction) {
 
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
-    final var transactionValidationParams =
-        ImmutableTransactionValidationParams.builder()
-            .from(TransactionValidationParams.transactionSimulator())
-            .isAllowExceedingBalance(isAllowExceedingBalance)
-            .build();
 
-    LOG.debug("Processing transaction with params: {}", modifiedCallParams);
+    LOG.debug("Processing transaction with params: {}", callParams);
     final var maybeResult =
-        transactionSimulator.process(
-            modifiedCallParams, transactionValidationParams, operationTracer, blockHeader);
+        simulationFunction.simulate(overrideGasLimit(callParams, gasLimit), operationTracer);
 
     final Optional<JsonRpcErrorResponse> maybeErrorResponse =
         validateSimulationResult(requestContext, maybeResult);
@@ -79,11 +65,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
     final var result = maybeResult.get();
     long low = result.result().getEstimateGasUsedByTransaction();
     final var lowResult =
-        transactionSimulator.process(
-            overrideGasLimitAndPrice(callParams, low),
-            transactionValidationParams,
-            operationTracer,
-            blockHeader);
+        simulationFunction.simulate(overrideGasLimit(callParams, low), operationTracer);
 
     if (lowResult.isPresent() && lowResult.get().isSuccessful()) {
       return Quantity.create(low);
@@ -95,11 +77,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
     while (low + 1 < high) {
       mid = (low + high) / 2;
       var binarySearchResult =
-          transactionSimulator.process(
-              overrideGasLimitAndPrice(callParams, mid),
-              transactionValidationParams,
-              operationTracer,
-              blockHeader);
+          simulationFunction.simulate(overrideGasLimit(callParams, mid), operationTracer);
 
       if (binarySearchResult.isEmpty() || !binarySearchResult.get().isSuccessful()) {
         low = mid;

@@ -25,23 +25,20 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 /** The Migrating protocol context. */
 public class MigratingProtocolContext extends ProtocolContext {
 
-  private final ForksSchedule<ConsensusContext> consensusContextSchedule;
+  private ForksSchedule<ConsensusContext> consensusContextSchedule;
 
   /**
    * Instantiates a new Migrating protocol context.
    *
    * @param blockchain the blockchain
    * @param worldStateArchive the world state archive
-   * @param consensusContextSchedule the consensus context schedule
    * @param badBlockManager the cache to use to keep invalid blocks
    */
-  public MigratingProtocolContext(
+  private MigratingProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ForksSchedule<ConsensusContext> consensusContextSchedule,
       final BadBlockManager badBlockManager) {
-    super(blockchain, worldStateArchive, null, badBlockManager);
-    this.consensusContextSchedule = consensusContextSchedule;
+    super(blockchain, worldStateArchive, badBlockManager);
   }
 
   /**
@@ -54,20 +51,26 @@ public class MigratingProtocolContext extends ProtocolContext {
    * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol context
    */
-  public static ProtocolContext init(
+  public static MigratingProtocolContext init(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory,
       final BadBlockManager badBlockManager) {
+    final var migratingProtocolContext =
+        new MigratingProtocolContext(blockchain, worldStateArchive, badBlockManager);
+
     final ConsensusContext consensusContext =
-        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule);
+        consensusContextFactory.create(migratingProtocolContext, protocolSchedule);
     final MigratingContext migratingContext = consensusContext.as(MigratingContext.class);
-    return new MigratingProtocolContext(
-        blockchain,
-        worldStateArchive,
-        migratingContext.getConsensusContextSchedule(),
-        badBlockManager);
+    migratingProtocolContext.setConsensusContextSchedule(
+        migratingContext.getConsensusContextSchedule());
+    return migratingProtocolContext;
+  }
+
+  private void setConsensusContextSchedule(
+      final ForksSchedule<ConsensusContext> consensusContextSchedule) {
+    this.consensusContextSchedule = consensusContextSchedule;
   }
 
   @Override

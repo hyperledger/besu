@@ -445,7 +445,7 @@ public class TestContextBuilder {
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
     final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule, 0L);
+        new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule, miningParams, 0L);
 
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
@@ -458,10 +458,11 @@ public class TestContextBuilder {
             blockChain, forksSchedule, blockValidatorProvider, transactionValidatorProvider);
 
     final ProtocolContext protocolContext =
-        new ProtocolContext(
+        ProtocolContext.create(
             blockChain,
             worldStateArchive,
-            new BftContext(validatorProvider, epochManager, blockInterface),
+            null,
+            (pc, ps) -> new BftContext(validatorProvider, epochManager, blockInterface),
             new BadBlockManager());
 
     final TransactionPoolConfiguration poolConf =

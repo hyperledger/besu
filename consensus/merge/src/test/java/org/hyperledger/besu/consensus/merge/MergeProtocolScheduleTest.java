@@ -193,8 +193,7 @@ public class MergeProtocolScheduleTest {
   private static void assertProofOfStakeConfigIsEnabled(final ProtocolSpec spec) {
     assertThat(spec.isPoS()).isTrue();
     assertThat(spec.getEvm().getOperationsUnsafe()[0x44]).isInstanceOf(PrevRanDaoOperation.class);
-    assertThat(spec.getDifficultyCalculator().nextDifficulty(-1, null, null))
-        .isEqualTo(BigInteger.ZERO);
+    assertThat(spec.getDifficultyCalculator().nextDifficulty(-1, null)).isEqualTo(BigInteger.ZERO);
     assertThat(spec.getBlockReward()).isEqualTo(Wei.ZERO);
     assertThat(spec.isSkipZeroBlockRewards()).isTrue();
     assertThat(spec.getBlockProcessor()).isInstanceOf(MainnetBlockProcessor.class);

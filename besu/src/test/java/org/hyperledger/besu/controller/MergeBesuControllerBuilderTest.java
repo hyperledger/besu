@@ -33,7 +33,7 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -55,7 +55,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKey
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -211,13 +210,13 @@ public class MergeBesuControllerBuilderTest {
 
   @Test
   public void assertConfiguredBlock() {
-    final Blockchain mockChain = mock(Blockchain.class);
+    final MutableBlockchain mockChain = mock(MutableBlockchain.class);
     when(mockChain.getBlockHeader(anyLong())).thenReturn(Optional.of(mock(BlockHeader.class)));
+    final ProtocolContext mockContext = mock(ProtocolContext.class);
+    when(mockContext.getBlockchain()).thenReturn(mockChain);
     final MergeContext mergeContext =
         besuControllerBuilder.createConsensusContext(
-            mockChain,
-            mock(WorldStateArchive.class),
-            this.besuControllerBuilder.createProtocolSchedule());
+            mockContext, this.besuControllerBuilder.createProtocolSchedule());
     assertThat(mergeContext).isNotNull();
     assertThat(mergeContext.getTerminalPoWBlock()).isPresent();
   }
@@ -228,12 +227,12 @@ public class MergeBesuControllerBuilderTest {
         GenesisState.fromConfig(
             genesisConfigFile, this.besuControllerBuilder.createProtocolSchedule());
     final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
+    final ProtocolContext mockContext = mock(ProtocolContext.class);
+    when(mockContext.getBlockchain()).thenReturn(blockchain);
     final MergeContext mergeContext =
         spy(
             besuControllerBuilder.createConsensusContext(
-                blockchain,
-                mock(WorldStateArchive.class),
-                this.besuControllerBuilder.createProtocolSchedule()));
+                mockContext, this.besuControllerBuilder.createProtocolSchedule()));
     assertThat(mergeContext).isNotNull();
     final Difficulty over = Difficulty.of(10000L);
     final Difficulty under = Difficulty.of(10L);
@@ -263,13 +262,13 @@ public class MergeBesuControllerBuilderTest {
 
   @Test
   public void assertNoFinalizedBlockWhenNotStored() {
-    final Blockchain mockChain = mock(Blockchain.class);
+    final MutableBlockchain mockChain = mock(MutableBlockchain.class);
     when(mockChain.getFinalized()).thenReturn(Optional.empty());
+    final ProtocolContext mockContext = mock(ProtocolContext.class);
+    when(mockContext.getBlockchain()).thenReturn(mockChain);
     final MergeContext mergeContext =
         besuControllerBuilder.createConsensusContext(
-            mockChain,
-            mock(WorldStateArchive.class),
-            this.besuControllerBuilder.createProtocolSchedule());
+            mockContext, this.besuControllerBuilder.createProtocolSchedule());
     assertThat(mergeContext).isNotNull();
     assertThat(mergeContext.getFinalized()).isEmpty();
   }
@@ -278,15 +277,15 @@ public class MergeBesuControllerBuilderTest {
   public void assertFinalizedBlockIsPresentWhenStored() {
     final BlockHeader finalizedHeader = finalizedBlockHeader();
 
-    final Blockchain mockChain = mock(Blockchain.class);
+    final MutableBlockchain mockChain = mock(MutableBlockchain.class);
     when(mockChain.getFinalized()).thenReturn(Optional.of(finalizedHeader.getHash()));
     when(mockChain.getBlockHeader(finalizedHeader.getHash()))
         .thenReturn(Optional.of(finalizedHeader));
+    final ProtocolContext mockContext = mock(ProtocolContext.class);
+    when(mockContext.getBlockchain()).thenReturn(mockChain);
     final MergeContext mergeContext =
         besuControllerBuilder.createConsensusContext(
-            mockChain,
-            mock(WorldStateArchive.class),
-            this.besuControllerBuilder.createProtocolSchedule());
+            mockContext, this.besuControllerBuilder.createProtocolSchedule());
     assertThat(mergeContext).isNotNull();
     assertThat(mergeContext.getFinalized().get()).isEqualTo(finalizedHeader);
   }

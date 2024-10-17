@@ -28,6 +28,7 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -70,7 +71,8 @@ public class NodeSmartContractPermissioningControllerTest {
     genesisState.writeStateTo(worldArchive.getMutable());
 
     final TransactionSimulator ts =
-        new TransactionSimulator(blockchain, worldArchive, protocolSchedule, 0L);
+        new TransactionSimulator(
+            blockchain, worldArchive, protocolSchedule, MiningParameters.newDefault(), 0L);
     final Address contractAddress = Address.fromHexString(contractAddressString);
 
     when(metricsSystem.createCounter(

@@ -118,11 +118,13 @@ public class QbftRoundTest {
   @BeforeEach
   public void setup() {
     protocolContext =
-        new ProtocolContext(
+        ProtocolContext.create(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(
-                BftContext.class, emptyList(), new QbftExtraDataCodec()),
+            protocolSchedule,
+            (pc, ps) ->
+                setupContextWithBftExtraDataEncoder(
+                    BftContext.class, emptyList(), new QbftExtraDataCodec()),
             new BadBlockManager());
 
     when(messageValidator.validateProposal(any())).thenReturn(true);

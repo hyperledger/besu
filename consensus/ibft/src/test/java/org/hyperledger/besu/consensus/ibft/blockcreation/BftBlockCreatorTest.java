@@ -127,10 +127,12 @@ public class BftBlockCreatorTest {
             false,
             new NoOpMetricsSystem());
     final ProtocolContext protContext =
-        new ProtocolContext(
+        ProtocolContext.create(
             blockchain,
             createInMemoryWorldStateArchive(),
-            setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
+            null,
+            (pc, ps) ->
+                setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
             new BadBlockManager());
 
     final TransactionPoolConfiguration poolConf =

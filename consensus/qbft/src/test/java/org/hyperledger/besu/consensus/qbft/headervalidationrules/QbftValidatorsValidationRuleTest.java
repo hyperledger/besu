@@ -44,10 +44,13 @@ public class QbftValidatorsValidationRuleTest {
     final QbftValidatorsValidationRule qbftValidatorsValidationRule =
         new QbftValidatorsValidationRule(true);
     final ProtocolContext context =
-        new ProtocolContext(
+        ProtocolContext.create(
             null,
             null,
-            setupContextWithBftExtraData(BftContext.class, Collections.emptyList(), bftExtraData),
+            null,
+            (pc, ps) ->
+                setupContextWithBftExtraData(
+                    BftContext.class, Collections.emptyList(), bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.empty());
@@ -63,10 +66,11 @@ public class QbftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        new ProtocolContext(
+        ProtocolContext.create(
             null,
             null,
-            setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
+            null,
+            (pc, ps) -> setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -81,10 +85,11 @@ public class QbftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        new ProtocolContext(
+        ProtocolContext.create(
             null,
             null,
-            setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
+            null,
+            (pc, ps) -> setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isFalse();
@@ -95,10 +100,13 @@ public class QbftValidatorsValidationRuleTest {
     final QbftValidatorsValidationRule qbftValidatorsValidationRule =
         new QbftValidatorsValidationRule(true);
     final ProtocolContext context =
-        new ProtocolContext(
+        ProtocolContext.create(
             null,
             null,
-            setupContextWithBftExtraData(BftContext.class, Collections.emptyList(), bftExtraData),
+            null,
+            (pc, ps) ->
+                setupContextWithBftExtraData(
+                    BftContext.class, Collections.emptyList(), bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.of(mock(Vote.class)));

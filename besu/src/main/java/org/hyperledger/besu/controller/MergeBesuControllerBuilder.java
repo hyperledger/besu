@@ -44,7 +44,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
 import java.util.Optional;
@@ -184,10 +183,9 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected MergeContext createConsensusContext(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolContext protocolContext, final ProtocolSchedule protocolSchedule) {
 
+    final var blockchain = protocolContext.getBlockchain();
     final OptionalLong terminalBlockNumber = genesisConfigOptions.getTerminalBlockNumber();
     final Optional<Hash> terminalBlockHash = genesisConfigOptions.getTerminalBlockHash();
     final boolean isPostMergeAtGenesis =

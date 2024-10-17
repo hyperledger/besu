@@ -71,10 +71,13 @@ public class ProposalPayloadValidatorTest {
   @BeforeEach
   public void setup() {
     protocolContext =
-        new ProtocolContext(
+        ProtocolContext.create(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataCodec),
+            null,
+            (pc, ps) ->
+                setupContextWithBftExtraDataEncoder(
+                    BftContext.class, emptyList(), bftExtraDataCodec),
             new BadBlockManager());
   }
 

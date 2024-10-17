@@ -383,9 +383,14 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final Blockchain blockchain,
         final WorldStateArchive worldStateArchive,
         final ProtocolSchedule protocolSchedule,
+        final MiningParameters miningParameters,
         final ApiConfiguration apiConfiguration) {
       return new TransactionSimulator(
-          blockchain, worldStateArchive, protocolSchedule, apiConfiguration.getGasCap());
+          blockchain,
+          worldStateArchive,
+          protocolSchedule,
+          miningParameters,
+          apiConfiguration.getGasCap());
     }
 
     @Provides

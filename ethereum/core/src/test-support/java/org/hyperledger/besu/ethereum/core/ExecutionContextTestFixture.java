@@ -76,7 +76,8 @@ public class ExecutionContextTestFixture {
     else this.stateArchive = createInMemoryWorldStateArchive();
     this.protocolSchedule = protocolSchedule;
     this.protocolContext =
-        new ProtocolContext(blockchain, stateArchive, null, new BadBlockManager());
+        ProtocolContext.create(
+            blockchain, stateArchive, protocolSchedule, (pc, ps) -> null, new BadBlockManager());
     genesisState.writeStateTo(stateArchive.getMutable());
   }
 

@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -97,18 +98,21 @@ public class CliqueMinerExecutorTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
+    cliqueProtocolContext =
+        ProtocolContext.create(null, null, null, (pc, ps) -> cliqueContext, new BadBlockManager());
     cliqueProtocolSchedule =
         CliqueProtocolSchedule.create(
             GENESIS_CONFIG_OPTIONS,
             new ForksSchedule<>(List.of()),
             proposerNodeKey,
+            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            () -> validatorProvider);
     cliqueEthContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }

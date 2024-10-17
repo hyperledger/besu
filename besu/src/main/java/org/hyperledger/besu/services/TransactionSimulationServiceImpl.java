@@ -59,31 +59,45 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
   @Override
   public Optional<TransactionSimulationResult> simulate(
       final Transaction transaction,
-      final Hash blockHash,
+      final Optional<Hash> maybeBlockHash,
       final OperationTracer operationTracer,
       final boolean isAllowExceedingBalance) {
 
     final CallParameter callParameter = CallParameter.fromTransaction(transaction);
 
-    final var maybeBlockHeader =
-        blockchain.getBlockHeader(blockHash).or(() -> blockchain.getBlockHeaderSafe(blockHash));
+    if (maybeBlockHash.isPresent()) {
+      final Hash blockHash = maybeBlockHash.get();
 
-    if (maybeBlockHeader.isEmpty()) {
-      return Optional.of(
-          new TransactionSimulationResult(
-              transaction,
-              TransactionProcessingResult.invalid(
-                  ValidationResult.invalid(TransactionInvalidReason.BLOCK_NOT_FOUND))));
+      final var maybeBlockHeader =
+          blockchain.getBlockHeader(blockHash).or(() -> blockchain.getBlockHeaderSafe(blockHash));
+
+      if (maybeBlockHeader.isEmpty()) {
+        return Optional.of(
+            new TransactionSimulationResult(
+                transaction,
+                TransactionProcessingResult.invalid(
+                    ValidationResult.invalid(TransactionInvalidReason.BLOCK_NOT_FOUND))));
+      }
+
+      return transactionSimulator
+          .process(
+              callParameter,
+              isAllowExceedingBalance
+                  ? SIMULATOR_ALLOWING_EXCEEDING_BALANCE
+                  : TransactionValidationParams.transactionSimulator(),
+              operationTracer,
+              maybeBlockHeader.get())
+          .map(res -> new TransactionSimulationResult(transaction, res.result()));
     }
 
     return transactionSimulator
-        .process(
+        .processOnPending(
             callParameter,
             isAllowExceedingBalance
                 ? SIMULATOR_ALLOWING_EXCEEDING_BALANCE
                 : TransactionValidationParams.transactionSimulator(),
             operationTracer,
-            maybeBlockHeader.get())
+            transactionSimulator.simulatePendingBlockHeader())
         .map(res -> new TransactionSimulationResult(transaction, res.result()));
   }
 }

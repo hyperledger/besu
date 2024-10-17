@@ -45,10 +45,11 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        new ProtocolContext(
+        ProtocolContext.create(
             null,
             null,
-            setupContextWithBftExtraData(validators, bftExtraData),
+            null,
+            (pc, ps) -> setupContextWithBftExtraData(validators, bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(validators);
 
@@ -63,10 +64,11 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        new ProtocolContext(
+        ProtocolContext.create(
             null,
             null,
-            setupContextWithBftExtraData(validators, bftExtraData),
+            null,
+            (pc, ps) -> setupContextWithBftExtraData(validators, bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(validators));
 
@@ -84,10 +86,11 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(2), AddressHelpers.ofValue(3), AddressHelpers.ofValue(4));
 
     final ProtocolContext context =
-        new ProtocolContext(
+        ProtocolContext.create(
             null,
             null,
-            setupContextWithBftExtraData(storedValidators, bftExtraData),
+            null,
+            (pc, ps) -> setupContextWithBftExtraData(storedValidators, bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(reportedValidators));
 

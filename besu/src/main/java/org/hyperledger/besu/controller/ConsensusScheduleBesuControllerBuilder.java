@@ -176,19 +176,15 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected ConsensusContext createConsensusContext(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolContext protocolContext, final ProtocolSchedule protocolSchedule) {
     final List<ForkSpec<ConsensusContext>> consensusContextSpecs =
         besuControllerBuilderSchedule.entrySet().stream()
             .map(
                 e ->
                     new ForkSpec<>(
                         e.getKey(),
-                        e.getValue()
-                            .createConsensusContext(
-                                blockchain, worldStateArchive, protocolSchedule)))
-            .collect(Collectors.toList());
+                        e.getValue().createConsensusContext(protocolContext, protocolSchedule)))
+            .toList();
     final ForksSchedule<ConsensusContext> consensusContextsSchedule =
         new ForksSchedule<>(consensusContextSpecs);
     return new MigratingContext(consensusContextsSchedule);

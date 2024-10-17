@@ -112,10 +112,11 @@ public class IbftRoundTest {
   @BeforeEach
   public void setup() {
     protocolContext =
-        new ProtocolContext(
+        ProtocolContext.create(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataCodec()),
+            protocolSchedule,
+            (pc, ps) -> setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataCodec()),
             new BadBlockManager());
 
     lenient().when(messageValidator.validateProposal(any())).thenReturn(true);

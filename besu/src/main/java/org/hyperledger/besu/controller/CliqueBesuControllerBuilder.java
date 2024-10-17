@@ -29,6 +29,7 @@ import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethods;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -42,7 +43,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +58,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   private EpochManager epochManager;
   private final BlockInterface blockInterface = new CliqueBlockInterface();
   private ForksSchedule<CliqueConfigOptions> forksSchedule;
+  private final AtomicReference<ValidatorProvider> validatorProviderRef = new AtomicReference<>();
 
   /** Default constructor. */
   public CliqueBesuControllerBuilder() {}
@@ -138,7 +141,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        validatorProviderRef::get);
   }
 
   @Override
@@ -158,17 +162,17 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected CliqueContext createConsensusContext(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolContext protocolContext, final ProtocolSchedule protocolSchedule) {
+    validatorProviderRef.set(createValidatorProvider(protocolContext.getBlockchain()));
     final CliqueContext cliqueContext =
-        new CliqueContext(
-            BlockValidatorProvider.nonForkingValidatorProvider(
-                blockchain, epochManager, blockInterface),
-            epochManager,
-            blockInterface);
-    installCliqueBlockChoiceRule(blockchain, cliqueContext);
+        new CliqueContext(validatorProviderRef.get(), epochManager, blockInterface);
+    installCliqueBlockChoiceRule(protocolContext.getBlockchain(), cliqueContext);
     return cliqueContext;
+  }
+
+  private ValidatorProvider createValidatorProvider(final Blockchain blockchain) {
+    return BlockValidatorProvider.nonForkingValidatorProvider(
+        blockchain, epochManager, blockInterface);
   }
 
   @Override
