@@ -27,6 +27,8 @@ dependencyManagement {
 
     dependency 'com.google.protobuf:protobuf-java:3.25.5'
 
+    dependency 'org.bitbucket.b_c:jose4j:0.9.4'
+
     dependency 'com.github.oshi:oshi-core:6.6.3'
 
     dependency 'com.google.auto.service:auto-service:1.1.1'

@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -224,14 +225,14 @@ public class BlockchainReferenceTestCaseSpec {
     "expectExceptionHomestead",
     "expectExceptionALL",
     "hasBigInt",
-    "rlp_decoded",
-    "transactionSequence"
+    "rlp_decoded"
   })
   public static class CandidateBlock {
 
     private final Bytes rlp;
 
     private final Boolean valid;
+    private final List<TransactionSequence> transactionSequence;
 
     @JsonCreator
     public CandidateBlock(
@@ -242,14 +243,15 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("withdrawals") final Object withdrawals,
         @JsonProperty("depositRequests") final Object depositRequests,
         @JsonProperty("withdrawalRequests") final Object withdrawalRequests,
-        @JsonProperty("consolidationRequests") final Object consolidationRequests) {
-      boolean blockVaid = true;
+        @JsonProperty("consolidationRequests") final Object consolidationRequests,
+        @JsonProperty("transactionSequence") final List<TransactionSequence> transactionSequence) {
+      boolean blockValid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
       try {
         rlpAttempt = Bytes.fromHexString(rlp);
       } catch (final IllegalArgumentException e) {
-        blockVaid = false;
+        blockValid = false;
       }
       this.rlp = rlpAttempt;
 
@@ -257,14 +259,20 @@ public class BlockchainReferenceTestCaseSpec {
           && transactions == null
           && uncleHeaders == null
           && withdrawals == null) {
-        blockVaid = false;
+        blockValid = false;
       }
 
-      this.valid = blockVaid;
+      this.valid = blockValid;
+      this.transactionSequence = transactionSequence;
     }
 
     public boolean isValid() {
       return valid;
+    }
+
+    public boolean areAllTransactionsValid() {
+      return transactionSequence == null
+          || transactionSequence.stream().filter(t -> !t.valid()).count() == 0;
     }
 
     public boolean isExecutable() {
