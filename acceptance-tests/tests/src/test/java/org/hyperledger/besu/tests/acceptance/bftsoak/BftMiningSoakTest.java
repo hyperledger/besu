@@ -32,8 +32,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BftMiningSoakTest extends ParameterizedBftTestBase {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BftMiningSoakTest.class);
 
   private final int NUM_STEPS = 5;
 
@@ -62,7 +66,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
     // Create a mix of Bonsai and Forest DB nodes
     final BesuNode minerNode1 = nodeFactory.createBonsaiNodeFixedPort(besu, "miner1");
-    final BesuNode minerNode2 = nodeFactory.createForestNodeFixedPort(besu, "miner2");
+    final BesuNode minerNode2 = nodeFactory.createBonsaiArchiveNodeFixedPort(besu, "miner2");
     final BesuNode minerNode3 = nodeFactory.createBonsaiNodeFixedPort(besu, "miner3");
     final BesuNode minerNode4 = nodeFactory.createForestNodeFixedPort(besu, "miner4");
 
@@ -132,6 +136,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     // Step 2
     // Stop one of the nodes, check that the chain continues mining
     // blocks
+    LOG.info("Stopping node 4 to check the chain continues mining (albeit more slowly)");
     stopNode(minerNode4);
 
     nextStepEndTime =
@@ -151,6 +156,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     // Step 3
     // Stop another one of the nodes, check that the chain now stops
     // mining blocks
+    LOG.info("Stopping node 3 to check that the chain stalls");
     stopNode(minerNode3);
 
     chainHeight = minerNode1.execute(ethTransactions.blockNumber());
@@ -170,8 +176,8 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     // Step 4
     // Restart both of the stopped nodes. Check that the chain resumes
     // mining blocks
+    LOG.info("Starting node 3 and node 4 to ensure the chain resumes mining new blocks");
     startNode(minerNode3);
-
     startNode(minerNode4);
 
     previousStepEndTime = Instant.now();
@@ -203,11 +209,16 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       lastChainHeight = chainHeight;
     }
 
+    LOG.info("Updating the value in the smart contract from 101 to 201");
     // Update our smart contract before upgrading from berlin to london
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(101));
     simpleStorageContract.set(BigInteger.valueOf(201)).send();
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(201));
 
+    LOG.info(
+        "Upgrading the entire chain to the London fork one node at a time. The genesis for each node will be updated to londonBlock = "
+            + lastChainHeight.intValue()
+            + 120);
     // Upgrade the chain from berlin to london in 120 blocks time
     upgradeToLondon(
         minerNode1, minerNode2, minerNode3, minerNode4, lastChainHeight.intValue() + 120);
@@ -219,6 +230,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
         previousStepEndTime.plus(getTestDurationMins() / NUM_STEPS, ChronoUnit.MINUTES);
     lastChainHeight = chainHeight;
 
+    // Allow the chain to restart mining blocks
+    Thread.sleep(THREE_MINUTES);
+
     while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
       Thread.sleep(ONE_MINUTE);
       chainHeight = minerNode1.execute(ethTransactions.blockNumber());
@@ -229,6 +243,8 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       lastChainHeight = chainHeight;
     }
 
+    LOG.info(
+        "Chain has successfully upgraded to the London fork. Checking the contract state is correct");
     // Check that the state of our smart contract is still correct
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(201));
 
@@ -237,11 +253,18 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(301));
 
     // Upgrade the chain to shanghai in 120 seconds. Then try to deploy a shanghai contract
+    LOG.info(
+        "Upgrading the entire chain to the Shanghai fork one node at a time. The genesis for each node will be updated to shanghaiTime = "
+            + Instant.now().getEpochSecond()
+            + 120);
     upgradeToShanghai(
         minerNode1, minerNode2, minerNode3, minerNode4, Instant.now().getEpochSecond() + 120);
 
+    // Allow the chain to restart mining blocks
     Thread.sleep(THREE_MINUTES);
 
+    LOG.info(
+        "Deploying a smart contract that should only work if the chain is running on the shanghai fork");
     SimpleStorageShanghai simpleStorageContractShanghai =
         minerNode1.execute(contractTransactions.createSmartContract(SimpleStorageShanghai.class));
 
@@ -284,21 +307,26 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       final int londonBlockNumber)
       throws InterruptedException {
     // Node 1
+
+    LOG.info("Upgrading node 1 to london fork");
     stopNode(minerNode1);
     updateGenesisConfigToLondon(minerNode1, true, londonBlockNumber);
     startNode(minerNode1);
 
     // Node 2
+    LOG.info("Upgrading node 2 to london fork");
     stopNode(minerNode2);
     updateGenesisConfigToLondon(minerNode2, true, londonBlockNumber);
     startNode(minerNode2);
 
     // Node 3
+    LOG.info("Upgrading node 3 to london fork");
     stopNode(minerNode3);
     updateGenesisConfigToLondon(minerNode3, true, londonBlockNumber);
     startNode(minerNode3);
 
     // Node 4
+    LOG.info("Upgrading node 4 to london fork");
     stopNode(minerNode4);
     updateGenesisConfigToLondon(minerNode4, true, londonBlockNumber);
     startNode(minerNode4);
@@ -312,21 +340,25 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       final long shanghaiTime)
       throws InterruptedException {
     // Node 1
+    LOG.info("Upgrading node 1 to shanghai fork");
     stopNode(minerNode1);
     updateGenesisConfigToShanghai(minerNode1, shanghaiTime);
     startNode(minerNode1);
 
     // Node 2
+    LOG.info("Upgrading node 2 to shanghai fork");
     stopNode(minerNode2);
     updateGenesisConfigToShanghai(minerNode2, shanghaiTime);
     startNode(minerNode2);
 
     // Node 3
+    LOG.info("Upgrading node 3 to shanghai fork");
     stopNode(minerNode3);
     updateGenesisConfigToShanghai(minerNode3, shanghaiTime);
     startNode(minerNode3);
 
     // Node 4
+    LOG.info("Upgrading node 4 to shanghai fork");
     stopNode(minerNode4);
     updateGenesisConfigToShanghai(minerNode4, shanghaiTime);
     startNode(minerNode4);
