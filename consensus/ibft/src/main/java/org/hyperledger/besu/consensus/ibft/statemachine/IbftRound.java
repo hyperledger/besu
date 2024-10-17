@@ -38,12 +38,16 @@ import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -53,6 +57,8 @@ import org.slf4j.LoggerFactory;
 public class IbftRound {
 
   private static final Logger LOG = LoggerFactory.getLogger(IbftRound.class);
+
+  private final TransactionPool transactionPool;
 
   private final Subscribers<MinedBlockObserver> observers;
   private final RoundState roundState;
@@ -94,7 +100,8 @@ public class IbftRound {
       final IbftMessageTransmitter transmitter,
       final RoundTimer roundTimer,
       final BftExtraDataCodec bftExtraDataCodec,
-      final BlockHeader parentHeader) {
+      final BlockHeader parentHeader,
+      final TransactionPool transactionPool) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -105,6 +112,7 @@ public class IbftRound {
     this.transmitter = transmitter;
     this.bftExtraDataCodec = bftExtraDataCodec;
     this.parentHeader = parentHeader;
+    this.transactionPool = transactionPool;
     roundTimer.startTimer(getRoundIdentifier());
   }
 
@@ -187,6 +195,24 @@ public class IbftRound {
   public void handleProposalMessage(final Proposal msg) {
     LOG.debug("Received a proposal message. round={}", roundState.getRoundIdentifier());
     final Block block = msg.getBlock();
+
+    if (transactionPool.getConfigTxFastVerifySignatureEnabled()) {
+      final AbstractPendingTransactionsSorter pendingTransactions;
+      pendingTransactions =
+          (AbstractPendingTransactionsSorter) (transactionPool.getPendingTransactionsObject());
+
+      final List<Transaction> blockTransactions = block.getBody().getTransactions();
+
+      for (final Transaction blockTransaction : blockTransactions) {
+
+        final Transaction pendingTransaction =
+            pendingTransactions.getTransactionByHash(blockTransaction.getHash()).orElse(null);
+
+        if (pendingTransaction != null) {
+          blockTransaction.setSender(pendingTransaction.getSender());
+        }
+      }
+    }
 
     if (updateStateWithProposedBlock(msg)) {
       LOG.debug("Sending prepare message. round={}", roundState.getRoundIdentifier());
