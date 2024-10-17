@@ -14,10 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import static org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil.getConsolidationRequests;
-import static org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil.getDepositRequests;
-import static org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil.getWithdrawalRequests;
-
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadBodiesResultV1.PayloadBody;
@@ -26,10 +22,12 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -162,6 +160,15 @@ public class BlockResultFactory {
                     TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
+    final Optional<List<String>> requestsWithoutRequestId =
+        payload
+            .requests()
+            .map(
+                rqs ->
+                    rqs.stream()
+                        .sorted(Comparator.comparing(Request::getType))
+                        .map(r -> r.getData().toHexString())
+                        .toList());
 
     final BlobsBundleV1 blobsBundleV1 =
         new BlobsBundleV1(blockWithReceipts.getBlock().getBody().getTransactions());
@@ -169,9 +176,7 @@ public class BlockResultFactory {
         blockWithReceipts.getHeader(),
         txs,
         blockWithReceipts.getBlock().getBody().getWithdrawals(),
-        getDepositRequests(blockWithReceipts.getBlock().getBody().getRequests()),
-        getWithdrawalRequests(blockWithReceipts.getBlock().getBody().getRequests()),
-        getConsolidationRequests(blockWithReceipts.getBlock().getBody().getRequests()),
+        requestsWithoutRequestId,
         Quantity.create(payload.blockValue()),
         blobsBundleV1);
   }

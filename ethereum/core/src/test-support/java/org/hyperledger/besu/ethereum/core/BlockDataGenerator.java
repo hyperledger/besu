@@ -303,7 +303,7 @@ public class BlockDataGenerator {
             .mixHash(hash())
             .nonce(blockNonce)
             .withdrawalsRoot(options.getWithdrawalsRoot(null))
-            .requestsRoot(options.getRequestsRoot(null))
+            .requestsHash(options.getRequestsHash(null))
             .blockHeaderFunctions(
                 options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
     options.getBaseFee(Optional.of(Wei.of(uint256(2)))).ifPresent(blockHeaderBuilder::baseFee);
@@ -329,10 +329,7 @@ public class BlockDataGenerator {
     }
 
     return new BlockBody(
-        options.getTransactions(defaultTxs),
-        ommers,
-        options.getWithdrawals(Optional.empty()),
-        options.getRequests(Optional.empty()));
+        options.getTransactions(defaultTxs), ommers, options.getWithdrawals(Optional.empty()));
   }
 
   private BlockHeader ommer() {
@@ -655,7 +652,7 @@ public class BlockDataGenerator {
     private Optional<Optional<Wei>> maybeBaseFee = Optional.empty();
 
     private Optional<Hash> withdrawalsRoot = Optional.empty();
-    private Optional<Hash> requestsRoot = Optional.empty();
+    private Optional<Hash> requestsHash = Optional.empty();
 
     private Optional<Optional<Wei>> maybeMaxFeePerBlobGas = Optional.empty();
 
@@ -724,8 +721,8 @@ public class BlockDataGenerator {
       return withdrawals.orElse(defaultValue);
     }
 
-    public Hash getRequestsRoot(final Hash defaultValue) {
-      return requestsRoot.orElse(defaultValue);
+    public Hash getRequestsHash(final Hash defaultValue) {
+      return requestsHash.orElse(defaultValue);
     }
 
     public Optional<List<Request>> getRequests(final Optional<List<Request>> defaultValue) {
@@ -852,8 +849,8 @@ public class BlockDataGenerator {
       return this;
     }
 
-    public BlockOptions setRequestsRoot(final Hash requestsRoot) {
-      this.requestsRoot = Optional.of(requestsRoot);
+    public BlockOptions setRequestsHash(final Hash requestsHash) {
+      this.requestsHash = Optional.of(requestsHash);
       return this;
     }
 
