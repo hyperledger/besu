@@ -33,5 +33,7 @@ public interface LabelledGauge {
    * @return true if the supplied labelValues are already observed by this LabelledGauge, false
    *     otherwise
    */
-  boolean isLabelsObserved(final String... labelValues);
+  default boolean isLabelsObserved(final String... labelValues) {
+    return false;
+  }
 }
