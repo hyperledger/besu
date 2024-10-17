@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.INVALIDATED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

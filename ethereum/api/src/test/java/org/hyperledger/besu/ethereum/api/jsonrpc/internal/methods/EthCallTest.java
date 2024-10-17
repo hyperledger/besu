@@ -157,12 +157,12 @@ public class EthCallTest {
     when(result.isSuccessful()).thenReturn(true);
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
     when(result.getOutput()).thenReturn(Bytes.of(1));
-    verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
+    verify(transactionSimulator)
+        .process(eq(callParameter()), any(), any(), mapperCaptor.capture(), any());
     assertThat(mapperCaptor.getValue().apply(mock(MutableWorldState.class), Optional.of(result)))
         .isEqualTo(Optional.of(expectedResponse));
 
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionSimulator).process(eq(callParameter()), any(), any(), any(), any());
     verify(blockchainQueries, atLeastOnce()).getBlockchain();
     verifyNoMoreInteractions(blockchainQueries);
   }
@@ -174,10 +174,9 @@ public class EthCallTest {
     // Expect a revert error with no decoded reason (error doesn't begin "Error(string)" so ignored)
     final String abiHexString = "0x1234";
     final JsonRpcError expectedError = new JsonRpcError(REVERT_ERROR, abiHexString);
-    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
+    final JsonRpcErrorResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
 
-    assertThat(((JsonRpcErrorResponse) expectedResponse).getError().getMessage())
-        .isEqualTo("Execution reverted");
+    assertThat(expectedResponse.getError().getMessage()).isEqualTo("Execution reverted");
 
     mockTransactionProcessorSuccessResult(expectedResponse);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -214,9 +213,9 @@ public class EthCallTest {
     // bytes are invalid ABI)
     final String abiHexString = "0x08c379a002d36d";
     final JsonRpcError expectedError = new JsonRpcError(REVERT_ERROR, abiHexString);
-    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
+    final JsonRpcErrorResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
 
-    assertThat(((JsonRpcErrorResponse) expectedResponse).getError().getMessage())
+    assertThat(expectedResponse.getError().getMessage())
         .isEqualTo("Execution reverted: ABI decode error");
 
     mockTransactionProcessorSuccessResult(expectedResponse);
@@ -254,9 +253,9 @@ public class EthCallTest {
     final String abiHexString =
         "0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002545524332303a207472616e736665722066726f6d20746865207a65726f2061646472657373000000000000000000000000000000000000000000000000000000";
     final JsonRpcError expectedError = new JsonRpcError(REVERT_ERROR, abiHexString);
-    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
+    final JsonRpcErrorResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
 
-    assertThat(((JsonRpcErrorResponse) expectedResponse).getError().getMessage())
+    assertThat(expectedResponse.getError().getMessage())
         .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
 
     mockTransactionProcessorSuccessResult(expectedResponse);
@@ -279,8 +278,6 @@ public class EthCallTest {
     when(result.result()).thenReturn(processingResult);
 
     verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
-    System.out.println(result);
-    System.out.println(expectedResponse);
     assertThat(mapperCaptor.getValue().apply(mock(MutableWorldState.class), Optional.of(result)))
         .isEqualTo(Optional.of(expectedResponse));
 
