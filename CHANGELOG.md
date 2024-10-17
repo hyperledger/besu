@@ -1,9 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+- Added isLabelsObserved to LabelledGauge in plugin-api. Default implementation returns false.
 
 ### Breaking Changes
-- Added isLabelsObserved to LabelledGauge in plugin-api. Implementing classes will need to also implement this method
 
 ### Upcoming Breaking Changes
 
