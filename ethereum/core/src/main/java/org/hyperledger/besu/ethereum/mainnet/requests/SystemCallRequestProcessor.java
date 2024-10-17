@@ -19,8 +19,6 @@ import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.mainnet.SystemCallProcessor;
 
-import java.util.Optional;
-
 import org.apache.tuweni.bytes.Bytes;
 
 /** Processes system call requests. */
