@@ -125,7 +125,7 @@ public class PeerTransactionTracker
   private <T> Set<T> createTransactionsSet() {
     return Collections.synchronizedSet(
         Collections.newSetFromMap(
-            new LinkedHashMap<>(1 << 4, 0.75f, true) {
+            new LinkedHashMap<>(16, 0.75f, true) {
               @Override
               protected boolean removeEldestEntry(final Map.Entry<T, Boolean> eldest) {
                 return size() > MAX_TRACKED_SEEN_TRANSACTIONS;
