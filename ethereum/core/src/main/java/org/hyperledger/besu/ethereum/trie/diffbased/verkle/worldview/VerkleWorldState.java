@@ -95,7 +95,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
                 trieLogManager,
                 diffBasedWorldStateConfig);
         this.verklePreloader =
-                new VerklePreloader(new StemPreloader(), new TrieNodePreLoader(worldStateKeyValueStorage));
+                new VerklePreloader(worldStateKeyValueStorage.getStemPreloader(), new TrieNodePreLoader(worldStateKeyValueStorage));
         this.setAccumulator(
                 new VerkleWorldStateUpdateAccumulator(
                         this,

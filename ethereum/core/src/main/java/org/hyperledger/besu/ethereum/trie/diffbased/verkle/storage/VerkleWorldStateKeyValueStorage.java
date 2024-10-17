@@ -104,6 +104,10 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     return flatDbStrategyProvider.getFlatDbMode();
   }
 
+  public StemPreloader getStemPreloader() {
+    return stemPreloader;
+  }
+
   public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
