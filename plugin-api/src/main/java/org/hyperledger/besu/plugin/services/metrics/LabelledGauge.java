@@ -25,4 +25,15 @@ public interface LabelledGauge {
    * @param labelValues the label values
    */
   void labels(final DoubleSupplier valueSupplier, final String... labelValues);
+
+  /**
+   * Checks whether the supplied labelValues are already observed by this LabelledGauge
+   *
+   * @param labelValues The labelValues to check
+   * @return true if the supplied labelValues are already observed by this LabelledGauge, false
+   *     otherwise
+   */
+  default boolean isLabelsObserved(final String... labelValues) {
+    return false;
+  }
 }
