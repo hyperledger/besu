@@ -27,12 +27,14 @@ public class MainnetRequestsValidator {
     return new RequestProcessorCoordinator.Builder()
         .addProcessor(
             RequestType.WITHDRAWAL,
-            new WithdrawalRequestProcessor(
-                requestContractAddresses.getWithdrawalRequestContractAddress()))
+            new SystemCallRequestProcessor(
+                requestContractAddresses.getWithdrawalRequestContractAddress(),
+                RequestType.WITHDRAWAL))
         .addProcessor(
             RequestType.CONSOLIDATION,
-            new ConsolidationRequestProcessor(
-                requestContractAddresses.getConsolidationRequestContractAddress()))
+            new SystemCallRequestProcessor(
+                requestContractAddresses.getConsolidationRequestContractAddress(),
+                RequestType.CONSOLIDATION))
         .addProcessor(
             RequestType.DEPOSIT,
             new DepositRequestProcessor(requestContractAddresses.getDepositContractAddress()))

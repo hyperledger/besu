@@ -28,9 +28,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class DepositRequestProcessor implements RequestProcessor {
 
-  public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
-      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
-
   private final Optional<Address> depositContractAddress;
 
   public DepositRequestProcessor(final Address depositContractAddress) {
@@ -40,7 +37,7 @@ public class DepositRequestProcessor implements RequestProcessor {
   @Override
   public Request process(final ProcessRequestContext context) {
     if (depositContractAddress.isEmpty()) {
-      throw new IllegalStateException("Deposit contract address is not set.");
+      return new Request(RequestType.DEPOSIT, Bytes.EMPTY);
     }
     Optional<Bytes> depositRequests = getDepositRequestData(context.transactionReceipts());
     return new Request(RequestType.DEPOSIT, depositRequests.orElse(Bytes.EMPTY));

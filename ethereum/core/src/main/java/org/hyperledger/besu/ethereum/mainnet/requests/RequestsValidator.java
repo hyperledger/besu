@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 
 import java.util.List;
@@ -40,15 +39,11 @@ public class RequestsValidator {
    * Validates a block's requests by ensuring they are correctly ordered, have a valid root, and
    * pass their respective type-specific validations.
    *
-   * @param block The block containing the requests to be validated.
-   * @param maybeRequests The list of requests contained within the block.
-   * @param receipts The list of transaction receipts corresponding to the requests.
+   * @param block The block containing the requestHash to be validated.
+   * @param maybeRequests The list of requests to be validated.
    * @return true if all validations pass; false otherwise.
    */
-  public boolean validate(
-      final Block block,
-      final Optional<List<Request>> maybeRequests,
-      final List<TransactionReceipt> receipts) {
+  public boolean validate(final Block block, final Optional<List<Request>> maybeRequests) {
 
     if (!isRequestsHashValid(block, maybeRequests)) {
       return false;
@@ -67,7 +62,7 @@ public class RequestsValidator {
     final Optional<Hash> maybeRequestsHash = block.getHeader().getRequestsHash();
 
     if (maybeRequestsHash.isEmpty()) {
-      LOG.warn("Block {} must contain requests root", blockHash);
+      LOG.warn("Block {} must contain requests hash", blockHash);
       return false;
     }
 
@@ -78,9 +73,7 @@ public class RequestsValidator {
 
     final Hash expectedRequestsHash = BodyValidation.requestsHash(requests.get());
     if (!expectedRequestsHash.equals(maybeRequestsHash.get())) {
-      LOG.warn(
-          "Block {} requests root does not match expected hash root for requests in block",
-          blockHash);
+      LOG.warn("Block {} requests hash does not match expected request hash", blockHash);
       return false;
     }
     return true;
