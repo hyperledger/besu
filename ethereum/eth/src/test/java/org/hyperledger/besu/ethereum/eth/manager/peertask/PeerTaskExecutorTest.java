@@ -107,7 +107,7 @@ public class PeerTaskExecutorTest {
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
 
     Assertions.assertNotNull(result);
-    Assertions.assertTrue(result.result().isEmpty());
+    Assertions.assertTrue(result.result().isPresent());
     Assertions.assertEquals(PeerTaskExecutorResponseCode.INVALID_RESPONSE, result.responseCode());
   }
 
