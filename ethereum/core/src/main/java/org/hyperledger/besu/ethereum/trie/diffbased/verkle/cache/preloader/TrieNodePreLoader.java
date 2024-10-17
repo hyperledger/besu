@@ -31,7 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class TrieNodePreLoader implements StorageSubscriber {
 
-  private static final int CACHE_SIZE = 300_000;
+  private static final int CACHE_SIZE = 100_000;
   private final Cache<Bytes, Bytes> nodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(CACHE_SIZE).build();
   private final Cache<Bytes, Optional<Bytes>> stems =
@@ -72,7 +72,7 @@ public class TrieNodePreLoader implements StorageSubscriber {
     if (cachedStem != null) {
       return cachedStem;
     } else {
-      return worldStateKeyValueStorage.getStem(stem);
+      return Optional.empty();//worldStateKeyValueStorage.getStem(stem);
     }
   }
 

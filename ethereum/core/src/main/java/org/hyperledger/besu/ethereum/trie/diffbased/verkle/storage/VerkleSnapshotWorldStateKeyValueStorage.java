@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedSnapshotWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.VerklePreloader;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
@@ -38,11 +40,10 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
   private final long subscribeParentId;
 
   public VerkleSnapshotWorldStateKeyValueStorage(
-      final VerkleWorldStateKeyValueStorage parentWorldStateStorage,
-      final SnappedKeyValueStorage segmentedWorldStateStorage,
-      final KeyValueStorage trieLogStorage) {
-    super(segmentedWorldStateStorage, trieLogStorage, parentWorldStateStorage.metricsSystem);
-    ;
+          final VerkleWorldStateKeyValueStorage parentWorldStateStorage,
+          final SnappedKeyValueStorage segmentedWorldStateStorage,
+          final KeyValueStorage trieLogStorage) {
+    super(segmentedWorldStateStorage, trieLogStorage, parentWorldStateStorage.stemPreloader,  parentWorldStateStorage.dataStorageConfiguration, parentWorldStateStorage.metricsSystem);
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
@@ -69,12 +70,7 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
     return new Updater(
         ((SnappedKeyValueStorage) composedWorldStateStorage).getSnapshotTransaction(),
         trieLogStorage.startTransaction(),
-        flatDbStrategy);
-  }
-
-  @Override
-  public Optional<Bytes> getStem(final Bytes stem) {
-    return isClosedGet() ? Optional.empty() : super.getStem(stem);
+        getFlatDbStrategy());
   }
 
   @Override

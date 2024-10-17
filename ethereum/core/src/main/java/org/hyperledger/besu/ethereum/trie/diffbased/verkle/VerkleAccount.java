@@ -84,7 +84,7 @@ public class VerkleAccount extends DiffBasedAccount {
     updatedStorage.putAll(tracked.getUpdatedStorage());
   }
 
-  public static VerkleAccount fromRLP(
+  public static VerkleAccount fromLegacyFormat(
       final DiffBasedWorldView context,
       final Address address,
       final Bytes encoded,

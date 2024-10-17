@@ -75,9 +75,8 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       StorageSlotKey storageSlotKey,
       SegmentedKeyValueStorage storageStorage);
 
-  /*
-   * Puts the account data for the given account hash, using the world state root hash supplier and node loader.
-   */
+
+  @Override
   public void putFlatAccount(
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
@@ -85,14 +84,13 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
     transaction.put(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
   }
 
+  @Override
   public void removeFlatAccount(
       final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
     transaction.remove(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe());
   }
 
-  /*
-   * Puts the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
-   */
+  @Override
   public void putFlatAccountStorageValueByStorageSlotHash(
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
@@ -104,9 +102,7 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
         storage.toArrayUnsafe());
   }
 
-  /*
-   * Removes the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
-   */
+  @Override
   public void removeFlatAccountStorageValueByStorageSlotHash(
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,

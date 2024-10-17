@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFlatDbStrategy;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -51,7 +52,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValueStorage
     implements WorldStateKeyValueStorage {
-  protected final FlatDbStrategyProvider flatDbStrategyProvider;
+  protected final BonsaiFlatDbStrategyProvider flatDbStrategyProvider;
 
   public BonsaiWorldStateKeyValueStorage(
       final StorageProvider provider,
@@ -63,12 +64,12 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
                 ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE)),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
     this.flatDbStrategyProvider =
-        new FlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
+        new BonsaiFlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
   }
 
   public BonsaiWorldStateKeyValueStorage(
-      final FlatDbStrategyProvider flatDbStrategyProvider,
+      final BonsaiFlatDbStrategyProvider flatDbStrategyProvider,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
     super(composedWorldStateStorage, trieLogStorage);

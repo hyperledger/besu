@@ -1353,7 +1353,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isTrue();
+    assertThat(dataStorageConfiguration.getDiffbasedLimitTrieLogsEnabled()).isTrue();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1368,7 +1368,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isFalse();
+    assertThat(dataStorageConfiguration.getDiffbasedLimitTrieLogsEnabled()).isFalse();
     verify(mockLogger)
         .warn(
             "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
@@ -1403,7 +1403,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad()).isEqualTo(11);
+    assertThat(dataStorageConfiguration.getDiffbasedMaxLayersToLoad()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }

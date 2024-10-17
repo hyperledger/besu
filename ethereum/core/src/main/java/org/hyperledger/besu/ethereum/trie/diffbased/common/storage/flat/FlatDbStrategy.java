@@ -120,6 +120,34 @@ public abstract class FlatDbStrategy {
     codeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
   }
 
+  /*
+   * Puts the account data for the given account hash, using the world state root hash supplier and node loader.
+   */
+  public abstract void putFlatAccount(
+          final SegmentedKeyValueStorageTransaction transaction,
+          final Hash accountHash,
+          final Bytes accountValue);
+
+  public abstract void removeFlatAccount(
+          final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) ;
+
+  /*
+   * Puts the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
+  public abstract void putFlatAccountStorageValueByStorageSlotHash(
+          final SegmentedKeyValueStorageTransaction transaction,
+          final Hash accountHash,
+          final Hash slotHash,
+          final Bytes storage) ;
+
+  /*
+   * Removes the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
+  public abstract void removeFlatAccountStorageValueByStorageSlotHash(
+          final SegmentedKeyValueStorageTransaction transaction,
+          final Hash accountHash,
+          final Hash slotHash);
+
   public abstract void clearAll(final SegmentedKeyValueStorage storage);
 
   public abstract void resetOnResync(final SegmentedKeyValueStorage storage);

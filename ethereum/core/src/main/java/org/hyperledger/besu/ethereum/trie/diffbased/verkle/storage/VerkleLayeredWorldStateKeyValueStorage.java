@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage;
 
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedLayeredWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.VerklePreloader;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
@@ -31,9 +32,9 @@ public class VerkleLayeredWorldStateKeyValueStorage extends VerkleSnapshotWorldS
   }
 
   public VerkleLayeredWorldStateKeyValueStorage(
-      final SnappedKeyValueStorage composedWorldStateStorage,
-      final KeyValueStorage trieLogStorage,
-      final VerkleWorldStateKeyValueStorage parent) {
+          final SnappedKeyValueStorage composedWorldStateStorage,
+          final KeyValueStorage trieLogStorage,
+          final VerkleWorldStateKeyValueStorage parent) {
     super(parent, composedWorldStateStorage, trieLogStorage);
   }
 
