@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -35,9 +36,10 @@ public class EVMWorldUpdater implements WorldUpdater {
    * Instantiates a new EVM world updater.
    *
    * @param rootWorldUpdater the root world updater
+   * @param gasCalculator the gas calculator to check for precompiles.
    */
-  public EVMWorldUpdater(final WorldUpdater rootWorldUpdater) {
-    this(rootWorldUpdater, new DelegatedCodeService());
+  public EVMWorldUpdater(final WorldUpdater rootWorldUpdater, final GasCalculator gasCalculator) {
+    this(rootWorldUpdater, new DelegatedCodeService(gasCalculator));
   }
 
   private EVMWorldUpdater(
@@ -110,7 +112,10 @@ public class EVMWorldUpdater implements WorldUpdater {
 
   @Override
   public Optional<WorldUpdater> parentUpdater() {
-    return rootWorldUpdater.parentUpdater();
+    return rootWorldUpdater.parentUpdater().isPresent()
+        ? Optional.of(
+            new EVMWorldUpdater(rootWorldUpdater.parentUpdater().get(), delegatedCodeService))
+        : Optional.empty();
   }
 
   @Override

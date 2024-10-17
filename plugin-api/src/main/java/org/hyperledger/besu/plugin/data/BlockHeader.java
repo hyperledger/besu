@@ -128,7 +128,7 @@ public interface BlockHeader extends ProcessableBlockHeader {
    *     request in the request list portion of the block.
    */
   @Unstable
-  Optional<? extends Hash> getRequestsRoot();
+  Optional<? extends Hash> getRequestsHash();
 
   /**
    * The excess_blob_gas of this header.

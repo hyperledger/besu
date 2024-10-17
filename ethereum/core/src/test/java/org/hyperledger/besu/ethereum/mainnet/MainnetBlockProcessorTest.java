@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 
@@ -50,8 +49,6 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
   @BeforeEach
   public void setup() {
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getRequestsValidatorCoordinator())
-        .thenReturn(RequestsValidatorCoordinator.empty());
     when(protocolSpec.getBlockHashProcessor()).thenReturn(new FrontierBlockHashProcessor());
   }
 
