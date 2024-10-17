@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.mainnet.SystemCallProcessor;
 
@@ -22,19 +23,22 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/**
- * Abstract base class for processing system call requests.
- *
- * @param <T> The type of request to be processed.
- */
-public abstract class AbstractSystemCallRequestProcessor<T extends Request>
-    implements RequestProcessor {
+/** Processes system call requests. */
+public class SystemCallRequestProcessor implements RequestProcessor {
+
+  private final Address callAddress;
+  private final RequestType requestType;
+
+  public SystemCallRequestProcessor(final Address callAddress, final RequestType requestType) {
+    this.callAddress = callAddress;
+    this.requestType = requestType;
+  }
 
   /**
-   * Processes a system call and converts the result into requests of type T.
+   * Processes a system call and converts the result as a Request.
    *
    * @param context The request context being processed.
-   * @return An {@link Optional} containing a list of {@link T} objects if any are found
+   * @return A {@link Request} request
    */
   @Override
   public Request process(final ProcessRequestContext context) {
@@ -44,27 +48,13 @@ public abstract class AbstractSystemCallRequestProcessor<T extends Request>
 
     Bytes systemCallOutput =
         systemCallProcessor.process(
-            getCallAddress(),
+            callAddress,
             context.mutableWorldState().updater(),
             context.blockHeader(),
             context.operationTracer(),
             context.blockHashLookup());
 
-    return parseRequest(systemCallOutput == null ? Bytes.EMPTY : systemCallOutput);
+    Bytes requestData = systemCallOutput == null ? Bytes.EMPTY : systemCallOutput;
+    return new Request(requestType, requestData);
   }
-
-  /**
-   * Parses a single request from the provided bytes.
-   *
-   * @param requestBytes The bytes representing a single request.
-   * @return A parsed {@link T} object.
-   */
-  protected abstract T parseRequest(final Bytes requestBytes);
-
-  /**
-   * Gets the call address for the specific request type.
-   *
-   * @return The call address.
-   */
-  protected abstract Address getCallAddress();
 }
