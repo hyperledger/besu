@@ -8,6 +8,7 @@
 ### Upcoming Breaking Changes
 
 ### Additions and Improvements
+- Fine tune already seen txs tracker when a tx is removed from the pool [#7755](https://github.com/hyperledger/besu/pull/7755)
 
 ### Bug fixes
 
