@@ -119,8 +119,8 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   }
 
   @Override
-  public boolean isPartialSuccess(final List<BlockHeader> result) {
-    return result.isEmpty();
+  public boolean isSuccess(final List<BlockHeader> result) {
+    return !result.isEmpty();
   }
 
   public Long getBlockNumber() {
