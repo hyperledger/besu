@@ -35,7 +35,7 @@ public class ProhibitedRequestsValidator implements RequestValidator {
 
     if (hasRequestsHash) {
       LOG.warn(
-          "Block {} header contains requests_root but requests are prohibited", block.getHash());
+          "Block {} header contains requests_hash but requests are prohibited", block.getHash());
     }
 
     return !hasRequestsHash;

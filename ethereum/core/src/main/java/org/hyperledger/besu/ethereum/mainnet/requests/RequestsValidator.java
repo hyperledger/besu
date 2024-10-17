@@ -62,7 +62,7 @@ public class RequestsValidator {
     final Optional<Hash> maybeRequestsHash = block.getHeader().getRequestsHash();
 
     if (maybeRequestsHash.isEmpty()) {
-      LOG.warn("Block {} must contain requests root", blockHash);
+      LOG.warn("Block {} must contain requests hash", blockHash);
       return false;
     }
 
@@ -73,9 +73,7 @@ public class RequestsValidator {
 
     final Hash expectedRequestsHash = BodyValidation.requestsHash(requests.get());
     if (!expectedRequestsHash.equals(maybeRequestsHash.get())) {
-      LOG.warn(
-          "Block {} requests root does not match expected hash root for requests in block",
-          blockHash);
+      LOG.warn("Block {} requests hash does not match expected request hash", blockHash);
       return false;
     }
     return true;
