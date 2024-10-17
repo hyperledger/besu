@@ -87,7 +87,8 @@ public class KeyValueStorageProvider implements StorageProvider {
     if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
       return new BonsaiWorldStateKeyValueStorage(this, metricsSystem, dataStorageConfiguration);
     } else if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.VERKLE)) {
-      return new VerkleWorldStateKeyValueStorage(this, new StemPreloader(),dataStorageConfiguration, metricsSystem);
+      return new VerkleWorldStateKeyValueStorage(
+          this, new StemPreloader(), dataStorageConfiguration, metricsSystem);
     } else {
       return new ForestWorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));

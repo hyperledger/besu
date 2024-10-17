@@ -84,7 +84,8 @@ public class GenesisWorldStateProvider {
         new DiffBasedWorldStateConfig());
   }
 
-  private static MutableWorldState createGenesisVerkleWorldState(final DataStorageConfiguration dataStorageConfiguration) {
+  private static MutableWorldState createGenesisVerkleWorldState(
+      final DataStorageConfiguration dataStorageConfiguration) {
     final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage =
         new VerkleWorldStateKeyValueStorage(
             new KeyValueStorageProvider(
@@ -92,7 +93,7 @@ public class GenesisWorldStateProvider {
                 new InMemoryKeyValueStorage(),
                 new NoOpMetricsSystem()),
             new StemPreloader(),
-                dataStorageConfiguration,
+            dataStorageConfiguration,
             new NoOpMetricsSystem());
     return new VerkleWorldState(
         verkleWorldStateKeyValueStorage,

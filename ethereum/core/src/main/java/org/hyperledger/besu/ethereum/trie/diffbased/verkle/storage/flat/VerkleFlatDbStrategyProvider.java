@@ -14,48 +14,42 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullBonsaiFlatDbStrategy;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.PartialBonsaiFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 public class VerkleFlatDbStrategyProvider extends FlatDbStrategyProvider {
 
+  public VerkleFlatDbStrategyProvider(
+      final MetricsSystem metricsSystem, final DataStorageConfiguration dataStorageConfiguration) {
+    super(metricsSystem, dataStorageConfiguration);
+  }
 
-    public VerkleFlatDbStrategyProvider(final MetricsSystem metricsSystem, final DataStorageConfiguration dataStorageConfiguration) {
-        super(metricsSystem, dataStorageConfiguration);
-    }
+  @Override
+  protected FlatDbMode getRequestedFlatDbMode(
+      final DataStorageConfiguration dataStorageConfiguration) {
+    return dataStorageConfiguration.getUnstable().getVerkleStemFlatDbEnabled()
+        ? FlatDbMode.STEM
+        : FlatDbMode.FULL;
+  }
 
-    @Override
-    protected FlatDbMode getRequestedFlatDbMode(final DataStorageConfiguration dataStorageConfiguration) {
-        return dataStorageConfiguration.getUnstable().getVerkleStemFlatDbEnabled()
-                        ? FlatDbMode.STEM
-                        : FlatDbMode.FULL;
-    }
+  @Override
+  protected FlatDbMode alternativeFlatDbModeForExistingDatabase() {
+    return FlatDbMode.FULL;
+  }
 
-    @Override
-    protected FlatDbMode alternativeFlatDbModeForExistingDatabase() {
-        return FlatDbMode.FULL;
+  @Override
+  protected FlatDbStrategy createFlatDbStrategy(
+      final FlatDbMode flatDbMode,
+      final MetricsSystem metricsSystem,
+      final CodeStorageStrategy codeStorageStrategy) {
+    if (flatDbMode == FlatDbMode.FULL) {
+      return new VerkleLegacyFlatDbStrategy(metricsSystem, codeStorageStrategy);
+    } else {
+      return new VerkleStemFlatDbStrategy(metricsSystem, codeStorageStrategy);
     }
-
-    @Override
-    protected FlatDbStrategy createFlatDbStrategy(final FlatDbMode flatDbMode, final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
-        if (flatDbMode == FlatDbMode.FULL) {
-            return new VerkleLegacyFlatDbStrategy(metricsSystem, codeStorageStrategy);
-        } else {
-            return new VerkleStemFlatDbStrategy(metricsSystem, codeStorageStrategy);
-        }
-    }
+  }
 }

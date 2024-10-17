@@ -16,18 +16,15 @@ package org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyAdapter;
 import org.hyperledger.besu.ethereum.trie.verkle.hasher.CachedPedersenHasher;
 import org.hyperledger.besu.ethereum.trie.verkle.hasher.Hasher;
+import org.hyperledger.besu.ethereum.trie.verkle.hasher.PedersenHasher;
+import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -39,8 +36,6 @@ import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.PedersenHasher;
-import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 
 /**
  * Preloads stems for accounts, storage slots, and code. This class is designed to optimize block
@@ -88,9 +83,7 @@ public class StemPreloader {
    * @param keys a list of keys to use for stem generation
    * @return the preloaded stems
    */
-  public Map<Bytes32, Bytes> preloadStemIds(
-      final Address address,
-      final Set<Bytes32> keys) {
+  public Map<Bytes32, Bytes> preloadStemIds(final Address address, final Set<Bytes32> keys) {
     return getHasherByAddress(address).manyStems(address, new ArrayList<>(keys));
   }
 
@@ -105,8 +98,7 @@ public class StemPreloader {
             trieKeyAdapter.getStorageKeyTrieIndex(storageSlotKey.getSlotKey().orElseThrow()));
   }
 
-  public Map<Bytes32, Bytes> preloadStemIds(
-      final Address address, final Bytes codeUpdate) {
+  public Map<Bytes32, Bytes> preloadStemIds(final Address address, final Bytes codeUpdate) {
     return getHasherByAddress(address).manyStems(address, generateCodeChunkKeyIds(codeUpdate));
   }
 
@@ -127,7 +119,7 @@ public class StemPreloader {
     return defaultHasher;
   }
 
-  public UInt256 getStorageKeySuffix(final Bytes32 storageKey) {
+  public Bytes getStorageKeySuffix(final Bytes32 storageKey) {
     return trieKeyAdapter.getStorageKeySuffix(storageKey);
   }
 
@@ -146,15 +138,16 @@ public class StemPreloader {
 
   public List<Bytes32> generateCodeChunkKeyIds(final Bytes code) {
     return IntStream.range(0, trieKeyAdapter.getNbChunk(code))
-            .mapToObj(UInt256::valueOf)
-            .collect(Collectors.toUnmodifiableList());
+        .mapToObj(UInt256::valueOf)
+        .collect(Collectors.toUnmodifiableList());
   }
 
   public List<Bytes32> generateStorageKeyIds(final Set<StorageSlotKey> storageSlotKeys) {
     return storageSlotKeys.stream()
-            .map(storageSlotKey -> trieKeyAdapter.getStorageKeyTrieIndex(storageSlotKey.getSlotKey().orElseThrow()))
-            .map(Bytes32::wrap)
-            .toList();
+        .map(
+            storageSlotKey ->
+                trieKeyAdapter.getStorageKeyTrieIndex(storageSlotKey.getSlotKey().orElseThrow()))
+        .map(Bytes32::wrap)
+        .toList();
   }
-
 }

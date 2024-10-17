@@ -27,20 +27,14 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.util.Comparator;
-import java.util.NavigableMap;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.rlp.RLP;
 
 /**
  * This class represents a FlatDbReaderStrategy, which is responsible for reading and writing data
@@ -74,7 +68,6 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       Hash accountHash,
       StorageSlotKey storageSlotKey,
       SegmentedKeyValueStorage storageStorage);
-
 
   @Override
   public void putFlatAccount(
@@ -126,56 +119,55 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
 
   @Override
   protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
-          final SegmentedKeyValueStorage storage,
-          final Hash accountHash,
-          final Bytes startKeyHash,
-          final Function<Bytes, Bytes> valueMapper) {
+      final SegmentedKeyValueStorage storage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Function<Bytes, Bytes> valueMapper) {
 
     return storage
-            .streamFromKey(
-                    ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
-            .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
-            .map(
-                    pair ->
-                            new Pair<>(
-                                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                                    valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
+        .streamFromKey(
+            ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
+        .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
+        .map(
+            pair ->
+                new Pair<>(
+                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
+                    valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
   }
 
   @Override
   protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
-          final SegmentedKeyValueStorage storage,
-          final Hash accountHash,
-          final Bytes startKeyHash,
-          final Bytes32 endKeyHash,
-          final Function<Bytes, Bytes> valueMapper) {
+      final SegmentedKeyValueStorage storage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final Function<Bytes, Bytes> valueMapper) {
 
     return storage
-            .streamFromKey(
-                    ACCOUNT_STORAGE_STORAGE,
-                    Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
-                    Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
-            .map(
-                    pair ->
-                            new Pair<>(
-                                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                                    valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
+        .streamFromKey(
+            ACCOUNT_STORAGE_STORAGE,
+            Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
+            Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
+        .map(
+            pair ->
+                new Pair<>(
+                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
+                    valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
   }
 
   @Override
   protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
-          final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
+      final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
     return storage
-            .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
-            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
+        .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
+        .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
   }
 
   @Override
   protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
-          final SegmentedKeyValueStorage storage, final Bytes startKeyHash) {
+      final SegmentedKeyValueStorage storage, final Bytes startKeyHash) {
     return storage
-            .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe())
-            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
+        .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe())
+        .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
   }
-
 }

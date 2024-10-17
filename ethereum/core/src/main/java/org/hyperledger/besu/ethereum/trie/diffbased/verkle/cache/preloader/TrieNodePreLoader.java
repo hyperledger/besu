@@ -14,14 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 
-import java.util.List;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -72,12 +67,8 @@ public class TrieNodePreLoader implements StorageSubscriber {
     if (cachedStem != null) {
       return cachedStem;
     } else {
-      return Optional.empty();//worldStateKeyValueStorage.getStem(stem);
+      return Optional.empty(); // worldStateKeyValueStorage.getStem(stem);
     }
-  }
-
-  public Optional<List<Optional<Bytes32>>> getDecodedStem(final Bytes stem) {
-    return getStem(stem).map(this::decodeStemNode);
   }
 
   public void reset() {
@@ -88,24 +79,4 @@ public class TrieNodePreLoader implements StorageSubscriber {
   public void onClearTrie() {
     reset();
   }
-
-  private List<Optional<Bytes32>> decodeStemNode(final Bytes encodedValues) {
-    RLPInput input = new BytesValueRLPInput(encodedValues, false);
-    input.enterList();
-    input.skipNext(); // depth
-    input.skipNext(); // commitment
-    input.skipNext(); // leftCommitment
-    input.skipNext(); // rightCommitment
-    input.skipNext(); // leftScalar
-    input.skipNext(); // rightScalar
-    return input.readList(rlpInput -> {
-      Bytes bytes = rlpInput.readBytes();
-      if(bytes.isEmpty()){
-        return Optional.empty();
-      } else {
-        return Optional.of(Bytes32.leftPad(bytes));
-      }
-    });
-  }
-
 }

@@ -30,10 +30,12 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.StemPreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -217,7 +219,11 @@ class LogRollingTests {
     final VerkleWorldState worldState =
         new VerkleWorldState(
             archive,
-            new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            new VerkleWorldStateKeyValueStorage(
+                provider,
+                new StemPreloader(),
+                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             new DiffBasedWorldStateConfig());
     final WorldUpdater updater = worldState.updater();
@@ -244,7 +250,11 @@ class LogRollingTests {
     final VerkleWorldState worldState =
         new VerkleWorldState(
             archive,
-            new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            new VerkleWorldStateKeyValueStorage(
+                provider,
+                new StemPreloader(),
+                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             new DiffBasedWorldStateConfig());
     final WorldUpdater updater = worldState.updater();
@@ -258,7 +268,11 @@ class LogRollingTests {
     final VerkleWorldState secondWorldState =
         new VerkleWorldState(
             secondArchive,
-            new VerkleWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
+            new VerkleWorldStateKeyValueStorage(
+                secondProvider,
+                new StemPreloader(),
+                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             new DiffBasedWorldStateConfig());
     final VerkleWorldStateUpdateAccumulator secondUpdater =
@@ -290,7 +304,11 @@ class LogRollingTests {
     final VerkleWorldState worldState =
         new VerkleWorldState(
             archive,
-            new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            new VerkleWorldStateKeyValueStorage(
+                provider,
+                new StemPreloader(),
+                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             new DiffBasedWorldStateConfig());
 
@@ -312,7 +330,11 @@ class LogRollingTests {
     final VerkleWorldState secondWorldState =
         new VerkleWorldState(
             secondArchive,
-            new VerkleWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
+            new VerkleWorldStateKeyValueStorage(
+                secondProvider,
+                new StemPreloader(),
+                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             new DiffBasedWorldStateConfig());
     final VerkleWorldStateUpdateAccumulator secondUpdater =
@@ -345,7 +367,11 @@ class LogRollingTests {
     final VerkleWorldState worldState =
         new VerkleWorldState(
             archive,
-            new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            new VerkleWorldStateKeyValueStorage(
+                provider,
+                new StemPreloader(),
+                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             new DiffBasedWorldStateConfig());
 
@@ -374,7 +400,11 @@ class LogRollingTests {
     final VerkleWorldState secondWorldState =
         new VerkleWorldState(
             secondArchive,
-            new VerkleWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
+            new VerkleWorldStateKeyValueStorage(
+                secondProvider,
+                new StemPreloader(),
+                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             new DiffBasedWorldStateConfig());
 
@@ -404,7 +434,11 @@ class LogRollingTests {
     final VerkleWorldState worldState =
         new VerkleWorldState(
             archive,
-            new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            new VerkleWorldStateKeyValueStorage(
+                provider,
+                new StemPreloader(),
+                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             new DiffBasedWorldStateConfig());
 
@@ -445,7 +479,11 @@ class LogRollingTests {
     final VerkleWorldState worldState =
         new VerkleWorldState(
             archive,
-            new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            new VerkleWorldStateKeyValueStorage(
+                provider,
+                new StemPreloader(),
+                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             new DiffBasedWorldStateConfig());
 
@@ -515,7 +553,11 @@ class LogRollingTests {
     final VerkleWorldState worldState =
         new VerkleWorldState(
             archive,
-            new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            new VerkleWorldStateKeyValueStorage(
+                provider,
+                new StemPreloader(),
+                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             new DiffBasedWorldStateConfig());
 

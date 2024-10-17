@@ -116,7 +116,7 @@ public class TrieLogHelper {
           String.format(
               "Remaining trie logs (%d) did not match %s (%d). Trie logs backup files (in %s) have not been deleted, it is safe to rerun the subcommand.",
               countAfterPrune,
-                  DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
+              DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
               layersToRetain,
               batchFileNameBase));
     }
@@ -303,7 +303,8 @@ public class TrieLogHelper {
     checkArgument(
         config.getDiffbasedTrieLogPruningWindowSize() > 0,
         String.format(
-            DataStorageOptions.DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
+            DataStorageOptions.DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE
+                + "=%d must be greater than 0",
             config.getDiffbasedTrieLogPruningWindowSize()));
     checkArgument(
         config.getDiffbasedTrieLogPruningWindowSize() > config.getDiffbasedMaxLayersToLoad(),

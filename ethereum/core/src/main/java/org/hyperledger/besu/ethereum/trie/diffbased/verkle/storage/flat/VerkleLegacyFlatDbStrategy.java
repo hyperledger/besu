@@ -14,14 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat;
 
-import kotlin.Pair;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.NodeLoader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullBonsaiFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
@@ -34,45 +32,45 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import kotlin.Pair;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
-public class VerkleLegacyFlatDbStrategy  extends FlatDbStrategy {
-
+public class VerkleLegacyFlatDbStrategy extends FlatDbStrategy {
 
   protected final Counter getAccountNotFoundInFlatDatabaseCounter;
 
   protected final Counter getStorageValueNotFoundInFlatDatabaseCounter;
 
   public VerkleLegacyFlatDbStrategy(
-          final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
+      final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
     super(metricsSystem, codeStorageStrategy);
 
     getAccountNotFoundInFlatDatabaseCounter =
-            metricsSystem.createCounter(
-                    BesuMetricCategory.BLOCKCHAIN,
-                    "get_account_missing_flat_database",
-                    "Number of accounts not found in the flat database");
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_account_missing_flat_database",
+            "Number of accounts not found in the flat database");
 
     getStorageValueNotFoundInFlatDatabaseCounter =
-            metricsSystem.createCounter(
-                    BesuMetricCategory.BLOCKCHAIN,
-                    "get_storagevalue_missing_flat_database",
-                    "Number of storage slots not found in the flat database");
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_storagevalue_missing_flat_database",
+            "Number of storage slots not found in the flat database");
   }
 
   public Optional<VerkleAccount> getFlatAccount(
-          final Address address,
-          final DiffBasedWorldView context,
-          final SegmentedKeyValueStorage storage) {
+      final Address address,
+      final DiffBasedWorldView context,
+      final SegmentedKeyValueStorage storage) {
     getAccountCounter.inc();
     final Optional<VerkleAccount> accountFound =
-            storage.get(ACCOUNT_INFO_STATE, address.addressHash().toArrayUnsafe())
-                    .map(Bytes::wrap)
-                    .map(encoded -> VerkleAccount.fromLegacyFormat(context, address,encoded, true));
+        storage
+            .get(ACCOUNT_INFO_STATE, address.addressHash().toArrayUnsafe())
+            .map(Bytes::wrap)
+            .map(encoded -> VerkleAccount.fromLegacyFormat(context, address, encoded, true));
     if (accountFound.isPresent()) {
       getAccountFoundInFlatDatabaseCounter.inc();
     } else {
@@ -82,16 +80,17 @@ public class VerkleLegacyFlatDbStrategy  extends FlatDbStrategy {
   }
 
   public Optional<Bytes> getFlatStorageValueByStorageSlotKey(
-          final Address address,
-          final StorageSlotKey storageSlotKey,
-          final SegmentedKeyValueStorage storage) {
+      final Address address,
+      final StorageSlotKey storageSlotKey,
+      final SegmentedKeyValueStorage storage) {
     getStorageValueCounter.inc();
     final Optional<Bytes> storageFound =
-            storage
-                    .get(
-                            ACCOUNT_STORAGE_STORAGE,
-                            Bytes.concatenate(address.addressHash(), storageSlotKey.getSlotHash()).toArrayUnsafe())
-                    .map(Bytes::wrap);
+        storage
+            .get(
+                ACCOUNT_STORAGE_STORAGE,
+                Bytes.concatenate(address.addressHash(), storageSlotKey.getSlotHash())
+                    .toArrayUnsafe())
+            .map(Bytes::wrap);
     if (storageFound.isPresent()) {
       getStorageValueFlatDatabaseCounter.inc();
     } else {
@@ -103,37 +102,37 @@ public class VerkleLegacyFlatDbStrategy  extends FlatDbStrategy {
 
   @Override
   public void putFlatAccount(
-          final SegmentedKeyValueStorageTransaction transaction,
-          final Hash accountHash,
-          final Bytes accountValue) {
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Bytes accountValue) {
     transaction.put(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
   }
 
   @Override
   public void removeFlatAccount(
-          final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
+      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
     transaction.remove(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe());
   }
 
   @Override
   public void putFlatAccountStorageValueByStorageSlotHash(
-          final SegmentedKeyValueStorageTransaction transaction,
-          final Hash accountHash,
-          final Hash slotHash,
-          final Bytes storage) {
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash slotHash,
+      final Bytes storage) {
     transaction.put(
-            ACCOUNT_STORAGE_STORAGE,
-            Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(),
-            storage.toArrayUnsafe());
+        ACCOUNT_STORAGE_STORAGE,
+        Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(),
+        storage.toArrayUnsafe());
   }
 
   @Override
   public void removeFlatAccountStorageValueByStorageSlotHash(
-          final SegmentedKeyValueStorageTransaction transaction,
-          final Hash accountHash,
-          final Hash slotHash) {
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash slotHash) {
     transaction.remove(
-            ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
+        ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
   }
 
   @Override
@@ -149,22 +148,33 @@ public class VerkleLegacyFlatDbStrategy  extends FlatDbStrategy {
   }
 
   @Override
-  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(final SegmentedKeyValueStorage storage, final Hash accountHash, final Bytes startKeyHash, final Function<Bytes, Bytes> valueMapper) {
+  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+      final SegmentedKeyValueStorage storage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Function<Bytes, Bytes> valueMapper) {
     return Stream.empty();
   }
 
   @Override
-  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(final SegmentedKeyValueStorage storage, final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final Function<Bytes, Bytes> valueMapper) {
+  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+      final SegmentedKeyValueStorage storage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final Function<Bytes, Bytes> valueMapper) {
     return Stream.empty();
   }
 
   @Override
-  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
+  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+      final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
     return Stream.empty();
   }
 
   @Override
-  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(final SegmentedKeyValueStorage storage, final Bytes startKeyHash) {
+  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+      final SegmentedKeyValueStorage storage, final Bytes startKeyHash) {
     return Stream.empty();
   }
 }

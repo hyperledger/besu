@@ -19,8 +19,8 @@ import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_RECEIPT_COMPACTION_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_DIFFBASED_CODE_USING_CODE_HASH_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_DIFFBASED_CODE_USING_CODE_HASH_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_VERKLE_STEM_FLAT_DB_ENABLED;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
@@ -75,7 +75,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
       names = {
-              DIFFBASED_LIMIT_TRIE_LOGS_ENABLED,
+        DIFFBASED_LIMIT_TRIE_LOGS_ENABLED,
         "--Xbonsai-limit-trie-logs-enabled", // deprecated
         "--Xbonsai-trie-log-pruning-enabled" // deprecated
       },
@@ -87,12 +87,13 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
       names = {
-              DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE,
+        DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE,
         "--Xbonsai-trie-logs-pruning-window-size" // deprecated
       },
       description =
           "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
-  private Integer diffBasedTrieLogPruningWindowSize = DEFAULT_DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE;
+  private Integer diffBasedTrieLogPruningWindowSize =
+      DEFAULT_DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
   @Option(
       names = "--receipt-compaction-enabled",
@@ -138,12 +139,12 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     private Boolean isParallelTxProcessingEnabled = false;
 
     @CommandLine.Option(
-            hidden = true,
-            names = {
-                    "--Xverkle-stem-flat-db-enabled",
-            },
-            arity = "1",
-            description = "Enables stem flat database strategy for verkle. (default: ${DEFAULT-VALUE})")
+        hidden = true,
+        names = {
+          "--Xverkle-stem-flat-db-enabled",
+        },
+        arity = "1",
+        description = "Enables stem flat database strategy for verkle. (default: ${DEFAULT-VALUE})")
     private Boolean verkleStemFlatDbEnabled = DEFAULT_VERKLE_STEM_FLAT_DB_ENABLED;
 
     /** Default Constructor. */
@@ -165,21 +166,22 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    * @param commandLine the full commandLine to check all the options specified by the user
    */
   public void validate(final CommandLine commandLine) {
-    if (DataStorageFormat.BONSAI == dataStorageFormat || DataStorageFormat.VERKLE == dataStorageFormat) {
+    if (DataStorageFormat.BONSAI == dataStorageFormat
+        || DataStorageFormat.VERKLE == dataStorageFormat) {
       if (diffBasedLimitTrieLogsEnabled) {
         if (diffBasedMaxLayersToLoad < MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT) {
           throw new CommandLine.ParameterException(
               commandLine,
               String.format(
                   DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
-                      MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT));
+                  MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT));
         }
         if (diffBasedTrieLogPruningWindowSize <= 0) {
           throw new CommandLine.ParameterException(
               commandLine,
               String.format(
                   DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
-                      diffBasedTrieLogPruningWindowSize));
+                  diffBasedTrieLogPruningWindowSize));
         }
         if (diffBasedTrieLogPruningWindowSize <= diffBasedMaxLayersToLoad) {
           throw new CommandLine.ParameterException(
@@ -189,8 +191,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
                       + "=%d must be greater than "
                       + DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
                       + "=%d",
-                      diffBasedTrieLogPruningWindowSize,
-                      diffBasedMaxLayersToLoad));
+                  diffBasedTrieLogPruningWindowSize,
+                  diffBasedMaxLayersToLoad));
         }
       }
     } else {
@@ -213,7 +215,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
     dataStorageOptions.diffBasedMaxLayersToLoad = domainObject.getDiffbasedMaxLayersToLoad();
     dataStorageOptions.receiptCompactionEnabled = domainObject.getReceiptCompactionEnabled();
-    dataStorageOptions.diffBasedLimitTrieLogsEnabled = domainObject.getDiffbasedLimitTrieLogsEnabled();
+    dataStorageOptions.diffBasedLimitTrieLogsEnabled =
+        domainObject.getDiffbasedLimitTrieLogsEnabled();
     dataStorageOptions.diffBasedTrieLogPruningWindowSize =
         domainObject.getDiffbasedTrieLogPruningWindowSize();
     dataStorageOptions.unstableOptions.bonsaiFullFlatDbEnabled =
@@ -223,7 +226,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     dataStorageOptions.unstableOptions.isParallelTxProcessingEnabled =
         domainObject.getUnstable().isParallelTxProcessingEnabled();
     dataStorageOptions.unstableOptions.verkleStemFlatDbEnabled =
-            domainObject.getUnstable().getVerkleStemFlatDbEnabled();
+        domainObject.getUnstable().getVerkleStemFlatDbEnabled();
 
     return dataStorageOptions;
   }
@@ -239,9 +242,10 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         .unstable(
             ImmutableDataStorageConfiguration.Unstable.builder()
                 .bonsaiFullFlatDbEnabled(unstableOptions.bonsaiFullFlatDbEnabled)
-                .diffbasedCodeStoredByCodeHashEnabled(unstableOptions.bonsaiCodeUsingCodeHashEnabled)
+                .diffbasedCodeStoredByCodeHashEnabled(
+                    unstableOptions.bonsaiCodeUsingCodeHashEnabled)
                 .isParallelTxProcessingEnabled(unstableOptions.isParallelTxProcessingEnabled)
-                    .verkleStemFlatDbEnabled(unstableOptions.verkleStemFlatDbEnabled)
+                .verkleStemFlatDbEnabled(unstableOptions.verkleStemFlatDbEnabled)
                 .build())
         .build();
   }

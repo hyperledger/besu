@@ -56,18 +56,18 @@ public interface DataStorageConfiguration {
           .build();
 
   DataStorageConfiguration DEFAULT_VERKLE_CONFIG =
-          ImmutableDataStorageConfiguration.builder()
-                  .dataStorageFormat(DataStorageFormat.VERKLE)
-                  .unstable(Unstable.DEFAULT)
-                  .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
-                  .build();
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.VERKLE)
+          .unstable(Unstable.DEFAULT)
+          .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
+          .build();
 
   DataStorageConfiguration DEFAULT_VERKLE_STEM_FLATDB_CONFIG =
-          ImmutableDataStorageConfiguration.builder()
-                  .dataStorageFormat(DataStorageFormat.VERKLE)
-                  .unstable(Unstable.DEFAULT_VERKLE_STEM)
-                  .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
-                  .build();
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.VERKLE)
+          .unstable(Unstable.DEFAULT_VERKLE_STEM)
+          .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
+          .build();
 
   DataStorageFormat getDataStorageFormat();
 
@@ -109,7 +109,7 @@ public interface DataStorageConfiguration {
         ImmutableDataStorageConfiguration.Unstable.builder().bonsaiFullFlatDbEnabled(false).build();
 
     DataStorageConfiguration.Unstable DEFAULT_VERKLE_STEM =
-            ImmutableDataStorageConfiguration.Unstable.builder().verkleStemFlatDbEnabled(true).build();
+        ImmutableDataStorageConfiguration.Unstable.builder().verkleStemFlatDbEnabled(true).build();
 
     @Value.Default
     default boolean getBonsaiFullFlatDbEnabled() {
@@ -130,7 +130,5 @@ public interface DataStorageConfiguration {
     default boolean getVerkleStemFlatDbEnabled() {
       return DEFAULT_VERKLE_STEM_FLAT_DB_ENABLED;
     }
-
-
   }
 }

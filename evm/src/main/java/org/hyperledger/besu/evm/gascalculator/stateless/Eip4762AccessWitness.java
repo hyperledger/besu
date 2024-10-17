@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class Eip4762AccessWitness implements AccessWitness {
@@ -379,12 +380,12 @@ public class Eip4762AccessWitness implements AccessWitness {
 
   public record BranchAccessKey(Address address, UInt256 treeIndex) {}
 
-  public record LeafAccessKey(BranchAccessKey branchAccessKey, UInt256 leafIndex) {}
+  public record LeafAccessKey(BranchAccessKey branchAccessKey, Bytes leafIndex) {}
 
   @Override
   public List<UInt256> getStorageSlotTreeIndexes(final UInt256 storageKey) {
     return List.of(
         TRIE_KEY_ADAPTER.getStorageKeyTrieIndex(storageKey),
-        TRIE_KEY_ADAPTER.getStorageKeySuffix(storageKey));
+        UInt256.fromBytes(TRIE_KEY_ADAPTER.getStorageKeySuffix(storageKey)));
   }
 }

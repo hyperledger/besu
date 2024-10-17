@@ -14,10 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat;
 
-import com.google.common.annotations.VisibleForTesting;
-import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.AccountHashCodeStorageStrategy;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeHashCodeStorageStrategy;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategyProvider;
@@ -26,63 +24,62 @@ import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Optional;
-
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
-
 public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbStrategyProvider.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbStrategyProvider.class);
 
-    public BonsaiFlatDbStrategyProvider(final MetricsSystem metricsSystem, final DataStorageConfiguration dataStorageConfiguration) {
-        super(metricsSystem, dataStorageConfiguration);
-    }
+  public BonsaiFlatDbStrategyProvider(
+      final MetricsSystem metricsSystem, final DataStorageConfiguration dataStorageConfiguration) {
+    super(metricsSystem, dataStorageConfiguration);
+  }
 
-    @Override
-    protected FlatDbMode getRequestedFlatDbMode(final DataStorageConfiguration dataStorageConfiguration) {
-        return dataStorageConfiguration.getUnstable().getBonsaiFullFlatDbEnabled()
-                        ? FlatDbMode.FULL
-                        : FlatDbMode.PARTIAL;
-    }
+  @Override
+  protected FlatDbMode getRequestedFlatDbMode(
+      final DataStorageConfiguration dataStorageConfiguration) {
+    return dataStorageConfiguration.getUnstable().getBonsaiFullFlatDbEnabled()
+        ? FlatDbMode.FULL
+        : FlatDbMode.PARTIAL;
+  }
 
-    @Override
-    protected FlatDbMode alternativeFlatDbModeForExistingDatabase() {
-        return FlatDbMode.PARTIAL;
-    }
+  @Override
+  protected FlatDbMode alternativeFlatDbModeForExistingDatabase() {
+    return FlatDbMode.PARTIAL;
+  }
 
-    public void upgradeToFullFlatDbMode(final SegmentedKeyValueStorage composedWorldStateStorage) {
-        final SegmentedKeyValueStorageTransaction transaction =
-                composedWorldStateStorage.startTransaction();
-        LOG.info("setting FlatDbStrategy to FULL");
-        transaction.put(
-                TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
-        transaction.commit();
-        loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy
-    }
+  public void upgradeToFullFlatDbMode(final SegmentedKeyValueStorage composedWorldStateStorage) {
+    final SegmentedKeyValueStorageTransaction transaction =
+        composedWorldStateStorage.startTransaction();
+    LOG.info("setting FlatDbStrategy to FULL");
+    transaction.put(
+        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
+    transaction.commit();
+    loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy
+  }
 
-    public void downgradeToPartialFlatDbMode(
-            final SegmentedKeyValueStorage composedWorldStateStorage) {
-        final SegmentedKeyValueStorageTransaction transaction =
-                composedWorldStateStorage.startTransaction();
-        LOG.info("setting FlatDbStrategy to PARTIAL");
-        transaction.put(
-                TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.PARTIAL.getVersion().toArrayUnsafe());
-        transaction.commit();
-        loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy
-    }
+  public void downgradeToPartialFlatDbMode(
+      final SegmentedKeyValueStorage composedWorldStateStorage) {
+    final SegmentedKeyValueStorageTransaction transaction =
+        composedWorldStateStorage.startTransaction();
+    LOG.info("setting FlatDbStrategy to PARTIAL");
+    transaction.put(
+        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.PARTIAL.getVersion().toArrayUnsafe());
+    transaction.commit();
+    loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy
+  }
 
-    @Override
-    protected FlatDbStrategy createFlatDbStrategy(final FlatDbMode flatDbMode, final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
-        if (flatDbMode == FlatDbMode.FULL) {
-            return new FullBonsaiFlatDbStrategy(metricsSystem, codeStorageStrategy);
-        } else {
-            return new PartialBonsaiFlatDbStrategy(metricsSystem, codeStorageStrategy);
-        }
+  @Override
+  protected FlatDbStrategy createFlatDbStrategy(
+      final FlatDbMode flatDbMode,
+      final MetricsSystem metricsSystem,
+      final CodeStorageStrategy codeStorageStrategy) {
+    if (flatDbMode == FlatDbMode.FULL) {
+      return new FullBonsaiFlatDbStrategy(metricsSystem, codeStorageStrategy);
+    } else {
+      return new PartialBonsaiFlatDbStrategy(metricsSystem, codeStorageStrategy);
     }
+  }
 }

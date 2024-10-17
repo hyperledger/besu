@@ -31,7 +31,8 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogPruningLimitOption() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getDiffbasedTrieLogPruningWindowSize()).isEqualTo(600),
+            assertThat(dataStorageConfiguration.getDiffbasedTrieLogPruningWindowSize())
+                .isEqualTo(600),
         "--bonsai-limit-trie-logs-enabled",
         "--bonsai-trie-logs-pruning-window-size",
         "600");
@@ -41,7 +42,8 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogPruningLimitLegacyOption() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getDiffbasedTrieLogPruningWindowSize()).isEqualTo(600),
+            assertThat(dataStorageConfiguration.getDiffbasedTrieLogPruningWindowSize())
+                .isEqualTo(600),
         "--Xbonsai-limit-trie-logs-enabled",
         "--Xbonsai-trie-logs-pruning-window-size",
         "600");
@@ -51,7 +53,8 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogsEnabled_explicitlySetToFalse() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getDiffbasedLimitTrieLogsEnabled()).isEqualTo(false),
+            assertThat(dataStorageConfiguration.getDiffbasedLimitTrieLogsEnabled())
+                .isEqualTo(false),
         "--bonsai-limit-trie-logs-enabled=false");
   }
 
@@ -109,7 +112,9 @@ public class DataStorageOptionsTest
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(
-                    dataStorageConfiguration.getUnstable().getDiffbasedCodeStoredByCodeHashEnabled())
+                    dataStorageConfiguration
+                        .getUnstable()
+                        .getDiffbasedCodeStoredByCodeHashEnabled())
                 .isEqualTo(true),
         "--Xbonsai-code-using-code-hash-enabled",
         "true");
@@ -120,7 +125,9 @@ public class DataStorageOptionsTest
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(
-                    dataStorageConfiguration.getUnstable().getDiffbasedCodeStoredByCodeHashEnabled())
+                    dataStorageConfiguration
+                        .getUnstable()
+                        .getDiffbasedCodeStoredByCodeHashEnabled())
                 .isEqualTo(false),
         "--Xbonsai-code-using-code-hash-enabled",
         "false");

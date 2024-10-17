@@ -160,7 +160,7 @@ public class StateTrieAccountValue implements AccountValue {
     } else {
       codeHash = in.readBytes32();
     }
-    if(!in.isEndOfCurrentList()) {
+    if (!in.isEndOfCurrentList()) {
       if (in.nextIsNull()) {
         codeSize = Optional.empty();
         in.skipNext();

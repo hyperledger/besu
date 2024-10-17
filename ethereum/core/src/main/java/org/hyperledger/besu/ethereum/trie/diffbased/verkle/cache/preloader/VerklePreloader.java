@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -45,7 +44,8 @@ public class VerklePreloader {
     CompletableFuture.runAsync(
         () -> {
           stemPreloader.preloadAccountStemId(account);
-          //trieNodePreLoader.cacheNodes(stem); //TODO disabled waiting for benchmark before adding this trie node preload
+          // trieNodePreLoader.cacheNodes(stem); //TODO disabled waiting for benchmark before adding
+          // this trie node preload
         });
   }
 
@@ -61,7 +61,8 @@ public class VerklePreloader {
     CompletableFuture.runAsync(
         () -> {
           stemPreloader.preloadSlotStemId(account, slotKey);
-          //trieNodePreLoader.cacheNodes(stem); //TODO disabled waiting for benchmark before adding this trie node preload
+          // trieNodePreLoader.cacheNodes(stem); //TODO disabled waiting for benchmark before adding
+          // this trie node preload
         });
   }
 
@@ -74,14 +75,14 @@ public class VerklePreloader {
   public void preLoadCode(final Address account, final Bytes code) {
     CompletableFuture.runAsync(
         () -> {
-            stemPreloader
-                    .preloadStemIds(account, code);
+          stemPreloader.preloadStemIds(account, code);
           /*stemPreloader
-              .preloadStemIds(account, code)
-              .forEach(
-                  (key, stem) -> {
-                    trieNodePreLoader.cacheNodes(stem);
-                  });*/ //TODO disabled waiting for benchmark before adding this trie node preload
+          .preloadStemIds(account, code)
+          .forEach(
+              (key, stem) -> {
+                trieNodePreLoader.cacheNodes(stem);
+              });*/
+          // TODO disabled waiting for benchmark before adding this trie node preload
         });
   }
 

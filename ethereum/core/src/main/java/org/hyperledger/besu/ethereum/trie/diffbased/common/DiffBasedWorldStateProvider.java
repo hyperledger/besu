@@ -205,8 +205,8 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
 
           // roll back in tandem until we hit a shared state
           while (!persistedBlockHash.equals(targetBlockHash)) {
-            LOG.info("Paired Rollback {}", persistedBlockHash);
-            LOG.info("Paired Rollforward {}", targetBlockHash);
+            LOG.debug("Paired Rollback {}", persistedBlockHash);
+            LOG.debug("Paired Rollforward {}", targetBlockHash);
             rollForwards.add(trieLogManager.getTrieLogLayer(targetBlockHash).get());
             targetHeader = blockchain.getBlockHeader(targetHeader.getParentHash()).get();
 
