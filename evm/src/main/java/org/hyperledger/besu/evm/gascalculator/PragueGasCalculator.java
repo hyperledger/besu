@@ -52,9 +52,4 @@ public class PragueGasCalculator extends CancunGasCalculator {
   public long calculateDelegateCodeGasRefund(final long alreadyExistingAccounts) {
     return existingAccountGasRefund * alreadyExistingAccounts;
   }
-
-  @Override
-  public long delegatedCodeResolutionGasCost(final boolean isWarm) {
-    return isWarm ? getWarmStorageReadCost() : getColdAccountAccessCost();
-  }
 }
