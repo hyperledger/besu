@@ -19,13 +19,17 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,18 +40,27 @@ public class RetryingGetBlockFromPeersTask
   private static final Logger LOG = LoggerFactory.getLogger(RetryingGetBlockFromPeersTask.class);
 
   private final ProtocolSchedule protocolSchedule;
+  private final PeerTaskExecutor peerTaskExecutor;
+  private final SynchronizerConfiguration synchronizerConfiguration;
+  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final Optional<Hash> maybeBlockHash;
   private final long blockNumber;
 
   protected RetryingGetBlockFromPeersTask(
       final EthContext ethContext,
       final ProtocolSchedule protocolSchedule,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final int maxRetries,
       final Optional<Hash> maybeBlockHash,
       final long blockNumber) {
     super(ethContext, metricsSystem, Objects::isNull, maxRetries);
     this.protocolSchedule = protocolSchedule;
+    this.peerTaskExecutor = peerTaskExecutor;
+    this.synchronizerConfiguration = synchronizerConfiguration;
+    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.maybeBlockHash = maybeBlockHash;
     this.blockNumber = blockNumber;
   }
@@ -55,12 +68,23 @@ public class RetryingGetBlockFromPeersTask
   public static RetryingGetBlockFromPeersTask create(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final int maxRetries,
       final Optional<Hash> maybeHash,
       final long blockNumber) {
     return new RetryingGetBlockFromPeersTask(
-        ethContext, protocolSchedule, metricsSystem, maxRetries, maybeHash, blockNumber);
+        ethContext,
+        protocolSchedule,
+        peerTaskExecutor,
+        synchronizerConfiguration,
+        currentProtocolSpecSupplier,
+        metricsSystem,
+        maxRetries,
+        maybeHash,
+        blockNumber);
   }
 
   @Override
@@ -68,7 +92,14 @@ public class RetryingGetBlockFromPeersTask
       final EthPeer currentPeer) {
     final GetBlockFromPeerTask getBlockTask =
         GetBlockFromPeerTask.create(
-            protocolSchedule, getEthContext(), maybeBlockHash, blockNumber, getMetricsSystem());
+            protocolSchedule,
+            getEthContext(),
+            peerTaskExecutor,
+            synchronizerConfiguration,
+            currentProtocolSpecSupplier,
+            maybeBlockHash,
+            blockNumber,
+            getMetricsSystem());
     getBlockTask.assignPeer(currentPeer);
 
     return executeSubTask(getBlockTask::run)

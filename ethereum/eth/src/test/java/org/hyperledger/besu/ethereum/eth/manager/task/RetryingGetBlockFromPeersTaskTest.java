@@ -21,16 +21,21 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.RetryingSwitchingPeerMessageTaskTest;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class RetryingGetBlockFromPeersTaskTest
     extends RetryingSwitchingPeerMessageTaskTest<PeerTaskResult<Block>> {
+
+  private PeerTaskExecutor peerTaskExecutor;
 
   @Override
   protected void assertResultMatchesExpectation(
@@ -48,9 +53,13 @@ public class RetryingGetBlockFromPeersTaskTest
 
   @Override
   protected RetryingGetBlockFromPeersTask createTask(final PeerTaskResult<Block> requestedData) {
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     return RetryingGetBlockFromPeersTask.create(
         protocolSchedule,
         ethContext,
+        peerTaskExecutor,
+        SynchronizerConfiguration.builder().build(),
+        () -> null,
         metricsSystem,
         maxRetries,
         Optional.of(requestedData.getResult().getHash()),

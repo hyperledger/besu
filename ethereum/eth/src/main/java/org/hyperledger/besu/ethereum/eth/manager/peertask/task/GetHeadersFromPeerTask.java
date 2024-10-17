@@ -48,8 +48,26 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
       final Direction direction,
       final ProtocolSchedule protocolSchedule,
       final Supplier<ProtocolSpec> currentProtocolSpecSupplier) {
+    this(
+        null,
+        blockNumber,
+        maxHeaders,
+        skip,
+        direction,
+        protocolSchedule,
+        currentProtocolSpecSupplier);
+  }
+
+  public GetHeadersFromPeerTask(
+      final Hash blockHash,
+      final long blockNumber,
+      final int maxHeaders,
+      final int skip,
+      final Direction direction,
+      final ProtocolSchedule protocolSchedule,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier) {
+    this.blockHash = blockHash;
     this.blockNumber = blockNumber;
-    this.blockHash = null;
     this.maxHeaders = maxHeaders;
     this.skip = skip;
     this.direction = direction;
@@ -60,26 +78,6 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
         direction == Direction.FORWARD
             ? blockNumber + (long) (maxHeaders - 1) * skip + 1
             : blockNumber;
-  }
-
-  public GetHeadersFromPeerTask(
-      final Hash blockHash,
-      final int maxHeaders,
-      final int skip,
-      final Direction direction,
-      final ProtocolSchedule protocolSchedule,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier) {
-    this.blockNumber = null;
-    this.blockHash = blockHash;
-    this.maxHeaders = maxHeaders;
-    this.skip = skip;
-    this.direction = direction;
-    this.protocolSchedule = protocolSchedule;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
-
-    // can't calculate requiredBlockchainHeight, so set to 0 and just hope the peer we use is high
-    // enough
-    requiredBlockchainHeight = 0;
   }
 
   @Override

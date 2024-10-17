@@ -71,6 +71,9 @@ public class CheckpointDownloadBlockStep {
         GetBlockFromPeerTask.create(
             protocolSchedule,
             ethContext,
+            peerTaskExecutor,
+            synchronizerConfiguration,
+            currentProtocolSpecSupplier,
             Optional.of(hash),
             checkpoint.blockNumber(),
             metricsSystem);

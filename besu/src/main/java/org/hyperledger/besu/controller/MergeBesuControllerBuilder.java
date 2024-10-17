@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -43,6 +44,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -50,6 +52,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +71,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
       final MiningParameters miningParameters,
+      final PeerTaskExecutor peerTaskExecutor,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
     return createTransitionMiningCoordinator(
@@ -79,6 +84,9 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         new BackwardSyncContext(
             protocolContext,
             protocolSchedule,
+            peerTaskExecutor,
+            syncConfig,
+            currentProtocolSpecSupplier,
             metricsSystem,
             ethProtocolManager.ethContext(),
             syncState,

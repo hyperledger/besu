@@ -65,10 +65,12 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.BesuEvents;
@@ -142,6 +144,8 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
       final MiningParameters miningParameters,
+      final PeerTaskExecutor peerTaskExecutor,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();

@@ -735,6 +735,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             protocolContext,
             transactionPool,
             miningParameters,
+            peerTaskExecutor,
+            currentProtocolSpecSupplier,
             syncState,
             ethProtocolManager);
 
@@ -972,6 +974,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param protocolContext the protocol context
    * @param transactionPool the transaction pool
    * @param miningParameters the mining parameters
+   * @param peerTaskExecutor the peer task executor
+   * @param currentProtocolSpecSupplier the current protocol spec supplier
    * @param syncState the sync state
    * @param ethProtocolManager the eth protocol manager
    * @return the mining coordinator
@@ -981,6 +985,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       ProtocolContext protocolContext,
       TransactionPool transactionPool,
       MiningParameters miningParameters,
+      PeerTaskExecutor peerTaskExecutor,
+      Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       SyncState syncState,
       EthProtocolManager ethProtocolManager);
 

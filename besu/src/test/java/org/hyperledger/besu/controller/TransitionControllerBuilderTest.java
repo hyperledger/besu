@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitV
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -73,6 +74,7 @@ public class TransitionControllerBuilderTest {
   @Mock ProtocolContext protocolContext;
   @Mock MutableBlockchain mockBlockchain;
   @Mock TransactionPool transactionPool;
+  @Mock PeerTaskExecutor peerTaskExecutor;
   @Mock SyncState syncState;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
@@ -274,6 +276,8 @@ public class TransitionControllerBuilderTest {
             protocolContext,
             transactionPool,
             miningParameters,
+            peerTaskExecutor,
+            () -> null,
             syncState,
             ethProtocolManager);
 

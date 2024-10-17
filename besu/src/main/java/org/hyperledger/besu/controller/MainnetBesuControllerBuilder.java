@@ -23,13 +23,17 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+
+import java.util.function.Supplier;
 
 /** The Mainnet besu controller builder. */
 public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
@@ -45,6 +49,8 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
       final MiningParameters miningParameters,
+      final PeerTaskExecutor peerTaskExecutor,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
 

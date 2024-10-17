@@ -105,6 +105,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
       final MiningParameters miningParameters,
+      final PeerTaskExecutor peerTaskExecutor,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
 
@@ -122,6 +124,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         new TransitionBackwardSyncContext(
             protocolContext,
             transitionProtocolSchedule,
+            peerTaskExecutor,
+            syncConfig,
+            currentProtocolSpecSupplier,
             metricsSystem,
             ethProtocolManager.ethContext(),
             syncState,
@@ -140,6 +145,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                             .isMiningEnabled(false)
                             .build())
                     .build(),
+                peerTaskExecutor,
+                currentProtocolSpecSupplier,
                 syncState,
                 ethProtocolManager),
             mergeBesuControllerBuilder.createTransitionMiningCoordinator(

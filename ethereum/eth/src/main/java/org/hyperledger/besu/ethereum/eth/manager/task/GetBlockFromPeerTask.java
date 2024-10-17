@@ -20,12 +20,21 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +44,9 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private static final Logger LOG = LoggerFactory.getLogger(GetBlockFromPeerTask.class);
 
   private final ProtocolSchedule protocolSchedule;
+  private final PeerTaskExecutor peerTaskExecutor;
+  private final SynchronizerConfiguration synchronizerConfiguration;
+  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final Optional<Hash> hash;
   private final long blockNumber;
   private final MetricsSystem metricsSystem;
@@ -42,10 +54,16 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   protected GetBlockFromPeerTask(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
     super(ethContext, metricsSystem);
+    this.peerTaskExecutor = peerTaskExecutor;
+    this.synchronizerConfiguration = synchronizerConfiguration;
+    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.blockNumber = blockNumber;
     this.metricsSystem = metricsSystem;
     this.protocolSchedule = protocolSchedule;
@@ -55,10 +73,21 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   public static GetBlockFromPeerTask create(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
-    return new GetBlockFromPeerTask(protocolSchedule, ethContext, hash, blockNumber, metricsSystem);
+    return new GetBlockFromPeerTask(
+        protocolSchedule,
+        ethContext,
+        peerTaskExecutor,
+        synchronizerConfiguration,
+        currentProtocolSpecSupplier,
+        hash,
+        blockNumber,
+        metricsSystem);
   }
 
   @Override
@@ -68,31 +97,22 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         "Downloading block {} from peer {}.",
         blockIdentifier,
         assignedPeer.map(EthPeer::toString).orElse("<any>"));
-    downloadHeader()
-        .thenCompose(this::completeBlock)
-        .whenComplete(
-            (r, t) -> {
-              if (t != null) {
-                LOG.debug(
-                    "Failed to download block {} from peer {} with message '{}' and cause '{}'",
-                    blockIdentifier,
-                    assignedPeer.map(EthPeer::toString).orElse("<any>"),
-                    t.getMessage(),
-                    t.getCause());
-                result.completeExceptionally(t);
-              } else if (r.getResult().isEmpty()) {
-                r.getPeer().recordUselessResponse("Download block returned an empty result");
-                LOG.debug(
-                    "Failed to download block {} from peer {} with empty result.",
-                    blockIdentifier,
-                    r.getPeer());
-                result.completeExceptionally(new IncompleteResultsException());
-              } else {
-                LOG.debug(
-                    "Successfully downloaded block {} from peer {}.", blockIdentifier, r.getPeer());
-                result.complete(new PeerTaskResult<>(r.getPeer(), r.getResult().get(0)));
-              }
-            });
+    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+      ethContext
+          .getScheduler()
+          .scheduleServiceTask(
+              () -> {
+                downloadHeaderUsingPeerTaskSystem()
+                    .thenCompose(this::completeBlock)
+                    .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
+              });
+    } else {
+      downloadHeader()
+          .thenCompose(
+              (peerTaskResult) -> CompletableFuture.completedFuture(peerTaskResult.getResult()))
+          .thenCompose(this::completeBlock)
+          .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
+    }
   }
 
   private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeader() {
@@ -113,9 +133,50 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         });
   }
 
+  private CompletableFuture<List<BlockHeader>> downloadHeaderUsingPeerTaskSystem() {
+    GetHeadersFromPeerTask task =
+        hash.map(
+                (h) ->
+                    new GetHeadersFromPeerTask(
+                        h,
+                        blockNumber,
+                        1,
+                        0,
+                        Direction.FORWARD,
+                        protocolSchedule,
+                        currentProtocolSpecSupplier))
+            .orElseGet(
+                () ->
+                    new GetHeadersFromPeerTask(
+                        blockNumber,
+                        1,
+                        0,
+                        Direction.FORWARD,
+                        protocolSchedule,
+                        currentProtocolSpecSupplier));
+    PeerTaskExecutorResult<List<BlockHeader>> taskResult;
+    if (assignedPeer.isPresent()) {
+      taskResult = peerTaskExecutor.executeAgainstPeer(task, assignedPeer.get());
+    } else {
+      taskResult = peerTaskExecutor.execute(task);
+    }
+
+    CompletableFuture<List<BlockHeader>> returnValue = new CompletableFuture<List<BlockHeader>>();
+    if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
+      returnValue.completeExceptionally(new PeerDisconnectedException(assignedPeer.get()));
+    } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+        || taskResult.result().isEmpty()) {
+      returnValue.completeExceptionally(
+          new RuntimeException("Peer failed to successfully return requested block headers"));
+    } else {
+      returnValue.complete(taskResult.result().get());
+    }
+    return returnValue;
+  }
+
   private CompletableFuture<PeerTaskResult<List<Block>>> completeBlock(
-      final PeerTaskResult<List<BlockHeader>> headerResult) {
-    if (headerResult.getResult().isEmpty()) {
+      final List<BlockHeader> headers) {
+    if (headers.isEmpty()) {
       LOG.debug("header result is empty.");
       return CompletableFuture.failedFuture(new IncompleteResultsException());
     }
@@ -124,9 +185,38 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         () -> {
           final GetBodiesFromPeerTask task =
               GetBodiesFromPeerTask.forHeaders(
-                  protocolSchedule, ethContext, headerResult.getResult(), metricsSystem);
-          task.assignPeer(headerResult.getPeer());
+                  protocolSchedule, ethContext, headers, metricsSystem);
+          assignedPeer.ifPresent(task::assignPeer);
           return task.run();
         });
+  }
+
+  private void completeTask(
+      final PeerTaskResult<List<Block>> blockTaskResult,
+      final Throwable throwable,
+      final String blockIdentifier) {
+    if (throwable != null) {
+      LOG.debug(
+          "Failed to download block {} from peer {} with message '{}' and cause '{}'",
+          blockIdentifier,
+          assignedPeer.map(EthPeer::toString).orElse("<any>"),
+          throwable.getMessage(),
+          throwable.getCause());
+      result.completeExceptionally(throwable);
+    } else if (blockTaskResult.getResult().isEmpty()) {
+      blockTaskResult.getPeer().recordUselessResponse("Download block returned an empty result");
+      LOG.debug(
+          "Failed to download block {} from peer {} with empty result.",
+          blockIdentifier,
+          blockTaskResult.getPeer());
+      result.completeExceptionally(new IncompleteResultsException());
+    } else {
+      LOG.debug(
+          "Successfully downloaded block {} from peer {}.",
+          blockIdentifier,
+          blockTaskResult.getPeer());
+      result.complete(
+          new PeerTaskResult<>(blockTaskResult.getPeer(), blockTaskResult.getResult().get(0)));
+    }
   }
 }
