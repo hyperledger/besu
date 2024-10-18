@@ -330,7 +330,7 @@ final class GenesisStateTest {
     assertThat(header.getRequestsHash().get())
         .isEqualTo(
             Hash.fromHexString(
-                "0x554807b22674e6d335f734485993857bbad7a9543affb0663a10c14d78135ec7"));
+                "0x6036c41849da9c076ed79654d434017387a88fb833c2856b32e18218b3341c5f"));
   }
 
   @Test

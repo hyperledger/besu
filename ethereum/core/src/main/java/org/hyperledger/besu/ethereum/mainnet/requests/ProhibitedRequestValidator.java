@@ -19,6 +19,20 @@ import org.hyperledger.besu.ethereum.core.Request;
 import java.util.List;
 import java.util.Optional;
 
-public interface RequestsValidator {
-  boolean validate(Optional<List<Request>> maybeRequests);
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class ProhibitedRequestValidator implements RequestsValidator {
+  private static final Logger LOG = LoggerFactory.getLogger(MainnetRequestsValidator.class);
+
+  @Override
+  public boolean validate(final Optional<List<Request>> maybeRequests) {
+    boolean hasRequests = maybeRequests.isPresent();
+
+    if (hasRequests) {
+      LOG.warn("There are requests but requests are prohibited");
+    }
+
+    return !hasRequests;
+  }
 }

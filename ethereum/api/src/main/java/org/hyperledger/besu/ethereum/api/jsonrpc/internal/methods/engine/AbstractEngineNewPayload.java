@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getRequestsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
@@ -204,7 +205,11 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           "Invalid requests");
     }
 
-    // TODO JF validate requests
+    if (!getRequestsValidator(
+            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
+        .validate(maybeRequests)) {
+      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_REQUESTS_PARAMS);
+    }
 
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");

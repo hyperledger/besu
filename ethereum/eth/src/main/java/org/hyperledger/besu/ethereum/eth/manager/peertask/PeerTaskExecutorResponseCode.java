@@ -12,19 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet.requests;
+package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-
-import java.util.List;
-import java.util.Optional;
-
-/** Interface for request validation logic. */
-public interface RequestValidator {
-  boolean validate(
-      final Block block, final List<Request> request, final List<TransactionReceipt> receipts);
-
-  boolean validateParameter(final Optional<List<Request>> request);
+public enum PeerTaskExecutorResponseCode {
+  SUCCESS,
+  NO_PEER_AVAILABLE,
+  PEER_DISCONNECTED,
+  INTERNAL_SERVER_ERROR,
+  TIMEOUT,
+  INVALID_RESPONSE
 }
