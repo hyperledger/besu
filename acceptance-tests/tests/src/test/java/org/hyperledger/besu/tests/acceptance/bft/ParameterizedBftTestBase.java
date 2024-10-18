@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.bft;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 
 import java.util.stream.Stream;
 
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.provider.Arguments;
 
 @Disabled("This is not a test class, it offers BFT parameterization only.")
-public abstract class ParameterizedBftTestBase extends AcceptanceTestBaseJunit5 {
+public abstract class ParameterizedBftTestBase extends AcceptanceTestBase {
   protected String bftType;
   protected BftAcceptanceTestParameterization nodeFactory;
 

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor;
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
