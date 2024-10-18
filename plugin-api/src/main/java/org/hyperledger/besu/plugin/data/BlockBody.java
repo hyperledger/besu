@@ -15,7 +15,6 @@
 package org.hyperledger.besu.plugin.data;
 
 import org.hyperledger.besu.datatypes.Transaction;
-import org.hyperledger.besu.plugin.Unstable;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,12 +46,4 @@ public interface BlockBody {
    * @return The list of withdrawals of the block.
    */
   Optional<? extends List<? extends Withdrawal>> getWithdrawals();
-
-  /**
-   * Returns the list of requests of the block.
-   *
-   * @return The list of requests of the block.
-   */
-  @Unstable
-  Optional<? extends List<? extends Request>> getRequests();
 }

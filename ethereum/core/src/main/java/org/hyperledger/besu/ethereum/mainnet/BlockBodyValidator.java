@@ -17,11 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.List;
-import java.util.Optional;
 
 /** Validates block bodies. */
 public interface BlockBodyValidator {
@@ -41,7 +39,6 @@ public interface BlockBodyValidator {
       ProtocolContext context,
       Block block,
       List<TransactionReceipt> receipts,
-      Optional<List<Request>> requests,
       Hash worldStateRootHash,
       final HeaderValidationMode ommerValidationMode);
 
@@ -58,7 +55,6 @@ public interface BlockBodyValidator {
       ProtocolContext context,
       Block block,
       List<TransactionReceipt> receipts,
-      final Optional<List<Request>> requests,
       final HeaderValidationMode ommerValidationMode,
       final BodyValidationMode bodyValidationMode);
 }

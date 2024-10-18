@@ -36,8 +36,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestValidator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Collections;
@@ -61,8 +60,7 @@ class MainnetBlockBodyValidatorTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WithdrawalsValidator withdrawalsValidator;
-  @Mock private DepositRequestValidator depositRequestValidator;
-  @Mock private RequestsValidatorCoordinator requestValidator;
+  @Mock private RequestsValidator requestValidator;
 
   @BeforeEach
   public void setUp() {
@@ -72,12 +70,8 @@ class MainnetBlockBodyValidatorTest {
     lenient().when(withdrawalsValidator.validateWithdrawals(any())).thenReturn(true);
     lenient().when(withdrawalsValidator.validateWithdrawalsRoot(any())).thenReturn(true);
 
-    lenient()
-        .when(depositRequestValidator.validateDepositRequests(any(), any(), any()))
-        .thenReturn(true);
-
-    lenient().when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(requestValidator);
-    lenient().when(requestValidator.validate(any(), any(), any())).thenReturn(true);
+    lenient().when(protocolSpec.getRequestsValidator()).thenReturn(requestValidator);
+    lenient().when(requestValidator.validate(any())).thenReturn(true);
   }
 
   @Test
@@ -104,7 +98,6 @@ class MainnetBlockBodyValidatorTest {
                     blockchainSetupUtil.getProtocolContext(),
                     block,
                     emptyList(),
-                    any(),
                     NONE,
                     BodyValidationMode.FULL))
         .isTrue();
@@ -133,7 +126,6 @@ class MainnetBlockBodyValidatorTest {
                     blockchainSetupUtil.getProtocolContext(),
                     block,
                     emptyList(),
-                    any(),
                     NONE,
                     BodyValidationMode.FULL))
         .isFalse();
@@ -162,36 +154,6 @@ class MainnetBlockBodyValidatorTest {
                     blockchainSetupUtil.getProtocolContext(),
                     block,
                     emptyList(),
-                    any(),
-                    NONE,
-                    BodyValidationMode.FULL))
-        .isFalse();
-  }
-
-  @Test
-  public void validationFailsIfWithdrawalRequestsValidationFails() {
-    final Block block =
-        blockDataGenerator.block(
-            new BlockOptions()
-                .setBlockNumber(1)
-                .setGasUsed(0)
-                .hasTransactions(false)
-                .hasOmmers(false)
-                .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
-                .setRequests(Optional.of(List.of())));
-    blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
-
-    when(requestValidator.validate(any(), any(), any())).thenReturn(false);
-
-    assertThat(
-            new MainnetBlockBodyValidator(protocolSchedule)
-                .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(),
-                    block,
-                    emptyList(),
-                    any(),
                     NONE,
                     BodyValidationMode.FULL))
         .isFalse();
@@ -210,7 +172,6 @@ class MainnetBlockBodyValidatorTest {
                 blockchainSetupUtil.getProtocolContext(),
                 block,
                 receipts,
-                Optional.empty(),
                 NONE,
                 BodyValidationMode.NONE))
         .isTrue();
@@ -241,7 +202,6 @@ class MainnetBlockBodyValidatorTest {
                 blockchainSetupUtil.getProtocolContext(),
                 block,
                 emptyList(),
-                Optional.empty(),
                 NONE,
                 BodyValidationMode.LIGHT))
         .isTrue();
@@ -272,7 +232,6 @@ class MainnetBlockBodyValidatorTest {
                 blockchainSetupUtil.getProtocolContext(),
                 block,
                 emptyList(),
-                Optional.empty(),
                 NONE,
                 BodyValidationMode.FULL))
         .isTrue();

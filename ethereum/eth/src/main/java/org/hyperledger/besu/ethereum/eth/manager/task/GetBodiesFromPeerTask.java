@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -151,41 +150,34 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     private final Bytes32 transactionsRoot;
     private final Bytes32 ommersHash;
     private final Bytes32 withdrawalsRoot;
-    private final Bytes32 requestsRoot;
 
+    // TODO should requestsHash be included in this?
     public BodyIdentifier(
-        final Bytes32 transactionsRoot,
-        final Bytes32 ommersHash,
-        final Bytes32 withdrawalsRoot,
-        final Bytes32 requestsRoot) {
+        final Bytes32 transactionsRoot, final Bytes32 ommersHash, final Bytes32 withdrawalsRoot) {
       this.transactionsRoot = transactionsRoot;
       this.ommersHash = ommersHash;
       this.withdrawalsRoot = withdrawalsRoot;
-      this.requestsRoot = requestsRoot;
     }
 
     public BodyIdentifier(final BlockBody body) {
-      this(body.getTransactions(), body.getOmmers(), body.getWithdrawals(), body.getRequests());
+      this(body.getTransactions(), body.getOmmers(), body.getWithdrawals());
     }
 
     public BodyIdentifier(
         final List<Transaction> transactions,
         final List<BlockHeader> ommers,
-        final Optional<List<Withdrawal>> withdrawals,
-        final Optional<List<Request>> requests) {
+        final Optional<List<Withdrawal>> withdrawals) {
       this(
           BodyValidation.transactionsRoot(transactions),
           BodyValidation.ommersHash(ommers),
-          withdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
-          requests.map(BodyValidation::requestsRoot).orElse(null));
+          withdrawals.map(BodyValidation::withdrawalsRoot).orElse(null));
     }
 
     public BodyIdentifier(final BlockHeader header) {
       this(
           header.getTransactionsRoot(),
           header.getOmmersHash(),
-          header.getWithdrawalsRoot().orElse(null),
-          header.getRequestsRoot().orElse(null));
+          header.getWithdrawalsRoot().orElse(null));
     }
 
     @Override
@@ -195,13 +187,12 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
       BodyIdentifier that = (BodyIdentifier) o;
       return Objects.equals(transactionsRoot, that.transactionsRoot)
           && Objects.equals(ommersHash, that.ommersHash)
-          && Objects.equals(withdrawalsRoot, that.withdrawalsRoot)
-          && Objects.equals(requestsRoot, that.requestsRoot);
+          && Objects.equals(withdrawalsRoot, that.withdrawalsRoot);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(transactionsRoot, ommersHash, withdrawalsRoot, requestsRoot);
+      return Objects.hash(transactionsRoot, ommersHash, withdrawalsRoot);
     }
   }
 }

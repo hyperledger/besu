@@ -19,14 +19,11 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -52,12 +49,11 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final Optional<List<Request>> requests,
       final Hash worldStateRootHash,
       final HeaderValidationMode ommerValidationMode) {
 
     if (!validateBodyLight(
-        context, block, receipts, requests, ommerValidationMode, BodyValidationMode.FULL)) {
+        context, block, receipts, ommerValidationMode, BodyValidationMode.FULL)) {
       return false;
     }
 
@@ -78,7 +74,6 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final Optional<List<Request>> requests,
       final HeaderValidationMode ommerValidationMode,
       final BodyValidationMode bodyValidationMode) {
     if (bodyValidationMode == BodyValidationMode.NONE) {
@@ -119,9 +114,6 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!validateRequests(block, requests, receipts)) {
-      return false;
-    }
     return true;
   }
 
@@ -323,14 +315,5 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     }
 
     return true;
-  }
-
-  private boolean validateRequests(
-      final Block block,
-      final Optional<List<Request>> requests,
-      final List<TransactionReceipt> receipts) {
-    final RequestsValidatorCoordinator requestValidator =
-        protocolSchedule.getByBlockHeader(block.getHeader()).getRequestsValidatorCoordinator();
-    return requestValidator.validate(block, requests, receipts);
   }
 }

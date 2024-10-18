@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
@@ -42,12 +41,11 @@ public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final Optional<List<Request>> requests,
       final HeaderValidationMode ommerValidationMode,
       final BodyValidationMode bodyValidationMode) {
 
     return super.validateBodyLight(
-            context, block, receipts, requests, ommerValidationMode, bodyValidationMode)
+            context, block, receipts, ommerValidationMode, bodyValidationMode)
         && validateTransactionGasPrice(block);
   }
 

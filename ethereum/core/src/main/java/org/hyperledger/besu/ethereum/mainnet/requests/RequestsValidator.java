@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,21 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core;
+package org.hyperledger.besu.ethereum.mainnet.requests;
 
-import org.hyperledger.besu.datatypes.RequestType;
+import org.hyperledger.besu.ethereum.core.Request;
 
-import org.apache.tuweni.bytes.Bytes;
+import java.util.List;
+import java.util.Optional;
 
-public record Request(RequestType type, Bytes data)
-    implements org.hyperledger.besu.plugin.data.Request {
-  @Override
-  public RequestType getType() {
-    return type();
-  }
-
-  @Override
-  public Bytes getData() {
-    return data();
-  }
+public interface RequestsValidator {
+  boolean validate(Optional<List<Request>> maybeRequests);
 }
