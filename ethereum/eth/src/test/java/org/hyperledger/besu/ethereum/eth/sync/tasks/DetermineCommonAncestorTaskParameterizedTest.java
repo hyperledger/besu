@@ -34,7 +34,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -43,7 +48,9 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -55,6 +62,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
 
 public class DetermineCommonAncestorTaskParameterizedTest {
   private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
@@ -66,6 +74,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
   private static final int chainHeight = 50;
 
   private MutableBlockchain remoteBlockchain;
+  private PeerTaskExecutor peerTaskExecutor;
 
   @BeforeAll
   public static void setupClass() {
@@ -87,6 +96,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
   @BeforeEach
   public void setup() {
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
   }
 
   public static Stream<Arguments> parameters() throws IOException {
@@ -94,15 +104,19 @@ public class DetermineCommonAncestorTaskParameterizedTest {
     final Stream.Builder<Arguments> builder = Stream.builder();
     for (final int requestSize : requestSizes) {
       for (int i = 0; i <= chainHeight; i++) {
-        builder.add(Arguments.of(requestSize, i));
+        builder.add(Arguments.of(requestSize, i, true));
+        builder.add(Arguments.of(requestSize, i, false));
       }
     }
     return builder.build();
   }
 
-  @ParameterizedTest(name = "requestSize={0}, commonAncestor={1}")
+  @ParameterizedTest(name = "requestSize={0}, commonAncestor={1}, isPeerTaskSystemEnabled={2}")
   @MethodSource("parameters")
-  public void searchesAgainstNetwork(final int headerRequestSize, final int commonAncestorHeight) {
+  public void searchesAgainstNetwork(
+      final int headerRequestSize,
+      final int commonAncestorHeight,
+      final boolean isPeerTaskSystemEnabled) {
     BlockHeader commonHeader = genesisBlock.getHeader();
     for (long i = 1; i <= commonAncestorHeight; i++) {
       commonHeader = localBlockchain.getBlockHeader(i).get();
@@ -160,7 +174,34 @@ public class DetermineCommonAncestorTaskParameterizedTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             headerRequestSize,
+            peerTaskExecutor,
+            SynchronizerConfiguration.builder()
+                .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
+                .build(),
+            () -> null,
             metricsSystem);
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class),
+                Mockito.eq(respondingEthPeer.getEthPeer())))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask getHeadersTask =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              long blockNumber = getHeadersTask.getBlockNumber();
+              int maxHeaders = getHeadersTask.getMaxHeaders();
+              int skip = getHeadersTask.getSkip();
+
+              List<BlockHeader> headers = new ArrayList<>();
+              long lowerBound = Math.max(0, blockNumber - (maxHeaders - 1) * (skip + 1));
+              for (long i = blockNumber; i > lowerBound; i -= skip + 1) {
+                headers.add(remoteBlockchain.getBlockHeader(i).get());
+              }
+
+              return new PeerTaskExecutorResult<List<BlockHeader>>(
+                  Optional.of(headers), PeerTaskExecutorResponseCode.SUCCESS);
+            });
 
     final CompletableFuture<BlockHeader> future = task.run();
     respondingEthPeer.respondWhile(responder, () -> !future.isDone());

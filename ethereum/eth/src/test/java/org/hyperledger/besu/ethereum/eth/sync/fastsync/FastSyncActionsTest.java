@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -534,8 +535,10 @@ public class FastSyncActionsTest {
         syncConfig,
         worldStateStorageCoordinator,
         protocolSchedule,
+        () -> null,
         protocolContext,
         ethContext,
+        new PeerTaskExecutor(null, null, new NoOpMetricsSystem()),
         new SyncState(blockchain, ethContext.getEthPeers(), true, Optional.empty()),
         pivotBlockSelector,
         new NoOpMetricsSystem());

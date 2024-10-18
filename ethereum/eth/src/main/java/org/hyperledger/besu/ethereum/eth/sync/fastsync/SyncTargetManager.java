@@ -23,10 +23,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.AbstractSyncTargetManager;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -36,6 +38,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,9 +66,18 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState) {
-    super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
+    super(
+        config,
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        peerTaskExecutor,
+        currentProtocolSpecSupplier,
+        metricsSystem);
     this.config = config;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolSchedule = protocolSchedule;
