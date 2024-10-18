@@ -4,6 +4,11 @@
 - Added isLabelsObserved to LabelledGauge in plugin-api. Default implementation returns false.
 
 ### Breaking Changes
+- Removed deprecated experimental feature names 
+  - `--Xsnapsync-synchronizer-flat-db-healing-enabled` in favor of `--Xbonsai-full-flat-db-enabled` 
+  - `--Xbonsai-limit-trie-logs-enabled` and `--Xbonsai-trie-log-pruning-enabled` in favor of `--bonsai-limit-trie-logs-enabled`
+  - `--Xbonsai-trie-logs-pruning-window-size` in favor of `--bonsai-trie-logs-pruning-window-size` 
+
 
 ### Upcoming Breaking Changes
 

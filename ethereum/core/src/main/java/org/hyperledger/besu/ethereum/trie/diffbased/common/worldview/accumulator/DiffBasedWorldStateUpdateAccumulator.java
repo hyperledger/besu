@@ -878,8 +878,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   }
 
   protected Hash hashAndSaveAccountPreImage(final Address address) {
-    // no need to save account preimage by default
-    return Hash.hash(address);
+    // default to using address static hash cache:
+    return address.addressHash();
   }
 
   protected Hash hashAndSaveSlotPreImage(final UInt256 slotKey) {

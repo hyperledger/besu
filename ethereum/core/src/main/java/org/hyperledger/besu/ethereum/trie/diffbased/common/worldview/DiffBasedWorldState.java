@@ -296,7 +296,7 @@ public abstract class DiffBasedWorldState
 
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("storage format do not provide account streaming.");
+    throw new RuntimeException("storage format does not provide account streaming.");
   }
 
   @Override

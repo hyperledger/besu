@@ -36,4 +36,11 @@ public interface DataStorageConfiguration {
    */
   @Unstable
   boolean getReceiptCompactionEnabled();
+
+  /**
+   * Indicates whether to persist hash preimages to storage. When enabled this option will persist
+   * Account and Hash preimages to storage upon their writing.
+   */
+  @Unstable
+  boolean getHashPreimageStorageEnabled();
 }

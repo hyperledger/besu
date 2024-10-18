@@ -27,6 +27,7 @@ public interface DataStorageConfiguration {
   long MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
   int DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE = 5_000;
   boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = true;
+  boolean DEFAULT_HASH_PREIMAGE_STORAGE_ENABLED = false;
 
   DataStorageConfiguration DEFAULT_CONFIG =
       ImmutableDataStorageConfiguration.builder()
@@ -56,6 +57,8 @@ public interface DataStorageConfiguration {
           .build();
 
   DataStorageFormat getDataStorageFormat();
+
+  Boolean getHashPreimageStorageEnabled();
 
   Long getBonsaiMaxLayersToLoad();
 
