@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,12 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.transactions;
+package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.ethereum.core.Transaction;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@FunctionalInterface
-public interface PendingTransactionDroppedListener {
-
-  void onTransactionDropped(Transaction transaction, final RemovalReason reason);
-}
+public record TransactionSequence(
+    @JsonProperty("exception") String exception,
+    @JsonProperty("rawBytes") String rawBytes,
+    @JsonProperty("valid") boolean valid) {}
