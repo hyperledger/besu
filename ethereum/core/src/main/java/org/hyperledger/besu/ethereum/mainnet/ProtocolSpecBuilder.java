@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -80,7 +81,7 @@ public class ProtocolSpecBuilder {
   private WithdrawalsValidator withdrawalsValidator =
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
-  private RequestsValidator requestsValidator;
+  private RequestsValidator requestsValidator = new ProhibitedRequestValidator();
   private RequestProcessorCoordinator requestProcessorCoordinator;
   protected BlockHashProcessor blockHashProcessor;
   private FeeMarket feeMarket = FeeMarket.legacy();

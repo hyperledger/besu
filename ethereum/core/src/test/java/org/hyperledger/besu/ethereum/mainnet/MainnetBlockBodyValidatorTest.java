@@ -71,7 +71,7 @@ class MainnetBlockBodyValidatorTest {
     lenient().when(withdrawalsValidator.validateWithdrawalsRoot(any())).thenReturn(true);
 
     lenient().when(protocolSpec.getRequestsValidator()).thenReturn(requestValidator);
-    lenient().when(requestValidator.validate(any(), any())).thenReturn(true);
+    lenient().when(requestValidator.validate(any())).thenReturn(true);
   }
 
   @Test
