@@ -300,8 +300,7 @@ public abstract class AbstractIsolationTests {
     }
 
     @Override
-    protected BlockHeader createFinalBlockHeader(
-        final SealableBlockHeader sealableBlockHeader, final Optional<BlockHeader> parentHeader) {
+    protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
       return BlockHeaderBuilder.create()
           .difficulty(Difficulty.ZERO)
           .mixHash(Hash.ZERO)

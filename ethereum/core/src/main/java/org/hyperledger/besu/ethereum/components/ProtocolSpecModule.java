@@ -12,15 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.components;
+package org.hyperledger.besu.ethereum.components;
+
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+
+import javax.inject.Named;
 
 import dagger.Module;
 import dagger.Provides;
 
 @Module
-public class EthereumCoreModule {
+public class ProtocolSpecModule {
+
   @Provides
-  EthereumCoreComponent provideEthereumCoreComponent() {
-    return DaggerEthereumCoreComponent.create();
+  @Named("frontier")
+  public ProtocolSpecBuilder frontierProtocolSpec(
+      final EvmConfiguration evmConfiguration,
+      final boolean isParalleltxEnabled,
+      final MetricsSystem metricsSystem) {
+    return MainnetProtocolSpecs.frontierDefinition(
+        evmConfiguration, isParalleltxEnabled, metricsSystem);
   }
 }

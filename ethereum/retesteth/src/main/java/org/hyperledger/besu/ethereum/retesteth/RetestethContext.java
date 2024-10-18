@@ -172,7 +172,7 @@ public class RetestethContext {
             badBlockManager,
             false,
             new NoOpMetricsSystem(),
-            DaggerRetestethContext_RetestEthCoreComponent.create().getMiningParameters());
+            DaggerRetestethContext_RetestEthCoreComponent.builder().build().getMiningParameters());
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
       protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule, badBlockManager);
     }
@@ -276,7 +276,7 @@ public class RetestethContext {
             syncState,
             transactionPoolConfiguration,
             new BlobCache(),
-            DaggerRetestethContext_RetestEthCoreComponent.create().getMiningParameters());
+            DaggerRetestethContext_RetestEthCoreComponent.builder().build().getMiningParameters());
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Genesis Block {} ", genesisState.getBlock());
