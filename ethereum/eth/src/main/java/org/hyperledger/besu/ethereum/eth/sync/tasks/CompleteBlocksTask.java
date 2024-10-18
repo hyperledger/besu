@@ -108,6 +108,9 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
         && header
             .getWithdrawalsRoot()
             .map(wsRoot -> wsRoot.equals(Hash.EMPTY_TRIE_HASH))
+            .orElse(true)
+        && header.getRequestsRoot()
+            .map(reqRoot -> reqRoot.equals(Hash.EMPTY_TRIE_HASH))
             .orElse(true);
   }
 
