@@ -14,14 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.core.components;
 
+import org.hyperledger.besu.ethereum.components.ProtocolScheduleModule;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import javax.inject.Singleton;
 
-import dagger.Component;
+import dagger.Subcomponent;
 
 @Singleton
-@Component(modules = {MiningParametersModule.class})
+@Subcomponent(
+    modules = {
+      MiningParametersModule.class,
+      ProtocolScheduleModule.class,
+    })
 public interface EthereumCoreComponent {
   MiningParameters getMiningParameters();
+  // ProtocolSchedule getProtocolSchedule();
 }

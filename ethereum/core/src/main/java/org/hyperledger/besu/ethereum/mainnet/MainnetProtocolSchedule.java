@@ -47,9 +47,9 @@ public class MainnetProtocolSchedule {
    */
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
-      final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration,
+      final Optional<PrivacyParameters> privacyParameters,
+      final Optional<Boolean> isRevertReasonEnabled,
+      final Optional<EvmConfiguration> evmConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem,
@@ -57,9 +57,9 @@ public class MainnetProtocolSchedule {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
           config,
-          privacyParameters,
-          isRevertReasonEnabled,
-          evmConfiguration,
+          privacyParameters.orElse(PrivacyParameters.DEFAULT),
+          isRevertReasonEnabled.orElse(false),
+          evmConfiguration.orElse(EvmConfiguration.DEFAULT),
           badBlockManager,
           isParallelTxProcessingEnabled,
           metricsSystem,
@@ -69,9 +69,9 @@ public class MainnetProtocolSchedule {
             config,
             Optional.of(DEFAULT_CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
-            privacyParameters,
-            isRevertReasonEnabled,
-            evmConfiguration,
+            privacyParameters.orElse(PrivacyParameters.DEFAULT),
+            isRevertReasonEnabled.orElse(false),
+            evmConfiguration.orElse(EvmConfiguration.DEFAULT),
             badBlockManager,
             isParallelTxProcessingEnabled,
             metricsSystem,
@@ -100,9 +100,9 @@ public class MainnetProtocolSchedule {
       final MiningParameters miningParameters) {
     return fromConfig(
         config,
-        PrivacyParameters.DEFAULT,
-        isRevertReasonEnabled,
-        evmConfiguration,
+        Optional.empty(),
+        Optional.of(isRevertReasonEnabled),
+        Optional.of(evmConfiguration),
         badBlockManager,
         isParallelTxProcessingEnabled,
         metricsSystem,
@@ -128,9 +128,9 @@ public class MainnetProtocolSchedule {
       final MiningParameters miningParameters) {
     return fromConfig(
         config,
-        PrivacyParameters.DEFAULT,
-        false,
-        evmConfiguration,
+        Optional.empty(),
+        Optional.empty(),
+        Optional.of(evmConfiguration),
         badBlockManager,
         isParallelTxProcessingEnabled,
         metricsSystem,
@@ -154,9 +154,9 @@ public class MainnetProtocolSchedule {
       final MiningParameters miningParameters) {
     return fromConfig(
         config,
-        PrivacyParameters.DEFAULT,
-        false,
-        EvmConfiguration.DEFAULT,
+        Optional.empty(),
+        Optional.empty(),
+        Optional.empty(),
         badBlockManager,
         isParallelTxProcessingEnabled,
         metricsSystem,

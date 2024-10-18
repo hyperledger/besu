@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.components.EthereumCoreModule;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -58,6 +57,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -589,6 +589,15 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   }
 
   @Module
+  public static class ObservableMetricsSystemModule {
+    @Provides
+    @Singleton
+    public ObservableMetricsSystem provideObservableMetricsSystem() {
+      return new NoOpMetricsSystem();
+    }
+  }
+
+  @Module
   public static class MockBesuCommandModule {
 
     @Provides
@@ -620,12 +629,12 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       modules = {
         ThreadBesuNodeRunner.BesuControllerModule.class,
         ThreadBesuNodeRunner.MockBesuCommandModule.class,
+        ThreadBesuNodeRunner.ObservableMetricsSystemModule.class,
         ThreadBesuNodeRunnerModule.class,
         BonsaiCachedMerkleTrieLoaderModule.class,
         MetricsSystemModule.class,
         ThreadBesuNodeRunner.BesuNodeProviderModule.class,
-        BlobCacheModule.class,
-        EthereumCoreModule.class
+        BlobCacheModule.class
       })
   public interface AcceptanceTestBesuComponent extends BesuComponent {
     BesuController besuController();

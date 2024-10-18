@@ -386,8 +386,7 @@ abstract class AbstractBlockCreatorTest {
     }
 
     @Override
-    protected BlockHeader createFinalBlockHeader(
-        final SealableBlockHeader sealableBlockHeader, final Optional<BlockHeader> blockHeader) {
+    protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
       return BlockHeaderBuilder.create()
           .difficulty(Difficulty.ZERO)
           .populateFrom(sealableBlockHeader)
