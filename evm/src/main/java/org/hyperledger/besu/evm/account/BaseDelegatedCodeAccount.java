@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.account;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Optional;
@@ -25,13 +26,17 @@ import org.apache.tuweni.bytes.Bytes;
 
 class BaseDelegatedCodeAccount {
   private final WorldUpdater worldUpdater;
+  private final GasCalculator gasCalculator;
 
   /** The address of the account that has delegated code to be loaded into it. */
   protected final Address delegatedCodeAddress;
 
   protected BaseDelegatedCodeAccount(
-      final WorldUpdater worldUpdater, final Address delegatedCodeAddress) {
+      final WorldUpdater worldUpdater,
+      final Address delegatedCodeAddress,
+      final GasCalculator gasCalculator) {
     this.worldUpdater = worldUpdater;
+    this.gasCalculator = gasCalculator;
     this.delegatedCodeAddress = delegatedCodeAddress;
   }
 
@@ -86,6 +91,9 @@ class BaseDelegatedCodeAccount {
   }
 
   private Bytes resolveDelegatedCode() {
+    if (gasCalculator.isPrecompile(delegatedCodeAddress)) {
+      return Bytes.EMPTY;
+    }
 
     return getDelegatedAccount().map(Account::getUnprocessedCode).orElse(Bytes.EMPTY);
   }
