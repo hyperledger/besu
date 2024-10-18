@@ -10,6 +10,7 @@
 ### Additions and Improvements
 - Fine tune already seen txs tracker when a tx is removed from the pool [#7755](https://github.com/hyperledger/besu/pull/7755)
 - Create and publish Besu BOM (Bill of Materials) [#7615](https://github.com/hyperledger/besu/pull/7615) 
+- Update Java dependencies [#7786](https://github.com/hyperledger/besu/pull/7786)
 
 ### Bug fixes
 
