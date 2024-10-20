@@ -222,8 +222,6 @@ dependencyManagement {
 
     dependency 'org.springframework.security:spring-security-crypto:6.3.3'
 
-    dependency 'org.testcontainers:testcontainers:1.20.1'
-
     dependency 'org.web3j:quorum:4.10.0'
     dependencySet(group: 'org.web3j', version: '4.12.1') {
       entry 'abi'
