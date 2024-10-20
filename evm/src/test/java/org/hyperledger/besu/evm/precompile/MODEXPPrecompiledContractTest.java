@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evm.precompile;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
@@ -176,7 +176,7 @@ class MODEXPPrecompiledContractTest {
   }
 
   private void testComputation(final String inputString, final String precompiledResult) {
-    assumeThat(precompiledResult).isNotNull();
+    assumeFalse(precompiledResult.isEmpty());
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expected = Bytes.fromHexString(precompiledResult);
     assertThat(byzantiumContract.computePrecompile(input, messageFrame).getOutput())
