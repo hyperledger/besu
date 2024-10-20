@@ -243,14 +243,21 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
-    List<PeerValidator> retval = super.createPeerValidators(protocolSchedule);
+  protected List<PeerValidator> createPeerValidators(
+      final ProtocolSchedule protocolSchedule,
+      final PeerTaskExecutor peerTaskExecutor,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier) {
+    List<PeerValidator> retval =
+        super.createPeerValidators(protocolSchedule, peerTaskExecutor, currentProtocolSpecSupplier);
     final OptionalLong powTerminalBlockNumber = genesisConfigOptions.getTerminalBlockNumber();
     final Optional<Hash> powTerminalBlockHash = genesisConfigOptions.getTerminalBlockHash();
     if (powTerminalBlockHash.isPresent() && powTerminalBlockNumber.isPresent()) {
       retval.add(
           new RequiredBlocksPeerValidator(
               protocolSchedule,
+              peerTaskExecutor,
+              syncConfig,
+              currentProtocolSpecSupplier,
               metricsSystem,
               powTerminalBlockNumber.getAsLong(),
               powTerminalBlockHash.get(),

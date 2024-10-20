@@ -24,19 +24,32 @@ import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
+  private PeerTaskExecutor peerTaskExecutor;
+
   @Override
   AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     return new RequiredBlocksPeerValidator(
-        ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), blockNumber, Hash.ZERO, buffer);
+        ProtocolScheduleFixture.MAINNET,
+        peerTaskExecutor,
+        SynchronizerConfiguration.builder().build(),
+        () -> null,
+        new NoOpMetricsSystem(),
+        blockNumber,
+        Hash.ZERO,
+        buffer);
   }
 
   @Test
@@ -50,6 +63,9 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
             ProtocolScheduleFixture.MAINNET,
+            peerTaskExecutor,
+            SynchronizerConfiguration.builder().build(),
+            () -> null,
             new NoOpMetricsSystem(),
             requiredBlockNumber,
             requiredBlock.getHash(),
@@ -82,6 +98,9 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
             ProtocolScheduleFixture.MAINNET,
+            peerTaskExecutor,
+            SynchronizerConfiguration.builder().build(),
+            () -> null,
             new NoOpMetricsSystem(),
             requiredBlockNumber,
             Hash.ZERO,
@@ -109,7 +128,13 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
-            ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), 1, Hash.ZERO);
+            ProtocolScheduleFixture.MAINNET,
+            peerTaskExecutor,
+            SynchronizerConfiguration.builder().build(),
+            () -> null,
+            new NoOpMetricsSystem(),
+            1,
+            Hash.ZERO);
 
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
 
