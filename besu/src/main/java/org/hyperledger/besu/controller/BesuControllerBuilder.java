@@ -1151,6 +1151,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * Create peer validators list.
    *
    * @param protocolSchedule the protocol schedule
+   * @param peerTaskExecutor the peer task executor
+   * @param currentProtocolSpecSupplier the current protocol spec supplier
    * @return the list
    */
   protected List<PeerValidator> createPeerValidators(
