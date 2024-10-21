@@ -18,19 +18,26 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.math.BigInteger;
+import java.util.Optional;
+import javax.inject.Singleton;
+
 import dagger.Module;
 import dagger.Provides;
 
 @Module
 public class ProtocolScheduleModule {
+
+  @Singleton
   @Provides
-  public ProtocolSchedule provideProtocolSchedule(
+  public ProtocolScheduleBuilder provideProtocolSchedule(
       final GenesisConfigOptions config,
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
@@ -54,6 +61,15 @@ public class ProtocolScheduleModule {
             metricsSystem,
             miningParameters);
 
-    return builder.createProtocolSchedule();
+    return builder;
+  }
+
+  @Provides
+  public ProtocolSchedule createProtocolSchedule(
+      final ProtocolScheduleBuilder builder, final GenesisConfigOptions config) {
+    final Optional<BigInteger> chainId = config.getChainId().or(() -> builder.getDefaultChainId());
+    DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(chainId);
+    builder.initSchedule(protocolSchedule, chainId);
+    return protocolSchedule;
   }
 }
