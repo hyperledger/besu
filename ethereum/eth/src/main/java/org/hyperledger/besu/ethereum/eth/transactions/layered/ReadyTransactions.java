@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.PROMOTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.LayerMoveReason.PROMOTED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -109,7 +109,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   protected void internalRemove(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final PendingTransaction removedTx,
-      final RemovalReason removalReason) {
+      final LayeredRemovalReason removalReason) {
     orderByMaxFee.remove(removedTx);
     if (!senderTxs.isEmpty()) {
       orderByMaxFee.add(senderTxs.firstEntry().getValue());

@@ -14,23 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import org.hyperledger.besu.ethereum.eth.transactions.RemovalReason;
+
 import java.util.Locale;
 
 /** The reason why a pending tx has been removed */
-public interface RemovalReason {
+interface LayeredRemovalReason extends RemovalReason {
   /**
    * From where the tx has been removed
    *
    * @return removed from item
    */
   RemovedFrom removedFrom();
-
-  /**
-   * Return a label that identify this reason to be used in the metric system.
-   *
-   * @return a label
-   */
-  String label();
 
   /** There are 2 kinds of removals, from a layer and from the pool. */
   enum RemovedFrom {
@@ -50,37 +45,53 @@ public interface RemovalReason {
   }
 
   /** The reason why the tx has been removed from the pool */
-  enum PoolRemovalReason implements RemovalReason {
-    /** Tx removed since it is confirmed on chain, as part of an imported block. */
-    CONFIRMED,
-    /** Tx removed since it has been replaced by another one added in the same layer. */
-    REPLACED,
-    /** Tx removed since it has been replaced by another one added in another layer. */
-    CROSS_LAYER_REPLACED,
-    /** Tx removed when the pool is full, to make space for new incoming txs. */
-    DROPPED,
+  enum PoolRemovalReason implements LayeredRemovalReason {
+    /**
+     * Tx removed since it is confirmed on chain, as part of an imported block. Keep tracking since
+     * makes no sense to reprocess a confirmed.
+     */
+    CONFIRMED(false),
+    /**
+     * Tx removed since it has been replaced by another one added in the same layer. Keep tracking
+     * since makes no sense to reprocess a replaced tx.
+     */
+    REPLACED(false),
+    /**
+     * Tx removed since it has been replaced by another one added in another layer. Keep tracking
+     * since makes no sense to reprocess a replaced tx.
+     */
+    CROSS_LAYER_REPLACED(false),
+    /**
+     * Tx removed when the pool is full, to make space for new incoming txs. Stop tracking it so we
+     * could re-accept it in the future.
+     */
+    DROPPED(true),
     /**
      * Tx removed since found invalid after it was added to the pool, for example during txs
-     * selection for a new block proposal.
+     * selection for a new block proposal. Keep tracking since we do not want to reprocess an
+     * invalid tx.
      */
-    INVALIDATED,
+    INVALIDATED(false),
     /**
      * Special case, when for a sender, discrepancies are found between the world state view and the
      * pool view, then all the txs for this sender are removed and added again. Discrepancies, are
      * rare, and can happen during a short windows when a new block is being imported and the world
-     * state being updated.
+     * state being updated. Keep tracking since it is removed and re-added.
      */
-    RECONCILED,
+    RECONCILED(false),
     /**
      * When a pending tx is penalized its score is decreased, if at some point its score is lower
-     * than the configured minimum then the pending tx is removed from the pool.
+     * than the configured minimum then the pending tx is removed from the pool. Stop tracking it so
+     * we could re-accept it in the future.
      */
-    BELOW_MIN_SCORE;
+    BELOW_MIN_SCORE(true);
 
     private final String label;
+    private final boolean stopTracking;
 
-    PoolRemovalReason() {
+    PoolRemovalReason(final boolean stopTracking) {
       this.label = name().toLowerCase(Locale.ROOT);
+      this.stopTracking = stopTracking;
     }
 
     @Override
@@ -92,10 +103,15 @@ public interface RemovalReason {
     public String label() {
       return label;
     }
+
+    @Override
+    public boolean stopTracking() {
+      return stopTracking;
+    }
   }
 
   /** The reason why the tx has been moved across layers */
-  enum LayerMoveReason implements RemovalReason {
+  enum LayerMoveReason implements LayeredRemovalReason {
     /**
      * When the current layer is full, and this tx needs to be moved to the lower layer, in order to
      * free space.
@@ -131,6 +147,16 @@ public interface RemovalReason {
     @Override
     public String label() {
       return label;
+    }
+
+    /**
+     * We need to continue to track a tx when is moved between layers
+     *
+     * @return always false
+     */
+    @Override
+    public boolean stopTracking() {
+      return false;
     }
   }
 }

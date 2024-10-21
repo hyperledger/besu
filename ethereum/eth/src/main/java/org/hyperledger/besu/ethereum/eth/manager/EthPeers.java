@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerSelector;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
 import org.hyperledger.besu.ethereum.eth.sync.SnapServerChecker;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
+import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
@@ -61,7 +63,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EthPeers {
+public class EthPeers implements PeerSelector {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeers.class);
   public static final Comparator<EthPeer> TOTAL_DIFFICULTY =
       Comparator.comparing((final EthPeer p) -> p.chainState().getEstimatedTotalDifficulty());
@@ -463,6 +465,22 @@ public class EthPeers {
   public void setTrailingPeerRequirementsSupplier(
       final Supplier<TrailingPeerRequirements> tprSupplier) {
     this.trailingPeerRequirementsSupplier = tprSupplier;
+  }
+
+  // Part of the PeerSelector interface, to be split apart later
+  @Override
+  public Optional<EthPeer> getPeer(final Predicate<EthPeer> filter) {
+    return streamAvailablePeers()
+        .filter(filter)
+        .filter(EthPeer::hasAvailableRequestCapacity)
+        .filter(EthPeer::isFullyValidated)
+        .min(LEAST_TO_MOST_BUSY);
+  }
+
+  // Part of the PeerSelector interface, to be split apart later
+  @Override
+  public Optional<EthPeer> getPeerByPeerId(final PeerId peerId) {
+    return Optional.ofNullable(activeConnections.get(peerId.getId()));
   }
 
   @FunctionalInterface
