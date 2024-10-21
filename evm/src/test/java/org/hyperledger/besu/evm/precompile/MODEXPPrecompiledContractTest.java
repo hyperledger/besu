@@ -176,7 +176,7 @@ class MODEXPPrecompiledContractTest {
   }
 
   private void testComputation(final String inputString, final String precompiledResult) {
-    assumeFalse(precompiledResult.isEmpty());
+    assumeFalse(precompiledResult == null || precompiledResult.isEmpty());
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expected = Bytes.fromHexString(precompiledResult);
     assertThat(byzantiumContract.computePrecompile(input, messageFrame).getOutput())
