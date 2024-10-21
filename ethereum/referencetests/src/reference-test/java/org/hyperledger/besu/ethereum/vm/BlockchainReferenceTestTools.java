@@ -148,16 +148,15 @@ public class BlockchainReferenceTestTools {
   }
 
   static void verifyJournaledEVMAccountCompatability(
-      final MutableWorldState worldState, final ProtocolSpec protocolSpec) {
+          final MutableWorldState worldState, final ProtocolSpec protocolSpec) {
     EVM evm = protocolSpec.getEvm();
     if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
       assumeFalse(
               worldState
-                  .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-                  .anyMatch(AccountState::isEmpty),"Journaled account configured and empty account detected")
-          ;
-      assumeFalse(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0,"Journaled account configured and fork prior to the merge specified")
-          ;
+                      .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE).anyMatch(AccountState::isEmpty),
+              "Journaled account configured and empty account detected");
+      assumeFalse(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0,
+              "Journaled account configured and fork prior to the merge specified");
     }
   }
 }
