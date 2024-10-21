@@ -127,7 +127,7 @@ public class BftBlockCreatorTest {
             false,
             new NoOpMetricsSystem());
     final ProtocolContext protContext =
-        new ProtocolContext(
+        ProtocolContext.createPartiallyInitialized(
             blockchain,
             createInMemoryWorldStateArchive(),
             setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),

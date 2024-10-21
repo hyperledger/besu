@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.ethereum;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
@@ -30,9 +31,11 @@ import java.util.Optional;
 public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
-  private final BadBlockManager badBlockManager;
   private final ConsensusContext consensusContext;
+  private final BadBlockManager badBlockManager;
+
   private Synchronizer synchronizer;
+  private boolean sealed = false;
 
   /**
    * Constructs a new ProtocolContext with the given blockchain, world state archive, consensus
@@ -40,10 +43,10 @@ public class ProtocolContext {
    *
    * @param blockchain the blockchain of the protocol context
    * @param worldStateArchive the world state archive of the protocol context
-   * @param consensusContext the consensus context of the protocol context
+   * @param consensusContext the consensus context
    * @param badBlockManager the bad block manager of the protocol context
    */
-  public ProtocolContext(
+  protected ProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ConsensusContext consensusContext,
@@ -55,27 +58,23 @@ public class ProtocolContext {
   }
 
   /**
-   * Initializes a new ProtocolContext with the given blockchain, world state archive, protocol
-   * schedule, consensus context factory, and bad block manager.
+   * Create a new partially initialized ProtocolContext with the given blockchain, world state
+   * archive, consensus context, and bad block manager, but lacking the required synchronizer that
+   * due to cyclic dependencies could only be created later. After all the field are set the class
+   * can be sealed to avoid further modifications.
    *
    * @param blockchain the blockchain of the protocol context
    * @param worldStateArchive the world state archive of the protocol context
-   * @param protocolSchedule the protocol schedule of the protocol context
-   * @param consensusContextFactory the consensus context factory of the protocol context
+   * @param consensusContext the consensus context
    * @param badBlockManager the bad block manager of the protocol context
-   * @return the initialized ProtocolContext
+   * @return the new ProtocolContext
    */
-  public static ProtocolContext init(
+  public static ProtocolContext createPartiallyInitialized(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory,
+      final ConsensusContext consensusContext,
       final BadBlockManager badBlockManager) {
-    return new ProtocolContext(
-        blockchain,
-        worldStateArchive,
-        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule),
-        badBlockManager);
+    return new ProtocolContext(blockchain, worldStateArchive, consensusContext, badBlockManager);
   }
 
   /**
@@ -93,6 +92,8 @@ public class ProtocolContext {
    * @param synchronizer the synchronizer to set
    */
   public void setSynchronizer(final Synchronizer synchronizer) {
+    checkArgument(synchronizer != null, "Synchronizer cannot be null");
+    checkArgument(!sealed, "Protocol context is sealed and could not be modified anymore");
     this.synchronizer = synchronizer;
   }
 
@@ -145,5 +146,13 @@ public class ProtocolContext {
     return Optional.ofNullable(consensusContext)
         .filter(c -> klass.isAssignableFrom(c.getClass()))
         .map(klass::cast);
+  }
+
+  /**
+   * Ensure that protocol context is fully initialized and seal it to prevent further modifications
+   */
+  public void seal() {
+    checkArgument(synchronizer != null, "Could not seal since synchronizer not set");
+    sealed = true;
   }
 }

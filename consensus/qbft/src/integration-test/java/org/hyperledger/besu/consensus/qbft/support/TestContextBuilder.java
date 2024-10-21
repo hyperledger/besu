@@ -458,7 +458,7 @@ public class TestContextBuilder {
             blockChain, forksSchedule, blockValidatorProvider, transactionValidatorProvider);
 
     final ProtocolContext protocolContext =
-        new ProtocolContext(
+        ProtocolContext.createPartiallyInitialized(
             blockChain,
             worldStateArchive,
             new BftContext(validatorProvider, epochManager, blockInterface),

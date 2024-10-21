@@ -62,7 +62,9 @@ public class CliqueExtraDataValidationRuleTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
+    cliqueProtocolContext =
+        ProtocolContext.createPartiallyInitialized(
+            null, null, cliqueContext, new BadBlockManager());
   }
 
   @Test

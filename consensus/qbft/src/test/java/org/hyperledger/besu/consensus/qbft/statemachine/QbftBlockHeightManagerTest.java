@@ -172,7 +172,7 @@ public class QbftBlockHeightManagerTest {
     when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
 
     protocolContext =
-        new ProtocolContext(
+        ProtocolContext.createPartiallyInitialized(
             blockchain,
             null,
             setupContextWithBftExtraDataEncoder(

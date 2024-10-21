@@ -22,6 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
@@ -58,7 +59,8 @@ public class BlockMinerTest {
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
     final ProtocolContext protocolContext =
-        new ProtocolContext(null, null, null, new BadBlockManager());
+        ProtocolContext.createPartiallyInitialized(
+            null, null, mock(ConsensusContext.class), new BadBlockManager());
 
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
@@ -102,7 +104,8 @@ public class BlockMinerTest {
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
     final ProtocolContext protocolContext =
-        new ProtocolContext(null, null, null, new BadBlockManager());
+        ProtocolContext.createPartiallyInitialized(
+            null, null, mock(ConsensusContext.class), new BadBlockManager());
 
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
@@ -150,7 +153,8 @@ public class BlockMinerTest {
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
     final ProtocolContext protocolContext =
-        new ProtocolContext(null, null, null, new BadBlockManager());
+        ProtocolContext.createPartiallyInitialized(
+            null, null, mock(ConsensusContext.class), new BadBlockManager());
 
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =

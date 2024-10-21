@@ -15,11 +15,9 @@
 package org.hyperledger.besu.consensus.common;
 
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 /** The Migrating protocol context. */
@@ -32,42 +30,37 @@ public class MigratingProtocolContext extends ProtocolContext {
    *
    * @param blockchain the blockchain
    * @param worldStateArchive the world state archive
-   * @param consensusContextSchedule the consensus context schedule
+   * @param migratingConsensusContext the consensus context
    * @param badBlockManager the cache to use to keep invalid blocks
    */
-  public MigratingProtocolContext(
+  private MigratingProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ForksSchedule<ConsensusContext> consensusContextSchedule,
+      final MigratingConsensusContext migratingConsensusContext,
       final BadBlockManager badBlockManager) {
-    super(blockchain, worldStateArchive, null, badBlockManager);
-    this.consensusContextSchedule = consensusContextSchedule;
+    super(blockchain, worldStateArchive, migratingConsensusContext, badBlockManager);
+    this.consensusContextSchedule = migratingConsensusContext.getConsensusContextSchedule();
   }
 
   /**
-   * Init protocol context.
+   * Create a new partially initialized ProtocolContext with the given blockchain, world state
+   * archive, consensus context, and bad block manager, but lacking the required synchronizer that
+   * due to cyclic dependencies could only be created later. After all the field are set the class
+   * can be sealed to avoid further modifications.
    *
-   * @param blockchain the blockchain
-   * @param worldStateArchive the world state archive
-   * @param protocolSchedule the protocol schedule
-   * @param consensusContextFactory the consensus context factory
-   * @param badBlockManager the cache to use to keep invalid blocks
-   * @return the protocol context
+   * @param blockchain the blockchain of the protocol context
+   * @param worldStateArchive the world state archive of the protocol context
+   * @param migratingConsensusContext the migrating consensus context
+   * @param badBlockManager the bad block manager of the protocol context
+   * @return the new ProtocolContext
    */
-  public static ProtocolContext init(
+  public static MigratingProtocolContext createPartiallyInitialized(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory,
+      final MigratingConsensusContext migratingConsensusContext,
       final BadBlockManager badBlockManager) {
-    final ConsensusContext consensusContext =
-        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule);
-    final MigratingContext migratingContext = consensusContext.as(MigratingContext.class);
     return new MigratingProtocolContext(
-        blockchain,
-        worldStateArchive,
-        migratingContext.getConsensusContextSchedule(),
-        badBlockManager);
+        blockchain, worldStateArchive, migratingConsensusContext, badBlockManager);
   }
 
   @Override

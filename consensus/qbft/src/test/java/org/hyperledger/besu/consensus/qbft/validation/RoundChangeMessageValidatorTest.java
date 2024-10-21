@@ -81,7 +81,7 @@ public class RoundChangeMessageValidatorTest {
   @BeforeEach
   public void setup() {
     protocolContext =
-        new ProtocolContext(
+        ProtocolContext.createPartiallyInitialized(
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataEncoder),

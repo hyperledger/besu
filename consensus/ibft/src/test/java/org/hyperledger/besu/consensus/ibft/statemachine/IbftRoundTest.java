@@ -112,7 +112,7 @@ public class IbftRoundTest {
   @BeforeEach
   public void setup() {
     protocolContext =
-        new ProtocolContext(
+        ProtocolContext.createPartiallyInitialized(
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataCodec()),

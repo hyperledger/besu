@@ -118,7 +118,7 @@ public class QbftRoundTest {
   @BeforeEach
   public void setup() {
     protocolContext =
-        new ProtocolContext(
+        ProtocolContext.createPartiallyInitialized(
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
