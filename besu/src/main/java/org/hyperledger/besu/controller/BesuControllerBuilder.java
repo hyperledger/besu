@@ -717,7 +717,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       ethPeers.snapServerPeersNeeded(false);
     }
 
-    protocolContext.setSynchronizer(Optional.of(synchronizer));
+    protocolContext.setSynchronizer(synchronizer);
 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(

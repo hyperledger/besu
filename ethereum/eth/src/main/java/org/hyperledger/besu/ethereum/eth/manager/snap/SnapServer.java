@@ -112,13 +112,10 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     registerResponseConstructors();
 
     // subscribe to initial sync completed events to start/stop snap server:
-    this.protocolContext
-        .flatMap(ProtocolContext::getSynchronizer)
-        .filter(z -> z instanceof DefaultSynchronizer)
-        .map(DefaultSynchronizer.class::cast)
-        .ifPresentOrElse(
-            z -> this.listenerId.set(z.subscribeInitialSync(this)),
-            () -> LOGGER.warn("SnapServer created without reference to sync status"));
+    final var synchronizer = protocolContext.getSynchronizer();
+    if (synchronizer instanceof DefaultSynchronizer) {
+      this.listenerId.set(((DefaultSynchronizer) synchronizer).subscribeInitialSync(this));
+    }
   }
 
   /**
