@@ -160,7 +160,7 @@ public class BlockchainSetupUtil {
   private static ProtocolContext mainnetProtocolContextProvider(
       final MutableBlockchain blockchain, final WorldStateArchive worldStateArchive) {
     return ProtocolContext.create(
-        blockchain, worldStateArchive, null, (pc, ps) -> null, new BadBlockManager());
+        blockchain, worldStateArchive, new ConsensusContextFixture(), new BadBlockManager());
   }
 
   private static BlockchainSetupUtil create(

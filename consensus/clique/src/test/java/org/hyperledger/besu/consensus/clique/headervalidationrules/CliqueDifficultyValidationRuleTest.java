@@ -59,7 +59,7 @@ public class CliqueDifficultyValidationRuleTest {
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext =
-        ProtocolContext.create(null, null, null, (pc, ps) -> cliqueContext, new BadBlockManager());
+        ProtocolContext.create(null, null, cliqueContext, new BadBlockManager());
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
 

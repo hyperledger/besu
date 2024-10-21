@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -162,11 +163,13 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected CliqueContext createConsensusContext(
-      final ProtocolContext protocolContext, final ProtocolSchedule protocolSchedule) {
-    validatorProviderRef.set(createValidatorProvider(protocolContext.getBlockchain()));
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule) {
+    validatorProviderRef.set(createValidatorProvider(blockchain));
     final CliqueContext cliqueContext =
         new CliqueContext(validatorProviderRef.get(), epochManager, blockInterface);
-    installCliqueBlockChoiceRule(protocolContext.getBlockchain(), cliqueContext);
+    installCliqueBlockChoiceRule(blockchain, cliqueContext);
     return cliqueContext;
   }
 

@@ -99,7 +99,7 @@ public class CliqueMinerExecutorTest {
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext =
-        ProtocolContext.create(null, null, null, (pc, ps) -> cliqueContext, new BadBlockManager());
+        ProtocolContext.create(null, null, cliqueContext, new BadBlockManager());
     cliqueProtocolSchedule =
         CliqueProtocolSchedule.create(
             GENESIS_CONFIG_OPTIONS,

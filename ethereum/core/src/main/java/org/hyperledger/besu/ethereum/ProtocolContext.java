@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
@@ -30,8 +29,9 @@ import java.util.Optional;
 public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
+  private final ConsensusContext consensusContext;
   private final BadBlockManager badBlockManager;
-  private ConsensusContext consensusContext;
+
   private Synchronizer synchronizer;
 
   /**
@@ -40,14 +40,17 @@ public class ProtocolContext {
    *
    * @param blockchain the blockchain of the protocol context
    * @param worldStateArchive the world state archive of the protocol context
+   * @param consensusContext the consensus context
    * @param badBlockManager the bad block manager of the protocol context
    */
   protected ProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
+      final ConsensusContext consensusContext,
       final BadBlockManager badBlockManager) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
+    this.consensusContext = consensusContext;
     this.badBlockManager = badBlockManager;
   }
 
@@ -57,25 +60,16 @@ public class ProtocolContext {
    *
    * @param blockchain the blockchain of the protocol context
    * @param worldStateArchive the world state archive of the protocol context
-   * @param protocolSchedule the protocol schedule of the protocol context
-   * @param consensusContextFactory the consensus context factory of the protocol context
+   * @param consensusContext the consensus context
    * @param badBlockManager the bad block manager of the protocol context
    * @return the new ProtocolContext
    */
   public static ProtocolContext create(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory,
+      final ConsensusContext consensusContext,
       final BadBlockManager badBlockManager) {
-    final var protocolContext = new ProtocolContext(blockchain, worldStateArchive, badBlockManager);
-    protocolContext.setConsensusContext(
-        consensusContextFactory.create(protocolContext, protocolSchedule));
-    return protocolContext;
-  }
-
-  public void setConsensusContext(final ConsensusContext consensusContext) {
-    this.consensusContext = consensusContext;
+    return new ProtocolContext(blockchain, worldStateArchive, consensusContext, badBlockManager);
   }
 
   /**

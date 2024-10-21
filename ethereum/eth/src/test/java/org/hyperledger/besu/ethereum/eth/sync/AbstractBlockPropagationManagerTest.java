@@ -107,8 +107,7 @@ public abstract class AbstractBlockPropagationManagerTest {
         ProtocolContext.create(
             blockchain,
             tempProtocolContext.getWorldStateArchive(),
-            null,
-            (pc, ps) -> tempProtocolContext.getConsensusContext(ConsensusContext.class),
+            tempProtocolContext.getConsensusContext(ConsensusContext.class),
             new BadBlockManager());
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(

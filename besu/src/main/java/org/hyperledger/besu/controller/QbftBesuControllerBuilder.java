@@ -80,6 +80,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -387,37 +388,27 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected BftContext createConsensusContext(
-      final ProtocolContext protocolContext, final ProtocolSchedule protocolSchedule) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule) {
     final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
 
     final BftValidatorOverrides validatorOverrides =
         convertBftForks(genesisConfigOptions.getTransitions().getQbftForks());
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
-            protocolContext.getBlockchain(),
-            epochManager,
-            bftBlockInterface().get(),
-            validatorOverrides);
+            blockchain, epochManager, bftBlockInterface().get(), validatorOverrides);
 
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(
-            protocolContext.getBlockchain(),
-            protocolContext.getWorldStateArchive(),
-            protocolSchedule,
-            miningParameters,
-            0L);
+            blockchain, worldStateArchive, protocolSchedule, miningParameters, 0L);
     transactionValidatorProvider =
         new TransactionValidatorProvider(
-            protocolContext.getBlockchain(),
-            new ValidatorContractController(transactionSimulator),
-            qbftForksSchedule);
+            blockchain, new ValidatorContractController(transactionSimulator), qbftForksSchedule);
 
     final ValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
-            protocolContext.getBlockchain(),
-            qbftForksSchedule,
-            blockValidatorProvider,
-            transactionValidatorProvider);
+            blockchain, qbftForksSchedule, blockValidatorProvider, transactionValidatorProvider);
 
     return new BftContext(validatorProvider, epochManager, bftBlockInterface().get());
   }

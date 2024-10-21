@@ -84,10 +84,7 @@ public class RoundChangeMessageValidatorTest {
         ProtocolContext.create(
             blockChain,
             worldStateArchive,
-            protocolSchedule,
-            (pc, ps) ->
-                setupContextWithBftExtraDataEncoder(
-                    BftContext.class, emptyList(), bftExtraDataEncoder),
+            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataEncoder),
             new BadBlockManager());
 
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);

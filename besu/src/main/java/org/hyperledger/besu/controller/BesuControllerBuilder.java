@@ -26,7 +26,6 @@ import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -594,9 +593,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       genesisState.writeStateTo(worldStateArchive.getMutable());
     }
 
+    final var consensusContext =
+        createConsensusContext(blockchain, worldStateArchive, protocolSchedule);
+
     final ProtocolContext protocolContext =
-        createProtocolContext(
-            blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
+        createProtocolContext(blockchain, worldStateArchive, consensusContext);
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
@@ -989,12 +990,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Create consensus context consensus context.
    *
-   * @param protocolContext the protocol context
+   * @param blockchain the blockchain
+   * @param worldStateArchive the world state archive
    * @param protocolSchedule the protocol schedule
    * @return the consensus context
    */
   protected abstract ConsensusContext createConsensusContext(
-      ProtocolContext protocolContext, ProtocolSchedule protocolSchedule);
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule);
 
   /**
    * Gets supported protocol.
@@ -1054,17 +1058,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    *
    * @param blockchain the blockchain
    * @param worldStateArchive the world state archive
-   * @param protocolSchedule the protocol schedule
-   * @param consensusContextFactory the consensus context factory
+   * @param consensusContext the consensus context
    * @return the protocol context
    */
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory) {
-    return ProtocolContext.create(
-        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory, badBlockManager);
+      final ConsensusContext consensusContext) {
+    return ProtocolContext.create(blockchain, worldStateArchive, consensusContext, badBlockManager);
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(

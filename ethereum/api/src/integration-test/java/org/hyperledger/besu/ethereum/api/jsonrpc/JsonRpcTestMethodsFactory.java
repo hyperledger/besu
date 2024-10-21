@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -86,7 +87,7 @@ public class JsonRpcTestMethodsFactory {
     this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
     this.context =
         ProtocolContext.create(
-            blockchain, stateArchive, null, (pc, ps) -> null, new BadBlockManager());
+            blockchain, stateArchive, mock(ConsensusContext.class), new BadBlockManager());
 
     this.protocolSchedule = importer.getProtocolSchedule();
     this.synchronizer = mock(Synchronizer.class);

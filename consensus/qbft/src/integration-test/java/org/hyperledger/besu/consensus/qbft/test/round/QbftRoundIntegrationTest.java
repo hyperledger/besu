@@ -129,10 +129,8 @@ public class QbftRoundIntegrationTest {
         ProtocolContext.create(
             blockChain,
             worldStateArchive,
-            null,
-            (pc, ps) ->
-                setupContextWithBftExtraDataEncoder(
-                    BftContext.class, emptyList(), qbftExtraDataEncoder),
+            setupContextWithBftExtraDataEncoder(
+                BftContext.class, emptyList(), qbftExtraDataEncoder),
             new BadBlockManager());
   }
 

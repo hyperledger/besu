@@ -48,8 +48,7 @@ public class BftValidatorsValidationRuleTest {
         ProtocolContext.create(
             null,
             null,
-            null,
-            (pc, ps) -> setupContextWithBftExtraData(validators, bftExtraData),
+            setupContextWithBftExtraData(validators, bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(validators);
 
@@ -67,8 +66,7 @@ public class BftValidatorsValidationRuleTest {
         ProtocolContext.create(
             null,
             null,
-            null,
-            (pc, ps) -> setupContextWithBftExtraData(validators, bftExtraData),
+            setupContextWithBftExtraData(validators, bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(validators));
 
@@ -89,8 +87,7 @@ public class BftValidatorsValidationRuleTest {
         ProtocolContext.create(
             null,
             null,
-            null,
-            (pc, ps) -> setupContextWithBftExtraData(storedValidators, bftExtraData),
+            setupContextWithBftExtraData(storedValidators, bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(reportedValidators));
 

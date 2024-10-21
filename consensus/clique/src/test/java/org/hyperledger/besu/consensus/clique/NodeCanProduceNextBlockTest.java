@@ -81,8 +81,7 @@ public class NodeCanProduceNextBlockTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext =
-        ProtocolContext.create(
-            blockChain, null, null, (pc, ps) -> cliqueContext, new BadBlockManager());
+        ProtocolContext.create(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -107,8 +106,7 @@ public class NodeCanProduceNextBlockTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext =
-        ProtocolContext.create(
-            blockChain, null, null, (pc, ps) -> cliqueContext, new BadBlockManager());
+        ProtocolContext.create(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -142,8 +140,7 @@ public class NodeCanProduceNextBlockTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext =
-        ProtocolContext.create(
-            blockChain, null, null, (pc, ps) -> cliqueContext, new BadBlockManager());
+        ProtocolContext.create(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -173,8 +170,7 @@ public class NodeCanProduceNextBlockTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext =
-        ProtocolContext.create(
-            blockChain, null, null, (pc, ps) -> cliqueContext, new BadBlockManager());
+        ProtocolContext.create(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -219,8 +215,7 @@ public class NodeCanProduceNextBlockTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext =
-        ProtocolContext.create(
-            blockChain, null, null, (pc, ps) -> cliqueContext, new BadBlockManager());
+        ProtocolContext.create(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(otherNodeKeyPair);
@@ -249,8 +244,7 @@ public class NodeCanProduceNextBlockTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext =
-        ProtocolContext.create(
-            blockChain, null, null, (pc, ps) -> cliqueContext, new BadBlockManager());
+        ProtocolContext.create(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.parentHash(Hash.ZERO).number(3);
     final BlockHeader parentHeader =
@@ -274,8 +268,7 @@ public class NodeCanProduceNextBlockTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext =
-        ProtocolContext.create(
-            blockChain, null, null, (pc, ps) -> cliqueContext, new BadBlockManager());
+        ProtocolContext.create(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.parentHash(Hash.ZERO).number(3);
     final BlockHeader parentHeader = headerBuilder.buildHeader();

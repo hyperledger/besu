@@ -130,9 +130,7 @@ public class BftBlockCreatorTest {
         ProtocolContext.create(
             blockchain,
             createInMemoryWorldStateArchive(),
-            null,
-            (pc, ps) ->
-                setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
+            setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
             new BadBlockManager());
 
     final TransactionPoolConfiguration poolConf =

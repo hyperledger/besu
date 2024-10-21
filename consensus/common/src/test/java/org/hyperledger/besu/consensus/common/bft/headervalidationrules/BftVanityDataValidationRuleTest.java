@@ -48,8 +48,7 @@ public class BftVanityDataValidationRuleTest {
         ProtocolContext.create(
             null,
             null,
-            null,
-            (pc, ps) -> setupContextWithBftExtraData(emptyList(), extraData),
+            setupContextWithBftExtraData(emptyList(), extraData),
             new BadBlockManager());
     return validationRule.validate(blockHeader, null, context);
   }

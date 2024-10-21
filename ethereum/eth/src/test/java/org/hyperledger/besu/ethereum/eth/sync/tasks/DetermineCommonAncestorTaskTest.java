@@ -27,6 +27,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -89,7 +90,10 @@ public class DetermineCommonAncestorTaskTest {
     ethContext = ethProtocolManager.ethContext();
     protocolContext =
         ProtocolContext.create(
-            localBlockchain, worldStateArchive, null, (pc, ps) -> null, new BadBlockManager());
+            localBlockchain,
+            worldStateArchive,
+            mock(ConsensusContext.class),
+            new BadBlockManager());
   }
 
   @Test

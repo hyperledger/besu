@@ -104,8 +104,7 @@ public class MessageValidatorTest {
         ProtocolContext.create(
             mock(MutableBlockchain.class),
             mock(WorldStateArchive.class),
-            protocolSchedule,
-            (pc, ps) -> mockBftCtx,
+            mockBftCtx,
             new BadBlockManager());
 
     lenient()

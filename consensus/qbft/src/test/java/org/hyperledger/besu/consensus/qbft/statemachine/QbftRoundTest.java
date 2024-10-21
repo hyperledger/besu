@@ -121,10 +121,8 @@ public class QbftRoundTest {
         ProtocolContext.create(
             blockChain,
             worldStateArchive,
-            protocolSchedule,
-            (pc, ps) ->
-                setupContextWithBftExtraDataEncoder(
-                    BftContext.class, emptyList(), new QbftExtraDataCodec()),
+            setupContextWithBftExtraDataEncoder(
+                BftContext.class, emptyList(), new QbftExtraDataCodec()),
             new BadBlockManager());
 
     when(messageValidator.validateProposal(any())).thenReturn(true);

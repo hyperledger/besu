@@ -60,10 +60,7 @@ public class QbftProtocolScheduleTest {
     return ProtocolContext.create(
         null,
         null,
-        null,
-        (pc, ps) ->
-            setupContextWithBftExtraDataEncoder(
-                BftContext.class, validators, new QbftExtraDataCodec()),
+        setupContextWithBftExtraDataEncoder(BftContext.class, validators, new QbftExtraDataCodec()),
         new BadBlockManager());
   }
 

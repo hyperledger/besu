@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -78,7 +79,7 @@ public class FullSyncTargetManagerTest {
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     final ProtocolContext protocolContext =
         ProtocolContext.create(
-            localBlockchain, localWorldState, null, (pc, ps) -> null, new BadBlockManager());
+            localBlockchain, localWorldState, mock(ConsensusContext.class), new BadBlockManager());
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             protocolSchedule,

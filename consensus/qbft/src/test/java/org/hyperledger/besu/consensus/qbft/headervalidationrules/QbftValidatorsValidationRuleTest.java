@@ -47,10 +47,7 @@ public class QbftValidatorsValidationRuleTest {
         ProtocolContext.create(
             null,
             null,
-            null,
-            (pc, ps) ->
-                setupContextWithBftExtraData(
-                    BftContext.class, Collections.emptyList(), bftExtraData),
+            setupContextWithBftExtraData(BftContext.class, Collections.emptyList(), bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.empty());
@@ -69,8 +66,7 @@ public class QbftValidatorsValidationRuleTest {
         ProtocolContext.create(
             null,
             null,
-            null,
-            (pc, ps) -> setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
+            setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -88,8 +84,7 @@ public class QbftValidatorsValidationRuleTest {
         ProtocolContext.create(
             null,
             null,
-            null,
-            (pc, ps) -> setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
+            setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isFalse();
@@ -103,10 +98,7 @@ public class QbftValidatorsValidationRuleTest {
         ProtocolContext.create(
             null,
             null,
-            null,
-            (pc, ps) ->
-                setupContextWithBftExtraData(
-                    BftContext.class, Collections.emptyList(), bftExtraData),
+            setupContextWithBftExtraData(BftContext.class, Collections.emptyList(), bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.of(mock(Vote.class)));

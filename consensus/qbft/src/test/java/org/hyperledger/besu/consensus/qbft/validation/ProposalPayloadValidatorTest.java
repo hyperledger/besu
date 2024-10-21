@@ -74,10 +74,7 @@ public class ProposalPayloadValidatorTest {
         ProtocolContext.create(
             blockChain,
             worldStateArchive,
-            null,
-            (pc, ps) ->
-                setupContextWithBftExtraDataEncoder(
-                    BftContext.class, emptyList(), bftExtraDataCodec),
+            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataCodec),
             new BadBlockManager());
   }
 

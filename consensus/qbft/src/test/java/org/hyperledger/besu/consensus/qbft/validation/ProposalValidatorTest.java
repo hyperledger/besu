@@ -102,10 +102,7 @@ public class ProposalValidatorTest {
         ProtocolContext.create(
             blockChain,
             worldStateArchive,
-            protocolSchedule,
-            (pc, ps) ->
-                setupContextWithBftExtraDataEncoder(
-                    BftContext.class, emptyList(), bftExtraDataEncoder),
+            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataEncoder),
             new BadBlockManager());
 
     // typically tests require the blockValidation to be successful

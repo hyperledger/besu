@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -112,8 +113,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
         ProtocolContext.create(
             blockchain,
             blockchainSetupUtil.getWorldArchive(),
-            blockchainSetupUtil.getProtocolSchedule(),
-            (pc, ps) -> null,
+            mock(ConsensusContext.class),
             new BadBlockManager());
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
