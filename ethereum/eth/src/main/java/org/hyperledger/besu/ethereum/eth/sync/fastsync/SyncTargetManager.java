@@ -146,7 +146,6 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
               .getScheduler()
               .scheduleServiceTask(
                   () -> {
-                    LOG.info("Using peer task system to get header for pivot block");
                     GetHeadersFromPeerTask task =
                         new GetHeadersFromPeerTask(
                             pivotBlockHeader.getNumber(),
@@ -162,7 +161,6 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                       return CompletableFuture.failedFuture(
                           new RuntimeException("Unable to retrieve requested header from peer"));
                     }
-                    LOG.info("Successfully used peer task system to get header for pivot block");
                     return CompletableFuture.completedFuture(taskResult.result().get());
                   });
 
