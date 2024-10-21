@@ -346,9 +346,9 @@ public class MainnetTransactionProcessor {
           throw new RuntimeException("Code delegation processor is required for 7702 transactions");
         }
 
-        if (evmWorldUpdater.parentUpdater().isEmpty()) {
-          throw new RuntimeException("Code delegation needs the underlying world state");
-        }
+        //        if (evmWorldUpdater.parentUpdater().isEmpty()) {
+        //          throw new RuntimeException("Code delegation needs the underlying world state");
+        //        }
 
         // get the underlying world state to commit code delegations without the transaction having
         // to succeed
