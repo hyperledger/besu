@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -27,24 +29,32 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Acts as both a Hasher and PreImageStorage for Bonsai storage format. */
-public interface BonsaiPreImageProxy extends WorldStatePreimageStorage {
+public interface CachingPreImageStorage extends WorldStatePreimageStorage {
   /**
    * If this value is not already present, save in preImage store and return the hash value.
    *
    * @param value value to hash
    * @return Hash of value
    */
-  Hash hashAndSavePreImage(Bytes value);
+  Hash hashAndSaveAccountPreImage(Bytes value);
+
+
+  Hash hashAndSaveSlotPreImage(UInt256 keyUInt);
 
   /**
    * A caching PreImageProxy suitable for ReferenceTestWorldState which saves hashes in an unbounded
    * BiMap.
    */
-  class BonsaiReferenceTestPreImageProxy implements BonsaiPreImageProxy {
+  class UnboundedPreImageStorage implements CachingPreImageStorage {
     BiMap<Hash, Bytes> preImageCache = HashBiMap.create();
 
     @Override
-    public synchronized Hash hashAndSavePreImage(final Bytes value) {
+    public Hash hashAndSaveAccountPreImage(final Bytes value) {
+      return preImageCache.inverse().computeIfAbsent(value, Hash::hash);
+    }
+
+    @Override
+    public Hash hashAndSaveSlotPreImage(final UInt256 value) {
       return preImageCache.inverse().computeIfAbsent(value, Hash::hash);
     }
 
@@ -62,6 +72,56 @@ public interface BonsaiPreImageProxy extends WorldStatePreimageStorage {
     public Updater updater() {
       throw new UnsupportedOperationException(
           "BonsaiReferenceTestPreImageProxy does not implement an updater");
+    }
+  }
+
+  class LimitedInMemoryPreImageStorage implements CachingPreImageStorage {
+
+    //TODO: config max size perhaps
+    private static final Cache<Bytes, Hash> preimageCache =
+        Caffeine.newBuilder()
+            .maximumSize(10000)
+            .build();
+
+    private static final Cache<Hash, Bytes> preImageByHash =
+        Caffeine.newBuilder()
+            .maximumSize(10000)
+            .build();
+
+    @Override
+    public Hash hashAndSaveAccountPreImage(final Bytes value) {
+      return preimageCache.get(value, val -> {
+        // defer to the static address hash used by evm
+        Hash hash = Address.wrap(val).addressHash();
+        preImageByHash.put(hash, val);
+        return hash;
+      });
+    }
+
+    @Override
+    public Hash hashAndSaveSlotPreImage(final UInt256 keyUInt) {
+      return preimageCache.get(keyUInt, val -> {
+        Hash hash = Hash.hash(val);
+        preImageByHash.put(hash, val);
+        return hash;
+      });
+    }
+
+    @Override
+    public Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
+      return Optional.ofNullable(preImageByHash.getIfPresent(Hash.wrap(trieKey)))
+          .map(UInt256::fromBytes);
+    }
+
+    @Override
+    public Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
+      return Optional.ofNullable(preImageByHash.getIfPresent(Hash.wrap(trieKey)))
+          .map(Address::wrap);
+    }
+
+    @Override
+    public Updater updater() {
+      return null;
     }
   }
 }

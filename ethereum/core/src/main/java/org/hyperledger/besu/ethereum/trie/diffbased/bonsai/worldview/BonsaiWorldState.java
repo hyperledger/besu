@@ -192,7 +192,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
       try {
         if (updatedAccount == null) {
-          final Hash addressHash = hashAndSavePreImage(accountKey);
+          final Hash addressHash = preImageProxy.hashAndSaveAccountPreImage(accountKey);
           accountTrie.remove(addressHash);
           maybeStateUpdater.ifPresent(
               bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
@@ -201,7 +201,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
           final Bytes accountValue = updatedAccount.serializeAccount();
           maybeStateUpdater.ifPresent(
               bonsaiUpdater ->
-                  bonsaiUpdater.putAccountInfoState(hashAndSavePreImage(accountKey), accountValue));
+                  bonsaiUpdater.putAccountInfoState(preImageProxy.hashAndSaveAccountPreImage(accountKey), accountValue));
           accountTrie.put(addressHash, accountValue);
         }
       } catch (MerkleTrieException e) {
@@ -461,11 +461,6 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       return new StoredMerklePatriciaTrie<>(
           nodeLoader, rootHash, Function.identity(), Function.identity());
     }
-  }
-
-  protected Hash hashAndSavePreImage(final Bytes value) {
-    // by default do not save has preImages
-    return Hash.hash(value);
   }
 
   @Override

@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.CachingPreImageStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
@@ -51,6 +52,11 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     implements WorldStateKeyValueStorage, AutoCloseable {
   private static final Logger LOG =
       LoggerFactory.getLogger(DiffBasedWorldStateKeyValueStorage.class);
+
+
+  // TODO: config this based on dataStorageConfiguration, use real storage where appropriate
+  protected final CachingPreImageStorage preImageProxy =
+      new CachingPreImageStorage.UnboundedPreImageStorage();
 
   // 0x776f726c64526f6f74
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);

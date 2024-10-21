@@ -40,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class AbstractWorldUpdater<W extends WorldView, A extends Account>
     implements WorldUpdater {
 
-  private final W world;
+  protected final W world;
   private final EvmConfiguration evmConfiguration;
 
   /** The Updated accounts. */

@@ -16,7 +16,16 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.immutables.value.Value;
+
+import java.util.List;
+
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.HASH_PREIMAGE_STORE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 @Value.Immutable
 @Value.Enclosing

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.referencetests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
@@ -37,12 +36,10 @@ import org.apache.tuweni.rlp.RLP;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerStorage {
-  private final BonsaiPreImageProxy preImageProxy;
 
   public BonsaiReferenceTestWorldStateStorage(
-      final BonsaiWorldStateKeyValueStorage parent, final BonsaiPreImageProxy preImageProxy) {
+      final BonsaiWorldStateKeyValueStorage parent) {
     super(parent);
-    this.preImageProxy = preImageProxy;
   }
 
   @Override
