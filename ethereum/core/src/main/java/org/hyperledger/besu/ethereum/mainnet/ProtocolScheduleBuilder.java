@@ -84,7 +84,7 @@ public class ProtocolScheduleBuilder {
     return protocolSchedule;
   }
 
-  private void initSchedule(
+  public void initSchedule(
       final ProtocolSchedule protocolSchedule, final Optional<BigInteger> chainId) {
 
     final MainnetProtocolSpecFactory specFactory =
@@ -510,5 +510,9 @@ public class ProtocolScheduleBuilder {
       BLOCK_NUMBER,
       TIMESTAMP
     }
+  }
+
+  public Optional<BigInteger> getDefaultChainId() {
+    return defaultChainId;
   }
 }
