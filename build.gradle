@@ -24,7 +24,6 @@ import java.util.regex.Pattern
 
 plugins {
   id 'com.diffplug.spotless' version '6.25.0'
-  id 'com.github.ben-manes.versions' version '0.51.0'
   id 'com.github.jk1.dependency-license-report' version '2.9'
   id 'com.jfrog.artifactory' version '5.2.5'
   id 'me.champeau.jmh' version '0.7.2' apply false
