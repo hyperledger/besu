@@ -34,6 +34,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.tx.exceptions.ContractCallException;
 
 public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
@@ -86,6 +88,13 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     SimpleStorage simpleStorageContract =
         minerNode1.execute(contractTransactions.createSmartContract(SimpleStorage.class));
 
+    // Create another instance of the contract referencing the same contract address but on the
+    // archive node. This contract instance should be able to query state from the beginning of
+    // the test
+    SimpleStorage simpleStorageArchive =
+        minerNode2.execute(contractTransactions.createSmartContract(SimpleStorage.class));
+    simpleStorageArchive.setContractAddress(simpleStorageContract.getContractAddress());
+
     // Check the contract address is as expected for this sender & nonce
     contractVerifier
         .validTransactionReceipt("0x42699a7612a82f1d9c36148af9c77354759b210b")
@@ -107,6 +116,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
     // Set to something new
     simpleStorageContract.set(BigInteger.valueOf(101)).send();
+
+    // Save this block height to check on the archive node at the end of the test
+    BigInteger archiveChainHeight = minerNode1.execute(ethTransactions.blockNumber());
 
     // Check the state of the contract has updated correctly. We'll set & get this several times
     // during the test
@@ -270,8 +282,25 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
     // Check the contract address is as expected for this sender & nonce
     contractVerifier
-        .validTransactionReceipt("0x05d91b9031a655d08e654177336d08543ac4b711")
+        .validTransactionReceipt("0xfeae27388a65ee984f452f86effed42aabd438fd")
         .verify(simpleStorageContractShanghai);
+
+    // Archive node test. Check the state of the contract when it was first updated in the test
+    LOG.info(
+        "Checking that the archive node shows us the original smart contract value if we set a historic block number");
+    simpleStorageArchive.setDefaultBlockParameter(
+        DefaultBlockParameter.valueOf(archiveChainHeight));
+    assertThat(simpleStorageArchive.get().send()).isEqualTo(BigInteger.valueOf(101));
+
+    try {
+      simpleStorageContract.setDefaultBlockParameter(
+          DefaultBlockParameter.valueOf(archiveChainHeight));
+      // Should throw ContractCallException because a non-archive not can't satisfy this request
+      simpleStorageContract.get().send();
+      Assertions.fail("Request for historic state from non-archive node should have failed");
+    } catch (ContractCallException e) {
+      // Ignore
+    }
   }
 
   private static void updateGenesisConfigToLondon(
