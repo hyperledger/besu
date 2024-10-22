@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
@@ -26,23 +27,35 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
 import java.util.concurrent.CompletionStage;
+import java.util.function.Supplier;
 
 public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipelineFactory {
 
   public CheckpointSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
       final FastSyncState fastSyncState,
       final MetricsSystem metricsSystem) {
-    super(syncConfig, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
+    super(
+        syncConfig,
+        protocolSchedule,
+        currentProtocolSpecSupplier,
+        protocolContext,
+        ethContext,
+        peerTaskExecutor,
+        fastSyncState,
+        metricsSystem);
   }
 
   @Override
@@ -76,7 +89,14 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
             checkPointSource, checkpoint, protocolContext.getBlockchain());
 
     final CheckpointDownloadBlockStep checkPointDownloadBlockStep =
-        new CheckpointDownloadBlockStep(protocolSchedule, ethContext, checkpoint, metricsSystem);
+        new CheckpointDownloadBlockStep(
+            protocolSchedule,
+            currentProtocolSpecSupplier,
+            ethContext,
+            peerTaskExecutor,
+            checkpoint,
+            syncConfig,
+            metricsSystem);
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",

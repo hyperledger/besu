@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -71,6 +72,7 @@ public class FastDownloaderFactoryTest {
   @Mock private ProtocolContext protocolContext;
   @Mock private MetricsSystem metricsSystem;
   @Mock private EthContext ethContext;
+  @Mock private PeerTaskExecutor peerTaskExecutor;
   @Mock private SyncState syncState;
   @Mock private Clock clock;
   @Mock private Path dataDirectory;
@@ -111,9 +113,11 @@ public class FastDownloaderFactoryTest {
                     syncConfig,
                     dataDirectory,
                     protocolSchedule,
+                    () -> null,
                     protocolContext,
                     metricsSystem,
                     ethContext,
+                    peerTaskExecutor,
                     worldStateStorageCoordinator,
                     syncState,
                     clock,
@@ -136,9 +140,11 @@ public class FastDownloaderFactoryTest {
             syncConfig,
             dataDirectory,
             protocolSchedule,
+            () -> null,
             protocolContext,
             metricsSystem,
             ethContext,
+            peerTaskExecutor,
             worldStateStorageCoordinator,
             syncState,
             clock,
@@ -164,9 +170,11 @@ public class FastDownloaderFactoryTest {
         syncConfig,
         dataDirectory,
         protocolSchedule,
+        () -> null,
         protocolContext,
         metricsSystem,
         ethContext,
+        peerTaskExecutor,
         worldStateStorageCoordinator,
         syncState,
         clock,
@@ -199,9 +207,11 @@ public class FastDownloaderFactoryTest {
         syncConfig,
         dataDirectory,
         protocolSchedule,
+        () -> null,
         protocolContext,
         metricsSystem,
         ethContext,
+        peerTaskExecutor,
         worldStateStorageCoordinator,
         syncState,
         clock,
@@ -236,9 +246,11 @@ public class FastDownloaderFactoryTest {
                     syncConfig,
                     dataDirectory,
                     protocolSchedule,
+                    () -> null,
                     protocolContext,
                     metricsSystem,
                     ethContext,
+                    peerTaskExecutor,
                     worldStateStorageCoordinator,
                     syncState,
                     clock,
