@@ -67,10 +67,10 @@ public final class BlockHeadersMessageTest {
                 GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
                 false,
                 EvmConfiguration.DEFAULT,
+                MiningParameters.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                new NoOpMetricsSystem(),
-                MiningParameters.MINING_DISABLED));
+                new NoOpMetricsSystem()));
 
     for (int i = 0; i < 50; ++i) {
       Assertions.assertThat(readHeaders.get(i)).isEqualTo(headers.get(i));

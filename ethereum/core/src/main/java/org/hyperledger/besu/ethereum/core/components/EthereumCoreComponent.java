@@ -29,5 +29,4 @@ import dagger.Subcomponent;
     })
 public interface EthereumCoreComponent {
   MiningParameters getMiningParameters();
-  // ProtocolSchedule getProtocolSchedule();
 }
