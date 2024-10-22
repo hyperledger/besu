@@ -39,21 +39,18 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     implements ReferenceTestWorldState {
 
-  private final BonsaiReferenceTestWorldStateStorage refTestStorage;
   private final EvmConfiguration evmConfiguration;
 
   protected BonsaiReferenceTestWorldState(
-      final BonsaiReferenceTestWorldStateStorage worldStateKeyValueStorage,
+      final BonsaiWorldStateLayerStorage worldStateKeyValueStorage,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
@@ -65,7 +62,6 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         trieLogManager,
         evmConfiguration,
         new DiffBasedWorldStateConfig());
-    this.refTestStorage = worldStateKeyValueStorage;
     this.evmConfiguration = evmConfiguration;
     setAccumulator(
         new BonsaiReferenceTestUpdateAccumulator(
@@ -81,7 +77,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
 
   @Override
   public ReferenceTestWorldState copy() {
-    var layerCopy = new BonsaiReferenceTestWorldStateStorage(getWorldStateStorage());
+    var layerCopy = new BonsaiWorldStateLayerStorage(getWorldStateStorage());
     return new BonsaiReferenceTestWorldState(
         layerCopy,
         bonsaiCachedMerkleTrieLoader,
@@ -219,8 +215,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
             metricsSystem,
             DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
 
-    final BonsaiReferenceTestWorldStateStorage worldStateKeyValueStorage =
-        new BonsaiReferenceTestWorldStateStorage(bonsaiWorldStateKeyValueStorage);
+    final BonsaiWorldStateLayerStorage worldStateKeyValueStorage =
+        new BonsaiWorldStateLayerStorage(bonsaiWorldStateKeyValueStorage);
 
     final NoOpBonsaiCachedWorldStorageManager noOpCachedWorldStorageManager =
         new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage);
@@ -240,11 +236,6 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     }
     updater.commit();
     return worldState;
-  }
-
-  @Override
-  public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    return this.refTestStorage.streamAccounts(this, startKeyHash, limit);
   }
 
   static class ReferenceTestsInMemoryTrieLogManager extends TrieLogManager {

@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -28,6 +30,7 @@ import com.google.common.collect.HashBiMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
 /** Acts as both a Hasher and PreImageStorage for Bonsai storage format. */
 public interface CachingPreImageStorage {
@@ -73,6 +76,18 @@ public interface CachingPreImageStorage {
   Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey);
 
   Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey);
+
+  Optional<Bytes> getRawHashPreimage(final Hash hash);
+
+  /**
+   * This method indicates whether this Pre-Image store is "complete", meaning it has all of the
+   * hash preimages for all entries in the state trie.
+   *
+   * @return boolean indicating whether the pre-image store is complete or not
+   */
+  default boolean canSupportStreaming() {
+    return false;
+  }
 
   /**
    * A caching PreImageProxy suitable for ReferenceTestWorldState which saves hashes in an unbounded
@@ -121,6 +136,21 @@ public interface CachingPreImageStorage {
               preImageCache.get(new HashKey(Hash.wrap(trieKey), HashSource.ACCOUNT_ADDRESS)))
           .map(Address::wrap);
     }
+
+    @Override
+    public Optional<Bytes> getRawHashPreimage(final Hash hash) {
+      return Stream.of(
+              preImageCache.get(new HashKey(hash, HashSource.ACCOUNT_ADDRESS)),
+              preImageCache.get(new HashKey(hash, HashSource.SLOT_KEY)))
+          .filter(Objects::nonNull)
+          .findAny();
+    }
+
+    @Override
+    public boolean canSupportStreaming() {
+      return true;
+    }
+
   }
 
   class CachingOnlyPreImageStorage implements CachingPreImageStorage {
@@ -148,14 +178,20 @@ public interface CachingPreImageStorage {
 
     @Override
     public Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
-      // not configured for preimage streaming
-      return Optional.empty();
+      return getRawHashPreimage(Hash.wrap(trieKey)).map(UInt256::fromBytes);
     }
 
     @Override
     public Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
-      // not configured for preimage streaming
-      return Optional.empty();
+      return getRawHashPreimage(Hash.wrap(trieKey)).map(Address::wrap);
+    }
+
+    @Override
+    public Optional<Bytes> getRawHashPreimage(final Hash hash) {
+      return preimageCache.asMap().entrySet().stream()
+          .filter(e -> e.getValue().equals(hash))
+          .findFirst()
+          .map(Map.Entry::getKey);
     }
   }
 }

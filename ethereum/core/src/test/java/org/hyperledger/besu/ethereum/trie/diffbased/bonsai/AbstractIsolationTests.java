@@ -245,6 +245,11 @@ public abstract class AbstractIsolationTests {
                   public boolean getReceiptCompactionEnabled() {
                     return false;
                   }
+
+                  @Override
+                  public boolean getHashPreimageStorageEnabled() {
+                    return false;
+                  }
                 };
               }
             })

@@ -54,9 +54,9 @@ public abstract class DiffBasedWorldState
 
   private static final Logger LOG = LoggerFactory.getLogger(DiffBasedWorldState.class);
 
-  // where the shit to initialize you?
+  // TODO: where the shit to initialize you?  just use unbounded for now to ensure ref tests pass
   protected static final CachingPreImageStorage preImageProxy =
-      new CachingPreImageStorage.CachingOnlyPreImageStorage();
+      new CachingPreImageStorage.UnboundedPreImageStorage();//CachingOnlyPreImageStorage();
 
   protected DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected final DiffBasedCachedWorldStorageManager cachedWorldStorageManager;
@@ -305,11 +305,14 @@ public abstract class DiffBasedWorldState
   }
 
   @Override
-  public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    return preImageProxy
-        .streamAddressPreImages(startKeyHash, limit)
-        .map(address -> new StreamableAccount(Optional.of(address), get(address)));
-  }
+  public abstract Stream<StreamableAccount> streamAccounts(
+      final Bytes32 startKeyHash, final int limit);
+
+  //  {
+  //    return preImageProxy
+  //        .streamAddressPreImages(startKeyHash, limit)
+  //        .map(address -> new StreamableAccount(Optional.of(address), get(address)));
+  //  }
 
   @Override
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {

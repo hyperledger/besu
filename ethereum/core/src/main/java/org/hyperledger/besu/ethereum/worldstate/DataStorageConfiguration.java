@@ -58,9 +58,12 @@ public interface DataStorageConfiguration {
 
   DataStorageFormat getDataStorageFormat();
 
-  Boolean getHashPreimageStorageEnabled();
-
   Long getBonsaiMaxLayersToLoad();
+
+  @Value.Default
+  default boolean getHashPreImageStorageEnabled() {
+    return DEFAULT_HASH_PREIMAGE_STORAGE_ENABLED;
+  };
 
   @Value.Default
   default boolean getBonsaiLimitTrieLogsEnabled() {
