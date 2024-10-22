@@ -157,11 +157,10 @@ public class ReferenceTestProtocolSchedules {
             PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
-            // MiningParameters.MINING_DISABLED,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED)
+            new NoOpMetricsSystem())
         .createProtocolSchedule();
   }
 

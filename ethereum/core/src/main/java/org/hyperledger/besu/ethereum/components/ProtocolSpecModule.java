@@ -24,9 +24,21 @@ import javax.inject.Named;
 import dagger.Module;
 import dagger.Provides;
 
+/** Provides protocol specs for network forks. */
 @Module
 public class ProtocolSpecModule {
 
+  /** Default constructor. */
+  public ProtocolSpecModule() {}
+
+  /**
+   * Provides the protocol spec for the frontier network fork.
+   *
+   * @param evmConfiguration the EVM configuration
+   * @param isParalleltxEnabled whether parallel tx processing is enabled
+   * @param metricsSystem the metrics system
+   * @return the protocol spec for the frontier network fork
+   */
   @Provides
   @Named("frontier")
   public ProtocolSpecBuilder frontierProtocolSpec(

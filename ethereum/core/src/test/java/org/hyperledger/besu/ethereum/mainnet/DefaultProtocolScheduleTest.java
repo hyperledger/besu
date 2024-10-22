@@ -61,10 +61,10 @@ public class DefaultProtocolScheduleTest {
             privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED);
+            new NoOpMetricsSystem());
   }
 
   @Test

@@ -99,10 +99,10 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
+                        MiningParameters.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
-                        new NoOpMetricsSystem(),
-                        MiningParameters.MINING_DISABLED)
+                        new NoOpMetricsSystem())
                     .createProtocolSchedule())
             .build();
 
@@ -163,10 +163,10 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
+                        MiningParameters.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
-                        new NoOpMetricsSystem(),
-                        MiningParameters.MINING_DISABLED)
+                        new NoOpMetricsSystem())
                     .createProtocolSchedule())
             .build();
 
@@ -219,10 +219,10 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                 PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
+                MiningParameters.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                new NoOpMetricsSystem(),
-                MiningParameters.MINING_DISABLED)
+                new NoOpMetricsSystem())
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder(genesisConfigFile)
@@ -296,10 +296,10 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                 PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
+                MiningParameters.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                new NoOpMetricsSystem(),
-                MiningParameters.MINING_DISABLED)
+                new NoOpMetricsSystem())
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder(genesisConfigFile)

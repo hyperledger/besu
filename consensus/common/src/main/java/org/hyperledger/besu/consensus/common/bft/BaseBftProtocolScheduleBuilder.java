@@ -58,11 +58,11 @@ public abstract class BaseBftProtocolScheduleBuilder {
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @param metricsSystem metricsSystem A metricSystem instance to be able to expose metrics in the
    *     underlying calls
-   * @param miningParameters transaction selection settings
    * @return the protocol schedule
    */
   public BftProtocolSchedule createProtocolSchedule(
@@ -72,10 +72,10 @@ public abstract class BaseBftProtocolScheduleBuilder {
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
 
     forksSchedule
@@ -96,10 +96,10 @@ public abstract class BaseBftProtocolScheduleBuilder {
                 privacyParameters,
                 isRevertReasonEnabled,
                 evmConfiguration,
+                miningParameters,
                 badBlockManager,
                 isParallelTxProcessingEnabled,
-                metricsSystem,
-                miningParameters)
+                metricsSystem)
             .createProtocolSchedule();
     return new BftProtocolSchedule((DefaultProtocolSchedule) protocolSchedule);
   }

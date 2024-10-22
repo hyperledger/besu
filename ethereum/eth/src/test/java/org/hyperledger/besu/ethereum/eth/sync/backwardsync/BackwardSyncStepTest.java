@@ -72,10 +72,10 @@ public class BackwardSyncStepTest {
   private final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
           new StubGenesisConfigOptions(),
+          MiningParameters.MINING_DISABLED,
           new BadBlockManager(),
           false,
-          new NoOpMetricsSystem(),
-          MiningParameters.MINING_DISABLED);
+          new NoOpMetricsSystem());
 
   private final DeterministicEthScheduler ethScheduler = new DeterministicEthScheduler();
 

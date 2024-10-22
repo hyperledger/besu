@@ -176,10 +176,10 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfigOptions,
         privacyParameters,
         isRevertReasonEnabled,
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 
   @Override
