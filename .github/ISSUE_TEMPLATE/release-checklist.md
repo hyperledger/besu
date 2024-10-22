@@ -31,7 +31,7 @@ assignees: ''
   - [ ] git checkout 24.4.0-RC1
   - [ ] git tag 24.4.0
   - [ ] git push upstream 24.4.0
-- [ ] Manually run https://github.com/hyperledger/besu/actions/workflows/draft-release.yml inputing the FULL RELEASE tag name. Note, this workflow should always be run from `main` branch (this doesn't prevent hotfix tags from being released)
+- [ ] Manually run https://github.com/hyperledger/besu/actions/workflows/draft-release.yml using `main` branch` and the FULL RELEASE tag name, i.e. `24.4.0`. Note, this workflow should always be run from `main` branch (hotfix tags will still be released even if they were created based on another branch)
     - publishes artefacts and version-specific docker tags but does not fully publish the GitHub release so subscribers are not yet notified
 - [ ] Check all draft-release workflow jobs went green
 - [ ] Check binary SHAs are correct on the release page
