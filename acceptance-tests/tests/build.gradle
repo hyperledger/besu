@@ -80,8 +80,6 @@ dependencies {
   testImplementation 'org.web3j:core'
   testImplementation 'org.wiremock:wiremock'
   testImplementation project(path: ':acceptance-tests:tests:shanghai')
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
 test.enabled = false
