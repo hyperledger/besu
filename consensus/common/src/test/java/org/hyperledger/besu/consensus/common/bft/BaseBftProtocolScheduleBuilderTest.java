@@ -245,10 +245,10 @@ public class BaseBftProtocolScheduleBuilderTest {
         false,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
+        MiningParameters.MINING_DISABLED,
         new BadBlockManager(),
         false,
-        new NoOpMetricsSystem(),
-        MiningParameters.MINING_DISABLED);
+        new NoOpMetricsSystem());
   }
 
   private BftConfigOptions createBftConfig(final BigInteger blockReward) {

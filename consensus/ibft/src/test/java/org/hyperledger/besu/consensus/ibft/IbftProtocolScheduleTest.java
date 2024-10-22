@@ -127,10 +127,10 @@ public class IbftProtocolScheduleTest {
         false,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
+        MiningParameters.MINING_DISABLED,
         new BadBlockManager(),
         false,
-        new NoOpMetricsSystem(),
-        MiningParameters.MINING_DISABLED);
+        new NoOpMetricsSystem());
   }
 
   @Module

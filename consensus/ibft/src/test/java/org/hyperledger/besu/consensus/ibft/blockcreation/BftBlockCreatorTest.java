@@ -122,10 +122,10 @@ public class BftBlockCreatorTest {
             false,
             bftExtraDataEncoder,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED);
+            new NoOpMetricsSystem());
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,

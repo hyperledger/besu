@@ -32,9 +32,27 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 
+/** Provides the protocol schedule for the network. */
 @Module
 public class ProtocolScheduleModule {
 
+  /** Default constructor. */
+  public ProtocolScheduleModule() {}
+
+  /**
+   * Provides the protocol schedule builder.
+   *
+   * @param config the genesis config options
+   * @param protocolSpecAdapters the protocol spec adapters
+   * @param privacyParameters the privacy parameters
+   * @param isRevertReasonEnabled whether revert reason is enabled
+   * @param evmConfiguration the EVM configuration
+   * @param badBlockManager the bad block manager
+   * @param isParallelTxProcessingEnabled whether parallel tx processing is enabled
+   * @param metricsSystem the metrics system
+   * @param miningParameters the mining parameters
+   * @return the protocol schedule builder
+   */
   @Singleton
   @Provides
   public ProtocolScheduleBuilder provideProtocolSchedule(
@@ -56,14 +74,21 @@ public class ProtocolScheduleModule {
             privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
+            miningParameters,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            metricsSystem,
-            miningParameters);
+            metricsSystem);
 
     return builder;
   }
 
+  /**
+   * Provides the protocol schedule.
+   *
+   * @param builder the protocol schedule builder
+   * @param config the genesis config options
+   * @return the protocol schedule
+   */
   @Provides
   public ProtocolSchedule createProtocolSchedule(
       final ProtocolScheduleBuilder builder, final GenesisConfigOptions config) {

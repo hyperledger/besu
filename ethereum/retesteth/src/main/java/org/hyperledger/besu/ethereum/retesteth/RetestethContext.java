@@ -163,10 +163,10 @@ public class RetestethContext {
         MainnetProtocolSchedule.fromConfig(
             jsonGenesisConfigOptions,
             EvmConfiguration.DEFAULT,
+            miningParameters,
             badBlockManager,
             false,
-            new NoOpMetricsSystem(),
-            miningParameters);
+            new NoOpMetricsSystem());
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
       protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule, badBlockManager);
     }

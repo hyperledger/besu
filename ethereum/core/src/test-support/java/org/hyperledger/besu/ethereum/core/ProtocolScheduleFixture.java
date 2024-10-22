@@ -39,10 +39,10 @@ public class ProtocolScheduleFixture {
           Optional.empty(),
           Optional.empty(),
           Optional.empty(),
+          MiningParameters.newDefault(),
           new BadBlockManager(),
           false,
-          new NoOpMetricsSystem(),
-          MiningParameters.newDefault());
+          new NoOpMetricsSystem());
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
     // this method avoids reading all the alloc accounts when all we want is the "config" section

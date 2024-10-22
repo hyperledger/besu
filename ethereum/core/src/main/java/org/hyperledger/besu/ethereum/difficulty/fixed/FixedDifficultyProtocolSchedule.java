@@ -37,10 +37,10 @@ public class FixedDifficultyProtocolSchedule {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     return new ProtocolScheduleBuilder(
             config,
             Optional.empty(),
@@ -51,10 +51,10 @@ public class FixedDifficultyProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
+            miningParameters,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            metricsSystem,
-            miningParameters)
+            metricsSystem)
         .createProtocolSchedule();
   }
 
@@ -71,10 +71,10 @@ public class FixedDifficultyProtocolSchedule {
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
         evmConfiguration,
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 
   public static ProtocolSchedule create(
@@ -89,9 +89,9 @@ public class FixedDifficultyProtocolSchedule {
         PrivacyParameters.DEFAULT,
         false,
         evmConfiguration,
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 }

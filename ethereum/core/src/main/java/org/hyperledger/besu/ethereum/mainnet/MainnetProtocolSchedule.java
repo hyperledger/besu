@@ -40,6 +40,7 @@ public class MainnetProtocolSchedule {
    * @param privacyParameters the parameters set for private transactions
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
    * @param evmConfiguration how to configure the EVMs jumpdest cache
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
    * @param metricsSystem A metricSystem instance to expose metrics in the underlying calls
@@ -50,20 +51,20 @@ public class MainnetProtocolSchedule {
       final Optional<PrivacyParameters> privacyParameters,
       final Optional<Boolean> isRevertReasonEnabled,
       final Optional<EvmConfiguration> evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
           config,
           privacyParameters.orElse(PrivacyParameters.DEFAULT),
           isRevertReasonEnabled.orElse(false),
           evmConfiguration.orElse(EvmConfiguration.DEFAULT),
+          miningParameters,
           badBlockManager,
           isParallelTxProcessingEnabled,
-          metricsSystem,
-          miningParameters);
+          metricsSystem);
     }
     return new ProtocolScheduleBuilder(
             config,
@@ -72,10 +73,10 @@ public class MainnetProtocolSchedule {
             privacyParameters.orElse(PrivacyParameters.DEFAULT),
             isRevertReasonEnabled.orElse(false),
             evmConfiguration.orElse(EvmConfiguration.DEFAULT),
+            miningParameters,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            metricsSystem,
-            miningParameters)
+            metricsSystem)
         .createProtocolSchedule();
   }
 
@@ -86,6 +87,7 @@ public class MainnetProtocolSchedule {
    *     starting points
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
    * @param evmConfiguration how to configure the EVMs jumpdest cache
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @return A configured mainnet protocol schedule
@@ -94,19 +96,19 @@ public class MainnetProtocolSchedule {
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
         Optional.empty(),
         Optional.of(isRevertReasonEnabled),
         Optional.of(evmConfiguration),
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 
   /**
@@ -115,6 +117,7 @@ public class MainnetProtocolSchedule {
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
    *     starting points
    * @param evmConfiguration size of
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @return A configured mainnet protocol schedule
@@ -122,19 +125,19 @@ public class MainnetProtocolSchedule {
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
         Optional.empty(),
         Optional.empty(),
         Optional.of(evmConfiguration),
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 
   /**
@@ -142,24 +145,25 @@ public class MainnetProtocolSchedule {
    *
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
    *     starting points
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
         Optional.empty(),
         Optional.empty(),
         Optional.empty(),
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 }

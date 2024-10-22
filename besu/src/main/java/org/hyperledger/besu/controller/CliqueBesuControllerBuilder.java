@@ -134,10 +134,10 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         nodeKey,
         isRevertReasonEnabled,
         evmConfiguration,
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 
   @Override

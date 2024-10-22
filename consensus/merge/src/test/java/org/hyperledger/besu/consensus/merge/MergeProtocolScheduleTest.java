@@ -51,10 +51,10 @@ public class MergeProtocolScheduleTest {
         MergeProtocolSchedule.create(
             config,
             false,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED);
+            new NoOpMetricsSystem());
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
     final ProtocolSpec londonSpec = protocolSchedule.getByBlockHeader(blockHeader(1559));
@@ -72,10 +72,10 @@ public class MergeProtocolScheduleTest {
         MergeProtocolSchedule.create(
             config,
             false,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED);
+            new NoOpMetricsSystem());
 
     final long lastParisBlockNumber = 17034869L;
     final ProtocolSpec parisSpec =
@@ -113,10 +113,10 @@ public class MergeProtocolScheduleTest {
         MergeProtocolSchedule.create(
             config,
             false,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED);
+            new NoOpMetricsSystem());
 
     final ProtocolSpec parisSpec =
         protocolSchedule.getByBlockHeader(
@@ -146,10 +146,10 @@ public class MergeProtocolScheduleTest {
         MergeProtocolSchedule.create(
             config,
             false,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED);
+            new NoOpMetricsSystem());
 
     final long lastParisBlockNumber = 17034869L;
     final ProtocolSpec parisSpec =
@@ -180,10 +180,10 @@ public class MergeProtocolScheduleTest {
         MergeProtocolSchedule.create(
                 GenesisConfigFile.DEFAULT.getConfigOptions(),
                 false,
+                MiningParameters.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                new NoOpMetricsSystem(),
-                MiningParameters.MINING_DISABLED)
+                new NoOpMetricsSystem())
             .getByBlockHeader(blockHeader(0));
 
     assertThat(london.getName()).isEqualTo("Paris");
