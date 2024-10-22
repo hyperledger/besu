@@ -299,25 +299,29 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 parentHeader)
             .getBlock();
 
-    BlockProcessingResult result = validateProposedBlock(emptyBlock);
-    if (result.isSuccessful()) {
-      mergeContext.putPayloadById(
-          new PayloadWrapper(
-              payloadIdentifier,
-              new BlockWithReceipts(emptyBlock, result.getReceipts()),
-              result.getYield().flatMap(BlockProcessingOutputs::getRequests)));
-      LOG.info(
-          "Start building proposals for block {} identified by {}",
-          emptyBlock.getHeader().getNumber(),
-          payloadIdentifier);
-    } else {
-      LOG.warn(
-          "failed to validate empty block proposal {}, reason {}",
-          emptyBlock.getHash(),
-          result.errorMessage);
-      if (result.causedBy().isPresent()) {
-        LOG.warn("caused by", result.causedBy().get());
+    try {
+      BlockProcessingResult result = validateProposedBlock(emptyBlock);
+      if (result.isSuccessful()) {
+        mergeContext.putPayloadById(
+            new PayloadWrapper(
+                payloadIdentifier,
+                new BlockWithReceipts(emptyBlock, result.getReceipts()),
+                result.getYield().flatMap(BlockProcessingOutputs::getRequests)));
+        LOG.info(
+            "Start building proposals for block {} identified by {}",
+            emptyBlock.getHeader().getNumber(),
+            payloadIdentifier);
+      } else {
+        LOG.warn(
+            "failed to validate empty block proposal {}, reason {}",
+            emptyBlock.getHash(),
+            result.errorMessage);
+        if (result.causedBy().isPresent()) {
+          LOG.warn("caused by", result.causedBy().get());
+        }
       }
+    } catch (Exception e) {
+      LOG.error("failed to validate block proposal {}", emptyBlock.getHash(), e);
     }
 
     tryToBuildBetterBlock(
