@@ -15,7 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECP256R1;
@@ -80,7 +80,7 @@ public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
     // the signature algorithm instance to SECP256R1 as it could influence other tests running at
     // the same time. So we only execute the test when ProcessBesuNodeRunner is used, as there is
     // not conflict because we use separate processes.
-    assumeThat(BesuNodeRunner.isProcessBesuNodeRunner()).isTrue();
+    assumeTrue(BesuNodeRunner.isProcessBesuNodeRunner());
 
     minerNode.verify(net.awaitPeerCount(1));
     otherNode.verify(net.awaitPeerCount(1));
