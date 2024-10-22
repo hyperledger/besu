@@ -51,7 +51,6 @@ public class ProtocolScheduleBuilder {
   private final BadBlockManager badBlockManager;
   private final boolean isParallelTxProcessingEnabled;
   private final MetricsSystem metricsSystem;
-  // private final EthereumCoreComponent context;
   private final MiningParameters miningParameters;
 
   public ProtocolScheduleBuilder(

@@ -62,10 +62,10 @@ public class FixedDifficultyProtocolSchedule {
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
@@ -80,10 +80,10 @@ public class FixedDifficultyProtocolSchedule {
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
