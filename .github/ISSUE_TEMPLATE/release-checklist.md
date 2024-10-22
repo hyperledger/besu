@@ -24,9 +24,13 @@ assignees: ''
 - [ ] Optional: Perform a dry run with https://github.com/consensys/protocols-release-sandbox to test the workflows
   - [ ] Sync fork
   - [ ] git checkout <sha of 24.4.0-RC1>
-  - [ ] git tag 24.4.0; git push origin 24.4.0
+  - [ ] git tag 24.4.0
+  - [ ] git push origin 24.4.0
   - [ ] Manually run https://github.com/Consensys/protocols-release-sandbox/actions/workflows/draft-release.yml using `main` branch and `24.4.0` tag
 - [ ] Back on besu, using the same git sha as 24.4.0-RC1, create a calver tag for the FULL RELEASE, example format `24.4.0`
+  - [ ] git checkout 24.4.0-RC1
+  - [ ] git tag 24.4.0
+  - [ ] git push upstream 24.4.0
 - [ ] Manually run https://github.com/hyperledger/besu/actions/workflows/draft-release.yml inputing the FULL RELEASE tag name. Note, this workflow should always be run from `main` branch (this doesn't prevent hotfix tags from being released)
     - publishes artefacts and version-specific docker tags but does not fully publish the GitHub release so subscribers are not yet notified
 - [ ] Check all draft-release workflow jobs went green
