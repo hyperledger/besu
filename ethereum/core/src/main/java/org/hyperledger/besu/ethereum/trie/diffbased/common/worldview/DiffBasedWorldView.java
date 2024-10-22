@@ -58,7 +58,7 @@ public interface DiffBasedWorldView extends WorldView {
 
   boolean isPersisted();
 
-  //TODO: comments and naming
+  // TODO: comments and naming
   CachingPreImageStorage getPreImageProxy();
 
   DiffBasedWorldStateKeyValueStorage getWorldStateStorage();

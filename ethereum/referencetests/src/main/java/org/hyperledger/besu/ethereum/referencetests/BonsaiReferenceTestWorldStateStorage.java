@@ -37,8 +37,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerStorage {
 
-  public BonsaiReferenceTestWorldStateStorage(
-      final BonsaiWorldStateKeyValueStorage parent) {
+  public BonsaiReferenceTestWorldStateStorage(final BonsaiWorldStateKeyValueStorage parent) {
     super(parent);
   }
 

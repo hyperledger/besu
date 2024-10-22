@@ -479,7 +479,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                         final UInt256 keyUInt = storageUpdate.getKey();
                         final StorageSlotKey slotKey =
                             new StorageSlotKey(
-                                world.getPreImageProxy().hashAndSaveSlotPreImage(keyUInt), Optional.of(keyUInt));
+                                world.getPreImageProxy().hashAndSaveSlotKeyPreImage(keyUInt),
+                                Optional.of(keyUInt));
                         final UInt256 value = storageUpdate.getValue();
                         final DiffBasedValue<UInt256> pendingValue =
                             pendingStorageUpdates.get(slotKey);
@@ -523,7 +524,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 slotKey) {
     StorageSlotKey storageSlotKey =
-        new StorageSlotKey(world.getPreImageProxy().hashAndSaveSlotPreImage(slotKey), Optional.of(slotKey));
+        new StorageSlotKey(
+            world.getPreImageProxy().hashAndSaveSlotKeyPreImage(slotKey), Optional.of(slotKey));
     return getStorageValueByStorageSlotKey(address, storageSlotKey).orElse(UInt256.ZERO);
   }
 
@@ -562,7 +564,9 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     StorageSlotKey storageSlotKey =
-        new StorageSlotKey(world.getPreImageProxy().hashAndSaveSlotPreImage(storageKey), Optional.of(storageKey));
+        new StorageSlotKey(
+            world.getPreImageProxy().hashAndSaveSlotKeyPreImage(storageKey),
+            Optional.of(storageKey));
     final Map<StorageSlotKey, DiffBasedValue<UInt256>> localAccountStorage =
         storageToUpdate.get(address);
     if (localAccountStorage != null) {

@@ -55,7 +55,8 @@ public abstract class DiffBasedWorldState
   private static final Logger LOG = LoggerFactory.getLogger(DiffBasedWorldState.class);
 
   // where the shit to initialize you?
-  protected static final CachingPreImageStorage preImageProxy = new CachingPreImageStorage.LimitedInMemoryPreImageStorage();
+  protected static final CachingPreImageStorage preImageProxy =
+      new CachingPreImageStorage.CachingOnlyPreImageStorage();
 
   protected DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected final DiffBasedCachedWorldStorageManager cachedWorldStorageManager;
@@ -305,7 +306,9 @@ public abstract class DiffBasedWorldState
 
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("storage format does not provide account streaming.");
+    return preImageProxy
+        .streamAddressPreImages(startKeyHash, limit)
+        .map(address -> new StreamableAccount(Optional.of(address), get(address)));
   }
 
   @Override

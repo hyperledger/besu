@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
@@ -25,6 +24,8 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdateAccumulator {
 
@@ -39,10 +40,7 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
   public BonsaiReferenceTestUpdateAccumulator createDetachedAccumulator() {
     final BonsaiReferenceTestUpdateAccumulator copy =
         new BonsaiReferenceTestUpdateAccumulator(
-            wrappedWorldView(),
-            accountPreloader,
-            storagePreloader,
-            evmConfiguration);
+            wrappedWorldView(), accountPreloader, storagePreloader, evmConfiguration);
     getAccountsToUpdate().forEach((k, v) -> copy.getAccountsToUpdate().put(k, v.copy()));
     getCodeToUpdate().forEach((k, v) -> copy.getCodeToUpdate().put(k, v.copy()));
     copy.getStorageToClear().addAll(getStorageToClear());

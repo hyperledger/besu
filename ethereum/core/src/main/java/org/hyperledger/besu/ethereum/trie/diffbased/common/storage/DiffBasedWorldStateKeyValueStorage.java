@@ -53,7 +53,6 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   private static final Logger LOG =
       LoggerFactory.getLogger(DiffBasedWorldStateKeyValueStorage.class);
 
-
   // TODO: config this based on dataStorageConfiguration, use real storage where appropriate
   protected final CachingPreImageStorage preImageProxy =
       new CachingPreImageStorage.UnboundedPreImageStorage();

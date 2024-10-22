@@ -14,14 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Stream;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.apache.tuweni.bytes.Bytes;
@@ -29,99 +30,132 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Acts as both a Hasher and PreImageStorage for Bonsai storage format. */
-public interface CachingPreImageStorage extends WorldStatePreimageStorage {
+public interface CachingPreImageStorage {
+
+  enum HashSource {
+    ACCOUNT_ADDRESS((byte) 0x00),
+    SLOT_KEY((byte) 0x01);
+    byte internal_type;
+
+    HashSource(final byte type) {
+      internal_type = type;
+    }
+
+    byte getTypeSuffix() {
+      return internal_type;
+    }
+
+    static HashSource wrap(final byte val) {
+      if (val == 0x00) {
+        return ACCOUNT_ADDRESS;
+      } else if (val == 0x01) {
+        return SLOT_KEY;
+      } else {
+        throw new NoSuchElementException(String.format("Value %x is not a preimage source", val));
+      }
+    }
+  }
+
+  record HashKey(Hash hashValue, HashSource source) {}
+
   /**
    * If this value is not already present, save in preImage store and return the hash value.
    *
    * @param value value to hash
    * @return Hash of value
    */
-  Hash hashAndSaveAccountPreImage(Bytes value);
+  Hash hashAndSaveAddressPreImage(final Bytes value);
 
+  Hash hashAndSaveSlotKeyPreImage(final UInt256 keyUInt);
 
-  Hash hashAndSaveSlotPreImage(UInt256 keyUInt);
+  Stream<Address> streamAddressPreImages(final Bytes32 startKeyHash, final int limit);
+
+  Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey);
+
+  Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey);
 
   /**
    * A caching PreImageProxy suitable for ReferenceTestWorldState which saves hashes in an unbounded
    * BiMap.
    */
   class UnboundedPreImageStorage implements CachingPreImageStorage {
-    BiMap<Hash, Bytes> preImageCache = HashBiMap.create();
+    BiMap<HashKey, Bytes> preImageCache = HashBiMap.create();
 
     @Override
-    public Hash hashAndSaveAccountPreImage(final Bytes value) {
-      return preImageCache.inverse().computeIfAbsent(value, Hash::hash);
+    public Hash hashAndSaveAddressPreImage(final Bytes value) {
+      return preImageCache
+          .inverse()
+          .computeIfAbsent(
+              value, v -> new HashKey(Address.wrap(v).addressHash(), HashSource.ACCOUNT_ADDRESS))
+          .hashValue();
     }
 
     @Override
-    public Hash hashAndSaveSlotPreImage(final UInt256 value) {
-      return preImageCache.inverse().computeIfAbsent(value, Hash::hash);
+    public Hash hashAndSaveSlotKeyPreImage(final UInt256 value) {
+      return preImageCache
+          .inverse()
+          .computeIfAbsent(value, v -> new HashKey(Hash.hash(v), HashSource.SLOT_KEY))
+          .hashValue();
     }
 
     @Override
-    public Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
-      return Optional.ofNullable(preImageCache.get(trieKey)).map(UInt256::fromBytes);
-    }
-
-    @Override
-    public Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
-      return Optional.ofNullable(preImageCache.get(trieKey)).map(Address::wrap);
-    }
-
-    @Override
-    public Updater updater() {
-      throw new UnsupportedOperationException(
-          "BonsaiReferenceTestPreImageProxy does not implement an updater");
-    }
-  }
-
-  class LimitedInMemoryPreImageStorage implements CachingPreImageStorage {
-
-    //TODO: config max size perhaps
-    private static final Cache<Bytes, Hash> preimageCache =
-        Caffeine.newBuilder()
-            .maximumSize(10000)
-            .build();
-
-    private static final Cache<Hash, Bytes> preImageByHash =
-        Caffeine.newBuilder()
-            .maximumSize(10000)
-            .build();
-
-    @Override
-    public Hash hashAndSaveAccountPreImage(final Bytes value) {
-      return preimageCache.get(value, val -> {
-        // defer to the static address hash used by evm
-        Hash hash = Address.wrap(val).addressHash();
-        preImageByHash.put(hash, val);
-        return hash;
-      });
-    }
-
-    @Override
-    public Hash hashAndSaveSlotPreImage(final UInt256 keyUInt) {
-      return preimageCache.get(keyUInt, val -> {
-        Hash hash = Hash.hash(val);
-        preImageByHash.put(hash, val);
-        return hash;
-      });
+    public Stream<Address> streamAddressPreImages(final Bytes32 startKeyHash, final int limit) {
+      final Hash startHash = Hash.wrap(startKeyHash);
+      return preImageCache.entrySet().stream()
+          .filter(entry -> entry.getKey().source() == HashSource.ACCOUNT_ADDRESS)
+          .filter(entry -> entry.getKey().hashValue().compareTo(startHash) >= 0)
+          .map(e -> Address.wrap(e.getValue()))
+          .limit(limit);
     }
 
     @Override
     public Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
-      return Optional.ofNullable(preImageByHash.getIfPresent(Hash.wrap(trieKey)))
+      return Optional.ofNullable(
+              preImageCache.get(new HashKey(Hash.wrap(trieKey), HashSource.SLOT_KEY)))
           .map(UInt256::fromBytes);
     }
 
     @Override
     public Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
-      return Optional.ofNullable(preImageByHash.getIfPresent(Hash.wrap(trieKey)))
+      return Optional.ofNullable(
+              preImageCache.get(new HashKey(Hash.wrap(trieKey), HashSource.ACCOUNT_ADDRESS)))
           .map(Address::wrap);
+    }
+  }
+
+  class CachingOnlyPreImageStorage implements CachingPreImageStorage {
+
+    // TODO: config max size perhaps
+    private static final Cache<Bytes, Hash> preimageCache =
+        Caffeine.newBuilder().maximumSize(10000).build();
+
+    @Override
+    public Hash hashAndSaveAddressPreImage(final Bytes value) {
+      // defer to the static Address hash map used by the evm
+      return preimageCache.get(value, v -> Address.wrap(value).addressHash());
     }
 
     @Override
-    public Updater updater() {
-      return null;
+    public Hash hashAndSaveSlotKeyPreImage(final UInt256 keyUInt) {
+      return preimageCache.get(keyUInt, Hash::hash);
+    }
+
+    @Override
+    public Stream<Address> streamAddressPreImages(final Bytes32 startKeyHash, final int limit) {
+      // not configured for preimage streaming
+      return Stream.empty();
+    }
+
+    @Override
+    public Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
+      // not configured for preimage streaming
+      return Optional.empty();
+    }
+
+    @Override
+    public Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
+      // not configured for preimage streaming
+      return Optional.empty();
     }
   }
 }

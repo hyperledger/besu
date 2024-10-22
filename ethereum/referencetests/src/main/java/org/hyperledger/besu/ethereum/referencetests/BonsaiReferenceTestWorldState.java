@@ -44,7 +44,6 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class BonsaiReferenceTestWorldState extends BonsaiWorldState
