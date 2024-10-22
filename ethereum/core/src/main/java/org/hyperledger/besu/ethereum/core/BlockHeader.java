@@ -100,8 +100,8 @@ public class BlockHeader extends SealableBlockHeader
             .map(wsRoot -> wsRoot.equals(Hash.EMPTY_TRIE_HASH))
             .orElse(true)
         && blockHeader
-            .getRequestsRoot()
-            .map(reqRoot -> reqRoot.equals(Hash.EMPTY_TRIE_HASH))
+            .getRequestsHash()
+            .map(reqHash -> reqHash.equals(Hash.EMPTY_REQUESTS_HASH))
             .orElse(true);
   }
 

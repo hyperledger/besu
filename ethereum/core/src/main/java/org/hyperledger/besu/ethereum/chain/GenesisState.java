@@ -22,16 +22,13 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -220,17 +217,8 @@ public final class GenesisState {
         .excessBlobGas(isCancunAtGenesis(genesis) ? parseExcessBlobGas(genesis) : null)
         .parentBeaconBlockRoot(
             (isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
-        .requestsHash(isPragueAtGenesis(genesis) ? calcEmptyRequestsHash() : null)
+        .requestsHash(isPragueAtGenesis(genesis) ? Hash.EMPTY_REQUESTS_HASH : null)
         .buildBlockHeader();
-  }
-
-  private static Hash calcEmptyRequestsHash() {
-    final List<Request> emptyRequests =
-        List.of(
-            new Request(RequestType.DEPOSIT, Bytes.EMPTY),
-            new Request(RequestType.WITHDRAWAL, Bytes.EMPTY),
-            new Request(RequestType.CONSOLIDATION, Bytes.EMPTY));
-    return BodyValidation.requestsHash(emptyRequests);
   }
 
   private static Address parseCoinbase(final GenesisConfigFile genesis) {
