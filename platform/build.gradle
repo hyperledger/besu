@@ -191,13 +191,13 @@ publishing {
   publications {
     mavenPlatform(MavenPublication) {
       from components.javaPlatform
-      groupId "org.hyperledger.besu"
+      groupId "io.consensys.linea-besu"
       artifactId 'bom'
       version calculateVersion()
 
       pom {
-        name = "Besu BOM"
-        url = 'http://github.com/hyperledger/besu'
+        name = "Linea Besu BOM"
+        url = 'https://github.com/ConsenSys/linea-besu'
         licenses {
           license {
             name = 'The Apache License, Version 2.0'
@@ -205,9 +205,9 @@ publishing {
           }
         }
         scm {
-          connection = 'scm:git:git://github.com/hyperledger/besu.git'
-          developerConnection = 'scm:git:ssh://github.com/hyperledger/besu.git'
-          url = 'https://github.com/hyperledger/besu'
+          connection = 'scm:git:git://github.com/ConsenSys/linea-besu.git'
+          developerConnection = 'scm:git:ssh://github.com/ConsenSys/linea-besu.git'
+          url = 'https://github.com/ConsenSys/linea-besu'
         }
       }
     }
