@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.REVERT_ERROR;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -99,7 +98,6 @@ public class EthCallTest {
   @Test
   public void noAccountOverrides() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
-    //    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, INTERNAL_ERROR);
     Optional<Map<Address, AccountOverride>> overrideMap =
         method.getAddressAccountOverrideMap(request);
     assertThat(overrideMap.isPresent()).isFalse();
@@ -108,10 +106,11 @@ public class EthCallTest {
   @Test
   public void emptyAccountOverrides() {
     Map<Address, AccountOverride> expectedOverrides = new HashMap<>();
-    final JsonRpcRequestContext request = ethCallRequestWithStateOverrides(callParameter(), "latest", expectedOverrides);
-    //    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, INTERNAL_ERROR);
+    final JsonRpcRequestContext request =
+        ethCallRequestWithStateOverrides(callParameter(), "latest", expectedOverrides);
     Optional<Map<Address, AccountOverride>> overrideMap =
-            method.getAddressAccountOverrideMap(request);
+        method.getAddressAccountOverrideMap(request);
+    // TODO how to handle empty map? edge case
     assertThat(overrideMap.isPresent()).isFalse();
   }
 
@@ -125,17 +124,27 @@ public class EthCallTest {
 
     final JsonRpcRequestContext request =
         ethCallRequestWithStateOverrides(callParameter(), "latest", expectedOverrides);
-    //    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, INTERNAL_ERROR);
+
     Optional<Map<Address, AccountOverride>> maybeOverrideMap =
         method.getAddressAccountOverrideMap(request);
     assertThat(maybeOverrideMap.isPresent()).isTrue();
     Map<Address, AccountOverride> overrideMap = maybeOverrideMap.get();
     assertThat(overrideMap.keySet()).hasSize(1);
     assertThat(overrideMap.values()).hasSize(1);
+
     System.out.println(address);
     System.out.println(overrideMap.get(address));
     System.out.println(overrideMap.values().iterator().next());
-//    System.out.println(overrideMap.values().iterator().next().getClass());
+    // this line causes a class cast exception
+    //    System.out.println(overrideMap.values().iterator().next().getClass());
+
+    // the address LOOKS right, but it doesn't pass equality test
+
+    //    Expecting actual:
+    //    {"0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3"={"balance"=null, "code"=null, "nonce"=88,
+    // "state"=null}}
+    //    to contain key:
+    //    0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3
 
     assertThat(overrideMap).containsKey(address);
     assertThat(overrideMap).containsValue(override);

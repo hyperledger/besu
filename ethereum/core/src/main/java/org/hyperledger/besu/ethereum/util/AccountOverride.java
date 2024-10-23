@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.util;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.Map;
 import java.util.Optional;
+
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 // similar to AccountDiff
 // BUT
@@ -33,7 +34,11 @@ public class AccountOverride {
   private final Optional<String> code;
   private final Optional<Map<String, String>> state;
 
-  private AccountOverride(final Optional<Wei> balance, final Optional<Long> nonce, final Optional<String> code, final Optional<Map<String, String>> state) {
+  private AccountOverride(
+      final Optional<Wei> balance,
+      final Optional<Long> nonce,
+      final Optional<String> code,
+      final Optional<Map<String, String>> state) {
     this.balance = balance;
     this.nonce = nonce;
     this.code = code;
@@ -96,11 +101,15 @@ public class AccountOverride {
 
   @Override
   public String toString() {
-    return "AccountOverride{" +
-            "balance=" + balance +
-            ", nonce=" + nonce +
-            ", code=" + code +
-            ", state=" + state +
-            '}';
+    return "AccountOverride{"
+        + "balance="
+        + balance
+        + ", nonce="
+        + nonce
+        + ", code="
+        + code
+        + ", state="
+        + state
+        + '}';
   }
 }
