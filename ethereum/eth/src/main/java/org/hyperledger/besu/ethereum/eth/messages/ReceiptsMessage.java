@@ -74,6 +74,10 @@ public final class ReceiptsMessage extends AbstractMessageData {
   }
 
   public List<List<TransactionReceipt>> receipts() {
+    return receipts(false);
+  }
+
+  public List<List<TransactionReceipt>> receipts(final boolean keepRlp) {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
     final List<List<TransactionReceipt>> receipts = new ArrayList<>();
@@ -81,7 +85,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
       final int setSize = input.enterList();
       final List<TransactionReceipt> receiptSet = new ArrayList<>(setSize);
       for (int i = 0; i < setSize; i++) {
-        receiptSet.add(TransactionReceipt.readFrom(input, false));
+        receiptSet.add(TransactionReceipt.readFrom(input.readAsRlp(), false, keepRlp));
       }
       input.leaveList();
       receipts.add(receiptSet);
