@@ -16,7 +16,6 @@ package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
@@ -33,7 +32,7 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SEPOLIA_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SEPOLIA_DISCOVERY_URL;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
-import static org.junit.Assume.assumeThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
@@ -2392,7 +2391,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void logsWarningWhenFailToLoadJemalloc() {
-    assumeThat(PlatformDetector.getOSType(), is("linux"));
+    assumeTrue(PlatformDetector.getOSType().equals("linux"));
     setEnvironmentVariable("BESU_USING_JEMALLOC", "true");
     parseCommand();
     verify(mockLogger)
@@ -2404,7 +2403,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void logsSuggestInstallingJemallocWhenEnvVarNotPresent() {
-    assumeThat(PlatformDetector.getOSType(), is("linux"));
+    assumeTrue(PlatformDetector.getOSType().equals("linux"));
     parseCommand();
     verify(mockLogger)
         .info("jemalloc library not found, memory usage may be reduced by installing it");

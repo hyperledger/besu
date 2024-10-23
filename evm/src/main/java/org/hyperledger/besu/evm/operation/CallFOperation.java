@@ -54,8 +54,7 @@ public class CallFOperation extends AbstractOperation {
     int section = code.readBigEndianU16(pc + 1);
     CodeSection info = code.getCodeSection(section);
     int operandStackSize = frame.stackSize();
-    if (operandStackSize >= 1024
-        || operandStackSize > 1024 - info.getMaxStackHeight() + info.getInputs()) {
+    if (operandStackSize > 1024 - info.getMaxStackHeight() + info.getInputs()) {
       return callfStackOverflow;
     }
     frame.getReturnStack().push(new ReturnStack.ReturnStackItem(frame.getSection(), pc + 2));

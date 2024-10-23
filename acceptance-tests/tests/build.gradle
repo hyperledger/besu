@@ -70,7 +70,6 @@ dependencies {
   testImplementation 'io.opentracing:opentracing-api'
   testImplementation 'io.opentracing:opentracing-util'
   testImplementation 'io.vertx:vertx-core'
-  testImplementation 'junit:junit'
   testImplementation 'org.apache.commons:commons-compress'
   testImplementation 'org.apache.logging.log4j:log4j-core'
   testImplementation 'io.tmio:tuweni-crypto'
@@ -85,8 +84,6 @@ dependencies {
   testImplementation 'com.google.dagger:dagger'
   testAnnotationProcessor 'com.google.dagger:dagger-compiler'
   testImplementation project(path: ':acceptance-tests:tests:shanghai')
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
 test.enabled = false

@@ -109,8 +109,6 @@ dependencies {
     api 'io.tmio:tuweni-toml:2.4.2'
     api 'io.tmio:tuweni-units:2.4.2'
 
-    api 'junit:junit:4.13.2'
-
     api 'net.java.dev.jna:jna:5.15.0'
 
     api 'org.antlr:antlr4:4.11.1'
