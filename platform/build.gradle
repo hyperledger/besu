@@ -185,7 +185,20 @@ spotless {
   }
 }
 
+def cloudsmithUser = project.hasProperty('cloudsmithUser') ? project.property('cloudsmithUser') : System.getenv('CLOUDSMITH_USER')
+def cloudsmithKey = project.hasProperty('cloudsmithApiKey') ? project.property('cloudsmithApiKey') : System.getenv('CLOUDSMITH_API_KEY')
+
 publishing {
+  repositories {
+    maven {
+      name = "cloudsmith"
+      url = "https://api.cloudsmith.io/maven/consensys/linea-besu/"
+      credentials {
+        username = cloudsmithUser
+        password = cloudsmithKey
+      }
+    }
+  }
   publications {
     mavenPlatform(MavenPublication) {
       from components.javaPlatform
