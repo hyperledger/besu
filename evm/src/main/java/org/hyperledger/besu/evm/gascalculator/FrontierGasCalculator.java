@@ -26,7 +26,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.ExpOperation;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -415,7 +414,7 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long balanceOperationGasCost(
-      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
     return BALANCE_OPERATION_GAS_COST;
   }
 
@@ -468,14 +467,14 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long extCodeHashOperationGasCost(
-      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> address) {
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
     throw new UnsupportedOperationException(
         "EXTCODEHASH not supported by " + getClass().getSimpleName());
   }
 
   @Override
   public long extCodeSizeOperationGasCost(
-      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
     return extCodeBaseGasCost();
   }
 

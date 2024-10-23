@@ -42,7 +42,6 @@ import org.hyperledger.besu.evm.precompile.SHA256PrecompiledContract;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -363,11 +362,11 @@ public interface GasCalculator {
    *
    * @param frame The current frame
    * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
-   * @param maybeAddress targeted address
+   * @param address targeted address
    * @return the cost for executing the balance operation
    */
   long balanceOperationGasCost(
-      MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress);
+      MessageFrame frame, final boolean accountIsWarm, final Address address);
 
   /**
    * Returns the cost for executing a {@link BlockHashOperation}.
@@ -420,22 +419,22 @@ public interface GasCalculator {
    *
    * @param frame The current frame
    * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
-   * @param maybeAddress targeted address
+   * @param address targeted address
    * @return the cost for executing the external code hash operation
    */
   long extCodeHashOperationGasCost(
-      final MessageFrame frame, final boolean accountIsWarm, Optional<Address> maybeAddress);
+      final MessageFrame frame, final boolean accountIsWarm, Address address);
 
   /**
    * Returns the cost for executing a {@link ExtCodeSizeOperation}.
    *
    * @param frame The current frame
    * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
-   * @param maybeAddress targeted address
+   * @param address targeted address
    * @return the cost for executing the external code size operation
    */
   long extCodeSizeOperationGasCost(
-      MessageFrame frame, final boolean accountIsWarm, Optional<Address> maybeAddress);
+      MessageFrame frame, final boolean accountIsWarm, Address address);
 
   /**
    * Returns the cost for executing a {@link JumpDestOperation}.

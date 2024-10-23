@@ -20,7 +20,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -131,7 +130,7 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
 
   @Override
   public long extCodeHashOperationGasCost(
-      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> address) {
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
     return EXTCODE_HASH_COST;
   }
 }

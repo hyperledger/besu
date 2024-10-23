@@ -26,8 +26,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.stateless.Eip4762AccessWitness;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -125,28 +123,6 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
   }
 
   @Override
-  public long calculateStorageCost(
-      final MessageFrame frame,
-      final UInt256 key,
-      final UInt256 newValue,
-      final Supplier<UInt256> currentValue,
-      final Supplier<UInt256> originalValue) {
-
-    List<UInt256> treeIndexes = frame.getAccessWitness().getStorageSlotTreeIndexes(key);
-    long gas =
-        frame
-            .getAccessWitness()
-            .touchAddressOnWriteResetAndComputeGas(
-                frame.getRecipientAddress(), treeIndexes.get(0), treeIndexes.get(1));
-
-    if (gas == 0) {
-      return SLOAD_GAS;
-    }
-
-    return gas;
-  }
-
-  @Override
   public long calculateStorageRefundAmount(
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
@@ -239,13 +215,7 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
 
   @Override
   public long balanceOperationGasCost(
-      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
-    if (maybeAddress.isEmpty()) {
-      // can happen if there was a problem getting the address - not charged
-      return 0L;
-    }
-
-    final Address address = maybeAddress.get();
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
     final long gas =
         frame.getAccessWitness().touchAddressAndChargeRead(address, BASIC_DATA_LEAF_KEY);
     if (gas == 0) {
@@ -256,13 +226,7 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
 
   @Override
   public long extCodeHashOperationGasCost(
-      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
-    if (maybeAddress.isEmpty()) {
-      // can happen if there was a problem getting the address - not charged
-      return 0;
-    }
-
-    final Address address = maybeAddress.get();
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
     if (isPrecompile(address) || isSystemContract(address)) {
       return getWarmStorageReadCost();
     }
@@ -276,13 +240,7 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
 
   @Override
   public long extCodeSizeOperationGasCost(
-      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
-    if (maybeAddress.isEmpty()) {
-      // can happen if there was a problem getting the address - not charged
-      return 0L;
-    }
-
-    final Address address = maybeAddress.get();
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
     if (isPrecompile(address) || isSystemContract(address)) {
       return getWarmStorageReadCost();
     }
@@ -351,15 +309,32 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
   @Override
   public long sloadOperationGasCost(
       final MessageFrame frame, final UInt256 key, final boolean slotIsWarm) {
-    List<UInt256> treeIndexes = frame.getAccessWitness().getStorageSlotTreeIndexes(key);
-    long gas =
-        frame
-            .getAccessWitness()
-            .touchAddressOnReadAndComputeGas(
-                frame.getContractAddress(), treeIndexes.get(0), treeIndexes.get(1));
+    long gas = frame.getAccessWitness().touchAndChargeStorageLoad(frame.getContractAddress(), key);
+
     if (gas == 0) {
       return getWarmStorageReadCost();
     }
+
+    return gas;
+  }
+
+  @Override
+  public long calculateStorageCost(
+      final MessageFrame frame,
+      final UInt256 key,
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
+
+    long gas =
+        frame
+            .getAccessWitness()
+            .touchAndChargeStorageStore(frame.getRecipientAddress(), key, originalValue != null);
+
+    if (gas == 0) {
+      return SLOAD_GAS;
+    }
+
     return gas;
   }
 

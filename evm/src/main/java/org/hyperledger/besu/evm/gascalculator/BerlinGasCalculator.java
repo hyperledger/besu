@@ -27,7 +27,6 @@ import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
 import java.math.BigInteger;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -121,7 +120,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   // Zeroed out old costs
   @Override
   public long balanceOperationGasCost(
-      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
     return accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost();
   }
 
@@ -132,13 +131,13 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   @Override
   public long extCodeHashOperationGasCost(
-      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> address) {
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
     return (accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());
   }
 
   @Override
   public long extCodeSizeOperationGasCost(
-      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
     return (accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());
   }
 

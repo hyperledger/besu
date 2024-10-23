@@ -61,13 +61,6 @@ public class Eip4762AccessWitness implements AccessWitness {
   }
 
   @Override
-  public List<Address> keys() {
-    return this.leaves.keySet().stream()
-        .map(leafAccessKey -> leafAccessKey.branchAccessKey().address())
-        .toList();
-  }
-
-  @Override
   public long touchAddressAndChargeRead(final Address address, final UInt256 leafKey) {
     return touchAddressOnReadAndComputeGas(address, zeroTreeIndex, leafKey);
   }
@@ -203,8 +196,7 @@ public class Eip4762AccessWitness implements AccessWitness {
       return;
     }
     // TODO: not done right now on Geth either - implement case if target does not exist yet - a
-    // CODEHASH_LEAF will be
-    //  touched too and WriteSet will be called
+    // CODEHASH_LEAF will be touched too and WriteSet will be called
     touchAddressOnWriteResetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY);
   }
 
@@ -226,13 +218,13 @@ public class Eip4762AccessWitness implements AccessWitness {
   @Override
   public long touchCodeChunks(
       final Address contractAddress,
-      final boolean contractCreatedInTransaction,
+      final boolean isContractInDeployment,
       final long startPc,
       final long readSize,
       final long codeLength) {
     long gas = 0;
 
-    if (contractCreatedInTransaction || readSize == 0 || startPc >= codeLength) {
+    if (isContractInDeployment || readSize == 0 || startPc >= codeLength) {
       return 0;
     }
 
@@ -251,23 +243,42 @@ public class Eip4762AccessWitness implements AccessWitness {
     return gas;
   }
 
-  @Override
-  public long touchAddressOnWriteResetAndComputeGas(
+  private long touchAddressOnWriteResetAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
     return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessMode.WRITE_RESET);
   }
 
-  @Override
-  public long touchAddressOnWriteSetAndComputeGas(
+  private long touchAddressOnWriteSetAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
     // TODO: change to WRITE_SET when CHUNK_FILL is implemented. Still not implemented in devnet-7
     return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessMode.WRITE_RESET);
   }
 
-  @Override
-  public long touchAddressOnReadAndComputeGas(
+  private long touchAddressOnReadAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
     return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessMode.READ);
+  }
+
+  private List<UInt256> getStorageSlotTreeIndexes(final UInt256 storageKey) {
+    return List.of(
+        TRIE_KEY_ADAPTER.locateStorageKeyOffset(storageKey),
+        TRIE_KEY_ADAPTER.locateStorageKeySuffix(storageKey));
+  }
+
+  @Override
+  public long touchAndChargeStorageLoad(final Address address, final UInt256 storageKey) {
+    List<UInt256> treeIndexes = getStorageSlotTreeIndexes(storageKey);
+    return touchAddressOnReadAndComputeGas(address, treeIndexes.get(0), treeIndexes.get(1));
+  }
+
+  @Override
+  public long touchAndChargeStorageStore(
+      final Address address, final UInt256 storageKey, final boolean hasPreviousValue) {
+    List<UInt256> treeIndexes = getStorageSlotTreeIndexes(storageKey);
+    if (!hasPreviousValue) {
+      return touchAddressOnWriteSetAndComputeGas(address, treeIndexes.get(0), treeIndexes.get(1));
+    }
+    return touchAddressOnWriteResetAndComputeGas(address, treeIndexes.get(0), treeIndexes.get(1));
   }
 
   public long touchAddressAndChargeGas(
@@ -441,11 +452,4 @@ public class Eip4762AccessWitness implements AccessWitness {
   public record BranchAccessKey(Address address, UInt256 treeIndex) {}
 
   public record LeafAccessKey(BranchAccessKey branchAccessKey, UInt256 leafIndex) {}
-
-  @Override
-  public List<UInt256> getStorageSlotTreeIndexes(final UInt256 storageKey) {
-    return List.of(
-        TRIE_KEY_ADAPTER.locateStorageKeyOffset(storageKey),
-        TRIE_KEY_ADAPTER.locateStorageKeySuffix(storageKey));
-  }
 }

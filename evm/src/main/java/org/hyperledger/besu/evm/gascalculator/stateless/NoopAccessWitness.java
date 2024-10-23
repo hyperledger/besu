@@ -18,8 +18,6 @@ import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -35,11 +33,6 @@ public class NoopAccessWitness implements AccessWitness {
       instance = new NoopAccessWitness();
     }
     return instance;
-  }
-
-  @Override
-  public List<Address> keys() {
-    return Collections.emptyList();
   }
 
   @Override
@@ -79,26 +72,14 @@ public class NoopAccessWitness implements AccessWitness {
   }
 
   @Override
-  public long touchAddressOnWriteResetAndComputeGas(
-      final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
+  public long touchAndChargeStorageLoad(final Address address, final UInt256 storageKey) {
     return 0;
   }
 
   @Override
-  public long touchAddressOnWriteSetAndComputeGas(
-      final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
+  public long touchAndChargeStorageStore(
+      final Address address, final UInt256 storageKey, final boolean hasPreviousValue) {
     return 0;
-  }
-
-  @Override
-  public long touchAddressOnReadAndComputeGas(
-      final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
-    return 0;
-  }
-
-  @Override
-  public List<UInt256> getStorageSlotTreeIndexes(final UInt256 storageKey) {
-    return Collections.emptyList();
   }
 
   @Override
@@ -109,7 +90,7 @@ public class NoopAccessWitness implements AccessWitness {
   @Override
   public long touchCodeChunks(
       final Address address,
-      final boolean contractCreatedInTransaction,
+      final boolean isContractInDeployment,
       final long offset,
       final long readSize,
       final long codeLength) {
