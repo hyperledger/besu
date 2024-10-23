@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.REVERT_ERROR;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -105,20 +106,39 @@ public class EthCallTest {
   }
 
   @Test
+  public void emptyAccountOverrides() {
+    Map<Address, AccountOverride> expectedOverrides = new HashMap<>();
+    final JsonRpcRequestContext request = ethCallRequestWithStateOverrides(callParameter(), "latest", expectedOverrides);
+    //    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, INTERNAL_ERROR);
+    Optional<Map<Address, AccountOverride>> overrideMap =
+            method.getAddressAccountOverrideMap(request);
+    assertThat(overrideMap.isPresent()).isFalse();
+  }
+
+  @Test
   public void someAccountOverrides() {
     Map<Address, AccountOverride> expectedOverrides = new HashMap<>();
-    AccountOverride.Builder builder = new AccountOverride.Builder().balance(Wei.of(99));
-    AccountOverride override = builder.build();
-    expectedOverrides.put(
-        Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3"), override);
+    AccountOverride override = new AccountOverride.Builder().nonce(88L).build();
+    final Address address = Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3");
+    expectedOverrides.put(address, override);
+    System.out.println(override.toString());
 
     final JsonRpcRequestContext request =
         ethCallRequestWithStateOverrides(callParameter(), "latest", expectedOverrides);
     //    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, INTERNAL_ERROR);
-    Optional<Map<Address, AccountOverride>> overrideMap =
+    Optional<Map<Address, AccountOverride>> maybeOverrideMap =
         method.getAddressAccountOverrideMap(request);
-    assertThat(overrideMap.isPresent()).isTrue();
-    assertThat(overrideMap.get()).isEqualTo(expectedOverrides);
+    assertThat(maybeOverrideMap.isPresent()).isTrue();
+    Map<Address, AccountOverride> overrideMap = maybeOverrideMap.get();
+    assertThat(overrideMap.keySet()).hasSize(1);
+    assertThat(overrideMap.values()).hasSize(1);
+    System.out.println(address);
+    System.out.println(overrideMap.get(address));
+    System.out.println(overrideMap.values().iterator().next());
+//    System.out.println(overrideMap.values().iterator().next().getClass());
+
+    assertThat(overrideMap).containsKey(address);
+    assertThat(overrideMap).containsValue(override);
   }
 
   @Test

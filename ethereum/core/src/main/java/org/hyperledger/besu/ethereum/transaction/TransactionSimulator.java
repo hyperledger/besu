@@ -335,8 +335,8 @@ public class TransactionSimulator {
   protected void applyOverrides(final MutableAccount account, final AccountOverride override) {
 
     override.getNonce().ifPresent(account::setNonce);
-    if (override.getBalance() != null) {
-      account.setBalance(override.getBalance());
+    if (override.getBalance().isPresent()) {
+      account.setBalance(override.getBalance().get());
     }
     override.getCode().ifPresent(n -> account.setCode(Bytes.fromHexString(n)));
     // TODO storage overrides
