@@ -14,13 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
+import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import org.immutables.value.Value;
 
 @Value.Immutable
 @Value.Enclosing
-public interface DataStorageConfiguration {
+public interface DataStorageConfiguration
+    extends org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration {
 
   long DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD = 512;
   boolean DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED = true;
@@ -56,15 +58,13 @@ public interface DataStorageConfiguration {
           .unstable(Unstable.DEFAULT)
           .build();
 
-  DataStorageFormat getDataStorageFormat();
-
   Long getBonsaiMaxLayersToLoad();
 
   @Value.Default
+  @Override
   default boolean getHashPreImageStorageEnabled() {
     return DEFAULT_HASH_PREIMAGE_STORAGE_ENABLED;
   }
-  ;
 
   @Value.Default
   default boolean getBonsaiLimitTrieLogsEnabled() {
@@ -77,6 +77,7 @@ public interface DataStorageConfiguration {
   }
 
   @Value.Default
+  @Override
   default boolean getReceiptCompactionEnabled() {
     return DEFAULT_RECEIPT_COMPACTION_ENABLED;
   }

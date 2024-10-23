@@ -133,7 +133,7 @@ public class BesuConfigurationImpl implements BesuConfiguration {
     }
 
     @Override
-    public DataStorageFormat getDatabaseFormat() {
+    public DataStorageFormat getDataStorageFormat() {
       return dataStorageConfiguration.getDataStorageFormat();
     }
 
