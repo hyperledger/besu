@@ -514,7 +514,14 @@ subprojects {
     return result
   }
 
-  if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
+  def hasPlugin = { pluginName ->
+    def result = project.getPluginManager().hasPlugin(pluginName)
+    def projectName = project.name
+    logger.info("Project = " + projectName + (result ? " has" : "has not") + " plugin " + pluginName)
+    return result
+  }
+
+  if (hasPlugin("java-platform") || sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
     apply plugin: 'maven-publish'
 
     publishing {
@@ -528,42 +535,49 @@ subprojects {
           }
         }
       }
-      publications {
-        mavenJava(MavenPublication) {
-          groupId "io.consensys.linea-besu.internal"
-          version "${project.version}"
-          if (sourceSetIsPopulated("main")) {
-            from components.java
-            artifact sourcesJar
-            artifact javadocJar
-          }
 
-          if (sourceSetIsPopulated("testSupport")) {
-            artifact testSupportJar
-          }
-          versionMapping {
-            usage('java-api') { fromResolutionOf('runtimeClasspath') }
-            usage('java-runtime') { fromResolutionResult() }
-          }
-          pom {
-            name = "Linea Besu - ${project.name}"
-            url = 'https://github.com/ConsenSys/linea-besu'
-            licenses {
-              license {
-                name = 'The Apache License, Version 2.0'
-                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-              }
+      publications {
+        if(!hasPlugin("java-platform")) {
+
+          mavenJava(MavenPublication) {
+            groupId "io.consensys.linea-besu.internal"
+            version "${project.version}"
+
+            if (sourceSetIsPopulated("main")) {
+              from components.java
+              artifact sourcesJar
+              artifact javadocJar
             }
-            scm {
-              connection = 'scm:git:git://github.com/ConsenSys/linea-besu.git'
-              developerConnection = 'scm:git:ssh://github.com/ConsenSys/linea-besu.git'
+
+            if (sourceSetIsPopulated("testSupport")) {
+              artifact testSupportJar
+            }
+
+            versionMapping {
+              usage('java-api') { fromResolutionOf('runtimeClasspath') }
+              usage('java-runtime') { fromResolutionResult() }
+            }
+            pom {
+              name = "Linea Besu - ${project.name}"
               url = 'https://github.com/ConsenSys/linea-besu'
+              licenses {
+                license {
+                  name = 'The Apache License, Version 2.0'
+                  url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                }
+              }
+              scm {
+                connection = 'scm:git:git://github.com/ConsenSys/linea-besu.git'
+                developerConnection = 'scm:git:ssh://github.com/ConsenSys/linea-besu.git'
+                url = 'https://github.com/ConsenSys/linea-besu'
+              }
             }
           }
         }
       }
     }
   }
+
 
   tasks.withType(Test) {
     // If GRADLE_MAX_TEST_FORKS is not set, use half the available processors

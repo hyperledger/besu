@@ -189,10 +189,9 @@ publishing {
   publications {
     mavenPlatform(MavenPublication) {
       from components.javaPlatform
-      groupId "io.consensys.linea-besu"
+      groupId 'io.consensys.linea-besu'
       artifactId 'bom'
       version calculateVersion()
-
       pom {
         name = "Linea Besu BOM"
         url = 'https://github.com/ConsenSys/linea-besu'
