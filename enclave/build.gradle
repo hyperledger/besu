@@ -24,5 +24,4 @@ dependencies {
   integrationTestImplementation 'org.awaitility:awaitility'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
-  integrationTestImplementation 'org.testcontainers:testcontainers'
 }

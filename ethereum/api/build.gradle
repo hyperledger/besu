@@ -121,7 +121,6 @@ dependencies {
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter'
   integrationTestImplementation 'org.mockito:mockito-core'
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
-  integrationTestImplementation 'org.testcontainers:testcontainers'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }
