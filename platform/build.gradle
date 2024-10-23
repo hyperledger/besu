@@ -15,7 +15,6 @@
 plugins {
   id 'java-platform'
   id 'com.diffplug.spotless'
-  id 'maven-publish'
 }
 
 repositories {
