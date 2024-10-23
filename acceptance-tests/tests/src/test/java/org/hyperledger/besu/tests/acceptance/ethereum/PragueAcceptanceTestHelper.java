@@ -92,10 +92,10 @@ public class PragueAcceptanceTestHelper {
       assertThat(newBlockHash).isNotEmpty();
     }
 
-    String newPayloadRequest1 =
-        createNewPayloadRequest(
-            executionPayload.toString(), parentBeaconBlockRoot, executionResults.toString());
-    final Call newPayloadRequest = createEngineCall(newPayloadRequest1);
+    final Call newPayloadRequest =
+        createEngineCall(
+            createNewPayloadRequest(
+                executionPayload.toString(), parentBeaconBlockRoot, executionResults.toString()));
     try (final Response newPayloadResponse = newPayloadRequest.execute()) {
       assertThat(newPayloadResponse.code()).isEqualTo(200);
     }
@@ -172,7 +172,6 @@ public class PragueAcceptanceTestHelper {
       final String executionPayload,
       final String parentBeaconBlockRoot,
       final String executionRequests) {
-    System.out.println("executionRequests = " + executionRequests);
     return "{"
         + "  \"jsonrpc\": \"2.0\","
         + "  \"method\": \"engine_newPayloadV4\","

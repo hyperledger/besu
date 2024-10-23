@@ -93,7 +93,7 @@ public final class BodyValidation {
    * Generates the requests hash for a list of requests
    *
    * @param requests list of request
-   * @return the requests root
+   * @return the requests hash
    */
   public static Hash requestsHash(final List<Request> requests) {
     List<Bytes> requestHashes = new ArrayList<>();

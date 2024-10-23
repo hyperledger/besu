@@ -27,9 +27,9 @@
         "transactions": [],
         "withdrawals": [],
         "blockNumber": "0x1",
+        "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
         "blobGasUsed": "0x0",
-        "blockHash": "0x7cccf6d9ce3e5acaeac9058959c27ace53af3a30b15763e1703bab2d0ae9438e",
-        "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
+        "blockHash": "0x7cccf6d9ce3e5acaeac9058959c27ace53af3a30b15763e1703bab2d0ae9438e"
       },
       "blockValue": "0x0",
       "blobsBundle": {
