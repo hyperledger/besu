@@ -414,7 +414,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getBalanceOperationGasCost(
+  public long balanceOperationGasCost(
       final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
     return BALANCE_OPERATION_GAS_COST;
   }
@@ -474,7 +474,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getExtCodeSizeOperationGasCost(
+  public long extCodeSizeOperationGasCost(
       final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
     return extCodeBaseGasCost();
   }
@@ -533,7 +533,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getSloadOperationGasCost(
+  public long sloadOperationGasCost(
       final MessageFrame frame, final UInt256 key, final boolean slotIsWarm) {
     return SLOAD_OPERATION_GAS_COST;
   }

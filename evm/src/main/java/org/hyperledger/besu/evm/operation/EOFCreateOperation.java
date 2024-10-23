@@ -20,7 +20,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -57,12 +56,6 @@ public class EOFCreateOperation extends AbstractCreateOperation {
         clampedAdd(
             gasCalculator().txCreateCost(),
             gasCalculator().createKeccakCost(codeSupplier.get().getSize())));
-  }
-
-  @Override
-  protected long statelessCost(
-      final MessageFrame frame, final Address contractAddress, final Wei value) {
-    return gasCalculator().initcodeStatelessCost(frame, contractAddress, value);
   }
 
   @Override

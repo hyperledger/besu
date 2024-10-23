@@ -67,7 +67,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
    */
   protected long cost(
       final boolean accountIsWarm, final MessageFrame frame, final Optional<Address> maybeAddress) {
-    return gasCalculator().getExtCodeSizeOperationGasCost(frame, accountIsWarm, maybeAddress);
+    return gasCalculator().extCodeSizeOperationGasCost(frame, accountIsWarm, maybeAddress);
   }
 
   @Override

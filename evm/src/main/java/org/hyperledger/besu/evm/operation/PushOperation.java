@@ -54,7 +54,7 @@ public class PushOperation extends AbstractOperation {
     if (code.length <= copyStart) {
       push = Bytes.EMPTY;
     } else {
-      final int copyLength = Math.min(length, code.length - pc - 1);
+      final int copyLength = Math.min(length, code.length - copyStart);
       push = Bytes.wrap(code, copyStart, copyLength);
     }
     frame.pushStackItem(push);

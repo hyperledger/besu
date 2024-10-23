@@ -50,7 +50,7 @@ public class BalanceOperation extends AbstractOperation {
    */
   protected long cost(
       final MessageFrame frame, final Optional<Address> maybeAddress, final boolean accountIsWarm) {
-    return gasCalculator().getBalanceOperationGasCost(frame, accountIsWarm, maybeAddress);
+    return gasCalculator().balanceOperationGasCost(frame, accountIsWarm, maybeAddress);
   }
 
   @Override

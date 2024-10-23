@@ -117,9 +117,8 @@ class AbstractCreateOperationTest {
     }
 
     @Override
-    protected long statelessCost(
-        final MessageFrame frame, final Address contractAddress, final Wei value) {
-      return gasCalculator().initcodeStatelessCost(frame, contractAddress, value);
+    protected long statelessCost(final MessageFrame frame, final Address contractAddress) {
+      return gasCalculator().proofOfAbsenceCost(frame, contractAddress);
     }
 
     @Override

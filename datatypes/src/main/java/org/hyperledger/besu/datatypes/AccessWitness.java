@@ -15,6 +15,7 @@
 package org.hyperledger.besu.datatypes;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -22,21 +23,23 @@ public interface AccessWitness {
 
   List<Address> keys();
 
+  long touchAndChargeValueTransfer(
+      Address caller, Address target, boolean isAccountCreation, long warmReadCost);
+
+  long touchAndChargeValueTransferSelfDestruct(
+      Address caller, Address target, boolean isAccountCreation, long warmReadCost);
+
+  long touchAddressAndChargeRead(Address address, UInt256 leafKey);
+
+  void touchBaseTx(Address origin, Optional<Address> target, Wei value);
+
   long touchAndChargeProofOfAbsence(Address address);
-
-  long touchAndChargeValueTransfer(Address caller, Address target);
-
-  long touchAndChargeMessageCall(Address address);
-
-  long touchTxOriginAndComputeGas(Address origin);
-
-  long touchTxExistingAndComputeGas(Address target, boolean sendsValue);
-
-  long touchAndChargeContractCreateInit(Address address, boolean createSendsValue);
 
   long touchAndChargeContractCreateCompleted(final Address address);
 
-  long touchAddressOnWriteAndComputeGas(Address address, UInt256 treeIndex, UInt256 subIndex);
+  long touchAddressOnWriteResetAndComputeGas(Address address, UInt256 treeIndex, UInt256 subIndex);
+
+  long touchAddressOnWriteSetAndComputeGas(Address address, UInt256 treeIndex, UInt256 subIndex);
 
   long touchAddressOnReadAndComputeGas(Address address, UInt256 treeIndex, UInt256 subIndex);
 
@@ -44,10 +47,10 @@ public interface AccessWitness {
 
   long touchCodeChunksUponContractCreation(Address address, long codeLength);
 
-  long touchCodeChunks(Address address, long offset, long readSize, long codeLength);
-
-  default long touchCodeChunksWithoutAccessCost(
-      final Address address, final long offset, final long readSize, final long codeLength) {
-    return touchCodeChunks(address, offset, readSize, codeLength);
-  }
+  long touchCodeChunks(
+      Address address,
+      boolean contractCreatedInTransaction,
+      long offset,
+      long readSize,
+      long codeLength);
 }

@@ -17,10 +17,8 @@ package org.hyperledger.besu.evm.gascalculator;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.stateless.NoopAccessWitness;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
@@ -309,8 +307,7 @@ public interface GasCalculator {
    */
   long initcodeCost(final int initCodeLength);
 
-  default long initcodeStatelessCost(
-      final MessageFrame frame, final Address address, final Wei value) {
+  default long proofOfAbsenceCost(final MessageFrame frame, final Address address) {
     return 0;
   }
 
@@ -369,7 +366,7 @@ public interface GasCalculator {
    * @param maybeAddress targeted address
    * @return the cost for executing the balance operation
    */
-  long getBalanceOperationGasCost(
+  long balanceOperationGasCost(
       MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress);
 
   /**
@@ -437,7 +434,7 @@ public interface GasCalculator {
    * @param maybeAddress targeted address
    * @return the cost for executing the external code size operation
    */
-  long getExtCodeSizeOperationGasCost(
+  long extCodeSizeOperationGasCost(
       MessageFrame frame, final boolean accountIsWarm, Optional<Address> maybeAddress);
 
   /**
@@ -517,7 +514,7 @@ public interface GasCalculator {
    *
    * @return the cost for executing the storage load operation
    */
-  long getSloadOperationGasCost(MessageFrame frame, UInt256 key, final boolean slotIsWarm);
+  long sloadOperationGasCost(MessageFrame frame, UInt256 key, final boolean slotIsWarm);
 
   /**
    * Returns the cost for an SSTORE operation.
@@ -749,19 +746,6 @@ public interface GasCalculator {
    * @return the gas cost
    */
   default long delegatedCodeResolutionGasCost(final boolean isWarm) {
-    return 0L;
-  }
-
-  /**
-   * Compute access events cost of a transaction
-   *
-   * @param transaction transaction
-   * @return gas cost after computing all access events
-   */
-  default long computeBaseAccessEventsCost(
-      final AccessWitness accessWitness,
-      final Transaction transaction,
-      final MutableAccount sender) {
     return 0L;
   }
 

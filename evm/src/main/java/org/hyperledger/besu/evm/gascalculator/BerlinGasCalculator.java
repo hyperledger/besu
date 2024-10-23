@@ -49,7 +49,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   protected static final long ACCESS_LIST_STORAGE_COST = 1900L;
 
   // redefinitions for EIP-2929
-  private static final long SLOAD_GAS = WARM_STORAGE_READ_COST;
+  protected static final long SLOAD_GAS = WARM_STORAGE_READ_COST;
 
   /** The constant SSTORE_RESET_GAS. */
   protected static final long SSTORE_RESET_GAS = 5000L - COLD_SLOAD_COST;
@@ -120,7 +120,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   // Zeroed out old costs
   @Override
-  public long getBalanceOperationGasCost(
+  public long balanceOperationGasCost(
       final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
     return accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost();
   }
@@ -137,13 +137,13 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   }
 
   @Override
-  public long getExtCodeSizeOperationGasCost(
+  public long extCodeSizeOperationGasCost(
       final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
     return (accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());
   }
 
   @Override
-  public long getSloadOperationGasCost(
+  public long sloadOperationGasCost(
       final MessageFrame frame, final UInt256 key, final boolean slotIsWarm) {
     return (slotIsWarm ? getWarmStorageReadCost() : getColdSloadCost());
   }
