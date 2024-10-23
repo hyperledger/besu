@@ -194,6 +194,7 @@ public class TraceServiceImpl implements TraceService {
     final BlockHeader header = block.getHeader();
     tracer.traceStartBlock(block.getHeader(), block.getBody());
 
+    final WorldUpdater worldUpdater = chainUpdater.getNextUpdater();
     block
         .getBody()
         .getTransactions()
@@ -209,7 +210,6 @@ public class TraceServiceImpl implements TraceService {
                               .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
                               .orElse(BlobGas.ZERO));
 
-              final WorldUpdater worldUpdater = chainUpdater.getNextUpdater();
               final TransactionProcessingResult result =
                   transactionProcessor.processTransaction(
                       worldUpdater,
@@ -224,7 +224,8 @@ public class TraceServiceImpl implements TraceService {
               results.add(result);
             });
 
-    tracer.traceEndBlock(block.getHeader(), block.getBody());
+    tracer.traceEndBlock(
+        block.getHeader(), block.getBody(), blockchainQueries.getWorldStateArchive().getMutable());
 
     return results;
   }
