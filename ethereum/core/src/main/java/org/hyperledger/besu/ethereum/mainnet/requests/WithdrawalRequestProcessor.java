@@ -27,7 +27,7 @@ public class WithdrawalRequestProcessor
     extends AbstractSystemCallRequestProcessor<WithdrawalRequest> {
 
   public static final Address DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS =
-      Address.fromHexString("0x00A3ca265EBcb825B45F985A16CEFB49958cE017");
+      Address.fromHexString("0x05F27129610CB42103b665629CB5c8C00296AaAa");
 
   private static final int ADDRESS_BYTES = 20;
   private static final int PUBLIC_KEY_BYTES = 48;
