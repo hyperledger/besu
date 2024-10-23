@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.util.Subscribers;
 
 /** The Qbft round factory. */
@@ -39,6 +40,7 @@ public class QbftRoundFactory {
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
   private final BftExtraDataCodec bftExtraDataCodec;
+  private final TransactionPool transactionPool;
 
   /**
    * Instantiates a new Qbft round factory.
@@ -58,7 +60,8 @@ public class QbftRoundFactory {
       final Subscribers<MinedBlockObserver> minedBlockObservers,
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final TransactionPool transactionPool) {
     this.finalState = finalState;
     this.blockCreatorFactory = finalState.getBlockCreatorFactory();
     this.protocolContext = protocolContext;
@@ -67,6 +70,7 @@ public class QbftRoundFactory {
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
     this.bftExtraDataCodec = bftExtraDataCodec;
+    this.transactionPool = transactionPool;
   }
 
   /**
@@ -116,6 +120,7 @@ public class QbftRoundFactory {
         messageTransmitter,
         finalState.getRoundTimer(),
         bftExtraDataCodec,
-        parentHeader);
+        parentHeader,
+        transactionPool);
   }
 }
