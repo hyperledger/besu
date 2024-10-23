@@ -30,7 +30,6 @@ import com.google.common.collect.HashBiMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
 /** Acts as both a Hasher and PreImageStorage for Bonsai storage format. */
 public interface CachingPreImageStorage {
@@ -77,7 +76,7 @@ public interface CachingPreImageStorage {
 
   Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey);
 
-  Optional<Bytes> getRawHashPreimage(final Hash hash);
+  Optional<Bytes> getRawHashPreImage(final Hash hash);
 
   /**
    * This method indicates whether this Pre-Image store is "complete", meaning it has all of the
@@ -138,7 +137,7 @@ public interface CachingPreImageStorage {
     }
 
     @Override
-    public Optional<Bytes> getRawHashPreimage(final Hash hash) {
+    public Optional<Bytes> getRawHashPreImage(final Hash hash) {
       return Stream.of(
               preImageCache.get(new HashKey(hash, HashSource.ACCOUNT_ADDRESS)),
               preImageCache.get(new HashKey(hash, HashSource.SLOT_KEY)))
@@ -150,7 +149,6 @@ public interface CachingPreImageStorage {
     public boolean canSupportStreaming() {
       return true;
     }
-
   }
 
   class CachingOnlyPreImageStorage implements CachingPreImageStorage {
@@ -178,16 +176,16 @@ public interface CachingPreImageStorage {
 
     @Override
     public Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
-      return getRawHashPreimage(Hash.wrap(trieKey)).map(UInt256::fromBytes);
+      return getRawHashPreImage(Hash.wrap(trieKey)).map(UInt256::fromBytes);
     }
 
     @Override
     public Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
-      return getRawHashPreimage(Hash.wrap(trieKey)).map(Address::wrap);
+      return getRawHashPreImage(Hash.wrap(trieKey)).map(Address::wrap);
     }
 
     @Override
-    public Optional<Bytes> getRawHashPreimage(final Hash hash) {
+    public Optional<Bytes> getRawHashPreImage(final Hash hash) {
       return preimageCache.asMap().entrySet().stream()
           .filter(e -> e.getValue().equals(hash))
           .findFirst()

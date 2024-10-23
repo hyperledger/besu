@@ -63,7 +63,8 @@ public interface DataStorageConfiguration {
   @Value.Default
   default boolean getHashPreImageStorageEnabled() {
     return DEFAULT_HASH_PREIMAGE_STORAGE_ENABLED;
-  };
+  }
+  ;
 
   @Value.Default
   default boolean getBonsaiLimitTrieLogsEnabled() {

@@ -65,7 +65,7 @@ public class KeyValueStorageProviderBuilder {
         metricsSystem);
 
     final KeyValueStorage worldStatePreImageStorage =
-        commonConfiguration.getDataStorageConfiguration().getHashPreimageStorageEnabled()
+        commonConfiguration.getDataStorageConfiguration().getHashPreImageStorageEnabled()
             ? storageFactory.create(
                 KeyValueSegmentIdentifier.HASH_PREIMAGE_STORE, commonConfiguration, metricsSystem)
             : new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE);

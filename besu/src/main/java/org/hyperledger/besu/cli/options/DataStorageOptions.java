@@ -200,7 +200,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
     final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
-    dataStorageOptions.hashStorePreimagesEnabled = domainObject.getHashPreimageStorageEnabled();
+    dataStorageOptions.hashStorePreimagesEnabled = domainObject.getHashPreImageStorageEnabled();
     dataStorageOptions.bonsaiMaxLayersToLoad = domainObject.getBonsaiMaxLayersToLoad();
     dataStorageOptions.receiptCompactionEnabled = domainObject.getReceiptCompactionEnabled();
     dataStorageOptions.bonsaiLimitTrieLogsEnabled = domainObject.getBonsaiLimitTrieLogsEnabled();
@@ -220,7 +220,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public DataStorageConfiguration toDomainObject() {
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(dataStorageFormat)
-        .hashPreimageStorageEnabled(hashStorePreimagesEnabled)
+        .hashPreImageStorageEnabled(hashStorePreimagesEnabled)
         .bonsaiMaxLayersToLoad(bonsaiMaxLayersToLoad)
         .receiptCompactionEnabled(receiptCompactionEnabled)
         .bonsaiLimitTrieLogsEnabled(bonsaiLimitTrieLogsEnabled)

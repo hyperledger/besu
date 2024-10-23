@@ -42,5 +42,5 @@ public interface DataStorageConfiguration {
    * Account and Hash preimages to storage upon their writing.
    */
   @Unstable
-  boolean getHashPreimageStorageEnabled();
+  boolean getHashPreImageStorageEnabled();
 }

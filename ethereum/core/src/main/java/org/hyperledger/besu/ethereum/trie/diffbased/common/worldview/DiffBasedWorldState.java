@@ -56,7 +56,7 @@ public abstract class DiffBasedWorldState
 
   // TODO: where the shit to initialize you?  just use unbounded for now to ensure ref tests pass
   protected static final CachingPreImageStorage preImageProxy =
-      new CachingPreImageStorage.UnboundedPreImageStorage();//CachingOnlyPreImageStorage();
+      new CachingPreImageStorage.UnboundedPreImageStorage(); // CachingOnlyPreImageStorage();
 
   protected DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected final DiffBasedCachedWorldStorageManager cachedWorldStorageManager;

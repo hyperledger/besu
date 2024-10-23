@@ -143,8 +143,8 @@ public class BesuConfigurationImpl implements BesuConfiguration {
     }
 
     @Override
-    public boolean getHashPreimageStorageEnabled() {
-      return dataStorageConfiguration.getHashPreimageStorageEnabled();
+    public boolean getHashPreImageStorageEnabled() {
+      return dataStorageConfiguration.getHashPreImageStorageEnabled();
     }
   }
 }

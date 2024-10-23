@@ -247,7 +247,7 @@ public abstract class AbstractIsolationTests {
                   }
 
                   @Override
-                  public boolean getHashPreimageStorageEnabled() {
+                  public boolean getHashPreImageStorageEnabled() {
                     return false;
                   }
                 };
