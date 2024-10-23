@@ -36,4 +36,10 @@ public class NoOpValueCollector implements LabelledGauge {
     }
     labelValuesCreated.add(labelValuesString);
   }
+
+  @Override
+  public boolean isLabelsObserved(final String... labelValues) {
+    final String labelValuesString = String.join(",", labelValues);
+    return labelValuesCreated.contains(labelValuesString);
+  }
 }
