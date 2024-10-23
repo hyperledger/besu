@@ -109,6 +109,7 @@ public class JsonRpcParameter {
     return Optional.empty();
   }
 
+  // TODO maybe try with specific types rather than generics
   public <T, V> Optional<Map<T, V>> optionalMap(
       final Object[] params, final int index, final Class<T> keyClass, final Class<V> valueClass)
       throws JsonRpcParameterException {
@@ -118,9 +119,12 @@ public class JsonRpcParameter {
     Object rawParam = params[index];
     if (Map.class.isAssignableFrom(rawParam.getClass())) {
       try {
-        Map<T, V> returnedMap = (Map<T, V>) rawParam;
+        String mapJson = mapper.writeValueAsString(rawParam);
+        System.out.println(mapJson);
+        // Use TypeReference to specify the map's key and value types
+        Map<T, V> returnedMap = mapper.readValue(mapJson, new TypeReference<>() {});
         return Optional.of(returnedMap);
-      } catch (RuntimeException e) {
+      } catch (JsonProcessingException e) {
         throw new JsonRpcParameterException(
             String.format(
                 "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected types: key '%s' value '%s'",
