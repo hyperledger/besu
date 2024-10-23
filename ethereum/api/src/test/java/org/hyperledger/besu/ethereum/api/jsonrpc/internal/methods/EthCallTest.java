@@ -51,7 +51,10 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.util.AccountOverride;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -90,6 +93,32 @@ public class EthCallTest {
   @Test
   public void shouldReturnCorrectMethodName() {
     assertThat(method.getName()).isEqualTo("eth_call");
+  }
+
+  @Test
+  public void noAccountOverrides() {
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
+    //    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, INTERNAL_ERROR);
+    Optional<Map<Address, AccountOverride>> overrideMap =
+        method.getAddressAccountOverrideMap(request);
+    assertThat(overrideMap.isPresent()).isFalse();
+  }
+
+  @Test
+  public void someAccountOverrides() {
+    Map<Address, AccountOverride> expectedOverrides = new HashMap<>();
+    AccountOverride.Builder builder = new AccountOverride.Builder().balance(Wei.of(99));
+    AccountOverride override = builder.build();
+    expectedOverrides.put(
+        Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3"), override);
+
+    final JsonRpcRequestContext request =
+        ethCallRequestWithStateOverrides(callParameter(), "latest", expectedOverrides);
+    //    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, INTERNAL_ERROR);
+    Optional<Map<Address, AccountOverride>> overrideMap =
+        method.getAddressAccountOverrideMap(request);
+    assertThat(overrideMap.isPresent()).isTrue();
+    assertThat(overrideMap.get()).isEqualTo(expectedOverrides);
   }
 
   @Test
@@ -456,6 +485,15 @@ public class EthCallTest {
       final CallParameter callParameter, final String blockNumberInHex) {
     return new JsonRpcRequestContext(
         new JsonRpcRequest("2.0", "eth_call", new Object[] {callParameter, blockNumberInHex}));
+  }
+
+  private JsonRpcRequestContext ethCallRequestWithStateOverrides(
+      final CallParameter callParameter,
+      final String blockNumberInHex,
+      final Map<Address, AccountOverride> overrides) {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest(
+            "2.0", "eth_call", new Object[] {callParameter, blockNumberInHex, overrides}));
   }
 
   private void mockTransactionProcessorSuccessResult(final JsonRpcResponse jsonRpcResponse) {

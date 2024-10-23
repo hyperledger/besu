@@ -34,18 +34,22 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.util.AccountOverride;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -152,6 +156,33 @@ public class TransactionSimulator {
       final OperationTracer operationTracer,
       final PreCloseStateHandler<U> preWorldStateCloseGuard,
       final BlockHeader header) {
+    return process(
+        callParams,
+        Optional.empty(),
+        transactionValidationParams,
+        operationTracer,
+        preWorldStateCloseGuard,
+        header);
+  }
+
+  /**
+   * Processes a transaction simulation with the provided parameters and executes pre-worldstate
+   * close actions.
+   *
+   * @param callParams The call parameters for the transaction.
+   * @param transactionValidationParams The validation parameters for the transaction.
+   * @param operationTracer The tracer for capturing operations during processing.
+   * @param preWorldStateCloseGuard The pre-worldstate close guard for executing pre-close actions.
+   * @param header The block header.
+   * @return An Optional containing the result of the processing.
+   */
+  public <U> Optional<U> process(
+      final CallParameter callParams,
+      final Optional<Map<Address, AccountOverride>> maybeStateOverrides,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
+      final PreCloseStateHandler<U> preWorldStateCloseGuard,
+      final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
     }
@@ -169,7 +200,12 @@ public class TransactionSimulator {
       return preWorldStateCloseGuard.apply(
           ws,
           processWithWorldUpdater(
-              callParams, transactionValidationParams, operationTracer, header, updater));
+              callParams,
+              maybeStateOverrides,
+              transactionValidationParams,
+              operationTracer,
+              header,
+              updater));
 
     } catch (final Exception e) {
       return Optional.empty();
@@ -208,6 +244,7 @@ public class TransactionSimulator {
   @Nonnull
   public Optional<TransactionSimulatorResult> processWithWorldUpdater(
       final CallParameter callParams,
+      final Optional<Map<Address, AccountOverride>> maybeStateOverrides,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
       final BlockHeader header,
@@ -225,6 +262,16 @@ public class TransactionSimulator {
               .baseFee(Wei.ZERO)
               .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions())
               .buildBlockHeader();
+    }
+
+    // TODO apply BlockOverrides to header
+
+    // TODO apply AccountOverrides to world state
+    if (maybeStateOverrides.isPresent()) {
+      for (Address accountToOverride : maybeStateOverrides.get().keySet()) {
+        final AccountOverride overrides = maybeStateOverrides.get().get(accountToOverride);
+        applyOverrides(updater.getOrCreate(accountToOverride), overrides);
+      }
     }
 
     final Account sender = updater.get(senderAddress);
@@ -282,6 +329,17 @@ public class TransactionSimulator {
             blobGasPrice);
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
+  }
+
+  @VisibleForTesting
+  protected void applyOverrides(final MutableAccount account, final AccountOverride override) {
+
+    override.getNonce().ifPresent(account::setNonce);
+    if (override.getBalance() != null) {
+      account.setBalance(override.getBalance());
+    }
+    override.getCode().ifPresent(n -> account.setCode(Bytes.fromHexString(n)));
+    // TODO storage overrides
   }
 
   private long calculateSimulationGasCap(

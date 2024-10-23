@@ -288,6 +288,7 @@ public class MainnetTransactionProcessor {
       final Wei blobGasPrice) {
     final EVMWorldUpdater evmWorldUpdater = new EVMWorldUpdater(worldState);
     try {
+      // TODO add stateOverrides param
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =

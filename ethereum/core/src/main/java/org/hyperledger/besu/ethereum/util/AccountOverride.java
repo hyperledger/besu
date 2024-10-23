@@ -25,19 +25,19 @@ import java.util.Optional;
 // stateDiff
 // movePrecompileToAddress
 public class AccountOverride {
-  private final Optional<Wei> balance;
+  private final Wei balance;
   private final Optional<Long> nonce;
   private final Optional<String> code;
   private final Optional<Map<String, String>> state;
 
   private AccountOverride(final Builder builder) {
-    this.balance = Optional.ofNullable(builder.balance);
+    this.balance = builder.balance;
     this.nonce = Optional.ofNullable(builder.nonce);
     this.code = Optional.ofNullable(builder.code);
     this.state = Optional.ofNullable(builder.state);
   }
 
-  public Optional<Wei> getBalance() {
+  public Wei getBalance() {
     return balance;
   }
 
@@ -74,7 +74,7 @@ public class AccountOverride {
       return this;
     }
 
-    public Builder state(final Map<String, String> state) {
+    public Builder stateDiff(final Map<String, String> state) {
       this.state = state;
       return this;
     }

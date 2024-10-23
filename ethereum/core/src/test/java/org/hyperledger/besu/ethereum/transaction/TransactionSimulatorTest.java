@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECPSignature;
@@ -47,8 +48,10 @@ import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
+import org.hyperledger.besu.ethereum.util.AccountOverride;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -98,6 +101,24 @@ public class TransactionSimulatorTest {
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, 0);
     this.cappedTransactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, GAS_CAP);
+  }
+
+  @Test
+  public void testOverrides_whenNoOverrides_noUpdates() {
+    MutableAccount mutableAccount = mock(MutableAccount.class);
+    AccountOverride.Builder builder = new AccountOverride.Builder();
+    AccountOverride override = builder.build();
+    transactionSimulator.applyOverrides(mutableAccount, override);
+    verifyNoInteractions(mutableAccount);
+  }
+
+  @Test
+  public void testOverrides_whenBalanceOverrides_balanceIsUpdated() {
+    MutableAccount mutableAccount = mock(MutableAccount.class);
+    AccountOverride.Builder builder = new AccountOverride.Builder().balance(Wei.of(99));
+    AccountOverride override = builder.build();
+    transactionSimulator.applyOverrides(mutableAccount, override);
+    verify(mutableAccount).setBalance(eq(Wei.of(99)));
   }
 
   @Test
