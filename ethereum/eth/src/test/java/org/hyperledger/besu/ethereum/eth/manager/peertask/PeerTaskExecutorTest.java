@@ -72,7 +72,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenReturn(responseMessageData);
-    Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.processResponse(responseMessageData)).thenReturn(responseObject);
     Mockito.when(peerTask.isSuccess(responseObject)).thenReturn(true);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
@@ -101,7 +101,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenReturn(responseMessageData);
-    Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.processResponse(responseMessageData)).thenReturn(responseObject);
     Mockito.when(peerTask.isSuccess(responseObject)).thenReturn(false);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
@@ -130,7 +130,7 @@ public class PeerTaskExecutorTest {
         .thenThrow(new TimeoutException())
         .thenReturn(responseMessageData);
     Mockito.when(requestMessageData.getCode()).thenReturn(requestMessageDataCode);
-    Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.processResponse(responseMessageData)).thenReturn(responseObject);
     Mockito.when(peerTask.isSuccess(responseObject)).thenReturn(true);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
@@ -204,7 +204,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenReturn(responseMessageData);
-    Mockito.when(peerTask.parseResponse(responseMessageData))
+    Mockito.when(peerTask.processResponse(responseMessageData))
         .thenThrow(new InvalidPeerTaskResponseException());
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
@@ -236,7 +236,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenReturn(responseMessageData);
-    Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.processResponse(responseMessageData)).thenReturn(responseObject);
     Mockito.when(peerTask.isSuccess(responseObject)).thenReturn(true);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
@@ -274,7 +274,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(requestMessageData.getCode()).thenReturn(requestMessageDataCode);
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, peer2))
         .thenReturn(responseMessageData);
-    Mockito.when(peerTask.parseResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.processResponse(responseMessageData)).thenReturn(responseObject);
     Mockito.when(peerTask.isSuccess(responseObject)).thenReturn(true);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.execute(peerTask);

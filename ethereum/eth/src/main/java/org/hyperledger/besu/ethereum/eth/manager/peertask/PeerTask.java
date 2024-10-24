@@ -41,13 +41,13 @@ public interface PeerTask<T> {
   MessageData getRequestMessage();
 
   /**
-   * Parses the MessageData response from the EthPeer
+   * Parses and processes the MessageData response from the EthPeer
    *
    * @param messageData the response MessageData to be parsed
    * @return a T built from the response MessageData
    * @throws InvalidPeerTaskResponseException if the response messageData is invalid
    */
-  T parseResponse(MessageData messageData) throws InvalidPeerTaskResponseException;
+  T processResponse(MessageData messageData) throws InvalidPeerTaskResponseException;
 
   /**
    * Gets the number of times this task may be attempted against other peers

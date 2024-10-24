@@ -133,7 +133,7 @@ public class PeerTaskExecutor {
           MessageData responseMessageData =
               requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
 
-          result = peerTask.parseResponse(responseMessageData);
+          result = peerTask.processResponse(responseMessageData);
         } finally {
           inflightRequestCountForThisTaskClass.decrementAndGet();
         }

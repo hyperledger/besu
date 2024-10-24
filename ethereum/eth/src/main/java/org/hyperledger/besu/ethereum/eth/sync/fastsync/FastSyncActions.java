@@ -19,6 +19,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
@@ -46,8 +48,10 @@ public class FastSyncActions {
   protected final SynchronizerConfiguration syncConfig;
   protected final WorldStateStorageCoordinator worldStateStorageCoordinator;
   protected final ProtocolSchedule protocolSchedule;
+  protected final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   protected final ProtocolContext protocolContext;
   protected final EthContext ethContext;
+  protected final PeerTaskExecutor peerTaskExecutor;
   protected final SyncState syncState;
   protected final PivotBlockSelector pivotBlockSelector;
   protected final MetricsSystem metricsSystem;
@@ -58,16 +62,20 @@ public class FastSyncActions {
       final SynchronizerConfiguration syncConfig,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolSchedule protocolSchedule,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final PivotBlockSelector pivotBlockSelector,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolSchedule = protocolSchedule;
+    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.peerTaskExecutor = peerTaskExecutor;
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
     this.metricsSystem = metricsSystem;
@@ -162,8 +170,10 @@ public class FastSyncActions {
         syncConfig,
         worldStateStorageCoordinator,
         protocolSchedule,
+        currentProtocolSpecSupplier,
         protocolContext,
         ethContext,
+        peerTaskExecutor,
         syncState,
         metricsSystem,
         currentState,
