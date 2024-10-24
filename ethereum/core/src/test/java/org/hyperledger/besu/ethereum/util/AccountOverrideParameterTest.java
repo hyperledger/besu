@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
@@ -36,11 +37,11 @@ public class AccountOverrideParameterTest {
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{"
             + "\"from\":\"0x0\", \"to\": \"0x0\"}, "
             + "\"latest\","
-            //                    + "{\"0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3\":"
+            + "{\"0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3\":"
             + "{"
             + "\"balance\": \"0x01\","
-            + "\"nonce\": \"88\""
-            + "}],\"id\":1}";
+            + "\"nonce\": 88"
+            + "}}],\"id\":1}";
 
     final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
     JsonCallParameter p = request.getRequiredParameter(0, JsonCallParameter.class);
@@ -50,13 +51,17 @@ public class AccountOverrideParameterTest {
     assertThat(o).isInstanceOf(Map.class);
     final Map<String, String> parsedParameter = (Map<String, String>) o;
     System.out.println("map" + parsedParameter);
-    final AccountOverride accountOverrideParam =
-        request.getRequiredParameter(2, AccountOverride.class);
+    final AccountOverrideMap accountOverrideParam =
+        request.getRequiredParameter(2, AccountOverrideMap.class);
     System.out.println(accountOverrideParam);
 
     //    assertThat(parsedParameter.get("balance")).isEqualTo("0x01");
 
-    assertThat(accountOverrideParam.getNonce()).isEqualTo(Optional.of(88L));
+    assertThat(
+            accountOverrideParam
+                .get(Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3"))
+                .getNonce())
+        .isEqualTo(Optional.of(88L));
   }
 
   private JsonRpcRequest readJsonAsJsonRpcRequest(final String json) throws java.io.IOException {

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.util;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -38,17 +39,17 @@ public class AccountOverride {
   private final Optional<Wei> balance;
   private final Optional<Long> nonce;
   private final Optional<String> code;
-  private final Optional<Map<String, String>> state;
+  private final Optional<Map<String, String>> stateDiff;
 
   private AccountOverride(
       final Optional<Wei> balance,
       final Optional<Long> nonce,
       final Optional<String> code,
-      final Optional<Map<String, String>> state) {
+      final Optional<Map<String, String>> stateDiff) {
     this.balance = balance;
     this.nonce = nonce;
     this.code = code;
-    this.state = state;
+    this.stateDiff = stateDiff;
   }
 
   public Optional<Wei> getBalance() {
@@ -63,15 +64,15 @@ public class AccountOverride {
     return code;
   }
 
-  public Optional<Map<String, String>> getState() {
-    return state;
+  public Optional<Map<String, String>> getStateDiff() {
+    return stateDiff;
   }
 
   public static class Builder {
     private Optional<Wei> balance = Optional.empty();
     private Optional<Long> nonce = Optional.empty();
     private Optional<String> code = Optional.empty();
-    private Optional<Map<String, String>> state = Optional.empty();
+    private Optional<Map<String, String>> stateDiff = Optional.empty();
 
     /** Default constructor. */
     public Builder() {}
@@ -91,13 +92,13 @@ public class AccountOverride {
       return this;
     }
 
-    public Builder withStateDiff(final Map<String, String> state) {
-      this.state = Optional.ofNullable(state);
+    public Builder withStateDiff(final Map<String, String> stateDiff) {
+      this.stateDiff = Optional.ofNullable(stateDiff);
       return this;
     }
 
     public AccountOverride build() {
-      return new AccountOverride(balance, nonce, code, state);
+      return new AccountOverride(balance, nonce, code, stateDiff);
     }
   }
 
@@ -111,6 +112,26 @@ public class AccountOverride {
   }
 
   @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final AccountOverride accountOverride = (AccountOverride) o;
+    return balance.equals(accountOverride.balance)
+        && nonce.equals(accountOverride.nonce)
+        && code.equals(accountOverride.code)
+        && stateDiff.equals(accountOverride.stateDiff);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(balance, nonce, code, stateDiff);
+  }
+
+  @Override
   public String toString() {
     return "AccountOverride{"
         + "balance="
@@ -119,8 +140,8 @@ public class AccountOverride {
         + nonce
         + ", code="
         + code
-        + ", state="
-        + state
+        + ", stateDiff="
+        + stateDiff
         + '}';
   }
 }

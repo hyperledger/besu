@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -147,12 +146,6 @@ public class JsonRpcRequest {
   public <T> Optional<List<T>> getOptionalList(final int index, final Class<T> paramClass)
       throws JsonRpcParameterException {
     return parameterAccessor.optionalList(params, index, paramClass);
-  }
-
-  public <T, V> Optional<Map<T, V>> getOptionalMap(
-      final int index, final Class<T> keyClass, final Class<V> valueClass)
-      throws JsonRpcParameterException {
-    return parameterAccessor.optionalMap(params, index, keyClass, valueClass);
   }
 
   @Override

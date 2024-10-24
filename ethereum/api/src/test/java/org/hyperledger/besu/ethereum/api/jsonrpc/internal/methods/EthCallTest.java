@@ -52,6 +52,7 @@ import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.util.AccountOverride;
+import org.hyperledger.besu.ethereum.util.AccountOverrideMap;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -98,8 +99,7 @@ public class EthCallTest {
   @Test
   public void noAccountOverrides() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
-    Optional<Map<Address, AccountOverride>> overrideMap =
-        method.getAddressAccountOverrideMap(request);
+    Optional<AccountOverrideMap> overrideMap = method.getAddressAccountOverrideMap(request);
     assertThat(overrideMap.isPresent()).isFalse();
   }
 
@@ -108,8 +108,7 @@ public class EthCallTest {
     Map<Address, AccountOverride> expectedOverrides = new HashMap<>();
     final JsonRpcRequestContext request =
         ethCallRequestWithStateOverrides(callParameter(), "latest", expectedOverrides);
-    Optional<Map<Address, AccountOverride>> overrideMap =
-        method.getAddressAccountOverrideMap(request);
+    Optional<AccountOverrideMap> overrideMap = method.getAddressAccountOverrideMap(request);
     // TODO how to handle empty map? edge case
     assertThat(overrideMap.isPresent()).isFalse();
   }
@@ -125,10 +124,9 @@ public class EthCallTest {
     final JsonRpcRequestContext request =
         ethCallRequestWithStateOverrides(callParameter(), "latest", expectedOverrides);
 
-    Optional<Map<Address, AccountOverride>> maybeOverrideMap =
-        method.getAddressAccountOverrideMap(request);
+    Optional<AccountOverrideMap> maybeOverrideMap = method.getAddressAccountOverrideMap(request);
     assertThat(maybeOverrideMap.isPresent()).isTrue();
-    Map<Address, AccountOverride> overrideMap = maybeOverrideMap.get();
+    AccountOverrideMap overrideMap = maybeOverrideMap.get();
     assertThat(overrideMap.keySet()).hasSize(1);
     assertThat(overrideMap.values()).hasSize(1);
 
@@ -216,7 +214,8 @@ public class EthCallTest {
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
     when(result.getOutput()).thenReturn(Bytes.of(1));
     verify(transactionSimulator)
-        .process(eq(callParameter()), any(), any(), mapperCaptor.capture(), any());
+        .process(
+            eq(callParameter()), eq(Optional.empty()), any(), any(), mapperCaptor.capture(), any());
     assertThat(mapperCaptor.getValue().apply(mock(MutableWorldState.class), Optional.of(result)))
         .isEqualTo(Optional.of(expectedResponse));
 

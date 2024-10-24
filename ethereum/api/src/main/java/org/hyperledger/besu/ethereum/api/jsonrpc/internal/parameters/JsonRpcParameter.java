@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -103,36 +102,6 @@ public class JsonRpcParameter {
             String.format(
                 "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected type: '%s'",
                 index, rawParam, rawParam.getClass().getName(), listClass.getName()),
-            e);
-      }
-    }
-    return Optional.empty();
-  }
-
-  // TODO maybe try with specific types rather than generics
-  public <T, V> Optional<Map<T, V>> optionalMap(
-      final Object[] params, final int index, final Class<T> keyClass, final Class<V> valueClass)
-      throws JsonRpcParameterException {
-    if (params == null || params.length <= index || params[index] == null) {
-      return Optional.empty();
-    }
-    Object rawParam = params[index];
-    if (Map.class.isAssignableFrom(rawParam.getClass())) {
-      try {
-        String mapJson = mapper.writeValueAsString(rawParam);
-        System.out.println(mapJson);
-        // Use TypeReference to specify the map's key and value types
-        Map<T, V> returnedMap = mapper.readValue(mapJson, new TypeReference<>() {});
-        return Optional.of(returnedMap);
-      } catch (JsonProcessingException e) {
-        throw new JsonRpcParameterException(
-            String.format(
-                "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected types: key '%s' value '%s'",
-                index,
-                rawParam,
-                rawParam.getClass().getName(),
-                keyClass.getName(),
-                valueClass.getName()),
             e);
       }
     }

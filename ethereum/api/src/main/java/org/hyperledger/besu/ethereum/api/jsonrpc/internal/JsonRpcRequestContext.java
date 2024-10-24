@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -77,12 +76,6 @@ public class JsonRpcRequestContext {
   public <T> Optional<List<T>> getOptionalList(final int index, final Class<T> listOf)
       throws JsonRpcParameterException {
     return jsonRpcRequest.getOptionalList(index, listOf);
-  }
-
-  public <T, V> Optional<Map<T, V>> getOptionalMap(
-      final int index, final Class<T> keyClass, final Class<V> valueClass)
-      throws JsonRpcParameterException {
-    return jsonRpcRequest.getOptionalMap(index, keyClass, valueClass);
   }
 
   @Override

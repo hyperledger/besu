@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INTERNAL_ERROR;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
@@ -42,10 +41,9 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.ethereum.util.AccountOverride;
+import org.hyperledger.besu.ethereum.util.AccountOverrideMap;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
-import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -90,8 +88,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
       final JsonRpcRequestContext request, final BlockHeader header) {
     JsonCallParameter callParams = JsonCallParameterUtil.validateAndGetCallParams(request);
     // TODO check whether there are any state overrides
-    Optional<Map<Address, AccountOverride>> maybeStateOverrides =
-        getAddressAccountOverrideMap(request);
+    Optional<AccountOverrideMap> maybeStateOverrides = getAddressAccountOverrideMap(request);
     // TODO check for block overrides
 
     return transactionSimulator
@@ -122,11 +119,11 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   }
 
   @VisibleForTesting
-  protected Optional<Map<Address, AccountOverride>> getAddressAccountOverrideMap(
+  protected Optional<AccountOverrideMap> getAddressAccountOverrideMap(
       final JsonRpcRequestContext request) {
-    Optional<Map<Address, AccountOverride>> maybeStateOverrides;
+    Optional<AccountOverrideMap> maybeStateOverrides;
     try {
-      maybeStateOverrides = request.getOptionalMap(2, Address.class, AccountOverride.class);
+      maybeStateOverrides = request.getOptionalParameter(2, AccountOverrideMap.class);
     } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcRequestException(
           "Invalid account overrides parameter (index 2)", RpcErrorType.INVALID_CALL_PARAMS, e);
