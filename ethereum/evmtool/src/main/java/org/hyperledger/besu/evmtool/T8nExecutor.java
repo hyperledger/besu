@@ -526,7 +526,7 @@ public class T8nExecutor {
               receipts,
               new CachingBlockHashLookup(blockHeader, blockchain),
               OperationTracer.NO_TRACING);
-      Optional<List<Request>> maybeRequests = rpc.process(context);
+      Optional<List<Request>> maybeRequests = Optional.of(rpc.process(context));
       Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
 
       resultObject.put("requestsHash", requestsHash.toHexString());

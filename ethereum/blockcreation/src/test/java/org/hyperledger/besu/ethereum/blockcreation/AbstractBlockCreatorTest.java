@@ -281,12 +281,6 @@ abstract class AbstractBlockCreatorTest {
     return createBlockCreator(protocolSpecAdapters);
   }
 
-  //  private CreateOn blockCreatorWithProhibitedDepositRequests() {
-  //    final ProtocolSpecAdapters protocolSpecAdapters =
-  //        ProtocolSpecAdapters.create(0, specBuilder -> specBuilder);
-  //    return createBlockCreator(protocolSpecAdapters);
-  //  }
-
   private CreateOn blockCreatorWithWithdrawalsProcessor() {
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(

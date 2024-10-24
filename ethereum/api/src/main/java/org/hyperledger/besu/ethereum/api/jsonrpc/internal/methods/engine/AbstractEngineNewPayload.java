@@ -202,7 +202,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
           INVALID,
-          "Invalid requests");
+          "Invalid execution requests");
     }
 
     if (!getRequestsValidator(

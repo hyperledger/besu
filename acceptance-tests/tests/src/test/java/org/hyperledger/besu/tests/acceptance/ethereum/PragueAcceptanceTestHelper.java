@@ -76,7 +76,7 @@ public class PragueAcceptanceTestHelper {
     final Call getPayloadRequest = createEngineCall(createGetPayloadRequest(payloadId));
 
     final ObjectNode executionPayload;
-    final ArrayNode executionResults;
+    final ArrayNode executionRequests;
     final String newBlockHash;
     final String parentBeaconBlockRoot;
     try (final Response getPayloadResponse = getPayloadRequest.execute()) {
@@ -84,7 +84,7 @@ public class PragueAcceptanceTestHelper {
 
       JsonNode result = mapper.readTree(getPayloadResponse.body().string()).get("result");
       executionPayload = (ObjectNode) result.get("executionPayload");
-      executionResults = (ArrayNode) result.get("executionRequests");
+      executionRequests = (ArrayNode) result.get("executionRequests");
 
       newBlockHash = executionPayload.get("blockHash").asText();
       parentBeaconBlockRoot = executionPayload.remove("parentBeaconBlockRoot").asText();
@@ -95,7 +95,7 @@ public class PragueAcceptanceTestHelper {
     final Call newPayloadRequest =
         createEngineCall(
             createNewPayloadRequest(
-                executionPayload.toString(), parentBeaconBlockRoot, executionResults.toString()));
+                executionPayload.toString(), parentBeaconBlockRoot, executionRequests.toString()));
     try (final Response newPayloadResponse = newPayloadRequest.execute()) {
       assertThat(newPayloadResponse.code()).isEqualTo(200);
     }

@@ -52,7 +52,6 @@ public class SystemCallRequestProcessor implements RequestProcessor {
             context.operationTracer(),
             context.blockHashLookup());
 
-    Bytes requestData = systemCallOutput == null ? Bytes.EMPTY : systemCallOutput;
-    return new Request(requestType, requestData);
+    return new Request(requestType, systemCallOutput);
   }
 }
