@@ -253,5 +253,14 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
           "The count of labels used must match the count of labels expected.");
       Preconditions.checkNotNull(valueSupplier, "No valueSupplier specified");
     }
+
+    @Override
+    public boolean isLabelsObserved(final String... labelValues) {
+      Preconditions.checkArgument(
+          labelValues.length == labelCount,
+          "The count of labels used must match the count of labels expected.");
+      final String labelValuesString = String.join(",", labelValues);
+      return labelValuesCache.contains(labelValuesString);
+    }
   }
 }
