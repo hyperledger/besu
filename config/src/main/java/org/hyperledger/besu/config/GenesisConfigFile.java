@@ -266,6 +266,15 @@ public class GenesisConfigFile {
   }
 
   /**
+   * Gets target blob count.
+   *
+   * @return the target blob count
+   */
+  public Optional<String> getTargetBlobCount() {
+    return JsonUtil.getValueAsString(genesisRoot, "targetblobcount");
+  }
+
+  /**
    * Gets coinbase.
    *
    * @return the coinbase
