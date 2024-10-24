@@ -218,7 +218,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               OperationTracer.NO_TRACING);
 
-      maybeRequests = requestProcessor.get().process(context);
+      maybeRequests = Optional.of(requestProcessor.get().process(context));
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {

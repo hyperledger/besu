@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum;
 
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.ArrayList;
@@ -133,5 +134,14 @@ public class BlockProcessingResult extends BlockValidationResult {
     } else {
       return yield.get().getReceipts();
     }
+  }
+
+  /**
+   * Gets the requests of the result.
+   *
+   * @return the requests of the result
+   */
+  public Optional<List<Request>> getRequests() {
+    return yield.flatMap(BlockProcessingOutputs::getRequests);
   }
 }

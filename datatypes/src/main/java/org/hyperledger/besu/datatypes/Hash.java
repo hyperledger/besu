@@ -15,6 +15,7 @@
 package org.hyperledger.besu.datatypes;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.crypto.Hash.sha256;
 
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
@@ -49,6 +50,17 @@ public class Hash extends DelegatingBytes32 {
    * "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
    */
   public static final Hash EMPTY = hash(Bytes.EMPTY);
+
+  /**
+   * Hash of empty requests or "0x6036c41849da9c076ed79654d434017387a88fb833c2856b32e18218b3341c5f"
+   */
+  public static final Hash EMPTY_REQUESTS_HASH =
+      Hash.wrap(
+          sha256(
+              Bytes.concatenate(
+                  sha256(Bytes.of(RequestType.DEPOSIT.getSerializedType())),
+                  sha256(Bytes.of(RequestType.WITHDRAWAL.getSerializedType())),
+                  sha256(Bytes.of(RequestType.CONSOLIDATION.getSerializedType())))));
 
   /**
    * Instantiates a new Hash.

@@ -17,9 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.ImmutableSortedMap;
 
@@ -37,18 +35,10 @@ public class RequestProcessorCoordinator {
     this.processors = processors;
   }
 
-  public Optional<List<Request>> process(final ProcessRequestContext context) {
-    List<Request> requests = null;
-    for (RequestProcessor requestProcessor : processors.values()) {
-      var r = requestProcessor.process(context);
-      if (r.isPresent()) {
-        if (requests == null) {
-          requests = new ArrayList<>();
-        }
-        requests.addAll(r.get());
-      }
-    }
-    return Optional.ofNullable(requests);
+  public List<Request> process(final ProcessRequestContext context) {
+    return processors.values().stream()
+        .map(requestProcessor -> requestProcessor.process(context))
+        .toList();
   }
 
   public static class Builder {
@@ -62,7 +52,12 @@ public class RequestProcessorCoordinator {
     }
 
     public RequestProcessorCoordinator build() {
-      return new RequestProcessorCoordinator(requestProcessorBuilder.build());
+      final ImmutableSortedMap<RequestType, RequestProcessor> processors =
+          requestProcessorBuilder.build();
+      if (processors.isEmpty()) {
+        throw new IllegalStateException("No processors added to RequestProcessorCoordinator");
+      }
+      return new RequestProcessorCoordinator(processors);
     }
   }
 }
