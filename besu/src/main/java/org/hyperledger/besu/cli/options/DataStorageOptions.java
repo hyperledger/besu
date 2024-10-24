@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.options;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_HASH_PREIMAGE_STORAGE_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_RECEIPT_COMPACTION_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
@@ -32,26 +33,35 @@ import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine;
-import picocli.CommandLine.Option;
 
 /** The Data storage CLI options. */
 public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> {
 
   private static final String DATA_STORAGE_FORMAT = "--data-storage-format";
 
+  /** Feature to store hash preimages as part of worldstate */
+  public static final String HASH_STORE_PREIMAGE_ENABLED = "--hash-preimage-storage-enabled";
+
   /** The maximum number of historical layers to load. */
   public static final String BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD =
       "--bonsai-historical-block-limit";
 
   // Use Bonsai DB
-  @Option(
+  @CommandLine.Option(
       names = {DATA_STORAGE_FORMAT},
       description =
           "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).",
       arity = "1")
   private DataStorageFormat dataStorageFormat = DataStorageFormat.BONSAI;
 
-  @Option(
+  @CommandLine.Option(
+      names = {HASH_STORE_PREIMAGE_ENABLED},
+      description =
+          "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).",
+      arity = "1")
+  private Boolean hashStorePreimagesEnabled = DEFAULT_HASH_PREIMAGE_STORAGE_ENABLED;
+
+  @CommandLine.Option(
       names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD, "--bonsai-maximum-back-layers-to-load"},
       paramLabel = "<LONG>",
       description =
@@ -68,31 +78,24 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public static final String BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE =
       "--bonsai-trie-logs-pruning-window-size";
 
-  // TODO --Xbonsai-limit-trie-logs-enabled and --Xbonsai-trie-log-pruning-enabled are deprecated,
-  // remove in a future release
   @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
       names = {
         BONSAI_LIMIT_TRIE_LOGS_ENABLED,
-        "--Xbonsai-limit-trie-logs-enabled", // deprecated
-        "--Xbonsai-trie-log-pruning-enabled" // deprecated
       },
       fallbackValue = "true",
       description = "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
   private Boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
 
-  // TODO --Xbonsai-trie-logs-pruning-window-size is deprecated, remove in a future release
-  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
       names = {
         BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE,
-        "--Xbonsai-trie-logs-pruning-window-size" // deprecated
       },
       description =
           "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
   private Integer bonsaiTrieLogPruningWindowSize = DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
-  @Option(
+  @CommandLine.Option(
       names = "--receipt-compaction-enabled",
       description = "Enables compact storing of receipts (default: ${DEFAULT-VALUE})",
       fallbackValue = "true")
@@ -107,13 +110,10 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   /** The unstable options for data storage. */
   public static class Unstable {
 
-    // TODO: --Xsnapsync-synchronizer-flat-db-healing-enabled is deprecated, remove it in a future
-    // release
     @CommandLine.Option(
         hidden = true,
         names = {
           "--Xbonsai-full-flat-db-enabled",
-          "--Xsnapsync-synchronizer-flat-db-healing-enabled"
         },
         arity = "1",
         description = "Enables bonsai full flat database strategy. (default: ${DEFAULT-VALUE})")
@@ -200,6 +200,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
     final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
+    dataStorageOptions.hashStorePreimagesEnabled = domainObject.getHashPreImageStorageEnabled();
     dataStorageOptions.bonsaiMaxLayersToLoad = domainObject.getBonsaiMaxLayersToLoad();
     dataStorageOptions.receiptCompactionEnabled = domainObject.getReceiptCompactionEnabled();
     dataStorageOptions.bonsaiLimitTrieLogsEnabled = domainObject.getBonsaiLimitTrieLogsEnabled();
@@ -219,6 +220,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public DataStorageConfiguration toDomainObject() {
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(dataStorageFormat)
+        .hashPreImageStorageEnabled(hashStorePreimagesEnabled)
         .bonsaiMaxLayersToLoad(bonsaiMaxLayersToLoad)
         .receiptCompactionEnabled(receiptCompactionEnabled)
         .bonsaiLimitTrieLogsEnabled(bonsaiLimitTrieLogsEnabled)
