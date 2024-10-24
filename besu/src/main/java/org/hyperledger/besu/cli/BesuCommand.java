@@ -2343,26 +2343,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (SyncMode.FULL.equals(getDefaultSyncModeIfNotSet())
         && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())
-        && dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()) {
+        && dataStorageConfiguration.getDiffbasedLimitTrieLogsEnabled()) {
 
       if (CommandLineUtils.isOptionSet(
-          commandLine, DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED)) {
+          commandLine, DataStorageOptions.DIFFBASED_LIMIT_TRIE_LOGS_ENABLED)) {
         throw new ParameterException(
             commandLine,
             String.format(
                 "Cannot enable %s with --sync-mode=%s and --data-storage-format=%s. You must set %s or use a different sync-mode",
-                DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED,
+                DataStorageOptions.DIFFBASED_LIMIT_TRIE_LOGS_ENABLED,
                 SyncMode.FULL,
                 DataStorageFormat.BONSAI,
-                DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false"));
+                DataStorageOptions.DIFFBASED_LIMIT_TRIE_LOGS_ENABLED + "=false"));
       }
 
       dataStorageConfiguration =
           ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
-              .withBonsaiLimitTrieLogsEnabled(false);
+              .withDiffbasedLimitTrieLogsEnabled(false);
       logger.warn(
           "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
-          DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false",
+          DataStorageOptions.DIFFBASED_LIMIT_TRIE_LOGS_ENABLED + "=false",
           SyncMode.FULL,
           DataStorageFormat.BONSAI);
     }
@@ -2930,11 +2930,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())
-        && getDataStorageConfiguration().getBonsaiLimitTrieLogsEnabled()) {
+        && getDataStorageConfiguration().getDiffbasedLimitTrieLogsEnabled()) {
       builder.setLimitTrieLogsEnabled();
-      builder.setTrieLogRetentionLimit(getDataStorageConfiguration().getBonsaiMaxLayersToLoad());
+      builder.setTrieLogRetentionLimit(getDataStorageConfiguration().getDiffbasedMaxLayersToLoad());
       builder.setTrieLogsPruningWindowSize(
-          getDataStorageConfiguration().getBonsaiTrieLogPruningWindowSize());
+          getDataStorageConfiguration().getDiffbasedTrieLogPruningWindowSize());
     }
 
     builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());

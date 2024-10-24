@@ -167,11 +167,12 @@ dependencyManagement {
       entry 'gnark'
     }
 
-    dependencySet(group: 'org.hyperledger.besu', version: '0.8.4-SNAPSHOT') {
+    dependencySet(group: 'org.hyperledger.besu', version: '0.8.5') {
       entry 'ipa-multipoint'
     }
 
-    dependency 'org.hyperledger.besu:besu-verkle-trie:0.0.3-20241002.133354-5'
+    dependency 'org.hyperledger.besu:besu-verkle-trie:0.0.3-SNAPSHOT-133'
+
 
     dependencySet(group: 'org.immutables', version: '2.10.1') {
       entry 'value-annotations'
