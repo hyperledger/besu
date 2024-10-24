@@ -87,10 +87,10 @@ public class SystemCallProcessorTest {
   }
 
   @Test
-  void shouldReturnNullWhenContractDoesNotExist() {
+  void shouldReturnEmptyWhenContractDoesNotExist() {
     final MutableWorldState worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
     Bytes actualOutput = processSystemCall(worldState);
-    assertThat(actualOutput).isNull();
+    assertThat(actualOutput).isEqualTo(Bytes.EMPTY);
   }
 
   Bytes processSystemCall(final MutableWorldState worldState) {
