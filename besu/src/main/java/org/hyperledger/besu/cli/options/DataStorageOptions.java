@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.cli.options;
 
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_DIFFBASED_LIMIT_TRIE_LOGS_ENABLED;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_RECEIPT_COMPACTION_ENABLED;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_DIFFBASED_CODE_USING_CODE_HASH_ENABLED;
 
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -40,7 +40,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   private static final String DATA_STORAGE_FORMAT = "--data-storage-format";
 
   /** The maximum number of historical layers to load. */
-  public static final String BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD =
+  public static final String DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD =
       "--bonsai-historical-block-limit";
 
   // Use Bonsai DB
@@ -52,20 +52,20 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   private DataStorageFormat dataStorageFormat = DataStorageFormat.BONSAI;
 
   @Option(
-      names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD, "--bonsai-maximum-back-layers-to-load"},
+      names = {DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD, "--bonsai-maximum-back-layers-to-load"},
       paramLabel = "<LONG>",
       description =
           "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}). When using "
-              + BONSAI_LIMIT_TRIE_LOGS_ENABLED
+              + DIFFBASED_LIMIT_TRIE_LOGS_ENABLED
               + " it will also be used as the number of layers of trie logs to retain.",
       arity = "1")
-  private Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+  private Long diffBasedMaxLayersToLoad = DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD;
 
   /** The bonsai limit trie logs enabled option name */
-  public static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED = "--bonsai-limit-trie-logs-enabled";
+  public static final String DIFFBASED_LIMIT_TRIE_LOGS_ENABLED = "--bonsai-limit-trie-logs-enabled";
 
   /** The bonsai trie logs pruning window size. */
-  public static final String BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE =
+  public static final String DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE =
       "--bonsai-trie-logs-pruning-window-size";
 
   // TODO --Xbonsai-limit-trie-logs-enabled and --Xbonsai-trie-log-pruning-enabled are deprecated,
@@ -73,24 +73,25 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
       names = {
-        BONSAI_LIMIT_TRIE_LOGS_ENABLED,
+        DIFFBASED_LIMIT_TRIE_LOGS_ENABLED,
         "--Xbonsai-limit-trie-logs-enabled", // deprecated
         "--Xbonsai-trie-log-pruning-enabled" // deprecated
       },
       fallbackValue = "true",
       description = "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
-  private Boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
+  private Boolean diffbasedLimitTrieLogsEnabled = DEFAULT_DIFFBASED_LIMIT_TRIE_LOGS_ENABLED;
 
   // TODO --Xbonsai-trie-logs-pruning-window-size is deprecated, remove in a future release
   @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
       names = {
-        BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE,
+        DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE,
         "--Xbonsai-trie-logs-pruning-window-size" // deprecated
       },
       description =
           "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
-  private Integer bonsaiTrieLogPruningWindowSize = DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+  private Integer diffbasedTrieLogPruningWindowSize =
+      DEFAULT_DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
   @Option(
       names = "--receipt-compaction-enabled",
@@ -125,7 +126,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         arity = "1",
         description =
             "Enables code storage using code hash instead of by account hash. (default: ${DEFAULT-VALUE})")
-    private boolean bonsaiCodeUsingCodeHashEnabled = DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
+    private boolean diffbasedCodeUsingCodeHashEnabled =
+        DEFAULT_DIFFBASED_CODE_USING_CODE_HASH_ENABLED;
 
     @CommandLine.Option(
         hidden = true,
@@ -155,31 +157,31 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    */
   public void validate(final CommandLine commandLine) {
     if (DataStorageFormat.BONSAI == dataStorageFormat) {
-      if (bonsaiLimitTrieLogsEnabled) {
-        if (bonsaiMaxLayersToLoad < MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT) {
+      if (diffbasedLimitTrieLogsEnabled) {
+        if (diffBasedMaxLayersToLoad < MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT) {
           throw new CommandLine.ParameterException(
               commandLine,
               String.format(
-                  BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
-                  MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
+                  DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
+                  MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT));
         }
-        if (bonsaiTrieLogPruningWindowSize <= 0) {
+        if (diffbasedTrieLogPruningWindowSize <= 0) {
           throw new CommandLine.ParameterException(
               commandLine,
               String.format(
-                  BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
-                  bonsaiTrieLogPruningWindowSize));
+                  DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
+                  diffbasedTrieLogPruningWindowSize));
         }
-        if (bonsaiTrieLogPruningWindowSize <= bonsaiMaxLayersToLoad) {
+        if (diffbasedTrieLogPruningWindowSize <= diffBasedMaxLayersToLoad) {
           throw new CommandLine.ParameterException(
               commandLine,
               String.format(
-                  BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
+                  DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE
                       + "=%d must be greater than "
-                      + BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
+                      + DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
                       + "=%d",
-                  bonsaiTrieLogPruningWindowSize,
-                  bonsaiMaxLayersToLoad));
+                  diffbasedTrieLogPruningWindowSize,
+                  diffBasedMaxLayersToLoad));
         }
       }
     } else {
@@ -200,15 +202,16 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
     final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
-    dataStorageOptions.bonsaiMaxLayersToLoad = domainObject.getBonsaiMaxLayersToLoad();
+    dataStorageOptions.diffBasedMaxLayersToLoad = domainObject.getDiffBasedMaxLayersToLoad();
     dataStorageOptions.receiptCompactionEnabled = domainObject.getReceiptCompactionEnabled();
-    dataStorageOptions.bonsaiLimitTrieLogsEnabled = domainObject.getBonsaiLimitTrieLogsEnabled();
-    dataStorageOptions.bonsaiTrieLogPruningWindowSize =
-        domainObject.getBonsaiTrieLogPruningWindowSize();
+    dataStorageOptions.diffbasedLimitTrieLogsEnabled =
+        domainObject.getDiffbasedLimitTrieLogsEnabled();
+    dataStorageOptions.diffbasedTrieLogPruningWindowSize =
+        domainObject.getDiffbasedTrieLogPruningWindowSize();
     dataStorageOptions.unstableOptions.bonsaiFullFlatDbEnabled =
         domainObject.getUnstable().getBonsaiFullFlatDbEnabled();
-    dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashEnabled =
-        domainObject.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
+    dataStorageOptions.unstableOptions.diffbasedCodeUsingCodeHashEnabled =
+        domainObject.getUnstable().getDiffbasedCodeStoredByCodeHashEnabled();
     dataStorageOptions.unstableOptions.isParallelTxProcessingEnabled =
         domainObject.getUnstable().isParallelTxProcessingEnabled();
 
@@ -219,14 +222,15 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public DataStorageConfiguration toDomainObject() {
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(dataStorageFormat)
-        .bonsaiMaxLayersToLoad(bonsaiMaxLayersToLoad)
+        .diffbasedMaxLayersToLoad(diffBasedMaxLayersToLoad)
         .receiptCompactionEnabled(receiptCompactionEnabled)
-        .bonsaiLimitTrieLogsEnabled(bonsaiLimitTrieLogsEnabled)
-        .bonsaiTrieLogPruningWindowSize(bonsaiTrieLogPruningWindowSize)
+        .diffbasedLimitTrieLogsEnabled(diffbasedLimitTrieLogsEnabled)
+        .diffbasedTrieLogPruningWindowSize(diffbasedTrieLogPruningWindowSize)
         .unstable(
             ImmutableDataStorageConfiguration.Unstable.builder()
                 .bonsaiFullFlatDbEnabled(unstableOptions.bonsaiFullFlatDbEnabled)
-                .bonsaiCodeStoredByCodeHashEnabled(unstableOptions.bonsaiCodeUsingCodeHashEnabled)
+                .diffbasedCodeStoredByCodeHashEnabled(
+                    unstableOptions.diffbasedCodeUsingCodeHashEnabled)
                 .isParallelTxProcessingEnabled(unstableOptions.isParallelTxProcessingEnabled)
                 .build())
         .build();
