@@ -117,12 +117,6 @@ class AbstractCreateOperationTest {
     }
 
     @Override
-    protected long statelessCost(
-        final MessageFrame frame, final Address contractAddress, final Wei value) {
-      return gasCalculator().initcodeStatelessCost(frame, contractAddress, value);
-    }
-
-    @Override
     protected Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
       final Account sender = frame.getWorldUpdater().get(frame.getRecipientAddress());
       // Decrement nonce by 1 to normalize the effect of transaction execution

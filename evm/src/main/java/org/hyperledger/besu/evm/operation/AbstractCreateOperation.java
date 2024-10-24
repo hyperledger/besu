@@ -141,9 +141,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    */
   protected abstract long cost(final MessageFrame frame, Supplier<Code> codeSupplier);
 
-  protected abstract long statelessCost(
-      final MessageFrame frame, final Address contractAddress, final Wei value);
-
   /**
    * Target contract address.
    *
