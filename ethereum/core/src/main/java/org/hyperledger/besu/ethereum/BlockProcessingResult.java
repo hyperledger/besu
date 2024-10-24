@@ -142,10 +142,6 @@ public class BlockProcessingResult extends BlockValidationResult {
    * @return the requests of the result
    */
   public Optional<List<Request>> getRequests() {
-    if (yield.isEmpty()) {
-      return Optional.empty();
-    } else {
-      return yield.get().getRequests();
-    }
+    return yield.flatMap(BlockProcessingOutputs::getRequests);
   }
 }

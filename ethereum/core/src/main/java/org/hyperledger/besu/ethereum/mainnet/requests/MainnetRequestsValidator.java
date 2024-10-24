@@ -18,8 +18,8 @@ import org.hyperledger.besu.ethereum.core.Request;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
+import com.google.common.collect.Ordering;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +55,6 @@ public class MainnetRequestsValidator implements RequestsValidator {
   }
 
   private static boolean isRequestOrderValid(final List<Request> requests) {
-    return IntStream.range(0, requests.size() - 1)
-        .allMatch(i -> requests.get(i).getType().compareTo(requests.get(i + 1).getType()) <= 0);
+    return Ordering.natural().onResultOf(Request::getType).isOrdered(requests);
   }
 }
