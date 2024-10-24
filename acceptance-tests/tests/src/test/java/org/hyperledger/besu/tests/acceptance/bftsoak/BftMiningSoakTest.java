@@ -41,7 +41,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
   private static final long ONE_MINUTE = Duration.of(1, ChronoUnit.MINUTES).toMillis();
 
-  private static final long THREE_MINUTES = Duration.of(1, ChronoUnit.MINUTES).toMillis();
+  private static final long THREE_MINUTES = Duration.of(3, ChronoUnit.MINUTES).toMillis();
 
   private static final long TEN_SECONDS = Duration.of(10, ChronoUnit.SECONDS).toMillis();
 
