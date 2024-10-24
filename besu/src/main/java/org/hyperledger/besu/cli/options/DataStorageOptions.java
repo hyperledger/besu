@@ -59,7 +59,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
               + DIFFBASED_LIMIT_TRIE_LOGS_ENABLED
               + " it will also be used as the number of layers of trie logs to retain.",
       arity = "1")
-  private Long diffBasedMaxLayersToLoad = DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD;
+  private Long diffbasedMaxLayersToLoad = DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD;
 
   /** The bonsai limit trie logs enabled option name */
   public static final String DIFFBASED_LIMIT_TRIE_LOGS_ENABLED = "--bonsai-limit-trie-logs-enabled";
@@ -158,7 +158,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public void validate(final CommandLine commandLine) {
     if (DataStorageFormat.BONSAI == dataStorageFormat) {
       if (diffbasedLimitTrieLogsEnabled) {
-        if (diffBasedMaxLayersToLoad < MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT) {
+        if (diffbasedMaxLayersToLoad < MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT) {
           throw new CommandLine.ParameterException(
               commandLine,
               String.format(
@@ -172,7 +172,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
                   DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
                   diffbasedTrieLogPruningWindowSize));
         }
-        if (diffbasedTrieLogPruningWindowSize <= diffBasedMaxLayersToLoad) {
+        if (diffbasedTrieLogPruningWindowSize <= diffbasedMaxLayersToLoad) {
           throw new CommandLine.ParameterException(
               commandLine,
               String.format(
@@ -181,7 +181,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
                       + DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
                       + "=%d",
                   diffbasedTrieLogPruningWindowSize,
-                  diffBasedMaxLayersToLoad));
+                  diffbasedMaxLayersToLoad));
         }
       }
     } else {
@@ -202,7 +202,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
     final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
-    dataStorageOptions.diffBasedMaxLayersToLoad = domainObject.getDiffBasedMaxLayersToLoad();
+    dataStorageOptions.diffbasedMaxLayersToLoad = domainObject.getDiffBasedMaxLayersToLoad();
     dataStorageOptions.receiptCompactionEnabled = domainObject.getReceiptCompactionEnabled();
     dataStorageOptions.diffbasedLimitTrieLogsEnabled =
         domainObject.getDiffbasedLimitTrieLogsEnabled();
@@ -222,7 +222,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public DataStorageConfiguration toDomainObject() {
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(dataStorageFormat)
-        .diffbasedMaxLayersToLoad(diffBasedMaxLayersToLoad)
+        .diffbasedMaxLayersToLoad(diffbasedMaxLayersToLoad)
         .receiptCompactionEnabled(receiptCompactionEnabled)
         .diffbasedLimitTrieLogsEnabled(diffbasedLimitTrieLogsEnabled)
         .diffbasedTrieLogPruningWindowSize(diffbasedTrieLogPruningWindowSize)

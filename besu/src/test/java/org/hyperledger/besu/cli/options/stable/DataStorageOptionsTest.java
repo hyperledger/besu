@@ -167,7 +167,7 @@ public class DataStorageOptionsTest
   protected DataStorageConfiguration createCustomizedDomainObject() {
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(DataStorageFormat.BONSAI)
-        .diffBasedMaxLayersToLoad(513L)
+        .diffbasedMaxLayersToLoad(513L)
         .diffbasedLimitTrieLogsEnabled(true)
         .diffbasedTrieLogPruningWindowSize(514)
         .build();

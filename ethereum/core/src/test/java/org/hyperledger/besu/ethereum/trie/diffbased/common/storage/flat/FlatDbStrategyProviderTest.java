@@ -85,7 +85,7 @@ class FlatDbStrategyProviderTest {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(DataStorageFormat.BONSAI)
-            .diffBasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
+            .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
                     .diffbasedCodeStoredByCodeHashEnabled(codeByHashEnabled)
@@ -110,7 +110,7 @@ class FlatDbStrategyProviderTest {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(DataStorageFormat.BONSAI)
-            .diffBasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
+            .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
                     .diffbasedCodeStoredByCodeHashEnabled(codeByHashEnabled)
@@ -140,7 +140,7 @@ class FlatDbStrategyProviderTest {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(DataStorageFormat.BONSAI)
-            .diffBasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
+            .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
                     .diffbasedCodeStoredByCodeHashEnabled(codeByHashEnabled)

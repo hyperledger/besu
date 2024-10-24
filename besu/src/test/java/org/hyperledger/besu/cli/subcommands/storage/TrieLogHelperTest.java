@@ -134,7 +134,7 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedMaxLayersToLoad(3L)
+            .diffbasedMaxLayersToLoad(3L)
             .diffbasedLimitTrieLogsEnabled(true)
             .build();
 
@@ -172,7 +172,7 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedMaxLayersToLoad(2L)
+            .diffbasedMaxLayersToLoad(2L)
             .diffbasedLimitTrieLogsEnabled(true)
             .build();
 
@@ -192,7 +192,7 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedMaxLayersToLoad(10L)
+            .diffbasedMaxLayersToLoad(10L)
             .diffbasedLimitTrieLogsEnabled(true)
             .build();
 
@@ -212,7 +212,7 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedMaxLayersToLoad(2L)
+            .diffbasedMaxLayersToLoad(2L)
             .diffbasedLimitTrieLogsEnabled(true)
             .build();
 
@@ -233,7 +233,7 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedMaxLayersToLoad(6L)
+            .diffbasedMaxLayersToLoad(6L)
             .diffbasedLimitTrieLogsEnabled(true)
             .build();
 
@@ -255,7 +255,7 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedMaxLayersToLoad(3L)
+            .diffbasedMaxLayersToLoad(3L)
             .diffbasedLimitTrieLogsEnabled(true)
             .build();
 
@@ -285,7 +285,7 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedMaxLayersToLoad(511L)
+            .diffbasedMaxLayersToLoad(511L)
             .diffbasedLimitTrieLogsEnabled(true)
             .build();
 
@@ -303,7 +303,7 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedMaxLayersToLoad(512L)
+            .diffbasedMaxLayersToLoad(512L)
             .diffbasedLimitTrieLogsEnabled(true)
             .diffbasedTrieLogPruningWindowSize(0)
             .build();
@@ -321,7 +321,7 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedMaxLayersToLoad(512L)
+            .diffbasedMaxLayersToLoad(512L)
             .diffbasedLimitTrieLogsEnabled(true)
             .diffbasedTrieLogPruningWindowSize(512)
             .build();
@@ -341,7 +341,7 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedMaxLayersToLoad(3L)
+            .diffbasedMaxLayersToLoad(3L)
             .diffbasedLimitTrieLogsEnabled(true)
             .build();
 
