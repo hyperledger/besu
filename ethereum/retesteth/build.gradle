@@ -35,6 +35,7 @@ dependencies {
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
+  implementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
