@@ -63,6 +63,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class JsonRpcResponseUtils {
 
@@ -131,6 +132,7 @@ public class JsonRpcResponseUtils {
             null, // ToDo 4844: set with the value of excess_blob_gas field
             null, // TODO 4788: set with the value of the parent beacon block root field
             requestsHash,
+            UInt64.ZERO, // TODO SLD EIP-7742 targetBlobCount
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(
