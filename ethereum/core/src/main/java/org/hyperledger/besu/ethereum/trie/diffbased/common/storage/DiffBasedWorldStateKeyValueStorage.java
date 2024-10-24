@@ -65,7 +65,8 @@ public abstract class DiffBasedWorldStateKeyValueStorage
       LoggerFactory.getLogger(DiffBasedWorldStateKeyValueStorage.class);
 
   // TODO: config this based on dataStorageConfiguration, use real storage where appropriate
-  protected final CachingPreImageStorage preImageProxy =
+  //   currently hard-coded to Unbounded preimage store so ref/spec tests pass
+  private static final CachingPreImageStorage preImageProxy =
       new CachingPreImageStorage.UnboundedPreImageStorage();
 
   // 0x776f726c64526f6f74
@@ -107,6 +108,10 @@ public abstract class DiffBasedWorldStateKeyValueStorage
 
   public SegmentedKeyValueStorage getComposedWorldStateStorage() {
     return composedWorldStateStorage;
+  }
+
+  public CachingPreImageStorage getPreImageProxy() {
+    return preImageProxy;
   }
 
   public KeyValueStorage getTrieLogStorage() {

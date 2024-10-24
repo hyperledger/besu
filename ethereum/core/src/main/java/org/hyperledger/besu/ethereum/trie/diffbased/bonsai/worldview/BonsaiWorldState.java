@@ -192,7 +192,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
       try {
         if (updatedAccount == null) {
-          final Hash addressHash = preImageProxy.hashAndSaveAddressPreImage(accountKey);
+          final Hash addressHash = getPreImageProxy().hashAndSaveAddressPreImage(accountKey);
           accountTrie.remove(addressHash);
           maybeStateUpdater.ifPresent(
               bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
@@ -202,7 +202,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
           maybeStateUpdater.ifPresent(
               bonsaiUpdater ->
                   bonsaiUpdater.putAccountInfoState(
-                      preImageProxy.hashAndSaveAddressPreImage(accountKey), accountValue));
+                      getPreImageProxy().hashAndSaveAddressPreImage(accountKey), accountValue));
           accountTrie.put(addressHash, accountValue);
         }
       } catch (MerkleTrieException e) {

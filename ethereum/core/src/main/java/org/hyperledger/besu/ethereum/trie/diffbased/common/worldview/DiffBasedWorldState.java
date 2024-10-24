@@ -54,10 +54,6 @@ public abstract class DiffBasedWorldState
 
   private static final Logger LOG = LoggerFactory.getLogger(DiffBasedWorldState.class);
 
-  // TODO: where the shit to initialize you?  just use unbounded for now to ensure ref tests pass
-  protected static final CachingPreImageStorage preImageProxy =
-      new CachingPreImageStorage.UnboundedPreImageStorage(); // CachingOnlyPreImageStorage();
-
   protected DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected final DiffBasedCachedWorldStorageManager cachedWorldStorageManager;
   protected final TrieLogManager trieLogManager;
@@ -124,7 +120,7 @@ public abstract class DiffBasedWorldState
 
   @Override
   public CachingPreImageStorage getPreImageProxy() {
-    return preImageProxy;
+    return worldStateKeyValueStorage.getPreImageProxy();
   }
 
   /**

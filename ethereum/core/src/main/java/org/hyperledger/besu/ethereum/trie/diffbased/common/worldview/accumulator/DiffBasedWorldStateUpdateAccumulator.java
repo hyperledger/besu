@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.CachingPreImageStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
@@ -614,6 +615,11 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     return wrappedWorldView().getWorldStateStorage();
   }
 
+  @Override
+  public CachingPreImageStorage getPreImageProxy() {
+    return wrappedWorldView().getPreImageProxy();
+  }
+
   public void rollForward(final TrieLog layer) {
     layer
         .getAccountChanges()
@@ -881,7 +887,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
 
   protected Hash hashAndSaveAccountPreImage(final Address address) {
     // default to using address static hash cache:
-    return address.addressHash();
+    return getPreImageProxy().hashAndSaveAddressPreImage(address);
   }
 
   public abstract DiffBasedWorldStateUpdateAccumulator<ACCOUNT> copy();

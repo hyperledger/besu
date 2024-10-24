@@ -43,8 +43,8 @@ public class DataStorageOptionsTest
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getBonsaiTrieLogPruningWindowSize()).isEqualTo(600),
-        "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-logs-pruning-window-size",
+        "--bonsai-limit-trie-logs-enabled",
+        "--bonsai-trie-logs-pruning-window-size",
         "600");
   }
 
