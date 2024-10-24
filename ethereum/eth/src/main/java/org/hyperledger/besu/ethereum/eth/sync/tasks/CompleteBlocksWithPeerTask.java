@@ -115,6 +115,7 @@ public class CompleteBlocksWithPeerTask {
             block -> {
               remainingBlocks--;
               result[nextIndex] = block;
+              headersToGet.removeFirst();
               nextIndex = findNextIndex(nextIndex + 1);
             });
       }
