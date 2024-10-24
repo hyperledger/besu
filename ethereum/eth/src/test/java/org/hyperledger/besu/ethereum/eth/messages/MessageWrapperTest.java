@@ -398,6 +398,7 @@ public class MessageWrapperTest {
           null,
           null,
           null,
+          null,
           new MainnetBlockHeaderFunctions());
     }
   }
