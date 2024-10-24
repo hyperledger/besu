@@ -113,6 +113,7 @@ import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
+import jakarta.validation.constraints.NotEmpty;
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
@@ -621,6 +622,7 @@ public abstract class CommandTestAbstract {
   @CommandLine.Command
   public static class TestBesuCommandWithRequiredOption extends TestBesuCommand {
 
+    @NotEmpty
     @CommandLine.Option(
         names = {"--accept-terms-and-conditions"},
         description = "You must explicitly accept terms and conditions",
