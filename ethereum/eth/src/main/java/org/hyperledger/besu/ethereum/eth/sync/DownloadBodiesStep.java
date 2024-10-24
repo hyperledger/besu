@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.eth.sync;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.CompleteBlocksTask;
+import org.hyperledger.besu.ethereum.eth.sync.tasks.CompleteBlocksWithPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -31,19 +33,41 @@ public class DownloadBodiesStep
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
+  private final SynchronizerConfiguration synchronizerConfiguration;
+  private final PeerTaskExecutor peerTaskExecutor;
 
   public DownloadBodiesStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
+    this.peerTaskExecutor = peerTaskExecutor;
+    this.synchronizerConfiguration = synchronizerConfiguration;
     this.metricsSystem = metricsSystem;
   }
 
   @Override
   public CompletableFuture<List<Block>> apply(final List<BlockHeader> blockHeaders) {
-    return CompleteBlocksTask.forHeaders(protocolSchedule, ethContext, blockHeaders, metricsSystem)
-        .run();
+    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+      return ethContext
+          .getScheduler()
+          .scheduleServiceTask(() -> getBodiesWithPeerTaskSystem(blockHeaders));
+    } else {
+      return CompleteBlocksTask.forHeaders(
+              protocolSchedule, ethContext, blockHeaders, metricsSystem)
+          .run();
+    }
+  }
+
+  private CompletableFuture<List<Block>> getBodiesWithPeerTaskSystem(
+      final List<BlockHeader> headers) {
+
+    final CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
+        new CompleteBlocksWithPeerTask(protocolSchedule, headers, peerTaskExecutor);
+    final List<Block> blocks = completeBlocksWithPeerTask.getBlocks();
+    return CompletableFuture.completedFuture(blocks);
   }
 }
