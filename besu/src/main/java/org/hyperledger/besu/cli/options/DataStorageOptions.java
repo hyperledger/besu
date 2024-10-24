@@ -202,7 +202,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
     final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
-    dataStorageOptions.diffbasedMaxLayersToLoad = domainObject.getDiffBasedMaxLayersToLoad();
+    dataStorageOptions.diffbasedMaxLayersToLoad = domainObject.getDiffbasedMaxLayersToLoad();
     dataStorageOptions.receiptCompactionEnabled = domainObject.getReceiptCompactionEnabled();
     dataStorageOptions.diffbasedLimitTrieLogsEnabled =
         domainObject.getDiffbasedLimitTrieLogsEnabled();

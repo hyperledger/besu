@@ -809,7 +809,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
             scheduler::executeServiceTask,
-            dataStorageConfiguration.getDiffBasedMaxLayersToLoad(),
+            dataStorageConfiguration.getDiffbasedMaxLayersToLoad(),
             dataStorageConfiguration.getDiffbasedTrieLogPruningWindowSize(),
             isProofOfStake,
             metricsSystem);
@@ -1095,7 +1095,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         yield new BonsaiWorldStateProvider(
             worldStateKeyValueStorage,
             blockchain,
-            Optional.of(dataStorageConfiguration.getDiffBasedMaxLayersToLoad()),
+            Optional.of(dataStorageConfiguration.getDiffbasedMaxLayersToLoad()),
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration);

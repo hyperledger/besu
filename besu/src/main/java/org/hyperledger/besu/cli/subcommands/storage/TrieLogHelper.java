@@ -73,7 +73,7 @@ public class TrieLogHelper {
 
     validatePruneConfiguration(config);
 
-    final long layersToRetain = config.getDiffBasedMaxLayersToLoad();
+    final long layersToRetain = config.getDiffbasedMaxLayersToLoad();
 
     final long chainHeight = blockchain.getChainHeadBlockNumber();
 
@@ -295,7 +295,7 @@ public class TrieLogHelper {
   @VisibleForTesting
   void validatePruneConfiguration(final DataStorageConfiguration config) {
     checkArgument(
-        config.getDiffBasedMaxLayersToLoad()
+        config.getDiffbasedMaxLayersToLoad()
             >= DataStorageConfiguration.MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT,
         String.format(
             DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
@@ -307,14 +307,14 @@ public class TrieLogHelper {
                 + "=%d must be greater than 0",
             config.getDiffbasedTrieLogPruningWindowSize()));
     checkArgument(
-        config.getDiffbasedTrieLogPruningWindowSize() > config.getDiffBasedMaxLayersToLoad(),
+        config.getDiffbasedTrieLogPruningWindowSize() > config.getDiffbasedMaxLayersToLoad(),
         String.format(
             DataStorageOptions.DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE
                 + "=%d must be greater than "
                 + DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
                 + "=%d",
             config.getDiffbasedTrieLogPruningWindowSize(),
-            config.getDiffBasedMaxLayersToLoad()));
+            config.getDiffbasedMaxLayersToLoad()));
   }
 
   private void saveTrieLogsInFile(

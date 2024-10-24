@@ -57,7 +57,7 @@ public interface DataStorageConfiguration {
 
   DataStorageFormat getDataStorageFormat();
 
-  Long getDiffBasedMaxLayersToLoad();
+  Long getDiffbasedMaxLayersToLoad();
 
   @Value.Default
   default boolean getDiffbasedLimitTrieLogsEnabled() {

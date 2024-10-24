@@ -1448,7 +1448,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getDiffBasedMaxLayersToLoad()).isEqualTo(11);
+    assertThat(dataStorageConfiguration.getDiffbasedMaxLayersToLoad()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }

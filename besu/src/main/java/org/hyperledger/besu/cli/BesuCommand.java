@@ -2718,7 +2718,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())
         && getDataStorageConfiguration().getDiffbasedLimitTrieLogsEnabled()) {
       builder.setLimitTrieLogsEnabled();
-      builder.setTrieLogRetentionLimit(getDataStorageConfiguration().getDiffBasedMaxLayersToLoad());
+      builder.setTrieLogRetentionLimit(getDataStorageConfiguration().getDiffbasedMaxLayersToLoad());
       builder.setTrieLogsPruningWindowSize(
           getDataStorageConfiguration().getDiffbasedTrieLogPruningWindowSize());
     }

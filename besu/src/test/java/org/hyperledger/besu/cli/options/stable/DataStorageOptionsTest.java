@@ -81,7 +81,7 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogRetentionLimitOption() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getDiffBasedMaxLayersToLoad())
+            assertThat(dataStorageConfiguration.getDiffbasedMaxLayersToLoad())
                 .isEqualTo(MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT + 1),
         "--bonsai-limit-trie-logs-enabled",
         "--bonsai-historical-block-limit",
@@ -92,7 +92,7 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogRetentionLimitOption_boundaryTest() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getDiffBasedMaxLayersToLoad())
+            assertThat(dataStorageConfiguration.getDiffbasedMaxLayersToLoad())
                 .isEqualTo(MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT),
         "--bonsai-limit-trie-logs-enabled",
         "--bonsai-historical-block-limit",
