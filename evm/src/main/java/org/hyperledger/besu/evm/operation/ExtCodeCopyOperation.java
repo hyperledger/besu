@@ -103,7 +103,6 @@ public class ExtCodeCopyOperation extends AbstractOperation {
       }
     }
 
-    // TODO get account and get code before cost checking only for verkle ? maybe move this call
     final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
     final long cost =

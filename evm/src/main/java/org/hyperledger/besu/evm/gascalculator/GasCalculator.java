@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.gascalculator;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -43,7 +42,6 @@ import org.hyperledger.besu.evm.precompile.SHA256PrecompiledContract;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -308,8 +306,7 @@ public interface GasCalculator {
    */
   long initcodeCost(final int initCodeLength);
 
-  default long initcodeStatelessCost(
-      final MessageFrame frame, final Address address, final Wei value) {
+  default long proofOfAbsenceCost(final MessageFrame frame, final Address address) {
     return 0;
   }
 
@@ -365,11 +362,11 @@ public interface GasCalculator {
    *
    * @param frame The current frame
    * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
-   * @param maybeAddress targeted address
+   * @param address targeted address
    * @return the cost for executing the balance operation
    */
-  long getBalanceOperationGasCost(
-      MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress);
+  long balanceOperationGasCost(
+      MessageFrame frame, final boolean accountIsWarm, final Address address);
 
   /**
    * Returns the cost for executing a {@link BlockHashOperation}.
@@ -422,22 +419,22 @@ public interface GasCalculator {
    *
    * @param frame The current frame
    * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
-   * @param maybeAddress targeted address
+   * @param address targeted address
    * @return the cost for executing the external code hash operation
    */
   long extCodeHashOperationGasCost(
-      final MessageFrame frame, final boolean accountIsWarm, Optional<Address> maybeAddress);
+      final MessageFrame frame, final boolean accountIsWarm, Address address);
 
   /**
    * Returns the cost for executing a {@link ExtCodeSizeOperation}.
    *
    * @param frame The current frame
    * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
-   * @param maybeAddress targeted address
+   * @param address targeted address
    * @return the cost for executing the external code size operation
    */
-  long getExtCodeSizeOperationGasCost(
-      MessageFrame frame, final boolean accountIsWarm, Optional<Address> maybeAddress);
+  long extCodeSizeOperationGasCost(
+      MessageFrame frame, final boolean accountIsWarm, Address address);
 
   /**
    * Returns the cost for executing a {@link JumpDestOperation}.
@@ -516,7 +513,7 @@ public interface GasCalculator {
    *
    * @return the cost for executing the storage load operation
    */
-  long getSloadOperationGasCost(MessageFrame frame, UInt256 key, final boolean slotIsWarm);
+  long sloadOperationGasCost(MessageFrame frame, UInt256 key, final boolean slotIsWarm);
 
   /**
    * Returns the cost for an SSTORE operation.
@@ -748,17 +745,6 @@ public interface GasCalculator {
    * @return the gas cost
    */
   default long delegatedCodeResolutionGasCost(final boolean isWarm) {
-    return 0L;
-  }
-
-  /**
-   * Compute access events cost of a transaction
-   *
-   * @param transaction transaction
-   * @return gas cost after computing all access events
-   */
-  default long computeBaseAccessEventsCost(
-      final AccessWitness accessWitness, final Transaction transaction) {
     return 0L;
   }
 

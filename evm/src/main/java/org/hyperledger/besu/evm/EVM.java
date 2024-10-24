@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.EOFLayout;
@@ -217,13 +218,17 @@ public class EVM {
         opcode = code[pc] & 0xff;
         currentOperation = operationArray[opcode];
 
-        if (!frame.wasCreatedInTransaction(frame.getContractAddress())) {
-          long statelessGas =
-              frame
-                  .getAccessWitness()
-                  .touchCodeChunks(frame.getContractAddress(), frame.getPC(), 1, code.length);
-          frame.decrementRemainingGas(statelessGas);
-        }
+        final Address contractAddress = frame.getContractAddress();
+        long statelessGas =
+            frame
+                .getAccessWitness()
+                .touchCodeChunks(
+                    contractAddress,
+                    frame.wasCreatedInTransaction(contractAddress),
+                    frame.getPC(),
+                    1,
+                    code.length);
+        frame.decrementRemainingGas(statelessGas);
 
       } catch (ArrayIndexOutOfBoundsException aiiobe) {
         opcode = 0;

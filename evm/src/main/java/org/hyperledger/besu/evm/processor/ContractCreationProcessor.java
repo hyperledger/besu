@@ -99,6 +99,9 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       Address contractAddress = frame.getContractAddress();
 
       final MutableAccount contract = frame.getWorldUpdater().getOrCreate(contractAddress);
+      long statelessGasCost =
+          evm.getGasCalculator().proofOfAbsenceCost(frame, contract.getAddress());
+      frame.decrementRemainingGas(statelessGasCost);
       if (accountExists(contract)) {
         LOG.trace(
             "Contract creation error: account has already been created for address {}",

@@ -24,12 +24,8 @@ import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.OverflowException;
-import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper;
-
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -65,64 +61,49 @@ public class ExtCodeHashOperation extends AbstractOperation {
    * Cost of Ext code hash operation.
    *
    * @param frame the current frame
-   * @param maybeAddress the address to use
+   * @param address the address to use
    * @param accountIsWarm the account is warm
    * @return the long
    */
   protected long cost(
-      final MessageFrame frame, final Optional<Address> maybeAddress, final boolean accountIsWarm) {
-    return gasCalculator().extCodeHashOperationGasCost(frame, accountIsWarm, maybeAddress);
+      final MessageFrame frame, final Address address, final boolean accountIsWarm) {
+    return gasCalculator().extCodeHashOperationGasCost(frame, accountIsWarm, address);
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final Address address;
-    try {
-      address = Words.toAddress(frame.popStackItem());
-    } catch (final UnderflowException ufe) {
-      // TODO not sure about this case, we need to check what is the gas cost in case of underflow
-      // exception
-      return new OperationResult(
-          cost(frame, Optional.empty(), true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    final Address address = Words.toAddress(frame.popStackItem());
+    final boolean accountIsWarm =
+        frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
+    final long cost = cost(frame, address, accountIsWarm);
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
-    try {
-      final boolean accountIsWarm =
-          frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-      final long cost = cost(frame, Optional.of(address), accountIsWarm);
-      if (frame.getRemainingGas() < cost) {
-        return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+
+    final Account account = frame.getWorldUpdater().get(address);
+
+    if (account != null) {
+      final DelegatedCodeGasCostHelper.Result result =
+          deductDelegatedCodeGasCost(frame, gasCalculator(), account);
+      if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
+        return new Operation.OperationResult(
+            result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
       }
+    }
 
-      final Account account = frame.getWorldUpdater().get(address);
-
-      if (account != null) {
-        final DelegatedCodeGasCostHelper.Result result =
-            deductDelegatedCodeGasCost(frame, gasCalculator(), account);
-        if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-          return new Operation.OperationResult(
-              result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
-        }
-      }
-
-      if (account == null || account.isEmpty()) {
-        frame.pushStackItem(Bytes.EMPTY);
+    if (account == null || account.isEmpty()) {
+      frame.pushStackItem(Bytes.EMPTY);
+    } else {
+      final Bytes code = account.getCode();
+      if (enableEIP3540
+          && code.size() >= 2
+          && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
+          && code.get(1) == 0) {
+        frame.pushStackItem(EOF_REPLACEMENT_HASH);
       } else {
-        final Bytes code = account.getCode();
-        if (enableEIP3540
-            && code.size() >= 2
-            && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
-            && code.get(1) == 0) {
-          frame.pushStackItem(EOF_REPLACEMENT_HASH);
-        } else {
-          frame.pushStackItem(account.getCodeHash());
-        }
+        frame.pushStackItem(account.getCodeHash());
       }
-      return new OperationResult(cost, null);
-    } catch (final OverflowException ofe) {
-      // TODO not sure about this case, we need to check what is the gas cost in case of overflow
-      // exception
-      return new OperationResult(
-          cost(frame, Optional.of(address), true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
+    return new OperationResult(cost, null);
   }
 }
