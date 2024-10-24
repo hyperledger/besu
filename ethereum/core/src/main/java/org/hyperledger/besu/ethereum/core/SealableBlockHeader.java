@@ -166,9 +166,9 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
   }
 
   /**
-   * Returns the block requests root hash.
+   * Returns the block requests hash.
    *
-   * @return the block requests root hash
+   * @return the block requests hash
    */
   public Optional<Hash> getRequestsHash() {
     return Optional.ofNullable(requestsHash);

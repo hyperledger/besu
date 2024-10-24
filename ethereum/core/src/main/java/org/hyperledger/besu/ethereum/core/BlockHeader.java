@@ -92,6 +92,19 @@ public class BlockHeader extends SealableBlockHeader
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
   }
 
+  public static boolean hasEmptyBlock(final BlockHeader blockHeader) {
+    return blockHeader.getOmmersHash().equals(Hash.EMPTY_LIST_HASH)
+        && blockHeader.getTransactionsRoot().equals(Hash.EMPTY_TRIE_HASH)
+        && blockHeader
+            .getWithdrawalsRoot()
+            .map(wsRoot -> wsRoot.equals(Hash.EMPTY_TRIE_HASH))
+            .orElse(true)
+        && blockHeader
+            .getRequestsHash()
+            .map(reqHash -> reqHash.equals(Hash.EMPTY_REQUESTS_HASH))
+            .orElse(true);
+  }
+
   /**
    * Returns the block mixed hash.
    *

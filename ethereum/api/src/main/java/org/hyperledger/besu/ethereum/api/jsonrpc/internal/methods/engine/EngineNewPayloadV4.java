@@ -72,7 +72,7 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
           "Missing parent beacon block root field");
     } else if (maybeRequestsParam.isEmpty()) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_REQUESTS_PARAMS, "Missing execution requests field");
+          RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS, "Missing execution requests field");
     } else {
       return ValidationResult.valid();
     }

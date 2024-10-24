@@ -35,12 +35,6 @@ class MainnetRequestsValidatorTest {
   }
 
   @Test
-  void validateFalseWhenEmptyListOfRequests() {
-    MainnetRequestsValidator validator = new MainnetRequestsValidator();
-    assertFalse(validator.validate(Optional.of(List.of())));
-  }
-
-  @Test
   void validateFalseWhenRequestsNotInOrder() {
     MainnetRequestsValidator validator = new MainnetRequestsValidator();
     List<Request> requests =
@@ -48,16 +42,6 @@ class MainnetRequestsValidatorTest {
             new Request(RequestType.WITHDRAWAL, Bytes.of(3)),
             new Request(RequestType.DEPOSIT, Bytes.of(1)),
             new Request(RequestType.CONSOLIDATION, Bytes.of(2)));
-    assertFalse(validator.validate(Optional.of(requests)));
-  }
-
-  @Test
-  void validateFalseWhenNotAllRequestTypesAreContained() {
-    MainnetRequestsValidator validator = new MainnetRequestsValidator();
-    List<Request> requests =
-        List.of(
-            new Request(RequestType.DEPOSIT, Bytes.of(1)),
-            new Request(RequestType.WITHDRAWAL, Bytes.of(2)));
     assertFalse(validator.validate(Optional.of(requests)));
   }
 

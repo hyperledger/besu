@@ -56,7 +56,8 @@ public class SystemCallProcessor {
    * @param blockHeader the current block header.
    * @param operationTracer the operation tracer for tracing EVM operations.
    * @param blockHashLookup the block hash lookup function.
-   * @return the output data from the call
+   * @return the output data from the call. If no code exists at the callAddress then an empty Bytes
+   *     is returned.
    */
   public Bytes process(
       final Address callAddress,
@@ -69,7 +70,7 @@ public class SystemCallProcessor {
     final Account maybeContract = worldState.get(callAddress);
     if (maybeContract == null) {
       LOG.trace("System call address not found {}", callAddress);
-      return null;
+      return Bytes.EMPTY;
     }
 
     final AbstractMessageProcessor messageProcessor =

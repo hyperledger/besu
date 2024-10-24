@@ -14,27 +14,26 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
-import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
+import com.google.common.collect.Ordering;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Validates requests within a block against a set of predefined validators. This class delegates
  * the validation of requests of specific types to corresponding validators. It ensures that
- * requests are properly ordered, have a valid root, and meet the criteria defined by their
+ * requests are properly ordered, have a valid hash, and meet the criteria defined by their
  * validators.
  */
 public class MainnetRequestsValidator implements RequestsValidator {
   private static final Logger LOG = LoggerFactory.getLogger(MainnetRequestsValidator.class);
 
   /**
-   * Validates a block's requests by ensuring they are correctly ordered, have a valid root, and
+   * Validates a block's requests by ensuring they are correctly ordered, have a valid hash, and
    * pass their respective type-specific validations.
    *
    * @param maybeRequests The list of requests to be validated.
@@ -52,21 +51,10 @@ public class MainnetRequestsValidator implements RequestsValidator {
       return false;
     }
 
-    if (!allRequestTypesAreContained(maybeRequests.get())) {
-      LOG.warn("Requests must contain all request types");
-      return false;
-    }
-
     return true;
   }
 
   private static boolean isRequestOrderValid(final List<Request> requests) {
-    return IntStream.range(0, requests.size() - 1)
-        .allMatch(i -> requests.get(i).getType().compareTo(requests.get(i + 1).getType()) <= 0);
-  }
-
-  private static boolean allRequestTypesAreContained(final List<Request> requests) {
-    return requests.stream().map(Request::getType).distinct().count()
-        == RequestType.values().length;
+    return Ordering.natural().onResultOf(Request::getType).isOrdered(requests);
   }
 }

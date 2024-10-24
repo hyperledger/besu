@@ -143,7 +143,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcRequestException(
           "Invalid execution request parameters (index 3)",
-          RpcErrorType.INVALID_REQUESTS_PARAMS,
+          RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS,
           e);
     }
 
@@ -202,13 +202,13 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
           INVALID,
-          "Invalid requests");
+          "Invalid execution requests");
     }
 
     if (!getRequestsValidator(
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validate(maybeRequests)) {
-      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_REQUESTS_PARAMS);
+      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
     }
 
     if (mergeContext.get().isSyncing()) {
