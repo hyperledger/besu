@@ -16,9 +16,14 @@ package org.hyperledger.besu.ethereum.eth.peervalidation;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,17 +33,37 @@ public class ClassicForkPeerValidator extends AbstractPeerBlockValidator {
 
   ClassicForkPeerValidator(
       final ProtocolSchedule protocolSchedule,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final long daoBlockNumber,
       final long chainHeightEstimationBuffer) {
-    super(protocolSchedule, metricsSystem, daoBlockNumber, chainHeightEstimationBuffer);
+    super(
+        protocolSchedule,
+        peerTaskExecutor,
+        synchronizerConfiguration,
+        currentProtocolSpecSupplier,
+        metricsSystem,
+        daoBlockNumber,
+        chainHeightEstimationBuffer);
   }
 
   public ClassicForkPeerValidator(
       final ProtocolSchedule protocolSchedule,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final long daoBlockNumber) {
-    this(protocolSchedule, metricsSystem, daoBlockNumber, DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
+    this(
+        protocolSchedule,
+        peerTaskExecutor,
+        synchronizerConfiguration,
+        currentProtocolSpecSupplier,
+        metricsSystem,
+        daoBlockNumber,
+        DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
   }
 
   @Override

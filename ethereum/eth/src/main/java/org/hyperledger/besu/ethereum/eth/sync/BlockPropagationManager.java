@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
@@ -77,6 +78,8 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
+  private final PeerTaskExecutor peerTaskExecutor;
+  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final SyncState syncState;
   private final MetricsSystem metricsSystem;
   private final BlockBroadcaster blockBroadcaster;
@@ -94,6 +97,8 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final SyncState syncState,
       final PendingBlocksManager pendingBlocksManager,
       final MetricsSystem metricsSystem,
@@ -103,6 +108,8 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
         protocolSchedule,
         protocolContext,
         ethContext,
+        peerTaskExecutor,
+        currentProtocolSpecSupplier,
         syncState,
         pendingBlocksManager,
         metricsSystem,
@@ -115,6 +122,8 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final SyncState syncState,
       final PendingBlocksManager pendingBlocksManager,
       final MetricsSystem metricsSystem,
@@ -124,6 +133,8 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.peerTaskExecutor = peerTaskExecutor;
+    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.metricsSystem = metricsSystem;
     this.blockBroadcaster = blockBroadcaster;
     this.syncState = syncState;
@@ -536,6 +547,9 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
         RetryingGetBlockFromPeersTask.create(
             protocolSchedule,
             ethContext,
+            peerTaskExecutor,
+            config,
+            currentProtocolSpecSupplier,
             metricsSystem,
             Math.max(1, ethContext.getEthPeers().peerCount()),
             maybeBlockHash,
