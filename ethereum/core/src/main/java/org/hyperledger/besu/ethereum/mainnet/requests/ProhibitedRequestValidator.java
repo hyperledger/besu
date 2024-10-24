@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,17 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.List;
 import java.util.Optional;
 
-/** Interface for request validation logic. */
-public interface RequestValidator {
-  boolean validate(
-      final Block block, final List<Request> request, final List<TransactionReceipt> receipts);
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-  boolean validateParameter(final Optional<List<Request>> request);
+public class ProhibitedRequestValidator implements RequestsValidator {
+  private static final Logger LOG = LoggerFactory.getLogger(MainnetRequestsValidator.class);
+
+  @Override
+  public boolean validate(final Optional<List<Request>> maybeRequests) {
+    boolean hasRequests = maybeRequests.isPresent();
+
+    if (hasRequests) {
+      LOG.warn("There are requests but requests are prohibited");
+    }
+
+    return !hasRequests;
+  }
 }
