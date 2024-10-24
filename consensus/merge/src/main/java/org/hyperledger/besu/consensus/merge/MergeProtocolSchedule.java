@@ -101,7 +101,7 @@ public class MergeProtocolSchedule {
 
     return new ProtocolScheduleBuilder(
             config,
-            DEFAULT_CHAIN_ID,
+            Optional.of(DEFAULT_CHAIN_ID),
             new ProtocolSpecAdapters(postMergeModifications),
             privacyParameters,
             isRevertReasonEnabled,

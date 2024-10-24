@@ -24,7 +24,12 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-/** A ProtocolSchedule which behaves similarly to MainNet, but with a much reduced difficulty. */
+import java.util.Optional;
+
+/**
+ * A ProtocolSchedule which behaves similarly to pre-merge MainNet, but with a much reduced
+ * difficulty.
+ */
 public class FixedDifficultyProtocolSchedule {
 
   public static ProtocolSchedule create(
@@ -38,6 +43,7 @@ public class FixedDifficultyProtocolSchedule {
       final MetricsSystem metricsSystem) {
     return new ProtocolScheduleBuilder(
             config,
+            Optional.empty(),
             ProtocolSpecAdapters.create(
                 0,
                 builder ->

@@ -182,7 +182,7 @@ public class QbftBlockHeightManagerTest {
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(
             new StubGenesisConfigOptions(),
-            BigInteger.ONE,
+            Optional.of(BigInteger.ONE),
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,

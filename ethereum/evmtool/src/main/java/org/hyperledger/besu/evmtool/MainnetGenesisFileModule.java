@@ -187,7 +187,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
     return () ->
         new ProtocolScheduleBuilder(
                 options,
-                options.getChainId().orElse(BigInteger.ONE),
+                options.getChainId(),
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,

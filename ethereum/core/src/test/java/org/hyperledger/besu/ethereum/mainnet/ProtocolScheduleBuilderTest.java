@@ -62,7 +62,7 @@ class ProtocolScheduleBuilderTest {
     builder =
         new ProtocolScheduleBuilder(
             configOptions,
-            CHAIN_ID,
+            Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
@@ -257,7 +257,7 @@ class ProtocolScheduleBuilderTest {
     final ProtocolScheduleBuilder builder =
         new ProtocolScheduleBuilder(
             configOptions,
-            CHAIN_ID,
+            Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(blockNumber, modifier),
             new PrivacyParameters(),
             false,

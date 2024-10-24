@@ -304,7 +304,7 @@ abstract class AbstractBlockCreatorTest {
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
                         genesisConfigFile.getConfigOptions(),
-                        BigInteger.valueOf(42),
+                        Optional.of(BigInteger.valueOf(42)),
                         protocolSpecAdapters,
                         PrivacyParameters.DEFAULT,
                         false,

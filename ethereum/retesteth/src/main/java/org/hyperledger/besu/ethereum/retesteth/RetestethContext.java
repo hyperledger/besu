@@ -270,7 +270,7 @@ public class RetestethContext {
             syncState,
             transactionPoolConfiguration,
             new BlobCache(),
-            MiningParameters.newDefault());
+            miningParameters);
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Genesis Block {} ", genesisState.getBlock());

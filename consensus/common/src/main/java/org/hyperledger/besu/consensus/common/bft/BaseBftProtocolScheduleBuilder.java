@@ -38,6 +38,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
@@ -90,7 +91,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
     final ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
                 config,
-                DEFAULT_CHAIN_ID,
+                Optional.of(DEFAULT_CHAIN_ID),
                 specAdapters,
                 privacyParameters,
                 isRevertReasonEnabled,

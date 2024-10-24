@@ -180,7 +180,7 @@ public class IbftBlockHeightManagerTest {
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(
             new StubGenesisConfigOptions(),
-            BigInteger.ONE,
+            Optional.empty(),
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,

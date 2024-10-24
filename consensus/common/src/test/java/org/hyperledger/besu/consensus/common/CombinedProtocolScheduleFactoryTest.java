@@ -172,7 +172,7 @@ public class CombinedProtocolScheduleFactoryTest {
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(
             genesisConfigOptions,
-            BigInteger.ONE,
+            Optional.of(BigInteger.ONE),
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
