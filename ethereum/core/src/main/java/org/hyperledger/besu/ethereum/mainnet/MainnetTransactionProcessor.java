@@ -286,7 +286,7 @@ public class MainnetTransactionProcessor {
       final TransactionValidationParams transactionValidationParams,
       final PrivateMetadataUpdater privateMetadataUpdater,
       final Wei blobGasPrice) {
-    final EVMWorldUpdater evmWorldUpdater = new EVMWorldUpdater(worldState);
+    final EVMWorldUpdater evmWorldUpdater = new EVMWorldUpdater(worldState, gasCalculator);
     try {
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
@@ -346,12 +346,26 @@ public class MainnetTransactionProcessor {
           throw new RuntimeException("Code delegation processor is required for 7702 transactions");
         }
 
+        //        if (evmWorldUpdater.parentUpdater().isEmpty()) {
+        //          throw new RuntimeException("Code delegation needs the underlying world state");
+        //        }
+
+        // get the underlying world state to commit code delegations without the transaction having
+        // to succeed
+        //        final EVMWorldUpdater parentUpdater =
+        //            (EVMWorldUpdater) evmWorldUpdater.parentUpdater().get();
+
         final CodeDelegationResult codeDelegationResult =
             maybeCodeDelegationProcessor.get().process(evmWorldUpdater, transaction);
         warmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
         codeDelegationRefund =
             gasCalculator.calculateDelegateCodeGasRefund(
                 (codeDelegationResult.alreadyExistingDelegators()));
+
+        evmWorldUpdater.commit();
+
+        // authorizations will always be commited independently if the transaction succeeds or not
+        //        parentUpdater.commit();
       }
 
       final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
@@ -415,7 +429,6 @@ public class MainnetTransactionProcessor {
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .contextVariables(contextVariablesBuilder.build())
-              .accessListWarmAddresses(warmAddressList)
               .accessListWarmStorage(storageList);
 
       if (transaction.getVersionedHashes().isPresent()) {
@@ -439,11 +452,17 @@ public class MainnetTransactionProcessor {
                 .contract(contractAddress)
                 .inputData(initCodeBytes.slice(code.getSize()))
                 .code(code)
+                .accessListWarmAddresses(warmAddressList)
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
         final Optional<Account> maybeContract = Optional.ofNullable(evmWorldUpdater.get(to));
+
+        if (maybeContract.isPresent() && maybeContract.get().hasDelegatedCode()) {
+          warmAddressList.add(maybeContract.get().delegatedCodeAddress().get());
+        }
+
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.MESSAGE_CALL)
@@ -454,6 +473,7 @@ public class MainnetTransactionProcessor {
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
                         .orElse(CodeV0.EMPTY_CODE))
+                .accessListWarmAddresses(warmAddressList)
                 .build();
       }
       Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();

@@ -25,9 +25,9 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class CodeDelegationEncoder {
+public class CodeDelegationTransactionEncoder {
 
-  private CodeDelegationEncoder() {
+  private CodeDelegationTransactionEncoder() {
     // private constructor
   }
 
@@ -49,7 +49,7 @@ public class CodeDelegationEncoder {
       final CodeDelegation payload, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     encodeAuthorizationDetails(payload, rlpOutput);
-    rlpOutput.writeIntScalar(payload.signature().getRecId());
+    rlpOutput.writeUnsignedByte(payload.signature().getRecId() & 0xFF);
     rlpOutput.writeBigIntegerScalar(payload.signature().getR());
     rlpOutput.writeBigIntegerScalar(payload.signature().getS());
     rlpOutput.endList();

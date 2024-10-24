@@ -95,6 +95,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_REMOTE_CAPABILITIES_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid remote capabilities params"),
   INVALID_REWARD_PERCENTILES_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid reward percentiles params"),
+  INVALID_REQUESTS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid requests params"),
   INVALID_SEALER_ID_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid sealer ID params"),
   INVALID_STORAGE_KEYS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid storage keys params"),
   INVALID_SUBSCRIPTION_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid subscription params"),
