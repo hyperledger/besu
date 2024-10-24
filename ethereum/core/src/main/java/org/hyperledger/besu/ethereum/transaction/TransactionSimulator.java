@@ -170,7 +170,8 @@ public class TransactionSimulator {
    * close actions.
    *
    * @param callParams The call parameters for the transaction.
-   * @param maybeStateOverrides The map of state overrides to apply to the state for this transaction.
+   * @param maybeStateOverrides The map of state overrides to apply to the state for this
+   *     transaction.
    * @param transactionValidationParams The validation parameters for the transaction.
    * @param operationTracer The tracer for capturing operations during processing.
    * @param preWorldStateCloseGuard The pre-worldstate close guard for executing pre-close actions.

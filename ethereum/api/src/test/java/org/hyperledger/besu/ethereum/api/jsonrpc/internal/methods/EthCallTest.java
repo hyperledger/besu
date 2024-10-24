@@ -117,7 +117,7 @@ public class EthCallTest {
   @Test
   public void someAccountOverrides() {
     Map<Address, AccountOverride> expectedOverrides = new HashMap<>();
-    AccountOverride override = new AccountOverride.Builder().nonce(88L).build();
+    AccountOverride override = new AccountOverride.Builder().withNonce(88L).build();
     final Address address = Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3");
     expectedOverrides.put(address, override);
     System.out.println(override.toString());

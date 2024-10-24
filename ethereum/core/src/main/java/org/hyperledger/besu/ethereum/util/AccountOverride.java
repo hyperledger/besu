@@ -19,16 +19,22 @@ import org.hyperledger.besu.datatypes.Wei;
 import java.util.Map;
 import java.util.Optional;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // similar to AccountDiff
 // BUT
 // there are more fields that need to be added
 // stateDiff
 // movePrecompileToAddress
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonDeserialize(builder = AccountOverride.Builder.class)
 public class AccountOverride {
+  private static final Logger LOG = LoggerFactory.getLogger(AccountOverride.class);
+
   private final Optional<Wei> balance;
   private final Optional<Long> nonce;
   private final Optional<String> code;
@@ -45,22 +51,18 @@ public class AccountOverride {
     this.state = state;
   }
 
-  @JsonGetter("balance")
   public Optional<Wei> getBalance() {
     return balance;
   }
 
-  @JsonGetter("nonce")
   public Optional<Long> getNonce() {
     return nonce;
   }
 
-  @JsonGetter("code")
   public Optional<String> getCode() {
     return code;
   }
 
-  @JsonGetter("state")
   public Optional<Map<String, String>> getState() {
     return state;
   }
@@ -74,22 +76,22 @@ public class AccountOverride {
     /** Default constructor. */
     public Builder() {}
 
-    public Builder balance(final Wei balance) {
+    public Builder withBalance(final Wei balance) {
       this.balance = Optional.ofNullable(balance);
       return this;
     }
 
-    public Builder nonce(final Long nonce) {
+    public Builder withNonce(final Long nonce) {
       this.nonce = Optional.ofNullable(nonce);
       return this;
     }
 
-    public Builder code(final String code) {
+    public Builder withCode(final String code) {
       this.code = Optional.ofNullable(code);
       return this;
     }
 
-    public Builder stateDiff(final Map<String, String> state) {
+    public Builder withStateDiff(final Map<String, String> state) {
       this.state = Optional.ofNullable(state);
       return this;
     }
@@ -97,6 +99,15 @@ public class AccountOverride {
     public AccountOverride build() {
       return new AccountOverride(balance, nonce, code, state);
     }
+  }
+
+  @JsonAnySetter
+  public void withUnknownProperties(final String key, final Object value) {
+    LOG.debug(
+        "unknown property - {} with value - {} and type - {} caught during serialization",
+        key,
+        value,
+        value != null ? value.getClass() : "NULL");
   }
 
   @Override

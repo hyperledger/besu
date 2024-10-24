@@ -115,7 +115,7 @@ public class TransactionSimulatorTest {
   @Test
   public void testOverrides_whenBalanceOverrides_balanceIsUpdated() {
     MutableAccount mutableAccount = mock(MutableAccount.class);
-    AccountOverride.Builder builder = new AccountOverride.Builder().balance(Wei.of(99));
+    AccountOverride.Builder builder = new AccountOverride.Builder().withBalance(Wei.of(99));
     AccountOverride override = builder.build();
     transactionSimulator.applyOverrides(mutableAccount, override);
     verify(mutableAccount).setBalance(eq(Wei.of(99)));
