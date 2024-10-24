@@ -1421,7 +1421,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateOptions() {
-    validateRequiredOptions();
     issueOptionWarnings();
     validateP2PInterface(p2PDiscoveryOptions.p2pInterface);
     validateMiningParams();
@@ -1473,19 +1472,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validateDataStorageOptions() {
     dataStorageOptions.validate(commandLine);
-  }
-
-  private void validateRequiredOptions() {
-    commandLine
-        .getCommandSpec()
-        .options()
-        .forEach(
-            option -> {
-              if (option.required() && option.stringValues().isEmpty()) {
-                throw new ParameterException(
-                    this.commandLine, "Missing required option: " + option.longestName());
-              }
-            });
   }
 
   private void validateMiningParams() {
