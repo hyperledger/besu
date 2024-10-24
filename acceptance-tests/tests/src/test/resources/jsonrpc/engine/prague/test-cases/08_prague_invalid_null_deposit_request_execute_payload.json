@@ -33,7 +33,7 @@
     "id" : 67,
     "error" : {
       "code" : -32602,
-      "message" : "Invalid requests params",
+      "message" : "Invalid execution requests params",
       "data" : "Missing execution requests field"
     }
   },
