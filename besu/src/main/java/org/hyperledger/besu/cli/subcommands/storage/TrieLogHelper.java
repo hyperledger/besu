@@ -15,9 +15,9 @@
 package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.cli.options.stable.DataStorageOptions.BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.cli.options.stable.DataStorageOptions.DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
 import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.datatypes.Hash;
@@ -73,7 +73,7 @@ public class TrieLogHelper {
 
     validatePruneConfiguration(config);
 
-    final long layersToRetain = config.getBonsaiMaxLayersToLoad();
+    final long layersToRetain = config.getDiffbasedMaxLayersToLoad();
 
     final long chainHeight = blockchain.getChainHeadBlockNumber();
 
@@ -102,7 +102,7 @@ public class TrieLogHelper {
     // Should only be layersToRetain left but loading extra just in case of an unforeseen bug
     final long countAfterPrune =
         rootWorldStateStorage
-            .streamTrieLogKeys(layersToRetain + DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE)
+            .streamTrieLogKeys(layersToRetain + DEFAULT_DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE)
             .count();
     if (countAfterPrune == layersToRetain) {
       if (deleteFiles(batchFileNameBase, numberOfBatches)) {
@@ -116,7 +116,7 @@ public class TrieLogHelper {
           String.format(
               "Remaining trie logs (%d) did not match %s (%d). Trie logs backup files (in %s) have not been deleted, it is safe to rerun the subcommand.",
               countAfterPrune,
-              BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
+              DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
               layersToRetain,
               batchFileNameBase));
     }
@@ -231,7 +231,7 @@ public class TrieLogHelper {
     // plus extra threshold to account forks and orphans
     final long clampedCountBeforePruning =
         rootWorldStateStorage
-            .streamTrieLogKeys(layersToRetain + DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE)
+            .streamTrieLogKeys(layersToRetain + DEFAULT_DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE)
             .count();
     if (clampedCountBeforePruning < layersToRetain) {
       throw new IllegalArgumentException(
@@ -295,25 +295,26 @@ public class TrieLogHelper {
   @VisibleForTesting
   void validatePruneConfiguration(final DataStorageConfiguration config) {
     checkArgument(
-        config.getBonsaiMaxLayersToLoad()
-            >= DataStorageConfiguration.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT,
+        config.getDiffbasedMaxLayersToLoad()
+            >= DataStorageConfiguration.MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT,
         String.format(
-            BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
-            DataStorageConfiguration.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
+            DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
+            DataStorageConfiguration.MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT));
     checkArgument(
-        config.getBonsaiTrieLogPruningWindowSize() > 0,
+        config.getDiffbasedTrieLogPruningWindowSize() > 0,
         String.format(
-            DataStorageOptions.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
-            config.getBonsaiTrieLogPruningWindowSize()));
+            DataStorageOptions.DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE
+                + "=%d must be greater than 0",
+            config.getDiffbasedTrieLogPruningWindowSize()));
     checkArgument(
-        config.getBonsaiTrieLogPruningWindowSize() > config.getBonsaiMaxLayersToLoad(),
+        config.getDiffbasedTrieLogPruningWindowSize() > config.getDiffbasedMaxLayersToLoad(),
         String.format(
-            DataStorageOptions.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
+            DataStorageOptions.DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE
                 + "=%d must be greater than "
-                + BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
+                + DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
                 + "=%d",
-            config.getBonsaiTrieLogPruningWindowSize(),
-            config.getBonsaiMaxLayersToLoad()));
+            config.getDiffbasedTrieLogPruningWindowSize(),
+            config.getDiffbasedMaxLayersToLoad()));
   }
 
   private void saveTrieLogsInFile(

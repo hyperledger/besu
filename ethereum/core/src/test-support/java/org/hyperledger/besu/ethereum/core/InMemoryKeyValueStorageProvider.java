@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -126,7 +126,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     final DataStorageConfiguration verkleDataStorageConfig =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(DataStorageFormat.VERKLE)
-            .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
             .unstable(DataStorageConfiguration.Unstable.DEFAULT)
             .build();
     return new VerkleWorldStateProvider(

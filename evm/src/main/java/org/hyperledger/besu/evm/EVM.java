@@ -213,16 +213,15 @@ public class EVM {
       int opcode;
       int pc = frame.getPC();
 
-      long statelessGas;
       try {
         opcode = code[pc] & 0xff;
         currentOperation = operationArray[opcode];
 
         if (!frame.wasCreatedInTransaction(frame.getContractAddress())) {
-          statelessGas =
+          long statelessGas =
               frame
                   .getAccessWitness()
-                  .touchCodeChunks(frame.getContractAddress(), pc, 1, code.length);
+                  .touchCodeChunks(frame.getContractAddress(), frame.getPC(), 1, code.length);
           frame.decrementRemainingGas(statelessGas);
         }
 

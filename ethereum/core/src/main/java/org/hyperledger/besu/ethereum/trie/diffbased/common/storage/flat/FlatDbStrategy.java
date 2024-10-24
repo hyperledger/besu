@@ -14,13 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-
-import kotlin.Pair;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.rlp.RLP;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -37,7 +30,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 
 /**
  * This class represents a FlatDbReaderStrategy, which is responsible for reading and writing data
@@ -120,6 +116,34 @@ public abstract class FlatDbStrategy {
     codeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
   }
 
+  /*
+   * Puts the account data for the given account hash, using the world state root hash supplier and node loader.
+   */
+  public abstract void putFlatAccount(
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Bytes accountValue);
+
+  public abstract void removeFlatAccount(
+      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash);
+
+  /*
+   * Puts the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
+  public abstract void putFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash slotHash,
+      final Bytes storage);
+
+  /*
+   * Removes the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
+  public abstract void removeFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash slotHash);
+
   public abstract void clearAll(final SegmentedKeyValueStorage storage);
 
   public abstract void resetOnResync(final SegmentedKeyValueStorage storage);
@@ -182,7 +206,7 @@ public abstract class FlatDbStrategy {
       final SegmentedKeyValueStorage storage,
       final Hash accountHash,
       final Bytes startKeyHash,
-      final Function<Bytes, Bytes> valueMapper) ;
+      final Function<Bytes, Bytes> valueMapper);
 
   protected abstract Stream<Pair<Bytes32, Bytes>> storageToPairStream(
       final SegmentedKeyValueStorage storage,

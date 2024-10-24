@@ -17,12 +17,21 @@ package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeHashCodeStorageStrategy;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat.VerkleFlatDbStrategy;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategyProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.StemPreloader;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat.VerkleFlatDbStrategyProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat.VerkleLegacyFlatDbStrategy;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat.VerkleStemFlatDbStrategy;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -37,37 +46,50 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValueStorage
     implements WorldStateKeyValueStorage {
 
+  protected final FlatDbStrategyProvider flatDbStrategyProvider;
+  protected final StemPreloader stemPreloader;
   protected MetricsSystem metricsSystem;
-
-  protected VerkleFlatDbStrategy flatDbStrategy;
+  protected final DataStorageConfiguration dataStorageConfiguration;
 
   public VerkleWorldStateKeyValueStorage(
-      final StorageProvider provider, final MetricsSystem metricsSystem) {
+      final StorageProvider provider,
+      final StemPreloader stemPreloader,
+      final DataStorageConfiguration dataStorageConfiguration,
+      final MetricsSystem metricsSystem) {
     super(
         provider.getStorageBySegmentIdentifiers(List.of(CODE_STORAGE, TRIE_BRANCH_STORAGE)),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
+    this.stemPreloader = stemPreloader;
     this.metricsSystem = metricsSystem;
-    this.flatDbStrategy =
-        new VerkleFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
+    this.dataStorageConfiguration = dataStorageConfiguration;
+    this.flatDbStrategyProvider =
+        new VerkleFlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
+    flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
   }
 
   public VerkleWorldStateKeyValueStorage(
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
+      final StemPreloader stemPreloader,
+      final DataStorageConfiguration dataStorageConfiguration,
       final MetricsSystem metricsSystem) {
     super(composedWorldStateStorage, trieLogStorage);
     this.metricsSystem = metricsSystem;
-    this.flatDbStrategy =
-        new VerkleFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
+    this.dataStorageConfiguration = dataStorageConfiguration;
+    this.flatDbStrategyProvider =
+        new VerkleFlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
+    flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
+    this.stemPreloader = stemPreloader;
   }
 
   @Override
-  public VerkleFlatDbStrategy getFlatDbStrategy() {
-    return flatDbStrategy;
+  public FlatDbStrategy getFlatDbStrategy() {
+    return flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage);
   }
 
   @Override
@@ -77,7 +99,11 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
 
   @Override
   public FlatDbMode getFlatDbMode() {
-    return FlatDbMode.FULL;
+    return flatDbStrategyProvider.getFlatDbMode();
+  }
+
+  public StemPreloader getStemPreloader() {
+    return stemPreloader;
   }
 
   public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
@@ -88,8 +114,34 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     }
   }
 
-  public Optional<Bytes> getStem(final Bytes stem) {
-    return getFlatDbStrategy().getStem(stem, composedWorldStateStorage);
+  public Optional<VerkleAccount> getAccount(
+      final Address address, final DiffBasedWorldView context) {
+    final FlatDbStrategy flatDbStrategy = getFlatDbStrategy();
+    // TODO this code is not 100% clean but legacy flat db will be removed in the future
+    if (flatDbStrategy instanceof VerkleLegacyFlatDbStrategy legacyFlatDbStrategy) {
+      return legacyFlatDbStrategy.getFlatAccount(address, context, composedWorldStateStorage);
+    } else if (flatDbStrategy instanceof VerkleStemFlatDbStrategy stemFlatDbStrategy) {
+      return stemFlatDbStrategy.getFlatAccount(
+          address, context, stemPreloader, composedWorldStateStorage);
+    }
+    return Optional.empty();
+  }
+
+  public Optional<UInt256> getStorageValueByStorageSlotKey(
+      final Address address, final StorageSlotKey storageSlotKey) {
+    final FlatDbStrategy flatDbStrategy = getFlatDbStrategy();
+    // TODO this code is not 100% clean but legacy flat db will be removed in the future
+    if (flatDbStrategy instanceof VerkleLegacyFlatDbStrategy legacyFlatDbStrategy) {
+      return legacyFlatDbStrategy
+          .getFlatStorageValueByStorageSlotKey(address, storageSlotKey, composedWorldStateStorage)
+          .map(UInt256::fromBytes);
+    } else if (flatDbStrategy instanceof VerkleStemFlatDbStrategy stemFlatDbStrategy) {
+      return stemFlatDbStrategy
+          .getFlatStorageValueByStorageSlotKey(
+              address, storageSlotKey, stemPreloader, composedWorldStateStorage)
+          .map(UInt256::fromBytes);
+    }
+    return Optional.empty();
   }
 
   @Override
@@ -102,19 +154,19 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     return new Updater(
         composedWorldStateStorage.startTransaction(),
         trieLogStorage.startTransaction(),
-        flatDbStrategy);
+        getFlatDbStrategy());
   }
 
   public static class Updater implements DiffBasedWorldStateKeyValueStorage.Updater {
 
     private final SegmentedKeyValueStorageTransaction composedWorldStateTransaction;
     private final KeyValueStorageTransaction trieLogStorageTransaction;
-    private final VerkleFlatDbStrategy flatDbStrategy;
+    private final FlatDbStrategy flatDbStrategy;
 
     public Updater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction,
-        final VerkleFlatDbStrategy flatDbStrategy) {
+        final FlatDbStrategy flatDbStrategy) {
 
       this.composedWorldStateTransaction = composedWorldStateTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
@@ -139,6 +191,33 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       }
       flatDbStrategy.putFlatCode(composedWorldStateTransaction, accountHash, codeHash, code);
       return this;
+    }
+
+    public Updater removeAccountInfoState(final Hash accountHash) {
+      flatDbStrategy.removeFlatAccount(composedWorldStateTransaction, accountHash);
+      return this;
+    }
+
+    public Updater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
+      if (accountValue.size() == 0) {
+        // Don't save empty values
+        return this;
+      }
+      flatDbStrategy.putFlatAccount(composedWorldStateTransaction, accountHash, accountValue);
+      return this;
+    }
+
+    public synchronized Updater putStorageValueBySlotHash(
+        final Hash accountHash, final Hash slotHash, final Bytes storage) {
+      flatDbStrategy.putFlatAccountStorageValueByStorageSlotHash(
+          composedWorldStateTransaction, accountHash, slotHash, storage);
+      return this;
+    }
+
+    public synchronized void removeStorageValueBySlotHash(
+        final Hash accountHash, final Hash slotHash) {
+      flatDbStrategy.removeFlatAccountStorageValueByStorageSlotHash(
+          composedWorldStateTransaction, accountHash, slotHash);
     }
 
     @Override

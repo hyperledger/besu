@@ -89,7 +89,8 @@ public class TrieLogSubCommand implements Runnable {
         .besuCommand
         .setupControllerBuilder()
         .dataStorageConfiguration(
-            ImmutableDataStorageConfiguration.copyOf(config).withBonsaiLimitTrieLogsEnabled(false))
+            ImmutableDataStorageConfiguration.copyOf(config)
+                .withDiffbasedLimitTrieLogsEnabled(false))
         .build();
   }
 

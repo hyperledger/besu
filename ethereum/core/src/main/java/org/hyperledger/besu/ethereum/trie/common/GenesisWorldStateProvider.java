@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.VerkleNoOpCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.StemPreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
@@ -52,7 +53,7 @@ public class GenesisWorldStateProvider {
       return createGenesisBonsaiWorldState();
     } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
         == DataStorageFormat.VERKLE) {
-      return createGenesisVerkleWorldState();
+      return createGenesisVerkleWorldState(dataStorageConfiguration);
     } else {
       return createGenesisForestWorldState();
     }
@@ -83,13 +84,16 @@ public class GenesisWorldStateProvider {
         new DiffBasedWorldStateConfig());
   }
 
-  private static MutableWorldState createGenesisVerkleWorldState() {
+  private static MutableWorldState createGenesisVerkleWorldState(
+      final DataStorageConfiguration dataStorageConfiguration) {
     final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage =
         new VerkleWorldStateKeyValueStorage(
             new KeyValueStorageProvider(
                 segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
                 new InMemoryKeyValueStorage(),
                 new NoOpMetricsSystem()),
+            new StemPreloader(),
+            dataStorageConfiguration,
             new NoOpMetricsSystem());
     return new VerkleWorldState(
         verkleWorldStateKeyValueStorage,

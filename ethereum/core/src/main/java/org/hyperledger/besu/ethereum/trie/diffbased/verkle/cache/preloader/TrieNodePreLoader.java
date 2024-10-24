@@ -14,14 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 
-import java.util.List;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -31,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class TrieNodePreLoader implements StorageSubscriber {
 
-  private static final int CACHE_SIZE = 300_000;
+  private static final int CACHE_SIZE = 100_000;
   private final Cache<Bytes, Bytes> nodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(CACHE_SIZE).build();
   private final Cache<Bytes, Optional<Bytes>> stems =
@@ -72,12 +67,8 @@ public class TrieNodePreLoader implements StorageSubscriber {
     if (cachedStem != null) {
       return cachedStem;
     } else {
-      return worldStateKeyValueStorage.getStem(stem);
+      return Optional.empty(); // worldStateKeyValueStorage.getStem(stem);
     }
-  }
-
-  public Optional<List<Bytes32>> getDecodedStem(final Bytes stem) {
-    return getStem(stem).map(this::decodeStemNode);
   }
 
   public void reset() {
@@ -88,18 +79,4 @@ public class TrieNodePreLoader implements StorageSubscriber {
   public void onClearTrie() {
     reset();
   }
-
-  private List<Bytes32> decodeStemNode(final Bytes encodedValues) {
-    RLPInput input = new BytesValueRLPInput(encodedValues, false);
-    input.enterList();
-    input.skipNext(); // depth
-    input.skipNext(); // commitment
-    input.skipNext(); // leftCommitment
-    input.skipNext(); // rightCommitment
-    input.skipNext(); // leftScalar
-    input.skipNext(); // rightScalar
-    return input.readList(
-            rlpInput -> Bytes32.leftPad(rlpInput.readBytes()));
-  }
-
 }

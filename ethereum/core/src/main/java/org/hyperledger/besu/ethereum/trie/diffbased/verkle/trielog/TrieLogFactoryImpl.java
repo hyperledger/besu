@@ -56,7 +56,6 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
         // by default do not persist empty reads of accounts to the trie log
         continue;
       }
-      System.out.println("account " + newAccountValue.getClass());
       layer.addAccountChange(updatedAccount.getKey(), oldAccountValue, newAccountValue);
     }
 

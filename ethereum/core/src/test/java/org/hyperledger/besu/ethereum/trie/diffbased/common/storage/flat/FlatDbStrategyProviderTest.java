@@ -15,10 +15,11 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullBonsaiFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.PartialBonsaiFlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -43,8 +44,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class FlatDbStrategyProviderTest {
-  private final FlatDbStrategyProvider flatDbStrategyProvider =
-      new FlatDbStrategyProvider(new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
+  private final BonsaiFlatDbStrategyProvider flatDbStrategyProvider =
+      new BonsaiFlatDbStrategyProvider(
+          new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
   private final SegmentedKeyValueStorage composedWorldStateStorage =
       new SegmentedInMemoryKeyValueStorage(
           List.of(
@@ -85,14 +87,14 @@ class FlatDbStrategyProviderTest {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(DataStorageFormat.BONSAI)
-            .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiCodeStoredByCodeHashEnabled(codeByHashEnabled)
+                    .diffbasedCodeStoredByCodeHashEnabled(codeByHashEnabled)
                     .build())
             .build();
     final FlatDbStrategyProvider flatDbStrategyProvider =
-        new FlatDbStrategyProvider(new NoOpMetricsSystem(), dataStorageConfiguration);
+        new BonsaiFlatDbStrategyProvider(new NoOpMetricsSystem(), dataStorageConfiguration);
 
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
     final Class<? extends CodeStorageStrategy> expectedCodeStorageClass =
@@ -110,14 +112,14 @@ class FlatDbStrategyProviderTest {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(DataStorageFormat.BONSAI)
-            .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiCodeStoredByCodeHashEnabled(codeByHashEnabled)
+                    .diffbasedCodeStoredByCodeHashEnabled(codeByHashEnabled)
                     .build())
             .build();
     final FlatDbStrategyProvider flatDbStrategyProvider =
-        new FlatDbStrategyProvider(new NoOpMetricsSystem(), dataStorageConfiguration);
+        new BonsaiFlatDbStrategyProvider(new NoOpMetricsSystem(), dataStorageConfiguration);
 
     final SegmentedKeyValueStorageTransaction transaction =
         composedWorldStateStorage.startTransaction();
@@ -140,14 +142,14 @@ class FlatDbStrategyProviderTest {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(DataStorageFormat.BONSAI)
-            .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiCodeStoredByCodeHashEnabled(codeByHashEnabled)
+                    .diffbasedCodeStoredByCodeHashEnabled(codeByHashEnabled)
                     .build())
             .build();
     final FlatDbStrategyProvider flatDbStrategyProvider =
-        new FlatDbStrategyProvider(new NoOpMetricsSystem(), dataStorageConfiguration);
+        new BonsaiFlatDbStrategyProvider(new NoOpMetricsSystem(), dataStorageConfiguration);
 
     final SegmentedKeyValueStorageTransaction transaction =
         composedWorldStateStorage.startTransaction();

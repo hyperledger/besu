@@ -14,11 +14,31 @@
  */
 package org.hyperledger.besu.evm.gascalculator.stateless;
 
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
+
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class NoopAccessWitness extends Eip4762AccessWitness {
+public class NoopAccessWitness implements AccessWitness {
+
+  private static NoopAccessWitness instance;
+
+  private NoopAccessWitness() {}
+
+  public static NoopAccessWitness get() {
+    if (instance == null) {
+      instance = new NoopAccessWitness();
+    }
+    return instance;
+  }
+
+  @Override
+  public List<Address> keys() {
+    return Collections.emptyList();
+  }
 
   @Override
   public long touchAndChargeProofOfAbsence(final Address address) {
@@ -26,7 +46,8 @@ public class NoopAccessWitness extends Eip4762AccessWitness {
   }
 
   @Override
-  public long touchAndChargeValueTransfer(final Address caller, final Address target) {
+  public long touchAndChargeValueTransfer(
+      final Address caller, final Address target, final boolean isAccountCreation) {
     return 0;
   }
 
@@ -46,8 +67,7 @@ public class NoopAccessWitness extends Eip4762AccessWitness {
   }
 
   @Override
-  public long touchAndChargeContractCreateInit(
-      final Address address, final boolean createSendsValue) {
+  public long touchAndChargeContractCreateInit(final Address address) {
     return 0;
   }
 
@@ -57,7 +77,13 @@ public class NoopAccessWitness extends Eip4762AccessWitness {
   }
 
   @Override
-  public long touchAddressOnWriteAndComputeGas(
+  public long touchAddressOnWriteResetAndComputeGas(
+      final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
+    return 0;
+  }
+
+  @Override
+  public long touchAddressOnWriteSetAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
     return 0;
   }
@@ -69,18 +95,17 @@ public class NoopAccessWitness extends Eip4762AccessWitness {
   }
 
   @Override
+  public List<UInt256> getStorageSlotTreeIndexes(final UInt256 storageKey) {
+    return Collections.emptyList();
+  }
+
+  @Override
   public long touchCodeChunksUponContractCreation(final Address address, final long codeLength) {
     return 0;
   }
 
   @Override
   public long touchCodeChunks(
-      final Address address, final long offset, final long readSize, final long codeLength) {
-    return 0;
-  }
-
-  @Override
-  public long touchCodeChunksWithoutAccessCost(
       final Address address, final long offset, final long readSize, final long codeLength) {
     return 0;
   }

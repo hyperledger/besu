@@ -41,8 +41,12 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
       final VerkleWorldStateKeyValueStorage parentWorldStateStorage,
       final SnappedKeyValueStorage segmentedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
-    super(segmentedWorldStateStorage, trieLogStorage, parentWorldStateStorage.metricsSystem);
-    ;
+    super(
+        segmentedWorldStateStorage,
+        trieLogStorage,
+        parentWorldStateStorage.stemPreloader,
+        parentWorldStateStorage.dataStorageConfiguration,
+        parentWorldStateStorage.metricsSystem);
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
@@ -69,12 +73,7 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
     return new Updater(
         ((SnappedKeyValueStorage) composedWorldStateStorage).getSnapshotTransaction(),
         trieLogStorage.startTransaction(),
-        flatDbStrategy);
-  }
-
-  @Override
-  public Optional<Bytes> getStem(final Bytes stem) {
-    return isClosedGet() ? Optional.empty() : super.getStem(stem);
+        getFlatDbStrategy());
   }
 
   @Override

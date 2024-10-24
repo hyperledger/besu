@@ -87,7 +87,7 @@ public class SnapCommitVisitor<V> extends CommitVisitor<V> implements LocationNo
     maybeStoreNode(location, extensionNode);
   }
 
-  /**·
+  /**
    * Visits a branch node during a traversal operation.
    *
    * <p>This method is invoked when visiting a branch node. It first checks if the branch node is

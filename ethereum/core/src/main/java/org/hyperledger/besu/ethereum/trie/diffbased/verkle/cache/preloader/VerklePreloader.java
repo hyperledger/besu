@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -44,8 +43,9 @@ public class VerklePreloader {
   public void preLoadAccount(final Address account) {
     CompletableFuture.runAsync(
         () -> {
-          final Bytes stem = stemPreloader.preloadAccountStemId(account);
-          trieNodePreLoader.cacheNodes(stem);
+          stemPreloader.preloadAccountStemId(account);
+          // trieNodePreLoader.cacheNodes(stem); //TODO disabled waiting for benchmark before adding
+          // this trie node preload
         });
   }
 
@@ -60,8 +60,9 @@ public class VerklePreloader {
   public void preLoadStorageSlot(final Address account, final StorageSlotKey slotKey) {
     CompletableFuture.runAsync(
         () -> {
-          final Bytes stem = stemPreloader.preloadSlotStemId(account, slotKey);
-          trieNodePreLoader.cacheNodes(stem);
+          stemPreloader.preloadSlotStemId(account, slotKey);
+          // trieNodePreLoader.cacheNodes(stem); //TODO disabled waiting for benchmark before adding
+          // this trie node preload
         });
   }
 
@@ -74,12 +75,14 @@ public class VerklePreloader {
   public void preLoadCode(final Address account, final Bytes code) {
     CompletableFuture.runAsync(
         () -> {
-          stemPreloader
-              .preloadStemIds(account, code)
-              .forEach(
-                  (key, stem) -> {
-                    trieNodePreLoader.cacheNodes(stem);
-                  });
+          stemPreloader.preloadStemIds(account, code);
+          /*stemPreloader
+          .preloadStemIds(account, code)
+          .forEach(
+              (key, stem) -> {
+                trieNodePreLoader.cacheNodes(stem);
+              });*/
+          // TODO disabled waiting for benchmark before adding this trie node preload
         });
   }
 

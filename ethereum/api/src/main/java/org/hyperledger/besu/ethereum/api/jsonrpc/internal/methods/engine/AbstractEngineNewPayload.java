@@ -148,14 +148,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final ValidationResult<RpcErrorType> parameterValidationResult =
         validateParameters(blockParam, maybeVersionedHashParam, maybeParentBeaconBlockRootParam);
     if (!parameterValidationResult.isValid()) {
-      System.out.println("invalid15");
       return new JsonRpcErrorResponse(reqId, parameterValidationResult);
     }
 
     final ValidationResult<RpcErrorType> forkValidationResult =
         validateForkSupported(blockParam.getTimestamp());
     if (!forkValidationResult.isValid()) {
-      System.out.println("invalid14");
       return new JsonRpcErrorResponse(reqId, forkValidationResult);
     }
 
@@ -163,7 +161,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     try {
       maybeVersionedHashes = extractVersionedHashes(maybeVersionedHashParam);
     } catch (RuntimeException ex) {
-      System.out.println("issie " + ex.getMessage());
       return respondWithInvalid(
           reqId,
           blockParam,
@@ -231,7 +228,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (!getExecutionWitnessValidator(
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateExecutionWitness(maybeExecutionWitness)) {
-      System.out.println("invalid10");
       return new JsonRpcErrorResponse(
           reqId, new JsonRpcError(RpcErrorType.INVALID_PARAMS, "Invalid executionWitness"));
     }
@@ -266,7 +262,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                             .log();
                       }));
     } catch (final RLPException | IllegalArgumentException e) {
-      System.out.println("issie " + e.getMessage());
       return respondWithInvalid(
           reqId,
           blockParam,
@@ -276,7 +271,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
 
     if (blockParam.getExtraData() == null) {
-      System.out.println("invalid9");
       return respondWithInvalid(
           reqId,
           blockParam,
@@ -321,7 +315,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               "Computed block hash %s does not match block hash parameter %s",
               newBlockHeader.getBlockHash(), blockParam.getBlockHash());
       LOG.debug(errorMessage);
-      System.out.println("invalid8");
       return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
     }
 
@@ -336,7 +329,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             maybeVersionedHashes,
             protocolSchedule.get().getByBlockHeader(newBlockHeader));
     if (!blobValidationResult.isValid()) {
-      System.out.println("invalid7");
       return respondWithInvalid(
           reqId,
           blockParam,
@@ -348,11 +340,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     // do we already have this payload
     if (protocolContext.getBlockchain().getBlockByHash(newBlockHeader.getBlockHash()).isPresent()) {
       LOG.debug("block already present");
-      System.out.println("invalid6");
       return respondWith(reqId, blockParam, blockParam.getBlockHash(), VALID);
     }
     if (mergeCoordinator.isBadBlock(blockParam.getBlockHash())) {
-      System.out.println("invalid5");
       return respondWithInvalid(
           reqId,
           blockParam,
@@ -366,7 +356,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (maybeParentHeader.isPresent()
         && (Long.compareUnsigned(maybeParentHeader.get().getTimestamp(), blockParam.getTimestamp())
             >= 0)) {
-      System.out.println("invalid4");
       return respondWithInvalid(
           reqId,
           blockParam,
@@ -381,7 +370,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals, maybeRequests));
 
     if (maybeParentHeader.isEmpty()) {
-      System.out.println("invalid3");
       LOG.atInfo()
           .setMessage("Parent of block {} is not present, append it to backward sync")
           .addArgument(block::toLogString)
@@ -393,7 +381,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);
 
     if (latestValidAncestor.isEmpty()) {
-      System.out.println("invalid 2c ");
       return respondWith(reqId, blockParam, null, ACCEPTED);
     }
 
@@ -416,7 +403,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
       if (executionResult.causedBy().isPresent()) {
-        System.out.println("invalid 1");
         Throwable causedBy = executionResult.causedBy().get();
         if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
           RpcErrorType error = RpcErrorType.INTERNAL_ERROR;

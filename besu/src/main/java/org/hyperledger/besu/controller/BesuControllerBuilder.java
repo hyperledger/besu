@@ -743,7 +743,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext, protocolSchedule, miningParameters);
 
-    if (dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()
+    if (dataStorageConfiguration.getDiffbasedLimitTrieLogsEnabled()
         && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
       final TrieLogManager trieLogManager =
           ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
@@ -811,8 +811,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
             scheduler::executeServiceTask,
-            dataStorageConfiguration.getBonsaiMaxLayersToLoad(),
-            dataStorageConfiguration.getBonsaiTrieLogPruningWindowSize(),
+            dataStorageConfiguration.getDiffbasedMaxLayersToLoad(),
+            dataStorageConfiguration.getDiffbasedTrieLogPruningWindowSize(),
             isProofOfStake,
             metricsSystem);
     trieLogPruner.initialize();
@@ -1097,7 +1097,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         yield new BonsaiWorldStateProvider(
             worldStateKeyValueStorage,
             blockchain,
-            Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
+            Optional.of(dataStorageConfiguration.getDiffbasedMaxLayersToLoad()),
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration);
@@ -1110,7 +1110,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             blockchain,
             Optional.of(
                 dataStorageConfiguration
-                    .getBonsaiMaxLayersToLoad()), // TODO having verkle configuration or generic
+                    .getDiffbasedMaxLayersToLoad()), // TODO having verkle configuration or generic
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration);
       }

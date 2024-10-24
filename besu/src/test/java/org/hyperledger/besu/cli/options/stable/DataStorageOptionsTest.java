@@ -15,7 +15,7 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT;
 
 import org.hyperledger.besu.cli.options.AbstractCLIOptionsTest;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -31,7 +31,8 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogPruningLimitOption() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getBonsaiTrieLogPruningWindowSize()).isEqualTo(600),
+            assertThat(dataStorageConfiguration.getDiffbasedTrieLogPruningWindowSize())
+                .isEqualTo(600),
         "--bonsai-limit-trie-logs-enabled",
         "--bonsai-trie-logs-pruning-window-size",
         "600");
@@ -41,7 +42,8 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogPruningLimitLegacyOption() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getBonsaiTrieLogPruningWindowSize()).isEqualTo(600),
+            assertThat(dataStorageConfiguration.getDiffbasedTrieLogPruningWindowSize())
+                .isEqualTo(600),
         "--Xbonsai-limit-trie-logs-enabled",
         "--Xbonsai-trie-logs-pruning-window-size",
         "600");
@@ -51,7 +53,8 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogsEnabled_explicitlySetToFalse() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isEqualTo(false),
+            assertThat(dataStorageConfiguration.getDiffbasedLimitTrieLogsEnabled())
+                .isEqualTo(false),
         "--bonsai-limit-trie-logs-enabled=false");
   }
 
@@ -77,8 +80,8 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogRetentionLimitOption() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad())
-                .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT + 1),
+            assertThat(dataStorageConfiguration.getDiffbasedMaxLayersToLoad())
+                .isEqualTo(MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT + 1),
         "--bonsai-limit-trie-logs-enabled",
         "--bonsai-historical-block-limit",
         "513");
@@ -88,8 +91,8 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogRetentionLimitOption_boundaryTest() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad())
-                .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT),
+            assertThat(dataStorageConfiguration.getDiffbasedMaxLayersToLoad())
+                .isEqualTo(MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT),
         "--bonsai-limit-trie-logs-enabled",
         "--bonsai-historical-block-limit",
         "512");
@@ -109,7 +112,9 @@ public class DataStorageOptionsTest
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(
-                    dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled())
+                    dataStorageConfiguration
+                        .getUnstable()
+                        .getDiffbasedCodeStoredByCodeHashEnabled())
                 .isEqualTo(true),
         "--Xbonsai-code-using-code-hash-enabled",
         "true");
@@ -120,7 +125,9 @@ public class DataStorageOptionsTest
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(
-                    dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled())
+                    dataStorageConfiguration
+                        .getUnstable()
+                        .getDiffbasedCodeStoredByCodeHashEnabled())
                 .isEqualTo(false),
         "--Xbonsai-code-using-code-hash-enabled",
         "false");
@@ -159,9 +166,9 @@ public class DataStorageOptionsTest
   protected DataStorageConfiguration createCustomizedDomainObject() {
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(DataStorageFormat.BONSAI)
-        .bonsaiMaxLayersToLoad(513L)
-        .bonsaiLimitTrieLogsEnabled(true)
-        .bonsaiTrieLogPruningWindowSize(514)
+        .diffbasedMaxLayersToLoad(513L)
+        .diffbasedLimitTrieLogsEnabled(true)
+        .diffbasedTrieLogPruningWindowSize(514)
         .build();
   }
 

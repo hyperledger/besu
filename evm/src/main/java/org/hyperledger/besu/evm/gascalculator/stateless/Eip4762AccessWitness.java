@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_OFF
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERKLE_NODE_WIDTH;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyAdapter;
 import org.hyperledger.besu.ethereum.trie.verkle.hasher.PedersenHasher;
@@ -29,37 +30,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.AccessWitness {
+public class Eip4762AccessWitness implements AccessWitness {
 
   private static final TrieKeyAdapter TRIE_KEY_ADAPTER = new TrieKeyAdapter(new PedersenHasher());
-  private static final long WITNESS_BRANCH_READ_COST = 1900;
-  private static final long WITNESS_CHUNK_READ_COST = 200;
-  private static final long WITNESS_BRANCH_WRITE_COST = 3000;
-  private static final long WITNESS_CHUNK_WRITE_COST = 500;
-  private static final long WITNESS_CHUNK_FILL_COST = 6200;
+  private static final long WITNESS_BRANCH_COST = 1900;
+  private static final long WITNESS_CHUNK_COST = 200;
+  private static final long SUBTREE_EDIT_COST = 3000;
+  private static final long CHUNK_EDIT_COST = 500;
+  private static final long CHUNK_FILL_COST = 6200;
 
   private static final UInt256 zeroTreeIndex = UInt256.ZERO;
-  private static final byte AccessWitnessReadFlag = 1;
-  private static final byte AccessWitnessWriteFlag = 2;
-  private final Map<BranchAccessKey, Byte> branches;
-  private final Map<ChunkAccessKey, Byte> chunks;
+  private final Map<LeafAccessKey, Integer> leaves;
+  private final Map<BranchAccessKey, Integer> branches;
 
   public Eip4762AccessWitness() {
     this(new HashMap<>(), new HashMap<>());
   }
 
   public Eip4762AccessWitness(
-      final Map<BranchAccessKey, Byte> branches, final Map<ChunkAccessKey, Byte> chunks) {
+      final Map<LeafAccessKey, Integer> leaves, final Map<BranchAccessKey, Integer> branches) {
     this.branches = branches;
-    this.chunks = chunks;
+    this.leaves = leaves;
   }
 
   @Override
   public List<Address> keys() {
-    return this.chunks.keySet().stream()
-        .map(chunkAccessKey -> chunkAccessKey.branchAccessKey().address())
+    return this.leaves.keySet().stream()
+        .map(leafAccessKey -> leafAccessKey.branchAccessKey().address())
         .toList();
   }
 
@@ -69,9 +69,6 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
     gas =
         clampedAdd(
             gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-    gas =
-        clampedAdd(
-            gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY));
     return gas;
   }
 
@@ -81,36 +78,34 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
   }
 
   @Override
-  public long touchAndChargeValueTransfer(final Address caller, final Address target) {
+  public long touchAndChargeValueTransfer(
+      final Address caller, final Address target, final boolean isAccountCreation) {
 
     long gas = 0;
 
     gas =
         clampedAdd(
-            gas, touchAddressOnWriteAndComputeGas(caller, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+            gas, touchAddressOnWriteResetAndComputeGas(caller, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+    if (isAccountCreation) {
+      gas =
+          clampedAdd(
+              gas, touchAddressOnWriteSetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+      gas =
+          clampedAdd(
+              gas, touchAddressOnWriteSetAndComputeGas(target, zeroTreeIndex, CODE_HASH_LEAF_KEY));
+    } else {
+      gas =
+          clampedAdd(
+              gas,
+              touchAddressOnWriteResetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+    }
 
     return gas;
   }
 
   @Override
-  public long touchAndChargeContractCreateInit(
-      final Address address, final boolean createSendsValue) {
-
-    long gas = 0;
-
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-
-    if (createSendsValue) {
-      gas =
-          clampedAdd(
-              gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-    }
-    return gas;
+  public long touchAndChargeContractCreateInit(final Address address) {
+    return touchAddressOnWriteResetAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY);
   }
 
   @Override
@@ -120,54 +115,40 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
 
     gas =
         clampedAdd(
-            gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+            gas,
+            touchAddressOnWriteResetAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
     gas =
         clampedAdd(
-            gas, touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY));
+            gas, touchAddressOnWriteResetAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY));
 
     return gas;
   }
 
-  @SuppressWarnings("unused")
   @Override
   public long touchTxOriginAndComputeGas(final Address origin) {
-
     long gas = 0;
-
     gas =
         clampedAdd(
-            gas, touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+            gas, touchAddressOnWriteResetAndComputeGas(origin, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
     gas =
         clampedAdd(gas, touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, CODE_HASH_LEAF_KEY));
-
-    // modifying this after update on EIP-4762 to not charge simple transfers
-
-    return 0;
+    return gas;
   }
 
-  @SuppressWarnings("unused")
   @Override
   public long touchTxExistingAndComputeGas(final Address target, final boolean sendsValue) {
-
-    long gas = 0;
-
-    gas =
-        clampedAdd(
-            gas, touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-    gas =
-        clampedAdd(gas, touchAddressOnReadAndComputeGas(target, zeroTreeIndex, CODE_HASH_LEAF_KEY));
-
-    if (sendsValue) {
+    long gas = touchAddressOnReadAndComputeGas(target, zeroTreeIndex, CODE_HASH_LEAF_KEY);
+    if (!sendsValue) {
       gas =
           clampedAdd(
-              gas, touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+              gas, touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+    } else {
+      gas =
+          clampedAdd(
+              gas,
+              touchAddressOnWriteResetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
     }
-    // modifying this after update on EIP-4762 to not charge simple transfers
-
-    return 0;
+    return gas;
   }
 
   @Override
@@ -177,7 +158,7 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
       gas =
           clampedAdd(
               gas,
-              touchAddressOnWriteAndComputeGas(
+              touchAddressOnWriteResetAndComputeGas(
                   address,
                   CODE_OFFSET.add(i).divide(VERKLE_NODE_WIDTH),
                   CODE_OFFSET.add(i).mod(VERKLE_NODE_WIDTH)));
@@ -189,16 +170,10 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
   public long touchCodeChunks(
       final Address address, final long startPc, final long readSize, final long codeLength) {
     long gas = 0;
-    if ((readSize == 0 && codeLength == 0) || startPc > codeLength) {
+    if (readSize == 0 || startPc > codeLength) {
       return 0;
     }
-    long endPc = startPc + readSize;
-    if (endPc > codeLength) {
-      endPc = codeLength;
-    }
-    if (endPc > 0) {
-      endPc -= 1;
-    }
+    long endPc = Math.min(startPc + readSize, codeLength - 1);
     for (long i = startPc / 31; i <= endPc / 31; i++) {
       gas =
           clampedAdd(
@@ -212,103 +187,112 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
   }
 
   @Override
-  public long touchAddressOnWriteAndComputeGas(
+  public long touchAddressOnWriteResetAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
+    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessMode.WRITE_RESET);
+  }
 
-    return touchAddressAndChargeGas(address, treeIndex, subIndex, true);
+  @Override
+  public long touchAddressOnWriteSetAndComputeGas(
+      final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
+    // TODO: change to WRITE_SET when CHUNK_FILL is implemented. Still not implemented in devnet-7
+    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessMode.WRITE_RESET);
   }
 
   @Override
   public long touchAddressOnReadAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
-    return touchAddressAndChargeGas(address, treeIndex, subIndex, false);
+    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessMode.READ);
   }
 
   public long touchAddressAndChargeGas(
       final Address address,
       final UInt256 treeIndex,
       final UInt256 subIndex,
-      final boolean isWrite) {
-
-    AccessEvents accessEvent = touchAddress(address, treeIndex, subIndex, isWrite);
-    boolean logEnabled = false;
+      final int accessMode) {
+    // TODO: consider getting rid of accessEvents and compute gas inside touchAddress
+    final short accessEvents = touchAddress(address, treeIndex, subIndex, accessMode);
+    boolean logEnabled = true;
+    if (logEnabled) {
+      System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    }
     long gas = 0;
-    if (accessEvent.isBranchRead()) {
-      gas = clampedAdd(gas, WITNESS_BRANCH_READ_COST);
+    if (AccessEvents.isBranchRead(accessEvents)) {
+      gas = clampedAdd(gas, WITNESS_BRANCH_COST);
       if (logEnabled) {
         System.out.println(
-            "touchAddressAndChargeGas WitnessBranchReadCost "
+            "touchAddressAndChargeGas WITNESS_BRANCH_COST "
                 + address
                 + " "
                 + treeIndex
                 + " "
                 + subIndex
                 + " "
-                + isWrite
+                + AccessMode.toString(accessMode)
                 + " "
                 + gas);
       }
     }
-    if (accessEvent.isChunkRead()) {
-      gas = clampedAdd(gas, WITNESS_CHUNK_READ_COST);
+    if (AccessEvents.isLeafRead(accessEvents)) {
+      gas = clampedAdd(gas, WITNESS_CHUNK_COST);
       if (logEnabled) {
         System.out.println(
-            "touchAddressAndChargeGas WitnessChunkReadCost "
+            "touchAddressAndChargeGas WITNESS_CHUNK_COST "
                 + address
                 + " "
                 + treeIndex
                 + " "
                 + subIndex
                 + " "
-                + isWrite
+                + AccessMode.toString(accessMode)
                 + " "
                 + gas);
       }
     }
-    if (accessEvent.isBranchWrite()) {
-      gas = clampedAdd(gas, WITNESS_BRANCH_WRITE_COST);
+    if (AccessEvents.isBranchWrite(accessEvents)) {
+      gas = clampedAdd(gas, SUBTREE_EDIT_COST);
       if (logEnabled) {
         System.out.println(
-            "touchAddressAndChargeGas WitnessBranchWriteCost "
+            "touchAddressAndChargeGas SUBTREE_EDIT_COST "
                 + address
                 + " "
                 + treeIndex
                 + " "
                 + subIndex
                 + " "
-                + isWrite
+                + AccessMode.toString(accessMode)
                 + " "
                 + gas);
       }
     }
-    if (accessEvent.isChunkWrite()) {
-      gas = clampedAdd(gas, WITNESS_CHUNK_WRITE_COST);
+    if (AccessEvents.isLeafReset(accessEvents)) {
+      gas = clampedAdd(gas, CHUNK_EDIT_COST);
       if (logEnabled) {
         System.out.println(
-            "touchAddressAndChargeGas WitnessChunkWriteCost "
+            "touchAddressAndChargeGas CHUNK_EDIT_COST "
                 + address
                 + " "
                 + treeIndex
                 + " "
                 + subIndex
                 + " "
-                + isWrite
+                + AccessMode.toString(accessMode)
                 + " "
                 + gas);
       }
     }
-    if (accessEvent.isChunkFill()) {
-      gas = clampedAdd(gas, WITNESS_CHUNK_FILL_COST);
+    if (AccessEvents.isLeafSet(accessEvents)) {
+      gas = clampedAdd(gas, CHUNK_FILL_COST);
       if (logEnabled) {
         System.out.println(
-            "touchAddressAndChargeGas WitnessChunkFillCost "
+            "touchAddressAndChargeGas CHUNK_FILL_COST "
                 + address
                 + " "
                 + treeIndex
                 + " "
                 + subIndex
                 + " "
-                + isWrite
+                + AccessMode.toString(accessMode)
                 + " "
                 + gas);
       }
@@ -317,43 +301,62 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
     return gas;
   }
 
-  public AccessEvents touchAddress(
-      final Address addr, final UInt256 treeIndex, final UInt256 subIndex, final boolean isWrite) {
-    AccessEvents accessEvents = new AccessEvents();
+  public short touchAddress(
+      final Address addr, final UInt256 treeIndex, final UInt256 leafIndex, final int accessMode) {
+    short accessEvents = AccessEvents.NONE;
     BranchAccessKey branchKey = new BranchAccessKey(addr, treeIndex);
 
-    ChunkAccessKey chunkKey = new ChunkAccessKey(addr, treeIndex, subIndex);
+    accessEvents |= touchAddressForBranch(branchKey, accessMode);
+    if (leafIndex != null) {
+      accessEvents |= touchAddressForLeaf(branchKey, leafIndex, accessMode);
+    }
 
-    // Read access.
+    return accessEvents;
+  }
+
+  private short touchAddressForBranch(final BranchAccessKey branchKey, final int accessMode) {
+    short accessEvents = AccessEvents.NONE;
+
     if (!this.branches.containsKey(branchKey)) {
-      accessEvents.setBranchRead(true);
-      this.branches.put(branchKey, AccessWitnessReadFlag);
-    }
-    if (!this.chunks.containsKey(chunkKey)) {
-      accessEvents.setChunkRead(true);
-      this.chunks.put(chunkKey, AccessWitnessReadFlag);
+      accessEvents |= AccessEvents.BRANCH_READ;
+      this.branches.put(branchKey, AccessMode.READ);
     }
 
-    // TODO VERKLE: for now testnet doesn't charge
-    //  chunk filling costs if the leaf was previously empty in the state
-    //    boolean chunkFill = false;
-
-    if (isWrite) {
-
-      if ((this.branches.get(branchKey) & AccessWitnessWriteFlag) == 0) {
-        accessEvents.setBranchWrite(true);
-        this.branches.put(
-            branchKey, (byte) (this.branches.get(branchKey) | AccessWitnessWriteFlag));
-      }
-
-      byte chunkValue = this.chunks.get(chunkKey);
-
-      if ((chunkValue & AccessWitnessWriteFlag) == 0) {
-        accessEvents.setChunkWrite(true);
-        this.chunks.put(chunkKey, (byte) (this.chunks.get(chunkKey) | AccessWitnessWriteFlag));
+    // A write is always a read
+    if (AccessMode.isWrite(accessMode)) {
+      int previousAccessMode =
+          !this.branches.containsKey(branchKey) ? AccessMode.NONE : this.branches.get(branchKey);
+      if (!AccessMode.isWrite(previousAccessMode)) {
+        accessEvents |= AccessEvents.BRANCH_WRITE;
+        this.branches.put(branchKey, (previousAccessMode | accessMode));
       }
     }
 
+    return accessEvents;
+  }
+
+  private short touchAddressForLeaf(
+      final BranchAccessKey branchKey, final UInt256 subIndex, final int accessMode) {
+    LeafAccessKey leafKey = new LeafAccessKey(branchKey, subIndex);
+    short accessEvents = AccessEvents.NONE;
+
+    if (!this.leaves.containsKey(leafKey)) {
+      accessEvents |= AccessEvents.LEAF_READ;
+      this.leaves.put(leafKey, AccessMode.READ);
+    }
+
+    // A write is always a read
+    if (AccessMode.isWrite(accessMode)) {
+      int previousAccessMode =
+          !this.leaves.containsKey(leafKey) ? AccessMode.NONE : this.leaves.get(leafKey);
+      if (!AccessMode.isWrite(previousAccessMode)) {
+        accessEvents |= AccessEvents.LEAF_RESET;
+        if (AccessMode.isWriteSet(accessMode)) {
+          accessEvents |= AccessEvents.LEAF_SET;
+        }
+        this.leaves.put(leafKey, (previousAccessMode | accessMode));
+      }
+    }
     return accessEvents;
   }
 
@@ -362,41 +365,27 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Eip4762AccessWitness that = (Eip4762AccessWitness) o;
-    return Objects.equals(branches, that.branches) && Objects.equals(chunks, that.chunks);
+    return Objects.equals(branches, that.branches) && Objects.equals(leaves, that.leaves);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(branches, chunks);
+    return Objects.hash(branches, leaves);
   }
 
   @Override
   public String toString() {
-    return "AccessWitness{" + "branches=" + branches + ", chunks=" + chunks + '}';
-  }
-
-  public Map<BranchAccessKey, Byte> getBranches() {
-    return branches;
-  }
-
-  public Map<ChunkAccessKey, Byte> getChunks() {
-    return chunks;
+    return "AccessWitness{" + "leaves=" + leaves + ", branches=" + branches + '}';
   }
 
   public record BranchAccessKey(Address address, UInt256 treeIndex) {}
-  ;
 
-  public record ChunkAccessKey(BranchAccessKey branchAccessKey, UInt256 chunkIndex) {
-    public ChunkAccessKey(
-        final Address address, final UInt256 treeIndex, final UInt256 chunkIndex) {
-      this(new BranchAccessKey(address, treeIndex), chunkIndex);
-    }
-  }
+  public record LeafAccessKey(BranchAccessKey branchAccessKey, Bytes leafIndex) {}
 
   @Override
   public List<UInt256> getStorageSlotTreeIndexes(final UInt256 storageKey) {
     return List.of(
         TRIE_KEY_ADAPTER.getStorageKeyTrieIndex(storageKey),
-        TRIE_KEY_ADAPTER.getStorageKeySuffix(storageKey));
+        UInt256.fromBytes(TRIE_KEY_ADAPTER.getStorageKeySuffix(storageKey)));
   }
 }
