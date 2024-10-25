@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.hyperledger.besu.plugin.services.metrics.Summary;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -91,6 +92,15 @@ public class StubMetricsSystem implements ObservableMetricsSystem {
       final String help,
       final DoubleSupplier valueSupplier) {
     gauges.put(name, valueSupplier);
+  }
+
+  @Override
+  public LabelledMetric<Summary> createLabelledSummary(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    return null;
   }
 
   public double getGaugeValue(final String name) {

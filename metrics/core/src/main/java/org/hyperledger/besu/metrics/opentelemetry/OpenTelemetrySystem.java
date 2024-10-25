@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.hyperledger.besu.plugin.services.metrics.Summary;
 
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -275,6 +276,15 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
           .setDescription(help)
           .buildWithCallback(res -> res.record(valueSupplier.getAsDouble(), Attributes.empty()));
     }
+  }
+
+  @Override
+  public LabelledMetric<Summary> createLabelledSummary(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    return null;
   }
 
   @Override

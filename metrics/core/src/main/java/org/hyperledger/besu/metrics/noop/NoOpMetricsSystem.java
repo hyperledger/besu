@@ -21,6 +21,7 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.hyperledger.besu.plugin.services.metrics.Summary;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,6 +46,8 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   /** The constant NO_OP_OPERATION_TIMER. */
   public static final OperationTimer NO_OP_OPERATION_TIMER = () -> NO_OP_TIMING_CONTEXT;
 
+  public static final Summary NO_OP_SUMMARY = d -> {};
+
   /** The constant NO_OP_LABELLED_1_COUNTER. */
   public static final LabelledMetric<Counter> NO_OP_LABELLED_1_COUNTER =
       new LabelCountingNoOpMetric<>(1, NO_OP_COUNTER);
@@ -60,6 +63,9 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   /** The constant NO_OP_LABELLED_1_OPERATION_TIMER. */
   public static final LabelledMetric<OperationTimer> NO_OP_LABELLED_1_OPERATION_TIMER =
       new LabelCountingNoOpMetric<>(1, NO_OP_OPERATION_TIMER);
+
+  public static final LabelledMetric<Summary> NO_OP_LABELLED_1_SUMMARY =
+      new LabelCountingNoOpMetric<>(1, NO_OP_SUMMARY);
 
   /** The constant NO_OP_LABELLED_1_GAUGE. */
   public static final LabelledGauge NO_OP_LABELLED_1_GAUGE =
@@ -137,12 +143,35 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
     }
   }
 
+  /**
+   * Gets summary labelled metric.
+   *
+   * @param labelCount the label count
+   * @return the operation timer labelled metric
+   */
+  public static LabelledMetric<Summary> getSummaryLabelledMetric(final int labelCount) {
+    if (labelCount == 1) {
+      return NO_OP_LABELLED_1_SUMMARY;
+    } else {
+      return new LabelCountingNoOpMetric<>(labelCount, NO_OP_SUMMARY);
+    }
+  }
+
   @Override
   public void createGauge(
       final MetricCategory category,
       final String name,
       final String help,
       final DoubleSupplier valueSupplier) {}
+
+  @Override
+  public LabelledMetric<Summary> createLabelledSummary(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    return null;
+  }
 
   @Override
   public LabelledGauge createLabelledGauge(
