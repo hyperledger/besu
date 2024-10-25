@@ -5,6 +5,11 @@
 
 ### Breaking Changes
 - Removed Retesteth rpc service and commands [#7833](https://github.com/hyperledger/besu/pull/7783)
+- Removed deprecated experimental feature names 
+  - `--Xsnapsync-synchronizer-flat-db-healing-enabled` in favor of `--Xbonsai-full-flat-db-enabled` 
+  - `--Xbonsai-limit-trie-logs-enabled` and `--Xbonsai-trie-log-pruning-enabled` in favor of `--bonsai-limit-trie-logs-enabled`
+  - `--Xbonsai-trie-logs-pruning-window-size` in favor of `--bonsai-trie-logs-pruning-window-size` 
+
 
 ### Upcoming Breaking Changes
 
