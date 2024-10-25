@@ -75,7 +75,7 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
   }
 
   @Override
-  public List<Block> parseResponse(final MessageData messageData)
+  public List<Block> processResponse(final MessageData messageData)
       throws InvalidPeerTaskResponseException {
     // Blocks returned by this method are in the same order as the headers, but might not be
     // complete
