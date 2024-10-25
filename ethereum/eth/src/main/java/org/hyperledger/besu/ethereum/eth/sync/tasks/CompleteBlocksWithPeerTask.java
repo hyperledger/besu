@@ -47,7 +47,7 @@ public class CompleteBlocksWithPeerTask {
   private final Block[] result;
   private final int resultSize;
   private int nextIndex = 0;
-  private int remainingBlocks = 0;
+  private int remainingBlocks;
 
   public CompleteBlocksWithPeerTask(
       final ProtocolSchedule protocolSchedule,
@@ -97,11 +97,7 @@ public class CompleteBlocksWithPeerTask {
           .setMessage("Requesting {} bodies from peer")
           .addArgument(headersToGet.size())
           .log();
-      final GetBodiesFromPeerTask task =
-          new GetBodiesFromPeerTask(
-              headersToGet,
-              () -> protocolSchedule.getByBlockHeader(headersToGet.getLast()),
-              protocolSchedule);
+      final GetBodiesFromPeerTask task = new GetBodiesFromPeerTask(headersToGet, protocolSchedule);
       final PeerTaskExecutorResult<List<Block>> executionResult = peerTaskExecutor.execute(task);
       if (executionResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
           && executionResult.result().isPresent()) {

@@ -63,10 +63,10 @@ public class CompleteBlocksWithPeerTaskTest {
 
     CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
         new CompleteBlocksWithPeerTask(protocolSchedule, List.of(blockHeader), peerTaskExecutor);
-    assertThat(completeBlocksWithPeerTask.getBlocks()).isNotEmpty();
-    assertThat(completeBlocksWithPeerTask.getBlocks().size()).isEqualTo(1);
-    assertThat(BlockHeader.hasEmptyBlock(completeBlocksWithPeerTask.getBlocks().get(0).getHeader()))
-        .isTrue();
+    final List<Block> blocks = completeBlocksWithPeerTask.getBlocks();
+    assertThat(blocks).isNotEmpty();
+    assertThat(blocks.size()).isEqualTo(1);
+    assertThat(BlockHeader.hasEmptyBlock(blocks.get(0).getHeader())).isTrue();
 
     verify(peerTaskExecutor, Mockito.never()).execute(any());
   }
@@ -120,9 +120,10 @@ public class CompleteBlocksWithPeerTaskTest {
         new CompleteBlocksWithPeerTask(
             protocolSchedule, List.of(nonEmptyBlockHeaderMock), peerTaskExecutor);
 
-    assertThat(completeBlocksWithPeerTask.getBlocks()).isNotEmpty();
-    assertThat(completeBlocksWithPeerTask.getBlocks().size()).isEqualTo(1);
-    assertThat(completeBlocksWithPeerTask.getBlocks().get(0)).isEqualTo(block);
+    final List<Block> blocks = completeBlocksWithPeerTask.getBlocks();
+    assertThat(blocks).isNotEmpty();
+    assertThat(blocks.size()).isEqualTo(1);
+    assertThat(blocks.get(0)).isEqualTo(block);
   }
 
   @Test
@@ -150,14 +151,13 @@ public class CompleteBlocksWithPeerTaskTest {
                 emptyBlockHeaderMock),
             peerTaskExecutor);
 
-    assertThat(completeBlocksWithPeerTask.getBlocks()).isNotEmpty();
-    assertThat(completeBlocksWithPeerTask.getBlocks().size()).isEqualTo(4);
-    assertThat(completeBlocksWithPeerTask.getBlocks().get(0)).isEqualTo(block1);
-    assertThat(BlockHeader.hasEmptyBlock(completeBlocksWithPeerTask.getBlocks().get(1).getHeader()))
-        .isTrue();
-    assertThat(completeBlocksWithPeerTask.getBlocks().get(2)).isEqualTo(block3);
-    assertThat(BlockHeader.hasEmptyBlock(completeBlocksWithPeerTask.getBlocks().get(3).getHeader()))
-        .isTrue();
+    final List<Block> blocks = completeBlocksWithPeerTask.getBlocks();
+    assertThat(blocks).isNotEmpty();
+    assertThat(blocks.size()).isEqualTo(4);
+    assertThat(blocks.get(0)).isEqualTo(block1);
+    assertThat(BlockHeader.hasEmptyBlock(blocks.get(1).getHeader())).isTrue();
+    assertThat(blocks.get(2)).isEqualTo(block3);
+    assertThat(BlockHeader.hasEmptyBlock(blocks.get(3).getHeader())).isTrue();
   }
 
   @Test
@@ -188,14 +188,13 @@ public class CompleteBlocksWithPeerTaskTest {
                 emptyBlockHeaderMock),
             peerTaskExecutor);
 
-    assertThat(completeBlocksWithPeerTask.getBlocks()).isNotEmpty();
-    assertThat(completeBlocksWithPeerTask.getBlocks().size()).isEqualTo(4);
-    assertThat(completeBlocksWithPeerTask.getBlocks().get(0)).isEqualTo(block1);
-    assertThat(BlockHeader.hasEmptyBlock(completeBlocksWithPeerTask.getBlocks().get(1).getHeader()))
-        .isTrue();
-    assertThat(completeBlocksWithPeerTask.getBlocks().get(2)).isEqualTo(block3);
-    assertThat(BlockHeader.hasEmptyBlock(completeBlocksWithPeerTask.getBlocks().get(3).getHeader()))
-        .isTrue();
+    final List<Block> blocks = completeBlocksWithPeerTask.getBlocks();
+    assertThat(blocks).isNotEmpty();
+    assertThat(blocks.size()).isEqualTo(4);
+    assertThat(blocks.get(0)).isEqualTo(block1);
+    assertThat(BlockHeader.hasEmptyBlock(blocks.get(1).getHeader())).isTrue();
+    assertThat(blocks.get(2)).isEqualTo(block3);
+    assertThat(BlockHeader.hasEmptyBlock(blocks.get(3).getHeader())).isTrue();
   }
 
   private static ProtocolSchedule getProtocolScheduleMock() {

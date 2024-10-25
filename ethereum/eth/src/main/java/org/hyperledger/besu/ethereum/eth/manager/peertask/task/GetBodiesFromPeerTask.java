@@ -25,14 +25,12 @@ import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,19 +40,19 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
   private static final Logger LOG = LoggerFactory.getLogger(GetBodiesFromPeerTask.class);
 
   private final List<BlockHeader> blockHeaders;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final ProtocolSchedule protocolSchedule;
 
   private final long requiredBlockchainHeight;
   private final List<Block> blocks = new ArrayList<>();
+  private final boolean isPoS;
 
   public GetBodiesFromPeerTask(
-      final List<BlockHeader> blockHeaders,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
-      final ProtocolSchedule protocolSchedule) {
+      final List<BlockHeader> blockHeaders, final ProtocolSchedule protocolSchedule) {
+    if (blockHeaders == null || blockHeaders.isEmpty()) {
+      throw new IllegalArgumentException("Block headers must not be empty");
+    }
 
     this.blockHeaders = blockHeaders;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.protocolSchedule = protocolSchedule;
 
     this.requiredBlockchainHeight =
@@ -62,6 +60,7 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
             .mapToLong(BlockHeader::getNumber)
             .max()
             .orElse(BlockHeader.GENESIS_BLOCK_NUMBER);
+    this.isPoS = protocolSchedule.getByBlockHeader(blockHeaders.getLast()).isPoS();
   }
 
   @Override
@@ -105,8 +104,7 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
   private boolean blockBodyMatchesBlockHeader(
       final BlockBody blockBody, final BlockHeader blockHeader) {
     // this method validates that the block body matches the block header by calculating the roots
-    // of the block body
-    // and comparing them to the roots in the block header
+    // of the block body and comparing them to the roots in the block header
     if (!BodyValidation.transactionsRoot(blockBody.getTransactions())
         .equals(blockHeader.getTransactionsRoot())) {
       return false;
@@ -142,9 +140,7 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
   @Override
   public Predicate<EthPeer> getPeerRequirementFilter() {
     return (ethPeer) ->
-        ethPeer.getProtocolName().equals(getSubProtocol().getName())
-            && (currentProtocolSpecSupplier.get().isPoS()
-                || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight);
+        isPoS || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight;
   }
 
   @Override

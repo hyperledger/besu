@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -45,6 +46,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -60,10 +62,21 @@ public class GetBodiesFromPeerTaskTest {
   public static final List<Transaction> TRANSACTION_LIST = List.of(TX);
   public static final BlockBody BLOCK_BODY =
       new BlockBody(TRANSACTION_LIST, Collections.emptyList(), Optional.empty(), Optional.empty());
+  private static ProtocolSchedule protocolSchedule;
+
+  @BeforeAll
+  public static void setup() {
+    protocolSchedule = mock(ProtocolSchedule.class);
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+    when(protocolSpec.isPoS()).thenReturn(true);
+    when(protocolSchedule.getByBlockHeader(Mockito.any())).thenReturn(protocolSpec);
+  }
 
   @Test
   public void testGetSubProtocol() {
-    GetBodiesFromPeerTask task = new GetBodiesFromPeerTask(Collections.emptyList(), null, null);
+
+    GetBodiesFromPeerTask task =
+        new GetBodiesFromPeerTask(List.of(mockBlockHeader(0)), protocolSchedule);
     Assertions.assertEquals(EthProtocol.get(), task.getSubProtocol());
   }
 
@@ -71,7 +84,7 @@ public class GetBodiesFromPeerTaskTest {
   public void testGetRequestMessage() {
     GetBodiesFromPeerTask task =
         new GetBodiesFromPeerTask(
-            List.of(mockBlockHeader(1), mockBlockHeader(2), mockBlockHeader(3)), null, null);
+            List.of(mockBlockHeader(1), mockBlockHeader(2), mockBlockHeader(3)), protocolSchedule);
 
     MessageData messageData = task.getRequestMessage();
     GetBlockBodiesMessage getBlockBodiesMessage = GetBlockBodiesMessage.readFrom(messageData);
@@ -93,13 +106,15 @@ public class GetBodiesFromPeerTaskTest {
 
   @Test
   public void testParseResponseWithNullResponseMessage() {
-    GetBodiesFromPeerTask task = new GetBodiesFromPeerTask(Collections.emptyList(), null, null);
-    Assertions.assertThrows(InvalidPeerTaskResponseException.class, () -> task.parseResponse(null));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> new GetBodiesFromPeerTask(Collections.emptyList(), protocolSchedule));
   }
 
   @Test
   public void testParseResponseForInvalidResponse() {
-    GetBodiesFromPeerTask task = new GetBodiesFromPeerTask(List.of(mockBlockHeader(1)), null, null);
+    GetBodiesFromPeerTask task =
+        new GetBodiesFromPeerTask(List.of(mockBlockHeader(1)), protocolSchedule);
     // body does not match header
     BlockBodiesMessage bodiesMessage = BlockBodiesMessage.create(List.of(BLOCK_BODY));
 
@@ -113,7 +128,7 @@ public class GetBodiesFromPeerTaskTest {
         getNonEmptyBlockHeaderMock(BodyValidation.transactionsRoot(TRANSACTION_LIST).toString());
 
     GetBodiesFromPeerTask task =
-        new GetBodiesFromPeerTask(List.of(nonEmptyBlockHeaderMock), null, null);
+        new GetBodiesFromPeerTask(List.of(nonEmptyBlockHeaderMock), protocolSchedule);
 
     final BlockBodiesMessage blockBodiesMessage = BlockBodiesMessage.create(List.of(BLOCK_BODY));
 
@@ -129,32 +144,27 @@ public class GetBodiesFromPeerTaskTest {
     BlockHeader blockHeader2 = mockBlockHeader(2);
     BlockHeader blockHeader3 = mockBlockHeader(3);
 
-    ProtocolSpec protocolSpec = Mockito.mock(ProtocolSpec.class);
-    Mockito.when(protocolSpec.isPoS()).thenReturn(false);
-
     GetBodiesFromPeerTask task =
         new GetBodiesFromPeerTask(
-            List.of(blockHeader1, blockHeader2, blockHeader3), () -> protocolSpec, null);
+            List.of(blockHeader1, blockHeader2, blockHeader3), protocolSchedule);
 
-    EthPeer failForIncorrectProtocol = mockPeer("incorrectProtocol", 5);
-    EthPeer failForShortChainHeight = mockPeer("incorrectProtocol", 1);
     EthPeer successfulCandidate = mockPeer(EthProtocol.NAME, 5);
 
-    Assertions.assertFalse(task.getPeerRequirementFilter().test(failForIncorrectProtocol));
-    Assertions.assertFalse(task.getPeerRequirementFilter().test(failForShortChainHeight));
     Assertions.assertTrue(task.getPeerRequirementFilter().test(successfulCandidate));
   }
 
   @Test
   public void testIsSuccessForPartialSuccess() {
-    GetBodiesFromPeerTask task = new GetBodiesFromPeerTask(Collections.emptyList(), null, null);
+    GetBodiesFromPeerTask task =
+        new GetBodiesFromPeerTask(List.of(mockBlockHeader(1)), protocolSchedule);
 
     Assertions.assertFalse(task.isSuccess(Collections.emptyList()));
   }
 
   @Test
   public void testIsSuccessForFullSuccess() {
-    GetBodiesFromPeerTask task = new GetBodiesFromPeerTask(Collections.emptyList(), null, null);
+    GetBodiesFromPeerTask task =
+        new GetBodiesFromPeerTask(List.of(mockBlockHeader(1)), protocolSchedule);
 
     final List<Block> blockHeaders = List.of(mock(Block.class));
 
