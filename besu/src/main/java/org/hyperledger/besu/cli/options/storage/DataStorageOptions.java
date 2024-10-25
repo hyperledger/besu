@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.options.storage;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_RECEIPT_COMPACTION_ENABLED;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
+import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -104,7 +105,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
   @Override
   public List<String> getCLIOptions() {
-    final List<String> cliOptions = diffBasedSubStorageOptions.getCLIOptions();
+    final List<String> cliOptions = CommandLineUtils.getCLIOptions(this, new DataStorageOptions());
     cliOptions.addAll(diffBasedSubStorageOptions.getCLIOptions());
     return cliOptions;
   }
