@@ -55,7 +55,8 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
   protected ValidationResult<RpcErrorType> validateParameters(
       final EnginePayloadParameter payloadParameter,
       final Optional<List<String>> maybeVersionedHashParam,
-      final Optional<String> maybeBeaconBlockRootParam) {
+      final Optional<String> maybeBeaconBlockRootParam,
+      final Optional<List<String>> maybeRequestsParam) {
     if (payloadParameter.getBlobGasUsed() == null) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS, "Missing blob gas used field");
@@ -69,8 +70,9 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,
           "Missing parent beacon block root field");
-    } else if (payloadParameter.getDepositRequests() == null) {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing deposit field");
+    } else if (maybeRequestsParam.isEmpty()) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS, "Missing execution requests field");
     } else {
       return ValidationResult.valid();
     }

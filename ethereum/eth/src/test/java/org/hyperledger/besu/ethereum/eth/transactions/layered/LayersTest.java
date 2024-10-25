@@ -21,13 +21,13 @@ import static org.hyperledger.besu.datatypes.TransactionType.ACCESS_LIST;
 import static org.hyperledger.besu.datatypes.TransactionType.BLOB;
 import static org.hyperledger.besu.datatypes.TransactionType.EIP1559;
 import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.INVALIDATED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S1;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S2;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S3;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S4;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.SP1;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.SP2;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.INVALIDATED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -1409,7 +1409,8 @@ public class LayersTest extends BaseTransactionPoolTest {
       this.pending = new LayeredPendingTransactions(poolConfig, this.prio, ethScheduler);
 
       this.pending.subscribePendingTransactions(notificationsChecker::collectAddNotification);
-      this.pending.subscribeDroppedTransactions(notificationsChecker::collectDropNotification);
+      this.pending.subscribeDroppedTransactions(
+          (tx, reason) -> notificationsChecker.collectDropNotification(tx));
     }
 
     @Override
