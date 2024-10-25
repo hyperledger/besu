@@ -23,5 +23,5 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AccountOverrideMap extends HashMap<Address, AccountOverride> {
 
-  private AccountOverrideMap() {}
+  public AccountOverrideMap() {}
 }
