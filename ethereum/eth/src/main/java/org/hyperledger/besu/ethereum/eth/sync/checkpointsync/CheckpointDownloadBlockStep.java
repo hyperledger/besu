@@ -84,31 +84,31 @@ public class CheckpointDownloadBlockStep {
       final PeerTaskResult<Block> peerTaskResult) {
     final Block block = peerTaskResult.getResult();
     if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      CompletableFuture<Optional<BlockWithReceipts>> futureReceipts = new CompletableFuture<>();
-      GetReceiptsFromPeerTask task =
-          new GetReceiptsFromPeerTask(
-              List.of(block.getHeader()), new BodyValidator(), currentProtocolSpecSupplier);
-      PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> executorResult =
-          peerTaskExecutor.execute(task);
+      return ethContext.getScheduler().scheduleServiceTask(() -> {
+        GetReceiptsFromPeerTask task =
+                new GetReceiptsFromPeerTask(
+                        List.of(block.getHeader()), new BodyValidator(), currentProtocolSpecSupplier);
+        PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> executorResult =
+                peerTaskExecutor.execute(task);
 
-      if (executorResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
-        List<TransactionReceipt> transactionReceipts =
-            executorResult
-                .result()
-                .map((map) -> map.get(block.getHeader()))
-                .orElseThrow(
-                    () ->
-                        new IllegalStateException("PeerTask response code was success, but empty"));
-        if (block.getBody().getTransactions().size() != transactionReceipts.size()) {
-          throw new IllegalStateException(
-              "PeerTask response code was success, but incorrect number of receipts returned");
+        if (executorResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
+          List<TransactionReceipt> transactionReceipts =
+                  executorResult
+                          .result()
+                          .map((map) -> map.get(block.getHeader()))
+                          .orElseThrow(
+                                  () ->
+                                          new IllegalStateException("PeerTask response code was success, but empty"));
+          if (block.getBody().getTransactions().size() != transactionReceipts.size()) {
+            throw new IllegalStateException(
+                    "PeerTask response code was success, but incorrect number of receipts returned");
+          }
+          BlockWithReceipts blockWithReceipts = new BlockWithReceipts(block, transactionReceipts);
+          return CompletableFuture.completedFuture(Optional.of(blockWithReceipts));
+        } else {
+          return CompletableFuture.completedFuture(Optional.empty());
         }
-        BlockWithReceipts blockWithReceipts = new BlockWithReceipts(block, transactionReceipts);
-        futureReceipts.complete(Optional.of(blockWithReceipts));
-      } else {
-        futureReceipts.complete(Optional.empty());
-      }
-      return futureReceipts;
+      });
 
     } else {
       final org.hyperledger.besu.ethereum.eth.manager.task.GetReceiptsFromPeerTask

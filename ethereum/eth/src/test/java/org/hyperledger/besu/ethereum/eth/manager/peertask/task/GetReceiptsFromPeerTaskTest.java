@@ -77,7 +77,8 @@ public class GetReceiptsFromPeerTaskTest {
   public void testParseResponseWithNullResponseMessage() {
     GetReceiptsFromPeerTask task =
         new GetReceiptsFromPeerTask(Collections.emptyList(), null, () -> null);
-    Assertions.assertThrows(InvalidPeerTaskResponseException.class, () -> task.parseResponse(null));
+    Assertions.assertThrows(
+        InvalidPeerTaskResponseException.class, () -> task.processResponse(null));
   }
 
   @Test
@@ -95,7 +96,7 @@ public class GetReceiptsFromPeerTaskTest {
                     new TransactionReceipt(1, 101112, Collections.emptyList(), Optional.empty()))));
 
     Assertions.assertThrows(
-        InvalidPeerTaskResponseException.class, () -> task.parseResponse(receiptsMessage));
+        InvalidPeerTaskResponseException.class, () -> task.processResponse(receiptsMessage));
   }
 
   @Test
@@ -127,7 +128,7 @@ public class GetReceiptsFromPeerTaskTest {
     Mockito.when(bodyValidator.receiptsRoot(List.of(receiptForBlock3)))
         .thenReturn(Hash.fromHexString(StringUtils.repeat("00", 31) + "32"));
 
-    Map<BlockHeader, List<TransactionReceipt>> resultMap = task.parseResponse(receiptsMessage);
+    Map<BlockHeader, List<TransactionReceipt>> resultMap = task.processResponse(receiptsMessage);
 
     Assertions.assertEquals(3, resultMap.size());
     Assertions.assertEquals(List.of(receiptForBlock1), resultMap.get(blockHeader1));
