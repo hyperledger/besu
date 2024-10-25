@@ -99,10 +99,8 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getMutable()).thenReturn(worldState);
     when(blockHeaderValidator.validateHeader(any(), any(), any())).thenReturn(true);
     when(blockHeaderValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
-    when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any()))
-        .thenReturn(true);
-    when(blockBodyValidator.validateBodyLight(any(), any(), any(), any(), any(), any()))
-        .thenReturn(true);
+    when(blockBodyValidator.validateBody(any(), any(), any(), any(), any())).thenReturn(true);
+    when(blockBodyValidator.validateBodyLight(any(), any(), any(), any(), any())).thenReturn(true);
     when(blockProcessor.processBlock(any(), any(), any())).thenReturn(successfulProcessingResult);
     when(blockProcessor.processBlock(any(), any(), any(), any()))
         .thenReturn(successfulProcessingResult);
@@ -167,8 +165,7 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void validateAndProcessBlock_whenBlockBodyInvalid() {
-    when(blockBodyValidator.validateBody(any(), eq(block), any(), any(), any(), any()))
-        .thenReturn(false);
+    when(blockBodyValidator.validateBody(any(), eq(block), any(), any(), any())).thenReturn(false);
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
@@ -353,7 +350,6 @@ public class MainnetBlockValidatorTest {
             protocolContext,
             block,
             Collections.emptyList(),
-            block.getBody().getRequests(),
             HeaderValidationMode.FULL,
             HeaderValidationMode.FULL,
             BodyValidationMode.FULL);
@@ -375,7 +371,6 @@ public class MainnetBlockValidatorTest {
             protocolContext,
             block,
             Collections.emptyList(),
-            block.getBody().getRequests(),
             headerValidationMode,
             headerValidationMode,
             bodyValidationMode);
@@ -392,7 +387,6 @@ public class MainnetBlockValidatorTest {
             eq(protocolContext),
             eq(block),
             any(),
-            any(),
             eq(headerValidationMode),
             eq(bodyValidationMode)))
         .thenReturn(false);
@@ -402,7 +396,6 @@ public class MainnetBlockValidatorTest {
             protocolContext,
             block,
             Collections.emptyList(),
-            block.getBody().getRequests(),
             headerValidationMode,
             headerValidationMode,
             bodyValidationMode);

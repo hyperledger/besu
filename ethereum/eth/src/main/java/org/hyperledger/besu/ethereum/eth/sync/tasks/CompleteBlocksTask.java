@@ -92,8 +92,7 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
         Collections.emptyList(),
         isWithdrawalsEnabled(protocolSchedule, header)
             ? Optional.of(Collections.emptyList())
-            : Optional.empty(),
-        Optional.empty());
+            : Optional.empty());
   }
 
   private boolean isWithdrawalsEnabled(
