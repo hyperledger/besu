@@ -15,14 +15,14 @@
 package org.hyperledger.besu.ethereum.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,38 +30,70 @@ import org.junit.jupiter.api.Test;
 
 public class AccountOverrideParameterTest {
 
-  @SuppressWarnings("unchecked")
+  private static final String ADDRESS_HEX = "0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3";
+  private static final String STORAGE_KEY =
+      "0x1cf7945003fc5b59d2f6736f0704557aa805c4f2844084ccd1173b8d56946962";
+  private static final String STORAGE_VALUE =
+      "0x000000000000000000000000000000000000000000000000000000110ed03bf7";
+
   @Test
   public void jsonDeserializesCorrectly() throws Exception {
     final String json =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{"
             + "\"from\":\"0x0\", \"to\": \"0x0\"}, "
             + "\"latest\","
-            + "{\"0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3\":"
+            + "{\""
+            + ADDRESS_HEX
+            + "\":"
             + "{"
             + "\"balance\": \"0x01\","
             + "\"nonce\": 88"
             + "}}],\"id\":1}";
 
     final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
-    JsonCallParameter p = request.getRequiredParameter(0, JsonCallParameter.class);
-    System.out.println(p);
+    final AccountOverrideMap accountOverrideParam =
+        request.getRequiredParameter(2, AccountOverrideMap.class);
 
-    Object o = request.getRequiredParameter(2, HashMap.class);
-    assertThat(o).isInstanceOf(Map.class);
-    final Map<String, String> parsedParameter = (Map<String, String>) o;
-    System.out.println("map" + parsedParameter);
+    final AccountOverride accountOverride =
+        accountOverrideParam.get(Address.fromHexString(ADDRESS_HEX));
+
+    assertThat(accountOverride.getNonce()).isEqualTo(Optional.of(88L));
+    assertThat(accountOverride.getBalance()).isEqualTo(Optional.of(Wei.of(1)));
+    assertFalse(accountOverride.getStateDiff().isPresent());
+  }
+
+  @Test
+  public void jsonWithStorageOverridesDeserializesCorrectly() throws Exception {
+    final String json =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{"
+            + "\"from\":\"0x0\", \"to\": \"0x0\"}, "
+            + "\"latest\","
+            + "{\""
+            + ADDRESS_HEX
+            + "\":"
+            + "{"
+            + "\"balance\": \"0x01\","
+            + "\"nonce\": 88,"
+            + "\"stateDiff\": {"
+            + "\""
+            + STORAGE_KEY
+            + "\": \""
+            + STORAGE_VALUE
+            + "\""
+            + "}}}],\"id\":1}";
+
+    final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
+
     final AccountOverrideMap accountOverrideParam =
         request.getRequiredParameter(2, AccountOverrideMap.class);
     System.out.println(accountOverrideParam);
 
-    //    assertThat(parsedParameter.get("balance")).isEqualTo("0x01");
+    final AccountOverride accountOverride =
+        accountOverrideParam.get(Address.fromHexString(ADDRESS_HEX));
+    assertThat(accountOverride.getNonce()).isEqualTo(Optional.of(88L));
 
-    assertThat(
-            accountOverrideParam
-                .get(Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3"))
-                .getNonce())
-        .isEqualTo(Optional.of(88L));
+    assertTrue(accountOverride.getStateDiff().isPresent());
+    assertThat(accountOverride.getStateDiff().get().get(STORAGE_KEY)).isEqualTo(STORAGE_VALUE);
   }
 
   private JsonRpcRequest readJsonAsJsonRpcRequest(final String json) throws java.io.IOException {
