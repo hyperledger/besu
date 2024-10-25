@@ -64,7 +64,6 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
   private void getCLIOptions(final D domainObject) {
     T options = optionsFromDomainObject(domainObject);
     final String[] cliOptions = options.getCLIOptions().toArray(new String[0]);
-
     final TestBesuCommand cmd = parseCommand(cliOptions);
     final T optionsFromCommand = getOptionsFromBesuCommand(cmd);
 
