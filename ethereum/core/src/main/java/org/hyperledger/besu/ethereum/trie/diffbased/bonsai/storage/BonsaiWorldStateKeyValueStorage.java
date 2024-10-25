@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbSt
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
-import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -41,7 +40,6 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.List;
-import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -154,11 +152,6 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
             accountHash,
             storageSlotKey,
             composedWorldStateStorage);
-  }
-
-  public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
-      final Hash addressHash, final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("Bonsai Tries does not currently support enumerating storage");
   }
 
   public void upgradeToFullFlatDbMode() {

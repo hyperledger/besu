@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.CachingPreImageStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedLayeredWorldStateKeyValueStorage;
@@ -115,6 +116,11 @@ public abstract class DiffBasedWorldState
 
   private boolean isPersisted(final WorldStateKeyValueStorage worldStateKeyValueStorage) {
     return !(worldStateKeyValueStorage instanceof DiffBasedSnapshotWorldStateKeyValueStorage);
+  }
+
+  @Override
+  public CachingPreImageStorage getPreImageProxy() {
+    return worldStateKeyValueStorage.getPreImageProxy();
   }
 
   /**
@@ -295,9 +301,14 @@ public abstract class DiffBasedWorldState
   }
 
   @Override
-  public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("storage format do not provide account streaming.");
-  }
+  public abstract Stream<StreamableAccount> streamAccounts(
+      final Bytes32 startKeyHash, final int limit);
+
+  //  {
+  //    return preImageProxy
+  //        .streamAddressPreImages(startKeyHash, limit)
+  //        .map(address -> new StreamableAccount(Optional.of(address), get(address)));
+  //  }
 
   @Override
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {

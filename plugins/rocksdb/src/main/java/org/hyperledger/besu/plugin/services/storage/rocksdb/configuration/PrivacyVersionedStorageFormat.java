@@ -63,7 +63,7 @@ public enum PrivacyVersionedStorageFormat implements VersionedStorageFormat {
    */
   public static VersionedStorageFormat defaultForNewDB(
       final DataStorageConfiguration configuration) {
-    return switch (configuration.getDatabaseFormat()) {
+    return switch (configuration.getDataStorageFormat()) {
       case FOREST -> FOREST_WITH_RECEIPT_COMPACTION;
       case BONSAI -> BONSAI_WITH_RECEIPT_COMPACTION;
     };
