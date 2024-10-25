@@ -44,7 +44,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class FlatDbStrategyProviderTest {
+class BonsaiFlatDbStrategyProviderTest {
   private final BonsaiFlatDbStrategyProvider flatDbStrategyProvider =
       new BonsaiFlatDbStrategyProvider(
           new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
