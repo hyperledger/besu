@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
+import static org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
@@ -31,8 +30,6 @@ import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BLSPublicKey;
-import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.GWei;
@@ -48,7 +45,6 @@ import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
@@ -81,10 +77,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor;
-import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -141,83 +134,16 @@ abstract class AbstractBlockCreatorTest {
     List<TransactionReceipt> receipts =
         List.of(receiptWithoutDeposit1, receiptWithDeposit, receiptWithoutDeposit2);
 
-    DepositRequest expectedDepositRequest =
-        new DepositRequest(
-            BLSPublicKey.fromHexString(
-                "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
-            Bytes32.fromHexString(
-                "0x0017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa35589483"),
-            GWei.of(32000000000L),
-            BLSSignature.fromHexString(
-                "0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
-            UInt64.valueOf(539967));
-    final List<DepositRequest> expectedDepositRequests = List.of(expectedDepositRequest);
+    Request expectedDepositRequest =
+        new Request(
+            RequestType.DEPOSIT,
+            Bytes.fromHexString(
+                "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e0017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa355894830040597307000000a889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb53f3d080000000000"));
 
     var depositRequestsFromReceipts =
         new DepositRequestProcessor(DEFAULT_DEPOSIT_CONTRACT_ADDRESS)
             .process(new ProcessRequestContext(null, null, null, receipts, null, null));
-    assertThat(depositRequestsFromReceipts.get()).isEqualTo(expectedDepositRequests);
-  }
-
-  @Test
-  void withAllowedDepositRequestsAndContractAddress_DepositRequestsAreParsed() {
-    final CreateOn miningOn =
-        blockCreatorWithAllowedDepositRequests(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
-
-    final BlockCreationResult blockCreationResult =
-        miningOn.blockCreator.createBlock(
-            Optional.empty(),
-            Optional.empty(),
-            Optional.of(emptyList()),
-            Optional.empty(),
-            Optional.empty(),
-            1L,
-            false,
-            miningOn.parentHeader);
-
-    List<Request> depositRequests = emptyList();
-    final Hash requestsRoot = BodyValidation.requestsRoot(depositRequests);
-    assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).hasValue(requestsRoot);
-    assertThat(blockCreationResult.getBlock().getBody().getRequests()).hasValue(depositRequests);
-  }
-
-  @Test
-  void withAllowedDepositRequestsAndNoContractAddress_DepositRequestsAreNotParsed() {
-    final CreateOn miningOn = blockCreatorWithAllowedDepositRequests(null);
-
-    final BlockCreationResult blockCreationResult =
-        miningOn.blockCreator.createBlock(
-            Optional.empty(),
-            Optional.empty(),
-            Optional.of(emptyList()),
-            Optional.empty(),
-            Optional.empty(),
-            1L,
-            false,
-            miningOn.parentHeader);
-
-    assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).isEmpty();
-    assertThat(blockCreationResult.getBlock().getBody().getRequests()).isEmpty();
-  }
-
-  @Test
-  void withProhibitedDepositRequests_DepositRequestsAreNotParsed() {
-
-    final CreateOn miningOn = blockCreatorWithProhibitedDepositRequests();
-
-    final BlockCreationResult blockCreationResult =
-        miningOn.blockCreator.createBlock(
-            Optional.empty(),
-            Optional.empty(),
-            Optional.of(emptyList()),
-            Optional.empty(),
-            Optional.empty(),
-            1L,
-            false,
-            miningOn.parentHeader);
-
-    assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).isEmpty();
-    assertThat(blockCreationResult.getBlock().getBody().getRequests()).isEmpty();
+    assertThat(depositRequestsFromReceipts).isEqualTo(expectedDepositRequest);
   }
 
   @Test
@@ -355,12 +281,6 @@ abstract class AbstractBlockCreatorTest {
     return createBlockCreator(protocolSpecAdapters);
   }
 
-  private CreateOn blockCreatorWithProhibitedDepositRequests() {
-    final ProtocolSpecAdapters protocolSpecAdapters =
-        ProtocolSpecAdapters.create(0, specBuilder -> specBuilder);
-    return createBlockCreator(protocolSpecAdapters);
-  }
-
   private CreateOn blockCreatorWithWithdrawalsProcessor() {
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(
@@ -371,27 +291,6 @@ abstract class AbstractBlockCreatorTest {
   private CreateOn blockCreatorWithoutWithdrawalsProcessor() {
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(0, specBuilder -> specBuilder.withdrawalsProcessor(null));
-    return createBlockCreator(protocolSpecAdapters);
-  }
-
-  private CreateOn blockCreatorWithAllowedDepositRequests(final Address depositContractAddress) {
-    final ProtocolSpecAdapters protocolSpecAdapters =
-        ProtocolSpecAdapters.create(
-            0,
-            specBuilder ->
-                specBuilder
-                    .requestsValidator(
-                        new RequestsValidatorCoordinator.Builder()
-                            .addValidator(
-                                RequestType.DEPOSIT,
-                                new DepositRequestValidator((depositContractAddress)))
-                            .build())
-                    .requestProcessorCoordinator(
-                        new RequestProcessorCoordinator.Builder()
-                            .addProcessor(
-                                RequestType.DEPOSIT,
-                                new DepositRequestProcessor(depositContractAddress))
-                            .build()));
     return createBlockCreator(protocolSpecAdapters);
   }
 

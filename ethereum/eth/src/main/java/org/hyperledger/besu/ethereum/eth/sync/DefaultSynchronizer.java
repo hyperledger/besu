@@ -388,10 +388,12 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     return syncState.unsubscribeSyncStatus(listenerId);
   }
 
+  @Override
   public long subscribeInitialSync(final BesuEvents.InitialSyncCompletionListener listener) {
     return syncState.subscribeCompletionReached(listener);
   }
 
+  @Override
   public boolean unsubscribeInitialSync(final long listenerId) {
     return syncState.unsubscribeInitialConditionReached(listenerId);
   }
