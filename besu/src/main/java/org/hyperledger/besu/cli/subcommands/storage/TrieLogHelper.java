@@ -15,11 +15,10 @@
 package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.cli.options.DataStorageOptions.DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.cli.options.storage.DiffBasedSubStorageOptions.MAX_LAYERS_TO_LOAD;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
-import org.hyperledger.besu.cli.options.DataStorageOptions;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -30,6 +29,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactor
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -73,7 +73,7 @@ public class TrieLogHelper {
 
     validatePruneConfiguration(config);
 
-    final long layersToRetain = config.getDiffbasedMaxLayersToLoad();
+    final long layersToRetain = config.getDiffBasedSubStorageConfiguration().getMaxLayersToLoad();
 
     final long chainHeight = blockchain.getChainHeadBlockNumber();
 
@@ -102,7 +102,7 @@ public class TrieLogHelper {
     // Should only be layersToRetain left but loading extra just in case of an unforeseen bug
     final long countAfterPrune =
         rootWorldStateStorage
-            .streamTrieLogKeys(layersToRetain + DEFAULT_DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE)
+            .streamTrieLogKeys(layersToRetain + DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE)
             .count();
     if (countAfterPrune == layersToRetain) {
       if (deleteFiles(batchFileNameBase, numberOfBatches)) {
@@ -115,10 +115,7 @@ public class TrieLogHelper {
       throw new IllegalStateException(
           String.format(
               "Remaining trie logs (%d) did not match %s (%d). Trie logs backup files (in %s) have not been deleted, it is safe to rerun the subcommand.",
-              countAfterPrune,
-              DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
-              layersToRetain,
-              batchFileNameBase));
+              countAfterPrune, MAX_LAYERS_TO_LOAD, layersToRetain, batchFileNameBase));
     }
   }
 
@@ -231,7 +228,7 @@ public class TrieLogHelper {
     // plus extra threshold to account forks and orphans
     final long clampedCountBeforePruning =
         rootWorldStateStorage
-            .streamTrieLogKeys(layersToRetain + DEFAULT_DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE)
+            .streamTrieLogKeys(layersToRetain + DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE)
             .count();
     if (clampedCountBeforePruning < layersToRetain) {
       throw new IllegalArgumentException(
@@ -294,27 +291,29 @@ public class TrieLogHelper {
 
   @VisibleForTesting
   void validatePruneConfiguration(final DataStorageConfiguration config) {
+    final DiffBasedSubStorageConfiguration subStorageConfiguration =
+        config.getDiffBasedSubStorageConfiguration();
     checkArgument(
-        config.getDiffbasedMaxLayersToLoad()
-            >= DataStorageConfiguration.MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT,
+        subStorageConfiguration.getMaxLayersToLoad()
+            >= DiffBasedSubStorageConfiguration.MINIMUM_TRIE_LOG_RETENTION_LIMIT,
         String.format(
-            DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
-            DataStorageConfiguration.MINIMUM_DIFFBASED_TRIE_LOG_RETENTION_LIMIT));
+            MAX_LAYERS_TO_LOAD + " minimum value is %d",
+            DiffBasedSubStorageConfiguration.MINIMUM_TRIE_LOG_RETENTION_LIMIT));
     checkArgument(
-        config.getDiffbasedTrieLogPruningWindowSize() > 0,
+        subStorageConfiguration.getTrieLogPruningWindowSize() > 0,
         String.format(
-            DataStorageOptions.DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE
-                + "=%d must be greater than 0",
-            config.getDiffbasedTrieLogPruningWindowSize()));
+            DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
+            subStorageConfiguration.getTrieLogPruningWindowSize()));
     checkArgument(
-        config.getDiffbasedTrieLogPruningWindowSize() > config.getDiffbasedMaxLayersToLoad(),
+        subStorageConfiguration.getTrieLogPruningWindowSize()
+            > subStorageConfiguration.getMaxLayersToLoad(),
         String.format(
-            DataStorageOptions.DIFFBASED_TRIE_LOG_PRUNING_WINDOW_SIZE
+            DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE
                 + "=%d must be greater than "
-                + DIFFBASED_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
+                + MAX_LAYERS_TO_LOAD
                 + "=%d",
-            config.getDiffbasedTrieLogPruningWindowSize(),
-            config.getDiffbasedMaxLayersToLoad()));
+            subStorageConfiguration.getTrieLogPruningWindowSize(),
+            subStorageConfiguration.getMaxLayersToLoad()));
   }
 
   private void saveTrieLogsInFile(

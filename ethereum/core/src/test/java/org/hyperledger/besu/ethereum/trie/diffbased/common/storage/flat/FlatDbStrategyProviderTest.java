@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -23,8 +22,10 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFl
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFullFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiPartialFlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -87,10 +88,13 @@ class FlatDbStrategyProviderTest {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(DataStorageFormat.BONSAI)
-            .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .diffbasedCodeStoredByCodeHashEnabled(codeByHashEnabled)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(DiffBasedSubStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD)
+                    .unstable(
+                        ImmutableDiffBasedSubStorageConfiguration.DiffBasedUnstable.builder()
+                            .codeStoredByCodeHashEnabled(codeByHashEnabled)
+                            .build())
                     .build())
             .build();
     final BonsaiFlatDbStrategyProvider flatDbStrategyProvider =
@@ -112,10 +116,13 @@ class FlatDbStrategyProviderTest {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(DataStorageFormat.BONSAI)
-            .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .diffbasedCodeStoredByCodeHashEnabled(codeByHashEnabled)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(DiffBasedSubStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD)
+                    .unstable(
+                        ImmutableDiffBasedSubStorageConfiguration.DiffBasedUnstable.builder()
+                            .codeStoredByCodeHashEnabled(codeByHashEnabled)
+                            .build())
                     .build())
             .build();
     final BonsaiFlatDbStrategyProvider flatDbStrategyProvider =
@@ -142,10 +149,13 @@ class FlatDbStrategyProviderTest {
     final DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(DataStorageFormat.BONSAI)
-            .diffbasedMaxLayersToLoad(DEFAULT_DIFFBASED_MAX_LAYERS_TO_LOAD)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .diffbasedCodeStoredByCodeHashEnabled(codeByHashEnabled)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(DiffBasedSubStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD)
+                    .unstable(
+                        ImmutableDiffBasedSubStorageConfiguration.DiffBasedUnstable.builder()
+                            .codeStoredByCodeHashEnabled(codeByHashEnabled)
+                            .build())
                     .build())
             .build();
     final BonsaiFlatDbStrategyProvider flatDbStrategyProvider =

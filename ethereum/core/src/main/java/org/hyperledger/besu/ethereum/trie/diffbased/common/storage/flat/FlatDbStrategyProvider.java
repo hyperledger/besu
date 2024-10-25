@@ -65,7 +65,10 @@ public abstract class FlatDbStrategyProvider {
   protected boolean deriveUseCodeStorageByHash(
       final SegmentedKeyValueStorage composedWorldStateStorage) {
     final boolean configCodeUsingHash =
-        dataStorageConfiguration.getUnstable().getDiffbasedCodeStoredByCodeHashEnabled();
+        dataStorageConfiguration
+            .getDiffBasedSubStorageConfiguration()
+            .getUnstable()
+            .getCodeStoredByCodeHashEnabled();
     boolean codeUsingCodeByHash =
         detectCodeStorageByHash(composedWorldStateStorage)
             .map(
