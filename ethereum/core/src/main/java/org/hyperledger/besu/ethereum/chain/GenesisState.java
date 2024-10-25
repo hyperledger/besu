@@ -221,7 +221,9 @@ public final class GenesisState {
         .requestsHash(isPragueAtGenesis(genesis) ? Hash.EMPTY_REQUESTS_HASH : null)
         .targetBlobCount(
             isPragueAtGenesis(genesis)
-                ? genesis.getTargetBlobCount().map(UInt64::fromHexString).orElseThrow()
+                // TODO SLD EIP-7742 Currently defaulting to null due to dependency on web3j
+                // BlockHeader in CodeDelegationTransactionAcceptanceTest
+                ? genesis.getTargetBlobCount().map(UInt64::fromHexString).orElse(null)
                 : null)
         .buildBlockHeader();
   }

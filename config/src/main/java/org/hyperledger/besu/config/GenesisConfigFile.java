@@ -271,6 +271,8 @@ public class GenesisConfigFile {
    * @return the target blob count
    */
   public Optional<String> getTargetBlobCount() {
+    // TODO SLD EIP-7742 not sure if we should use a default value here or enforce any
+    // "pragueAtGenesis" genesis file (used in devnets) to have this value
     return JsonUtil.getValueAsString(genesisRoot, "targetblobcount");
   }
 
