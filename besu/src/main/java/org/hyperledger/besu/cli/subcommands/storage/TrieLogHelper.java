@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.cli.options.storage.DiffBasedSubStorageOptions.MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.cli.options.storage.DiffBasedSubStorageOptions.TRIE_LOG_PRUNING_WINDOW_SIZE;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
@@ -302,16 +303,13 @@ public class TrieLogHelper {
     checkArgument(
         subStorageConfiguration.getTrieLogPruningWindowSize() > 0,
         String.format(
-            DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
+            TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
             subStorageConfiguration.getTrieLogPruningWindowSize()));
     checkArgument(
         subStorageConfiguration.getTrieLogPruningWindowSize()
             > subStorageConfiguration.getMaxLayersToLoad(),
         String.format(
-            DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE
-                + "=%d must be greater than "
-                + MAX_LAYERS_TO_LOAD
-                + "=%d",
+            TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than " + MAX_LAYERS_TO_LOAD + "=%d",
             subStorageConfiguration.getTrieLogPruningWindowSize(),
             subStorageConfiguration.getMaxLayersToLoad()));
   }
