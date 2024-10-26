@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.assertj.core.api.Assertions.assertThat;
-
+import org.apache.logging.log4j.ThreadContext;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Blockchain;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.admin.AdminConditions;
@@ -45,20 +43,23 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.ProcessBuilder.Redirect;
 import java.math.BigInteger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.junit.After;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Superclass for acceptance tests. For now (transition to junit5 is ongoing) this class supports
@@ -125,7 +126,15 @@ public class AcceptanceTestBase {
     exitedSuccessfully = new ExitedWithCode(0);
   }
 
-  @After
+  @BeforeEach
+  public void setUp(final TestInfo testInfo) {
+    // log4j is configured to create a file per test
+    // build/acceptanceTestLogs/${ctx:class}.${ctx:test}.log
+    ThreadContext.put("class", this.getClass().getSimpleName());
+    ThreadContext.put("test", testInfo.getTestMethod().get().getName());
+  }
+
+  @AfterEach
   public void tearDownAcceptanceTestBase() {
     reportMemory();
     cluster.close();
@@ -143,7 +152,9 @@ public class AcceptanceTestBase {
     if (command != null) {
       LOG.info("Memory usage at end of test:");
       final ProcessBuilder processBuilder =
-          new ProcessBuilder(command).redirectErrorStream(true).redirectInput(Redirect.INHERIT);
+          new ProcessBuilder(command)
+              .redirectErrorStream(true)
+              .redirectInput(ProcessBuilder.Redirect.INHERIT);
       try {
         final Process memInfoProcess = processBuilder.start();
         outputProcessorExecutor.execute(() -> printOutput(memInfoProcess));
