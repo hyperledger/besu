@@ -34,19 +34,15 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ConsolidationRequest;
-import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
@@ -530,41 +526,14 @@ public class T8nExecutor {
               receipts,
               new CachingBlockHashLookup(blockHeader, blockchain),
               OperationTracer.NO_TRACING);
-      Optional<List<Request>> maybeRequests = rpc.process(context);
-      Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
+      Optional<List<Request>> maybeRequests = Optional.of(rpc.process(context));
+      Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
 
-      resultObject.put("requestsRoot", requestRoot.toHexString());
-      var deposits = resultObject.putArray("depositRequests");
-      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), DepositRequest.class)
-          .forEach(
-              deposit -> {
-                var obj = deposits.addObject();
-                obj.put("pubkey", deposit.getPubkey().toHexString());
-                obj.put("withdrawalCredentials", deposit.getWithdrawalCredentials().toHexString());
-                obj.put("amount", deposit.getAmount().toHexString());
-                obj.put("signature", deposit.getSignature().toHexString());
-                obj.put("index", deposit.getIndex().toHexString());
-              });
-
-      var withdrawalRequests = resultObject.putArray("withdrawalRequests");
-      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), WithdrawalRequest.class)
-          .forEach(
-              wr -> {
-                var obj = withdrawalRequests.addObject();
-                obj.put("sourceAddress", wr.getSourceAddress().toHexString());
-                obj.put("validatorPubkey", wr.getValidatorPubkey().toHexString());
-                obj.put("amount", wr.getAmount().toHexString());
-              });
-
-      var consolidationRequests = resultObject.putArray("consolidationRequests");
-      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), ConsolidationRequest.class)
-          .forEach(
-              cr -> {
-                var obj = consolidationRequests.addObject();
-                obj.put("sourceAddress", cr.getSourceAddress().toHexString());
-                obj.put("sourcePubkey", cr.getSourcePubkey().toHexString());
-                obj.put("targetPubkey", cr.getTargetPubkey().toHexString());
-              });
+      resultObject.put("requestsHash", requestsHash.toHexString());
+      ArrayNode requests = resultObject.putArray("requests");
+      maybeRequests
+          .orElseGet(List::of)
+          .forEach(request -> requests.add(request.getData().toHexString()));
     }
 
     worldState.persist(blockHeader);

@@ -16,7 +16,6 @@ package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
@@ -33,7 +32,7 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SEPOLIA_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SEPOLIA_DISCOVERY_URL;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
-import static org.junit.Assume.assumeThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
@@ -1391,7 +1390,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void bonsaiLimitTrieLogsEnabledByDefault() {
+  public void diffbasedLimitTrieLogsEnabledByDefault() {
     parseCommand();
     verify(mockControllerBuilder)
         .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
@@ -1399,7 +1398,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isTrue();
+    assertThat(
+            dataStorageConfiguration
+                .getDiffBasedSubStorageConfiguration()
+                .getLimitTrieLogsEnabled())
+        .isTrue();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1414,7 +1417,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isFalse();
+    assertThat(
+            dataStorageConfiguration
+                .getDiffBasedSubStorageConfiguration()
+                .getLimitTrieLogsEnabled())
+        .isFalse();
     verify(mockLogger)
         .warn(
             "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
@@ -1449,7 +1456,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad()).isEqualTo(11);
+    assertThat(dataStorageConfiguration.getDiffBasedSubStorageConfiguration().getMaxLayersToLoad())
+        .isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -2392,7 +2400,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void logsWarningWhenFailToLoadJemalloc() {
-    assumeThat(PlatformDetector.getOSType(), is("linux"));
+    assumeTrue(PlatformDetector.getOSType().equals("linux"));
     setEnvironmentVariable("BESU_USING_JEMALLOC", "true");
     parseCommand();
     verify(mockLogger)
@@ -2404,7 +2412,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void logsSuggestInstallingJemallocWhenEnvVarNotPresent() {
-    assumeThat(PlatformDetector.getOSType(), is("linux"));
+    assumeTrue(PlatformDetector.getOSType().equals("linux"));
     parseCommand();
     verify(mockLogger)
         .info("jemalloc library not found, memory usage may be reduced by installing it");
@@ -2552,8 +2560,9 @@ public class BesuCommandTest extends CommandTestAbstract {
             besuCommand
                 .getDataStorageOptions()
                 .toDomainObject()
+                .getDiffBasedSubStorageConfiguration()
                 .getUnstable()
-                .getBonsaiFullFlatDbEnabled())
+                .getFullFlatDbEnabled())
         .isTrue();
   }
 
@@ -2564,8 +2573,9 @@ public class BesuCommandTest extends CommandTestAbstract {
             besuCommand
                 .dataStorageOptions
                 .toDomainObject()
+                .getDiffBasedSubStorageConfiguration()
                 .getUnstable()
-                .getBonsaiFullFlatDbEnabled())
+                .getFullFlatDbEnabled())
         .isFalse();
   }
 

@@ -14,64 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestsValidator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
 
 import java.util.Optional;
 
 public class RequestValidatorProvider {
 
-  public static RequestValidator getDepositRequestValidator(
+  public static RequestsValidator getRequestsValidator(
       final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
-    return getRequestValidator(protocolSchedule, blockTimestamp, blockNumber, RequestType.DEPOSIT);
-  }
-
-  public static RequestValidator getWithdrawalRequestValidator(
-      final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
-    return getRequestValidator(
-        protocolSchedule, blockTimestamp, blockNumber, RequestType.WITHDRAWAL);
-  }
-
-  public static RequestValidator getConsolidationRequestValidator(
-      final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
-    return getRequestValidator(
-        protocolSchedule, blockTimestamp, blockNumber, RequestType.CONSOLIDATION);
-  }
-
-  private static RequestValidator getRequestValidator(
-      final ProtocolSchedule protocolSchedule,
-      final long blockTimestamp,
-      final long blockNumber,
-      final RequestType requestType) {
-
-    RequestsValidatorCoordinator requestsValidatorCoordinator =
-        getRequestValidatorCoordinator(protocolSchedule, blockTimestamp, blockNumber);
-    return requestsValidatorCoordinator
-        .getRequestValidator(requestType)
-        .orElse(new ProhibitedRequestsValidator());
-  }
-
-  private static RequestsValidatorCoordinator getRequestValidatorCoordinator(
-      final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
-
     final BlockHeader blockHeader =
         BlockHeaderBuilder.createDefault()
             .timestamp(blockTimestamp)
             .number(blockNumber)
             .buildBlockHeader();
-    return getRequestValidatorCoordinator(protocolSchedule.getByBlockHeader(blockHeader));
-  }
-
-  private static RequestsValidatorCoordinator getRequestValidatorCoordinator(
-      final ProtocolSpec protocolSchedule) {
-    return Optional.ofNullable(protocolSchedule)
-        .map(ProtocolSpec::getRequestsValidatorCoordinator)
-        .orElseGet(RequestsValidatorCoordinator::empty);
+    return Optional.ofNullable(protocolSchedule.getByBlockHeader(blockHeader))
+        .map(ProtocolSpec::getRequestsValidator)
+        .orElse(v -> true);
   }
 }

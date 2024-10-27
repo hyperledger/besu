@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
@@ -81,10 +80,6 @@ public class DownloadReceiptsStep
   private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>>
       getReceiptsWithPeerTaskSystem(final List<BlockHeader> headers) {
     Map<BlockHeader, List<TransactionReceipt>> getReceipts = new HashMap<>();
-    headers.stream()
-        .filter(header -> header.getReceiptsRoot().equals(Hash.EMPTY_TRIE_HASH))
-        .forEach(header -> getReceipts.put(header, emptyList()));
-    headers.removeAll(getReceipts.keySet());
     do {
       GetReceiptsFromPeerTask task =
           new GetReceiptsFromPeerTask(headers, new BodyValidator(), currentProtocolSpecSupplier);
