@@ -48,13 +48,13 @@ public class BodyValidator {
   }
 
   /**
-   * Generates the requests root for a list of requests
+   * Generates the requests hash for a list of requests
    *
    * @param requests list of request
-   * @return the requests root
+   * @return the requests hash
    */
-  public Hash requestsRoot(final List<Request> requests) {
-    return BodyValidation.requestsRoot(requests);
+  public Hash requestsHash(final List<Request> requests) {
+    return BodyValidation.requestsHash(requests);
   }
 
   /**
