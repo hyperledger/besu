@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
+import static java.util.Collections.emptyList;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -30,14 +32,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import static java.util.Collections.emptyList;
 
 public class GetReceiptsFromPeerTask
     implements PeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
@@ -49,7 +48,6 @@ public class GetReceiptsFromPeerTask
   private final Map<Hash, List<BlockHeader>> headersByReceiptsRoot = new HashMap<>();
   private final long requiredBlockchainHeight;
 
-
   public GetReceiptsFromPeerTask(
       final Collection<BlockHeader> blockHeaders,
       final BodyValidator bodyValidator,
@@ -60,25 +58,25 @@ public class GetReceiptsFromPeerTask
 
     // pre-fill any headers with an empty receipts root into the result map
     this.blockHeaders.stream()
-            .filter(header -> header.getReceiptsRoot().equals(Hash.EMPTY_TRIE_HASH))
-            .forEach(header -> receiptsByBlockHeader.put(header, emptyList()));
+        .filter(header -> header.getReceiptsRoot().equals(Hash.EMPTY_TRIE_HASH))
+        .forEach(header -> receiptsByBlockHeader.put(header, emptyList()));
     this.blockHeaders.removeAll(receiptsByBlockHeader.keySet());
 
-    // group headers by their receipts root hash to reduce total number of receipts hashes requested for
+    // group headers by their receipts root hash to reduce total number of receipts hashes requested
+    // for
     this.blockHeaders.forEach(
         header ->
             headersByReceiptsRoot
                 .computeIfAbsent(header.getReceiptsRoot(), key -> new ArrayList<>())
                 .add(header));
 
-    // calculate the minimum required blockchain height a peer will need to be able to fulfil this request
+    // calculate the minimum required blockchain height a peer will need to be able to fulfil this
+    // request
     requiredBlockchainHeight =
-            this.blockHeaders.stream()
+        this.blockHeaders.stream()
             .mapToLong(BlockHeader::getNumber)
             .max()
             .orElse(BlockHeader.GENESIS_BLOCK_NUMBER);
-
-
   }
 
   @Override
@@ -109,8 +107,10 @@ public class GetReceiptsFromPeerTask
       throw new InvalidPeerTaskResponseException();
     }
 
-    //take a copy of the pre-filled receiptsByBlockHeader, to ensure idempotency of subsequent calls to processResponse
-    final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader = new HashMap<>(receiptsByBlockHeader);
+    // take a copy of the pre-filled receiptsByBlockHeader, to ensure idempotency of subsequent
+    // calls to processResponse
+    final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader =
+        new HashMap<>(receiptsByBlockHeader);
     for (final List<TransactionReceipt> receiptsInBlock : receiptsByBlock) {
       final List<BlockHeader> blockHeaders =
           headersByReceiptsRoot.get(bodyValidator.receiptsRoot(receiptsInBlock));

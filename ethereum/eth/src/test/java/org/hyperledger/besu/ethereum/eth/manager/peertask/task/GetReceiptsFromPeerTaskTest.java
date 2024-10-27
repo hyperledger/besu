@@ -109,7 +109,9 @@ public class GetReceiptsFromPeerTaskTest {
 
     GetReceiptsFromPeerTask task =
         new GetReceiptsFromPeerTask(
-            List.of(blockHeader1, blockHeader2, blockHeader3, blockHeader4), bodyValidator, () -> null);
+            List.of(blockHeader1, blockHeader2, blockHeader3, blockHeader4),
+            bodyValidator,
+            () -> null);
 
     TransactionReceipt receiptForBlock1 =
         new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
@@ -198,7 +200,7 @@ public class GetReceiptsFromPeerTaskTest {
     // second to last hex digit indicates the blockNumber, last hex digit indicates the usage of the
     // hash
     Mockito.when(blockHeader.getHash())
-            .thenReturn(Hash.fromHexString(StringUtils.repeat("00", 31) + blockNumber + "1"));
+        .thenReturn(Hash.fromHexString(StringUtils.repeat("00", 31) + blockNumber + "1"));
     Mockito.when(blockHeader.getReceiptsRoot()).thenReturn(Hash.EMPTY_TRIE_HASH);
 
     return blockHeader;
