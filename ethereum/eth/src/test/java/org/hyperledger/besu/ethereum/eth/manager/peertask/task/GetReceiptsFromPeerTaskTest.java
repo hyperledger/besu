@@ -105,10 +105,11 @@ public class GetReceiptsFromPeerTaskTest {
     BlockHeader blockHeader1 = mockBlockHeader(1);
     BlockHeader blockHeader2 = mockBlockHeader(2);
     BlockHeader blockHeader3 = mockBlockHeader(3);
+    BlockHeader blockHeader4 = mockBlockHeaderWithEmptyReceiptsRootHash(4);
 
     GetReceiptsFromPeerTask task =
         new GetReceiptsFromPeerTask(
-            List.of(blockHeader1, blockHeader2, blockHeader3), bodyValidator, () -> null);
+            List.of(blockHeader1, blockHeader2, blockHeader3, blockHeader4), bodyValidator, () -> null);
 
     TransactionReceipt receiptForBlock1 =
         new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
@@ -130,7 +131,8 @@ public class GetReceiptsFromPeerTaskTest {
 
     Map<BlockHeader, List<TransactionReceipt>> resultMap = task.processResponse(receiptsMessage);
 
-    Assertions.assertEquals(3, resultMap.size());
+    Assertions.assertEquals(4, resultMap.size());
+    Assertions.assertEquals(Collections.emptyList(), resultMap.get(blockHeader4));
     Assertions.assertEquals(List.of(receiptForBlock1), resultMap.get(blockHeader1));
     Assertions.assertEquals(List.of(receiptForBlock2), resultMap.get(blockHeader2));
     Assertions.assertEquals(List.of(receiptForBlock3), resultMap.get(blockHeader3));
@@ -186,6 +188,18 @@ public class GetReceiptsFromPeerTaskTest {
         .thenReturn(Hash.fromHexString(StringUtils.repeat("00", 31) + blockNumber + "1"));
     Mockito.when(blockHeader.getReceiptsRoot())
         .thenReturn(Hash.fromHexString(StringUtils.repeat("00", 31) + blockNumber + "2"));
+
+    return blockHeader;
+  }
+
+  private BlockHeader mockBlockHeaderWithEmptyReceiptsRootHash(final long blockNumber) {
+    BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
+    Mockito.when(blockHeader.getNumber()).thenReturn(blockNumber);
+    // second to last hex digit indicates the blockNumber, last hex digit indicates the usage of the
+    // hash
+    Mockito.when(blockHeader.getHash())
+            .thenReturn(Hash.fromHexString(StringUtils.repeat("00", 31) + blockNumber + "1"));
+    Mockito.when(blockHeader.getReceiptsRoot()).thenReturn(Hash.EMPTY_TRIE_HASH);
 
     return blockHeader;
   }

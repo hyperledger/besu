@@ -81,10 +81,6 @@ public class DownloadReceiptsStep
   private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>>
       getReceiptsWithPeerTaskSystem(final List<BlockHeader> headers) {
     Map<BlockHeader, List<TransactionReceipt>> getReceipts = new HashMap<>();
-    headers.stream()
-        .filter(header -> header.getReceiptsRoot().equals(Hash.EMPTY_TRIE_HASH))
-        .forEach(header -> getReceipts.put(header, emptyList()));
-    headers.removeAll(getReceipts.keySet());
     do {
       GetReceiptsFromPeerTask task =
           new GetReceiptsFromPeerTask(headers, new BodyValidator(), currentProtocolSpecSupplier);
