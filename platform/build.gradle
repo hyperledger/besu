@@ -15,7 +15,6 @@
 plugins {
   id 'java-platform'
   id 'com.diffplug.spotless'
-  id 'maven-publish'
 }
 
 repositories {
@@ -127,6 +126,8 @@ dependencies {
     api 'org.bouncycastle:bcprov-jdk18on:1.78.1'
 
     api 'org.fusesource.jansi:jansi:2.4.1'
+
+    api 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
 
     api 'org.hyperledger.besu:arithmetic:0.9.7'
     api 'org.hyperledger.besu:blake2bf:0.9.7'

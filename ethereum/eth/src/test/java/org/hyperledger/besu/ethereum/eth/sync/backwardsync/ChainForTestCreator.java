@@ -88,7 +88,7 @@ public class ChainForTestCreator {
         blockHeader.getBlobGasUsed().orElse(null),
         blockHeader.getExcessBlobGas().orElse(null),
         blockHeader.getParentBeaconBlockRoot().orElse(null),
-        blockHeader.getRequestsRoot().orElse(null),
+        blockHeader.getRequestsHash().orElse(null),
         new MainnetBlockHeaderFunctions());
   }
 

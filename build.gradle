@@ -526,7 +526,8 @@ subprojects {
     return result
   }
 
-  if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
+
+  if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport") || project.name == "platform") {
     apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'maven-publish'
 
