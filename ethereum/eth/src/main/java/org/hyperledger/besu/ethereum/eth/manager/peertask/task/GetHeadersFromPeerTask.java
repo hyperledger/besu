@@ -100,7 +100,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   }
 
   @Override
-  public List<BlockHeader> parseResponse(final MessageData messageData)
+  public List<BlockHeader> processResponse(final MessageData messageData)
       throws InvalidPeerTaskResponseException {
     if (messageData == null) {
       throw new InvalidPeerTaskResponseException();
