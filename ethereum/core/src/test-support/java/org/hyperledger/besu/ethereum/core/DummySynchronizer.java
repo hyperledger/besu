@@ -12,10 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.retesteth;
+package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
@@ -79,6 +78,16 @@ public class DummySynchronizer implements Synchronizer {
 
   @Override
   public boolean unsubscribeInSync(final long listenerId) {
+    return false;
+  }
+
+  @Override
+  public long subscribeInitialSync(final BesuEvents.InitialSyncCompletionListener listener) {
+    return 0;
+  }
+
+  @Override
+  public boolean unsubscribeInitialSync(final long listenerId) {
     return false;
   }
 }
