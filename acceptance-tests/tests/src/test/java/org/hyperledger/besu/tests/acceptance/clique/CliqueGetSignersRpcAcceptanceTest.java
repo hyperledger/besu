@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.tests.acceptance.clique;
 
+import static org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions.LATEST;
+
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import static org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions.LATEST;
 
 @Disabled("flaky test due to hardcoded block numbers")
 public class CliqueGetSignersRpcAcceptanceTest extends AcceptanceTestBase {

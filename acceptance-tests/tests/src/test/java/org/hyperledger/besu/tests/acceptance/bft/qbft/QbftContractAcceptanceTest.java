@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.bft.qbft;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+
 import org.junit.jupiter.api.Test;
 
 public class QbftContractAcceptanceTest extends AcceptanceTestBase {
