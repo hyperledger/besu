@@ -35,9 +35,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -92,8 +89,15 @@ public class FastSyncActionsTest {
     setUp(storageFormat, isPeerTaskSystemEnabled, Optional.empty());
   }
 
-  public void setUp(final DataStorageFormat storageFormat, final boolean isPeerTaskSystemEnabled, final Optional<Integer> syncMinimumPeers) {
-    SynchronizerConfiguration.Builder syncConfigBuilder = new SynchronizerConfiguration.Builder().syncMode(SyncMode.FAST).syncPivotDistance(1000).isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
+  public void setUp(
+      final DataStorageFormat storageFormat,
+      final boolean isPeerTaskSystemEnabled,
+      final Optional<Integer> syncMinimumPeers) {
+    SynchronizerConfiguration.Builder syncConfigBuilder =
+        new SynchronizerConfiguration.Builder()
+            .syncMode(SyncMode.FAST)
+            .syncPivotDistance(1000)
+            .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
     syncMinimumPeers.ifPresent(syncConfigBuilder::syncMinimumPeerCount);
     syncConfig = syncConfigBuilder.build();
     when(worldStateStorageCoordinator.getDataStorageFormat()).thenReturn(storageFormat);

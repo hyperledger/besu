@@ -20,12 +20,17 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeaders;
 import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.DownloadHeaderSequenceTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.FutureUtils;
 
@@ -33,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +50,9 @@ public class DownloadHeadersStep
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final ValidationPolicy validationPolicy;
+  private final PeerTaskExecutor peerTaskExecutor;
+  private final SynchronizerConfiguration synchronizerConfiguration;
+  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final int headerRequestSize;
   private final MetricsSystem metricsSystem;
 
@@ -52,12 +61,18 @@ public class DownloadHeadersStep
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final ValidationPolicy validationPolicy,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final int headerRequestSize,
       final MetricsSystem metricsSystem) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.validationPolicy = validationPolicy;
+    this.peerTaskExecutor = peerTaskExecutor;
+    this.synchronizerConfiguration = synchronizerConfiguration;
+    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.headerRequestSize = headerRequestSize;
     this.metricsSystem = metricsSystem;
   }
@@ -92,16 +107,41 @@ public class DownloadHeadersStep
           .run();
     } else {
       LOG.debug("Downloading headers starting from {}", range.getStart().getNumber());
-      return GetHeadersFromPeerByHashTask.startingAtHash(
-              protocolSchedule,
-              ethContext,
-              range.getStart().getHash(),
-              range.getStart().getNumber(),
-              headerRequestSize,
-              metricsSystem)
-          .assignPeer(range.getSyncTarget())
-          .run()
-          .thenApply(PeerTaskResult::getResult);
+      if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+        return ethContext
+            .getScheduler()
+            .scheduleServiceTask(
+                () -> {
+                  GetHeadersFromPeerTask task =
+                      new GetHeadersFromPeerTask(
+                          range.getStart().getHash(),
+                          range.getStart().getNumber(),
+                          headerRequestSize,
+                          0,
+                          GetHeadersFromPeerTask.Direction.FORWARD,
+                          protocolSchedule,
+                          currentProtocolSpecSupplier);
+                  PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                      peerTaskExecutor.executeAgainstPeer(task, range.getSyncTarget());
+                  if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                      || taskResult.result().isEmpty()) {
+                    return CompletableFuture.failedFuture(
+                        new RuntimeException("Unable to download headers for range " + range));
+                  }
+                  return CompletableFuture.completedFuture(taskResult.result().get());
+                });
+      } else {
+        return GetHeadersFromPeerByHashTask.startingAtHash(
+                protocolSchedule,
+                ethContext,
+                range.getStart().getHash(),
+                range.getStart().getNumber(),
+                headerRequestSize,
+                metricsSystem)
+            .assignPeer(range.getSyncTarget())
+            .run()
+            .thenApply(PeerTaskResult::getResult);
+      }
     }
   }
 

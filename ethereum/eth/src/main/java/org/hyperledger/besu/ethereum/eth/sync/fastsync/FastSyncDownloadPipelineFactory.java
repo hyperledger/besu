@@ -147,6 +147,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolContext,
             ethContext,
             detachedValidationPolicy,
+            peerTaskExecutor,
+            syncConfig,
+            currentProtocolSpecSupplier,
             headerRequestSize,
             metricsSystem);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
