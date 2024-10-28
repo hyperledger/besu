@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -32,13 +31,13 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class FullFlatDbStrategy extends FlatDbStrategy {
+public class BonsaiFullFlatDbStrategy extends BonsaiFlatDbStrategy {
 
   protected final Counter getAccountNotFoundInFlatDatabaseCounter;
 
   protected final Counter getStorageValueNotFoundInFlatDatabaseCounter;
 
-  public FullFlatDbStrategy(
+  public BonsaiFullFlatDbStrategy(
       final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
     super(metricsSystem, codeStorageStrategy);
 
