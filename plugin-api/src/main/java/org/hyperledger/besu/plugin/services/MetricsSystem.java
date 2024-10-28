@@ -15,11 +15,11 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
-import org.hyperledger.besu.plugin.services.metrics.Summary;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.IntSupplier;
@@ -161,6 +161,6 @@ public interface MetricsSystem extends BesuService {
     createGauge(category, name, help, () -> (double) valueSupplier.getAsLong());
   }
 
-  LabelledMetric<Summary> createLabelledSummary(
-      MetricCategory category, String name, String help, String... labelNames);
+  LabelledMetric<Histogram> createLabelledHistogram(
+      MetricCategory category, String name, String help, double[] buckets, String... labelNames);
 }

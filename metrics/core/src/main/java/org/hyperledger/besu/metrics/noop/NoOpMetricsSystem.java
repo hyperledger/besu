@@ -17,11 +17,11 @@ package org.hyperledger.besu.metrics.noop;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
-import org.hyperledger.besu.plugin.services.metrics.Summary;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +46,8 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   /** The constant NO_OP_OPERATION_TIMER. */
   public static final OperationTimer NO_OP_OPERATION_TIMER = () -> NO_OP_TIMING_CONTEXT;
 
-  public static final Summary NO_OP_SUMMARY = d -> {};
+  /** The constant NO_OP_HISTOGRAM. */
+  public static final Histogram NO_OP_HISTOGRAM = d -> {};
 
   /** The constant NO_OP_LABELLED_1_COUNTER. */
   public static final LabelledMetric<Counter> NO_OP_LABELLED_1_COUNTER =
@@ -64,8 +65,9 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   public static final LabelledMetric<OperationTimer> NO_OP_LABELLED_1_OPERATION_TIMER =
       new LabelCountingNoOpMetric<>(1, NO_OP_OPERATION_TIMER);
 
-  public static final LabelledMetric<Summary> NO_OP_LABELLED_1_SUMMARY =
-      new LabelCountingNoOpMetric<>(1, NO_OP_SUMMARY);
+  /** The constant NO_OP_LABELLED_1_HISTOGRAM. */
+  public static final LabelledMetric<Histogram> NO_OP_LABELLED_1_HISTOGRAM =
+      new LabelCountingNoOpMetric<>(1, NO_OP_HISTOGRAM);
 
   /** The constant NO_OP_LABELLED_1_GAUGE. */
   public static final LabelledGauge NO_OP_LABELLED_1_GAUGE =
@@ -149,11 +151,11 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
    * @param labelCount the label count
    * @return the operation timer labelled metric
    */
-  public static LabelledMetric<Summary> getSummaryLabelledMetric(final int labelCount) {
+  public static LabelledMetric<Histogram> getSummaryLabelledMetric(final int labelCount) {
     if (labelCount == 1) {
-      return NO_OP_LABELLED_1_SUMMARY;
+      return NO_OP_LABELLED_1_HISTOGRAM;
     } else {
-      return new LabelCountingNoOpMetric<>(labelCount, NO_OP_SUMMARY);
+      return new LabelCountingNoOpMetric<>(labelCount, NO_OP_HISTOGRAM);
     }
   }
 
@@ -165,10 +167,11 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
       final DoubleSupplier valueSupplier) {}
 
   @Override
-  public LabelledMetric<Summary> createLabelledSummary(
+  public LabelledMetric<Histogram> createLabelledHistogram(
       final MetricCategory category,
       final String name,
       final String help,
+      final double[] buckets,
       final String... labelNames) {
     return null;
   }

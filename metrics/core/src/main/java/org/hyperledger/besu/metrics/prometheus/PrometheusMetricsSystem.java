@@ -59,8 +59,8 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       cachedCounters = new ConcurrentHashMap<>();
   private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
-  private final Map<String, LabelledMetric<org.hyperledger.besu.plugin.services.metrics.Summary>>
-      cachedSummaries = new ConcurrentHashMap<>();
+  private final Map<String, LabelledMetric<org.hyperledger.besu.plugin.services.metrics.Histogram>>
+      cachedHistograms = new ConcurrentHashMap<>();
   private final Set<String> totalSuffixedCounters = new ConcurrentHashSet<>();
 
   private final Set<MetricCategory> enabledCategories;
@@ -114,31 +114,22 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public LabelledMetric<org.hyperledger.besu.plugin.services.metrics.Summary> createLabelledSummary(
-      final MetricCategory category,
-      final String name,
-      final String help,
-      final String... labelNames) {
+  public LabelledMetric<org.hyperledger.besu.plugin.services.metrics.Histogram>
+      createLabelledHistogram(
+          final MetricCategory category,
+          final String name,
+          final String help,
+          final double[] buckets,
+          final String... labelNames) {
     final String metricName = convertToPrometheusName(category, name);
-    return cachedSummaries.computeIfAbsent(
+    return cachedHistograms.computeIfAbsent(
         metricName,
         k -> {
           if (isCategoryEnabled(category)) {
-            final Summary summary =
-                Summary.build(metricName, help)
-                    .quantile(0.0, 0)
-                    .quantile(0.2, 0.02)
-                    .quantile(0.5, 0.05)
-                    .quantile(0.8, 0.02)
-                    .quantile(0.95, 0.005)
-                    .quantile(0.99, 0.001)
-                    .quantile(1.0, 0)
-                    .labelNames(labelNames)
-                    .ageBuckets(5)
-                    .maxAgeSeconds(2)
-                    .create();
-            addCollectorUnchecked(category, summary);
-            return new PrometheusSummary(summary);
+            final Histogram histogram =
+                Histogram.build(metricName, help).labelNames(labelNames).buckets(buckets).create();
+            addCollectorUnchecked(category, histogram);
+            return new PrometheusHistogram(histogram);
           } else {
             return NoOpMetricsSystem.getSummaryLabelledMetric(labelNames.length);
           }

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.metrics;
 
-public interface Summary {
+public interface Histogram {
 
   void observe(double amount);
 }

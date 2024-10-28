@@ -14,26 +14,26 @@
  */
 package org.hyperledger.besu.metrics.prometheus;
 
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
-import org.hyperledger.besu.plugin.services.metrics.Summary;
 
-class PrometheusSummary implements LabelledMetric<Summary> {
+class PrometheusHistogram implements LabelledMetric<Histogram> {
 
-  private final io.prometheus.client.Summary summary;
+  private final io.prometheus.client.Histogram histogram;
 
-  public PrometheusSummary(final io.prometheus.client.Summary summary) {
-    this.summary = summary;
+  public PrometheusHistogram(final io.prometheus.client.Histogram histogram) {
+    this.histogram = histogram;
   }
 
   @Override
-  public Summary labels(final String... labels) {
-    return new UnlabelledSummary(summary.labels(labels));
+  public Histogram labels(final String... labels) {
+    return new UnlabelledHistogram(histogram.labels(labels));
   }
 
-  private static class UnlabelledSummary implements Summary {
-    private final io.prometheus.client.Summary.Child amount;
+  private static class UnlabelledHistogram implements Histogram {
+    private final io.prometheus.client.Histogram.Child amount;
 
-    private UnlabelledSummary(final io.prometheus.client.Summary.Child amount) {
+    private UnlabelledHistogram(final io.prometheus.client.Histogram.Child amount) {
       this.amount = amount;
     }
 
