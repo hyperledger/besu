@@ -47,7 +47,7 @@ public class ProcessableBlockHeader
   protected final Bytes32 mixHashOrPrevRandao;
   // parentBeaconBlockRoot is included for Cancun
   protected final Bytes32 parentBeaconBlockRoot;
-  // TODO SLD Quantity or UInt64Value<UInt64>?
+  // TODO SLD Quantity or UInt64Value<UInt64> instead?
   protected final UInt64 targetBlobCount;
 
   protected ProcessableBlockHeader(
