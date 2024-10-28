@@ -89,8 +89,7 @@ public class CheckpointDownloadBlockStep {
               () -> {
                 GetReceiptsFromPeerTask task =
                     new GetReceiptsFromPeerTask(
-                        List.of(block.getHeader()),
-                        currentProtocolSpecSupplier);
+                        List.of(block.getHeader()), currentProtocolSpecSupplier);
                 PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> executorResult =
                     peerTaskExecutor.execute(task);
 
