@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.hyperledger.besu.crypto.Hash;
@@ -70,6 +72,27 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
 
   @ParameterizedTest
   @ValueSource(
+      strings = {"0x01", "0x4e9a67b663f9abe03e7e9fd5452c9497998337077122f44ee78a466f6a7358de"})
+  public void assertOnlyChainHeadMovesWorldParameterAbsent(final String blockParam) {
+    var chainTip = blockchain.getChainHead().getBlockHeader();
+    var blockOne = getBlockHeaderForHashOrNumber(blockParam).orElse(null);
+
+    assertThat(blockOne).isNotNull();
+    assertThat(blockOne).isNotEqualTo(chainTip);
+
+    // move the head to param val, number or hash
+    debugSetHead.response(debugSetHead(blockParam, Optional.empty()));
+
+    // get the new chainTip:
+    var newChainTip = blockchain.getChainHead().getBlockHeader();
+
+    // assert the chain moved, and the worldstate did not
+    assertThat(newChainTip).isEqualTo(blockOne);
+    assertThat(archive.getMutable().rootHash()).isEqualTo(chainTip.getStateRoot());
+  }
+
+  @ParameterizedTest
+  @ValueSource(
       strings = {
         "0x01",
         "0x02",
@@ -84,7 +107,7 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
     assertThat(blockOne).isNotEqualTo(chainTip);
 
     // move the head to param val, number or hash
-    debugSetHead.response(debugSetHead(blockParam, false));
+    debugSetHead.response(debugSetHead(blockParam, Optional.of(FALSE)));
 
     // get the new chainTip:
     var newChainTip = blockchain.getChainHead().getBlockHeader();
@@ -110,7 +133,7 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
     assertThat(blockOne).isNotEqualTo(chainTip);
 
     // move the head and worldstate to param val number or hash
-    debugSetHead.response(debugSetHead(blockParam, true));
+    debugSetHead.response(debugSetHead(blockParam, Optional.of(TRUE)));
 
     // get the new chainTip:
     var newChainTip = blockchain.getChainHead().getBlockHeader();
@@ -125,13 +148,16 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
     var chainTip = blockchain.getChainHead().getBlockHeader();
 
     // move the head to number just after chain head
-    var resp = debugSetHead.response(debugSetHead("" + chainTip.getNumber() + 1, false));
+    var resp =
+        debugSetHead.response(debugSetHead("" + chainTip.getNumber() + 1, Optional.of(TRUE)));
     assertThat(resp.getType()).isEqualTo(RpcResponseType.ERROR);
 
     // move the head to some arbitrary hash
     var resp2 =
         debugSetHead.response(
-            debugSetHead(Hash.keccak256(Bytes.fromHexString("0xdeadbeef")).toHexString(), false));
+            debugSetHead(
+                Hash.keccak256(Bytes.fromHexString("0xdeadbeef")).toHexString(),
+                Optional.of(TRUE)));
     assertThat(resp2.getType()).isEqualTo(RpcResponseType.ERROR);
 
     // get the new chainTip:
@@ -143,9 +169,15 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
   }
 
   private JsonRpcRequestContext debugSetHead(
-      final String numberOrHash, final Boolean moveWorldState) {
-    return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "debug_setHead", new Object[] {numberOrHash, moveWorldState}));
+      final String numberOrHash, final Optional<Boolean> moveWorldState) {
+    if (moveWorldState.isPresent()) {
+      return new JsonRpcRequestContext(
+          new JsonRpcRequest(
+              "2.0", "debug_setHead", new Object[] {numberOrHash, moveWorldState.get()}));
+    } else {
+      return new JsonRpcRequestContext(
+          new JsonRpcRequest("2.0", "debug_setHead", new Object[] {numberOrHash}));
+    }
   }
 
   private Optional<BlockHeader> getBlockHeaderForHashOrNumber(final String input) {

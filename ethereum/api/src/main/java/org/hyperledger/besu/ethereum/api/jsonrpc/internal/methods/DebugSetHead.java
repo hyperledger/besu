@@ -75,7 +75,11 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
       if (archive.isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getBlockHash())) {
         // WARNING, this can be dangerous for a DiffBasedWorldstate if a concurrent
         //          process attempts to move or modify the head worldstate.
-        //          for Foreset worldstates, this is essentially a no-op.
+        //          Ensure no block processing is occuring when using this feature.
+        //          No engine-api, block import, sync, or mining should be running.
+        //          Even p2p transaction processing will be very expensive and should be disabled.
+        //
+        //          for Forest worldstates, this is essentially a no-op.
         archive.getMutable(blockHeader.getStateRoot(), blockHeader.getBlockHash());
       }
     }
