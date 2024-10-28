@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskRespons
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
-import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
@@ -42,7 +42,6 @@ public class GetReceiptsFromPeerTask
     implements PeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
 
   private final Collection<BlockHeader> blockHeaders;
-  private final BodyValidator bodyValidator;
   private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final Map<BlockHeader, List<TransactionReceipt>> receiptsByBlockHeader = new HashMap<>();
   private final Map<Hash, List<BlockHeader>> headersByReceiptsRoot = new HashMap<>();
@@ -50,10 +49,8 @@ public class GetReceiptsFromPeerTask
 
   public GetReceiptsFromPeerTask(
       final Collection<BlockHeader> blockHeaders,
-      final BodyValidator bodyValidator,
       final Supplier<ProtocolSpec> currentProtocolSpecSupplier) {
     this.blockHeaders = new ArrayList<>(blockHeaders);
-    this.bodyValidator = bodyValidator;
     this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
 
     // pre-fill any headers with an empty receipts root into the result map
@@ -113,7 +110,7 @@ public class GetReceiptsFromPeerTask
         new HashMap<>(receiptsByBlockHeader);
     for (final List<TransactionReceipt> receiptsInBlock : receiptsByBlock) {
       final List<BlockHeader> blockHeaders =
-          headersByReceiptsRoot.get(bodyValidator.receiptsRoot(receiptsInBlock));
+          headersByReceiptsRoot.get(BodyValidation.receiptsRoot(receiptsInBlock));
       if (blockHeaders == null) {
         // Contains receipts that we didn't request, so mustn't be the response we're looking for.
         throw new InvalidPeerTaskResponseException();

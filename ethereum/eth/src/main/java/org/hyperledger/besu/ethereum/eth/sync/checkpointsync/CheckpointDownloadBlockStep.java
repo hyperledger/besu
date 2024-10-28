@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskR
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
-import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -91,7 +90,6 @@ public class CheckpointDownloadBlockStep {
                 GetReceiptsFromPeerTask task =
                     new GetReceiptsFromPeerTask(
                         List.of(block.getHeader()),
-                        new BodyValidator(),
                         currentProtocolSpecSupplier);
                 PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> executorResult =
                     peerTaskExecutor.execute(task);

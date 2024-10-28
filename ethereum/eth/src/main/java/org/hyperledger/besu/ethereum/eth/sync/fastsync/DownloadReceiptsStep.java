@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
-import org.hyperledger.besu.ethereum.mainnet.BodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -82,7 +81,7 @@ public class DownloadReceiptsStep
     Map<BlockHeader, List<TransactionReceipt>> getReceipts = new HashMap<>();
     do {
       GetReceiptsFromPeerTask task =
-          new GetReceiptsFromPeerTask(headers, new BodyValidator(), currentProtocolSpecSupplier);
+          new GetReceiptsFromPeerTask(headers, currentProtocolSpecSupplier);
       PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
           peerTaskExecutor.execute(task);
       if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
