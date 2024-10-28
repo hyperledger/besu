@@ -113,7 +113,7 @@ public interface ProcessableBlockHeader {
    * @return The target blob count of this header.
    */
   @Unstable
-  // TODO SLD should be Quantity?
+  // TODO SLD should be Quantity or new subclass of Quantity?
   default Optional<UInt64> getTargetBlobCount() {
     return Optional.empty();
   }
