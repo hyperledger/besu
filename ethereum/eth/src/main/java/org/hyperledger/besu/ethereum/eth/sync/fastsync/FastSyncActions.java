@@ -192,7 +192,6 @@ public class FastSyncActions {
     LOG.debug("Downloading pivot block header by hash {}", hash);
     CompletableFuture<BlockHeader> blockHeaderFuture;
     if (syncConfig.isPeerTaskSystemEnabled()) {
-      LOG.info("Using peer task system to download pivot block header");
       blockHeaderFuture =
           ethContext
               .getScheduler()
@@ -212,19 +211,14 @@ public class FastSyncActions {
                     if (taskResult.responseCode() == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE
                         || taskResult.responseCode()
                             == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
-                      LOG.info("No peer available. Sync will restart in 5 seconds");
                       return CompletableFuture.failedFuture(new NoAvailablePeersException());
                     } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                         || taskResult.result().isEmpty()) {
-                      LOG.info(
-                          "Failed to download pivot block header. Response Code was {}. Sync will restart in 5 seconds",
-                          taskResult.responseCode());
                       return CompletableFuture.failedFuture(
                           new RuntimeException(
                               "Failed to download pivot block header. Response Code was "
                                   + taskResult.responseCode()));
                     } else {
-                      LOG.info("Successfully used peer task system to download pivot block header");
                       return CompletableFuture.completedFuture(
                           taskResult.result().get().getFirst());
                     }
