@@ -1390,7 +1390,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void bonsaiLimitTrieLogsEnabledByDefault() {
+  public void diffbasedLimitTrieLogsEnabledByDefault() {
     parseCommand();
     verify(mockControllerBuilder)
         .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
@@ -1398,7 +1398,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isTrue();
+    assertThat(
+            dataStorageConfiguration
+                .getDiffBasedSubStorageConfiguration()
+                .getLimitTrieLogsEnabled())
+        .isTrue();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1413,7 +1417,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isFalse();
+    assertThat(
+            dataStorageConfiguration
+                .getDiffBasedSubStorageConfiguration()
+                .getLimitTrieLogsEnabled())
+        .isFalse();
     verify(mockLogger)
         .warn(
             "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
@@ -1448,7 +1456,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad()).isEqualTo(11);
+    assertThat(dataStorageConfiguration.getDiffBasedSubStorageConfiguration().getMaxLayersToLoad())
+        .isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -2551,8 +2560,9 @@ public class BesuCommandTest extends CommandTestAbstract {
             besuCommand
                 .getDataStorageOptions()
                 .toDomainObject()
+                .getDiffBasedSubStorageConfiguration()
                 .getUnstable()
-                .getBonsaiFullFlatDbEnabled())
+                .getFullFlatDbEnabled())
         .isTrue();
   }
 
@@ -2563,8 +2573,9 @@ public class BesuCommandTest extends CommandTestAbstract {
             besuCommand
                 .dataStorageOptions
                 .toDomainObject()
+                .getDiffBasedSubStorageConfiguration()
                 .getUnstable()
-                .getBonsaiFullFlatDbEnabled())
+                .getFullFlatDbEnabled())
         .isFalse();
   }
 
