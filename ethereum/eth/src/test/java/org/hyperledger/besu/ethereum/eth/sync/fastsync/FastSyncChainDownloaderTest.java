@@ -109,7 +109,6 @@ public class FastSyncChainDownloaderTest {
         syncConfig,
         worldStateStorageCoordinator,
         protocolSchedule,
-        () -> null,
         protocolContext,
         ethContext,
         new PeerTaskExecutor(null, null, new NoOpMetricsSystem()),

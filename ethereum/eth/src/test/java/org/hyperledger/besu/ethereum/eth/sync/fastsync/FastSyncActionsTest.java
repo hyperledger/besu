@@ -528,7 +528,6 @@ public class FastSyncActionsTest {
         syncConfig,
         worldStateStorageCoordinator,
         protocolSchedule,
-        () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
         protocolContext,
         ethContext,
         peerTaskExecutor,

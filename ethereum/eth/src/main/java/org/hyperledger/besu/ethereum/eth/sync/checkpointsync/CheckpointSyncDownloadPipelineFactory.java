@@ -27,21 +27,18 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
 import java.util.concurrent.CompletionStage;
-import java.util.function.Supplier;
 
 public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipelineFactory {
 
   public CheckpointSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final PeerTaskExecutor peerTaskExecutor,
@@ -50,7 +47,6 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
     super(
         syncConfig,
         protocolSchedule,
-        currentProtocolSpecSupplier,
         protocolContext,
         ethContext,
         peerTaskExecutor,
@@ -90,13 +86,7 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
 
     final CheckpointDownloadBlockStep checkPointDownloadBlockStep =
         new CheckpointDownloadBlockStep(
-            protocolSchedule,
-            currentProtocolSpecSupplier,
-            ethContext,
-            peerTaskExecutor,
-            checkpoint,
-            syncConfig,
-            metricsSystem);
+            protocolSchedule, ethContext, peerTaskExecutor, checkpoint, syncConfig, metricsSystem);
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",

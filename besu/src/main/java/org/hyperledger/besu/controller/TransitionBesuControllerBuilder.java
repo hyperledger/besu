@@ -51,7 +51,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -67,7 +66,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -232,7 +230,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected DefaultSynchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
@@ -244,7 +241,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     DefaultSynchronizer sync =
         super.createSynchronizer(
             protocolSchedule,
-            currentProtocolSpecSupplier,
             worldStateStorageCoordinator,
             protocolContext,
             ethContext,

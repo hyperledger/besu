@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
@@ -36,22 +36,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 public class GetReceiptsFromPeerTask
     implements PeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
 
   private final Collection<BlockHeader> blockHeaders;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
+  private final ProtocolSchedule protocolSchedule;
   private final Map<BlockHeader, List<TransactionReceipt>> receiptsByBlockHeader = new HashMap<>();
   private final Map<Hash, List<BlockHeader>> headersByReceiptsRoot = new HashMap<>();
   private final long requiredBlockchainHeight;
 
   public GetReceiptsFromPeerTask(
-      final Collection<BlockHeader> blockHeaders,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier) {
+      final Collection<BlockHeader> blockHeaders, final ProtocolSchedule protocolSchedule) {
     this.blockHeaders = new ArrayList<>(blockHeaders);
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
+    this.protocolSchedule = protocolSchedule;
 
     // pre-fill any headers with an empty receipts root into the result map
     this.blockHeaders.stream()
@@ -100,22 +98,24 @@ public class GetReceiptsFromPeerTask
     }
     final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(messageData);
     final List<List<TransactionReceipt>> receiptsByBlock = receiptsMessage.receipts();
-    if (receiptsByBlock.isEmpty() || receiptsByBlock.size() > blockHeaders.size()) {
-      throw new InvalidPeerTaskResponseException();
-    }
-
     // take a copy of the pre-filled receiptsByBlockHeader, to ensure idempotency of subsequent
     // calls to processResponse
     final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader =
         new HashMap<>(receiptsByBlockHeader);
-    for (final List<TransactionReceipt> receiptsInBlock : receiptsByBlock) {
-      final List<BlockHeader> blockHeaders =
-          headersByReceiptsRoot.get(BodyValidation.receiptsRoot(receiptsInBlock));
-      if (blockHeaders == null) {
-        // Contains receipts that we didn't request, so mustn't be the response we're looking for.
+    if (!blockHeaders.isEmpty()) {
+      if (receiptsByBlock.isEmpty() || receiptsByBlock.size() > blockHeaders.size()) {
         throw new InvalidPeerTaskResponseException();
       }
-      blockHeaders.forEach(header -> receiptsByHeader.put(header, receiptsInBlock));
+
+      for (final List<TransactionReceipt> receiptsInBlock : receiptsByBlock) {
+        final List<BlockHeader> blockHeaders =
+            headersByReceiptsRoot.get(BodyValidation.receiptsRoot(receiptsInBlock));
+        if (blockHeaders == null) {
+          // Contains receipts that we didn't request, so mustn't be the response we're looking for.
+          throw new InvalidPeerTaskResponseException();
+        }
+        blockHeaders.forEach(header -> receiptsByHeader.put(header, receiptsInBlock));
+      }
     }
     return receiptsByHeader;
   }
@@ -124,7 +124,7 @@ public class GetReceiptsFromPeerTask
   public Predicate<EthPeer> getPeerRequirementFilter() {
     return (ethPeer) ->
         ethPeer.getProtocolName().equals(getSubProtocol().getName())
-            && (currentProtocolSpecSupplier.get().isPoS()
+            && (protocolSchedule.anyMatch((ps) -> ps.spec().isPoS())
                 || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight);
   }
 
