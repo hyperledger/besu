@@ -50,9 +50,26 @@ public class GetReceiptsFromPeerTaskTest {
 
   @Test
   public void testGetRequestMessage() {
+    BlockHeader blockHeader1 = mockBlockHeader(1);
+    TransactionReceipt receiptForBlock1 =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    Mockito.when(blockHeader1.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock1)));
+
+    BlockHeader blockHeader2 = mockBlockHeader(2);
+    TransactionReceipt receiptForBlock2 =
+        new TransactionReceipt(1, 456, Collections.emptyList(), Optional.empty());
+    Mockito.when(blockHeader2.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock2)));
+
+    BlockHeader blockHeader3 = mockBlockHeader(3);
+    TransactionReceipt receiptForBlock3 =
+        new TransactionReceipt(1, 789, Collections.emptyList(), Optional.empty());
+    Mockito.when(blockHeader3.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock3)));
+
     GetReceiptsFromPeerTask task =
-        new GetReceiptsFromPeerTask(
-            List.of(mockBlockHeader(1), mockBlockHeader(2), mockBlockHeader(3)), () -> null);
+        new GetReceiptsFromPeerTask(List.of(blockHeader1, blockHeader2, blockHeader3), () -> null);
 
     MessageData messageData = task.getRequestMessage();
     GetReceiptsMessage getReceiptsMessage = GetReceiptsMessage.readFrom(messageData);
@@ -81,15 +98,31 @@ public class GetReceiptsFromPeerTaskTest {
 
   @Test
   public void testParseResponseForInvalidResponse() {
+    BlockHeader blockHeader1 = mockBlockHeader(1);
+    TransactionReceipt receiptForBlock1 =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    Mockito.when(blockHeader1.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock1)));
+
+    BlockHeader blockHeader2 = mockBlockHeader(2);
+    TransactionReceipt receiptForBlock2 =
+        new TransactionReceipt(1, 456, Collections.emptyList(), Optional.empty());
+    Mockito.when(blockHeader2.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock2)));
+
+    BlockHeader blockHeader3 = mockBlockHeader(3);
+    TransactionReceipt receiptForBlock3 =
+        new TransactionReceipt(1, 789, Collections.emptyList(), Optional.empty());
+    Mockito.when(blockHeader3.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock3)));
     GetReceiptsFromPeerTask task =
-        new GetReceiptsFromPeerTask(
-            List.of(mockBlockHeader(1), mockBlockHeader(2), mockBlockHeader(3)), () -> null);
+        new GetReceiptsFromPeerTask(List.of(blockHeader1, blockHeader2, blockHeader3), () -> null);
     ReceiptsMessage receiptsMessage =
         ReceiptsMessage.create(
             List.of(
-                List.of(new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty())),
-                List.of(new TransactionReceipt(1, 456, Collections.emptyList(), Optional.empty())),
-                List.of(new TransactionReceipt(1, 789, Collections.emptyList(), Optional.empty())),
+                List.of(receiptForBlock1),
+                List.of(receiptForBlock2),
+                List.of(receiptForBlock3),
                 List.of(
                     new TransactionReceipt(1, 101112, Collections.emptyList(), Optional.empty()))));
 
@@ -139,10 +172,40 @@ public class GetReceiptsFromPeerTaskTest {
   }
 
   @Test
+  public void testParseResponseForOnlyPrefilledEmptyTrieReceiptsRoots()
+      throws InvalidPeerTaskResponseException {
+    BlockHeader blockHeader1 = mockBlockHeader(1);
+    Mockito.when(blockHeader1.getReceiptsRoot()).thenReturn(Hash.EMPTY_TRIE_HASH);
+
+    GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(List.of(blockHeader1), () -> null);
+
+    ReceiptsMessage receiptsMessage = ReceiptsMessage.create(Collections.emptyList());
+
+    Map<BlockHeader, List<TransactionReceipt>> resultMap = task.processResponse(receiptsMessage);
+
+    Assertions.assertEquals(1, resultMap.size());
+    Assertions.assertEquals(Collections.emptyList(), resultMap.get(blockHeader1));
+  }
+
+  @Test
   public void testGetPeerRequirementFilter() {
     BlockHeader blockHeader1 = mockBlockHeader(1);
+    TransactionReceipt receiptForBlock1 =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    Mockito.when(blockHeader1.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock1)));
+
     BlockHeader blockHeader2 = mockBlockHeader(2);
+    TransactionReceipt receiptForBlock2 =
+        new TransactionReceipt(1, 456, Collections.emptyList(), Optional.empty());
+    Mockito.when(blockHeader2.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock2)));
+
     BlockHeader blockHeader3 = mockBlockHeader(3);
+    TransactionReceipt receiptForBlock3 =
+        new TransactionReceipt(1, 789, Collections.emptyList(), Optional.empty());
+    Mockito.when(blockHeader3.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock3)));
 
     ProtocolSpec protocolSpec = Mockito.mock(ProtocolSpec.class);
     Mockito.when(protocolSpec.isPoS()).thenReturn(false);

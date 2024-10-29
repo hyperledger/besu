@@ -100,22 +100,24 @@ public class GetReceiptsFromPeerTask
     }
     final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(messageData);
     final List<List<TransactionReceipt>> receiptsByBlock = receiptsMessage.receipts();
-    if (receiptsByBlock.isEmpty() || receiptsByBlock.size() > blockHeaders.size()) {
-      throw new InvalidPeerTaskResponseException();
-    }
-
     // take a copy of the pre-filled receiptsByBlockHeader, to ensure idempotency of subsequent
     // calls to processResponse
     final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader =
         new HashMap<>(receiptsByBlockHeader);
-    for (final List<TransactionReceipt> receiptsInBlock : receiptsByBlock) {
-      final List<BlockHeader> blockHeaders =
-          headersByReceiptsRoot.get(BodyValidation.receiptsRoot(receiptsInBlock));
-      if (blockHeaders == null) {
-        // Contains receipts that we didn't request, so mustn't be the response we're looking for.
+    if (!blockHeaders.isEmpty()) {
+      if (receiptsByBlock.isEmpty() || receiptsByBlock.size() > blockHeaders.size()) {
         throw new InvalidPeerTaskResponseException();
       }
-      blockHeaders.forEach(header -> receiptsByHeader.put(header, receiptsInBlock));
+
+      for (final List<TransactionReceipt> receiptsInBlock : receiptsByBlock) {
+        final List<BlockHeader> blockHeaders =
+            headersByReceiptsRoot.get(BodyValidation.receiptsRoot(receiptsInBlock));
+        if (blockHeaders == null) {
+          // Contains receipts that we didn't request, so mustn't be the response we're looking for.
+          throw new InvalidPeerTaskResponseException();
+        }
+        blockHeaders.forEach(header -> receiptsByHeader.put(header, receiptsInBlock));
+      }
     }
     return receiptsByHeader;
   }
