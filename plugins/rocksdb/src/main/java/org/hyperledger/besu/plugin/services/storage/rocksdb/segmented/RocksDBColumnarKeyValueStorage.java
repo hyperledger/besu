@@ -55,6 +55,7 @@ import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
 import org.rocksdb.LRUCache;
 import org.rocksdb.Options;
+import org.rocksdb.PlainTableConfig;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
@@ -70,8 +71,6 @@ import org.slf4j.LoggerFactory;
 public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValueStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueStorage.class);
-  private static final int ROCKSDB_FORMAT_VERSION = 5;
-  private static final long ROCKSDB_BLOCK_SIZE = 32768;
 
   /** RocksDb blockcache size when using the high spec option */
   protected static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
@@ -164,7 +163,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
           .forEach(trimmedSegments::remove);
       columnDescriptors =
           trimmedSegments.stream()
-              .map(segment -> createColumnDescriptor(segment, configuration))
+              .map(segment -> createColumnDescriptor(segment))
               .collect(Collectors.toList());
 
       setGlobalOptions(configuration, stats);
@@ -181,19 +180,18 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
    * options to apply to the corresponding Column Family
    *
    * @param segment the segment identifier
-   * @param configuration RocksDB configuration
    * @return a column family descriptor
    */
   private ColumnFamilyDescriptor createColumnDescriptor(
-      final SegmentIdentifier segment, final RocksDBConfiguration configuration) {
+      final SegmentIdentifier segment) {
 
-    BlockBasedTableConfig basedTableConfig = createBlockBasedTableConfig(segment, configuration);
+    PlainTableConfig plainTableConfig = createPlainTableConfig();
 
     final var options =
         new ColumnFamilyOptions()
             .setTtl(0)
             .setCompressionType(CompressionType.LZ4_COMPRESSION)
-            .setTableFormatConfig(basedTableConfig);
+            .setTableFormatConfig(plainTableConfig);
 
     if (segment.containsStaticData()) {
       options
@@ -206,29 +204,15 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
     return new ColumnFamilyDescriptor(segment.getId(), options);
   }
 
-  /***
-   * Create a Block Base Table configuration for each segment, depending on the configuration in place
-   * and the segment itself
-   *
-   * @param segment The segment related to the column family
-   * @param config RocksDB configuration
-   * @return Block Base Table configuration
-   */
-  private BlockBasedTableConfig createBlockBasedTableConfig(
-      final SegmentIdentifier segment, final RocksDBConfiguration config) {
-    final LRUCache cache =
-        new LRUCache(
-            config.isHighSpec() && segment.isEligibleToHighSpecFlag()
-                ? ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC
-                : config.getCacheCapacity());
-    return new BlockBasedTableConfig()
-        .setFormatVersion(ROCKSDB_FORMAT_VERSION)
-        .setBlockCache(cache)
-        .setFilterPolicy(new BloomFilter(10, false))
-        .setPartitionFilters(true)
-        .setCacheIndexAndFilterBlocks(false)
-        .setBlockSize(ROCKSDB_BLOCK_SIZE);
+  private PlainTableConfig createPlainTableConfig() {
+    return new PlainTableConfig()
+            .setBloomBitsPerKey(10) // Optional: can use bloom filters to speed up key lookups
+            .setHashTableRatio(0.75) // Default hash table ratio
+            .setIndexSparseness(16) // Adjust the density of the index
+            .setEncodingType(PlainTableConfig.DEFAULT_ENCODING_TYPE) // Use prefix encoding for efficient memory use
+            .setFullScanMode(false); // Optimized for in-memory full scan
   }
+
 
   /***
    * Set Global options (DBOptions)
