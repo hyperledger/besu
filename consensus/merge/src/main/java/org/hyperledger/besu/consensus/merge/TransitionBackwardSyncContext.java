@@ -23,12 +23,9 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardChain;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-
-import java.util.function.Supplier;
 
 /** The Transition backward sync context. */
 public class TransitionBackwardSyncContext extends BackwardSyncContext {
@@ -50,7 +47,6 @@ public class TransitionBackwardSyncContext extends BackwardSyncContext {
       final TransitionProtocolSchedule transitionProtocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
       final SyncState syncState,
@@ -60,7 +56,6 @@ public class TransitionBackwardSyncContext extends BackwardSyncContext {
         transitionProtocolSchedule,
         peerTaskExecutor,
         synchronizerConfiguration,
-        currentProtocolSpecSupplier,
         metricsSystem,
         ethContext,
         syncState,

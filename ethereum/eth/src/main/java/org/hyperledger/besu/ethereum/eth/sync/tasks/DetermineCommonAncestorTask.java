@@ -29,14 +29,12 @@ import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.util.BlockchainUtil;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -57,7 +55,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
   private final int headerRequestSize;
   private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final MetricsSystem metricsSystem;
 
   private long maximumPossibleCommonAncestorNumber;
@@ -73,7 +70,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
       final int headerRequestSize,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem) {
     super(metricsSystem);
     this.protocolSchedule = protocolSchedule;
@@ -83,7 +79,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     this.headerRequestSize = headerRequestSize;
     this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.metricsSystem = metricsSystem;
 
     maximumPossibleCommonAncestorNumber =
@@ -103,7 +98,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
       final int headerRequestSize,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem) {
     return new DetermineCommonAncestorTask(
         protocolSchedule,
@@ -113,7 +107,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
         headerRequestSize,
         peerTaskExecutor,
         synchronizerConfiguration,
-        currentProtocolSpecSupplier,
         metricsSystem);
   }
 
@@ -214,8 +207,7 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
             count,
             skipInterval,
             Direction.REVERSE,
-            protocolSchedule,
-            currentProtocolSpecSupplier);
+            protocolSchedule);
     return peerTaskExecutor.executeAgainstPeer(task, peer);
   }
 

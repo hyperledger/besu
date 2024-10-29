@@ -24,14 +24,12 @@ import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.DetermineCommonAncestorTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +45,6 @@ public abstract class AbstractSyncTargetManager {
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final PeerTaskExecutor peerTaskExecutor;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final MetricsSystem metricsSystem;
 
   protected AbstractSyncTargetManager(
@@ -56,14 +53,12 @@ public abstract class AbstractSyncTargetManager {
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final PeerTaskExecutor peerTaskExecutor,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem) {
     this.config = config;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.peerTaskExecutor = peerTaskExecutor;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.metricsSystem = metricsSystem;
   }
 
@@ -84,7 +79,6 @@ public abstract class AbstractSyncTargetManager {
                         config.getDownloaderHeaderRequestSize(),
                         peerTaskExecutor,
                         config,
-                        currentProtocolSpecSupplier,
                         metricsSystem)
                     .run()
                     .handle(

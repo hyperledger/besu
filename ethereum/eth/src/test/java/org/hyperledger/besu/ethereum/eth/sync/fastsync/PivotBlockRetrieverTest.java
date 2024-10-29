@@ -105,7 +105,6 @@ public class PivotBlockRetrieverTest {
                 metricsSystem,
                 new PeerTaskExecutor(null, null, new NoOpMetricsSystem()),
                 SynchronizerConfiguration.builder().build(),
-                () -> null,
                 PIVOT_BLOCK_NUMBER,
                 peersToQuery,
                 pivotBlockDelta,

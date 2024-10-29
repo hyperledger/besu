@@ -153,7 +153,6 @@ public class FastSyncActions {
                                     metricsSystem,
                                     peerTaskExecutor,
                                     syncConfig,
-                                    currentProtocolSpecSupplier,
                                     currentState.getPivotBlockNumber().getAsLong(),
                                     syncConfig.getSyncMinimumPeerCount(),
                                     syncConfig.getSyncPivotDistance())
@@ -199,8 +198,7 @@ public class FastSyncActions {
                             1,
                             0,
                             GetHeadersFromPeerTask.Direction.FORWARD,
-                            protocolSchedule,
-                            currentProtocolSpecSupplier);
+                            protocolSchedule);
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
                         peerTaskExecutor.execute(task);
                     if (taskResult.responseCode() == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE

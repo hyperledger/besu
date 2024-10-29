@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.FutureUtils;
 
@@ -44,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -65,7 +63,6 @@ class PivotBlockConfirmer {
   private final ProtocolSchedule protocolSchedule;
   private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
 
   // The number of peers we need to query to confirm our pivot block
   private final int numberOfPeersToQuery;
@@ -90,7 +87,6 @@ class PivotBlockConfirmer {
       final MetricsSystem metricsSystem,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final long pivotBlockNumber,
       final int numberOfPeersToQuery,
       final int numberOfRetriesPerPeer) {
@@ -99,7 +95,6 @@ class PivotBlockConfirmer {
     this.metricsSystem = metricsSystem;
     this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.pivotBlockNumber = pivotBlockNumber;
     this.numberOfPeersToQuery = numberOfPeersToQuery;
     this.numberOfRetriesPerPeer = numberOfRetriesPerPeer;
@@ -209,12 +204,7 @@ class PivotBlockConfirmer {
       final long blockNumber) {
     GetHeadersFromPeerTask task =
         new GetHeadersFromPeerTask(
-            blockNumber,
-            1,
-            0,
-            GetHeadersFromPeerTask.Direction.FORWARD,
-            protocolSchedule,
-            currentProtocolSpecSupplier);
+            blockNumber, 1, 0, GetHeadersFromPeerTask.Direction.FORWARD, protocolSchedule);
     Optional<EthPeer> maybeEthPeer;
     final EthPeer ethPeer;
     try {

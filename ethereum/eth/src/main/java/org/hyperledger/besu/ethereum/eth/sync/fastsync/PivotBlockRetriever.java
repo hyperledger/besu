@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.ExceptionUtils;
 
@@ -28,7 +27,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +50,6 @@ public class PivotBlockRetriever {
   private final ProtocolSchedule protocolSchedule;
   private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
 
   // The number of peers we need to query to confirm our pivot block
   private final int peersToQuery;
@@ -75,7 +72,6 @@ public class PivotBlockRetriever {
       final MetricsSystem metricsSystem,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final long pivotBlockNumber,
       final int peersToQuery,
       final long pivotBlockNumberResetDelta,
@@ -85,7 +81,6 @@ public class PivotBlockRetriever {
     this.metricsSystem = metricsSystem;
     this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.pivotBlockNumber = new AtomicLong(pivotBlockNumber);
     this.peersToQuery = peersToQuery;
     this.pivotBlockNumberResetDelta = pivotBlockNumberResetDelta;
@@ -98,7 +93,6 @@ public class PivotBlockRetriever {
       final MetricsSystem metricsSystem,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final long pivotBlockNumber,
       final int peersToQuery,
       final long pivotBlockNumberResetDelta) {
@@ -108,7 +102,6 @@ public class PivotBlockRetriever {
         metricsSystem,
         peerTaskExecutor,
         synchronizerConfiguration,
-        currentProtocolSpecSupplier,
         pivotBlockNumber,
         peersToQuery,
         pivotBlockNumberResetDelta,
@@ -132,7 +125,6 @@ public class PivotBlockRetriever {
             metricsSystem,
             peerTaskExecutor,
             synchronizerConfiguration,
-            currentProtocolSpecSupplier,
             pivotBlockNumber.get(),
             peersToQuery,
             MAX_QUERY_RETRIES_PER_PEER);

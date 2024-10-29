@@ -51,7 +51,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -70,7 +69,6 @@ import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -133,7 +131,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final TransactionPool transactionPool,
       final MiningParameters miningParameters,
       final PeerTaskExecutor peerTaskExecutor,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
 
@@ -150,7 +147,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
                                 transactionPool,
                                 miningParameters,
                                 peerTaskExecutor,
-                                currentProtocolSpecSupplier,
                                 syncState,
                                 ethProtocolManager)))
             .collect(Collectors.toList());

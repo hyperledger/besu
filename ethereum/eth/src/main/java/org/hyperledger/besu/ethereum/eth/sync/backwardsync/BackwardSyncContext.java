@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -39,7 +38,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -58,7 +56,6 @@ public class BackwardSyncContext {
   private final EthContext ethContext;
   private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final MetricsSystem metricsSystem;
   private final SyncState syncState;
   private final AtomicReference<Status> currentBackwardSyncStatus = new AtomicReference<>();
@@ -74,7 +71,6 @@ public class BackwardSyncContext {
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
       final SyncState syncState,
@@ -84,7 +80,6 @@ public class BackwardSyncContext {
         protocolSchedule,
         peerTaskExecutor,
         synchronizerConfiguration,
-        currentProtocolSpecSupplier,
         metricsSystem,
         ethContext,
         syncState,
@@ -98,7 +93,6 @@ public class BackwardSyncContext {
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
       final SyncState syncState,
@@ -111,7 +105,6 @@ public class BackwardSyncContext {
     this.ethContext = ethContext;
     this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.metricsSystem = metricsSystem;
     this.syncState = syncState;
     this.backwardChain = backwardChain;
@@ -456,10 +449,6 @@ public class BackwardSyncContext {
 
   public SynchronizerConfiguration getSynchronizerConfiguration() {
     return synchronizerConfiguration;
-  }
-
-  public Supplier<ProtocolSpec> getCurrentProtocolSpecSupplier() {
-    return currentProtocolSpecSupplier;
   }
 
   class Status {

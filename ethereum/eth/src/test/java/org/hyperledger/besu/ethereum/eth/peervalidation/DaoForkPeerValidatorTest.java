@@ -45,7 +45,6 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
         ProtocolScheduleFixture.MAINNET,
         peerTaskExecutor,
         SynchronizerConfiguration.builder().build(),
-        () -> null,
         new NoOpMetricsSystem(),
         blockNumber,
         buffer);
@@ -67,7 +66,6 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
             ProtocolScheduleFixture.MAINNET,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().build(),
-            () -> null,
             new NoOpMetricsSystem(),
             daoBlockNumber,
             0);
@@ -101,7 +99,6 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
             ProtocolScheduleFixture.MAINNET,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().build(),
-            () -> null,
             new NoOpMetricsSystem(),
             daoBlockNumber,
             0);
@@ -132,7 +129,6 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
             ProtocolScheduleFixture.MAINNET,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().build(),
-            () -> null,
             new NoOpMetricsSystem(),
             daoBlockNumber,
             0);

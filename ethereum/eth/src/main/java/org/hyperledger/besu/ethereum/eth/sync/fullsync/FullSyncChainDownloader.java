@@ -22,11 +22,8 @@ import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-
-import java.util.function.Supplier;
 
 public class FullSyncChainDownloader {
   private FullSyncChainDownloader() {}
@@ -37,7 +34,6 @@ public class FullSyncChainDownloader {
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final PeerTaskExecutor peerTaskExecutor,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final SyncTerminationCondition terminationCondition,
@@ -50,7 +46,6 @@ public class FullSyncChainDownloader {
             protocolContext,
             ethContext,
             peerTaskExecutor,
-            currentProtocolSpecSupplier,
             metricsSystem,
             terminationCondition);
 
@@ -63,7 +58,6 @@ public class FullSyncChainDownloader {
             protocolContext,
             ethContext,
             peerTaskExecutor,
-            currentProtocolSpecSupplier,
             metricsSystem,
             terminationCondition),
         ethContext.getScheduler(),

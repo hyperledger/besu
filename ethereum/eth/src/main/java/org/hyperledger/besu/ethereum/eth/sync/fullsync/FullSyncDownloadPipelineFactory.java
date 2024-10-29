@@ -32,14 +32,12 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
 import java.util.concurrent.CompletionStage;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +50,6 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final PeerTaskExecutor peerTaskExecutor;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final MetricsSystem metricsSystem;
   private final ValidationPolicy detachedValidationPolicy =
       () -> HeaderValidationMode.DETACHED_ONLY;
@@ -65,7 +62,6 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final PeerTaskExecutor peerTaskExecutor,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final SyncTerminationCondition syncTerminationCondition) {
     this.syncConfig = syncConfig;
@@ -73,7 +69,6 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.peerTaskExecutor = peerTaskExecutor;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.metricsSystem = metricsSystem;
     this.fullSyncTerminationCondition = syncTerminationCondition;
     betterSyncTargetEvaluator = new BetterSyncTargetEvaluator(syncConfig, ethContext.getEthPeers());
@@ -110,7 +105,6 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             detachedValidationPolicy,
             peerTaskExecutor,
             syncConfig,
-            currentProtocolSpecSupplier,
             headerRequestSize,
             metricsSystem);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =

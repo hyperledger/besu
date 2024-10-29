@@ -28,13 +28,11 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPee
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +44,6 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private final ProtocolSchedule protocolSchedule;
   private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final Optional<Hash> hash;
   private final long blockNumber;
   private final MetricsSystem metricsSystem;
@@ -56,14 +53,12 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
       final EthContext ethContext,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
     super(ethContext, metricsSystem);
     this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.blockNumber = blockNumber;
     this.metricsSystem = metricsSystem;
     this.protocolSchedule = protocolSchedule;
@@ -75,7 +70,6 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
       final EthContext ethContext,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
@@ -84,7 +78,6 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         ethContext,
         peerTaskExecutor,
         synchronizerConfiguration,
-        currentProtocolSpecSupplier,
         hash,
         blockNumber,
         metricsSystem);
@@ -138,22 +131,11 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         hash.map(
                 (h) ->
                     new GetHeadersFromPeerTask(
-                        h,
-                        blockNumber,
-                        1,
-                        0,
-                        Direction.FORWARD,
-                        protocolSchedule,
-                        currentProtocolSpecSupplier))
+                        h, blockNumber, 1, 0, Direction.FORWARD, protocolSchedule))
             .orElseGet(
                 () ->
                     new GetHeadersFromPeerTask(
-                        blockNumber,
-                        1,
-                        0,
-                        Direction.FORWARD,
-                        protocolSchedule,
-                        currentProtocolSpecSupplier));
+                        blockNumber, 1, 0, Direction.FORWARD, protocolSchedule));
     PeerTaskExecutorResult<List<BlockHeader>> taskResult;
     if (assignedPeer.isPresent()) {
       taskResult = peerTaskExecutor.executeAgainstPeer(task, assignedPeer.get());

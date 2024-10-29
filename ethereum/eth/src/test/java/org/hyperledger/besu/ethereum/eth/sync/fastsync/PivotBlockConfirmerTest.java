@@ -113,7 +113,6 @@ public class PivotBlockConfirmerTest {
             SynchronizerConfiguration.builder()
                 .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
                 .build(),
-            currentProtocolSpecSupplier,
             PIVOT_BLOCK_NUMBER,
             peersToQuery,
             maxRetries));

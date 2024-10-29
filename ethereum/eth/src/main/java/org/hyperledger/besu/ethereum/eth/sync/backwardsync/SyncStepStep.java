@@ -52,7 +52,6 @@ public class SyncStepStep {
             context.getEthContext(),
             context.getPeerTaskExecutor(),
             context.getSynchronizerConfiguration(),
-            context.getCurrentProtocolSpecSupplier(),
             context.getMetricsSystem(),
             context.getEthContext().getEthPeers().peerCount(),
             Optional.of(targetHash),

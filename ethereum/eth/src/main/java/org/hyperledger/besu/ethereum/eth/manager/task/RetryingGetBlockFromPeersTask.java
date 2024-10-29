@@ -23,13 +23,11 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +40,6 @@ public class RetryingGetBlockFromPeersTask
   private final ProtocolSchedule protocolSchedule;
   private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final Optional<Hash> maybeBlockHash;
   private final long blockNumber;
 
@@ -51,7 +48,6 @@ public class RetryingGetBlockFromPeersTask
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final int maxRetries,
       final Optional<Hash> maybeBlockHash,
@@ -60,7 +56,6 @@ public class RetryingGetBlockFromPeersTask
     this.protocolSchedule = protocolSchedule;
     this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.maybeBlockHash = maybeBlockHash;
     this.blockNumber = blockNumber;
   }
@@ -70,7 +65,6 @@ public class RetryingGetBlockFromPeersTask
       final EthContext ethContext,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final int maxRetries,
       final Optional<Hash> maybeHash,
@@ -80,7 +74,6 @@ public class RetryingGetBlockFromPeersTask
         protocolSchedule,
         peerTaskExecutor,
         synchronizerConfiguration,
-        currentProtocolSpecSupplier,
         metricsSystem,
         maxRetries,
         maybeHash,
@@ -96,7 +89,6 @@ public class RetryingGetBlockFromPeersTask
             getEthContext(),
             peerTaskExecutor,
             synchronizerConfiguration,
-            currentProtocolSpecSupplier,
             maybeBlockHash,
             blockNumber,
             getMetricsSystem());

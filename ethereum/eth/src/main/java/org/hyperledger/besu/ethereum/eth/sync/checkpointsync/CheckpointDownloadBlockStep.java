@@ -85,9 +85,7 @@ public class CheckpointDownloadBlockStep {
           .scheduleServiceTask(
               () -> {
                 GetReceiptsFromPeerTask task =
-                    new GetReceiptsFromPeerTask(
-                        List.of(block.getHeader()),
-                        protocolSchedule);
+                    new GetReceiptsFromPeerTask(List.of(block.getHeader()), protocolSchedule);
                 PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> executorResult =
                     peerTaskExecutor.execute(task);
 

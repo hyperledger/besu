@@ -123,10 +123,10 @@ public class ConsensusScheduleBesuControllerBuilderTest {
         Map.of(0L, besuControllerBuilder1, 5L, besuControllerBuilder2);
 
     when(besuControllerBuilder1.createMiningCoordinator(
-            any(), any(), any(), any(), any(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(miningCoordinator1);
     when(besuControllerBuilder2.createMiningCoordinator(
-            any(), any(), any(), any(), any(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(miningCoordinator2);
     final ProtocolContext mockProtocolContext = mock(ProtocolContext.class);
     when(mockProtocolContext.getBlockchain()).thenReturn(mock(MutableBlockchain.class));
@@ -140,7 +140,6 @@ public class ConsensusScheduleBesuControllerBuilderTest {
             mock(TransactionPool.class),
             mock(MiningParameters.class),
             mock(PeerTaskExecutor.class),
-            () -> null,
             mock(SyncState.class),
             mock(EthProtocolManager.class));
 

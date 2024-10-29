@@ -20,10 +20,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +34,6 @@ public class RequiredBlocksPeerValidator extends AbstractPeerBlockValidator {
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final long blockNumber,
       final Hash hash,
@@ -46,7 +42,6 @@ public class RequiredBlocksPeerValidator extends AbstractPeerBlockValidator {
         protocolSchedule,
         peerTaskExecutor,
         synchronizerConfiguration,
-        currentProtocolSpecSupplier,
         metricsSystem,
         blockNumber,
         chainHeightEstimationBuffer);
@@ -57,7 +52,6 @@ public class RequiredBlocksPeerValidator extends AbstractPeerBlockValidator {
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final long blockNumber,
       final Hash hash) {
@@ -65,7 +59,6 @@ public class RequiredBlocksPeerValidator extends AbstractPeerBlockValidator {
         protocolSchedule,
         peerTaskExecutor,
         synchronizerConfiguration,
-        currentProtocolSpecSupplier,
         metricsSystem,
         blockNumber,
         hash,

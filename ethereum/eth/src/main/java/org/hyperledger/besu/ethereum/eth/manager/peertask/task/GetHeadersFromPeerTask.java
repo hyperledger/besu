@@ -23,13 +23,11 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   private final Long blockNumber;
@@ -38,7 +36,6 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   private final int skip;
   private final Direction direction;
   private final ProtocolSchedule protocolSchedule;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final long requiredBlockchainHeight;
 
   public GetHeadersFromPeerTask(
@@ -46,16 +43,8 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
       final int maxHeaders,
       final int skip,
       final Direction direction,
-      final ProtocolSchedule protocolSchedule,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier) {
-    this(
-        null,
-        blockNumber,
-        maxHeaders,
-        skip,
-        direction,
-        protocolSchedule,
-        currentProtocolSpecSupplier);
+      final ProtocolSchedule protocolSchedule) {
+    this(null, blockNumber, maxHeaders, skip, direction, protocolSchedule);
   }
 
   public GetHeadersFromPeerTask(
@@ -64,15 +53,13 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
       final int maxHeaders,
       final int skip,
       final Direction direction,
-      final ProtocolSchedule protocolSchedule,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier) {
+      final ProtocolSchedule protocolSchedule) {
     this.blockHash = blockHash;
     this.blockNumber = blockNumber;
     this.maxHeaders = maxHeaders;
     this.skip = skip;
     this.direction = direction;
     this.protocolSchedule = protocolSchedule;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
 
     requiredBlockchainHeight =
         direction == Direction.FORWARD
@@ -112,7 +99,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   public Predicate<EthPeer> getPeerRequirementFilter() {
     return (ethPeer) ->
         ethPeer.getProtocolName().equals(getSubProtocol().getName())
-            && (currentProtocolSpecSupplier.get().isPoS()
+            && (protocolSchedule.anyMatch((ps) -> ps.spec().isPoS())
                 || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight);
   }
 
@@ -135,10 +122,6 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
 
   public int getSkip() {
     return skip;
-  }
-
-  public Direction getDirection() {
-    return direction;
   }
 
   public enum Direction {

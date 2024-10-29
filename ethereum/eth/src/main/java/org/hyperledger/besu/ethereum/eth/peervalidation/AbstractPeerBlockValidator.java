@@ -27,13 +27,11 @@ import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +43,6 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
   private final ProtocolSchedule protocolSchedule;
   private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final MetricsSystem metricsSystem;
 
   final long blockNumber;
@@ -56,7 +53,6 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final MetricsSystem metricsSystem,
       final long blockNumber,
       final long chainHeightEstimationBuffer) {
@@ -64,7 +60,6 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
     this.protocolSchedule = protocolSchedule;
     this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.metricsSystem = metricsSystem;
     this.blockNumber = blockNumber;
     this.chainHeightEstimationBuffer = chainHeightEstimationBuffer;
@@ -84,8 +79,7 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
                         1,
                         0,
                         GetHeadersFromPeerTask.Direction.FORWARD,
-                        protocolSchedule,
-                        currentProtocolSpecSupplier);
+                        protocolSchedule);
                 PeerTaskExecutorResult<List<BlockHeader>> taskResult =
                     peerTaskExecutor.executeAgainstPeer(task, ethPeer);
                 CompletableFuture<Boolean> resultFuture;

@@ -79,7 +79,6 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final PeerTaskExecutor peerTaskExecutor;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final SyncState syncState;
   private final MetricsSystem metricsSystem;
   private final BlockBroadcaster blockBroadcaster;
@@ -98,7 +97,6 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final PeerTaskExecutor peerTaskExecutor,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final SyncState syncState,
       final PendingBlocksManager pendingBlocksManager,
       final MetricsSystem metricsSystem,
@@ -109,7 +107,6 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
         protocolContext,
         ethContext,
         peerTaskExecutor,
-        currentProtocolSpecSupplier,
         syncState,
         pendingBlocksManager,
         metricsSystem,
@@ -123,7 +120,6 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final PeerTaskExecutor peerTaskExecutor,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final SyncState syncState,
       final PendingBlocksManager pendingBlocksManager,
       final MetricsSystem metricsSystem,
@@ -134,7 +130,6 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.peerTaskExecutor = peerTaskExecutor;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.metricsSystem = metricsSystem;
     this.blockBroadcaster = blockBroadcaster;
     this.syncState = syncState;
@@ -549,7 +544,6 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
             ethContext,
             peerTaskExecutor,
             config,
-            currentProtocolSpecSupplier,
             metricsSystem,
             Math.max(1, ethContext.getEthPeers().peerCount()),
             maybeBlockHash,

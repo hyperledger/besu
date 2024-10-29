@@ -683,7 +683,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             miningParameters);
 
     final List<PeerValidator> peerValidators =
-        createPeerValidators(protocolSchedule, peerTaskExecutor, currentProtocolSpecSupplier);
+        createPeerValidators(protocolSchedule, peerTaskExecutor);
 
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
@@ -737,7 +737,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             transactionPool,
             miningParameters,
             peerTaskExecutor,
-            currentProtocolSpecSupplier,
             syncState,
             ethProtocolManager);
 
@@ -977,7 +976,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param transactionPool the transaction pool
    * @param miningParameters the mining parameters
    * @param peerTaskExecutor the peer task executor
-   * @param currentProtocolSpecSupplier the current protocol spec supplier
    * @param syncState the sync state
    * @param ethProtocolManager the eth protocol manager
    * @return the mining coordinator
@@ -988,7 +986,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       TransactionPool transactionPool,
       MiningParameters miningParameters,
       PeerTaskExecutor peerTaskExecutor,
-      Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       SyncState syncState,
       EthProtocolManager ethProtocolManager);
 
@@ -1157,13 +1154,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    *
    * @param protocolSchedule the protocol schedule
    * @param peerTaskExecutor the peer task executor
-   * @param currentProtocolSpecSupplier the current protocol spec supplier
    * @return the list
    */
   protected List<PeerValidator> createPeerValidators(
-      final ProtocolSchedule protocolSchedule,
-      final PeerTaskExecutor peerTaskExecutor,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier) {
+      final ProtocolSchedule protocolSchedule, final PeerTaskExecutor peerTaskExecutor) {
     final List<PeerValidator> validators = new ArrayList<>();
 
     final OptionalLong daoBlock = genesisConfigOptions.getDaoForkBlock();
@@ -1171,12 +1165,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       // Setup dao validator
       validators.add(
           new DaoForkPeerValidator(
-              protocolSchedule,
-              peerTaskExecutor,
-              syncConfig,
-              currentProtocolSpecSupplier,
-              metricsSystem,
-              daoBlock.getAsLong()));
+              protocolSchedule, peerTaskExecutor, syncConfig, metricsSystem, daoBlock.getAsLong()));
     }
 
     final OptionalLong classicBlock = genesisConfigOptions.getClassicForkBlock();
@@ -1187,7 +1176,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               protocolSchedule,
               peerTaskExecutor,
               syncConfig,
-              currentProtocolSpecSupplier,
               metricsSystem,
               classicBlock.getAsLong()));
     }
@@ -1198,7 +1186,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               protocolSchedule,
               peerTaskExecutor,
               syncConfig,
-              currentProtocolSpecSupplier,
               metricsSystem,
               requiredBlock.getKey(),
               requiredBlock.getValue()));
@@ -1212,7 +1199,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               protocolSchedule,
               peerTaskExecutor,
               syncConfig,
-              currentProtocolSpecSupplier,
               metricsSystem,
               checkpointConfigOptions.getNumber().orElseThrow(),
               checkpointConfigOptions.getHash().map(Hash::fromHexString).orElseThrow()));

@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeaders;
 import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.DownloadHeaderSequenceTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.FutureUtils;
 
@@ -38,7 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +50,6 @@ public class DownloadHeadersStep
   private final ValidationPolicy validationPolicy;
   private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   private final int headerRequestSize;
   private final MetricsSystem metricsSystem;
 
@@ -63,7 +60,6 @@ public class DownloadHeadersStep
       final ValidationPolicy validationPolicy,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final int headerRequestSize,
       final MetricsSystem metricsSystem) {
     this.protocolSchedule = protocolSchedule;
@@ -72,7 +68,6 @@ public class DownloadHeadersStep
     this.validationPolicy = validationPolicy;
     this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.headerRequestSize = headerRequestSize;
     this.metricsSystem = metricsSystem;
   }
@@ -119,8 +114,7 @@ public class DownloadHeadersStep
                           headerRequestSize,
                           0,
                           GetHeadersFromPeerTask.Direction.FORWARD,
-                          protocolSchedule,
-                          currentProtocolSpecSupplier);
+                          protocolSchedule);
                   PeerTaskExecutorResult<List<BlockHeader>> taskResult =
                       peerTaskExecutor.executeAgainstPeer(task, range.getSyncTarget());
                   if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS

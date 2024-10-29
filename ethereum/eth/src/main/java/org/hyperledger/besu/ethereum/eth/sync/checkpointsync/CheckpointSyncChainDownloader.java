@@ -51,7 +51,6 @@ public class CheckpointSyncChainDownloader extends FastSyncChainDownloader {
             protocolContext,
             ethContext,
             peerTaskExecutor,
-            currentProtocolSpecSupplier,
             metricsSystem,
             fastSyncState);
 
