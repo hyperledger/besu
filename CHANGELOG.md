@@ -14,6 +14,7 @@
 - Add a method to get all the transaction in the pool, to the `TransactionPoolService`, to easily access the transaction pool content from plugins [#7813](https://github.com/hyperledger/besu/pull/7813)
 
 ### Bug fixes
+- Fix registering new metric categories from plugins [#7825](https://github.com/hyperledger/besu/pull/7825)
 
 ## 24.10.0
 
