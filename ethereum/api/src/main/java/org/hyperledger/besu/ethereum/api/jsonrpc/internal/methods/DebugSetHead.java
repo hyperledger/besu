@@ -27,17 +27,35 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 
 import java.util.Optional;
 
+import graphql.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
   private final ProtocolContext protocolContext;
+  private static final Logger LOG = LoggerFactory.getLogger(DebugSetHead.class);
+  private static final int DEFAULT_MAX_TRIE_LOGS_TO_ROLL_AT_ONCE = 512;
+
+  private final long maxTrieLogsToRollAtOnce;
 
   public DebugSetHead(final BlockchainQueries blockchain, final ProtocolContext protocolContext) {
-    super(blockchain);
+    this(blockchain, protocolContext, DEFAULT_MAX_TRIE_LOGS_TO_ROLL_AT_ONCE);
+  }
 
+  @VisibleForTesting
+  DebugSetHead(
+      final BlockchainQueries blockchain,
+      final ProtocolContext protocolContext,
+      final long maxTrieLogsToRollAtOnce) {
+    super(blockchain);
     this.protocolContext = protocolContext;
+    this.maxTrieLogsToRollAtOnce = Math.abs(maxTrieLogsToRollAtOnce);
   }
 
   @Override
@@ -59,6 +77,7 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
     var blockchainQueries = getBlockchainQueries();
+    var blockchain = protocolContext.getBlockchain();
     Optional<BlockHeader> maybeBlockHeader = blockchainQueries.getBlockHeaderByHash(blockHash);
     Optional<Boolean> maybeMoveWorldstate = shouldMoveWorldstate(request);
 
@@ -66,24 +85,63 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
       return new JsonRpcErrorResponse(request.getRequest().getId(), UNKNOWN_BLOCK);
     }
 
-    protocolContext.getBlockchain().rewindToBlock(maybeBlockHeader.get().getBlockHash());
-
-    // Optionally move the worldstate to the specified blockhash, if it is present
+    // Optionally move the worldstate to the specified blockhash, if it is present in the chain
     if (maybeMoveWorldstate.orElse(Boolean.FALSE)) {
-      var blockHeader = maybeBlockHeader.get();
       var archive = blockchainQueries.getWorldStateArchive();
-      if (archive.isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getBlockHash())) {
-        // WARNING, this can be dangerous for a DiffBasedWorldstate if a concurrent
-        //          process attempts to move or modify the head worldstate.
-        //          Ensure no block processing is occuring when using this feature.
-        //          No engine-api, block import, sync, mining or other rpc calls should be running.
-        //
-        //          for Forest worldstates, this is essentially a no-op.
-        archive.getMutable(blockHeader.getStateRoot(), blockHeader.getBlockHash());
+
+      // Only DiffBasedWorldState's need to be moved:
+      if (archive instanceof DiffBasedWorldStateProvider diffBasedArchive) {
+        rollWorldStateIncrementally(maybeBlockHeader.get(), blockchain, diffBasedArchive);
       }
     }
 
+    // finally move the blockchain
+    blockchain.rewindToBlock(maybeBlockHeader.get().getBlockHash());
+
     return JsonRpcSuccessResponse.SUCCESS_RESULT;
+  }
+
+  private void rollWorldStateIncrementally(
+      final BlockHeader target,
+      final Blockchain blockchain,
+      final DiffBasedWorldStateProvider archive) {
+
+    if (archive.isWorldStateAvailable(target.getStateRoot(), target.getBlockHash())) {
+      // WARNING, this can be dangerous for a DiffBasedWorldstate if a concurrent
+      //          process attempts to move or modify the head worldstate.
+      //          Ensure no block processing is occuring when using this feature.
+      //          No engine-api, block import, sync, mining or other rpc calls should be running.
+
+      Optional<BlockHeader> current =
+          archive
+              .getWorldStateKeyValueStorage()
+              .getWorldStateBlockHash()
+              .flatMap(blockchain::getBlockHeader);
+
+      while (current.isPresent() && !target.getStateRoot().equals(current.get().getStateRoot())) {
+        long delta = current.get().getNumber() - target.getNumber();
+
+        if (maxTrieLogsToRollAtOnce < Math.abs(delta)) {
+          // do we need to move forward or backward?
+          long distanceToMove = (delta > 0) ? -maxTrieLogsToRollAtOnce : maxTrieLogsToRollAtOnce;
+
+          // Add distanceToMove to the current block number to get the interim target header
+          var interimHead = blockchain.getBlockHeader(current.get().getNumber() + distanceToMove);
+
+          interimHead.ifPresent(
+              it -> {
+                archive.getMutable(it.getStateRoot(), it.getBlockHash());
+                LOG.info("incrementally rolled worldstate to {}", it.toLogString());
+              });
+          current = interimHead;
+
+        } else {
+          archive.getMutable(target.getStateRoot(), target.getBlockHash());
+          LOG.info("finished rolling worldstate to {}", target.toLogString());
+          break;
+        }
+      }
+    }
   }
 
   private Optional<Boolean> shouldMoveWorldstate(final JsonRpcRequestContext request) {

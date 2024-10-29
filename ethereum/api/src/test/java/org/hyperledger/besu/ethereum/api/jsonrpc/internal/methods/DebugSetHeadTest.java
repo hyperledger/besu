@@ -66,7 +66,9 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
         new DebugSetHead(
             new BlockchainQueries(
                 protocolSchedule, blockchain, archive, MiningParameters.MINING_DISABLED),
-            protocolContext);
+            protocolContext,
+            // a value of 2 here exercises all the state rolling code paths
+            2);
     startService();
   }
 
