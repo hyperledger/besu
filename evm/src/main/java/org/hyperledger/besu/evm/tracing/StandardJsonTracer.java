@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
-import static com.google.common.base.Strings.padStart;
-
 import org.hyperledger.besu.evm.code.OpcodeInfo;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -127,9 +125,7 @@ public class StandardJsonTracer implements OperationTracer {
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
       stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
     }
-    pc =
-        messageFrame.getPC()
-            - messageFrame.getCode().getCodeSection(messageFrame.getSection()).getEntryPoint();
+    pc = messageFrame.getPC() - messageFrame.getCode().getCodeSection(0).getEntryPoint();
     section = messageFrame.getSection();
     gas = shortNumber(messageFrame.getRemainingGas());
     memorySize = messageFrame.memoryWordSize() * 32;
@@ -226,43 +222,12 @@ public class StandardJsonTracer implements OperationTracer {
           .append("\"");
     } else if (messageFrame.getRevertReason().isPresent()) {
       sb.append(",\"error\":\"")
-          .append(quoteEscape(messageFrame.getRevertReason().orElse(Bytes.EMPTY)))
+          .append(messageFrame.getRevertReason().get().toHexString())
           .append("\"");
     }
 
     sb.append(storageString).append("}");
     out.println(sb);
-  }
-
-  private static String quoteEscape(final Bytes bytes) {
-    final StringBuilder result = new StringBuilder(bytes.size());
-    for (final byte b : bytes.toArrayUnsafe()) {
-      final int c = Byte.toUnsignedInt(b);
-      // list from RFC-4627 section 2
-      if (c == '"') {
-        result.append("\\\"");
-      } else if (c == '\\') {
-        result.append("\\\\");
-      } else if (c == '/') {
-        result.append("\\/");
-      } else if (c == '\b') {
-        result.append("\\b");
-      } else if (c == '\f') {
-        result.append("\\f");
-      } else if (c == '\n') {
-        result.append("\\n");
-      } else if (c == '\r') {
-        result.append("\\r");
-      } else if (c == '\t') {
-        result.append("\\t");
-      } else if (c <= 0x1F) {
-        result.append("\\u");
-        result.append(padStart(Integer.toHexString(c), 4, '0'));
-      } else {
-        result.append((char) b);
-      }
-    }
-    return result.toString();
   }
 
   @Override

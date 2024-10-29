@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
+
+import java.util.Collection;
 
 /** Service to enable and disable the transaction pool. */
 public class TransactionPoolServiceImpl implements TransactionPoolService {
@@ -39,5 +42,10 @@ public class TransactionPoolServiceImpl implements TransactionPoolService {
   @Override
   public void enableTransactionPool() {
     transactionPool.setEnabled();
+  }
+
+  @Override
+  public Collection<? extends PendingTransaction> getPendingTransactions() {
+    return transactionPool.getPendingTransactions();
   }
 }

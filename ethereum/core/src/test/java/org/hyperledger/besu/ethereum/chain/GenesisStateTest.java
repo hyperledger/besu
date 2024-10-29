@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -275,7 +276,7 @@ final class GenesisStateTest {
     assertThat(last).isNotNull();
     Wei lastBalance = last.getBalance();
     assertThat(lastBalance).isEqualTo(Wei.fromHexString("0x123450000000000000000"));
-    assertThat(header.getRequestsRoot().isPresent()).isFalse();
+    assertThat(header.getRequestsHash().isPresent()).isFalse();
   }
 
   @ParameterizedTest
@@ -287,10 +288,6 @@ final class GenesisStateTest {
             GenesisStateTest.class.getResource("genesis_prague.json"),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
-    assertThat(header.getHash())
-        .isEqualTo(
-            Hash.fromHexString(
-                "0xaad700fd347070b47165c299dd5b843d0a47d4eaee12d3414a5cb58c5c8a8fe4"));
     assertThat(header.getGasLimit()).isEqualTo(0x2fefd8);
     assertThat(header.getGasUsed()).isZero();
     assertThat(header.getNumber()).isZero();
@@ -326,11 +323,18 @@ final class GenesisStateTest {
     Wei lastBalance = last.getBalance();
     assertThat(lastBalance).isEqualTo(Wei.fromHexString("0x123450000000000000000"));
 
-    assertThat(header.getRequestsRoot().isPresent()).isTrue();
-    assertThat(header.getRequestsRoot().get())
+    assertThat(header.getRequestsHash().isPresent()).isTrue();
+    assertThat(header.getRequestsHash().get())
         .isEqualTo(
             Hash.fromHexString(
-                "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"));
+                "0x6036c41849da9c076ed79654d434017387a88fb833c2856b32e18218b3341c5f"));
+    assertThat(header.getTargetBlobCount().isPresent()).isTrue();
+    assertThat(header.getTargetBlobCount().get()).isEqualTo(UInt64.ONE);
+
+    assertThat(header.getHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0xdbc64edecb3a432e48cbd270b4a248ffc611b5f3dd666c8a10d546672cae17bd"));
   }
 
   @Test
