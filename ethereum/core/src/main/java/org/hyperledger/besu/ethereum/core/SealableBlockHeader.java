@@ -24,6 +24,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /** A block header capable of being sealed. */
 public class SealableBlockHeader extends ProcessableBlockHeader {
@@ -69,7 +70,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Long blobGasUsed,
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
-      final Hash requestsHash) {
+      final Hash requestsHash,
+      final UInt64 targetBlobCount) {
     super(
         parentHash,
         coinbase,
@@ -79,7 +81,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
         timestamp,
         baseFee,
         mixHashOrPrevRandao,
-        parentBeaconBlockRoot);
+        parentBeaconBlockRoot,
+        targetBlobCount);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;
