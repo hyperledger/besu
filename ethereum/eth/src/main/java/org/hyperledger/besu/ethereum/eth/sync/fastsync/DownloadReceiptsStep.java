@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.HashMap;
@@ -36,24 +36,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class DownloadReceiptsStep
     implements Function<List<Block>, CompletableFuture<List<BlockWithReceipts>>> {
 
-  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
+  private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
   private final MetricsSystem metricsSystem;
 
   public DownloadReceiptsStep(
-      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
+      final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem) {
-    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
+    this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
@@ -80,8 +79,7 @@ public class DownloadReceiptsStep
       getReceiptsWithPeerTaskSystem(final List<BlockHeader> headers) {
     Map<BlockHeader, List<TransactionReceipt>> getReceipts = new HashMap<>();
     do {
-      GetReceiptsFromPeerTask task =
-          new GetReceiptsFromPeerTask(headers, currentProtocolSpecSupplier);
+      GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(headers, protocolSchedule);
       PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
           peerTaskExecutor.execute(task);
       if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS

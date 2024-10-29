@@ -191,7 +191,6 @@ public class CheckPointSyncChainDownloaderTest {
         syncConfig,
         worldStateStorageCoordinator,
         protocolSchedule,
-        () -> null,
         protocolContext,
         ethContext,
         peerTaskExecutor,
