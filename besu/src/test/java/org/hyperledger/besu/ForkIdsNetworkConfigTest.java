@@ -15,6 +15,7 @@
 package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,20 +47,14 @@ import java.util.stream.Stream;
 import com.google.common.collect.Streams;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(Parameterized.class)
+@ExtendWith(MockitoExtension.class)
 public class ForkIdsNetworkConfigTest {
 
-  @Parameterized.Parameter public NetworkName chainName;
-
-  @Parameterized.Parameter(1)
-  public List<ForkId> expectedForkIds;
-
-  @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> parameters() {
     return List.of(
         new Object[] {
@@ -149,8 +144,8 @@ public class ForkIdsNetworkConfigTest {
 
     final AtomicLong blockNumber = new AtomicLong();
     when(mockBlockchain.getChainHeadHeader()).thenReturn(mockBlockHeader);
-    when(mockBlockHeader.getNumber()).thenAnswer(o -> blockNumber.get());
-    when(mockBlockHeader.getTimestamp()).thenAnswer(o -> blockNumber.get());
+    lenient().when(mockBlockHeader.getNumber()).thenAnswer(o -> blockNumber.get());
+    lenient().when(mockBlockHeader.getTimestamp()).thenAnswer(o -> blockNumber.get());
 
     final ForkIdManager forkIdManager =
         new ForkIdManager(

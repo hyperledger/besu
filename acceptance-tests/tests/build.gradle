@@ -68,21 +68,17 @@ dependencies {
   testImplementation 'io.opentracing:opentracing-api'
   testImplementation 'io.opentracing:opentracing-util'
   testImplementation 'io.vertx:vertx-core'
-  testImplementation 'junit:junit'
   testImplementation 'org.apache.commons:commons-compress'
   testImplementation 'org.apache.logging.log4j:log4j-core'
   testImplementation 'io.tmio:tuweni-crypto'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'
-  testImplementation 'org.testcontainers:testcontainers'
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
   testImplementation 'org.web3j:core'
   testImplementation 'org.wiremock:wiremock'
   testImplementation project(path: ':acceptance-tests:tests:shanghai')
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
 test.enabled = false
@@ -106,7 +102,8 @@ task acceptanceTest(type: Test) {
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
-  mustRunAfter rootProject.subprojects*.test
+  def javaProjects = rootProject.subprojects - project(':platform')
+  mustRunAfter javaProjects.test
   description = 'Runs ALL Besu acceptance tests (mainnet and non-mainnet).'
   group = 'verification'
 
@@ -135,7 +132,8 @@ task acceptanceTestNotPrivacy(type: Test) {
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
-  mustRunAfter rootProject.subprojects*.test
+  def javaProjects = rootProject.subprojects - project(':platform')
+  mustRunAfter javaProjects.test
   description = 'Runs MAINNET Besu acceptance tests (excluding specific non-mainnet suites).'
   group = 'verification'
 
@@ -163,7 +161,8 @@ task acceptanceTestCliqueBft(type: Test) {
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
-  mustRunAfter rootProject.subprojects*.test
+  def javaProjects = rootProject.subprojects - project(':platform')
+  mustRunAfter javaProjects.test
   description = 'Runs Clique and BFT Besu acceptance tests.'
   group = 'verification'
 
@@ -192,7 +191,8 @@ task acceptanceTestBftSoak(type: Test) {
   // Set to any time > 60 minutes to run the soak test for longer
   // systemProperty 'acctests.soakTimeMins', '120'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
-  mustRunAfter rootProject.subprojects*.test
+  def javaProjects = rootProject.subprojects - project(':platform')
+  mustRunAfter javaProjects.test
   description = 'Runs BFT soak test.'
   group = 'verification'
 
@@ -219,7 +219,8 @@ task acceptanceTestPermissioning(type: Test) {
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
-  mustRunAfter rootProject.subprojects*.test
+  def javaProjects = rootProject.subprojects - project(':platform')
+  mustRunAfter javaProjects.test
   description = 'Runs Permissioning Besu acceptance tests.'
   group = 'verification'
 

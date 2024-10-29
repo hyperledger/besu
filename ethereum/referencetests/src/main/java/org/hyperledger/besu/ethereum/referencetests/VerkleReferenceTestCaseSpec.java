@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createVerkleInMemoryWorldStateArchive;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -168,6 +169,11 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
   }
 
   @Override
+  public boolean areAllTransactionsValid(final Block block) {
+    throw new NotImplementedException("areAllTransactionsValid not available for verkle test");
+  }
+
+  @Override
   public String getSealEngine() {
     return sealEngine;
   }
@@ -220,7 +226,8 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
           null,
           null,
           null,
-          null, // TODO MANAGE THAT
+          null,
+          null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -293,15 +300,12 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
       final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
       final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
       final BlockBody body =
-          new BlockBody(
-              input.readList(Transaction::readFrom),
-              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
-              input.isEndOfCurrentList()
-                  ? Optional.empty()
-                  : Optional.of(input.readList(Withdrawal::readFrom)),
-              input.isEndOfCurrentList()
-                  ? Optional.empty()
-                  : Optional.of(input.readList(Request::readFrom)));
+              new BlockBody(
+                      input.readList(Transaction::readFrom),
+                      input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
+                      input.isEndOfCurrentList()
+                              ? Optional.empty()
+                              : Optional.of(input.readList(Withdrawal::readFrom)));
       return new Block(header, body);
     }
   }

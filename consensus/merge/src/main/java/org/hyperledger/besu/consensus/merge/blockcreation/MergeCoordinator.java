@@ -302,7 +302,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           new PayloadWrapper(
-              payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts())));
+              payloadIdentifier,
+              new BlockWithReceipts(emptyBlock, result.getReceipts()),
+              result.getRequests()));
       LOG.info(
           "Start building proposals for block {} identified by {}",
           emptyBlock.getHeader().getNumber(),
@@ -469,7 +471,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
       mergeContext.putPayloadById(
           new PayloadWrapper(
-              payloadIdentifier, new BlockWithReceipts(bestBlock, resultBest.getReceipts())));
+              payloadIdentifier,
+              new BlockWithReceipts(bestBlock, resultBest.getReceipts()),
+              resultBest.getRequests()));
       LOG.atDebug()
           .setMessage(
               "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms")

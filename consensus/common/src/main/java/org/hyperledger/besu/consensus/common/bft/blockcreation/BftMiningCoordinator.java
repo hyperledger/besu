@@ -93,7 +93,9 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
 
   @Override
   public void start() {
-    if (state.compareAndSet(State.IDLE, State.RUNNING)) {
+    if (state.compareAndSet(State.IDLE, State.RUNNING)
+        || state.compareAndSet(State.STOPPED, State.RUNNING)) {
+      bftProcessor.start();
       bftExecutors.start();
       blockAddedObserverId = blockchain.observeBlockAdded(this);
       eventHandler.start();
@@ -110,7 +112,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
       try {
         bftProcessor.awaitStop();
       } catch (final InterruptedException e) {
-        LOG.debug("Interrupted while waiting for IbftProcessor to stop.", e);
+        LOG.debug("Interrupted while waiting for BftProcessor to stop.", e);
         Thread.currentThread().interrupt();
       }
       bftExecutors.stop();
@@ -135,12 +137,17 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
 
   @Override
   public boolean disable() {
+    if (state.get() == State.PAUSED
+        || state.compareAndSet(State.IDLE, State.PAUSED)
+        || state.compareAndSet(State.RUNNING, State.PAUSED)) {
+      return true;
+    }
     return false;
   }
 
   @Override
   public boolean isMining() {
-    return true;
+    return state.get() == State.RUNNING;
   }
 
   @Override

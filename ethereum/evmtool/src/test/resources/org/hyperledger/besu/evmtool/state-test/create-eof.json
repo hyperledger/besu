@@ -45,7 +45,7 @@
       },
       "out": "0x",
       "post": {
-        "CancunEOF": [
+        "Osaka": [
           {
             "hash": "0x1a8642a04dae90535f00f53d3a30284c4db051d508a653db89eb100ba9aecbf3",
             "logs": "0xf48b954a6a6f4ce6b28e4950b7027413f4bdc8f459df6003b6e8d7a1567c8940",
@@ -79,7 +79,7 @@
     {"pc":5,"section":0,"op":95,"gas":"0x793d71","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
     {"pc":6,"section":0,"op":95,"gas":"0x793d6f","gasCost":"0x2","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
     {"pc":7,"section":0,"op":238,"immediate":"0x00","gas":"0x793d6d","gasCost":"0x0","memSize":0,"stack":["0x0","0x0"],"depth":1,"refund":0,"opName":"RETURNCONTRACT"},
-    {"output":"","gasUsed":"0xe433","test":"create-eof","fork":"CancunEOF","d":0,"g":0,"v":0,"postHash":"0x1a8642a04dae90535f00f53d3a30284c4db051d508a653db89eb100ba9aecbf3","postLogsHash":"0xf48b954a6a6f4ce6b28e4950b7027413f4bdc8f459df6003b6e8d7a1567c8940","pass":true},
+    {"output":"","gasUsed":"0xe433","test":"create-eof","fork":"Osaka","d":0,"g":0,"v":0,"postHash":"0x1a8642a04dae90535f00f53d3a30284c4db051d508a653db89eb100ba9aecbf3","postLogsHash":"0xf48b954a6a6f4ce6b28e4950b7027413f4bdc8f459df6003b6e8d7a1567c8940","pass":true},
     {"pc":0,"op":239,"gas":"0x794068","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"INVALID","error":"Bad instruction"},
     {"output":"","gasUsed":"0x7a1200","test":"create-eof","fork":"Cancun","d":0,"g":0,"v":0,"postHash":"0xaa80d89bc89f58da8de41d3894bd1a241896ff91f7a5964edaefb39e8e3a4a98","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true,"error":"INVALID_OPERATION"}
   ]

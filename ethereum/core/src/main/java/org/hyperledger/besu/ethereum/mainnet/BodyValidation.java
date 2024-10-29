@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.crypto.Hash.sha256;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -23,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
-import org.hyperledger.besu.ethereum.core.encoding.RequestEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -89,16 +90,24 @@ public final class BodyValidation {
   }
 
   /**
-   * Generates the requests root for a list of requests
+   * Generates the requests hash for a list of requests
    *
    * @param requests list of request
-   * @return the requests root
+   * @return the requests hash
    */
-  public static Hash requestsRoot(final List<Request> requests) {
-    final MerkleTrie<Bytes, Bytes> trie = trie();
+  public static Hash requestsHash(final List<Request> requests) {
+    List<Bytes> requestHashes = new ArrayList<>();
     IntStream.range(0, requests.size())
-        .forEach(i -> trie.put(indexKey(i), RequestEncoder.encodeOpaqueBytes(requests.get(i))));
-    return Hash.wrap(trie.getRootHash());
+        .forEach(
+            i -> {
+              final Request request = requests.get(i);
+              final Bytes requestBytes =
+                  Bytes.concatenate(
+                      Bytes.of(request.getType().getSerializedType()), request.getData());
+              requestHashes.add(sha256(requestBytes));
+            });
+
+    return Hash.wrap(sha256(Bytes.wrap(requestHashes)));
   }
 
   /**

@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## Copyright contributors to Hyperledger Besu.
+## Copyright contributors to Besu.
 ##
 ## Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
 ## the License. You may obtain a copy of the License at
@@ -57,7 +57,7 @@ else
 fi
 
 # For the latest tag check the version match
-if [[ ${TAG} == "latest" && ${CHECK_LATEST} == "true" ]]
+if [[ ${TAG} =~ ^latest && ${CHECK_LATEST} == "true" ]]
 then
   _VERSION_IN_LOG=$(docker logs ${CONTAINER_NAME} | grep "#" | grep "Besu version" | cut -d " " -f 4 | sed 's/\s//g')
   echo "Extracted version from logs [$_VERSION_IN_LOG]"

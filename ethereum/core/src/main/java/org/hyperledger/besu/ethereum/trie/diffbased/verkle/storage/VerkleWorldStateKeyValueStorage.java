@@ -23,7 +23,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullFlatDbStrategy;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFlatDbStrategy;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFullFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeHashCodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
@@ -45,7 +46,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValueStorage
     implements WorldStateKeyValueStorage {
 
-  protected FullFlatDbStrategy flatDbStrategy;
+  protected BonsaiFullFlatDbStrategy flatDbStrategy;
 
   public VerkleWorldStateKeyValueStorage(
       final StorageProvider provider, final MetricsSystem metricsSystem) {
@@ -54,11 +55,11 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
             List.of(
                 ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE)),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
-    this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
+    this.flatDbStrategy = new BonsaiFullFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
   }
 
   public VerkleWorldStateKeyValueStorage(
-      final FullFlatDbStrategy flatDbStrategy,
+      final BonsaiFullFlatDbStrategy flatDbStrategy,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
     super(composedWorldStateStorage, trieLogStorage);
@@ -66,7 +67,7 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   }
 
   @Override
-  public FlatDbStrategy getFlatDbStrategy() {
+  public BonsaiFlatDbStrategy getFlatDbStrategy() {
     return flatDbStrategy;
   }
 

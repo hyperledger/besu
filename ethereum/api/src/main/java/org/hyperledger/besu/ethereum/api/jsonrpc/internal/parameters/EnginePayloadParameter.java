@@ -43,9 +43,6 @@ public class EnginePayloadParameter {
   private final List<WithdrawalParameter> withdrawals;
   private final Long blobGasUsed;
   private final String excessBlobGas;
-  private final List<DepositRequestParameter> depositRequests;
-  private final List<WithdrawalRequestParameter> withdrawalRequests;
-  private final List<ConsolidationRequestParameter> consolidationRequests;
   private final ExecutionWitnessParameter executionWitness;
 
   /**
@@ -68,9 +65,6 @@ public class EnginePayloadParameter {
    * @param withdrawals Array of Withdrawal
    * @param blobGasUsed QUANTITY, 64 Bits
    * @param excessBlobGas QUANTITY, 64 Bits
-   * @param depositRequests List of deposit parameters.
-   * @param withdrawalRequestParameters List of withdrawal requests parameters.
-   * @param consolidationRequests List of consolidation requests parameters.
    * @param executionWitness OBJECT executionWitness.
    */
   @JsonCreator
@@ -92,11 +86,6 @@ public class EnginePayloadParameter {
       @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
       @JsonProperty("blobGasUsed") final UnsignedLongParameter blobGasUsed,
       @JsonProperty("excessBlobGas") final String excessBlobGas,
-      @JsonProperty("depositRequests") final List<DepositRequestParameter> depositRequests,
-      @JsonProperty("withdrawalRequests")
-          final List<WithdrawalRequestParameter> withdrawalRequestParameters,
-      @JsonProperty("consolidationRequests")
-          final List<ConsolidationRequestParameter> consolidationRequests,
       @JsonProperty("executionWitness") final ExecutionWitnessParameter executionWitness) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
@@ -115,9 +104,7 @@ public class EnginePayloadParameter {
     this.withdrawals = withdrawals;
     this.blobGasUsed = blobGasUsed == null ? null : blobGasUsed.getValue();
     this.excessBlobGas = excessBlobGas;
-    this.depositRequests = depositRequests;
-    this.withdrawalRequests = withdrawalRequestParameters;
-    this.consolidationRequests = consolidationRequests;
+
     this.executionWitness = executionWitness;
   }
 
@@ -187,18 +174,6 @@ public class EnginePayloadParameter {
 
   public String getExcessBlobGas() {
     return excessBlobGas;
-  }
-
-  public List<DepositRequestParameter> getDepositRequests() {
-    return depositRequests;
-  }
-
-  public List<WithdrawalRequestParameter> getWithdrawalRequests() {
-    return withdrawalRequests;
-  }
-
-  public List<ConsolidationRequestParameter> getConsolidationRequests() {
-    return consolidationRequests;
   }
 
   public ExecutionWitnessParameter getExecutionWitness() {

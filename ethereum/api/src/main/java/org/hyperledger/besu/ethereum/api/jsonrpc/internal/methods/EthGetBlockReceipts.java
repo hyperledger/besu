@@ -95,7 +95,8 @@ public class EthGetBlockReceipts extends AbstractBlockParameterOrBlockHashMethod
             .map(
                 block ->
                     block.getTransactions().stream()
-                        .map(tx -> txReceipt(tx).get())
+                        .map(this::txReceipt)
+                        .flatMap(Optional::stream)
                         .collect(Collectors.toList()))
             .orElse(new ArrayList<>());
 

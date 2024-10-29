@@ -115,7 +115,7 @@ public class NonBesuBlockHeader implements BlockHeader {
   }
 
   @Override
-  public Optional<? extends Hash> getRequestsRoot() {
+  public Optional<? extends Hash> getRequestsHash() {
     return Optional.empty();
   }
 

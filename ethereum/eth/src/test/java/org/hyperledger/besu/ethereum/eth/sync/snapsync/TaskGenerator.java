@@ -44,7 +44,8 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class TaskGenerator {
 
-  public static List<Task<SnapDataRequest>> createAccountRequest(final boolean withData) {
+  public static List<Task<SnapDataRequest>> createAccountRequest(
+      final boolean withData, final boolean withNullTaskElement) {
 
     final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
@@ -91,7 +92,8 @@ public class TaskGenerator {
             rootHash,
             accountHash,
             stateTrieAccountValue.getStorageRoot(),
-            withData);
+            withData,
+            withNullTaskElement);
     final BytecodeRequest bytecodeRequest =
         createBytecodeDataRequest(
             worldStateKeyValueStorage,
@@ -112,7 +114,8 @@ public class TaskGenerator {
       final Hash rootHash,
       final Hash accountHash,
       final Bytes32 storageRoot,
-      final boolean withData) {
+      final boolean withData,
+      final boolean withNullTaskElement) {
 
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
@@ -139,6 +142,11 @@ public class TaskGenerator {
     if (withData) {
       request.setProofValid(true);
       request.addResponse(null, worldStateProofProvider, slots, new ArrayDeque<>());
+    }
+
+    if (withNullTaskElement) {
+      // setting isValidProof to true to simulate a null task element.
+      request.setProofValid(true);
     }
     return request;
   }

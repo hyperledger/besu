@@ -253,9 +253,18 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
                         .getValue()
                         .getBlockPeriodSeconds()));
 
-    if (syncState.isInitialSyncPhaseDone()) {
-      ibftMiningCoordinator.enable();
-    }
+    syncState.subscribeSyncStatus(
+        syncStatus -> {
+          if (syncState.syncTarget().isPresent()) {
+            // We're syncing so stop doing other stuff
+            LOG.info("Stopping IBFT mining coordinator while we are syncing");
+            ibftMiningCoordinator.stop();
+          } else {
+            LOG.info("Starting IBFT mining coordinator following sync");
+            ibftMiningCoordinator.enable();
+            ibftMiningCoordinator.start();
+          }
+        });
 
     syncState.subscribeCompletionReached(
         new BesuEvents.InitialSyncCompletionListener() {
