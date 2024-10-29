@@ -96,9 +96,9 @@ public class DownloadReceiptsStep
                           throw new IllegalStateException(
                               "Unexpectedly got receipts for block header already populated!");
                         }));
+        // remove all the headers we found receipts for
+        headers.removeAll(getReceipts.keySet());
       }
-      // remove all the headers we found receipts for
-      headers.removeAll(getReceipts.keySet());
       // repeat until all headers have receipts
     } while (!headers.isEmpty());
     return CompletableFuture.completedFuture(getReceipts);
