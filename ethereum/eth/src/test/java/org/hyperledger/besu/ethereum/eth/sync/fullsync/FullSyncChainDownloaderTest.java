@@ -122,7 +122,6 @@ public class FullSyncChainDownloaderTest {
         protocolContext,
         ethContext,
         new PeerTaskExecutor(null, null, new NoOpMetricsSystem()),
-        () -> null,
         syncState,
         metricsSystem,
         SyncTerminationCondition.never(),

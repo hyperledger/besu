@@ -121,7 +121,6 @@ public class DetermineCommonAncestorTaskTest {
             defaultHeaderRequestSize,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            () -> null,
             metricsSystem);
 
     final AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -157,7 +156,6 @@ public class DetermineCommonAncestorTaskTest {
             defaultHeaderRequestSize,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
-            () -> null,
             metricsSystem);
 
     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
@@ -204,7 +202,6 @@ public class DetermineCommonAncestorTaskTest {
             defaultHeaderRequestSize,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            () -> null,
             metricsSystem);
 
     // Empty response should be handled without any error
@@ -255,7 +252,6 @@ public class DetermineCommonAncestorTaskTest {
             defaultHeaderRequestSize,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            () -> null,
             metricsSystem);
     final DetermineCommonAncestorTask spy = spy(task);
 
@@ -291,7 +287,6 @@ public class DetermineCommonAncestorTaskTest {
             defaultHeaderRequestSize,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
-            () -> null,
             metricsSystem);
 
     Mockito.when(
@@ -334,7 +329,6 @@ public class DetermineCommonAncestorTaskTest {
             10,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            () -> null,
             metricsSystem);
     final DetermineCommonAncestorTask spy = spy(task);
 
@@ -373,7 +367,6 @@ public class DetermineCommonAncestorTaskTest {
             10,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
-            () -> null,
             metricsSystem);
     final DetermineCommonAncestorTask spy = spy(task);
 
@@ -416,7 +409,6 @@ public class DetermineCommonAncestorTaskTest {
             defaultHeaderRequestSize,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            () -> null,
             metricsSystem);
 
     final CompletableFuture<BlockHeader> result = task.run();
@@ -443,7 +435,6 @@ public class DetermineCommonAncestorTaskTest {
             defaultHeaderRequestSize,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
-            () -> null,
             metricsSystem);
 
     final CompletableFuture<BlockHeader> result = task.run();

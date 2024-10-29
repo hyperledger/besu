@@ -183,7 +183,6 @@ public class BackwardSyncContextTest {
                 protocolSchedule,
                 peerTaskExecutor,
                 SynchronizerConfiguration.builder().build(),
-                () -> null,
                 metricsSystem,
                 ethContext,
                 syncState,

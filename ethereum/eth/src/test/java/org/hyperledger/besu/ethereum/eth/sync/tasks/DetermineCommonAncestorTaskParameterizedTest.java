@@ -178,7 +178,6 @@ public class DetermineCommonAncestorTaskParameterizedTest {
             SynchronizerConfiguration.builder()
                 .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
                 .build(),
-            () -> null,
             metricsSystem);
 
     Mockito.when(

@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockConfirmer.ContestedPivotBlockException;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -47,7 +46,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -72,7 +70,6 @@ public class PivotBlockConfirmerTest {
   private TransactionPool transactionPool;
   private ProtocolSchedule protocolSchedule;
   private PeerTaskExecutor peerTaskExecutor;
-  private Supplier<ProtocolSpec> currentProtocolSpecSupplier;
 
   static class PivotBlockConfirmerTestArguments implements ArgumentsProvider {
     @Override
@@ -88,8 +85,6 @@ public class PivotBlockConfirmerTest {
     blockchain = blockchainSetupUtil.getBlockchain();
     transactionPool = blockchainSetupUtil.getTransactionPool();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
-    currentProtocolSpecSupplier =
-        () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
     protocolContext = blockchainSetupUtil.getProtocolContext();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(

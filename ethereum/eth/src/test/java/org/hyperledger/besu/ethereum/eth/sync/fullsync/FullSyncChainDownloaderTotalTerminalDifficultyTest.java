@@ -108,7 +108,6 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
         protocolContext,
         ethContext,
         new PeerTaskExecutor(null, null, new NoOpMetricsSystem()),
-        () -> null,
         syncState,
         metricsSystem,
         terminalCondition,

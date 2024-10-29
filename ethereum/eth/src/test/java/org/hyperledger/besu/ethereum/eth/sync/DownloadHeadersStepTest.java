@@ -90,7 +90,6 @@ public class DownloadHeadersStepTest {
             () -> HeaderValidationMode.DETACHED_ONLY,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            () -> null,
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -113,7 +112,6 @@ public class DownloadHeadersStepTest {
             () -> HeaderValidationMode.DETACHED_ONLY,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            () -> null,
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -139,7 +137,6 @@ public class DownloadHeadersStepTest {
             () -> HeaderValidationMode.DETACHED_ONLY,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            () -> null,
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
     final SyncTargetRange checkpointRange =
@@ -162,7 +159,6 @@ public class DownloadHeadersStepTest {
             () -> HeaderValidationMode.DETACHED_ONLY,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            () -> null,
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -187,7 +183,6 @@ public class DownloadHeadersStepTest {
             () -> HeaderValidationMode.DETACHED_ONLY,
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
-            () -> null,
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);

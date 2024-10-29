@@ -58,7 +58,6 @@ public class GetBlockFromPeerTaskTest
         ethContext,
         peerTaskExecutor,
         SynchronizerConfiguration.builder().build(),
-        () -> null,
         Optional.of(requestedData.getHash()),
         BLOCK_NUMBER,
         metricsSystem);

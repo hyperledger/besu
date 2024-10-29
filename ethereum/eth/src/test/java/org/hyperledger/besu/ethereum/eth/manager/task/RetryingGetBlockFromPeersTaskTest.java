@@ -59,7 +59,6 @@ public class RetryingGetBlockFromPeersTaskTest
         ethContext,
         peerTaskExecutor,
         SynchronizerConfiguration.builder().build(),
-        () -> null,
         metricsSystem,
         maxRetries,
         Optional.of(requestedData.getResult().getHash()),
