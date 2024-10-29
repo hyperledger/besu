@@ -52,6 +52,7 @@ import javax.annotation.Nonnull;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -265,10 +266,6 @@ public class TransactionSimulator {
               .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions())
               .buildBlockHeader();
     }
-
-    // TODO apply BlockOverrides to header
-
-    // TODO apply AccountOverrides to world state
     if (maybeStateOverrides.isPresent()) {
       for (Address accountToOverride : maybeStateOverrides.get().keySet()) {
         final AccountOverride overrides = maybeStateOverrides.get().get(accountToOverride);
@@ -335,13 +332,20 @@ public class TransactionSimulator {
 
   @VisibleForTesting
   protected void applyOverrides(final MutableAccount account, final AccountOverride override) {
-
+    LOG.debug("applying overrides to state for account {}", account.getAddress().toString());
     override.getNonce().ifPresent(account::setNonce);
     if (override.getBalance().isPresent()) {
       account.setBalance(override.getBalance().get());
     }
     override.getCode().ifPresent(n -> account.setCode(Bytes.fromHexString(n)));
-    // TODO storage overrides
+    override
+        .getStateDiff()
+        .ifPresent(
+            d ->
+                d.forEach(
+                    (key, value) ->
+                        account.setStorageValue(
+                            UInt256.fromHexString(key), UInt256.fromHexString(value))));
   }
 
   private long calculateSimulationGasCap(
