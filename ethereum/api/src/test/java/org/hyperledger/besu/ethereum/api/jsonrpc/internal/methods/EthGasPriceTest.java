@@ -373,6 +373,7 @@ public class EthGasPriceTest {
             null,
             null,
             null,
+            null,
             null),
         new BlockBody(
             IntStream.range(0, txsNum)
