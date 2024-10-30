@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.metrics;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 
@@ -25,6 +28,7 @@ import java.util.Map;
 /** The Metric category registry implementation. */
 public class MetricCategoryRegistryImpl implements MetricCategoryRegistry {
   private final Map<String, MetricCategory> metricCategories = new HashMap<>();
+  private MetricsConfiguration metricsConfiguration;
 
   /** Default constructor */
   public MetricCategoryRegistryImpl() {}
@@ -49,6 +53,14 @@ public class MetricCategoryRegistryImpl implements MetricCategoryRegistry {
     metricCategories.put(metricCategory.getName().toUpperCase(Locale.ROOT), metricCategory);
   }
 
+  @Override
+  public boolean isMetricCategoryEnabled(final MetricCategory metricCategory) {
+    checkNotNull(
+        metricsConfiguration, "Metrics configuration must be set before calling this method");
+    return (metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled())
+        && metricsConfiguration.getMetricCategories().contains(metricCategory);
+  }
+
   /**
    * Return true if a category with that name is already registered
    *
@@ -67,5 +79,15 @@ public class MetricCategoryRegistryImpl implements MetricCategoryRegistry {
    */
   public MetricCategory getMetricCategory(final String name) {
     return metricCategories.get(name.toUpperCase(Locale.ROOT));
+  }
+
+  /**
+   * Set the metric configuration via a method since it is still not available when creating this
+   * object
+   *
+   * @param metricsConfiguration the metrics configuration
+   */
+  public void setMetricsConfiguration(final MetricsConfiguration metricsConfiguration) {
+    this.metricsConfiguration = metricsConfiguration;
   }
 }

@@ -1891,7 +1891,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 ? p2PDiscoveryOptions.autoDiscoverDefaultIP().getHostAddress()
                 : metricsOptions.getMetricsPushHost())
         .hostsAllowlist(hostsAllowlist);
-    return metricsConfigurationBuilder.build();
+    final var metricsConfiguration = metricsConfigurationBuilder.build();
+    metricCategoryRegistry.setMetricsConfiguration(metricsConfiguration);
+    return metricsConfiguration;
   }
 
   private PrivacyParameters privacyParameters() {
