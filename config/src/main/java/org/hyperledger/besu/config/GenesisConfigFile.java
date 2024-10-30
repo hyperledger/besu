@@ -266,6 +266,17 @@ public class GenesisConfigFile {
   }
 
   /**
+   * Gets target blob count.
+   *
+   * @return the target blob count
+   */
+  public Optional<String> getTargetBlobCount() {
+    // TODO SLD EIP-7742 not sure if we should use a default value here or enforce any
+    // "pragueAtGenesis" genesis file (used in devnets) to have this value
+    return JsonUtil.getValueAsString(genesisRoot, "targetblobcount");
+  }
+
+  /**
    * Gets coinbase.
    *
    * @return the coinbase
@@ -280,6 +291,9 @@ public class GenesisConfigFile {
    * @return the timestamp
    */
   public long getTimestamp() {
+    if (overrides != null && overrides.containsKey("timestamp")) {
+      return Long.parseLong(overrides.get("timestamp"));
+    }
     return parseLong("timestamp", JsonUtil.getValueAsString(genesisRoot, "timestamp", "0x0"));
   }
 

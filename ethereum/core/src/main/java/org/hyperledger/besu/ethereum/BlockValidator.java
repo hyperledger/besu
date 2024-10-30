@@ -15,13 +15,11 @@
 package org.hyperledger.besu.ethereum;
 
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * The BlockValidator interface defines the methods for validating and processing blocks in the
@@ -90,7 +88,6 @@ public interface BlockValidator {
    * @param context the protocol context
    * @param block the block to validate
    * @param receipts the transaction receipts
-   * @param requests the requests
    * @param headerValidationMode the header validation mode
    * @param ommerValidationMode the ommer validation mode
    * @param bodyValidationMode the body validation mode
@@ -100,7 +97,6 @@ public interface BlockValidator {
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final Optional<List<Request>> requests,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
       final BodyValidationMode bodyValidationMode);

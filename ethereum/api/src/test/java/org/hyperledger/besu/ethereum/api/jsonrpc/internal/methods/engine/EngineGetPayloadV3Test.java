@@ -128,10 +128,10 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
                 new BlockBody(
                     List.of(blobTx),
                     Collections.emptyList(),
-                    Optional.of(Collections.emptyList()),
                     Optional.of(Collections.emptyList()))),
             List.of(blobReceipt));
-    PayloadWrapper payloadPostCancun = new PayloadWrapper(postCancunPid, postCancunBlock);
+    PayloadWrapper payloadPostCancun =
+        new PayloadWrapper(postCancunPid, postCancunBlock, Optional.empty());
 
     when(mergeContext.retrievePayloadById(postCancunPid))
         .thenReturn(Optional.of(payloadPostCancun));

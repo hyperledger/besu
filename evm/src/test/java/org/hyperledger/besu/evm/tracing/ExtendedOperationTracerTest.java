@@ -55,7 +55,7 @@ class ExtendedOperationTracerTest {
 
   @Test
   void shouldCallTraceAccountCreationResultIfIsExtendedTracing() {
-    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
     final ContractCreationProcessor contractCreationProcessor =
         new ContractCreationProcessor(evm, false, Collections.emptyList(), 0);
 
@@ -69,7 +69,7 @@ class ExtendedOperationTracerTest {
 
   @Test
   void shouldNotCallTraceAccountCreationResultIfIsNotExtendedTracing() {
-    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
     final ContractCreationProcessor contractCreationProcessor =
         new ContractCreationProcessor(evm, false, Collections.emptyList(), 0);
 

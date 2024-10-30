@@ -16,8 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assume.assumeThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -415,10 +414,9 @@ public class PrivacyOptionsTest extends CommandTestAbstract {
 
   @Test
   public void privEnclaveKeyFileDoesNotExist() {
-    assumeThat(
-        "Ignored if system language is not English",
-        System.getProperty("user.language"),
-        startsWith("en"));
+    assumeTrue(
+        System.getProperty("user.language").startsWith("en"),
+        "Ignored if system language is not English");
     parseCommand("--privacy-enabled=true", "--privacy-public-key-file", "/non/existent/file");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();

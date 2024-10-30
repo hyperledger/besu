@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,6 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 // Represents parameters for eth_call and eth_estimateGas JSON-RPC methods.
 public class CallParameter {
+  private final Optional<BigInteger> chainId;
 
   private final Address from;
 
@@ -56,6 +58,7 @@ public class CallParameter {
       final Wei gasPrice,
       final Wei value,
       final Bytes payload) {
+    this.chainId = Optional.empty();
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
@@ -79,6 +82,7 @@ public class CallParameter {
       final Wei value,
       final Bytes payload,
       final Optional<List<AccessListEntry>> accessList) {
+    this.chainId = Optional.empty();
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
@@ -93,6 +97,7 @@ public class CallParameter {
   }
 
   public CallParameter(
+      final Optional<BigInteger> chainId,
       final Address from,
       final Address to,
       final long gasLimit,
@@ -104,6 +109,7 @@ public class CallParameter {
       final Optional<List<AccessListEntry>> accessList,
       final Optional<Wei> maxFeePerBlobGas,
       final Optional<List<VersionedHash>> blobVersionedHashes) {
+    this.chainId = chainId;
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
@@ -115,6 +121,10 @@ public class CallParameter {
     this.accessList = accessList;
     this.maxFeePerBlobGas = maxFeePerBlobGas;
     this.blobVersionedHashes = blobVersionedHashes;
+  }
+
+  public Optional<BigInteger> getChainId() {
+    return chainId;
   }
 
   public Address getFrom() {
@@ -171,6 +181,7 @@ public class CallParameter {
     }
     final CallParameter that = (CallParameter) o;
     return gasLimit == that.gasLimit
+        && chainId.equals(that.chainId)
         && Objects.equals(from, that.from)
         && Objects.equals(to, that.to)
         && Objects.equals(gasPrice, that.gasPrice)
@@ -186,6 +197,7 @@ public class CallParameter {
   @Override
   public int hashCode() {
     return Objects.hash(
+        chainId,
         from,
         to,
         gasLimit,
@@ -202,7 +214,9 @@ public class CallParameter {
   @Override
   public String toString() {
     return "CallParameter{"
-        + "from="
+        + "chainId="
+        + chainId
+        + ", from="
         + from
         + ", to="
         + to
@@ -229,6 +243,7 @@ public class CallParameter {
 
   public static CallParameter fromTransaction(final Transaction tx) {
     return new CallParameter(
+        tx.getChainId(),
         tx.getSender(),
         tx.getTo().orElse(null),
         tx.getGasLimit(),
@@ -244,6 +259,7 @@ public class CallParameter {
 
   public static CallParameter fromTransaction(final org.hyperledger.besu.datatypes.Transaction tx) {
     return new CallParameter(
+        tx.getChainId(),
         tx.getSender(),
         tx.getTo().orElse(null),
         tx.getGasLimit(),

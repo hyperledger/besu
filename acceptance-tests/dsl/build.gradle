@@ -33,7 +33,6 @@ dependencies {
   implementation 'info.picocli:picocli'
   implementation 'io.reactivex.rxjava2:rxjava'
   implementation 'io.vertx:vertx-core'
-  implementation 'junit:junit'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-io'
@@ -46,6 +45,5 @@ dependencies {
   implementation 'org.web3j:crypto'
   implementation 'org.wiremock:wiremock'
 
-  implementation 'org.testcontainers:testcontainers'
   implementation 'org.junit.jupiter:junit-jupiter'
 }

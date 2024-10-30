@@ -68,7 +68,6 @@ public class JsonRpcTestMethodsFactory {
   private static final String CLIENT_NODE_NAME = "TestClientVersion/0.1.0";
   private static final String CLIENT_VERSION = "0.1.0";
   private static final String CLIENT_COMMIT = "12345678";
-  private static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
 
   private final BlockchainImporter importer;
   private final MutableBlockchain blockchain;
@@ -76,6 +75,7 @@ public class JsonRpcTestMethodsFactory {
   private final ProtocolContext context;
   private final BlockchainQueries blockchainQueries;
   private final Synchronizer synchronizer;
+  private final ProtocolSchedule protocolSchedule;
 
   public JsonRpcTestMethodsFactory(final BlockchainImporter importer) {
     this.importer = importer;
@@ -84,7 +84,7 @@ public class JsonRpcTestMethodsFactory {
     this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
     this.context = new ProtocolContext(blockchain, stateArchive, null, new BadBlockManager());
 
-    final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
+    this.protocolSchedule = importer.getProtocolSchedule();
     this.synchronizer = mock(Synchronizer.class);
 
     for (final Block block : importer.getBlocks()) {
@@ -106,6 +106,7 @@ public class JsonRpcTestMethodsFactory {
     this.blockchain = blockchain;
     this.stateArchive = stateArchive;
     this.context = context;
+    this.protocolSchedule = importer.getProtocolSchedule();
     this.blockchainQueries =
         new BlockchainQueries(
             importer.getProtocolSchedule(),
@@ -126,6 +127,7 @@ public class JsonRpcTestMethodsFactory {
     this.stateArchive = stateArchive;
     this.context = context;
     this.synchronizer = synchronizer;
+    this.protocolSchedule = importer.getProtocolSchedule();
     this.blockchainQueries =
         new BlockchainQueries(
             importer.getProtocolSchedule(),
@@ -140,6 +142,10 @@ public class JsonRpcTestMethodsFactory {
 
   public WorldStateArchive getStateArchive() {
     return stateArchive;
+  }
+
+  public BigInteger getChainId() {
+    return protocolSchedule.getChainId().get();
   }
 
   public Map<String, JsonRpcMethod> methods() {
@@ -183,7 +189,7 @@ public class JsonRpcTestMethodsFactory {
             CLIENT_NODE_NAME,
             CLIENT_VERSION,
             CLIENT_COMMIT,
-            NETWORK_ID,
+            getChainId(),
             new StubGenesisConfigOptions(),
             peerDiscovery,
             blockchainQueries,

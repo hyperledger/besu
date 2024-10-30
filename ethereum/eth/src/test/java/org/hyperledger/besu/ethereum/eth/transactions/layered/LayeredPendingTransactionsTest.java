@@ -22,8 +22,8 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.MOVE;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.NEW;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.DROPPED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.REPLACED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.DROPPED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.REPLACED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOB_PRICE_BELOW_CURRENT_MIN;
@@ -281,7 +281,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertThat(smallLayers.evictedCollector.getEvictedTransactions())
         .map(PendingTransaction::getTransaction)
         .contains(firstTxs.get(0));
-    verify(droppedListener).onTransactionDropped(firstTxs.get(0));
+    verify(droppedListener).onTransactionDropped(firstTxs.get(0), DROPPED);
   }
 
   @Test

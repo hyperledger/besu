@@ -14,6 +14,9 @@
  */
 
 configurations {
+  referenceTestAnnotationProcessor.extendsFrom testAnnotationProcessor
+
+  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
   executionRefTestImplementation.extendsFrom referenceTestImplementation {
     canBeResolved = true
     canBeConsumed = false

@@ -52,6 +52,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.io.Resources;
+import jakarta.validation.constraints.NotBlank;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +71,7 @@ class GenerateBlockchainConfig implements Runnable {
   private final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
+  @NotBlank
   @Option(
       required = true,
       names = "--config-file",
@@ -78,6 +80,7 @@ class GenerateBlockchainConfig implements Runnable {
       arity = "1..1")
   private final File configurationFile = null;
 
+  @NotBlank
   @Option(
       required = true,
       names = "--to",
