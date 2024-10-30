@@ -132,11 +132,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
                 apiConfiguration.getGasCap())),
-        new EthFeeHistory(
-            protocolSchedule,
-            blockchainQueries.getBlockchain(),
-            miningCoordinator,
-            apiConfiguration),
+        new EthFeeHistory(protocolSchedule, blockchainQueries, miningCoordinator, apiConfiguration),
         new EthGetCode(blockchainQueries),
         new EthGetLogs(blockchainQueries, apiConfiguration.getMaxLogsRange()),
         new EthGetProof(blockchainQueries),

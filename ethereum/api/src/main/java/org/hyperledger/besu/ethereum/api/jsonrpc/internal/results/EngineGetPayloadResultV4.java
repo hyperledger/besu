@@ -14,15 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ConsolidationRequestParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ConsolidationRequest;
-import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,33 +27,32 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes32;
 
-@JsonPropertyOrder({"executionPayload", "blockValue", "blobsBundle", "shouldOverrideBuilder"})
+@JsonPropertyOrder({
+  "executionPayload",
+  "blockValue",
+  "blobsBundle",
+  "shouldOverrideBuilder",
+  "executionRequests"
+})
 public class EngineGetPayloadResultV4 {
   protected final PayloadResult executionPayload;
   private final String blockValue;
   private final BlobsBundleV1 blobsBundle;
   private final boolean shouldOverrideBuilder;
+  private final List<String> executionRequests;
 
   public EngineGetPayloadResultV4(
       final BlockHeader header,
       final List<String> transactions,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<List<DepositRequest>> depositRequests,
-      final Optional<List<WithdrawalRequest>> withdrawalRequests,
-      final Optional<List<ConsolidationRequest>> consolidationRequests,
+      final Optional<List<String>> executionRequests,
       final String blockValue,
       final BlobsBundleV1 blobsBundle) {
-    this.executionPayload =
-        new PayloadResult(
-            header,
-            transactions,
-            withdrawals,
-            depositRequests,
-            withdrawalRequests,
-            consolidationRequests);
+    this.executionPayload = new PayloadResult(header, transactions, withdrawals);
     this.blockValue = blockValue;
     this.blobsBundle = blobsBundle;
     this.shouldOverrideBuilder = false;
+    this.executionRequests = executionRequests.orElse(null);
   }
 
   @JsonGetter(value = "executionPayload")
@@ -80,6 +73,11 @@ public class EngineGetPayloadResultV4 {
   @JsonGetter(value = "shouldOverrideBuilder")
   public boolean shouldOverrideBuilder() {
     return shouldOverrideBuilder;
+  }
+
+  @JsonGetter(value = "executionRequests")
+  public List<String> getExecutionRequests() {
+    return executionRequests;
   }
 
   public static class PayloadResult {
@@ -103,17 +101,11 @@ public class EngineGetPayloadResultV4 {
 
     protected final List<String> transactions;
     private final List<WithdrawalParameter> withdrawals;
-    private final List<DepositRequestParameter> depositRequests;
-    private final List<WithdrawalRequestParameter> withdrawalRequests;
-    private final List<ConsolidationRequestParameter> consolidationRequests;
 
     public PayloadResult(
         final BlockHeader header,
         final List<String> transactions,
-        final Optional<List<Withdrawal>> withdrawals,
-        final Optional<List<DepositRequest>> depositRequests,
-        final Optional<List<WithdrawalRequest>> withdrawalRequests,
-        final Optional<List<ConsolidationRequest>> consolidationRequests) {
+        final Optional<List<Withdrawal>> withdrawals) {
       this.blockNumber = Quantity.create(header.getNumber());
       this.blockHash = header.getHash().toString();
       this.parentHash = header.getParentHash().toString();
@@ -134,30 +126,6 @@ public class EngineGetPayloadResultV4 {
                   ws ->
                       ws.stream()
                           .map(WithdrawalParameter::fromWithdrawal)
-                          .collect(Collectors.toList()))
-              .orElse(null);
-      this.depositRequests =
-          depositRequests
-              .map(
-                  ds ->
-                      ds.stream()
-                          .map(DepositRequestParameter::fromDeposit)
-                          .collect(Collectors.toList()))
-              .orElse(null);
-      this.withdrawalRequests =
-          withdrawalRequests
-              .map(
-                  wr ->
-                      wr.stream()
-                          .map(WithdrawalRequestParameter::fromWithdrawalRequest)
-                          .collect(Collectors.toList()))
-              .orElse(null);
-      this.consolidationRequests =
-          consolidationRequests
-              .map(
-                  wr ->
-                      wr.stream()
-                          .map(ConsolidationRequestParameter::fromConsolidationRequest)
                           .collect(Collectors.toList()))
               .orElse(null);
       this.blobGasUsed = header.getBlobGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
@@ -235,21 +203,6 @@ public class EngineGetPayloadResultV4 {
     @JsonGetter(value = "withdrawals")
     public List<WithdrawalParameter> getWithdrawals() {
       return withdrawals;
-    }
-
-    @JsonGetter(value = "depositRequests")
-    public List<DepositRequestParameter> getDepositRequests() {
-      return depositRequests;
-    }
-
-    @JsonGetter(value = "withdrawalRequests")
-    public List<WithdrawalRequestParameter> getWithdrawalRequests() {
-      return withdrawalRequests;
-    }
-
-    @JsonGetter(value = "consolidationRequests")
-    public List<ConsolidationRequestParameter> getConsolidationRequests() {
-      return consolidationRequests;
     }
 
     @JsonGetter(value = "feeRecipient")

@@ -594,26 +594,26 @@ class CodeFactoryTest {
   }
 
   private static void validCode(final String str) {
-    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
     Code code = evm.getCodeUncached(bytesFromPrettyPrint(str));
     assertThat(code.isValid()).isTrue();
   }
 
   private static void invalidCode(final String str, final String error) {
-    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
     Code code = evm.getCodeUncached(bytesFromPrettyPrint(str));
     assertThat(code.isValid()).isFalse();
     assertThat(((CodeInvalid) code).getInvalidReason()).contains(error);
   }
 
   private static void invalidCode(final String str) {
-    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
     Code code = evm.getCodeUncached(bytesFromPrettyPrint(str));
     assertThat(code.isValid()).isFalse();
   }
 
   private static void invalidCodeForCreation(final String str) {
-    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
     Code code = evm.getCodeForCreation(bytesFromPrettyPrint(str));
     assertThat(code.isValid()).isFalse();
   }

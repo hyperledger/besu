@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsProcessors;
-import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
+import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsProcessor.pragueRequestsProcessors;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
@@ -39,6 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.blockhash.PragueBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
@@ -57,8 +57,8 @@ import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
@@ -789,7 +789,7 @@ public abstract class MainnetProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
 
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
-        .requestsValidator(pragueRequestsValidator(requestContractAddresses))
+        .requestsValidator(new MainnetRequestsValidator())
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestProcessorCoordinator(pragueRequestsProcessors(requestContractAddresses))
 
@@ -815,7 +815,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Prague");
   }
 
-  static ProtocolSpecBuilder pragueEOFDefinition(
+  static ProtocolSpecBuilder osakaDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
@@ -833,7 +833,7 @@ public abstract class MainnetProtocolSpecs {
             miningParameters,
             isParallelTxProcessingEnabled,
             metricsSystem);
-    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("PragueEOF");
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("Osaka");
   }
 
   private static ProtocolSpecBuilder addEOF(
@@ -842,12 +842,11 @@ public abstract class MainnetProtocolSpecs {
       final ProtocolSpecBuilder protocolSpecBuilder) {
     return protocolSpecBuilder
         // EIP-7692 EOF v1 Gas calculator
-        .gasCalculator(PragueEOFGasCalculator::new)
+        .gasCalculator(OsakaGasCalculator::new)
         // EIP-7692 EOF v1 EVM and opcodes
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.pragueEOF(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+                MainnetEVMs.osaka(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         // EIP-7698 EOF v1 creation transaction
         .contractCreationProcessorBuilder(
             evm ->
@@ -867,7 +866,7 @@ public abstract class MainnetProtocolSpecs {
       final MiningParameters miningParameters,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-    return pragueEOFDefinition(
+    return osakaDefinition(
             chainId,
             enableRevertReason,
             genesisConfigOptions,

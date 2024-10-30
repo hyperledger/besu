@@ -109,15 +109,16 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     long inputOffset = inputDataOffset(frame);
     long inputLength = inputDataLength(frame);
 
+    GasCalculator gasCalculator = gasCalculator();
     if (!zeroValue && isStatic(frame)) {
       return new OperationResult(
-          gasCalculator().callValueTransferGasCost(), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+          gasCalculator.callValueTransferGasCost(), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     }
     if (toBytes.size() > Address.SIZE) {
       return new OperationResult(
-          gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputLength)
-              + (zeroValue ? 0 : gasCalculator().callValueTransferGasCost())
-              + gasCalculator().getColdAccountAccessCost(),
+          gasCalculator.memoryExpansionGasCost(frame, inputOffset, inputLength)
+              + (zeroValue ? 0 : gasCalculator.callValueTransferGasCost())
+              + gasCalculator.getColdAccountAccessCost(),
           ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
     }
     Address to = Words.toAddress(toBytes);
@@ -125,7 +126,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
 
     if (contract != null) {
       final DelegatedCodeGasCostHelper.Result result =
-          deductDelegatedCodeGasCost(frame, gasCalculator(), contract);
+          deductDelegatedCodeGasCost(frame, gasCalculator, contract);
       if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
         return new Operation.OperationResult(
             result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
@@ -134,12 +135,12 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
 
     boolean accountCreation = contract == null && !zeroValue;
     long cost =
-        gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputLength)
-            + (zeroValue ? 0 : gasCalculator().callValueTransferGasCost())
-            + (frame.warmUpAddress(to)
-                ? gasCalculator().getWarmStorageReadCost()
-                : gasCalculator().getColdAccountAccessCost())
-            + (accountCreation ? gasCalculator().newAccountGasCost() : 0);
+        gasCalculator.memoryExpansionGasCost(frame, inputOffset, inputLength)
+            + (zeroValue ? 0 : gasCalculator.callValueTransferGasCost())
+            + (frame.warmUpAddress(to) || gasCalculator.isPrecompile(to)
+                ? gasCalculator.getWarmStorageReadCost()
+                : gasCalculator.getColdAccountAccessCost())
+            + (accountCreation ? gasCalculator.newAccountGasCost() : 0);
     long currentGas = frame.getRemainingGas() - cost;
     if (currentGas < 0) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
@@ -163,14 +164,14 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
       return softFailure(frame, cost);
     }
 
-    long retainedGas = Math.max(currentGas / 64, gasCalculator().getMinRetainedGas());
+    long retainedGas = Math.max(currentGas / 64, gasCalculator.getMinRetainedGas());
     long childGas = currentGas - retainedGas;
 
     final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
     final Wei balance = (zeroValue || account == null) ? Wei.ZERO : account.getBalance();
 
     // There myst be a minimum gas for a call to have access to.
-    if (childGas < gasCalculator().getMinCalleeGas()) {
+    if (childGas < gasCalculator.getMinCalleeGas()) {
       return softFailure(frame, cost);
     }
     // transferring value you don't have is not a halting exception, just a failure

@@ -47,15 +47,18 @@ public class PrometheusGauge extends Collector implements LabelledGauge {
 
   @Override
   public synchronized void labels(final DoubleSupplier valueSupplier, final String... labelValues) {
-    if (labelValues.length != labelNames.size()) {
-      throw new IllegalArgumentException(
-          "Label values and label names must be the same cardinality");
-    }
+    validateLabelsCardinality(labelValues);
     if (observationsMap.putIfAbsent(List.of(labelValues), valueSupplier) != null) {
       final String labelValuesString = String.join(",", labelValues);
       throw new IllegalArgumentException(
           String.format("A gauge has already been created for label values %s", labelValuesString));
     }
+  }
+
+  @Override
+  public boolean isLabelsObserved(final String... labelValues) {
+    validateLabelsCardinality(labelValues);
+    return observationsMap.containsKey(List.of(labelValues));
   }
 
   @Override
@@ -67,5 +70,12 @@ public class PrometheusGauge extends Collector implements LabelledGauge {
                 new MetricFamilySamples.Sample(
                     metricName, labelNames, labels, valueSupplier.getAsDouble())));
     return List.of(new MetricFamilySamples(metricName, Type.GAUGE, help, samples));
+  }
+
+  private void validateLabelsCardinality(final String... labelValues) {
+    if (labelValues.length != labelNames.size()) {
+      throw new IllegalArgumentException(
+          "Label values and label names must be the same cardinality");
+    }
   }
 }

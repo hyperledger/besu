@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.MOVE;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.EVICTED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.FOLLOW_INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.LayerMoveReason.EVICTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.LayerMoveReason.FOLLOW_INVALIDATED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
-import org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason;
 
 import java.util.Map;
 import java.util.NavigableMap;
