@@ -28,6 +28,10 @@ jar {
   }
 }
 
+sonarqube {
+  skipProject = true
+}
+
 dependencies {
   implementation project(':ethereum:eth')
   implementation project(':plugin-api')
@@ -45,6 +49,4 @@ dependencies {
   implementation 'org.assertj:assertj-core'
   implementation 'org.mockito:mockito-core'
   implementation 'org.web3j:core'
-
-  implementation 'org.testcontainers:testcontainers'
 }

@@ -27,7 +27,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.NUMBE
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.OMMERS_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.PARENT_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.RECEIPTS_ROOT;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.REQUESTS_ROOT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.REQUESTS_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.SIZE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.STATE_ROOT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TIMESTAMP;
@@ -63,6 +63,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class JsonRpcResponseUtils {
 
@@ -104,8 +105,12 @@ public class JsonRpcResponseUtils {
     final int size = unsignedInt(values.get(SIZE));
     final Hash withdrawalsRoot =
         values.containsKey(WITHDRAWALS_ROOT) ? hash(values.get(WITHDRAWALS_ROOT)) : null;
-    final Hash requestsRoot =
-        values.containsKey(REQUESTS_ROOT) ? hash(values.get(REQUESTS_ROOT)) : null;
+    final Hash requestsHash =
+        values.containsKey(REQUESTS_HASH) ? hash(values.get(REQUESTS_HASH)) : null;
+    final UInt64 targetBlobCount =
+        values.containsKey(JsonRpcResponseKey.TARGET_BLOB_COUNT)
+            ? UInt64.fromHexString(values.get(JsonRpcResponseKey.TARGET_BLOB_COUNT))
+            : null;
     final List<JsonNode> ommers = new ArrayList<>();
 
     final BlockHeader header =
@@ -130,7 +135,8 @@ public class JsonRpcResponseUtils {
             null, // ToDo 4844: set with the value of blob_gas_used field
             null, // ToDo 4844: set with the value of excess_blob_gas field
             null, // TODO 4788: set with the value of the parent beacon block root field
-            requestsRoot,
+            requestsHash,
+            targetBlobCount,
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(

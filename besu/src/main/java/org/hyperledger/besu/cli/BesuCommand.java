@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
+import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
@@ -36,11 +37,9 @@ import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
-import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
-import org.hyperledger.besu.cli.options.DataStorageOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.stable.ApiConfigurationOptions;
@@ -50,19 +49,20 @@ import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.GraphQlOptions;
 import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
-import org.hyperledger.besu.cli.options.stable.MetricsOptionGroup;
+import org.hyperledger.besu.cli.options.stable.MetricsOptions;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PDiscoveryOptions;
 import org.hyperledger.besu.cli.options.stable.PermissionsOptions;
 import org.hyperledger.besu.cli.options.stable.PluginsConfigurationOptions;
 import org.hyperledger.besu.cli.options.stable.RpcWebsocketOptions;
+import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
+import org.hyperledger.besu.cli.options.storage.DiffBasedSubStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.ChainPruningOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
 import org.hyperledger.besu.cli.options.unstable.InProcessRpcOptions;
 import org.hyperledger.besu.cli.options.unstable.IpcOptions;
-import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
 import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
@@ -89,7 +89,7 @@ import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.Blake2bfMessageDigest;
@@ -139,7 +139,9 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -167,7 +169,6 @@ import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.p2p.P2PService;
 import org.hyperledger.besu.plugin.services.rlp.RlpConverterService;
@@ -196,6 +197,7 @@ import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
+import org.hyperledger.besu.util.EphemeryGenesisUpdater;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -246,7 +248,6 @@ import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
-import io.vertx.core.metrics.MetricsOptions;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -295,7 +296,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final NetworkingOptions unstableNetworkingOptions = NetworkingOptions.create();
   final SynchronizerOptions unstableSynchronizerOptions = SynchronizerOptions.create();
   final EthProtocolOptions unstableEthProtocolOptions = EthProtocolOptions.create();
-  final MetricsCLIOptions unstableMetricsCLIOptions = MetricsCLIOptions.create();
   private final DnsOptions unstableDnsOptions = DnsOptions.create();
   private final NatOptions unstableNatOptions = NatOptions.create();
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
@@ -330,7 +330,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
-  private final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
 
   private final PreSynchronizationTaskRunner preSynchronizationTaskRunner =
       new PreSynchronizationTaskRunner();
@@ -584,7 +583,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // Metrics Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Metrics Options|@%n")
-  MetricsOptionGroup metricsOptionGroup = new MetricsOptionGroup();
+  MetricsOptions metricsOptions = MetricsOptions.create();
 
   @Option(
       names = {"--host-allowlist"},
@@ -1134,10 +1133,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(Hash.class, Hash::fromHexString);
     commandLine.registerConverter(Optional.class, Optional::of);
     commandLine.registerConverter(Double.class, Double::parseDouble);
-
-    metricCategoryConverter.addCategories(BesuMetricCategory.class);
-    metricCategoryConverter.addCategories(StandardMetricCategory.class);
-    commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
   }
 
   private void handleStableOptions() {
@@ -1153,7 +1148,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final ImmutableMap<String, Object> unstableOptions =
         unstableOptionsBuild
             .put("Ethereum Wire Protocol", unstableEthProtocolOptions)
-            .put("Metrics", unstableMetricsCLIOptions)
             .put("P2P Network", unstableNetworkingOptions)
             .put("RPC", unstableRPCOptions)
             .put("DNS Configuration", unstableDnsOptions)
@@ -1173,6 +1167,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
+
+    metricCategoryRegistry.addCategories(BesuMetricCategory.class);
+    metricCategoryRegistry.addCategories(StandardMetricCategory.class);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
     besuPluginContext.addService(PermissioningService.class, permissioningService);
     besuPluginContext.addService(PrivacyPluginService.class, privacyPluginService);
@@ -1189,10 +1186,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     rocksDBPlugin = new RocksDBPlugin();
     rocksDBPlugin.register(besuPluginContext);
     new InMemoryStoragePlugin().register(besuPluginContext);
-
-    metricCategoryRegistry
-        .getMetricCategories()
-        .forEach(metricCategoryConverter::addRegistryCategory);
 
     // register default security module
     securityModuleService.register(
@@ -1409,7 +1402,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()
         || genesisConfigOptionsSupplier.get().getCancunEOFTime().isPresent()
         || genesisConfigOptionsSupplier.get().getPragueTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getPragueEOFTime().isPresent()) {
+        || genesisConfigOptionsSupplier.get().getOsakaTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
@@ -1423,7 +1416,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateOptions() {
-    validateRequiredOptions();
     issueOptionWarnings();
     validateP2PInterface(p2PDiscoveryOptions.p2pInterface);
     validateMiningParams();
@@ -1475,19 +1467,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validateDataStorageOptions() {
     dataStorageOptions.validate(commandLine);
-  }
-
-  private void validateRequiredOptions() {
-    commandLine
-        .getCommandSpec()
-        .options()
-        .forEach(
-            option -> {
-              if (option.required() && option.stringValues().isEmpty()) {
-                throw new ParameterException(
-                    this.commandLine, "Missing required option: " + option.longestName());
-              }
-            });
   }
 
   private void validateMiningParams() {
@@ -1606,11 +1585,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private GenesisConfigFile readGenesisConfigFile() {
-    final GenesisConfigFile effectiveGenesisFile =
-        genesisFile != null
-            ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
-            : GenesisConfigFile.fromResource(
-                Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
+    GenesisConfigFile effectiveGenesisFile;
+    effectiveGenesisFile =
+        network.equals(EPHEMERY)
+            ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
+            : genesisFile != null
+                ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
+                : GenesisConfigFile.fromResource(
+                    Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
@@ -1656,7 +1638,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         "--Xsnapsync-synchronizer-flat option can only be used when --Xbonsai-full-flat-db-enabled is true",
-        dataStorageOptions.toDomainObject().getUnstable().getBonsaiFullFlatDbEnabled(),
+        dataStorageOptions
+            .toDomainObject()
+            .getDiffBasedSubStorageConfiguration()
+            .getUnstable()
+            .getFullFlatDbEnabled(),
         asList(
             "--Xsnapsync-synchronizer-flat-account-healed-count-per-request",
             "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request"));
@@ -1788,38 +1774,46 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .withMiningParameters(miningParametersSupplier.get())
         .withJsonRpcHttpOptions(jsonRpcHttpOptions);
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
-    return controllerBuilder
-        .fromEthNetworkConfig(updateNetworkConfig(network), getDefaultSyncModeIfNotSet())
-        .synchronizerConfiguration(buildSyncConfig())
-        .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
-        .networkConfiguration(unstableNetworkingOptions.toDomainObject())
-        .dataDirectory(dataDir())
-        .dataStorageConfiguration(getDataStorageConfiguration())
-        .miningParameters(miningParametersSupplier.get())
-        .transactionPoolConfiguration(buildTransactionPoolConfiguration())
-        .nodeKey(new NodeKey(securityModule()))
-        .metricsSystem((ObservableMetricsSystem) besuComponent.getMetricsSystem())
-        .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
-        .privacyParameters(privacyParameters())
-        .clock(Clock.systemUTC())
-        .isRevertReasonEnabled(isRevertReasonEnabled)
-        .isParallelTxProcessingEnabled(
-            dataStorageConfiguration.getUnstable().isParallelTxProcessingEnabled())
-        .storageProvider(storageProvider)
-        .gasLimitCalculator(
-            miningParametersSupplier.get().getTargetGasLimit().isPresent()
-                ? new FrontierTargetingGasLimitCalculator()
-                : GasLimitCalculator.constant())
-        .requiredBlocks(requiredBlocks)
-        .reorgLoggingThreshold(reorgLoggingThreshold)
-        .evmConfiguration(unstableEvmOptions.toDomainObject())
-        .maxPeers(p2PDiscoveryOptions.maxPeers)
-        .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
-        .randomPeerPriority(p2PDiscoveryOptions.randomPeerPriority)
-        .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
-        .cacheLastBlocks(numberOfblocksToCache)
-        .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
-        .besuComponent(besuComponent);
+    BesuControllerBuilder besuControllerBuilder =
+        controllerBuilder
+            .fromEthNetworkConfig(updateNetworkConfig(network), getDefaultSyncModeIfNotSet())
+            .synchronizerConfiguration(buildSyncConfig())
+            .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
+            .networkConfiguration(unstableNetworkingOptions.toDomainObject())
+            .dataDirectory(dataDir())
+            .dataStorageConfiguration(getDataStorageConfiguration())
+            .miningParameters(miningParametersSupplier.get())
+            .transactionPoolConfiguration(buildTransactionPoolConfiguration())
+            .nodeKey(new NodeKey(securityModule()))
+            .metricsSystem((ObservableMetricsSystem) besuComponent.getMetricsSystem())
+            .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
+            .privacyParameters(privacyParameters())
+            .clock(Clock.systemUTC())
+            .isRevertReasonEnabled(isRevertReasonEnabled)
+            .storageProvider(storageProvider)
+            .gasLimitCalculator(
+                miningParametersSupplier.get().getTargetGasLimit().isPresent()
+                    ? new FrontierTargetingGasLimitCalculator()
+                    : GasLimitCalculator.constant())
+            .requiredBlocks(requiredBlocks)
+            .reorgLoggingThreshold(reorgLoggingThreshold)
+            .evmConfiguration(unstableEvmOptions.toDomainObject())
+            .maxPeers(p2PDiscoveryOptions.maxPeers)
+            .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
+            .randomPeerPriority(p2PDiscoveryOptions.randomPeerPriority)
+            .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
+            .cacheLastBlocks(numberOfblocksToCache)
+            .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
+            .besuComponent(besuComponent);
+    if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
+      final DiffBasedSubStorageConfiguration subStorageConfiguration =
+          getDataStorageConfiguration().getDiffBasedSubStorageConfiguration();
+      if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
+        besuControllerBuilder.isParallelTxProcessingEnabled(
+            subStorageConfiguration.getUnstable().isParallelTxProcessingEnabled());
+      }
+    }
+    return besuControllerBuilder;
   }
 
   private JsonRpcConfiguration createEngineJsonRpcConfiguration() {
@@ -1864,7 +1858,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return instance of MetricsConfiguration.
    */
   public MetricsConfiguration metricsConfiguration() {
-    if (metricsOptionGroup.getMetricsEnabled() && metricsOptionGroup.getMetricsPushEnabled()) {
+    if (metricsOptions.getMetricsEnabled() && metricsOptions.getMetricsPushEnabled()) {
       throw new ParameterException(
           this.commandLine,
           "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
@@ -1875,40 +1869,39 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--metrics-enabled",
-        !metricsOptionGroup.getMetricsEnabled(),
+        !metricsOptions.getMetricsEnabled(),
         asList("--metrics-host", "--metrics-port"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
         "--metrics-push-enabled",
-        !metricsOptionGroup.getMetricsPushEnabled(),
+        !metricsOptions.getMetricsPushEnabled(),
         asList(
             "--metrics-push-host",
             "--metrics-push-port",
             "--metrics-push-interval",
             "--metrics-push-prometheus-job"));
 
-    return unstableMetricsCLIOptions
-        .toDomainObject()
-        .enabled(metricsOptionGroup.getMetricsEnabled())
+    metricsOptions.setMetricCategoryRegistry(metricCategoryRegistry);
+
+    metricsOptions.validate(commandLine);
+
+    final MetricsConfiguration.Builder metricsConfigurationBuilder =
+        metricsOptions.toDomainObject();
+    metricsConfigurationBuilder
         .host(
-            Strings.isNullOrEmpty(metricsOptionGroup.getMetricsHost())
+            Strings.isNullOrEmpty(metricsOptions.getMetricsHost())
                 ? p2PDiscoveryOptions.p2pHost
-                : metricsOptionGroup.getMetricsHost())
-        .port(metricsOptionGroup.getMetricsPort())
-        .protocol(metricsOptionGroup.getMetricsProtocol())
-        .metricCategories(metricsOptionGroup.getMetricCategories())
-        .pushEnabled(metricsOptionGroup.getMetricsPushEnabled())
+                : metricsOptions.getMetricsHost())
         .pushHost(
-            Strings.isNullOrEmpty(metricsOptionGroup.getMetricsPushHost())
+            Strings.isNullOrEmpty(metricsOptions.getMetricsPushHost())
                 ? p2PDiscoveryOptions.autoDiscoverDefaultIP().getHostAddress()
-                : metricsOptionGroup.getMetricsPushHost())
-        .pushPort(metricsOptionGroup.getMetricsPushPort())
-        .pushInterval(metricsOptionGroup.getMetricsPushInterval())
-        .hostsAllowlist(hostsAllowlist)
-        .prometheusJob(metricsOptionGroup.getMetricsPrometheusJob())
-        .build();
+                : metricsOptions.getMetricsPushHost())
+        .hostsAllowlist(hostsAllowlist);
+    final var metricsConfiguration = metricsConfigurationBuilder.build();
+    metricCategoryRegistry.setMetricsConfiguration(metricsConfiguration);
+    return metricsConfiguration;
   }
 
   private PrivacyParameters privacyParameters() {
@@ -2146,29 +2139,34 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (SyncMode.FULL.equals(getDefaultSyncModeIfNotSet())
-        && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())
-        && dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()) {
+        && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
+      final DiffBasedSubStorageConfiguration diffBasedSubStorageConfiguration =
+          dataStorageConfiguration.getDiffBasedSubStorageConfiguration();
+      if (diffBasedSubStorageConfiguration.getLimitTrieLogsEnabled()) {
+        if (CommandLineUtils.isOptionSet(
+            commandLine, DiffBasedSubStorageOptions.LIMIT_TRIE_LOGS_ENABLED)) {
+          throw new ParameterException(
+              commandLine,
+              String.format(
+                  "Cannot enable %s with --sync-mode=%s and --data-storage-format=%s. You must set %s or use a different sync-mode",
+                  DiffBasedSubStorageOptions.LIMIT_TRIE_LOGS_ENABLED,
+                  SyncMode.FULL,
+                  DataStorageFormat.BONSAI,
+                  DiffBasedSubStorageOptions.LIMIT_TRIE_LOGS_ENABLED + "=false"));
+        }
 
-      if (CommandLineUtils.isOptionSet(
-          commandLine, DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED)) {
-        throw new ParameterException(
-            commandLine,
-            String.format(
-                "Cannot enable %s with --sync-mode=%s and --data-storage-format=%s. You must set %s or use a different sync-mode",
-                DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED,
-                SyncMode.FULL,
-                DataStorageFormat.BONSAI,
-                DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false"));
+        dataStorageConfiguration =
+            ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
+                .withDiffBasedSubStorageConfiguration(
+                    ImmutableDiffBasedSubStorageConfiguration.copyOf(
+                            dataStorageConfiguration.getDiffBasedSubStorageConfiguration())
+                        .withLimitTrieLogsEnabled(false));
+        logger.warn(
+            "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
+            DiffBasedSubStorageOptions.LIMIT_TRIE_LOGS_ENABLED + "=false",
+            SyncMode.FULL,
+            DataStorageFormat.BONSAI);
       }
-
-      dataStorageConfiguration =
-          ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
-              .withBonsaiLimitTrieLogsEnabled(false);
-      logger.warn(
-          "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
-          DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false",
-          SyncMode.FULL,
-          DataStorageFormat.BONSAI);
     }
     return dataStorageConfiguration;
   }
@@ -2281,7 +2279,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return new VertxOptions()
         .setPreferNativeTransport(true)
         .setMetricsOptions(
-            new MetricsOptions()
+            new io.vertx.core.metrics.MetricsOptions()
                 .setEnabled(true)
                 .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
   }
@@ -2344,7 +2342,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (networkId != null) {
       builder.setNetworkId(networkId);
     }
-
+    // ChainId update is required for Ephemery network
+    if (network.equals(EPHEMERY)) {
+      String chainId = genesisConfigOverrides.get("chainId");
+      builder.setNetworkId(new BigInteger(chainId));
+    }
     if (p2PDiscoveryOptions.discoveryDnsUrl != null) {
       builder.setDnsDiscoveryUrl(p2PDiscoveryOptions.discoveryDnsUrl);
     } else {
@@ -2537,9 +2539,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts, rpcWebsocketOptions.getRpcWsPort(), rpcWebsocketOptions.isRpcWsEnabled());
     addPortIfEnabled(effectivePorts, engineRPCConfig.engineRpcPort(), isEngineApiEnabled());
     addPortIfEnabled(
-        effectivePorts,
-        metricsOptionGroup.getMetricsPort(),
-        metricsOptionGroup.getMetricsEnabled());
+        effectivePorts, metricsOptions.getMetricsPort(), metricsOptions.getMetricsEnabled());
     addPortIfEnabled(
         effectivePorts,
         miningParametersSupplier.get().getStratumPort(),
@@ -2613,7 +2613,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void setMergeConfigOptions() {
-    MergeConfigOptions.setMergeEnabled(
+    MergeConfiguration.setMergeEnabled(
         genesisConfigOptionsSupplier.get().getTerminalTotalDifficulty().isPresent());
   }
 
@@ -2658,7 +2658,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean isMergeEnabled() {
-    return MergeConfigOptions.isMergeEnabled();
+    return MergeConfiguration.isMergeEnabled();
   }
 
   private boolean isEngineApiEnabled() {
@@ -2705,7 +2705,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     builder
         .setDataStorage(dataStorageOptions.normalizeDataStorageFormat())
-        .setSyncMode(syncMode.normalize());
+        .setSyncMode(syncMode.normalize())
+        .setSyncMinPeers(syncMinPeerCount);
 
     if (jsonRpcConfiguration != null && jsonRpcConfiguration.isEnabled()) {
       builder
@@ -2732,12 +2733,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
-    if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())
-        && getDataStorageConfiguration().getBonsaiLimitTrieLogsEnabled()) {
-      builder.setLimitTrieLogsEnabled();
-      builder.setTrieLogRetentionLimit(getDataStorageConfiguration().getBonsaiMaxLayersToLoad());
-      builder.setTrieLogsPruningWindowSize(
-          getDataStorageConfiguration().getBonsaiTrieLogPruningWindowSize());
+    if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
+      final DiffBasedSubStorageConfiguration subStorageConfiguration =
+          getDataStorageConfiguration().getDiffBasedSubStorageConfiguration();
+      if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
+        builder.setLimitTrieLogsEnabled();
+        builder.setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad());
+        builder.setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
+      }
     }
 
     builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());
@@ -2752,11 +2755,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Returns the plugin context.
+   * 2 Returns the plugin context.
    *
    * @return the plugin context.
    */
   public BesuPluginContextImpl getBesuPluginContext() {
     return besuPluginContext;
+  }
+
+  /**
+   * Returns the metrics options
+   *
+   * @return the metrics options
+   */
+  public MetricsOptions getMetricsOptions() {
+    return metricsOptions;
   }
 }

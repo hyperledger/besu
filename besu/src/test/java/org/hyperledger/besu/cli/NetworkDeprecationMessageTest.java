@@ -39,9 +39,7 @@ class NetworkDeprecationMessageTest {
   @ParameterizedTest
   @EnumSource(
       value = NetworkName.class,
-      names = {
-        "MAINNET", "SEPOLIA", "DEV", "CLASSIC", "MORDOR", "HOLESKY", "LUKSO",
-      })
+      names = {"MAINNET", "SEPOLIA", "DEV", "CLASSIC", "MORDOR", "HOLESKY", "LUKSO", "EPHEMERY"})
   void shouldThrowErrorForNonDeprecatedNetworks(final NetworkName network) {
     assertThatThrownBy(() -> NetworkDeprecationMessage.generate(network))
         .isInstanceOf(AssertionError.class);

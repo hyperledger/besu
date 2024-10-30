@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
@@ -90,6 +91,7 @@ public class MainnetBlockValidatorTest {
 
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
+    when(protocolContext.getSynchronizer()).thenReturn(mock(Synchronizer.class));
     when(worldStateArchive.getMutable(any(BlockHeader.class), anyBoolean()))
         .thenReturn(Optional.of(worldState));
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
@@ -97,10 +99,8 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getMutable()).thenReturn(worldState);
     when(blockHeaderValidator.validateHeader(any(), any(), any())).thenReturn(true);
     when(blockHeaderValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
-    when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any()))
-        .thenReturn(true);
-    when(blockBodyValidator.validateBodyLight(any(), any(), any(), any(), any(), any()))
-        .thenReturn(true);
+    when(blockBodyValidator.validateBody(any(), any(), any(), any(), any())).thenReturn(true);
+    when(blockBodyValidator.validateBodyLight(any(), any(), any(), any(), any())).thenReturn(true);
     when(blockProcessor.processBlock(any(), any(), any())).thenReturn(successfulProcessingResult);
     when(blockProcessor.processBlock(any(), any(), any(), any()))
         .thenReturn(successfulProcessingResult);
@@ -165,8 +165,7 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void validateAndProcessBlock_whenBlockBodyInvalid() {
-    when(blockBodyValidator.validateBody(any(), eq(block), any(), any(), any(), any()))
-        .thenReturn(false);
+    when(blockBodyValidator.validateBody(any(), eq(block), any(), any(), any())).thenReturn(false);
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
@@ -351,7 +350,6 @@ public class MainnetBlockValidatorTest {
             protocolContext,
             block,
             Collections.emptyList(),
-            block.getBody().getRequests(),
             HeaderValidationMode.FULL,
             HeaderValidationMode.FULL,
             BodyValidationMode.FULL);
@@ -373,7 +371,6 @@ public class MainnetBlockValidatorTest {
             protocolContext,
             block,
             Collections.emptyList(),
-            block.getBody().getRequests(),
             headerValidationMode,
             headerValidationMode,
             bodyValidationMode);
@@ -390,7 +387,6 @@ public class MainnetBlockValidatorTest {
             eq(protocolContext),
             eq(block),
             any(),
-            any(),
             eq(headerValidationMode),
             eq(bodyValidationMode)))
         .thenReturn(false);
@@ -400,7 +396,6 @@ public class MainnetBlockValidatorTest {
             protocolContext,
             block,
             Collections.emptyList(),
-            block.getBody().getRequests(),
             headerValidationMode,
             headerValidationMode,
             bodyValidationMode);

@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
 import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
@@ -251,7 +251,7 @@ public final class RunnerBuilderTest {
     engine.setEnabled(true);
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.networkId()).thenReturn(BigInteger.ONE);
-    MergeConfigOptions.setMergeEnabled(true);
+    MergeConfiguration.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
 
     final Runner runner =
@@ -293,7 +293,7 @@ public final class RunnerBuilderTest {
     wsRpc.setEnabled(true);
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.networkId()).thenReturn(BigInteger.ONE);
-    MergeConfigOptions.setMergeEnabled(true);
+    MergeConfiguration.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
     final JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
     engineConf.setEnabled(true);
@@ -336,7 +336,7 @@ public final class RunnerBuilderTest {
     wsRpc.setEnabled(true);
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.networkId()).thenReturn(BigInteger.ONE);
-    MergeConfigOptions.setMergeEnabled(true);
+    MergeConfiguration.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
     final JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
     engineConf.setEnabled(true);
@@ -384,7 +384,7 @@ public final class RunnerBuilderTest {
     defaultWebSockConfig.setEnabled(true);
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.networkId()).thenReturn(BigInteger.ONE);
-    MergeConfigOptions.setMergeEnabled(true);
+    MergeConfiguration.setMergeEnabled(true);
 
     final Runner runner =
         new RunnerBuilder()

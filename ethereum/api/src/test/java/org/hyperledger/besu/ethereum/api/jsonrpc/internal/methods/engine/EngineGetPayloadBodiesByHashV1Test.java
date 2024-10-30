@@ -180,7 +180,6 @@ public class EngineGetPayloadBodiesByHashV1Test {
         new BlockBody(
             List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
             Collections.emptyList(),
-            Optional.empty(),
             Optional.empty());
     when(blockchain.getBlockBody(blockHash1)).thenReturn(Optional.of(preShanghaiBlockBody));
     when(blockchain.getBlockBody(blockHash2)).thenReturn(Optional.of(preShanghaiBlockBody2));
@@ -211,15 +210,13 @@ public class EngineGetPayloadBodiesByHashV1Test {
                 new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
                 new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
             Collections.emptyList(),
-            Optional.of(List.of(withdrawal)),
-            Optional.empty());
+            Optional.of(List.of(withdrawal)));
 
     final BlockBody shanghaiBlockBody2 =
         new BlockBody(
             List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
             Collections.emptyList(),
-            Optional.of(List.of(withdrawal2)),
-            Optional.empty());
+            Optional.of(List.of(withdrawal2)));
     when(blockchain.getBlockBody(blockHash1)).thenReturn(Optional.of(shanghaiBlockBody));
     when(blockchain.getBlockBody(blockHash2)).thenReturn(Optional.of(shanghaiBlockBody2));
 

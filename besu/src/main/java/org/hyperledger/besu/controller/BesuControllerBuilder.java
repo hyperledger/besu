@@ -89,6 +89,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManage
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -717,7 +718,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       ethPeers.snapServerPeersNeeded(false);
     }
 
-    protocolContext.setSynchronizer(Optional.of(synchronizer));
+    protocolContext.setSynchronizer(synchronizer);
 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(
@@ -741,15 +742,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext, protocolSchedule, miningParameters);
 
-    if (dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()
-        && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
-      final TrieLogManager trieLogManager =
-          ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
-          worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
-      final TrieLogPruner trieLogPruner =
-          createTrieLogPruner(worldStateKeyValueStorage, blockchain, scheduler);
-      trieLogManager.subscribe(trieLogPruner);
+    if (DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
+      final DiffBasedSubStorageConfiguration subStorageConfiguration =
+          dataStorageConfiguration.getDiffBasedSubStorageConfiguration();
+      if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
+        final TrieLogManager trieLogManager =
+            ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
+        final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+            worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
+        final TrieLogPruner trieLogPruner =
+            createTrieLogPruner(worldStateKeyValueStorage, blockchain, scheduler);
+        trieLogManager.subscribe(trieLogPruner);
+      }
     }
 
     final List<Closeable> closeables = new ArrayList<>();
@@ -803,14 +807,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final Blockchain blockchain,
       final EthScheduler scheduler) {
     final boolean isProofOfStake = genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
-
+    final DiffBasedSubStorageConfiguration subStorageConfiguration =
+        dataStorageConfiguration.getDiffBasedSubStorageConfiguration();
     final TrieLogPruner trieLogPruner =
         new TrieLogPruner(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
             scheduler::executeServiceTask,
-            dataStorageConfiguration.getBonsaiMaxLayersToLoad(),
-            dataStorageConfiguration.getBonsaiTrieLogPruningWindowSize(),
+            subStorageConfiguration.getMaxLayersToLoad(),
+            subStorageConfiguration.getTrieLogPruningWindowSize(),
             isProofOfStake,
             metricsSystem);
     trieLogPruner.initialize();
@@ -1092,10 +1097,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       case BONSAI -> {
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
             worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
+
         yield new BonsaiWorldStateProvider(
             worldStateKeyValueStorage,
             blockchain,
-            Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
+            Optional.of(
+                dataStorageConfiguration
+                    .getDiffBasedSubStorageConfiguration()
+                    .getMaxLayersToLoad()),
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration);

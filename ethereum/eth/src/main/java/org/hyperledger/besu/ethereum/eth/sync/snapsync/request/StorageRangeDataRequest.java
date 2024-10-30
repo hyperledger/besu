@@ -179,6 +179,10 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
 
+    if (null == taskElement) {
+      return Stream.empty();
+    }
+
     findNewBeginElementInRange(storageRoot, taskElement.proofs(), taskElement.keys(), endKeyHash)
         .ifPresent(
             missingRightElement -> {

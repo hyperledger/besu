@@ -66,6 +66,28 @@ public class PeerTransactionTrackerTest {
   }
 
   @Test
+  public void shouldStopTrackingSeenTransactionsWhenRemovalReasonSaysSo() {
+    tracker.markTransactionsAsSeen(ethPeer1, ImmutableSet.of(transaction2));
+
+    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+
+    tracker.onTransactionDropped(transaction2, createRemovalReason(true));
+
+    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isFalse();
+  }
+
+  @Test
+  public void shouldKeepTrackingSeenTransactionsWhenRemovalReasonSaysSo() {
+    tracker.markTransactionsAsSeen(ethPeer1, ImmutableSet.of(transaction2));
+
+    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+
+    tracker.onTransactionDropped(transaction2, createRemovalReason(false));
+
+    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+  }
+
+  @Test
   public void shouldExcludeAlreadySeenTransactionsAsACollectionFromTransactionsToSend() {
     tracker.markTransactionsAsSeen(ethPeer1, ImmutableSet.of(transaction1, transaction2));
 
@@ -124,5 +146,20 @@ public class PeerTransactionTrackerTest {
     // since no peers are connected, all the transaction trackers have been removed
     assertThat(tracker.hasPeerSeenTransaction(ethPeer1, transaction1)).isFalse();
     assertThat(tracker.hasPeerSeenTransaction(ethPeer2, transaction2)).isFalse();
+  }
+
+  private RemovalReason createRemovalReason(final boolean stopTracking) {
+    return new RemovalReason() {
+
+      @Override
+      public String label() {
+        return "";
+      }
+
+      @Override
+      public boolean stopTracking() {
+        return stopTracking;
+      }
+    };
   }
 }

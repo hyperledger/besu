@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.RemovalReason;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,6 +48,18 @@ public class PendingTransactionDroppedSubscriptionServiceTest {
 
   private static final Hash TX_ONE =
       Hash.fromHexString("0x15876958423545c3c7b0fcf9be8ffb543305ee1b43db87ed380dcf0cd16589f7");
+  private static final RemovalReason DUMMY_REMOVAL_REASON =
+      new RemovalReason() {
+        @Override
+        public String label() {
+          return "";
+        }
+
+        @Override
+        public boolean stopTracking() {
+          return false;
+        }
+      };
 
   @Mock private SubscriptionManager subscriptionManager;
   @Mock private Blockchain blockchain;
@@ -65,7 +78,7 @@ public class PendingTransactionDroppedSubscriptionServiceTest {
     setUpSubscriptions(subscriptionIds);
     final Transaction pending = transaction(TX_ONE);
 
-    service.onTransactionDropped(pending);
+    service.onTransactionDropped(pending, DUMMY_REMOVAL_REASON);
 
     verifyNoInteractions(block);
     verifyNoInteractions(blockchain);
