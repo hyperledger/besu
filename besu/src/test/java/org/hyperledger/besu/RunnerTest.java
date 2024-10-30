@@ -153,7 +153,15 @@ public final class RunnerTest {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
     MergeConfiguration.setMergeEnabled(false);
 
-    syncFromGenesis(SyncMode.FULL, getFastSyncGenesis());
+    syncFromGenesis(SyncMode.FULL, getFastSyncGenesis(), false);
+  }
+
+  @Test
+  public void fullSyncFromGenesisUsingPeerTaskSystem() throws Exception {
+    // set merge flag to false, otherwise this test can fail if a merge test runs first
+    MergeConfiguration.setMergeEnabled(false);
+
+    syncFromGenesis(SyncMode.FULL, getFastSyncGenesis(), true);
   }
 
   @Test
@@ -161,10 +169,21 @@ public final class RunnerTest {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
     MergeConfiguration.setMergeEnabled(false);
 
-    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis());
+    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis(), false);
   }
 
-  private void syncFromGenesis(final SyncMode mode, final GenesisConfigFile genesisConfig)
+  @Test
+  public void fastSyncFromGenesisUsingPeerTaskSystem() throws Exception {
+    // set merge flag to false, otherwise this test can fail if a merge test runs first
+    MergeConfiguration.setMergeEnabled(false);
+
+    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis(), true);
+  }
+
+  private void syncFromGenesis(
+      final SyncMode mode,
+      final GenesisConfigFile genesisConfig,
+      final boolean isPeerTaskSystemEnabled)
       throws Exception {
     final Path dataDirAhead = Files.createTempDirectory(temp, "db-ahead");
     final Path dbAhead = dataDirAhead.resolve("database");
@@ -172,7 +191,10 @@ public final class RunnerTest {
     final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dataDirAhead));
     final NodeKey behindDbNodeKey = NodeKeyUtils.generate();
     final SynchronizerConfiguration syncConfigAhead =
-        SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
+        SynchronizerConfiguration.builder()
+            .syncMode(SyncMode.FULL)
+            .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
+            .build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
     final var miningParameters = MiningParameters.newDefault();
     final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
