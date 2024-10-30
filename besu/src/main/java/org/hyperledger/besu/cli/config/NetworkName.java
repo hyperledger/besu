@@ -38,7 +38,7 @@ public enum NetworkName {
    */
   EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135)),
 
-  /** Verkle testnet */
+  /** Verkle kaustinen testnet */
   KAUSTINEN("/kaustinen.json", BigInteger.valueOf(69420)),
 
   /** Dev network name. */

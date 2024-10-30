@@ -1118,9 +1118,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             worldStateKeyValueStorage,
             blockchain,
             Optional.of(
-                    dataStorageConfiguration
-                            .getDiffBasedSubStorageConfiguration()
-                            .getMaxLayersToLoad()),
+                dataStorageConfiguration
+                    .getDiffBasedSubStorageConfiguration()
+                    .getMaxLayersToLoad()),
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration);
       }

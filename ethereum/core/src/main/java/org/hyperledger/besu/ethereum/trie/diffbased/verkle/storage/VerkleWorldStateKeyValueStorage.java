@@ -55,7 +55,8 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
             List.of(
                 ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE)),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
-    this.flatDbStrategy = new BonsaiFullFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
+    this.flatDbStrategy =
+        new BonsaiFullFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
   }
 
   public VerkleWorldStateKeyValueStorage(

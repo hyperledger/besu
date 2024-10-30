@@ -125,7 +125,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     final DataStorageConfiguration verkleDataStorageConfig =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(DataStorageFormat.VERKLE)
-                .diffBasedSubStorageConfiguration(DiffBasedSubStorageConfiguration.DEFAULT)
+            .diffBasedSubStorageConfiguration(DiffBasedSubStorageConfiguration.DEFAULT)
             .build();
     return new VerkleWorldStateProvider(
         (VerkleWorldStateKeyValueStorage)

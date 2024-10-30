@@ -144,9 +144,9 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
   @Override
   public boolean areAllTransactionsValid(final Block block) {
     Optional<CandidateBlock> candidateBlock =
-            Arrays.stream(candidateBlocks)
-                    .filter(cb -> Objects.equals(cb.getBlock(), block))
-                    .findFirst();
+        Arrays.stream(candidateBlocks)
+            .filter(cb -> Objects.equals(cb.getBlock(), block))
+            .findFirst();
     return candidateBlock.isPresent() && candidateBlock.get().areAllTransactionsValid();
   }
 

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createVerkleInMemoryWorldStateArchive;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -31,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -50,6 +48,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -300,12 +299,12 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
       final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
       final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
       final BlockBody body =
-              new BlockBody(
-                      input.readList(Transaction::readFrom),
-                      input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
-                      input.isEndOfCurrentList()
-                              ? Optional.empty()
-                              : Optional.of(input.readList(Withdrawal::readFrom)));
+          new BlockBody(
+              input.readList(Transaction::readFrom),
+              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
+              input.isEndOfCurrentList()
+                  ? Optional.empty()
+                  : Optional.of(input.readList(Withdrawal::readFrom)));
       return new Block(header, body);
     }
   }
