@@ -27,7 +27,7 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -44,7 +44,7 @@ public class ExtCallOperationTest {
 
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final MutableAccount account = mock(MutableAccount.class);
-  private static final EVM EOF_EVM = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  private static final EVM EOF_EVM = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
   public static final Code LEGACY_CODE =
       EOF_EVM.getCodeUncached(Bytes.of(ExtCallOperation.OPCODE, 1));
   public static final Code SIMPLE_EOF =
@@ -115,7 +115,7 @@ public class ExtCallOperationTest {
       final Bytes stackItem,
       final boolean validCode,
       final boolean warmAddress) {
-    final ExtCallOperation operation = new ExtCallOperation(new PragueEOFGasCalculator());
+    final ExtCallOperation operation = new ExtCallOperation(new OsakaGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()
@@ -206,7 +206,7 @@ public class ExtCallOperationTest {
       final Wei valueSent,
       final Wei valueWeiHave,
       final boolean isStatic) {
-    final ExtCallOperation operation = new ExtCallOperation(new PragueEOFGasCalculator());
+    final ExtCallOperation operation = new ExtCallOperation(new OsakaGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()
@@ -242,7 +242,7 @@ public class ExtCallOperationTest {
 
   @Test
   void overflowTest() {
-    final ExtCallOperation operation = new ExtCallOperation(new PragueEOFGasCalculator());
+    final ExtCallOperation operation = new ExtCallOperation(new OsakaGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()
@@ -281,7 +281,7 @@ public class ExtCallOperationTest {
 
   @Test
   void legacyTest() {
-    final ExtCallOperation operation = new ExtCallOperation(new PragueEOFGasCalculator());
+    final ExtCallOperation operation = new ExtCallOperation(new OsakaGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()

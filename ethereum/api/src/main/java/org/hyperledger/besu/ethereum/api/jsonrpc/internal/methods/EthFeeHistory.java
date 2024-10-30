@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -32,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistory;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -57,9 +57,11 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
+import org.apache.tuweni.units.bigints.UInt256s;
 
 public class EthFeeHistory implements JsonRpcMethod {
   private final ProtocolSchedule protocolSchedule;
+  private final BlockchainQueries blockchainQueries;
   private final Blockchain blockchain;
   private final MiningCoordinator miningCoordinator;
   private final ApiConfiguration apiConfiguration;
@@ -70,13 +72,14 @@ public class EthFeeHistory implements JsonRpcMethod {
 
   public EthFeeHistory(
       final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
+      final BlockchainQueries blockchainQueries,
       final MiningCoordinator miningCoordinator,
       final ApiConfiguration apiConfiguration) {
     this.protocolSchedule = protocolSchedule;
-    this.blockchain = blockchain;
+    this.blockchainQueries = blockchainQueries;
     this.miningCoordinator = miningCoordinator;
     this.apiConfiguration = apiConfiguration;
+    this.blockchain = blockchainQueries.getBlockchain();
     this.cache = Caffeine.newBuilder().maximumSize(MAXIMUM_CACHE_SIZE).build();
   }
 
@@ -136,7 +139,8 @@ public class EthFeeHistory implements JsonRpcMethod {
     final List<Double> gasUsedRatios = getGasUsedRatios(blockHeaderRange);
     final List<Double> blobGasUsedRatios = getBlobGasUsedRatios(blockHeaderRange);
     final Optional<List<List<Wei>>> maybeRewards =
-        maybeRewardPercentiles.map(rewards -> getRewards(rewards, blockHeaderRange));
+        maybeRewardPercentiles.map(
+            percentiles -> getRewards(percentiles, blockHeaderRange, nextBaseFee));
     return new JsonRpcSuccessResponse(
         requestId,
         createFeeHistoryResult(
@@ -203,17 +207,19 @@ public class EthFeeHistory implements JsonRpcMethod {
   }
 
   private List<List<Wei>> getRewards(
-      final List<Double> rewardPercentiles, final List<BlockHeader> blockHeaders) {
+      final List<Double> rewardPercentiles,
+      final List<BlockHeader> blockHeaders,
+      final Wei nextBaseFee) {
     var sortedPercentiles = rewardPercentiles.stream().sorted().toList();
     return blockHeaders.stream()
         .parallel()
-        .map(blockHeader -> calculateBlockHeaderReward(sortedPercentiles, blockHeader))
+        .map(blockHeader -> calculateBlockHeaderReward(sortedPercentiles, blockHeader, nextBaseFee))
         .flatMap(Optional::stream)
         .toList();
   }
 
   private Optional<List<Wei>> calculateBlockHeaderReward(
-      final List<Double> sortedPercentiles, final BlockHeader blockHeader) {
+      final List<Double> sortedPercentiles, final BlockHeader blockHeader, final Wei nextBaseFee) {
 
     // Create a new key for the reward cache
     final RewardCacheKey key = new RewardCacheKey(blockHeader.getBlockHash(), sortedPercentiles);
@@ -226,7 +232,7 @@ public class EthFeeHistory implements JsonRpcMethod {
               Optional<Block> block = blockchain.getBlockByHash(blockHeader.getBlockHash());
               return block.map(
                   b -> {
-                    List<Wei> rewards = computeRewards(sortedPercentiles, b);
+                    List<Wei> rewards = computeRewards(sortedPercentiles, b, nextBaseFee);
                     // Put the computed rewards in the cache for future use
                     cache.put(key, rewards);
                     return rewards;
@@ -237,7 +243,8 @@ public class EthFeeHistory implements JsonRpcMethod {
   record TransactionInfo(Transaction transaction, Long gasUsed, Wei effectivePriorityFeePerGas) {}
 
   @VisibleForTesting
-  public List<Wei> computeRewards(final List<Double> rewardPercentiles, final Block block) {
+  public List<Wei> computeRewards(
+      final List<Double> rewardPercentiles, final Block block, final Wei nextBaseFee) {
     final List<Transaction> transactions = block.getBody().getTransactions();
     if (transactions.isEmpty()) {
       // all 0's for empty block
@@ -253,7 +260,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     // If the priority fee boundary is set, return the bounded rewards. Otherwise, return the real
     // rewards.
     if (apiConfiguration.isGasAndPriorityFeeLimitingEnabled()) {
-      return boundRewards(realRewards);
+      return boundRewards(realRewards, nextBaseFee);
     } else {
       return realRewards;
     }
@@ -292,16 +299,20 @@ public class EthFeeHistory implements JsonRpcMethod {
    * This method returns a list of bounded rewards.
    *
    * @param rewards The list of rewards to be bounded.
+   * @param nextBaseFee The base fee of the next block.
    * @return The list of bounded rewards.
    */
-  private List<Wei> boundRewards(final List<Wei> rewards) {
-    Wei minPriorityFee = miningCoordinator.getMinPriorityFeePerGas();
-    Wei lowerBound =
-        minPriorityFee
+  private List<Wei> boundRewards(final List<Wei> rewards, final Wei nextBaseFee) {
+    final Wei lowerBoundGasPrice = blockchainQueries.gasPriceLowerBound();
+    final Wei lowerBoundPriorityFee = lowerBoundGasPrice.subtract(nextBaseFee);
+    final Wei minPriorityFee = miningCoordinator.getMinPriorityFeePerGas();
+    final Wei forcedMinPriorityFee = UInt256s.max(minPriorityFee, lowerBoundPriorityFee);
+    final Wei lowerBound =
+        forcedMinPriorityFee
             .multiply(apiConfiguration.getLowerBoundGasAndPriorityFeeCoefficient())
             .divide(100);
-    Wei upperBound =
-        minPriorityFee
+    final Wei upperBound =
+        forcedMinPriorityFee
             .multiply(apiConfiguration.getUpperBoundGasAndPriorityFeeCoefficient())
             .divide(100);
 
@@ -438,7 +449,7 @@ public class EthFeeHistory implements JsonRpcMethod {
             .oldestBlock(oldestBlock)
             .baseFeePerGas(
                 Stream.concat(explicitlyRequestedBaseFees.stream(), Stream.of(nextBaseFee))
-                    .collect(toUnmodifiableList()))
+                    .toList())
             .baseFeePerBlobGas(requestedBlobBaseFees)
             .gasUsedRatio(gasUsedRatios)
             .blobGasUsedRatio(blobGasUsedRatio)

@@ -40,4 +40,6 @@ public interface BlockchainReferenceTestCase {
   boolean isExecutable(Block candidateBlock);
 
   boolean isValid(Block candidateBlock);
+
+  boolean areAllTransactionsValid(final Block block);
 }

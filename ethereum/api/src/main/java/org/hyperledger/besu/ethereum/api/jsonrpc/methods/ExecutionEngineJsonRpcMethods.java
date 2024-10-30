@@ -117,7 +117,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                   mergeCoordinator.get(),
                   ethPeers,
                   engineQosTimer),
-              new EngineNewPayloadV6800( // TODO replaced for verkle test
+              new EngineNewPayloadV6800( // TODO replaced for the verkle test
                   consensusEngineServer,
                   protocolSchedule,
                   protocolContext,

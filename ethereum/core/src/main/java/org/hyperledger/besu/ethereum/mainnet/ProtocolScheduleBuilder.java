@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.HardforkId;
+import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -277,7 +278,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Cancun", config.getCancunTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("CancunEOF", config.getCancunEOFTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Prague", config.getPragueTime(), lastForkBlock);
-    lastForkBlock = validateForkOrder("PragueEOF", config.getPragueEOFTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Osaka", config.getOsakaTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("ExperimentalEips", config.getExperimentalEipsTime(), lastForkBlock);
@@ -413,9 +414,9 @@ public class ProtocolScheduleBuilder {
                 config.getPragueTime(),
                 specFactory.pragueDefinition(config)),
             timestampMilestone(
-                HardforkId.MainnetHardforkId.PRAGUE_EOF,
-                config.getPragueEOFTime(),
-                specFactory.pragueEOFDefinition(config)),
+                MainnetHardforkId.OSAKA,
+                config.getOsakaTime(),
+                specFactory.osakaDefinition(config)),
             timestampMilestone(
                 HardforkId.MainnetHardforkId.FUTURE_EIPS,
                 config.getFutureEipsTime(),

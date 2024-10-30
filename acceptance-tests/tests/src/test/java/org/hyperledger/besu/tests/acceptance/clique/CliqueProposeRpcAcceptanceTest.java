@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.clique;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.clique.ExpectNonceVote.CLIQUE_NONCE_VOTE;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
@@ -23,7 +23,7 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
-public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBaseJunit5 {
+public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldAddValidators() throws IOException {

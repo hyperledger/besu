@@ -53,7 +53,8 @@ public class EngineNewPayloadV6800 extends AbstractEngineNewPayload {
   protected ValidationResult<RpcErrorType> validateParameters(
       final EnginePayloadParameter payloadParameter,
       final Optional<List<String>> maybeVersionedHashParam,
-      final Optional<String> maybeBeaconBlockRootParam) {
+      final Optional<String> maybeBeaconBlockRootParam,
+      final Optional<List<String>> maybeRequestsParam) {
     if (payloadParameter.getBlobGasUsed() != null) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARAMS, "non-null BlobGasUsed pre-cancun");

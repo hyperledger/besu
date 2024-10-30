@@ -40,7 +40,10 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
   @Override
   protected FlatDbMode getRequestedFlatDbMode(
       final DataStorageConfiguration dataStorageConfiguration) {
-    return dataStorageConfiguration.getUnstable().getBonsaiFullFlatDbEnabled()
+    return dataStorageConfiguration
+            .getDiffBasedSubStorageConfiguration()
+            .getUnstable()
+            .getFullFlatDbEnabled()
         ? FlatDbMode.FULL
         : FlatDbMode.PARTIAL;
   }
@@ -77,9 +80,9 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
       final MetricsSystem metricsSystem,
       final CodeStorageStrategy codeStorageStrategy) {
     if (flatDbMode == FlatDbMode.FULL) {
-      return new FullBonsaiFlatDbStrategy(metricsSystem, codeStorageStrategy);
+      return new BonsaiFullFlatDbStrategy(metricsSystem, codeStorageStrategy);
     } else {
-      return new PartialBonsaiFlatDbStrategy(metricsSystem, codeStorageStrategy);
+      return new BonsaiPartialFlatDbStrategy(metricsSystem, codeStorageStrategy);
     }
   }
 }

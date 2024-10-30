@@ -32,8 +32,7 @@ public class ProtocolContext {
   private final WorldStateArchive worldStateArchive;
   private final BadBlockManager badBlockManager;
   private final ConsensusContext consensusContext;
-
-  private Optional<Synchronizer> synchronizer;
+  private Synchronizer synchronizer;
 
   /**
    * Constructs a new ProtocolContext with the given blockchain, world state archive, consensus
@@ -52,7 +51,6 @@ public class ProtocolContext {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusContext = consensusContext;
-    this.synchronizer = Optional.empty();
     this.badBlockManager = badBlockManager;
   }
 
@@ -85,7 +83,7 @@ public class ProtocolContext {
    *
    * @return the synchronizer of the protocol context
    */
-  public Optional<Synchronizer> getSynchronizer() {
+  public Synchronizer getSynchronizer() {
     return synchronizer;
   }
 
@@ -94,7 +92,7 @@ public class ProtocolContext {
    *
    * @param synchronizer the synchronizer to set
    */
-  public void setSynchronizer(final Optional<Synchronizer> synchronizer) {
+  public void setSynchronizer(final Synchronizer synchronizer) {
     this.synchronizer = synchronizer;
   }
 

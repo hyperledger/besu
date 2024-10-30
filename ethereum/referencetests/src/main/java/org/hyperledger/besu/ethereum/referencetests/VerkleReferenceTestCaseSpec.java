@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -49,6 +48,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -168,6 +168,11 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
   }
 
   @Override
+  public boolean areAllTransactionsValid(final Block block) {
+    throw new NotImplementedException("areAllTransactionsValid not available for verkle test");
+  }
+
+  @Override
   public String getSealEngine() {
     return sealEngine;
   }
@@ -220,7 +225,8 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
           null,
           null,
           null,
-          null, // TODO MANAGE THAT
+          null,
+          null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -298,10 +304,7 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
               input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
               input.isEndOfCurrentList()
                   ? Optional.empty()
-                  : Optional.of(input.readList(Withdrawal::readFrom)),
-              input.isEndOfCurrentList()
-                  ? Optional.empty()
-                  : Optional.of(input.readList(Request::readFrom)));
+                  : Optional.of(input.readList(Withdrawal::readFrom)));
       return new Block(header, body);
     }
   }

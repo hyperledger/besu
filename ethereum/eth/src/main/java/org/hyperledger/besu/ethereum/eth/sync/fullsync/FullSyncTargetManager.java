@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 class FullSyncTargetManager extends AbstractSyncTargetManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(FullSyncTargetManager.class);
+  private final SynchronizerConfiguration config;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final SyncTerminationCondition terminationCondition;
@@ -49,6 +50,7 @@ class FullSyncTargetManager extends AbstractSyncTargetManager {
       final MetricsSystem metricsSystem,
       final SyncTerminationCondition terminationCondition) {
     super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
+    this.config = config;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.terminationCondition = terminationCondition;
@@ -77,7 +79,8 @@ class FullSyncTargetManager extends AbstractSyncTargetManager {
     final Optional<EthPeer> maybeBestPeer = ethContext.getEthPeers().bestPeerWithHeightEstimate();
     if (!maybeBestPeer.isPresent()) {
       LOG.info(
-          "Unable to find sync target. Currently checking {} peers for usefulness",
+          "Unable to find sync target. Waiting for {} peers minimum. Currently checking {} peers for usefulness",
+          config.getSyncMinimumPeerCount(),
           ethContext.getEthPeers().peerCount());
       return completedFuture(Optional.empty());
     } else {

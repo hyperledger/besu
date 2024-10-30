@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /** A block header capable of being sealed. */
 public class SealableBlockHeader extends ProcessableBlockHeader {
@@ -44,7 +45,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
 
   protected final Hash withdrawalsRoot;
 
-  protected final Hash requestsRoot;
+  protected final Hash requestsHash;
 
   protected final Long blobGasUsed;
 
@@ -71,7 +72,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Long blobGasUsed,
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
-      final Hash requestsRoot,
+      final Hash requestsHash,
+      final UInt64 targetBlobCount,
       final ExecutionWitness executionWitness) {
     super(
         parentHash,
@@ -82,13 +84,14 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
         timestamp,
         baseFee,
         mixHashOrPrevRandao,
-        parentBeaconBlockRoot);
+        parentBeaconBlockRoot,
+        targetBlobCount);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;
     this.withdrawalsRoot = withdrawalsRoot;
     this.receiptsRoot = receiptsRoot;
-    this.requestsRoot = requestsRoot;
+    this.requestsHash = requestsHash;
     this.logsBloom = logsBloom;
     this.gasUsed = gasUsed;
     this.extraData = extraData;
@@ -170,12 +173,12 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
   }
 
   /**
-   * Returns the block requests root hash.
+   * Returns the block requests hash.
    *
-   * @return the block requests root hash
+   * @return the block requests hash
    */
-  public Optional<Hash> getRequestsRoot() {
-    return Optional.ofNullable(requestsRoot);
+  public Optional<Hash> getRequestsHash() {
+    return Optional.ofNullable(requestsHash);
   }
 
   /**

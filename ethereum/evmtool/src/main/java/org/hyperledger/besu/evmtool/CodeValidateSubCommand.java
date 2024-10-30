@@ -86,7 +86,7 @@ public class CodeValidateSubCommand implements Runnable {
     String fork =
         parentCommand != null && parentCommand.hasFork()
             ? parentCommand.getFork()
-            : EvmSpecVersion.PRAGUE.getName();
+            : EvmSpecVersion.OSAKA.getName();
 
     evm =
         Suppliers.memoize(

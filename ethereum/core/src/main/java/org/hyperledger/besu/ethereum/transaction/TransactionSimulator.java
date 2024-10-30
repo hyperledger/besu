@@ -369,10 +369,13 @@ public class TransactionSimulator {
       transactionBuilder.maxFeePerBlobGas(maxFeePerBlobGas);
     }
     if (transactionBuilder.getTransactionType().requiresChainId()) {
-      transactionBuilder.chainId(
-          protocolSchedule
-              .getChainId()
-              .orElse(BigInteger.ONE)); // needed to make some transactions valid
+      callParams
+          .getChainId()
+          .ifPresentOrElse(
+              transactionBuilder::chainId,
+              () ->
+                  // needed to make some transactions valid
+                  transactionBuilder.chainId(protocolSchedule.getChainId().orElse(BigInteger.ONE)));
     }
 
     final Transaction transaction = transactionBuilder.build();
