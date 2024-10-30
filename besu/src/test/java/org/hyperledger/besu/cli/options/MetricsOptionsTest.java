@@ -60,4 +60,9 @@ public class MetricsOptionsTest
   protected MetricsOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getMetricsOptions();
   }
+
+  @Override
+  protected String[] getNonOptionFields() {
+    return new String[] {"metricCategoryRegistry"};
+  }
 }
