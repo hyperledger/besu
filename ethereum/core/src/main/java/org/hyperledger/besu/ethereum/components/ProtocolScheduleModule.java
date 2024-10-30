@@ -55,7 +55,7 @@ public class ProtocolScheduleModule {
    */
   @Singleton
   @Provides
-  public ProtocolScheduleBuilder provideProtocolSchedule(
+  public ProtocolScheduleBuilder provideProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
