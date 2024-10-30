@@ -257,11 +257,11 @@ public interface GenesisConfigOptions {
   OptionalLong getPragueTime();
 
   /**
-   * Gets Prague EOF time.
+   * Gets Osaka time.
    *
-   * @return the prague time
+   * @return the osaka time
    */
-  OptionalLong getPragueEOFTime();
+  OptionalLong getOsakaTime();
 
   /**
    * Gets future eips time.
@@ -539,4 +539,11 @@ public interface GenesisConfigOptions {
    * @return the deposit address
    */
   Optional<Address> getDepositContractAddress();
+
+  /**
+   * The consolidation request contract address
+   *
+   * @return the consolidation request contract address
+   */
+  Optional<Address> getConsolidationRequestContractAddress();
 }

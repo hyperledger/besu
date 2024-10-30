@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,13 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonCallParameterUtil.validateAndGetCallParams;
-
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -38,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EthEstimateGas extends AbstractEstimateGas {
-
   private static final Logger LOG = LoggerFactory.getLogger(EthEstimateGas.class);
 
   public EthEstimateGas(
@@ -52,19 +48,10 @@ public class EthEstimateGas extends AbstractEstimateGas {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final JsonCallParameter callParams = validateAndGetCallParams(requestContext);
-
-    final BlockHeader blockHeader = blockHeader();
-    if (blockHeader == null) {
-      LOG.error("Chain head block not found");
-      return errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR);
-    }
-    if (!blockchainQueries
-        .getWorldStateArchive()
-        .isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getHash())) {
-      return errorResponse(requestContext, RpcErrorType.WORLD_STATE_UNAVAILABLE);
-    }
+  protected Object resultByBlockHeader(
+      final JsonRpcRequestContext requestContext,
+      final JsonCallParameter callParams,
+      final BlockHeader blockHeader) {
 
     final CallParameter modifiedCallParams =
         overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
@@ -72,44 +59,48 @@ public class EthEstimateGas extends AbstractEstimateGas {
     final boolean isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
 
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
+    final var transactionValidationParams =
+        ImmutableTransactionValidationParams.builder()
+            .from(TransactionValidationParams.transactionSimulator())
+            .isAllowExceedingBalance(isAllowExceedingBalance)
+            .build();
 
-    var gasUsed =
-        executeSimulation(
-            blockHeader, modifiedCallParams, operationTracer, isAllowExceedingBalance);
+    LOG.debug("Processing transaction with params: {}", modifiedCallParams);
+    final var maybeResult =
+        transactionSimulator.process(
+            modifiedCallParams, transactionValidationParams, operationTracer, blockHeader);
 
-    if (gasUsed.isEmpty()) {
-      LOG.error("gasUsed is empty after simulating transaction.");
-      return errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR);
+    final Optional<JsonRpcErrorResponse> maybeErrorResponse =
+        validateSimulationResult(requestContext, maybeResult);
+    if (maybeErrorResponse.isPresent()) {
+      return maybeErrorResponse.get();
     }
 
-    // if the transaction is invalid or doesn't have enough gas with the max it never will!
-    if (gasUsed.get().isInvalid() || !gasUsed.get().isSuccessful()) {
-      return errorResponse(requestContext, gasUsed.get());
-    }
-
-    var low = gasUsed.get().result().getEstimateGasUsedByTransaction();
-    var lowResult =
-        executeSimulation(
-            blockHeader,
+    final var result = maybeResult.get();
+    long low = result.result().getEstimateGasUsedByTransaction();
+    final var lowResult =
+        transactionSimulator.process(
             overrideGasLimitAndPrice(callParams, low),
+            transactionValidationParams,
             operationTracer,
-            isAllowExceedingBalance);
+            blockHeader);
 
     if (lowResult.isPresent() && lowResult.get().isSuccessful()) {
-      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(low));
+      return Quantity.create(low);
     }
 
-    var high = processEstimateGas(gasUsed.get(), operationTracer);
-    var mid = high;
-    while (low + 1 < high) {
-      mid = (high + low) / 2;
+    long high = processEstimateGas(result, operationTracer);
+    long mid;
 
+    while (low + 1 < high) {
+      mid = (low + high) / 2;
       var binarySearchResult =
-          executeSimulation(
-              blockHeader,
+          transactionSimulator.process(
               overrideGasLimitAndPrice(callParams, mid),
+              transactionValidationParams,
               operationTracer,
-              isAllowExceedingBalance);
+              blockHeader);
+
       if (binarySearchResult.isEmpty() || !binarySearchResult.get().isSuccessful()) {
         low = mid;
       } else {
@@ -117,21 +108,23 @@ public class EthEstimateGas extends AbstractEstimateGas {
       }
     }
 
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(high));
+    return Quantity.create(high);
   }
 
-  private Optional<TransactionSimulatorResult> executeSimulation(
-      final BlockHeader blockHeader,
-      final CallParameter modifiedCallParams,
-      final EstimateGasOperationTracer operationTracer,
-      final boolean allowExceedingBalance) {
-    return transactionSimulator.process(
-        modifiedCallParams,
-        ImmutableTransactionValidationParams.builder()
-            .from(TransactionValidationParams.transactionSimulator())
-            .isAllowExceedingBalance(allowExceedingBalance)
-            .build(),
-        operationTracer,
-        blockHeader.getNumber());
+  private Optional<JsonRpcErrorResponse> validateSimulationResult(
+      final JsonRpcRequestContext requestContext,
+      final Optional<TransactionSimulatorResult> maybeResult) {
+    if (maybeResult.isEmpty()) {
+      LOG.error("No result after simulating transaction.");
+      return Optional.of(
+          new JsonRpcErrorResponse(
+              requestContext.getRequest().getId(), RpcErrorType.INTERNAL_ERROR));
+    }
+
+    // if the transaction is invalid or doesn't have enough gas with the max it never will!
+    if (maybeResult.get().isInvalid() || !maybeResult.get().isSuccessful()) {
+      return Optional.of(errorResponse(requestContext, maybeResult.get()));
+    }
+    return Optional.empty();
   }
 }

@@ -77,7 +77,9 @@ public class EVMExecutor {
   private OperationTracer tracer = OperationTracer.NO_TRACING;
   private boolean requireDeposit = true;
   private List<ContractValidationRule> contractValidationRules =
-      List.of(MaxCodeSizeRule.from(EvmSpecVersion.SPURIOUS_DRAGON), PrefixCodeRule.of());
+      List.of(
+          MaxCodeSizeRule.from(EvmSpecVersion.SPURIOUS_DRAGON, EvmConfiguration.DEFAULT),
+          PrefixCodeRule.of());
   private long initialNonce = 1;
   private Collection<Address> forceCommitAddresses = List.of(Address.fromHexString("0x03"));
   private Set<Address> accessListWarmAddresses = new BytesTrieSet<>(Address.SIZE);
@@ -162,7 +164,6 @@ public class EVMExecutor {
       case CANCUN -> cancun(chainId, evmConfiguration);
       case CANCUN_EOF -> cancunEOF(chainId, evmConfiguration);
       case PRAGUE -> prague(chainId, evmConfiguration);
-      case PRAGUE_EOF -> pragueEOF(chainId, evmConfiguration);
       case OSAKA -> osaka(chainId, evmConfiguration);
       case AMSTERDAM -> amsterdam(chainId, evmConfiguration);
       case BOGOTA -> bogota(chainId, evmConfiguration);
@@ -241,8 +242,7 @@ public class EVMExecutor {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.spuriousDragon(evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.frontier(executor.evm.getGasCalculator());
-    executor.contractValidationRules =
-        List.of(MaxCodeSizeRule.from(EvmSpecVersion.SPURIOUS_DRAGON));
+    executor.contractValidationRules = List.of(MaxCodeSizeRule.from(executor.evm));
     return executor;
   }
 
@@ -256,7 +256,7 @@ public class EVMExecutor {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.byzantium(evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.byzantium(executor.evm.getGasCalculator());
-    executor.contractValidationRules = List.of(MaxCodeSizeRule.from(EvmSpecVersion.BYZANTIUM));
+    executor.contractValidationRules = List.of(MaxCodeSizeRule.from(executor.evm));
     return executor;
   }
 
@@ -270,7 +270,7 @@ public class EVMExecutor {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.constantinople(evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.byzantium(executor.evm.getGasCalculator());
-    executor.contractValidationRules = List.of(MaxCodeSizeRule.from(EvmSpecVersion.CONSTANTINOPLE));
+    executor.contractValidationRules = List.of(MaxCodeSizeRule.from(executor.evm));
     return executor;
   }
 
@@ -284,7 +284,7 @@ public class EVMExecutor {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.petersburg(evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.byzantium(executor.evm.getGasCalculator());
-    executor.contractValidationRules = List.of(MaxCodeSizeRule.from(EvmSpecVersion.PETERSBURG));
+    executor.contractValidationRules = List.of(MaxCodeSizeRule.from(executor.evm));
     return executor;
   }
 
@@ -319,7 +319,7 @@ public class EVMExecutor {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.istanbul(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
-    executor.contractValidationRules = List.of(MaxCodeSizeRule.from(EvmSpecVersion.ISTANBUL));
+    executor.contractValidationRules = List.of(MaxCodeSizeRule.from(executor.evm));
     return executor;
   }
 
@@ -354,7 +354,7 @@ public class EVMExecutor {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.berlin(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
-    executor.contractValidationRules = List.of(MaxCodeSizeRule.from(EvmSpecVersion.BERLIN));
+    executor.contractValidationRules = List.of(MaxCodeSizeRule.from(executor.evm));
     return executor;
   }
 
@@ -519,21 +519,6 @@ public class EVMExecutor {
   public static EVMExecutor prague(
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.prague(chainId, evmConfiguration));
-    executor.precompileContractRegistry =
-        MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
-    return executor;
-  }
-
-  /**
-   * Instantiate PragueEOF evm executor.
-   *
-   * @param chainId the chain ID
-   * @param evmConfiguration the evm configuration
-   * @return the evm executor
-   */
-  public static EVMExecutor pragueEOF(
-      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.pragueEOF(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
     return executor;

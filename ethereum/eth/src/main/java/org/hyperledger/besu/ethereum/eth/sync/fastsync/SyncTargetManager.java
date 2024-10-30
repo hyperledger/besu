@@ -47,6 +47,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
   private static final int LOG_INFO_REPEAT_DELAY = 120;
   private static final int SECONDS_PER_REQUEST = 6; // 5s per request + 1s wait between retries
 
+  private final SynchronizerConfiguration config;
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -65,6 +66,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState) {
     super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
+    this.config = config;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -82,15 +84,17 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
       throttledLog(
           LOG::debug,
           String.format(
-              "Unable to find sync target. Currently checking %d peers for usefulness. Pivot block: %d",
-              ethContext.getEthPeers().peerCount(), pivotBlockHeader.getNumber()),
+              "Unable to find sync target. Waiting for %d peers minimum. Currently checking %d peers for usefulness. Pivot block: %d",
+              config.getSyncMinimumPeerCount(),
+              ethContext.getEthPeers().peerCount(),
+              pivotBlockHeader.getNumber()),
           logDebug,
           LOG_DEBUG_REPEAT_DELAY);
       throttledLog(
           LOG::info,
           String.format(
-              "Unable to find sync target. Currently checking %d peers for usefulness.",
-              ethContext.getEthPeers().peerCount()),
+              "Unable to find sync target. Waiting for %d peers minimum. Currently checking %d peers for usefulness.",
+              config.getSyncMinimumPeerCount(), ethContext.getEthPeers().peerCount()),
           logInfo,
           LOG_INFO_REPEAT_DELAY);
       return completedFuture(Optional.empty());

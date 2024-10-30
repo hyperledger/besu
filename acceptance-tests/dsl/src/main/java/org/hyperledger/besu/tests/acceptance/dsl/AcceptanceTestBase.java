@@ -26,7 +26,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.login.LoginConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.perm.PermissioningConditions;
-import org.hyperledger.besu.tests.acceptance.dsl.condition.priv.PrivConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.process.ExitedWithCode;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.txpool.TxPoolConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.web3.Web3Conditions;
@@ -44,20 +43,21 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.ProcessBuilder.Redirect;
 import java.math.BigInteger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.junit.After;
+import org.apache.logging.log4j.ThreadContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,8 +93,6 @@ public class AcceptanceTestBase {
   protected final PermissioningTransactions permissioningTransactions;
   protected final MinerTransactions minerTransactions;
   protected final Web3Conditions web3;
-  protected final PrivConditions priv;
-  protected final PrivacyTransactions privacyTransactions;
   protected final TxPoolConditions txPoolConditions;
   protected final TxPoolTransactions txPoolTransactions;
   protected final ExitedWithCode exitedSuccessfully;
@@ -109,10 +107,8 @@ public class AcceptanceTestBase {
     bftTransactions = new BftTransactions();
     accountTransactions = new AccountTransactions(accounts);
     permissioningTransactions = new PermissioningTransactions();
-    privacyTransactions = new PrivacyTransactions();
     contractTransactions = new ContractTransactions();
     minerTransactions = new MinerTransactions();
-
     blockchain = new Blockchain(ethTransactions);
     clique = new CliqueConditions(ethTransactions, cliqueTransactions);
     eth = new EthConditions(ethTransactions);
@@ -121,7 +117,6 @@ public class AcceptanceTestBase {
     net = new NetConditions(new NetTransactions());
     cluster = new Cluster(net);
     perm = new PermissioningConditions(permissioningTransactions);
-    priv = new PrivConditions(privacyTransactions);
     admin = new AdminConditions(adminTransactions);
     web3 = new Web3Conditions(new Web3Transactions());
     besu = new BesuNodeFactory();
@@ -132,7 +127,15 @@ public class AcceptanceTestBase {
     exitedSuccessfully = new ExitedWithCode(0);
   }
 
-  @After
+  @BeforeEach
+  public void setUp(final TestInfo testInfo) {
+    // log4j is configured to create a file per test
+    // build/acceptanceTestLogs/${ctx:class}.${ctx:test}.log
+    ThreadContext.put("class", this.getClass().getSimpleName());
+    ThreadContext.put("test", testInfo.getTestMethod().get().getName());
+  }
+
+  @AfterEach
   public void tearDownAcceptanceTestBase() {
     reportMemory();
     cluster.close();
@@ -150,7 +153,9 @@ public class AcceptanceTestBase {
     if (command != null) {
       LOG.info("Memory usage at end of test:");
       final ProcessBuilder processBuilder =
-          new ProcessBuilder(command).redirectErrorStream(true).redirectInput(Redirect.INHERIT);
+          new ProcessBuilder(command)
+              .redirectErrorStream(true)
+              .redirectInput(ProcessBuilder.Redirect.INHERIT);
       try {
         final Process memInfoProcess = processBuilder.start();
         outputProcessorExecutor.execute(() -> printOutput(memInfoProcess));

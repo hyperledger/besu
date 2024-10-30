@@ -119,6 +119,7 @@ public class IbftBlockHeightManagerTest {
   @Mock private RoundTimer roundTimer;
   @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   @Mock private ValidatorMulticaster validatorMulticaster;
+  @Mock private BlockHeader parentHeader;
 
   @Captor private ArgumentCaptor<MessageData> sentMessageArgCaptor;
 
@@ -158,7 +159,7 @@ public class IbftBlockHeightManagerTest {
     lenient().when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
     lenient()
-        .when(blockCreator.createBlock(anyLong()))
+        .when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
                 createdBlock, new TransactionSelectionResults(), new BlockCreationTiming()));
@@ -210,7 +211,8 @@ public class IbftBlockHeightManagerTest {
                   messageFactory,
                   messageTransmitter,
                   roundTimer,
-                  bftExtraDataCodec);
+                  bftExtraDataCodec,
+                  parentHeader);
             });
 
     lenient()
@@ -228,7 +230,8 @@ public class IbftBlockHeightManagerTest {
                   messageFactory,
                   messageTransmitter,
                   roundTimer,
-                  bftExtraDataCodec);
+                  bftExtraDataCodec,
+                  parentHeader);
             });
   }
 

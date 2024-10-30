@@ -46,13 +46,14 @@ public class ConfigurationOverviewBuilder {
   private String customGenesisFileName;
   private String dataStorage;
   private String syncMode;
+  private Integer syncMinPeers;
   private Integer rpcPort;
   private Collection<String> rpcHttpApis;
   private Integer enginePort;
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
-  private boolean isBonsaiLimitTrieLogsEnabled = false;
+  private boolean isLimitTrieLogsEnabled = false;
   private long trieLogRetentionLimit = 0;
   private Integer trieLogsPruningWindowSize = null;
   private boolean isSnapServerEnabled = false;
@@ -149,6 +150,17 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets sync min peers.
+   *
+   * @param syncMinPeers number of min peers for sync
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setSyncMinPeers(final int syncMinPeers) {
+    this.syncMinPeers = syncMinPeers;
+    return this;
+  }
+
+  /**
    * Sets rpc port.
    *
    * @param rpcPort the rpc port
@@ -208,7 +220,7 @@ public class ConfigurationOverviewBuilder {
    * @return the builder
    */
   public ConfigurationOverviewBuilder setLimitTrieLogsEnabled() {
-    isBonsaiLimitTrieLogsEnabled = true;
+    isLimitTrieLogsEnabled = true;
     return this;
   }
 
@@ -340,6 +352,10 @@ public class ConfigurationOverviewBuilder {
       lines.add("Sync mode: " + syncMode);
     }
 
+    if (syncMinPeers != null) {
+      lines.add("Sync min peers: " + syncMinPeers);
+    }
+
     if (rpcHttpApis != null) {
       lines.add("RPC HTTP APIs: " + String.join(",", rpcHttpApis));
     }
@@ -373,7 +389,7 @@ public class ConfigurationOverviewBuilder {
       lines.add("Experimental Snap Sync for BFT enabled");
     }
 
-    if (isBonsaiLimitTrieLogsEnabled) {
+    if (isLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();
       trieLogPruningString
           .append("Limit trie logs enabled: retention: ")

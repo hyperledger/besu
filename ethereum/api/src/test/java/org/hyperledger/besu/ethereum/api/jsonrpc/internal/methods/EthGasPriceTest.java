@@ -328,7 +328,7 @@ public class EthGasPriceTest {
     }
 
     when(blockchain.getChainHeadBlock()).thenReturn(blocksByNumber.get(chainHeadBlockNumber));
-    if (chainHeadBlockNumber > 1) {
+    if (chainHeadBlockNumber > 0) {
       when(blockchain.getBlockByNumber(anyLong()))
           .thenAnswer(
               invocation -> Optional.of(blocksByNumber.get(invocation.getArgument(0, Long.class))));
@@ -367,6 +367,7 @@ public class EthGasPriceTest {
             baseFee,
             Hash.EMPTY,
             0,
+            null,
             null,
             null,
             null,

@@ -22,11 +22,13 @@ import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.JsonUtil;
-import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -149,7 +151,7 @@ public final class RunnerTest {
   @Test
   public void fullSyncFromGenesis() throws Exception {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
-    MergeConfigOptions.setMergeEnabled(false);
+    MergeConfiguration.setMergeEnabled(false);
 
     syncFromGenesis(SyncMode.FULL, getFastSyncGenesis());
   }
@@ -157,7 +159,7 @@ public final class RunnerTest {
   @Test
   public void fastSyncFromGenesis() throws Exception {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
-    MergeConfigOptions.setMergeEnabled(false);
+    MergeConfiguration.setMergeEnabled(false);
 
     syncFromGenesis(SyncMode.FAST, getFastSyncGenesis());
   }
@@ -483,6 +485,7 @@ public final class RunnerTest {
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
         .randomPeerPriority(Boolean.FALSE)
+        .besuComponent(mock(BesuComponent.class))
         .maxPeers(25)
         .maxRemotelyInitiatedPeers(15)
         .build();

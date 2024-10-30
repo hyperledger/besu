@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
+import java.math.BigInteger;
 import java.util.Map;
 
 import com.google.common.base.Charsets;
@@ -142,6 +143,7 @@ public class EthCallIntegrationTest {
   public void shouldReturnSuccessWithValidMaxFeePerGas() {
     final JsonCallParameter callParameter =
         new JsonCallParameter.JsonCallParameterBuilder()
+            .withChainId(BLOCKCHAIN.getChainId())
             .withFrom(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
             .withTo(Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"))
             .withMaxFeePerGas(Wei.fromHexString("0x3B9ACA01"))
@@ -152,6 +154,26 @@ public class EthCallIntegrationTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
             null, "0x0000000000000000000000000000000000000000000000000000000000000001");
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnErrorWithInvalidChainId() {
+    final JsonCallParameter callParameter =
+        new JsonCallParameter.JsonCallParameterBuilder()
+            .withChainId(BLOCKCHAIN.getChainId().add(BigInteger.ONE))
+            .withFrom(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
+            .withTo(Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"))
+            .withMaxFeePerGas(Wei.fromHexString("0x3B9ACA01"))
+            .withInput(Bytes.fromHexString("0x2e64cec1"))
+            .build();
+
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, RpcErrorType.WRONG_CHAIN_ID);
 
     final JsonRpcResponse response = method.response(request);
 

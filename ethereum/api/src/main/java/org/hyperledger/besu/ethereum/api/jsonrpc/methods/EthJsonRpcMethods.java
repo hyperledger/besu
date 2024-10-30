@@ -132,11 +132,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
                 apiConfiguration.getGasCap())),
-        new EthFeeHistory(
-            protocolSchedule,
-            blockchainQueries.getBlockchain(),
-            miningCoordinator,
-            apiConfiguration),
+        new EthFeeHistory(protocolSchedule, blockchainQueries, miningCoordinator, apiConfiguration),
         new EthGetCode(blockchainQueries),
         new EthGetLogs(blockchainQueries, apiConfiguration.getMaxLogsRange()),
         new EthGetProof(blockchainQueries),
@@ -185,6 +181,6 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthGetMinerDataByBlockHash(blockchainQueries, protocolSchedule),
         new EthGetMinerDataByBlockNumber(blockchainQueries, protocolSchedule),
         new EthBlobBaseFee(blockchainQueries.getBlockchain(), protocolSchedule),
-        new EthMaxPriorityFeePerGas(blockchainQueries, miningCoordinator));
+        new EthMaxPriorityFeePerGas(blockchainQueries));
   }
 }

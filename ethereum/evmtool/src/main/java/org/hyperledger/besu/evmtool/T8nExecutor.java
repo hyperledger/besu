@@ -22,30 +22,27 @@ import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocol
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ConsolidationRequest;
-import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
@@ -223,8 +220,7 @@ public class T8nExecutor {
                 continue;
               }
 
-              List<org.hyperledger.besu.datatypes.SetCodeAuthorization> authorizations =
-                  new ArrayList<>(authorizationList.size());
+              List<CodeDelegation> authorizations = new ArrayList<>(authorizationList.size());
               for (JsonNode entryAsJson : authorizationList) {
                 final BigInteger authorizationChainId =
                     Bytes.fromHexStringLenient(entryAsJson.get("chainId").textValue())
@@ -232,26 +228,8 @@ public class T8nExecutor {
                 final Address authorizationAddress =
                     Address.fromHexString(entryAsJson.get("address").textValue());
 
-                JsonNode nonces = entryAsJson.get("nonce");
-
-                if (nonces == null) {
-                  out.printf(
-                      "TX json node unparseable: expected nonce field to be provided - %s%n",
-                      txNode);
-                  continue;
-                }
-
-                List<Long> authorizationNonces;
-                if (nonces.isArray()) {
-                  authorizationNonces = new ArrayList<>(nonces.size());
-                  for (JsonNode nonceAsJson : nonces) {
-                    authorizationNonces.add(
-                        Bytes.fromHexStringLenient(nonceAsJson.textValue()).toLong());
-                  }
-                } else {
-                  authorizationNonces =
-                      List.of(Bytes.fromHexStringLenient(nonces.textValue()).toLong());
-                }
+                final long authorizationNonce =
+                    Bytes.fromHexStringLenient(entryAsJson.get("nonce").textValue()).toLong();
 
                 final byte authorizationV =
                     Bytes.fromHexStringLenient(entryAsJson.get("v").textValue())
@@ -264,16 +242,17 @@ public class T8nExecutor {
                     Bytes.fromHexStringLenient(entryAsJson.get("s").textValue())
                         .toUnsignedBigInteger();
 
+                final SECPSignature authorizationSignature =
+                    new SECPSignature(authorizationR, authorizationS, authorizationV);
+
                 authorizations.add(
-                    SetCodeAuthorization.createSetCodeAuthorizationEntry(
+                    new org.hyperledger.besu.ethereum.core.CodeDelegation(
                         authorizationChainId,
                         authorizationAddress,
-                        authorizationNonces,
-                        authorizationV,
-                        authorizationR,
-                        authorizationS));
+                        authorizationNonce,
+                        authorizationSignature));
               }
-              builder.setCodeTransactionPayloads(authorizations);
+              builder.codeDelegations(authorizations);
             }
 
             if (txNode.has("blobVersionedHashes")) {
@@ -328,8 +307,8 @@ public class T8nExecutor {
         } else {
           out.printf("TX json node unparseable: %s%n", txNode);
         }
-      } catch (IllegalArgumentException iae) {
-        rejections.add(new RejectedTransaction(i, iae.getMessage()));
+      } catch (IllegalArgumentException | ArithmeticException e) {
+        rejections.add(new RejectedTransaction(i, e.getMessage()));
       }
       i++;
     }
@@ -547,41 +526,14 @@ public class T8nExecutor {
               receipts,
               new CachingBlockHashLookup(blockHeader, blockchain),
               OperationTracer.NO_TRACING);
-      Optional<List<Request>> maybeRequests = rpc.process(context);
-      Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
+      Optional<List<Request>> maybeRequests = Optional.of(rpc.process(context));
+      Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
 
-      resultObject.put("requestsRoot", requestRoot.toHexString());
-      var deposits = resultObject.putArray("depositRequests");
-      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), DepositRequest.class)
-          .forEach(
-              deposit -> {
-                var obj = deposits.addObject();
-                obj.put("pubkey", deposit.getPubkey().toHexString());
-                obj.put("withdrawalCredentials", deposit.getWithdrawalCredentials().toHexString());
-                obj.put("amount", deposit.getAmount().toHexString());
-                obj.put("signature", deposit.getSignature().toHexString());
-                obj.put("index", deposit.getIndex().toHexString());
-              });
-
-      var withdrawalRequests = resultObject.putArray("withdrawalRequests");
-      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), WithdrawalRequest.class)
-          .forEach(
-              wr -> {
-                var obj = withdrawalRequests.addObject();
-                obj.put("sourceAddress", wr.getSourceAddress().toHexString());
-                obj.put("validatorPubkey", wr.getValidatorPubkey().toHexString());
-                obj.put("amount", wr.getAmount().toHexString());
-              });
-
-      var consolidationRequests = resultObject.putArray("consolidationRequests");
-      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), ConsolidationRequest.class)
-          .forEach(
-              cr -> {
-                var obj = consolidationRequests.addObject();
-                obj.put("sourceAddress", cr.getSourceAddress().toHexString());
-                obj.put("sourcePubkey", cr.getSourcePubkey().toHexString());
-                obj.put("targetPubkey", cr.getTargetPubkey().toHexString());
-              });
+      resultObject.put("requestsHash", requestsHash.toHexString());
+      ArrayNode requests = resultObject.putArray("requests");
+      maybeRequests
+          .orElseGet(List::of)
+          .forEach(request -> requests.add(request.getData().toHexString()));
     }
 
     worldState.persist(blockHeader);

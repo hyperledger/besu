@@ -31,9 +31,11 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -89,6 +91,7 @@ public class MainnetBlockValidatorTest {
 
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
+    when(protocolContext.getSynchronizer()).thenReturn(mock(Synchronizer.class));
     when(worldStateArchive.getMutable(any(BlockHeader.class), anyBoolean()))
         .thenReturn(Optional.of(worldState));
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
@@ -96,8 +99,7 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getMutable()).thenReturn(worldState);
     when(blockHeaderValidator.validateHeader(any(), any(), any())).thenReturn(true);
     when(blockHeaderValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
-    when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any()))
-        .thenReturn(true);
+    when(blockBodyValidator.validateBody(any(), any(), any(), any(), any())).thenReturn(true);
     when(blockBodyValidator.validateBodyLight(any(), any(), any(), any(), any())).thenReturn(true);
     when(blockProcessor.processBlock(any(), any(), any())).thenReturn(successfulProcessingResult);
     when(blockProcessor.processBlock(any(), any(), any(), any()))
@@ -163,8 +165,7 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void validateAndProcessBlock_whenBlockBodyInvalid() {
-    when(blockBodyValidator.validateBody(any(), eq(block), any(), any(), any(), any()))
-        .thenReturn(false);
+    when(blockBodyValidator.validateBody(any(), eq(block), any(), any(), any())).thenReturn(false);
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
@@ -343,55 +344,61 @@ public class MainnetBlockValidatorTest {
   }
 
   @Test
-  public void fastBlockValidation_onSuccess() {
+  public void validateBlockForSyncing_onSuccess() {
     final boolean isValid =
-        mainnetBlockValidator.fastBlockValidation(
+        mainnetBlockValidator.validateBlockForSyncing(
             protocolContext,
             block,
             Collections.emptyList(),
-            block.getBody().getRequests(),
             HeaderValidationMode.FULL,
-            HeaderValidationMode.FULL);
+            HeaderValidationMode.FULL,
+            BodyValidationMode.FULL);
 
     assertThat(isValid).isTrue();
     assertNoBadBlocks();
   }
 
   @Test
-  public void fastBlockValidation_onFailedHeaderValidation() {
-    final HeaderValidationMode validationMode = HeaderValidationMode.FULL;
+  public void validateBlockValidation_onFailedHeaderForSyncing() {
+    final HeaderValidationMode headerValidationMode = HeaderValidationMode.FULL;
     when(blockHeaderValidator.validateHeader(
-            any(BlockHeader.class), eq(protocolContext), eq(validationMode)))
+            any(BlockHeader.class), eq(protocolContext), eq(headerValidationMode)))
         .thenReturn(false);
+    final BodyValidationMode bodyValidationMode = BodyValidationMode.FULL;
 
     final boolean isValid =
-        mainnetBlockValidator.fastBlockValidation(
+        mainnetBlockValidator.validateBlockForSyncing(
             protocolContext,
             block,
             Collections.emptyList(),
-            block.getBody().getRequests(),
-            validationMode,
-            validationMode);
+            headerValidationMode,
+            headerValidationMode,
+            bodyValidationMode);
 
     assertThat(isValid).isFalse();
     assertBadBlockIsTracked(block);
   }
 
   @Test
-  public void fastBlockValidation_onFailedBodyValidation() {
-    final HeaderValidationMode validationMode = HeaderValidationMode.FULL;
+  public void validateBlockValidation_onFailedBodyForSyncing() {
+    final HeaderValidationMode headerValidationMode = HeaderValidationMode.FULL;
+    final BodyValidationMode bodyValidationMode = BodyValidationMode.FULL;
     when(blockBodyValidator.validateBodyLight(
-            eq(protocolContext), eq(block), any(), any(), eq(validationMode)))
+            eq(protocolContext),
+            eq(block),
+            any(),
+            eq(headerValidationMode),
+            eq(bodyValidationMode)))
         .thenReturn(false);
 
     final boolean isValid =
-        mainnetBlockValidator.fastBlockValidation(
+        mainnetBlockValidator.validateBlockForSyncing(
             protocolContext,
             block,
             Collections.emptyList(),
-            block.getBody().getRequests(),
-            validationMode,
-            validationMode);
+            headerValidationMode,
+            headerValidationMode,
+            bodyValidationMode);
 
     assertThat(isValid).isFalse();
     assertBadBlockIsTracked(block);

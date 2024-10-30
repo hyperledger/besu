@@ -14,15 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonCallParameterUtil.validateAndGetCallParams;
-
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CreateAccessListResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -52,44 +48,29 @@ public class EthCreateAccessList extends AbstractEstimateGas {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final JsonCallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
-    final BlockHeader blockHeader = blockHeader();
-    final Optional<RpcErrorType> jsonRpcError = validateBlockHeader(blockHeader);
-    if (jsonRpcError.isPresent()) {
-      return errorResponse(requestContext, jsonRpcError.get());
-    }
+  protected Object resultByBlockHeader(
+      final JsonRpcRequestContext requestContext,
+      final JsonCallParameter jsonCallParameter,
+      final BlockHeader blockHeader) {
     final AccessListSimulatorResult maybeResult =
         processTransaction(jsonCallParameter, blockHeader);
     // if the call accessList is different from the simulation result, calculate gas and return
-    if (shouldProcessWithAccessListOverride(jsonCallParameter, maybeResult.getTracer())) {
+    if (shouldProcessWithAccessListOverride(jsonCallParameter, maybeResult.tracer())) {
       final AccessListSimulatorResult result =
           processTransactionWithAccessListOverride(
-              jsonCallParameter, blockHeader, maybeResult.getTracer().getAccessList());
+              jsonCallParameter, blockHeader, maybeResult.tracer().getAccessList());
       return createResponse(requestContext, result);
     } else {
       return createResponse(requestContext, maybeResult);
     }
   }
 
-  private Optional<RpcErrorType> validateBlockHeader(final BlockHeader blockHeader) {
-    if (blockHeader == null) {
-      return Optional.of(RpcErrorType.INTERNAL_ERROR);
-    }
-    if (!blockchainQueries
-        .getWorldStateArchive()
-        .isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getHash())) {
-      return Optional.of(RpcErrorType.WORLD_STATE_UNAVAILABLE);
-    }
-    return Optional.empty();
-  }
-
-  private JsonRpcResponse createResponse(
+  private Object createResponse(
       final JsonRpcRequestContext requestContext, final AccessListSimulatorResult result) {
     return result
-        .getResult()
-        .map(createResponse(requestContext, result.getTracer()))
-        .orElse(errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR));
+        .result()
+        .map(createResponse(requestContext, result.tracer()))
+        .orElseGet(() -> errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR));
   }
 
   private TransactionValidationParams transactionValidationParams(
@@ -117,14 +98,12 @@ public class EthCreateAccessList extends AbstractEstimateGas {
     return !Objects.equals(tracer.getAccessList(), parameters.getAccessList().get());
   }
 
-  private Function<TransactionSimulatorResult, JsonRpcResponse> createResponse(
+  private Function<TransactionSimulatorResult, Object> createResponse(
       final JsonRpcRequestContext request, final AccessListOperationTracer operationTracer) {
     return result ->
         result.isSuccessful()
-            ? new JsonRpcSuccessResponse(
-                request.getRequest().getId(),
-                new CreateAccessListResult(
-                    operationTracer.getAccessList(), processEstimateGas(result, operationTracer)))
+            ? new CreateAccessListResult(
+                operationTracer.getAccessList(), processEstimateGas(result, operationTracer))
             : errorResponse(request, result);
   }
 
@@ -138,8 +117,7 @@ public class EthCreateAccessList extends AbstractEstimateGas {
 
     final AccessListOperationTracer tracer = AccessListOperationTracer.create();
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(
-            callParams, transactionValidationParams, tracer, blockHeader.getNumber());
+        transactionSimulator.process(callParams, transactionValidationParams, tracer, blockHeader);
     return new AccessListSimulatorResult(result, tracer);
   }
 
@@ -156,7 +134,7 @@ public class EthCreateAccessList extends AbstractEstimateGas {
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(
-            callParameter, transactionValidationParams, tracer, blockHeader.getNumber());
+            callParameter, transactionValidationParams, tracer, blockHeader);
     return new AccessListSimulatorResult(result, tracer);
   }
 
@@ -176,22 +154,6 @@ public class EthCreateAccessList extends AbstractEstimateGas {
         Optional.ofNullable(accessListEntries));
   }
 
-  private static class AccessListSimulatorResult {
-    final Optional<TransactionSimulatorResult> result;
-    final AccessListOperationTracer tracer;
-
-    public AccessListSimulatorResult(
-        final Optional<TransactionSimulatorResult> result, final AccessListOperationTracer tracer) {
-      this.result = result;
-      this.tracer = tracer;
-    }
-
-    public Optional<TransactionSimulatorResult> getResult() {
-      return result;
-    }
-
-    public AccessListOperationTracer getTracer() {
-      return tracer;
-    }
-  }
+  private record AccessListSimulatorResult(
+      Optional<TransactionSimulatorResult> result, AccessListOperationTracer tracer) {}
 }

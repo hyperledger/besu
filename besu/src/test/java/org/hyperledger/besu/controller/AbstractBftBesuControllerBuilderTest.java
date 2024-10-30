@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -156,6 +157,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             .storageProvider(storageProvider)
             .gasLimitCalculator(gasLimitCalculator)
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .besuComponent(mock(BesuComponent.class))
             .networkConfiguration(NetworkingConfiguration.create());
   }
 
@@ -186,6 +188,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             Wei.ZERO,
             Hash.EMPTY,
             0,
+            null,
             null,
             null,
             null,

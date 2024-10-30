@@ -52,6 +52,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String WITHDRAWAL_REQUEST_CONTRACT_ADDRESS_KEY =
       "withdrawalrequestcontractaddress";
   private static final String DEPOSIT_CONTRACT_ADDRESS_KEY = "depositcontractaddress";
+  private static final String CONSOLIDATION_REQUEST_CONTRACT_ADDRESS_KEY =
+      "consolidationrequestcontractaddress";
 
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -306,8 +308,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getPragueEOFTime() {
-    return getOptionalLong("pragueeoftime");
+  public OptionalLong getOsakaTime() {
+    return getOptionalLong("osakatime");
   }
 
   @Override
@@ -454,6 +456,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public Optional<Address> getConsolidationRequestContractAddress() {
+    Optional<String> inputAddress =
+        JsonUtil.getString(configRoot, CONSOLIDATION_REQUEST_CONTRACT_ADDRESS_KEY);
+    return inputAddress.map(Address::fromHexString);
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
@@ -477,7 +486,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
     getCancunEOFTime().ifPresent(l -> builder.put("cancunEOFTime", l));
     getPragueTime().ifPresent(l -> builder.put("pragueTime", l));
-    getPragueEOFTime().ifPresent(l -> builder.put("pragueEOFTime", l));
+    getOsakaTime().ifPresent(l -> builder.put("osakaTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
@@ -504,6 +513,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getWithdrawalRequestContractAddress()
         .ifPresent(l -> builder.put("withdrawalRequestContractAddress", l));
     getDepositContractAddress().ifPresent(l -> builder.put("depositContractAddress", l));
+    getConsolidationRequestContractAddress()
+        .ifPresent(l -> builder.put("consolidationRequestContractAddress", l));
 
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
@@ -629,7 +640,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getCancunTime(),
             getCancunEOFTime(),
             getPragueTime(),
-            getPragueEOFTime(),
+            getOsakaTime(),
             getFutureEipsTime(),
             getExperimentalEipsTime());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json

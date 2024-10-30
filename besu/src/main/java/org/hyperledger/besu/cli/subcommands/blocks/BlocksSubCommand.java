@@ -54,6 +54,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
+import jakarta.validation.constraints.NotBlank;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -254,7 +255,7 @@ public class BlocksSubCommand implements Runnable {
         // Set some defaults
         return parentCommand
             .parentCommand
-            .getControllerBuilder()
+            .setupControllerBuilder()
             // set to mainnet genesis block so validation rules won't reject it.
             .clock(Clock.fixed(Instant.ofEpochSecond(startTime), ZoneOffset.UTC))
             .miningParameters(getMiningParameters())
@@ -335,6 +336,7 @@ public class BlocksSubCommand implements Runnable {
         arity = "1..1")
     private final BlockExportFormat format = BlockExportFormat.RLP;
 
+    @NotBlank
     @Option(
         names = "--to",
         required = true,
@@ -374,7 +376,7 @@ public class BlocksSubCommand implements Runnable {
     private BesuController createBesuController() {
       return parentCommand
           .parentCommand
-          .getControllerBuilder()
+          .setupControllerBuilder()
           .miningParameters(MiningParameters.newDefault())
           .build();
     }

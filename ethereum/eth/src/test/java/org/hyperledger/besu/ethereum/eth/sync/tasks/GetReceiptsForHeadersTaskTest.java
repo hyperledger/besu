@@ -30,10 +30,18 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class GetReceiptsForHeadersTaskTest
     extends RetryingMessageTaskTest<Map<BlockHeader, List<TransactionReceipt>>> {
+
+  @BeforeEach
+  @Override
+  public void resetMaxRetries() {
+    maxRetries = GetReceiptsForHeadersTask.DEFAULT_RETRIES;
+  }
 
   @Override
   protected Map<BlockHeader, List<TransactionReceipt>> generateDataToBeRequested() {
@@ -50,8 +58,7 @@ public class GetReceiptsForHeadersTaskTest
   protected EthTask<Map<BlockHeader, List<TransactionReceipt>>> createTask(
       final Map<BlockHeader, List<TransactionReceipt>> requestedData) {
     final List<BlockHeader> headersToComplete = new ArrayList<>(requestedData.keySet());
-    return GetReceiptsForHeadersTask.forHeaders(
-        ethContext, headersToComplete, maxRetries, metricsSystem);
+    return GetReceiptsForHeadersTask.forHeaders(ethContext, headersToComplete, metricsSystem);
   }
 
   @Test
@@ -67,5 +74,14 @@ public class GetReceiptsForHeadersTaskTest
         ImmutableMap.of(header1, emptyList(), header2, emptyList(), header3, emptyList());
 
     assertThat(createTask(expected).run()).isCompletedWithValue(expected);
+  }
+
+  @Override
+  @Test
+  @Disabled
+  public void failsWhenPeerReturnsPartialResultThenStops() {
+    // Test is not valid when more than 4 retries are allowed, as is always the case with
+    // GetReceiptsForHeadersTask, because the peer is forcefully disconnected after failing
+    // too many times
   }
 }

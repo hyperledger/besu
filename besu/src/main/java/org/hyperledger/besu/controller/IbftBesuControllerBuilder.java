@@ -74,6 +74,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -182,7 +183,10 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             uniqueMessageMulticaster,
-            new RoundTimer(bftEventQueue, bftConfig.getRequestTimeoutSeconds(), bftExecutors),
+            new RoundTimer(
+                bftEventQueue,
+                Duration.ofSeconds(bftConfig.getRequestTimeoutSeconds()),
+                bftExecutors),
             new BlockTimer(bftEventQueue, forksSchedule, bftExecutors, clock),
             blockCreatorFactory,
             clock);
@@ -249,9 +253,18 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
                         .getValue()
                         .getBlockPeriodSeconds()));
 
-    if (syncState.isInitialSyncPhaseDone()) {
-      ibftMiningCoordinator.enable();
-    }
+    syncState.subscribeSyncStatus(
+        syncStatus -> {
+          if (syncState.syncTarget().isPresent()) {
+            // We're syncing so stop doing other stuff
+            LOG.info("Stopping IBFT mining coordinator while we are syncing");
+            ibftMiningCoordinator.stop();
+          } else {
+            LOG.info("Starting IBFT mining coordinator following sync");
+            ibftMiningCoordinator.enable();
+            ibftMiningCoordinator.start();
+          }
+        });
 
     syncState.subscribeCompletionReached(
         new BesuEvents.InitialSyncCompletionListener() {

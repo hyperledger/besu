@@ -294,14 +294,17 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 prevRandao,
                 timestamp,
                 withdrawals,
-                parentBeaconBlockRoot)
+                parentBeaconBlockRoot,
+                parentHeader)
             .getBlock();
 
     BlockProcessingResult result = validateProposedBlock(emptyBlock);
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           new PayloadWrapper(
-              payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts())));
+              payloadIdentifier,
+              new BlockWithReceipts(emptyBlock, result.getReceipts()),
+              result.getRequests()));
       LOG.info(
           "Start building proposals for block {} identified by {}",
           emptyBlock.getHeader().getNumber(),
@@ -322,7 +325,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         payloadIdentifier,
         mergeBlockCreator,
         withdrawals,
-        parentBeaconBlockRoot);
+        parentBeaconBlockRoot,
+        parentHeader);
 
     return payloadIdentifier;
   }
@@ -363,12 +367,18 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final PayloadIdentifier payloadIdentifier,
       final MergeBlockCreator mergeBlockCreator,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot) {
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final BlockHeader parentHeader) {
 
     final Supplier<BlockCreationResult> blockCreator =
         () ->
             mergeBlockCreator.createBlock(
-                Optional.empty(), random, timestamp, withdrawals, parentBeaconBlockRoot);
+                Optional.empty(),
+                random,
+                timestamp,
+                withdrawals,
+                parentBeaconBlockRoot,
+                parentHeader);
 
     LOG.debug(
         "Block creation started for payload id {}, remaining time is {}ms",
@@ -461,7 +471,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
       mergeContext.putPayloadById(
           new PayloadWrapper(
-              payloadIdentifier, new BlockWithReceipts(bestBlock, resultBest.getReceipts())));
+              payloadIdentifier,
+              new BlockWithReceipts(bestBlock, resultBest.getReceipts()),
+              resultBest.getRequests()));
       LOG.atDebug()
           .setMessage(
               "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms")

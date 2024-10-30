@@ -27,7 +27,7 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -45,7 +45,9 @@ public class ExtDelegateCallOperationTest {
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final MutableAccount account = mock(MutableAccount.class);
   //  private final MutableAccount targetAccount = mock(MutableAccount.class);
-  private static final EVM EOF_EVM = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  private static final EVM EOF_EVM = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+  public static final Code LEGACY_CODE =
+      EOF_EVM.getCodeUncached(Bytes.of(ExtDelegateCallOperation.OPCODE, 1));
   public static final Code SIMPLE_EOF =
       EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"));
   public static final Code SIMPLE_LEGACY = EOF_EVM.getCodeUncached(Bytes.fromHexString("0x00"));
@@ -117,7 +119,7 @@ public class ExtDelegateCallOperationTest {
       final boolean validCode,
       final boolean warmAddress) {
     final ExtDelegateCallOperation operation =
-        new ExtDelegateCallOperation(new PragueEOFGasCalculator());
+        new ExtDelegateCallOperation(new OsakaGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()
@@ -178,7 +180,7 @@ public class ExtDelegateCallOperationTest {
       final ExceptionalHaltReason haltReason,
       final Bytes stackItem) {
     final ExtDelegateCallOperation operation =
-        new ExtDelegateCallOperation(new PragueEOFGasCalculator());
+        new ExtDelegateCallOperation(new OsakaGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()
@@ -225,10 +227,11 @@ public class ExtDelegateCallOperationTest {
   @Test
   void overflowTest() {
     final ExtDelegateCallOperation operation =
-        new ExtDelegateCallOperation(new PragueEOFGasCalculator());
+        new ExtDelegateCallOperation(new OsakaGasCalculator());
     final var messageFrame =
         new TestMessageFrameBuilder()
             .initialGas(400000)
+            .code(SIMPLE_EOF)
             .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
@@ -257,5 +260,35 @@ public class ExtDelegateCallOperationTest {
     MessageFrame parentFrame = messageFrame.getMessageFrameStack().getLast();
     assertThat(parentFrame.getStackItem(0))
         .isEqualTo(AbstractExtCallOperation.EOF1_EXCEPTION_STACK_ITEM);
+  }
+
+  @Test
+  void legacyTest() {
+    final ExtDelegateCallOperation operation =
+        new ExtDelegateCallOperation(new OsakaGasCalculator());
+
+    final var messageFrame =
+        new TestMessageFrameBuilder()
+            .initialGas(400000)
+            .code(LEGACY_CODE)
+            .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
+            .pushStackItem(Bytes.EMPTY)
+            .pushStackItem(Bytes.EMPTY)
+            .pushStackItem(Bytes.EMPTY)
+            .pushStackItem(CONTRACT_ADDRESS)
+            .worldUpdater(worldUpdater)
+            .build();
+    messageFrame.warmUpAddress(CONTRACT_ADDRESS);
+    when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(account.getCodeHash()).thenReturn(SIMPLE_EOF.getCodeHash());
+    when(account.getCode()).thenReturn(SIMPLE_EOF.getBytes());
+    when(worldUpdater.get(any())).thenReturn(account);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
+
+    var result = operation.execute(messageFrame, EOF_EVM);
+
+    assertThat(result.getGasCost()).isZero();
+    assertThat(result.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_OPERATION);
   }
 }

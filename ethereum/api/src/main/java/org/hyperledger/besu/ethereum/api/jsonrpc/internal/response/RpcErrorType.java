@@ -58,9 +58,11 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_ENGINE_NEW_PAYLOAD_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid engine payload parameter"),
   INVALID_ENGINE_PREPARE_PAYLOAD_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine prepare payload parameter"),
+  INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST(-38004, "Too large request"),
   INVALID_ENODE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid enode params"),
   INVALID_EXCESS_BLOB_GAS_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid excess blob gas params (missing or invalid)"),
+  INVALID_EXECUTION_REQUESTS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid execution requests params"),
   INVALID_EXTRA_DATA_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid extra data params"),
   INVALID_FILTER_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid filter params"),
   INVALID_GAS_PRICE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid gas price params"),
@@ -109,6 +111,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_TRANSACTION_LIMIT_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid transaction limit params"),
   INVALID_TRANSACTION_TRACE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid transaction trace params"),
   INVALID_VERSIONED_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid versioned hash params"),
+  INVALID_VERSIONED_HASHES_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid versioned hashes params"),
   INVALID_VOTE_TYPE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid vote type params"),
   INVALID_WITHDRAWALS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid withdrawals"),
 

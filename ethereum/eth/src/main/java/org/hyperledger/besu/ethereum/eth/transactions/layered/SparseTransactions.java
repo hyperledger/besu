@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.PROMOTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.LayerMoveReason.PROMOTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.INVALIDATED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.ArrayList;
@@ -225,7 +226,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
 
   @Override
   public synchronized void remove(
-      final PendingTransaction invalidatedTx, final RemovalReason reason) {
+      final PendingTransaction invalidatedTx, final PoolRemovalReason reason) {
 
     final var senderTxs = txsBySender.get(invalidatedTx.getSender());
     if (senderTxs != null && senderTxs.containsKey(invalidatedTx.getNonce())) {
@@ -277,7 +278,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   protected void internalRemove(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final PendingTransaction removedTx,
-      final RemovalReason removalReason) {
+      final LayeredRemovalReason removalReason) {
 
     sparseEvictionOrder.remove(removedTx);
 

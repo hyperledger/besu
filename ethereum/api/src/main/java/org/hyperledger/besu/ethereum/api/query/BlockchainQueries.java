@@ -46,7 +46,6 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -1006,7 +1005,7 @@ public class BlockchainQueries {
             .sorted()
             .toArray(Wei[]::new);
 
-    return (gasCollection == null || gasCollection.length == 0)
+    return gasCollection.length == 0
         ? gasPriceLowerBound(chainHeadHeader, nextBlockFeeMarket)
         : UInt256s.max(
             gasPriceLowerBound(chainHeadHeader, nextBlockFeeMarket),
@@ -1045,31 +1044,39 @@ public class BlockchainQueries {
     return minGasPrice;
   }
 
-  public Optional<Wei> gasPriorityFee() {
-    final long blockHeight = headBlockNumber();
-    final BigInteger[] gasCollection =
-        LongStream.range(Math.max(0, blockHeight - apiConfig.getGasPriceBlocks()), blockHeight)
-            .mapToObj(
-                l ->
-                    blockchain
-                        .getBlockByNumber(l)
-                        .map(Block::getBody)
-                        .map(BlockBody::getTransactions)
-                        .orElseThrow(
-                            () -> new IllegalStateException("Could not retrieve block #" + l)))
+  public Wei gasPriorityFee() {
+    final Block chainHeadBlock = blockchain.getChainHeadBlock();
+    final long blockHeight = chainHeadBlock.getHeader().getNumber();
+
+    final Wei[] gasCollection =
+        Stream.concat(
+                LongStream.range(
+                        Math.max(0, blockHeight - apiConfig.getGasPriceBlocks() + 1), blockHeight)
+                    .mapToObj(
+                        l ->
+                            blockchain
+                                .getBlockByNumber(l)
+                                .orElseThrow(
+                                    () ->
+                                        new IllegalStateException(
+                                            "Could not retrieve block #" + l))),
+                Stream.of(chainHeadBlock))
+            .map(Block::getBody)
+            .map(BlockBody::getTransactions)
             .flatMap(Collection::stream)
             .filter(t -> t.getMaxPriorityFeePerGas().isPresent())
-            .map(t -> t.getMaxPriorityFeePerGas().get().toBigInteger())
-            .sorted(BigInteger::compareTo)
-            .toArray(BigInteger[]::new);
-    return (gasCollection.length == 0)
-        ? Optional.empty()
-        : Optional.of(
-            Wei.of(
-                gasCollection[
-                    Math.min(
-                        gasCollection.length - 1,
-                        (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))]));
+            .map(t -> t.getMaxPriorityFeePerGas().get())
+            .sorted()
+            .toArray(Wei[]::new);
+
+    return gasCollection.length == 0
+        ? miningParameters.getMinPriorityFeePerGas()
+        : UInt256s.max(
+            miningParameters.getMinPriorityFeePerGas(),
+            gasCollection[
+                Math.min(
+                    gasCollection.length - 1,
+                    (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))]);
   }
 
   /**

@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValid
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
 
+import java.time.Duration;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -45,32 +46,43 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * Produces a BlockHeaderValidator configured for assessing bft block headers which are to form
    * part of the BlockChain (i.e. not proposed blocks, which do not contain commit seals)
    *
-   * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
+   * @param minimumTimeBetweenBlocks the minimum time which must elapse between blocks.
    * @param baseFeeMarket an {@link Optional} wrapping {@link BaseFeeMarket} class if appropriate.
    * @return BlockHeaderValidator configured for assessing bft block headers
    */
   public static BlockHeaderValidator.Builder blockHeaderValidator(
-      final long secondsBetweenBlocks, final Optional<BaseFeeMarket> baseFeeMarket) {
-    return new BlockHeaderValidator.Builder()
-        .addRule(new AncestryValidationRule())
-        .addRule(new GasUsageValidationRule())
-        .addRule(
-            new GasLimitRangeAndDeltaValidationRule(
-                DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
-        .addRule(new TimestampBoundedByFutureParameter(1))
-        .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
-        .addRule(
-            new ConstantFieldValidationRule<>(
-                "MixHash", BlockHeader::getMixHash, BftHelpers.EXPECTED_MIX_HASH))
-        .addRule(
-            new ConstantFieldValidationRule<>(
-                "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
-        .addRule(
-            new ConstantFieldValidationRule<>(
-                "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
-        .addRule(new ConstantFieldValidationRule<>("Nonce", BlockHeader::getNonce, 0L))
-        .addRule(new BftValidatorsValidationRule())
-        .addRule(new BftCoinbaseValidationRule())
-        .addRule(new BftCommitSealsValidationRule());
+      final Duration minimumTimeBetweenBlocks, final Optional<BaseFeeMarket> baseFeeMarket) {
+    final BlockHeaderValidator.Builder ruleBuilder =
+        new BlockHeaderValidator.Builder()
+            .addRule(new AncestryValidationRule())
+            .addRule(new GasUsageValidationRule())
+            .addRule(
+                new GasLimitRangeAndDeltaValidationRule(
+                    DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
+            .addRule(new TimestampBoundedByFutureParameter(1))
+            .addRule(
+                new ConstantFieldValidationRule<>(
+                    "MixHash", BlockHeader::getMixHash, BftHelpers.EXPECTED_MIX_HASH))
+            .addRule(
+                new ConstantFieldValidationRule<>(
+                    "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
+            .addRule(
+                new ConstantFieldValidationRule<>(
+                    "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
+            .addRule(new ConstantFieldValidationRule<>("Nonce", BlockHeader::getNonce, 0L))
+            .addRule(new BftValidatorsValidationRule())
+            .addRule(new BftCoinbaseValidationRule())
+            .addRule(new BftCommitSealsValidationRule());
+
+    // Currently the minimum acceptable time between blocks is 1 second. The timestamp of an
+    // Ethereum header is stored as seconds since Unix epoch so blocks being produced more
+    // frequently than once a second cannot pass this validator. For non-production scenarios
+    // (e.g. for testing block production much more frequently than once a second) Besu has
+    // an experimental 'xblockperiodmilliseconds' option for BFT chains. If this is enabled
+    // we cannot apply the TimestampMoreRecentThanParent validation rule so we do not add it
+    if (minimumTimeBetweenBlocks.compareTo(Duration.ofSeconds(1)) >= 0) {
+      ruleBuilder.addRule(new TimestampMoreRecentThanParent(minimumTimeBetweenBlocks.getSeconds()));
+    }
+    return ruleBuilder;
   }
 }

@@ -20,8 +20,10 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
@@ -55,9 +57,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -74,6 +78,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimaps;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +95,7 @@ public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private final Supplier<PendingTransactions> pendingTransactionsSupplier;
+  private final BlobCache cacheForBlobsOfTransactionsAddedToABlock;
   private volatile PendingTransactions pendingTransactions = new DisabledPendingTransactions();
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -103,6 +110,10 @@ public class TransactionPool implements BlockAddedObserver {
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
   private final EthScheduler.OrderedProcessor<BlockAddedEvent> blockAddedEventOrderedProcessor;
+  private final ListMultimap<VersionedHash, BlobsWithCommitments.BlobQuad>
+      mapOfBlobsInTransactionPool =
+          Multimaps.synchronizedListMultimap(
+              Multimaps.newListMultimap(new HashMap<>(), () -> new ArrayList<>(1)));
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -111,7 +122,8 @@ public class TransactionPool implements BlockAddedObserver {
       final TransactionBroadcaster transactionBroadcaster,
       final EthContext ethContext,
       final TransactionPoolMetrics metrics,
-      final TransactionPoolConfiguration configuration) {
+      final TransactionPoolConfiguration configuration,
+      final BlobCache blobCache) {
     this.pendingTransactionsSupplier = pendingTransactionsSupplier;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -121,7 +133,12 @@ public class TransactionPool implements BlockAddedObserver {
     this.configuration = configuration;
     this.blockAddedEventOrderedProcessor =
         ethContext.getScheduler().createOrderedProcessor(this::processBlockAddedEvent);
+    this.cacheForBlobsOfTransactionsAddedToABlock = blobCache;
+    initializeBlobMetrics();
     initLogForReplay();
+    subscribePendingTransactions(this::mapBlobsOnTransactionAdded);
+    subscribeDroppedTransactions(
+        (transaction, reason) -> unmapBlobsOnTransactionDropped(transaction));
   }
 
   private void initLogForReplay() {
@@ -640,8 +657,57 @@ public class TransactionPool implements BlockAddedObserver {
     return CompletableFuture.completedFuture(null);
   }
 
+  private void mapBlobsOnTransactionAdded(
+      final org.hyperledger.besu.datatypes.Transaction transaction) {
+    final Optional<BlobsWithCommitments> maybeBlobsWithCommitments =
+        transaction.getBlobsWithCommitments();
+    if (maybeBlobsWithCommitments.isEmpty()) {
+      return;
+    }
+    final List<BlobsWithCommitments.BlobQuad> blobQuads =
+        maybeBlobsWithCommitments.get().getBlobQuads();
+
+    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.versionedHash(), bq));
+  }
+
+  private void unmapBlobsOnTransactionDropped(
+      final org.hyperledger.besu.datatypes.Transaction transaction) {
+    final Optional<BlobsWithCommitments> maybeBlobsWithCommitments =
+        transaction.getBlobsWithCommitments();
+    if (maybeBlobsWithCommitments.isEmpty()) {
+      return;
+    }
+    final List<BlobsWithCommitments.BlobQuad> blobQuads =
+        maybeBlobsWithCommitments.get().getBlobQuads();
+
+    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.versionedHash(), bq));
+  }
+
+  public BlobsWithCommitments.BlobQuad getBlobQuad(final VersionedHash vh) {
+    try {
+      // returns an empty list if the key is not present, so getFirst() will throw
+      return mapOfBlobsInTransactionPool.get(vh).getFirst();
+    } catch (NoSuchElementException e) {
+      // do nothing
+    }
+    return cacheForBlobsOfTransactionsAddedToABlock.get(vh);
+  }
+
   public boolean isEnabled() {
     return isPoolEnabled.get();
+  }
+
+  public int getBlobCacheSize() {
+    return (int) cacheForBlobsOfTransactionsAddedToABlock.size();
+  }
+
+  public int getBlobMapSize() {
+    return mapOfBlobsInTransactionPool.size();
+  }
+
+  private void initializeBlobMetrics() {
+    metrics.createBlobCacheSizeMetric(this::getBlobCacheSize);
+    metrics.createBlobMapSizeMetric(this::getBlobMapSize);
   }
 
   class PendingTransactionsListenersProxy {
@@ -655,7 +721,9 @@ public class TransactionPool implements BlockAddedObserver {
 
     void subscribe() {
       onAddedListenerId = pendingTransactions.subscribePendingTransactions(this::onAdded);
-      onDroppedListenerId = pendingTransactions.subscribeDroppedTransactions(this::onDropped);
+      onDroppedListenerId =
+          pendingTransactions.subscribeDroppedTransactions(
+              (transaction, reason) -> onDropped(transaction, reason));
     }
 
     void unsubscribe() {
@@ -663,8 +731,8 @@ public class TransactionPool implements BlockAddedObserver {
       pendingTransactions.unsubscribeDroppedTransactions(onDroppedListenerId);
     }
 
-    private void onDropped(final Transaction transaction) {
-      onDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction));
+    private void onDropped(final Transaction transaction, final RemovalReason reason) {
+      onDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction, reason));
     }
 
     private void onAdded(final Transaction transaction) {

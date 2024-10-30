@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -170,7 +171,7 @@ public class MainnetBlockValidator implements BlockValidator {
         Optional<List<Request>> maybeRequests =
             result.getYield().flatMap(BlockProcessingOutputs::getRequests);
         if (!blockBodyValidator.validateBody(
-            context, block, receipts, maybeRequests, worldState.rootHash(), ommerValidationMode)) {
+            context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
           result = new BlockProcessingResult("failed to validate output of imported block");
           handleFailedBlockProcessing(block, result, shouldRecordBadBlock);
           return result;
@@ -180,16 +181,7 @@ public class MainnetBlockValidator implements BlockValidator {
             Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)));
       }
     } catch (MerkleTrieException ex) {
-      context
-          .getSynchronizer()
-          .ifPresentOrElse(
-              synchronizer -> synchronizer.healWorldState(ex.getMaybeAddress(), ex.getLocation()),
-              () ->
-                  handleFailedBlockProcessing(
-                      block,
-                      new BlockProcessingResult(Optional.empty(), ex),
-                      // Do not record bad black due to missing data
-                      false));
+      context.getSynchronizer().healWorldState(ex.getMaybeAddress(), ex.getLocation());
       return new BlockProcessingResult(Optional.empty(), ex);
     } catch (StorageException ex) {
       var retval = new BlockProcessingResult(Optional.empty(), ex);
@@ -247,13 +239,13 @@ public class MainnetBlockValidator implements BlockValidator {
   }
 
   @Override
-  public boolean fastBlockValidation(
+  public boolean validateBlockForSyncing(
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final Optional<List<Request>> requests,
       final HeaderValidationMode headerValidationMode,
-      final HeaderValidationMode ommerValidationMode) {
+      final HeaderValidationMode ommerValidationMode,
+      final BodyValidationMode bodyValidationMode) {
     final BlockHeader header = block.getHeader();
     if (!blockHeaderValidator.validateHeader(header, context, headerValidationMode)) {
       String description = String.format("Failed header validation (%s)", headerValidationMode);
@@ -262,7 +254,7 @@ public class MainnetBlockValidator implements BlockValidator {
     }
 
     if (!blockBodyValidator.validateBodyLight(
-        context, block, receipts, requests, ommerValidationMode)) {
+        context, block, receipts, ommerValidationMode, bodyValidationMode)) {
       badBlockManager.addBadBlock(
           block, BadBlockCause.fromValidationFailure("Failed body validation (light)"));
       return false;

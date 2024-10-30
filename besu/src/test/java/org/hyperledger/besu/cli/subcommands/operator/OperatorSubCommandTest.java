@@ -282,8 +282,10 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         false,
         singletonList("key.pub"),
         Optional.empty(),
-        Optional.of(
-            "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94d5feb0fc5a54a89f97aeb34c3df15397c19f6dd294d6a9a4c886eb008ac307abdc1f38745c1dd13a88808400000000c0"));
+        List.of(
+            new Field(
+                "extraData",
+                "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94d5feb0fc5a54a89f97aeb34c3df15397c19f6dd294d6a9a4c886eb008ac307abdc1f38745c1dd13a88808400000000c0")));
   }
 
   @Test
@@ -296,8 +298,49 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         false,
         singletonList("key.pub"),
         Optional.empty(),
-        Optional.of(
-            "0xf84fa00000000000000000000000000000000000000000000000000000000000000000ea94d5feb0fc5a54a89f97aeb34c3df15397c19f6dd294d6a9a4c886eb008ac307abdc1f38745c1dd13a88c080c0"));
+        List.of(
+            new Field(
+                "extraData",
+                "0xf84fa00000000000000000000000000000000000000000000000000000000000000000ea94d5feb0fc5a54a89f97aeb34c3df15397c19f6dd294d6a9a4c886eb008ac307abdc1f38745c1dd13a88c080c0")));
+  }
+
+  @Test
+  public void generatedGenesisFileShouldContainAllOriginalFieldsExcludingExtraData()
+      throws IOException {
+    final JsonObject alloc =
+        new JsonObject(
+            """
+    {
+      "24defc2d149861d3d245749b81fe0e6b28e04f31": {
+        "balance": "0x446c3b15f9926687d2c40534fdb564000000000000"
+      },
+      "2a813d7db3de19b07f92268b6d4125ed295cbe00": {
+        "balance": "0x446c3b15f9926687d2c40534fdb542000000000000"
+      }
+    }""");
+    final List<Field> fields =
+        List.of(
+            new Field("nonce", "0x0"),
+            new Field("timestamp", "0x5b3c3d18"),
+            new Field("gasUsed", "0x0"),
+            new Field(
+                "parentHash", "0x0000000000000000000000000000000000000000000000000000000000000000"),
+            new Field("gasLimit", "0x47b760"),
+            new Field("difficulty", "0x1"),
+            new Field(
+                "mixHash", "0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"),
+            new Field("coinbase", "0x0000000000000000000000000000000000000000"),
+            new Field("alloc", alloc.getMap().toString()));
+
+    runCmdAndCheckOutput(
+        cmd(),
+        "/operator/config_generate_keys.json",
+        tmpOutputDirectoryPath,
+        "genesis.json",
+        false,
+        singletonList("key.pub"),
+        Optional.empty(),
+        fields);
   }
 
   private void runCmdAndCheckOutput(
@@ -316,7 +359,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         generate,
         expectedKeyFiles,
         Optional.empty(),
-        Optional.empty());
+        List.of());
   }
 
   private void runCmdAndCheckOutput(
@@ -336,8 +379,10 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         generate,
         expectedKeyFiles,
         signatureAlgorithm,
-        Optional.empty());
+        List.of());
   }
+
+  private record Field(String key, String value) {}
 
   private void runCmdAndCheckOutput(
       final Cmd cmd,
@@ -347,7 +392,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
       final boolean generate,
       final Collection<String> expectedKeyFiles,
       final Optional<SignatureAlgorithm> signatureAlgorithm,
-      final Optional<String> expectedExtraData)
+      final List<Field> expectedFields)
       throws IOException {
     final URL configFilePath = this.getClass().getResource(configFile);
     parseCommand(
@@ -368,8 +413,9 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
     final String genesisString = contentOf(outputGenesisFile, UTF_8);
     final JsonObject genesisContent = new JsonObject(genesisString);
     assertThat(genesisContent.containsKey("extraData")).isTrue();
-    expectedExtraData.ifPresent(
-        extraData -> assertThat(genesisContent.getString("extraData")).isEqualTo(extraData));
+
+    expectedFields.forEach(
+        field -> assertThat(genesisContent.getString(field.key)).isEqualTo(field.value));
 
     final Path expectedKeysPath = outputDirectoryPath.resolve("keys");
     final File keysDirectory = new File(expectedKeysPath.toUri());

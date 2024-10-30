@@ -31,6 +31,8 @@ import java.util.Optional;
 public class MutableBftConfigOptions implements BftConfigOptions {
   private long epochLength;
   private int blockPeriodSeconds;
+  private int emptyBlockPeriodSeconds;
+  private long blockPeriodMilliseconds;
   private int requestTimeoutSeconds;
   private int gossipedHistoryLimit;
   private int messageQueueLimit;
@@ -48,6 +50,8 @@ public class MutableBftConfigOptions implements BftConfigOptions {
   public MutableBftConfigOptions(final BftConfigOptions bftConfigOptions) {
     this.epochLength = bftConfigOptions.getEpochLength();
     this.blockPeriodSeconds = bftConfigOptions.getBlockPeriodSeconds();
+    this.emptyBlockPeriodSeconds = bftConfigOptions.getEmptyBlockPeriodSeconds();
+    this.blockPeriodMilliseconds = bftConfigOptions.getBlockPeriodMilliseconds();
     this.requestTimeoutSeconds = bftConfigOptions.getRequestTimeoutSeconds();
     this.gossipedHistoryLimit = bftConfigOptions.getGossipedHistoryLimit();
     this.messageQueueLimit = bftConfigOptions.getMessageQueueLimit();
@@ -66,6 +70,16 @@ public class MutableBftConfigOptions implements BftConfigOptions {
   @Override
   public int getBlockPeriodSeconds() {
     return blockPeriodSeconds;
+  }
+
+  @Override
+  public int getEmptyBlockPeriodSeconds() {
+    return emptyBlockPeriodSeconds;
+  }
+
+  @Override
+  public long getBlockPeriodMilliseconds() {
+    return blockPeriodMilliseconds;
   }
 
   @Override
@@ -129,6 +143,25 @@ public class MutableBftConfigOptions implements BftConfigOptions {
    */
   public void setBlockPeriodSeconds(final int blockPeriodSeconds) {
     this.blockPeriodSeconds = blockPeriodSeconds;
+  }
+
+  /**
+   * Sets empty block period seconds.
+   *
+   * @param emptyBlockPeriodSeconds the empty block period seconds
+   */
+  public void setEmptyBlockPeriodSeconds(final int emptyBlockPeriodSeconds) {
+    this.emptyBlockPeriodSeconds = emptyBlockPeriodSeconds;
+  }
+
+  /**
+   * Sets block period milliseconds. Experimental for test scenarios. Not for use on production
+   * systems.
+   *
+   * @param blockPeriodMilliseconds the block period milliseconds
+   */
+  public void setBlockPeriodMilliseconds(final long blockPeriodMilliseconds) {
+    this.blockPeriodMilliseconds = blockPeriodMilliseconds;
   }
 
   /**

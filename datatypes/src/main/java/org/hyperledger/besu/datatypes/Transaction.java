@@ -236,16 +236,16 @@ public interface Transaction {
   int getSize();
 
   /**
-   * Returns the set code transaction payload if this transaction is a 7702 transaction.
+   * Returns the code delegations if this transaction is a 7702 transaction.
    *
-   * @return the set code transaction payloads
+   * @return the code delegations
    */
-  Optional<List<SetCodeAuthorization>> getAuthorizationList();
+  Optional<List<CodeDelegation>> getCodeDelegationList();
 
   /**
    * Returns the size of the authorization list.
    *
    * @return the size of the authorization list
    */
-  int authorizationListSize();
+  int codeDelegationListSize();
 }

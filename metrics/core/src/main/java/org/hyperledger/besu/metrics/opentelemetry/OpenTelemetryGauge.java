@@ -63,6 +63,14 @@ public class OpenTelemetryGauge implements LabelledGauge {
     }
   }
 
+  @Override
+  public boolean isLabelsObserved(final String... labelValues) {
+    Preconditions.checkArgument(
+        labelValues.length == labelNames.size(),
+        "label values and label names need the same number of elements");
+    return observationsMap.containsKey(getLabels(labelValues));
+  }
+
   private Attributes getLabels(final String... labelValues) {
     final AttributesBuilder labelsBuilder = Attributes.builder();
     for (int i = 0; i < labelNames.size(); i++) {

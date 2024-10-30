@@ -84,6 +84,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -222,7 +223,10 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             uniqueMessageMulticaster,
-            new RoundTimer(bftEventQueue, qbftConfig.getRequestTimeoutSeconds(), bftExecutors),
+            new RoundTimer(
+                bftEventQueue,
+                Duration.ofSeconds(qbftConfig.getRequestTimeoutSeconds()),
+                bftExecutors),
             new BlockTimer(bftEventQueue, qbftForksSchedule, bftExecutors, clock),
             blockCreatorFactory,
             clock);
@@ -284,16 +288,31 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     protocolContext
         .getBlockchain()
         .observeBlockAdded(
-            o ->
-                miningParameters.setBlockPeriodSeconds(
-                    qbftForksSchedule
-                        .getFork(o.getBlock().getHeader().getNumber() + 1)
-                        .getValue()
-                        .getBlockPeriodSeconds()));
+            o -> {
+              miningParameters.setBlockPeriodSeconds(
+                  qbftForksSchedule
+                      .getFork(o.getBlock().getHeader().getNumber() + 1)
+                      .getValue()
+                      .getBlockPeriodSeconds());
+              miningParameters.setEmptyBlockPeriodSeconds(
+                  qbftForksSchedule
+                      .getFork(o.getBlock().getHeader().getNumber() + 1)
+                      .getValue()
+                      .getEmptyBlockPeriodSeconds());
+            });
 
-    if (syncState.isInitialSyncPhaseDone()) {
-      miningCoordinator.enable();
-    }
+    syncState.subscribeSyncStatus(
+        syncStatus -> {
+          if (syncState.syncTarget().isPresent()) {
+            // We're syncing so stop doing other stuff
+            LOG.info("Stopping QBFT mining coordinator while we are syncing");
+            miningCoordinator.stop();
+          } else {
+            LOG.info("Starting QBFT mining coordinator following sync");
+            miningCoordinator.enable();
+            miningCoordinator.start();
+          }
+        });
 
     syncState.subscribeCompletionReached(
         new BesuEvents.InitialSyncCompletionListener() {
@@ -418,8 +437,9 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     return block ->
         LOG.info(
             String.format(
-                "%s #%,d / %d tx / %d pending / %,d (%01.1f%%) gas / (%s)",
+                "%s %s #%,d / %d tx / %d pending / %,d (%01.1f%%) gas / (%s)",
                 block.getHeader().getCoinbase().equals(localAddress) ? "Produced" : "Imported",
+                block.getBody().getTransactions().size() == 0 ? "empty block" : "block",
                 block.getHeader().getNumber(),
                 block.getBody().getTransactions().size(),
                 transactionPool.count(),
