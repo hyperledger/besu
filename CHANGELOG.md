@@ -4,6 +4,7 @@
 - Added isLabelsObserved to LabelledGauge in plugin-api. Default implementation returns false.
 
 ### Breaking Changes
+- Removed Retesteth rpc service and commands []
 
 ### Upcoming Breaking Changes
 
