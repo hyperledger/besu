@@ -23,6 +23,7 @@
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
 | Sally MacFarlane | macfarla         | macfarla         |
 | Karim Taam       | matkt            | matkt            |
+| Matilda Clerke   | Matilda-Clerke   | MatildaClerke    |
 | Matthew Whitehead| matthew1001      | matthew.whitehead      |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Stefan Pingel    | pinges           | pinges           |
