@@ -477,11 +477,13 @@ public class MainnetTransactionProcessor {
         if (initialFrame.getExceptionalHaltReason().isPresent()
             && initialFrame.getCode().isValid()) {
           validationResult =
-                  ValidationResult.invalid(
-                          TransactionInvalidReason.EXECUTION_HALTED,
-                          initialFrame.getExceptionalHaltReason().get()
-                                  + (initialFrame.getExtraData().isEmpty() ? ""
-                                  : initialFrame.getExtraData().toString()));
+              ValidationResult.invalid(
+                  TransactionInvalidReason.EXECUTION_HALTED,
+                  initialFrame.getExceptionalHaltReason().get()
+                      + (initialFrame.getExtraData().isEmpty()
+                          ? ""
+                          : initialFrame.getExtraData().toString()));
+        }
       }
 
       if (LOG.isTraceEnabled()) {
