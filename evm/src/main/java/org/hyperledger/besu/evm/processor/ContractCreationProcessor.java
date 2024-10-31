@@ -37,7 +37,8 @@ import org.slf4j.LoggerFactory;
 public class ContractCreationProcessor extends AbstractMessageProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(ContractCreationProcessor.class);
-
+  public static final String NON_EMPTY_CONTRACT_PRE_LONDON =
+          "Contract with nonce 0, no code and non empty storage.";
   private final boolean requireCodeDepositToSucceed;
 
   private final long initialContractNonce;
@@ -54,11 +55,11 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
    * @param forceCommitAddresses the force commit addresses
    */
   public ContractCreationProcessor(
-      final EVM evm,
-      final boolean requireCodeDepositToSucceed,
-      final List<ContractValidationRule> contractValidationRules,
-      final long initialContractNonce,
-      final Collection<Address> forceCommitAddresses) {
+          final EVM evm,
+          final boolean requireCodeDepositToSucceed,
+          final List<ContractValidationRule> contractValidationRules,
+          final long initialContractNonce,
+          final Collection<Address> forceCommitAddresses) {
     super(evm, forceCommitAddresses);
     this.requireCodeDepositToSucceed = requireCodeDepositToSucceed;
     this.contractValidationRules = contractValidationRules;
@@ -74,10 +75,10 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
    * @param initialContractNonce the initial contract nonce
    */
   public ContractCreationProcessor(
-      final EVM evm,
-      final boolean requireCodeDepositToSucceed,
-      final List<ContractValidationRule> contractValidationRules,
-      final long initialContractNonce) {
+          final EVM evm,
+          final boolean requireCodeDepositToSucceed,
+          final List<ContractValidationRule> contractValidationRules,
+          final long initialContractNonce) {
     this(evm, requireCodeDepositToSucceed, contractValidationRules, initialContractNonce, Set.of());
   }
 
@@ -85,6 +86,17 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     // The account exists if it has sent a transaction
     // or already has its code initialized.
     return account.getNonce() != 0 || !account.getCode().isEmpty() || !account.isStorageEmpty();
+  }
+
+  /**
+   * check is it is empty as per London contract spec strictly.
+   *
+   * @param account to check
+   * @return true if it has a nonce == 0, empty code and non-empty storage. It means it's non-empty
+   *     and was created before London.
+   */
+  public static boolean contractHasNonceZeroEmptyCodeAndNonEmptyStorage(final Account account) {
+    return account.getNonce() == 0 && account.getCode().isEmpty() && !account.isStorageEmpty();
   }
 
   @Override
@@ -101,12 +113,15 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       final MutableAccount contract = frame.getWorldUpdater().getOrCreate(contractAddress);
       if (accountExists(contract)) {
         LOG.trace(
-            "Contract creation error: account has already been created for address {}",
-            contractAddress);
+                "Contract creation error: account has already been created for address {}",
+                contractAddress);
         frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+        if (contractHasNonceZeroEmptyCodeAndNonEmptyStorage(contract)) {
+          frame.setExtraData(NON_EMPTY_CONTRACT_PRE_LONDON);
+        }
         operationTracer.traceAccountCreationResult(
-            frame, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+                frame, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
       } else {
         frame.addCreate(contractAddress);
         contract.incrementBalance(frame.getValue());
@@ -124,44 +139,44 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
   @Override
   public void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
     final Bytes contractCode =
-        frame.getCreatedCode() == null ? frame.getOutputData() : frame.getCreatedCode().getBytes();
+            frame.getCreatedCode() == null ? frame.getOutputData() : frame.getCreatedCode().getBytes();
 
     final long depositFee = evm.getGasCalculator().codeDepositGasCost(contractCode.size());
 
     if (frame.getRemainingGas() < depositFee) {
       LOG.trace(
-          "Not enough gas to pay the code deposit fee for {}: "
-              + "remaining gas = {} < {} = deposit fee",
-          frame.getContractAddress(),
-          frame.getRemainingGas(),
-          depositFee);
+              "Not enough gas to pay the code deposit fee for {}: "
+                      + "remaining gas = {} < {} = deposit fee",
+              frame.getContractAddress(),
+              frame.getRemainingGas(),
+              depositFee);
       if (requireCodeDepositToSucceed) {
         LOG.trace("Contract creation error: insufficient funds for code deposit");
         frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         operationTracer.traceAccountCreationResult(
-            frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+                frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
       }
     } else {
       final var invalidReason =
-          contractValidationRules.stream()
-              .map(rule -> rule.validate(contractCode, frame, evm))
-              .filter(Optional::isPresent)
-              .findFirst();
+              contractValidationRules.stream()
+                      .map(rule -> rule.validate(contractCode, frame, evm))
+                      .filter(Optional::isPresent)
+                      .findFirst();
       if (invalidReason.isEmpty()) {
         frame.decrementRemainingGas(depositFee);
 
         // Finalize contract creation, setting the contract code.
         final MutableAccount contract =
-            frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
+                frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
         contract.setCode(contractCode);
         LOG.trace(
-            "Successful creation of contract {} with code of size {} (Gas remaining: {})",
-            frame.getContractAddress(),
-            contractCode.size(),
-            frame.getRemainingGas());
+                "Successful creation of contract {} with code of size {} (Gas remaining: {})",
+                frame.getContractAddress(),
+                contractCode.size(),
+                frame.getRemainingGas());
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
         if (operationTracer.isExtendedTracing()) {
           operationTracer.traceAccountCreationResult(frame, Optional.empty());

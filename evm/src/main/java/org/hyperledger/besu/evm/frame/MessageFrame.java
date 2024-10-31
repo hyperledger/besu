@@ -246,6 +246,9 @@ public class MessageFrame {
   /** The mark of the undoable collections at the creation of this message frame */
   private final long undoMark;
 
+  /** Field to collect extra information while the frame is processed. */
+  private List<String> extraData;
+
   /**
    * Builder builder.
    *
@@ -256,21 +259,21 @@ public class MessageFrame {
   }
 
   private MessageFrame(
-      final Type type,
-      final WorldUpdater worldUpdater,
-      final long initialGas,
-      final Address recipient,
-      final Address contract,
-      final Bytes inputData,
-      final Address sender,
-      final Wei value,
-      final Wei apparentValue,
-      final Code code,
-      final boolean isStatic,
-      final Consumer<MessageFrame> completer,
-      final Map<String, Object> contextVariables,
-      final Optional<Bytes> revertReason,
-      final TxValues txValues) {
+          final Type type,
+          final WorldUpdater worldUpdater,
+          final long initialGas,
+          final Address recipient,
+          final Address contract,
+          final Bytes inputData,
+          final Address sender,
+          final Wei value,
+          final Wei apparentValue,
+          final Code code,
+          final boolean isStatic,
+          final Consumer<MessageFrame> completer,
+          final Map<String, Object> contextVariables,
+          final Optional<Bytes> revertReason,
+          final TxValues txValues) {
 
     this.txValues = txValues;
     this.type = type;
@@ -633,7 +636,7 @@ public class MessageFrame {
    * @return The bytes in the specified range
    */
   public MutableBytes readMutableMemory(
-      final long offset, final long length, final boolean explicitMemoryRead) {
+          final long offset, final long length, final boolean explicitMemoryRead) {
     final MutableBytes memBytes = memory.getMutableBytes(offset, length);
     if (explicitMemoryRead) {
       setUpdatedMemory(offset, memBytes);
@@ -675,7 +678,7 @@ public class MessageFrame {
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
    */
   public void writeMemory(
-      final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
+          final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, length, value);
     if (explicitMemoryUpdate) {
       setUpdatedMemory(offset, 0, length, value);
@@ -693,7 +696,7 @@ public class MessageFrame {
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
    */
   public void writeMemoryRightAligned(
-      final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
+          final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
     memory.setBytesRightAligned(offset, length, value);
     if (explicitMemoryUpdate) {
       setUpdatedMemoryRightAligned(offset, length, value);
@@ -709,7 +712,7 @@ public class MessageFrame {
    * @param value The value to write
    */
   public void writeMemory(
-      final long offset, final long sourceOffset, final long length, final Bytes value) {
+          final long offset, final long sourceOffset, final long length, final Bytes value) {
     writeMemory(offset, sourceOffset, length, value, false);
   }
 
@@ -723,11 +726,11 @@ public class MessageFrame {
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
    */
   public void writeMemory(
-      final long offset,
-      final long sourceOffset,
-      final long length,
-      final Bytes value,
-      final boolean explicitMemoryUpdate) {
+          final long offset,
+          final long sourceOffset,
+          final long length,
+          final Bytes value,
+          final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, sourceOffset, length, value);
     if (explicitMemoryUpdate && length > 0) {
       setUpdatedMemory(offset, sourceOffset, length, value);
@@ -745,7 +748,7 @@ public class MessageFrame {
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
    */
   public void copyMemory(
-      final long dst, final long src, final long length, final boolean explicitMemoryUpdate) {
+          final long dst, final long src, final long length, final boolean explicitMemoryUpdate) {
     if (length > 0) {
       memory.copy(dst, src, length);
       if (explicitMemoryUpdate) {
@@ -755,7 +758,7 @@ public class MessageFrame {
   }
 
   private void setUpdatedMemory(
-      final long offset, final long sourceOffset, final long length, final Bytes value) {
+          final long offset, final long sourceOffset, final long length, final Bytes value) {
     final long endIndex = sourceOffset + length;
     if (sourceOffset >= 0 && endIndex > 0) {
       final int srcSize = value.size();
@@ -772,7 +775,7 @@ public class MessageFrame {
   }
 
   private void setUpdatedMemoryRightAligned(
-      final long offset, final long length, final Bytes value) {
+          final long offset, final long length, final Bytes value) {
     if (length > 0) {
       final int srcSize = value.size();
       if (length > srcSize) {
@@ -1156,7 +1159,7 @@ public class MessageFrame {
    * @param exceptionalHaltReason the exceptional halt reason
    */
   public void setExceptionalHaltReason(
-      final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
+          final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
     this.exceptionalHaltReason = exceptionalHaltReason;
   }
 
@@ -1167,6 +1170,27 @@ public class MessageFrame {
    */
   public Optional<ExceptionalHaltReason> getExceptionalHaltReason() {
     return exceptionalHaltReason;
+  }
+
+  /**
+   * Gets extra data colelcted during the frame procesing.
+   *
+   * @return the extra data list
+   */
+  public List<String> getExtraData() {
+    return extraData == null ? List.of() : extraData;
+  }
+
+  /**
+   * Add extra data.
+   *
+   * @param extraData for future usage
+   */
+  public void setExtraData(String extraData) {
+    if (this.extraData == null) {
+      this.extraData = new ArrayList<>();
+    }
+    this.extraData.add(extraData);
   }
 
   /**
@@ -1296,7 +1320,7 @@ public class MessageFrame {
    * @param value the value to set in the transient store
    */
   public void setTransientStorageValue(
-      final Address accountAddress, final Bytes32 slot, final Bytes32 value) {
+          final Address accountAddress, final Bytes32 slot, final Bytes32 value) {
     txValues.transientStorage().put(accountAddress, slot, value);
   }
 
@@ -1667,22 +1691,22 @@ public class MessageFrame {
 
       if (parentMessageFrame == null) {
         newTxValues =
-            new TxValues(
-                blockHashLookup,
-                maxStackSize,
-                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
-                UndoTable.of(HashBasedTable.create()),
-                originator,
-                gasPrice,
-                blobGasPrice,
-                blockValues,
-                new ArrayDeque<>(),
-                miningBeneficiary,
-                versionedHashes,
-                UndoTable.of(HashBasedTable.create()),
-                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
-                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
-                new UndoScalar<>(0L));
+                new TxValues(
+                        blockHashLookup,
+                        maxStackSize,
+                        UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
+                        UndoTable.of(HashBasedTable.create()),
+                        originator,
+                        gasPrice,
+                        blobGasPrice,
+                        blockValues,
+                        new ArrayDeque<>(),
+                        miningBeneficiary,
+                        versionedHashes,
+                        UndoTable.of(HashBasedTable.create()),
+                        UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
+                        UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
+                        new UndoScalar<>(0L));
         updater = worldUpdater;
         newStatic = isStatic;
       } else {
@@ -1693,22 +1717,22 @@ public class MessageFrame {
       }
 
       MessageFrame messageFrame =
-          new MessageFrame(
-              type,
-              updater,
-              initialGas,
-              address,
-              contract,
-              inputData,
-              sender,
-              value,
-              apparentValue,
-              code,
-              newStatic,
-              completer,
-              contextVariables == null ? Map.of() : contextVariables,
-              reason,
-              newTxValues);
+              new MessageFrame(
+                      type,
+                      updater,
+                      initialGas,
+                      address,
+                      contract,
+                      inputData,
+                      sender,
+                      value,
+                      apparentValue,
+                      code,
+                      newStatic,
+                      completer,
+                      contextVariables == null ? Map.of() : contextVariables,
+                      reason,
+                      newTxValues);
       newTxValues.messageFrameStack().addFirst(messageFrame);
       messageFrame.warmUpAddress(sender);
       messageFrame.warmUpAddress(contract);
