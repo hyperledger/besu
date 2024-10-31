@@ -106,6 +106,7 @@ public abstract class AbstractJsonRpcExecutor {
   private static HttpResponseStatus statusCodeFromError(final RpcErrorType error) {
     return switch (error) {
       case INVALID_REQUEST, PARSE_ERROR -> HttpResponseStatus.BAD_REQUEST;
+      case TIMEOUT_ERROR -> HttpResponseStatus.REQUEST_TIMEOUT;
       default -> HttpResponseStatus.OK;
     };
   }
