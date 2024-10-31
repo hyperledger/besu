@@ -150,7 +150,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             payload,
             Optional.of(List.of()),
             Optional.of("0x0000000000000000000000000000000000000000000000000000000000000000"),
-            Optional.of(emptyList()));
+            Optional.of(emptyList()),
+            Optional.of("0x3"));
     assertThat(res.isValid()).isTrue();
   }
 
