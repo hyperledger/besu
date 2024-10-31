@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLError.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_TARGET_BLOB_COUNT_PARAM;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -35,6 +37,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadStatusResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Request;
@@ -50,6 +53,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,6 +69,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
           new Request(RequestType.DEPOSIT, Bytes.of(1)),
           new Request(RequestType.WITHDRAWAL, Bytes.of(1)),
           new Request(RequestType.CONSOLIDATION, Bytes.of(1)));
+  private static final UInt64 VALID_TARGET_BLOB_COUNT = UInt64.valueOf(3L);
 
   @BeforeEach
   @Override
@@ -91,9 +96,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   @Test
   public void shouldReturnInvalidIfRequestsIsNull_WhenRequestsAllowed() {
-    var resp =
-        respWithInvalidRequests(
-            mockEnginePayload(createValidBlockHeaderForV4(Optional.empty()), emptyList()));
+    var resp = respWithInvalidRequests();
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     assertThat(fromErrorResp(resp).getMessage())
@@ -129,10 +132,31 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
+  @Test
+  public void shouldReturnErrorIfTargetBlobCountIsMissing() {
+    var resp = respWithMissingTargetBlobCount();
+
+    assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    assertThat(fromErrorResp(resp).getMessage())
+        .isEqualTo(INVALID_TARGET_BLOB_COUNT_PARAM.getMessage());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnInvalidIfTargetBlobCountIsInvalid() {
+    var resp = respWithInvalidTargetBlobCount();
+    final EnginePayloadStatusResult result = fromSuccessResp(resp);
+
+    assertThat(result.getStatusAsString()).isEqualTo(INVALID.name());
+    assertThat(result.getError()).isEqualTo("Invalid targetBlobCount");
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
   private BlockHeader createValidBlockHeaderForV4(
       final Optional<List<Withdrawal>> maybeWithdrawals) {
     return createBlockHeaderFixtureForV3(maybeWithdrawals)
         .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS))
+        .targetBlobCount(VALID_TARGET_BLOB_COUNT)
         .buildHeader();
   }
 
@@ -173,22 +197,76 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     Object[] params =
         maybeParentBeaconBlockRoot
             .map(
-                bytes32 ->
+                parentBeaconBlockRootBytes32 ->
                     new Object[] {
-                      payload, emptyList(), bytes32.toHexString(), requestsWithoutRequestId
+                      payload,
+                      emptyList(),
+                      parentBeaconBlockRootBytes32.toHexString(),
+                      requestsWithoutRequestId,
+                      VALID_TARGET_BLOB_COUNT.toHexString()
                     })
             .orElseGet(() -> new Object[] {payload});
     return method.response(
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
   }
 
-  protected JsonRpcResponse respWithInvalidRequests(final EnginePayloadParameter payload) {
+  private JsonRpcResponse respWithInvalidRequests() {
+    final EnginePayloadParameter payload =
+        mockEnginePayload(createValidBlockHeaderForV4(Optional.empty()), emptyList());
     Object[] params =
         maybeParentBeaconBlockRoot
             .map(
                 bytes32 ->
                     new Object[] {payload, emptyList(), bytes32.toHexString()
-                      // empty requests param is invalid
+                      // missing requests param is invalid
+                    })
+            .orElseGet(() -> new Object[] {payload});
+    return method.response(
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
+  }
+
+  private JsonRpcResponse respWithMissingTargetBlobCount() {
+    final EnginePayloadParameter payload =
+        mockEnginePayload(createValidBlockHeaderForV4(Optional.empty()), emptyList());
+    final List<String> requestsWithoutRequestId =
+        VALID_REQUESTS.stream()
+            .sorted(Comparator.comparing(Request::getType))
+            .map(r -> r.getData().toHexString())
+            .toList();
+    Object[] params =
+        maybeParentBeaconBlockRoot
+            .map(
+                parentBeaconBlockRootBytes32 ->
+                    new Object[] {
+                      payload,
+                      emptyList(),
+                      parentBeaconBlockRootBytes32.toHexString(),
+                      requestsWithoutRequestId,
+                      // missing targetBlobCount param
+                    })
+            .orElseGet(() -> new Object[] {payload});
+    return method.response(
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
+  }
+
+  private JsonRpcResponse respWithInvalidTargetBlobCount() {
+    final EnginePayloadParameter payload =
+        mockEnginePayload(createValidBlockHeaderForV4(Optional.empty()), emptyList());
+    final List<String> requestsWithoutRequestId =
+        VALID_REQUESTS.stream()
+            .sorted(Comparator.comparing(Request::getType))
+            .map(r -> r.getData().toHexString())
+            .toList();
+    Object[] params =
+        maybeParentBeaconBlockRoot
+            .map(
+                parentBeaconBlockRootBytes32 ->
+                    new Object[] {
+                      payload,
+                      emptyList(),
+                      parentBeaconBlockRootBytes32.toHexString(),
+                      requestsWithoutRequestId,
+                      "invalidTargetBlobCount"
                     })
             .orElseGet(() -> new Object[] {payload});
     return method.response(
