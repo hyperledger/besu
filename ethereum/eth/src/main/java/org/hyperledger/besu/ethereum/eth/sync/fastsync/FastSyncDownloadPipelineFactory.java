@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
@@ -58,6 +59,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   protected final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
   protected final EthContext ethContext;
+  protected final PeerTaskExecutor peerTaskExecutor;
   protected final FastSyncState fastSyncState;
   protected final MetricsSystem metricsSystem;
   protected final FastSyncValidationPolicy attachedValidationPolicy;
@@ -69,12 +71,14 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
       final FastSyncState fastSyncState,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.peerTaskExecutor = peerTaskExecutor;
     this.fastSyncState = fastSyncState;
     this.metricsSystem = metricsSystem;
     final LabelledMetric<Counter> fastSyncValidationCounter =
@@ -145,7 +149,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =
-        new DownloadReceiptsStep(ethContext, metricsSystem);
+        new DownloadReceiptsStep(
+            protocolSchedule, ethContext, peerTaskExecutor, syncConfig, metricsSystem);
     final ImportBlocksStep importBlockStep =
         new ImportBlocksStep(
             protocolSchedule,

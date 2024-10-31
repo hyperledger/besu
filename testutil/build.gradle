@@ -45,6 +45,4 @@ dependencies {
   implementation 'org.assertj:assertj-core'
   implementation 'org.mockito:mockito-core'
   implementation 'org.web3j:core'
-
-  implementation 'org.testcontainers:testcontainers'
 }
