@@ -14,9 +14,8 @@ assignees: ''
 <!--   * Reproduced the issue in the latest version of the software -->
 <!--   * Read the debugging docs: https://besu.hyperledger.org/private-networks/how-to -->
 <!--   * Duplicate Issue check:  https://github.com/search?q=+is%3Aissue+repo%3Ahyperledger/Besu -->
-<!-- Note:  Not all sections will apply to all issue types. -->
 
-### Steps to Reproduce (Bug)
+### Steps to Reproduce
 1. [Step 1]
 2. [Step 2]
 3. [Step ...]
@@ -27,7 +26,7 @@ assignees: ''
 
 **Frequency:** [What percentage of the time does it occur?]
 
-### Logs (if a bug)
+### Logs
 Please post relevant logs from Besu (and the consensus client, if running proof of stake) from before and after the issue.
 
 ### Versions (Add all that apply)
