@@ -173,6 +173,22 @@ public class BonsaiAccount extends DiffBasedAccount {
         + '}';
   }
 
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final BonsaiAccount that = (BonsaiAccount) o;
+    return nonce == that.nonce
+        && balance.equals(that.balance)
+        && storageRoot.equals(that.storageRoot)
+        && codeHash.equals(that.codeHash);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(nonce, balance, storageRoot, codeHash);
+  }
+
   /**
    * Throws an exception if the two accounts represent different stored states
    *
