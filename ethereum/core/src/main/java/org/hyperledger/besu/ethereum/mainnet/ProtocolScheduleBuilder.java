@@ -279,6 +279,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("CancunEOF", config.getCancunEOFTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Prague", config.getPragueTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Osaka", config.getOsakaTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Verkle", config.getVerkleTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("ExperimentalEips", config.getExperimentalEipsTime(), lastForkBlock);
@@ -417,6 +418,10 @@ public class ProtocolScheduleBuilder {
                 MainnetHardforkId.OSAKA,
                 config.getOsakaTime(),
                 specFactory.osakaDefinition(config)),
+            timestampMilestone(
+                HardforkId.MainnetHardforkId.VERKLE,
+                config.getVerkleTime(),
+                specFactory.verkleDefinition(config)),
             timestampMilestone(
                 HardforkId.MainnetHardforkId.FUTURE_EIPS,
                 config.getFutureEipsTime(),

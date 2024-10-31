@@ -264,6 +264,13 @@ public interface GenesisConfigOptions {
   OptionalLong getOsakaTime();
 
   /**
+   * Gets verkle time.
+   *
+   * @return the verkle time
+   */
+  OptionalLong getVerkleTime();
+
+  /**
    * Gets future eips time.
    *
    * @return the future eips time

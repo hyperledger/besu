@@ -332,6 +332,14 @@ public final class GenesisState {
     if (osakaTimestamp.isPresent()) {
       return genesis.getTimestamp() >= osakaTimestamp.getAsLong();
     }
+    return isVerkleAtGenesis(genesis);
+  }
+
+  private static boolean isVerkleAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong verkleTimestamp = genesis.getConfigOptions().getVerkleTime();
+    if (verkleTimestamp.isPresent()) {
+      return genesis.getTimestamp() >= verkleTimestamp.getAsLong();
+    }
     return isFutureEipsTimeAtGenesis(genesis);
   }
 

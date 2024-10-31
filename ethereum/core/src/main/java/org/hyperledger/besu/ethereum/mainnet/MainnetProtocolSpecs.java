@@ -657,7 +657,6 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
-        .executionWitnessValidator(new ExecutionWitnessValidator.AllowedExecutionWitness())
         .name("Shanghai");
   }
 
@@ -864,7 +863,7 @@ public abstract class MainnetProtocolSpecs {
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES));
   }
 
-  static ProtocolSpecBuilder eip4762Definition(
+  static ProtocolSpecBuilder verkleDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
@@ -872,7 +871,6 @@ public abstract class MainnetProtocolSpecs {
       final MiningParameters miningParameters,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-
     final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
         new ClearEmptyAccountStrategy.ClearEmptyAccountWithException(
             List.of(PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS));
@@ -887,7 +885,7 @@ public abstract class MainnetProtocolSpecs {
         .gasCalculator(Eip4762GasCalculator::new)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.eip4762(
+                MainnetEVMs.verkle(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .transactionProcessorBuilder(
             (gasCalculator,
@@ -906,8 +904,9 @@ public abstract class MainnetProtocolSpecs {
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
+        .executionWitnessValidator(new ExecutionWitnessValidator.AllowedExecutionWitness())
         .blockHashProcessor(new PragueBlockHashProcessor())
-        .name("eip4762");
+        .name("Verkle");
   }
 
   static ProtocolSpecBuilder futureEipsDefinition(
