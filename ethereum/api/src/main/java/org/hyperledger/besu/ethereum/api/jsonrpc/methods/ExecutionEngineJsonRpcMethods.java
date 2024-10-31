@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineE
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV3;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV4;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetBlobsV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetClientVersionV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV1;
@@ -177,23 +178,28 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
       }
 
       if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("prague"))) {
-        executionEngineApisSupported.add(
-            new EngineGetPayloadV4(
-                consensusEngineServer,
-                protocolContext,
-                mergeCoordinator.get(),
-                blockResultFactory,
-                engineQosTimer,
-                protocolSchedule));
-
-        executionEngineApisSupported.add(
-            new EngineNewPayloadV4(
-                consensusEngineServer,
-                protocolSchedule,
-                protocolContext,
-                mergeCoordinator.get(),
-                ethPeers,
-                engineQosTimer));
+        executionEngineApisSupported.addAll(
+            List.of(
+                new EngineGetPayloadV4(
+                    consensusEngineServer,
+                    protocolContext,
+                    mergeCoordinator.get(),
+                    blockResultFactory,
+                    engineQosTimer,
+                    protocolSchedule),
+                new EngineNewPayloadV4(
+                    consensusEngineServer,
+                    protocolSchedule,
+                    protocolContext,
+                    mergeCoordinator.get(),
+                    ethPeers,
+                    engineQosTimer),
+                new EngineForkchoiceUpdatedV4(
+                    consensusEngineServer,
+                    protocolSchedule,
+                    protocolContext,
+                    mergeCoordinator.get(),
+                    engineQosTimer)));
       }
 
       return mapOf(executionEngineApisSupported);
