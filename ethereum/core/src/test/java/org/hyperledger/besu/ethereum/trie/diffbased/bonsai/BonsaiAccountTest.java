@@ -100,25 +100,25 @@ public class BonsaiAccountTest {
 
     // Another equality test
     final BonsaiAccount account3 =
-            new BonsaiAccount(
-                    bonsaiWorldState,
-                    Address.ZERO,
-                    Hash.hash(Address.ZERO),
-                    99,
-                    Wei.of(UInt256.fromHexString("0x123")),
-                    Hash.hash(Bytes.fromHexString("0xabcdef")),
-                    Hash.hash(Bytes.fromHexString("0x9876")),
-                    true);
+        new BonsaiAccount(
+            bonsaiWorldState,
+            Address.ZERO,
+            Hash.hash(Address.ZERO),
+            99,
+            Wei.of(UInt256.fromHexString("0x123")),
+            Hash.hash(Bytes.fromHexString("0xabcdef")),
+            Hash.hash(Bytes.fromHexString("0x9876")),
+            true);
     final BonsaiAccount account4 =
-            new BonsaiAccount(
-                    bonsaiWorldState,
-                    Address.ZERO,
-                    Hash.hash(Address.ZERO),
-                    99,
-                    Wei.of(UInt256.fromHexString("0x123")),
-                    Hash.hash(Bytes.fromHexString("0xabcdef")),
-                    Hash.hash(Bytes.fromHexString("0x9876")),
-                    true);
+        new BonsaiAccount(
+            bonsaiWorldState,
+            Address.ZERO,
+            Hash.hash(Address.ZERO),
+            99,
+            Wei.of(UInt256.fromHexString("0x123")),
+            Hash.hash(Bytes.fromHexString("0xabcdef")),
+            Hash.hash(Bytes.fromHexString("0x9876")),
+            true);
     assertThat(account3.equals(account4)).isTrue();
 
     // Context and mutability should not affect equality
@@ -145,99 +145,98 @@ public class BonsaiAccountTest {
     assertThat(account5.equals(account6)).isTrue();
   }
 
-
   @Test
   void shouldBeUnEqualIfAnyAttributesDiffer() {
     // Nonce
     final BonsaiAccount account1 =
-            new BonsaiAccount(
-                    bonsaiWorldState,
-                    Address.ZERO,
-                    Hash.hash(Address.ZERO),
-                    99,
-                    Wei.ONE,
-                    Hash.EMPTY_TRIE_HASH,
-                    Hash.EMPTY,
-                    true);
+        new BonsaiAccount(
+            bonsaiWorldState,
+            Address.ZERO,
+            Hash.hash(Address.ZERO),
+            99,
+            Wei.ONE,
+            Hash.EMPTY_TRIE_HASH,
+            Hash.EMPTY,
+            true);
     final BonsaiAccount account2 =
-            new BonsaiAccount(
-                    bonsaiWorldState,
-                    Address.ZERO,
-                    Hash.hash(Address.ZERO),
-                    100,
-                    Wei.ONE,
-                    Hash.EMPTY_TRIE_HASH,
-                    Hash.EMPTY,
-                    true);
+        new BonsaiAccount(
+            bonsaiWorldState,
+            Address.ZERO,
+            Hash.hash(Address.ZERO),
+            100,
+            Wei.ONE,
+            Hash.EMPTY_TRIE_HASH,
+            Hash.EMPTY,
+            true);
     assertThat(account1.equals(account2)).isFalse();
 
     // Balance
     final BonsaiAccount account3 =
-            new BonsaiAccount(
-                    bonsaiWorldState,
-                    Address.ZERO,
-                    Hash.hash(Address.ZERO),
-                    99,
-                    Wei.of(UInt256.fromHexString("0x123")),
-                    Hash.hash(Bytes.fromHexString("0xabcdef")),
-                    Hash.hash(Bytes.fromHexString("0x9876")),
-                    true);
+        new BonsaiAccount(
+            bonsaiWorldState,
+            Address.ZERO,
+            Hash.hash(Address.ZERO),
+            99,
+            Wei.of(UInt256.fromHexString("0x123")),
+            Hash.hash(Bytes.fromHexString("0xabcdef")),
+            Hash.hash(Bytes.fromHexString("0x9876")),
+            true);
     final BonsaiAccount account4 =
-            new BonsaiAccount(
-                    bonsaiWorldState,
-                    Address.ZERO,
-                    Hash.hash(Address.ZERO),
-                    99,
-                    Wei.of(UInt256.fromHexString("0x456")),
-                    Hash.hash(Bytes.fromHexString("0xabcdef")),
-                    Hash.hash(Bytes.fromHexString("0x9876")),
-                    true);
+        new BonsaiAccount(
+            bonsaiWorldState,
+            Address.ZERO,
+            Hash.hash(Address.ZERO),
+            99,
+            Wei.of(UInt256.fromHexString("0x456")),
+            Hash.hash(Bytes.fromHexString("0xabcdef")),
+            Hash.hash(Bytes.fromHexString("0x9876")),
+            true);
     assertThat(account3.equals(account4)).isFalse();
 
     // Storage root
     final BonsaiAccount account5 =
-            new BonsaiAccount(
-                    bonsaiWorldState,
-                    Address.ZERO,
-                    Hash.hash(Address.ZERO),
-                    99,
-                    Wei.of(UInt256.fromHexString("0x123")),
-                    Hash.hash(Bytes.fromHexString("0xabcdef")),
-                    Hash.hash(Bytes.fromHexString("0x9876")),
-                    true);
+        new BonsaiAccount(
+            bonsaiWorldState,
+            Address.ZERO,
+            Hash.hash(Address.ZERO),
+            99,
+            Wei.of(UInt256.fromHexString("0x123")),
+            Hash.hash(Bytes.fromHexString("0xabcdef")),
+            Hash.hash(Bytes.fromHexString("0x9876")),
+            true);
     final BonsaiAccount account6 =
-            new BonsaiAccount(
-                    bonsaiWorldState,
-                    Address.ZERO,
-                    Hash.hash(Address.ZERO),
-                    99,
-                    Wei.of(UInt256.fromHexString("0x456")),
-                    Hash.hash(Bytes.fromHexString("0xfedcba")),
-                    Hash.hash(Bytes.fromHexString("0x9876")),
-                    true);
+        new BonsaiAccount(
+            bonsaiWorldState,
+            Address.ZERO,
+            Hash.hash(Address.ZERO),
+            99,
+            Wei.of(UInt256.fromHexString("0x456")),
+            Hash.hash(Bytes.fromHexString("0xfedcba")),
+            Hash.hash(Bytes.fromHexString("0x9876")),
+            true);
     assertThat(account5.equals(account6)).isFalse();
 
     // Code hash
     final BonsaiAccount account7 =
-            new BonsaiAccount(
-                    bonsaiWorldState,
-                    Address.ZERO,
-                    Hash.hash(Address.ZERO),
-                    99,
-                    Wei.of(UInt256.fromHexString("0x123")),
-                    Hash.hash(Bytes.fromHexString("0xabcdef")),
-                    Hash.hash(Bytes.fromHexString("0x6789")),
-                    true);
+        new BonsaiAccount(
+            bonsaiWorldState,
+            Address.ZERO,
+            Hash.hash(Address.ZERO),
+            99,
+            Wei.of(UInt256.fromHexString("0x123")),
+            Hash.hash(Bytes.fromHexString("0xabcdef")),
+            Hash.hash(Bytes.fromHexString("0x6789")),
+            true);
     final BonsaiAccount account8 =
-            new BonsaiAccount(
-                    bonsaiWorldState,
-                    Address.ZERO,
-                    Hash.hash(Address.ZERO),
-                    99,
-                    Wei.of(UInt256.fromHexString("0x456")),
-                    Hash.hash(Bytes.fromHexString("0xabcdef")),
-                    Hash.hash(Bytes.fromHexString("0x9876")),
-                    true);
+        new BonsaiAccount(
+            bonsaiWorldState,
+            Address.ZERO,
+            Hash.hash(Address.ZERO),
+            99,
+            Wei.of(UInt256.fromHexString("0x456")),
+            Hash.hash(Bytes.fromHexString("0xabcdef")),
+            Hash.hash(Bytes.fromHexString("0x9876")),
+            true);
     assertThat(account7.equals(account8)).isFalse();
   }
 }
