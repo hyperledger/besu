@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class EnginePayloadAttributesParameter {
 
@@ -31,6 +32,8 @@ public class EnginePayloadAttributesParameter {
   final Address suggestedFeeRecipient;
   final List<WithdrawalParameter> withdrawals;
   private final Bytes32 parentBeaconBlockRoot;
+  private final UInt64 targetBlobCount;
+  private final UInt64 maximumBlobCount;
 
   @JsonCreator
   public EnginePayloadAttributesParameter(
@@ -38,13 +41,18 @@ public class EnginePayloadAttributesParameter {
       @JsonProperty("prevRandao") final String prevRandao,
       @JsonProperty("suggestedFeeRecipient") final String suggestedFeeRecipient,
       @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
-      @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot) {
+      @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
+      @JsonProperty("targetBlobCount") final String targetBlobCount,
+      @JsonProperty("maximumBlobCount") final String maximumBlobCount) {
     this.timestamp = Long.decode(timestamp);
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.suggestedFeeRecipient = Address.fromHexString(suggestedFeeRecipient);
     this.withdrawals = withdrawals;
     this.parentBeaconBlockRoot =
         parentBeaconBlockRoot == null ? null : Bytes32.fromHexString(parentBeaconBlockRoot);
+    this.targetBlobCount = targetBlobCount == null ? null : UInt64.fromHexString(targetBlobCount);
+    this.maximumBlobCount =
+        maximumBlobCount == null ? null : UInt64.fromHexString(maximumBlobCount);
   }
 
   public Long getTimestamp() {
@@ -61,6 +69,14 @@ public class EnginePayloadAttributesParameter {
 
   public Bytes32 getParentBeaconBlockRoot() {
     return parentBeaconBlockRoot;
+  }
+
+  public UInt64 getTargetBlobCount() {
+    return targetBlobCount;
+  }
+
+  public UInt64 getMaximumBlobCount() {
+    return maximumBlobCount;
   }
 
   public List<WithdrawalParameter> getWithdrawals() {
@@ -80,6 +96,12 @@ public class EnginePayloadAttributesParameter {
     }
     if (parentBeaconBlockRoot != null) {
       json.put("parentBeaconBlockRoot", parentBeaconBlockRoot.toHexString());
+    }
+    if (targetBlobCount != null) {
+      json.put("targetBlobCount", targetBlobCount.toHexString());
+    }
+    if (maximumBlobCount != null) {
+      json.put("maximumBlobCount", maximumBlobCount.toHexString());
     }
     return json.encode();
   }
