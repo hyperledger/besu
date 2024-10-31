@@ -246,6 +246,8 @@ public class MessageFrame {
   /** The mark of the undoable collections at the creation of this message frame */
   private final long undoMark;
 
+  /** Field to collect extra information while the frame is processed.*/
+  private List<String> extraData;
   /**
    * Builder builder.
    *
@@ -1167,6 +1169,27 @@ public class MessageFrame {
    */
   public Optional<ExceptionalHaltReason> getExceptionalHaltReason() {
     return exceptionalHaltReason;
+  }
+
+  /**
+   * Gets extra data colelcted during the frame procesing.
+   *
+   * @return the extra data list
+   */
+  public List<String> getExtraData() {
+    return extraData == null ? List.of() : extraData;
+  }
+
+  /**
+   * Add extra data.
+   *
+   * @param extraData for future usage
+   */
+  public void setExtraData(String extraData) {
+    if(this.extraData == null){
+      this.extraData = new ArrayList<>();
+    }
+    this.extraData.add(extraData);
   }
 
   /**
