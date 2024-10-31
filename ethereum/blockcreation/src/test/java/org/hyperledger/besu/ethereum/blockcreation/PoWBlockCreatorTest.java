@@ -62,6 +62,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
@@ -93,7 +94,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
                         genesisConfigFile.getConfigOptions(),
-                        BigInteger.valueOf(42),
+                        Optional.of(BigInteger.valueOf(42)),
                         ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
@@ -152,7 +153,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
                         genesisConfigFile.getConfigOptions(),
-                        BigInteger.valueOf(42),
+                        Optional.of(BigInteger.valueOf(42)),
                         ProtocolSpecAdapters.create(
                             0,
                             specBuilder ->
@@ -208,7 +209,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
                 genesisConfigFile.getConfigOptions(),
-                BigInteger.valueOf(42),
+                Optional.of(BigInteger.valueOf(42)),
                 ProtocolSpecAdapters.create(
                     0,
                     specBuilder ->
@@ -285,7 +286,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
                 genesisConfigFile.getConfigOptions(),
-                BigInteger.valueOf(42),
+                Optional.of(BigInteger.valueOf(42)),
                 ProtocolSpecAdapters.create(
                     0,
                     specBuilder ->

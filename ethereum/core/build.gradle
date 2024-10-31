@@ -107,6 +107,8 @@ dependencies {
   testSupportImplementation 'org.junit.jupiter:junit-jupiter'
   testSupportImplementation 'org.assertj:assertj-core'
   testSupportImplementation 'org.mockito:mockito-core'
+  testSupportImplementation 'com.google.dagger:dagger'
+  testSupportAnnotationProcessor 'com.google.dagger:dagger-compiler'
 
   jmhImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   jmhImplementation project(':crypto:algorithms')
