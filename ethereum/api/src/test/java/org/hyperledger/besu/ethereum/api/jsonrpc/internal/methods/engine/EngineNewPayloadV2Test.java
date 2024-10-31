@@ -82,8 +82,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
-            Optional.of(withdrawals),
-            Optional.empty());
+            Optional.of(withdrawals));
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
@@ -100,7 +99,6 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
-            Optional.empty(),
             Optional.empty());
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
@@ -120,7 +118,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     var resp =
         resp(
             mockEnginePayload(
-                createBlockHeader(Optional.of(Collections.emptyList()), Optional.empty()),
+                createBlockHeader(Optional.of(Collections.emptyList())),
                 Collections.emptyList(),
                 withdrawals));
 
@@ -133,14 +131,14 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   public void shouldValidateBlobGasUsedCorrectly() {
     // V2 should return error if non-null blobGasUsed
     BlockHeader blockHeader =
-        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+        createBlockHeaderFixture(Optional.of(Collections.emptyList()))
             .blobGasUsed(100L)
             .buildHeader();
 
     var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of()));
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_BLOB_GAS_USED_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas used field");
+    assertThat(jsonRpcError.getData()).isEqualTo("Unexpected blob gas used field present");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -148,7 +146,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   public void shouldValidateExcessBlobGasCorrectly() {
     // V2 should return error if non-null ExcessBlobGas
     BlockHeader blockHeader =
-        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+        createBlockHeaderFixture(Optional.of(Collections.emptyList()))
             .excessBlobGas(BlobGas.MAX_BLOB_GAS)
             .buildHeader();
 
@@ -156,7 +154,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("Missing excess blob gas field");
+    assertThat(jsonRpcError.getData()).isEqualTo("Unexpected excess blob gas field present");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -169,9 +167,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     var resp =
         resp(
             mockEnginePayload(
-                createBlockHeader(Optional.empty(), Optional.empty()),
-                Collections.emptyList(),
-                withdrawals));
+                createBlockHeader(Optional.empty()), Collections.emptyList(), withdrawals));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -182,7 +178,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     // Cancun starte at timestamp 30
     final long blockTimestamp = 31L;
     BlockHeader blockHeader =
-        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+        createBlockHeaderFixture(Optional.of(Collections.emptyList()))
             .timestamp(blockTimestamp)
             .buildHeader();
 
