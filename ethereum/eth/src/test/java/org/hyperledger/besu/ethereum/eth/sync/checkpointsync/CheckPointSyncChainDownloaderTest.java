@@ -175,7 +175,7 @@ public class CheckPointSyncChainDownloaderTest {
                 bh, otherBlockchain.getTxReceipts(bh.getHash()).get()));
 
     return new PeerTaskExecutorResult<>(
-        Optional.of(getReceiptsFromPeerTaskResult), PeerTaskExecutorResponseCode.SUCCESS);
+        Optional.of(getReceiptsFromPeerTaskResult), PeerTaskExecutorResponseCode.SUCCESS, null);
   }
 
   @AfterEach

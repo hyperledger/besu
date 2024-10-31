@@ -129,7 +129,7 @@ public class DownloadReceiptsStepTest {
         (b) -> receiptsMap.put(b.getHeader(), List.of(Mockito.mock(TransactionReceipt.class))));
     PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> peerTaskResult =
         new PeerTaskExecutorResult<>(
-            Optional.of(receiptsMap), PeerTaskExecutorResponseCode.SUCCESS);
+            Optional.of(receiptsMap), PeerTaskExecutorResponseCode.SUCCESS, null);
     Mockito.when(peerTaskExecutor.execute(Mockito.any(GetReceiptsFromPeerTask.class)))
         .thenReturn(peerTaskResult);
 

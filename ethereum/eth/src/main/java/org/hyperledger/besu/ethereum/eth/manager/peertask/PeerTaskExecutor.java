@@ -98,7 +98,7 @@ public class PeerTaskExecutor {
       if (peer.isEmpty()) {
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE);
+                Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE, null);
         continue;
       }
       usedEthPeers.add(peer.get());
@@ -142,39 +142,40 @@ public class PeerTaskExecutor {
           peer.recordUsefulResponse();
           executorResult =
               new PeerTaskExecutorResult<>(
-                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS);
+                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS, peer);
         } else {
           // At this point, the result is most likely empty. Technically, this is a valid result, so
           // we don't penalise the peer, but it's also a useless result, so we return
           // INVALID_RESPONSE code
           executorResult =
               new PeerTaskExecutorResult<>(
-                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.INVALID_RESPONSE);
+                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.INVALID_RESPONSE, peer);
         }
 
       } catch (PeerNotConnected e) {
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.PEER_DISCONNECTED);
+                Optional.empty(), PeerTaskExecutorResponseCode.PEER_DISCONNECTED, peer);
 
       } catch (InterruptedException | TimeoutException e) {
         peer.recordRequestTimeout(requestMessageData.getCode());
         timeoutCounter.labels(taskClassName).inc();
         executorResult =
-            new PeerTaskExecutorResult<>(Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT);
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, peer);
 
       } catch (InvalidPeerTaskResponseException e) {
         peer.recordUselessResponse(e.getMessage());
         invalidResponseCounter.labels(taskClassName).inc();
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE);
+                Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE, peer);
 
       } catch (ExecutionException e) {
         internalExceptionCounter.labels(taskClassName).inc();
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR);
+                Optional.empty(), PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR, peer);
       }
     } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS

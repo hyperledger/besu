@@ -199,7 +199,9 @@ public class DetermineCommonAncestorTaskParameterizedTest {
               }
 
               return new PeerTaskExecutorResult<List<BlockHeader>>(
-                  Optional.of(headers), PeerTaskExecutorResponseCode.SUCCESS);
+                  Optional.of(headers),
+                  PeerTaskExecutorResponseCode.SUCCESS,
+                  respondingEthPeer.getEthPeer());
             });
 
     final CompletableFuture<BlockHeader> future = task.run();

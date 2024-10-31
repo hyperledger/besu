@@ -163,7 +163,8 @@ public class PivotBlockConfirmerTest {
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
-                PeerTaskExecutorResponseCode.SUCCESS));
+                PeerTaskExecutorResponseCode.SUCCESS,
+                respondingPeerA.getEthPeer()));
     Mockito.when(
             peerTaskExecutor.executeAgainstPeer(
                 Mockito.any(GetHeadersFromPeerTask.class),
@@ -171,7 +172,8 @@ public class PivotBlockConfirmerTest {
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
-                PeerTaskExecutorResponseCode.SUCCESS));
+                PeerTaskExecutorResponseCode.SUCCESS,
+                respondingPeerB.getEthPeer()));
 
     // Execute task
     final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
@@ -316,13 +318,16 @@ public class PivotBlockConfirmerTest {
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
-                PeerTaskExecutorResponseCode.SUCCESS))
+                PeerTaskExecutorResponseCode.SUCCESS,
+                null))
         .thenReturn(
-            new PeerTaskExecutorResult<>(Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT))
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, null))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
-                PeerTaskExecutorResponseCode.SUCCESS));
+                PeerTaskExecutorResponseCode.SUCCESS,
+                null));
 
     // Execute task
     final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
@@ -427,7 +432,8 @@ public class PivotBlockConfirmerTest {
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
-                PeerTaskExecutorResponseCode.SUCCESS));
+                PeerTaskExecutorResponseCode.SUCCESS,
+                respondingPeerA.getEthPeer()));
     Mockito.when(
             peerTaskExecutor.executeAgainstPeer(
                 Mockito.any(GetHeadersFromPeerTask.class),
@@ -440,7 +446,8 @@ public class PivotBlockConfirmerTest {
                             .number(PIVOT_BLOCK_NUMBER)
                             .extraData(Bytes.of(1))
                             .buildHeader())),
-                PeerTaskExecutorResponseCode.SUCCESS));
+                PeerTaskExecutorResponseCode.SUCCESS,
+                respondingPeerB.getEthPeer()));
 
     // Execute task and wait for response
     final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();

@@ -25,11 +25,15 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractGetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -61,6 +65,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
   private final EthContext ethContext;
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
+  private final PeerTaskExecutor peerTaskExecutor;
+  private final SynchronizerConfiguration synchronizerConfiguration;
 
   private final BlockHeader[] headers;
   private final BlockHeader referenceHeader;
@@ -75,6 +81,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final BlockHeader referenceHeader,
       final int segmentLength,
       final int maxRetries,
@@ -84,6 +92,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.peerTaskExecutor = peerTaskExecutor;
+    this.synchronizerConfiguration = synchronizerConfiguration;
     this.referenceHeader = referenceHeader;
     this.segmentLength = segmentLength;
     this.validationPolicy = validationPolicy;
@@ -99,6 +109,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final BlockHeader referenceHeader,
       final int segmentLength,
       final int maxRetries,
@@ -108,6 +120,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         protocolSchedule,
         protocolContext,
         ethContext,
+        peerTaskExecutor,
+        synchronizerConfiguration,
         referenceHeader,
         segmentLength,
         maxRetries,
@@ -119,6 +133,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final BlockHeader referenceHeader,
       final int segmentLength,
       final ValidationPolicy validationPolicy,
@@ -127,6 +143,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         protocolSchedule,
         protocolContext,
         ethContext,
+        peerTaskExecutor,
+        synchronizerConfiguration,
         referenceHeader,
         segmentLength,
         DEFAULT_RETRIES,
@@ -139,9 +157,15 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final Optional<EthPeer> assignedPeer) {
     LOG.debug(
         "Downloading headers from {} to {}.", startingBlockNumber, referenceHeader.getNumber());
-    final CompletableFuture<List<BlockHeader>> task =
-        downloadHeaders(assignedPeer).thenCompose(this::processHeaders);
-    return task.whenComplete(
+    final CompletableFuture<List<BlockHeader>> headersFuture;
+    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+      headersFuture =
+          downloadHeadersUsingPeerTaskSystem(assignedPeer)
+              .thenCompose(this::processHeadersUsingPeerTask);
+    } else {
+      headersFuture = downloadHeaders(assignedPeer).thenCompose(this::processHeaders);
+    }
+    return headersFuture.whenComplete(
         (r, t) -> {
           // We're done if we've filled all requested headers
           if (lastFilledHeaderIndex == 0) {
@@ -179,73 +203,109 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         });
   }
 
+  private CompletableFuture<PeerTaskExecutorResult<List<BlockHeader>>>
+      downloadHeadersUsingPeerTaskSystem(final Optional<EthPeer> ethPeer) {
+    return ethContext
+        .getScheduler()
+        .scheduleServiceTask(
+            () -> {
+              // Figure out parameters for our headers request
+              final boolean partiallyFilled = lastFilledHeaderIndex < segmentLength;
+              final BlockHeader referenceHeaderForNextRequest =
+                  partiallyFilled ? headers[lastFilledHeaderIndex] : referenceHeader;
+              final Hash referenceHash = referenceHeaderForNextRequest.getHash();
+              final int count = partiallyFilled ? lastFilledHeaderIndex : segmentLength;
+
+              GetHeadersFromPeerTask task =
+                  new GetHeadersFromPeerTask(
+                      referenceHash,
+                      referenceHeaderForNextRequest.getNumber(),
+                      count + 1,
+                      0,
+                      GetHeadersFromPeerTask.Direction.REVERSE,
+                      protocolSchedule);
+              PeerTaskExecutorResult<List<BlockHeader>> taskResult;
+              if (ethPeer.isPresent()) {
+                taskResult = peerTaskExecutor.executeAgainstPeer(task, ethPeer.get());
+              } else {
+                taskResult = peerTaskExecutor.execute(task);
+              }
+              return CompletableFuture.completedFuture(taskResult);
+            });
+  }
+
   @VisibleForTesting
   CompletableFuture<List<BlockHeader>> processHeaders(
       final PeerTaskResult<List<BlockHeader>> headersResult) {
     return executeWorkerSubTask(
         ethContext.getScheduler(),
         () -> {
-          final CompletableFuture<List<BlockHeader>> future = new CompletableFuture<>();
-          BlockHeader child = null;
-          boolean firstSkipped = false;
-          final int previousHeaderIndex = lastFilledHeaderIndex;
-          for (final BlockHeader header : headersResult.getResult()) {
-            final int headerIndex =
-                Ints.checkedCast(
-                    segmentLength - (referenceHeader.getNumber() - header.getNumber()));
-            if (!firstSkipped) {
-              // Skip over reference header
-              firstSkipped = true;
-              continue;
-            }
-            if (child == null) {
-              child =
-                  (headerIndex == segmentLength - 1) ? referenceHeader : headers[headerIndex + 1];
-            }
-
-            final boolean foundChild = child != null;
-            final boolean headerInRange = checkHeaderInRange(header);
-            final boolean headerInvalid = foundChild && !validateHeader(child, header);
-            if (!headerInRange || !foundChild || headerInvalid) {
-              final BlockHeader invalidHeader = child;
-              final CompletableFuture<?> badBlockHandled =
-                  headerInvalid
-                      ? markBadBlock(invalidHeader, headersResult.getPeer())
-                      : CompletableFuture.completedFuture(null);
-              badBlockHandled.whenComplete(
-                  (res, err) -> {
-                    LOG.debug(
-                        "Received invalid headers from peer (BREACH_OF_PROTOCOL), disconnecting from: {}",
-                        headersResult.getPeer());
-                    headersResult
-                        .getPeer()
-                        .disconnect(DisconnectReason.BREACH_OF_PROTOCOL_INVALID_HEADERS);
-                    final InvalidBlockException exception;
-                    if (invalidHeader == null) {
-                      final String msg =
-                          String.format(
-                              "Received misordered blocks. Missing child of %s",
-                              header.toLogString());
-                      exception = InvalidBlockException.create(msg);
-                    } else {
-                      final String errorMsg =
-                          headerInvalid
-                              ? "Header failed validation"
-                              : "Out-of-range header received from peer";
-                      exception = InvalidBlockException.fromInvalidBlock(errorMsg, invalidHeader);
-                    }
-                    future.completeExceptionally(exception);
-                  });
-
-              return future;
-            }
-            headers[headerIndex] = header;
-            lastFilledHeaderIndex = headerIndex;
-            child = header;
-          }
-          future.complete(asList(headers).subList(lastFilledHeaderIndex, previousHeaderIndex));
-          return future;
+          return processHeaders(headersResult.getResult(), headersResult.getPeer());
         });
+  }
+
+  private CompletableFuture<List<BlockHeader>> processHeadersUsingPeerTask(
+      final PeerTaskExecutorResult<List<BlockHeader>> headersResult) {
+    return processHeaders(headersResult.result().get(), headersResult.ethPeer());
+  }
+
+  private CompletableFuture<List<BlockHeader>> processHeaders(
+      final List<BlockHeader> blockHeaders, final EthPeer ethPeer) {
+    final CompletableFuture<List<BlockHeader>> future = new CompletableFuture<>();
+    BlockHeader child = null;
+    boolean firstSkipped = false;
+    final int previousHeaderIndex = lastFilledHeaderIndex;
+    for (final BlockHeader header : blockHeaders) {
+      final int headerIndex =
+          Ints.checkedCast(segmentLength - (referenceHeader.getNumber() - header.getNumber()));
+      if (!firstSkipped) {
+        // Skip over reference header
+        firstSkipped = true;
+        continue;
+      }
+      if (child == null) {
+        child = (headerIndex == segmentLength - 1) ? referenceHeader : headers[headerIndex + 1];
+      }
+
+      final boolean foundChild = child != null;
+      final boolean headerInRange = checkHeaderInRange(header);
+      final boolean headerInvalid = foundChild && !validateHeader(child, header);
+      if (!headerInRange || !foundChild || headerInvalid) {
+        final BlockHeader invalidHeader = child;
+        final CompletableFuture<?> badBlockHandled =
+            headerInvalid
+                ? markBadBlock(invalidHeader, ethPeer)
+                : CompletableFuture.completedFuture(null);
+        badBlockHandled.whenComplete(
+            (res, err) -> {
+              LOG.debug(
+                  "Received invalid headers from peer (BREACH_OF_PROTOCOL), disconnecting from: {}",
+                  ethPeer);
+              ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_INVALID_HEADERS);
+              final InvalidBlockException exception;
+              if (invalidHeader == null) {
+                final String msg =
+                    String.format(
+                        "Received misordered blocks. Missing child of %s", header.toLogString());
+                exception = InvalidBlockException.create(msg);
+              } else {
+                final String errorMsg =
+                    headerInvalid
+                        ? "Header failed validation"
+                        : "Out-of-range header received from peer";
+                exception = InvalidBlockException.fromInvalidBlock(errorMsg, invalidHeader);
+              }
+              future.completeExceptionally(exception);
+            });
+
+        return future;
+      }
+      headers[headerIndex] = header;
+      lastFilledHeaderIndex = headerIndex;
+      child = header;
+    }
+    future.complete(asList(headers).subList(lastFilledHeaderIndex, previousHeaderIndex));
+    return future;
   }
 
   private CompletableFuture<?> markBadBlock(final BlockHeader badHeader, final EthPeer badPeer) {

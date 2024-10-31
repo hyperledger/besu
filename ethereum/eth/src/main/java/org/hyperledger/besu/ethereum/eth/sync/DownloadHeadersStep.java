@@ -95,6 +95,8 @@ public class DownloadHeadersStep
               protocolSchedule,
               protocolContext,
               ethContext,
+              peerTaskExecutor,
+              synchronizerConfiguration,
               range.getEnd(),
               range.getSegmentLengthExclusive(),
               validationPolicy,
