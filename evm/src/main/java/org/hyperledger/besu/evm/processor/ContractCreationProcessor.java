@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 public class ContractCreationProcessor extends AbstractMessageProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(ContractCreationProcessor.class);
-
+  public static final String NON_EMPTY_CONTRACT_PRE_LONDON = "Contract with nonce 0, no code and non empty storage.";
   private final boolean requireCodeDepositToSucceed;
 
   private final long initialContractNonce;
@@ -87,6 +87,17 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     return account.getNonce() != 0 || !account.getCode().isEmpty() || !account.isStorageEmpty();
   }
 
+  /**
+   * check is it is empty as per London contract spec strictly.
+   *
+   * @param account to check
+   * @return true if it has a nonce == 0, empty code and non-empty storage.
+   * It means it's non-empty and was created before London.
+   */
+  public static boolean contractHasNonceZeroEmptyCodeAndNonEmptyStorage(final Account account) {
+    return account.getNonce() == 0 && account.getCode().isEmpty() && !account.isStorageEmpty();
+  }
+
   @Override
   public void start(final MessageFrame frame, final OperationTracer operationTracer) {
     if (LOG.isTraceEnabled()) {
@@ -105,6 +116,9 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
             contractAddress);
         frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+        if(contractHasNonceZeroEmptyCodeAndNonEmptyStorage(contract)) {
+          frame.setExtraData(NON_EMPTY_CONTRACT_PRE_LONDON);
+        }
         operationTracer.traceAccountCreationResult(
             frame, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
       } else {
