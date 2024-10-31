@@ -84,7 +84,7 @@ The following steps must occur for a contributor to be "upgraded" as a maintaine
   - The proposed maintainer accepts the nomination and expresses a willingness
     to be a long-term (more than 6 month) committer by adding a comment in the proposal PR.
   - The PR will be communicated in all appropriate communication channels
-    including at least [besu-contributors channel on Discord](https://discord.gg/hyperledger),
+    including at least [besu-contributors channel on Discord](https://discord.com/invite/hyperledger),
     the [mailing list](https://lists.hyperledger.org/g/besu)
     and any maintainer/community call.
 - Approval by at least 3 current maintainers within two weeks of the proposal or
