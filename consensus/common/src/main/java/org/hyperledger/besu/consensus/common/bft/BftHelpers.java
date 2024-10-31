@@ -44,6 +44,16 @@ public class BftHelpers {
   }
 
   /**
+   * Calculate required future RC messages count quorum for a round change.
+   *
+   * @param validatorCount the validator count
+   * @return the int
+   */
+  public static int calculateRequiredFutureRCQuorum(final int validatorCount) {
+    return validatorCount - Util.fastDivCeiling(2 * validatorCount, 3) + 1;
+  }
+
+  /**
    * Prepare message count for quorum.
    *
    * @param quorum the quorum

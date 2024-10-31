@@ -68,6 +68,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
   private Optional<PreparedCertificate> latestPreparedCertificate = Optional.empty();
   private Optional<QbftRound> currentRound = Optional.empty();
+  private boolean isEarlyRoundChangeEnabled = false;
 
   /**
    * Instantiates a new Qbft block height manager.
@@ -213,37 +214,50 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   @Override
   public void roundExpired(final RoundExpiry expire) {
     if (currentRound.isEmpty()) {
-      LOG.error(
+      LOG.info(
           "Received Round timer expiry before round is created timerRound={}", expire.getView());
       return;
     }
 
     QbftRound qbftRound = currentRound.get();
     if (!expire.getView().equals(qbftRound.getRoundIdentifier())) {
-      LOG.trace(
+      LOG.info(
           "Ignoring Round timer expired which does not match current round. round={}, timerRound={}",
           qbftRound.getRoundIdentifier(),
           expire.getView());
       return;
     }
 
+    doRoundChange(qbftRound.getRoundIdentifier().getRoundNumber() + 1);
+  }
+
+  private synchronized void doRoundChange(final int newRoundNumber) {
+
+    if (currentRound.isPresent()
+        && currentRound.get().getRoundIdentifier().getRoundNumber() >= newRoundNumber) {
+      return;
+    }
     LOG.debug(
-        "Round has expired, creating PreparedCertificate and notifying peers. round={}",
-        qbftRound.getRoundIdentifier());
+        "Round has expired or changing based on RC quorum, creating PreparedCertificate and notifying peers. round={}",
+        currentRound.get().getRoundIdentifier());
     final Optional<PreparedCertificate> preparedCertificate =
-        qbftRound.constructPreparedCertificate();
+        currentRound.get().constructPreparedCertificate();
 
     if (preparedCertificate.isPresent()) {
       latestPreparedCertificate = preparedCertificate;
     }
 
-    startNewRound(qbftRound.getRoundIdentifier().getRoundNumber() + 1);
-    qbftRound = currentRound.get();
+    startNewRound(newRoundNumber);
+    if (currentRound.isEmpty()) {
+      LOG.info("Failed to start round ");
+      return;
+    }
+    QbftRound qbftRoundNew = currentRound.get();
 
     try {
       final RoundChange localRoundChange =
           messageFactory.createRoundChange(
-              qbftRound.getRoundIdentifier(), latestPreparedCertificate);
+              qbftRoundNew.getRoundIdentifier(), latestPreparedCertificate);
 
       // Its possible the locally created RoundChange triggers the transmission of a NewRound
       // message - so it must be handled accordingly.
@@ -252,7 +266,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       LOG.warn("Failed to create signed RoundChange message.", e);
     }
 
-    transmitter.multicastRoundChange(qbftRound.getRoundIdentifier(), latestPreparedCertificate);
+    transmitter.multicastRoundChange(qbftRoundNew.getRoundIdentifier(), latestPreparedCertificate);
   }
 
   @Override
@@ -333,23 +347,54 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     final Optional<Collection<RoundChange>> result =
         roundChangeManager.appendRoundChangeMessage(message);
 
-    if (result.isPresent()) {
-      LOG.debug(
-          "Received sufficient RoundChange messages to change round to targetRound={}",
-          targetRound);
-      if (messageAge == MessageAge.FUTURE_ROUND) {
-        startNewRound(targetRound.getRoundNumber());
-      }
-
-      final RoundChangeArtifacts roundChangeMetadata = RoundChangeArtifacts.create(result.get());
-
-      if (finalState.isLocalNodeProposerForRound(targetRound)) {
-        if (currentRound.isEmpty()) {
-          startNewRound(0);
+    if (!isEarlyRoundChangeEnabled) {
+      if (result.isPresent()) {
+        LOG.debug(
+            "Received sufficient RoundChange messages to change round to targetRound={}",
+            targetRound);
+        if (messageAge == MessageAge.FUTURE_ROUND) {
+          startNewRound(targetRound.getRoundNumber());
         }
+
+        final RoundChangeArtifacts roundChangeMetadata = RoundChangeArtifacts.create(result.get());
+
+        if (finalState.isLocalNodeProposerForRound(targetRound)) {
+          if (currentRound.isEmpty()) {
+            startNewRound(0);
+          }
+          currentRound
+              .get()
+              .startRoundWith(roundChangeMetadata, TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
+        }
+      }
+    } else {
+
+      if (currentRound.isEmpty()) {
+        startNewRound(0);
+      }
+      int currentRoundNumber = currentRound.get().getRoundIdentifier().getRoundNumber();
+      // If this node is proposer for the current round, check if quorum is achieved for RC messages
+      // aiming this round
+      if (targetRound.getRoundNumber() == currentRoundNumber
+          && finalState.isLocalNodeProposerForRound(targetRound)
+          && result.isPresent()) {
+
+        final RoundChangeArtifacts roundChangeMetadata = RoundChangeArtifacts.create(result.get());
+
         currentRound
             .get()
             .startRoundWith(roundChangeMetadata, TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
+      }
+
+      // check if f+1 RC messages for future rounds are received
+      QbftRound qbftRound = currentRound.get();
+      Optional<Integer> nextHigherRound =
+          roundChangeManager.futureRCQuorumReceived(qbftRound.getRoundIdentifier());
+      if (nextHigherRound.isPresent()) {
+        LOG.info(
+            "Received sufficient RoundChange messages to change round to targetRound={}",
+            nextHigherRound.get());
+        doRoundChange(nextHigherRound.get());
       }
     }
   }
@@ -389,6 +434,10 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       return MessageAge.CURRENT_ROUND;
     }
     return MessageAge.PRIOR_ROUND;
+  }
+
+  public void isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
+    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
   }
 
   /** The enum Message age. */

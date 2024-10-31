@@ -34,6 +34,7 @@ public class QbftBlockHeightManagerFactory {
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
   private final ValidatorModeTransitionLogger validatorModeTransitionLogger;
+  private boolean isEarlyRoundChangeEnabled = false;
 
   /**
    * Instantiates a new Qbft block height manager factory.
@@ -75,22 +76,39 @@ public class QbftBlockHeightManagerFactory {
     }
   }
 
+  public void isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
+    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
+  }
+
   private BaseQbftBlockHeightManager createNoOpBlockHeightManager(final BlockHeader parentHeader) {
     return new NoOpBlockHeightManager(parentHeader);
   }
 
   private BaseQbftBlockHeightManager createFullBlockHeightManager(final BlockHeader parentHeader) {
-    return new QbftBlockHeightManager(
-        parentHeader,
-        finalState,
+
+    RoundChangeManager roundChangeManager =
         new RoundChangeManager(
             BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
             messageValidatorFactory.createRoundChangeMessageValidator(
                 parentHeader.getNumber() + 1L, parentHeader),
-            finalState.getLocalAddress()),
-        roundFactory,
-        finalState.getClock(),
-        messageValidatorFactory,
-        messageFactory);
+            finalState.getLocalAddress());
+
+    QbftBlockHeightManager qbftBlockHeightManager =
+        new QbftBlockHeightManager(
+            parentHeader,
+            finalState,
+            roundChangeManager,
+            roundFactory,
+            finalState.getClock(),
+            messageValidatorFactory,
+            messageFactory);
+
+    if (isEarlyRoundChangeEnabled) {
+      roundChangeManager.setRCQuorum(
+          BftHelpers.calculateRequiredFutureRCQuorum(finalState.getValidators().size()));
+      qbftBlockHeightManager.isEarlyRoundChangeEnabled(true);
+    }
+
+    return qbftBlockHeightManager;
   }
 }

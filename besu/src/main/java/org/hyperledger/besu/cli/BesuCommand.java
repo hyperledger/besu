@@ -68,6 +68,7 @@ import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.P2PTLSConfigOptions;
 import org.hyperledger.besu.cli.options.unstable.PrivacyPluginOptions;
+import org.hyperledger.besu.cli.options.unstable.QBFTOptions;
 import org.hyperledger.besu.cli.options.unstable.RPCOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
@@ -303,6 +304,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
+  private final QBFTOptions unstableQbftOptions = QBFTOptions.create();
 
   // stable CLI options
   final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -1162,6 +1164,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
+            .put("QBFT options", unstableQbftOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1806,6 +1809,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .isRevertReasonEnabled(isRevertReasonEnabled)
         .isParallelTxProcessingEnabled(
             dataStorageConfiguration.getUnstable().isParallelTxProcessingEnabled())
+        .isEarlyRoundChangeEnabled(unstableQbftOptions.isEarlyRoundChangeEnabled())
         .storageProvider(storageProvider)
         .gasLimitCalculator(
             miningParametersSupplier.get().getTargetGasLimit().isPresent()
