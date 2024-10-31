@@ -178,7 +178,7 @@ public abstract class AbstractTransactionPoolTestBase {
     final ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
                 genesisConfigFile.getConfigOptions(),
-                BigInteger.valueOf(1),
+                Optional.of(BigInteger.valueOf(1)),
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 new PrivacyParameters(),
                 false,

@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -151,7 +152,7 @@ public class ReferenceTestProtocolSchedules {
   private static ProtocolSchedule createSchedule(final GenesisConfigOptions options) {
     return new ProtocolScheduleBuilder(
             options,
-            CHAIN_ID,
+            Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
             PrivacyParameters.DEFAULT,
             false,
