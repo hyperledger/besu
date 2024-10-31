@@ -1,0 +1,118 @@
+/*
+ * Copyright contributors to Hyperledger Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
+
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
+
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+
+import java.util.Optional;
+
+import io.vertx.core.Vertx;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class EngineForkchoiceUpdatedV4 extends AbstractEngineForkchoiceUpdated {
+
+  private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV4.class);
+  protected final Optional<Long> pragueMilestone;
+
+  public EngineForkchoiceUpdatedV4(
+      final Vertx vertx,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final MergeMiningCoordinator mergeCoordinator,
+      final EngineCallListener engineCallListener) {
+    super(vertx, protocolSchedule, protocolContext, mergeCoordinator, engineCallListener);
+    this.pragueMilestone = protocolSchedule.milestoneFor(PRAGUE);
+  }
+
+  @Override
+  public String getName() {
+    return RpcMethod.ENGINE_FORKCHOICE_UPDATED_V4.getMethodName();
+  }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateParameter(
+      final EngineForkchoiceUpdatedParameter fcuParameter,
+      final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes) {
+    if (fcuParameter.getHeadBlockHash() == null) {
+      return ValidationResult.invalid(
+          getInvalidPayloadAttributesError(), "Missing head block hash");
+    } else if (fcuParameter.getSafeBlockHash() == null) {
+      return ValidationResult.invalid(
+          getInvalidPayloadAttributesError(), "Missing safe block hash");
+    } else if (fcuParameter.getFinalizedBlockHash() == null) {
+      return ValidationResult.invalid(
+          getInvalidPayloadAttributesError(), "Missing finalized block hash");
+    }
+    if (maybePayloadAttributes.isPresent()) {
+      if (maybePayloadAttributes.get().getParentBeaconBlockRoot() == null) {
+        return ValidationResult.invalid(
+            getInvalidPayloadAttributesError(), "Missing parent beacon block root hash");
+      }
+      if (maybePayloadAttributes.get().getTargetBlobCount() == null) {
+        return ValidationResult.invalid(
+            getInvalidPayloadAttributesError(), "Missing target blob count");
+      }
+      if (maybePayloadAttributes.get().getMaximumBlobCount() == null) {
+        return ValidationResult.invalid(
+            getInvalidPayloadAttributesError(), "Missing maximum blob count");
+      }
+    }
+    return ValidationResult.valid();
+  }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    return ForkSupportHelper.validateForkSupported(PRAGUE, pragueMilestone, blockTimestamp);
+  }
+
+  @Override
+  protected Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
+      final Object requestId, final EnginePayloadAttributesParameter payloadAttributes) {
+    if (payloadAttributes.getParentBeaconBlockRoot() == null) {
+      LOG.error(
+          "Parent beacon block root hash not present in payload attributes after cancun hardfork");
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
+    }
+    if (payloadAttributes.getTargetBlobCount() == null) {
+      LOG.error("targetBlobCount not present in payload attributes after prague hardfork");
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
+    }
+    if (payloadAttributes.getMaximumBlobCount() == null) {
+      LOG.error("maximumBlobCount not present in payload attributes after prague hardfork");
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
+    }
+
+    if (payloadAttributes.getTimestamp() == 0) {
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
+    }
+
+    if (pragueMilestone.isEmpty() || payloadAttributes.getTimestamp() < pragueMilestone.get()) {
+      return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
+    }
+
+    return Optional.empty();
+  }
+}

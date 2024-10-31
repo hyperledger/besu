@@ -73,6 +73,8 @@ public class EngineForkchoiceUpdatedV2Test extends AbstractEngineForkchoiceUpdat
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             null,
+            null,
+            null,
             null);
 
     final JsonRpcResponse resp = resp(param, Optional.of(payloadParams));
