@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,19 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.retesteth;
+package org.hyperledger.besu.ethereum.core.components;
 
-import java.nio.file.Path;
+import org.hyperledger.besu.ethereum.components.ProtocolScheduleModule;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 
-public class RetestethConfiguration {
+import javax.inject.Singleton;
 
-  private final Path dataPath;
+import dagger.Subcomponent;
 
-  public RetestethConfiguration(final Path dataPath) {
-    this.dataPath = dataPath;
-  }
-
-  Path getDataPath() {
-    return dataPath;
-  }
+@Singleton
+@Subcomponent(
+    modules = {
+      MiningParametersModule.class,
+      ProtocolScheduleModule.class,
+    })
+public interface EthereumCoreComponent {
+  MiningParameters getMiningParameters();
 }

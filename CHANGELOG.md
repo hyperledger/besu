@@ -4,6 +4,7 @@
 - Added isLabelsObserved to LabelledGauge in plugin-api. Default implementation returns false.
 
 ### Breaking Changes
+- Removed Retesteth rpc service and commands [#7833](https://github.com/hyperledger/besu/pull/7783)
 
 ### Upcoming Breaking Changes
 
@@ -12,8 +13,10 @@
 - Create and publish Besu BOM (Bill of Materials) [#7615](https://github.com/hyperledger/besu/pull/7615) 
 - Update Java dependencies [#7786](https://github.com/hyperledger/besu/pull/7786)
 - Add a method to get all the transaction in the pool, to the `TransactionPoolService`, to easily access the transaction pool content from plugins [#7813](https://github.com/hyperledger/besu/pull/7813)
+- Add a method to check if a metric category is enabled to the plugin API [#7832](https://github.com/hyperledger/besu/pull/7832)
 
 ### Bug fixes
+- Fix registering new metric categories from plugins [#7825](https://github.com/hyperledger/besu/pull/7825)
 
 ## 24.10.0
 
