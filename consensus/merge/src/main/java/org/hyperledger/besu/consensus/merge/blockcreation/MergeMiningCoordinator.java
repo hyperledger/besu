@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /** The interface Merge mining coordinator. */
 public interface MergeMiningCoordinator extends MiningCoordinator {
@@ -43,6 +44,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @param feeRecipient the fee recipient
    * @param withdrawals the optional list of withdrawals
    * @param parentBeaconBlockRoot optional root hash of the parent beacon block
+   * @param targetBlobCount optional target blob count
    * @return the payload identifier
    */
   PayloadIdentifier preparePayload(
@@ -51,7 +53,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Bytes32 prevRandao,
       final Address feeRecipient,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot);
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<UInt64> targetBlobCount);
 
   @Override
   default boolean isCompatibleWithEngineApi() {
