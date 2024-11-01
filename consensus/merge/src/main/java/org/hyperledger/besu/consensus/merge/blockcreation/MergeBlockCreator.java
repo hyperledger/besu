@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /** The Merge block creator. */
 class MergeBlockCreator extends AbstractBlockCreator {
@@ -80,6 +81,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final long timestamp,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<UInt64> targetBlobCount,
       final BlockHeader parentHeader) {
 
     return createBlock(
@@ -88,6 +90,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
         withdrawals,
         Optional.of(random),
         parentBeaconBlockRoot,
+        targetBlobCount,
         timestamp,
         false,
         parentHeader);

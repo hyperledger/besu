@@ -298,6 +298,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 timestamp,
                 withdrawals,
                 parentBeaconBlockRoot,
+                targetBlobCount,
                 parentHeader)
             .getBlock();
 
@@ -329,6 +330,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         mergeBlockCreator,
         withdrawals,
         parentBeaconBlockRoot,
+        targetBlobCount,
         parentHeader);
 
     return payloadIdentifier;
@@ -371,6 +373,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final MergeBlockCreator mergeBlockCreator,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<UInt64> targetBlobCount,
       final BlockHeader parentHeader) {
 
     final Supplier<BlockCreationResult> blockCreator =
@@ -381,6 +384,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 timestamp,
                 withdrawals,
                 parentBeaconBlockRoot,
+                targetBlobCount,
                 parentHeader);
 
     LOG.debug(

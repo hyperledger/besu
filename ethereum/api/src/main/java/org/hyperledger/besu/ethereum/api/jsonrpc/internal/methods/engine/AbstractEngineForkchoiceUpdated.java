@@ -225,7 +225,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                     payloadAttributes.getSuggestedFeeRecipient(),
                     finalWithdrawals,
                     Optional.ofNullable(payloadAttributes.getParentBeaconBlockRoot()),
-                    Optional.of(tar)));
+                    Optional.ofNullable(payloadAttributes.getTargetBlobCount())));
 
     payloadId.ifPresent(
         pid ->
@@ -318,6 +318,13 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
           builder
               .setMessage(message)
               .addArgument(() -> payloadAttributes.getParentBeaconBlockRoot().toHexString());
+    }
+    if (payloadAttributes.getTargetBlobCount() != null) {
+      message += ", targetBlobCount: {}";
+      builder =
+          builder
+              .setMessage(message)
+              .addArgument(payloadAttributes::getTargetBlobCount);
     }
     builder.log();
   }

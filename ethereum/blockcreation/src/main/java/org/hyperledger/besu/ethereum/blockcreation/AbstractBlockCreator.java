@@ -69,6 +69,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,6 +153,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         Optional.empty(),
         Optional.empty(),
         Optional.empty(),
+        Optional.empty(),
         timestamp,
         true,
         parentHeader);
@@ -175,6 +177,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         maybeWithdrawals,
         Optional.empty(),
         Optional.empty(),
+        Optional.empty(),
         timestamp,
         true,
         parentHeader);
@@ -186,6 +189,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<Bytes32> maybePrevRandao,
       final Optional<Bytes32> maybeParentBeaconBlockRoot,
+      final Optional<UInt64> maybeTargetBlobCount,
       final long timestamp,
       boolean rewardCoinbase,
       final BlockHeader parentHeader) {
@@ -202,6 +206,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               timestamp,
               maybePrevRandao,
               maybeParentBeaconBlockRoot,
+              maybeTargetBlobCount,
               newProtocolSpec,
               parentHeader);
       final Address miningBeneficiary =
@@ -425,6 +430,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final long timestamp,
       final Optional<Bytes32> maybePrevRandao,
       final Optional<Bytes32> maybeParentBeaconBlockRoot,
+      final Optional<UInt64> maybeTargetBlobCount,
       final ProtocolSpec protocolSpec,
       final BlockHeader parentHeader) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
@@ -465,6 +471,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         .baseFee(baseFee)
         .prevRandao(prevRandao)
         .parentBeaconBlockRoot(parentBeaconBlockRoot)
+        .targetBlobCount(maybeTargetBlobCount.orElse(null))
         .buildProcessableBlockHeader();
   }
 
