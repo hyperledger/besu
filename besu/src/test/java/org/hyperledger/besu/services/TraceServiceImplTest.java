@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldView;
@@ -80,7 +80,7 @@ class TraceServiceImplTest {
             blockchainSetupUtil.getProtocolSchedule(),
             blockchain,
             worldStateArchive,
-            MiningParameters.newDefault());
+            MiningConfiguration.newDefault());
     traceService =
         new TraceServiceImpl(blockchainQueries, blockchainSetupUtil.getProtocolSchedule());
   }

@@ -76,7 +76,7 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
     if (!pendingTransaction.hasPriority()) {
 
       if (context
-              .miningParameters()
+              .miningConfiguration()
               .getMinTransactionGasPrice()
               .compareTo(evaluationContext.getTransactionGasPrice())
           > 0) {
@@ -86,7 +86,7 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
             .addArgument(pendingTransaction::toTraceLog)
             .addArgument(evaluationContext.getTransactionGasPrice()::toHumanReadableString)
             .addArgument(
-                context.miningParameters().getMinTransactionGasPrice()::toHumanReadableString)
+                context.miningConfiguration().getMinTransactionGasPrice()::toHumanReadableString)
             .log();
         return true;
       }

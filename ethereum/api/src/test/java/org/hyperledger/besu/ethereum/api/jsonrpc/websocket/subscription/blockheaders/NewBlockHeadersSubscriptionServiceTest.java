@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -85,7 +85,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
               protocolSchedule,
               blockchain,
               createInMemoryWorldStateArchive(),
-              MiningParameters.newDefault()));
+              MiningConfiguration.newDefault()));
 
   @BeforeEach
   public void before() {
