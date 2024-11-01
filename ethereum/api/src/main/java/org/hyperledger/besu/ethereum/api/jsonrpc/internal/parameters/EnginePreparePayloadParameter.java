@@ -34,6 +34,8 @@ public class EnginePreparePayloadParameter {
   final List<WithdrawalParameter> withdrawals;
   private final Optional<Bytes32> parentBeaconBlockRoot;
 
+  // TODO SLD EIP-7742 add targetBlobsPerBlock or refactor to inherit from
+  // EnginePayloadAttributesParameter?
   @JsonCreator
   public EnginePreparePayloadParameter(
       @JsonProperty("parentHash") final Optional<Hash> parentHash,
@@ -41,8 +43,7 @@ public class EnginePreparePayloadParameter {
       @JsonProperty("timestamp") final Optional<UnsignedLongParameter> timestamp,
       @JsonProperty("prevRandao") final Optional<String> prevRandao,
       @JsonProperty("withdrawals") final Optional<List<WithdrawalParameter>> withdrawals,
-      @JsonProperty("parentBeaconBlockRoot")
-          final Optional<Bytes32> parentBeaconBlockRoot) { // TODO SLD EIP-7742
+      @JsonProperty("parentBeaconBlockRoot") final Optional<Bytes32> parentBeaconBlockRoot) {
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient.orElse(Address.ZERO);
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);

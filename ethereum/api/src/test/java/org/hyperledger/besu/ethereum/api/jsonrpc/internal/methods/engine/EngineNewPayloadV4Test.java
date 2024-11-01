@@ -133,8 +133,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   }
 
   @Test
-  public void shouldReturnErrorIfTargetBlobCountIsMissing() {
-    var resp = respWithMissingTargetBlobCount();
+  public void shouldReturnErrorIfTargetBlobsPerBlockIsMissing() {
+    var resp = respWithMissingTargetBlobsPerBlock();
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     assertThat(fromErrorResp(resp).getMessage())
@@ -143,12 +143,12 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   }
 
   @Test
-  public void shouldReturnInvalidIfTargetBlobCountIsInvalid() {
-    var resp = respWithInvalidTargetBlobCount();
+  public void shouldReturnInvalidIfTargetBlobsPerBlockIsInvalid() {
+    var resp = respWithInvalidTargetBlobsPerBlock();
     final EnginePayloadStatusResult result = fromSuccessResp(resp);
 
     assertThat(result.getStatusAsString()).isEqualTo(INVALID.name());
-    assertThat(result.getError()).isEqualTo("Invalid targetBlobCount");
+    assertThat(result.getError()).isEqualTo("Invalid targetBlobsPerBlock");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -225,7 +225,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
   }
 
-  private JsonRpcResponse respWithMissingTargetBlobCount() {
+  private JsonRpcResponse respWithMissingTargetBlobsPerBlock() {
     final EnginePayloadParameter payload =
         mockEnginePayload(createValidBlockHeaderForV4(Optional.empty()), emptyList());
     final List<String> requestsWithoutRequestId =
@@ -242,14 +242,14 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
                       emptyList(),
                       parentBeaconBlockRootBytes32.toHexString(),
                       requestsWithoutRequestId,
-                      // missing targetBlobCount param
+                      // missing targetBlobsPerBlock param
                     })
             .orElseGet(() -> new Object[] {payload});
     return method.response(
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
   }
 
-  private JsonRpcResponse respWithInvalidTargetBlobCount() {
+  private JsonRpcResponse respWithInvalidTargetBlobsPerBlock() {
     final EnginePayloadParameter payload =
         mockEnginePayload(createValidBlockHeaderForV4(Optional.empty()), emptyList());
     final List<String> requestsWithoutRequestId =
@@ -266,7 +266,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
                       emptyList(),
                       parentBeaconBlockRootBytes32.toHexString(),
                       requestsWithoutRequestId,
-                      "invalidTargetBlobCount"
+                      "invalidTargetBlobsPerBlock"
                     })
             .orElseGet(() -> new Object[] {payload});
     return method.response(

@@ -228,7 +228,7 @@ public class PayloadIdentifierTest {
   }
 
   @Test
-  public void emptyOptionalAndNonEmptyTargetBlobCountYieldDifferentHash() {
+  public void emptyOptionalAndNonEmptyTargetBlobsPerBlockYieldDifferentHash() {
     final Bytes32 prevRandao = Bytes32.random();
     var idForTbc1 =
         PayloadIdentifier.forPayloadParams(
@@ -252,7 +252,7 @@ public class PayloadIdentifierTest {
   }
 
   @Test
-  public void differentTargetBlobCountYieldDifferentHash() {
+  public void differentTargetBlobsPerBlockYieldDifferentHash() {
     final Bytes32 prevRandao = Bytes32.random();
     var idForTbc1 =
         PayloadIdentifier.forPayloadParams(

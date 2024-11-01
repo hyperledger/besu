@@ -185,7 +185,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<Bytes32> maybePrevRandao,
       final Optional<Bytes32> maybeParentBeaconBlockRoot,
-      final Optional<UInt64> maybeTargetBlobCount,
+      final Optional<UInt64> maybeTargetBlobsPerBlock,
       final long timestamp,
       boolean rewardCoinbase,
       final BlockHeader parentHeader) {
@@ -205,7 +205,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   timestamp,
                   maybePrevRandao,
                   maybeParentBeaconBlockRoot,
-                  maybeTargetBlobCount)
+                  maybeTargetBlobsPerBlock)
               .buildProcessableBlockHeader();
 
       final Address miningBeneficiary =

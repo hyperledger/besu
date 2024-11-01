@@ -148,12 +148,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           e);
     }
 
-    final Optional<String> maybeTargetBlobCountParam;
+    final Optional<String> maybeTargetBlobsPerBlockParam;
     try {
-      maybeTargetBlobCountParam = requestContext.getOptionalParameter(4, String.class);
+      maybeTargetBlobsPerBlockParam = requestContext.getOptionalParameter(4, String.class);
     } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcRequestException(
-          "Invalid target blob count parameter (index 4)",
+          "Invalid target blobs per block parameter (index 4)",
           RpcErrorType.INVALID_TARGET_BLOB_COUNT_PARAM,
           e);
     }
@@ -164,7 +164,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             maybeVersionedHashParam,
             maybeParentBeaconBlockRootParam,
             maybeRequestsParam,
-            maybeTargetBlobCountParam);
+            maybeTargetBlobsPerBlockParam);
     if (!parameterValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, parameterValidationResult);
     }
@@ -223,16 +223,16 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
     }
 
-    final Optional<UInt64> maybeTargetBlobCount;
+    final Optional<UInt64> maybeTargetBlobsPerBlock;
     try {
-      maybeTargetBlobCount = maybeTargetBlobCountParam.map(UInt64::fromHexString);
+      maybeTargetBlobsPerBlock = maybeTargetBlobsPerBlockParam.map(UInt64::fromHexString);
     } catch (RuntimeException ex) {
       return respondWithInvalid(
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
           INVALID,
-          "Invalid targetBlobCount");
+          "Invalid targetBlobsPerBlock");
     }
 
     if (mergeContext.get().isSyncing()) {
@@ -303,7 +303,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsHash).orElse(null),
-            maybeTargetBlobCount.orElse(null),
+            maybeTargetBlobsPerBlock.orElse(null),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -482,7 +482,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final Optional<List<String>> maybeVersionedHashParam,
       final Optional<String> maybeBeaconBlockRootParam,
       final Optional<List<String>> maybeRequestsParam,
-      final Optional<String> maybeTargetBlobCountParam) {
+      final Optional<String> maybeTargetBlobsPerBlockParam) {
     return ValidationResult.valid();
   }
 

@@ -81,7 +81,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final long timestamp,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<Bytes32> parentBeaconBlockRoot,
-      final Optional<UInt64> targetBlobCount,
+      final Optional<UInt64> targetBlobsPerBlock,
       final BlockHeader parentHeader) {
 
     return createBlock(
@@ -90,7 +90,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
         withdrawals,
         Optional.of(random),
         parentBeaconBlockRoot,
-        targetBlobCount,
+        targetBlobsPerBlock,
         timestamp,
         false,
         parentHeader);

@@ -221,8 +221,7 @@ public final class GenesisState {
         .requestsHash(isPragueAtGenesis(genesis) ? Hash.EMPTY_REQUESTS_HASH : null)
         .targetBlobsPerBlock(
             isPragueAtGenesis(genesis)
-                // TODO SLD EIP-7742 Currently defaulting to null due to dependency on web3j
-                // BlockHeader in CodeDelegationTransactionAcceptanceTest
+                // TODO SLD EIP-7742 should we enforce a value instead of allowing null?
                 ? genesis.getTargetBlobsPerBlock().map(UInt64::fromHexString).orElse(null)
                 : null)
         .buildBlockHeader();
