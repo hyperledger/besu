@@ -56,7 +56,9 @@ public class BlobSizeTransactionSelector extends AbstractTransactionSelector {
     if (tx.getType().supportsBlob()) {
 
       final var remainingBlobGas =
-          context.gasLimitCalculator().currentBlobGasLimit()
+          context
+                  .gasLimitCalculator()
+                  .currentBlobGasLimit() // TODO SLD EIP-7742 max blobs may change
               - transactionSelectionResults.getCumulativeBlobGasUsed();
 
       if (remainingBlobGas == 0) {
