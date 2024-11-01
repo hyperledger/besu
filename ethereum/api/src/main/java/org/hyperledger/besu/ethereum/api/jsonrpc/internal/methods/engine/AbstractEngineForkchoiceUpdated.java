@@ -224,7 +224,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                     payloadAttributes.getPrevRandao(),
                     payloadAttributes.getSuggestedFeeRecipient(),
                     finalWithdrawals,
-                    Optional.ofNullable(payloadAttributes.getParentBeaconBlockRoot())));
+                    Optional.ofNullable(payloadAttributes.getParentBeaconBlockRoot()),
+                    Optional.of(tar)));
 
     payloadId.ifPresent(
         pid ->

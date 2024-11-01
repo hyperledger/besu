@@ -41,7 +41,8 @@ public class EnginePreparePayloadParameter {
       @JsonProperty("timestamp") final Optional<UnsignedLongParameter> timestamp,
       @JsonProperty("prevRandao") final Optional<String> prevRandao,
       @JsonProperty("withdrawals") final Optional<List<WithdrawalParameter>> withdrawals,
-      @JsonProperty("parentBeaconBlockRoot") final Optional<Bytes32> parentBeaconBlockRoot) {
+      @JsonProperty("parentBeaconBlockRoot")
+          final Optional<Bytes32> parentBeaconBlockRoot) { // TODO SLD EIP-7742
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient.orElse(Address.ZERO);
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
