@@ -57,6 +57,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -407,8 +408,17 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   }
 
   @Module
+  public static class ThreadBesuNodeRunnerModule {
+    @Provides
+    @Singleton
+    public ThreadBesuNodeRunner provideThreadBesuNodeRunner() {
+      return new ThreadBesuNodeRunner();
+    }
+  }
+
+  @Module
   @SuppressWarnings("CloseableProvides")
-  static class BesuControllerModule {
+  public static class BesuControllerModule {
     @Provides
     @Singleton
     public SynchronizerConfiguration provideSynchronizationConfiguration() {
@@ -579,7 +589,16 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   }
 
   @Module
-  static class MockBesuCommandModule {
+  public static class ObservableMetricsSystemModule {
+    @Provides
+    @Singleton
+    public ObservableMetricsSystem provideObservableMetricsSystem() {
+      return new NoOpMetricsSystem();
+    }
+  }
+
+  @Module
+  public static class MockBesuCommandModule {
 
     @Provides
     BesuCommand provideBesuCommand(final BesuPluginContextImpl pluginContext) {
@@ -610,6 +629,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       modules = {
         ThreadBesuNodeRunner.BesuControllerModule.class,
         ThreadBesuNodeRunner.MockBesuCommandModule.class,
+        ThreadBesuNodeRunner.ObservableMetricsSystemModule.class,
+        ThreadBesuNodeRunnerModule.class,
         BonsaiCachedMerkleTrieLoaderModule.class,
         MetricsSystemModule.class,
         ThreadBesuNodeRunner.BesuNodeProviderModule.class,
@@ -625,5 +646,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     RpcEndpointServiceImpl rpcEndpointService();
 
     BlockchainServiceImpl blockchainService();
+
+    ObservableMetricsSystem getObservableMetricsSystem();
+
+    ThreadBesuNodeRunner getThreadBesuNodeRunner();
   }
 }

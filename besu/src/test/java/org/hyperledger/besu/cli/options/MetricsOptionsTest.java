@@ -15,14 +15,26 @@
 package org.hyperledger.besu.cli.options;
 
 import org.hyperledger.besu.cli.options.stable.MetricsOptions;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
+import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class MetricsOptionsTest
     extends AbstractCLIOptionsTest<MetricsConfiguration.Builder, MetricsOptions> {
+  private MetricCategoryRegistryImpl categoryRegistry;
+
+  @BeforeEach
+  public void setUp() {
+    categoryRegistry = new MetricCategoryRegistryImpl();
+    categoryRegistry.addCategories(BesuMetricCategory.class);
+    categoryRegistry.addCategories(StandardMetricCategory.class);
+  }
 
   @Override
   protected MetricsConfiguration.Builder createDefaultDomainObject() {
@@ -39,11 +51,18 @@ public class MetricsOptionsTest
   @Override
   protected MetricsOptions optionsFromDomainObject(
       final MetricsConfiguration.Builder domainObject) {
-    return MetricsOptions.fromConfiguration(domainObject.build());
+    final var options = MetricsOptions.fromConfiguration(domainObject.build());
+    options.setMetricCategoryRegistry(categoryRegistry);
+    return options;
   }
 
   @Override
   protected MetricsOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getMetricsOptions();
+  }
+
+  @Override
+  protected String[] getNonOptionFields() {
+    return new String[] {"metricCategoryRegistry"};
   }
 }
