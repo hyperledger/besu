@@ -63,7 +63,7 @@ public class PayloadIdentifier implements Quantity {
    * @param feeRecipient the fee recipient
    * @param withdrawals the withdrawals
    * @param parentBeaconBlockRoot the parent beacon block root
-   * @param targetBlobCount the target blob count
+   * @param targetBlobsPerBlock the target blobs per block
    * @return the payload identifier
    */
   public static PayloadIdentifier forPayloadParams(
@@ -73,7 +73,7 @@ public class PayloadIdentifier implements Quantity {
       final Address feeRecipient,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<Bytes32> parentBeaconBlockRoot,
-      final Optional<UInt64> targetBlobCount) {
+      final Optional<UInt64> targetBlobsPerBlock) {
 
     return new PayloadIdentifier(
         timestamp
@@ -91,7 +91,7 @@ public class PayloadIdentifier implements Quantity {
                         .orElse(0)
                 << 32
             ^ ((long) parentBeaconBlockRoot.hashCode()) << 40
-            ^ ((long) targetBlobCount.hashCode()) << 48);
+            ^ ((long) targetBlobsPerBlock.hashCode()) << 48);
   }
 
   @Override

@@ -59,7 +59,7 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
       final Optional<List<String>> maybeVersionedHashParam,
       final Optional<String> maybeBeaconBlockRootParam,
       final Optional<List<String>> maybeRequestsParam,
-      final Optional<String> maybeTargetBlobCountParam) {
+      final Optional<String> maybeTargetBlobsPerBlockParam) {
     if (payloadParameter.getBlobGasUsed() != null) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS, "Unexpected blob gas used field present");

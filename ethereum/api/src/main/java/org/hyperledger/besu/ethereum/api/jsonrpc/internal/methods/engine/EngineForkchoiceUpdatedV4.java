@@ -71,9 +71,9 @@ public class EngineForkchoiceUpdatedV4 extends AbstractEngineForkchoiceUpdated {
         return ValidationResult.invalid(
             getInvalidPayloadAttributesError(), "Missing parent beacon block root hash");
       }
-      if (maybePayloadAttributes.get().getTargetBlobCount() == null) {
+      if (maybePayloadAttributes.get().getTargetBlobsPerBlock() == null) {
         return ValidationResult.invalid(
-            getInvalidPayloadAttributesError(), "Missing target blob count");
+            getInvalidPayloadAttributesError(), "Missing target blobs per block");
       }
       if (maybePayloadAttributes.get().getMaximumBlobCount() == null) {
         return ValidationResult.invalid(
@@ -96,8 +96,8 @@ public class EngineForkchoiceUpdatedV4 extends AbstractEngineForkchoiceUpdated {
           "Parent beacon block root hash not present in payload attributes after cancun hardfork");
       return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
     }
-    if (payloadAttributes.getTargetBlobCount() == null) {
-      LOG.error("targetBlobCount not present in payload attributes after prague hardfork");
+    if (payloadAttributes.getTargetBlobsPerBlock() == null) {
+      LOG.error("targetBlobsPerBlock not present in payload attributes after prague hardfork");
       return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
     }
     if (payloadAttributes.getMaximumBlobCount() == null) {

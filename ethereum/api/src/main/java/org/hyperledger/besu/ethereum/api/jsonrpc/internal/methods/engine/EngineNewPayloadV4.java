@@ -57,7 +57,7 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
       final Optional<List<String>> maybeVersionedHashParam,
       final Optional<String> maybeBeaconBlockRootParam,
       final Optional<List<String>> maybeRequestsParam,
-      final Optional<String> maybeTargetBlobCountParam) {
+      final Optional<String> maybeTargetBlobsPerBlockParam) {
     if (payloadParameter.getBlobGasUsed() == null) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS, "Missing blob gas used field");
@@ -74,9 +74,9 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
     } else if (maybeRequestsParam.isEmpty()) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS, "Missing execution requests field");
-    } else if (maybeTargetBlobCountParam.isEmpty()) {
+    } else if (maybeTargetBlobsPerBlockParam.isEmpty()) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_TARGET_BLOB_COUNT_PARAM, "Missing targetBlobCount field");
+          RpcErrorType.INVALID_TARGET_BLOB_COUNT_PARAM, "Missing targetBlobsPerBlock field");
     } else {
       return ValidationResult.valid();
     }
