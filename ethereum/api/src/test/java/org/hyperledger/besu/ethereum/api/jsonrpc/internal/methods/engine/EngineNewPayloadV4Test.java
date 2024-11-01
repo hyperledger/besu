@@ -156,7 +156,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
       final Optional<List<Withdrawal>> maybeWithdrawals) {
     return createBlockHeaderFixtureForV3(maybeWithdrawals)
         .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS))
-        .targetBlobCount(VALID_TARGET_BLOB_COUNT)
+        .targetBlobsPerBlock(VALID_TARGET_BLOB_COUNT)
         .buildHeader();
   }
 
