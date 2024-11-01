@@ -20,6 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -92,11 +93,21 @@ public class PragueAcceptanceTestHelper {
       assertThat(newBlockHash).isNotEmpty();
     }
 
+    final String targetBlobCount = "0x3";
     final Call newPayloadRequest =
         createEngineCall(
             createNewPayloadRequest(
-                executionPayload.toString(), parentBeaconBlockRoot, executionRequests.toString()));
+                executionPayload.toString(),
+                parentBeaconBlockRoot,
+                executionRequests.toString(),
+                targetBlobCount));
     try (final Response newPayloadResponse = newPayloadRequest.execute()) {
+      final InputStream responseStr = newPayloadResponse.body().byteStream();
+      JsonNode jsonNode = mapper.readTree(responseStr);
+      if (jsonNode.has("error")) {
+        throw new AssertionError(
+            "Unexpected engine_newPayload error: " + jsonNode.get("error").get("message").asText());
+      }
       assertThat(newPayloadResponse.code()).isEqualTo(200);
     }
 
@@ -148,7 +159,9 @@ public class PragueAcceptanceTestHelper {
               + "      \"prevRandao\": \"0x0000000000000000000000000000000000000000000000000000000000000000\","
               + "      \"suggestedFeeRecipient\": \"0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b\","
               + "      \"withdrawals\": [],"
-              + "      \"parentBeaconBlockRoot\": \"0x0000000000000000000000000000000000000000000000000000000000000000\""
+              + "      \"parentBeaconBlockRoot\": \"0x0000000000000000000000000000000000000000000000000000000000000000\","
+              + "      \"targetBlobCount\": \"0x3\","
+              + "      \"maximumBlobCount\": \"0x6\""
               + "    }";
     }
 
@@ -171,7 +184,8 @@ public class PragueAcceptanceTestHelper {
   private String createNewPayloadRequest(
       final String executionPayload,
       final String parentBeaconBlockRoot,
-      final String executionRequests) {
+      final String executionRequests,
+      final String targetBlobCount) {
     return "{"
         + "  \"jsonrpc\": \"2.0\","
         + "  \"method\": \"engine_newPayloadV4\","
@@ -183,7 +197,11 @@ public class PragueAcceptanceTestHelper {
         + "\""
         + ","
         + executionRequests
-        + "],"
+        + ","
+        + "\""
+        + targetBlobCount
+        + "\""
+        + "]," // end params
         + "  \"id\": 67"
         + "}";
   }

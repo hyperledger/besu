@@ -34,6 +34,7 @@ public class BlobCache {
   public BlobCache() {
     this.cache =
         Caffeine.newBuilder()
+            // TODO SLD EIP-7742 max blobs may change
             .maximumSize(6 * 32 * 3L) // 6 blobs max per 32 slots per 3 epochs
             .expireAfterWrite(
                 3 * 32 * 12L, TimeUnit.SECONDS) // 3 epochs of 32 slots which take 12 seconds each.

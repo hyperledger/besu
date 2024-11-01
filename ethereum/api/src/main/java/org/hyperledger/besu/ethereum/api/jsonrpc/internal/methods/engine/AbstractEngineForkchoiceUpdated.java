@@ -321,10 +321,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     }
     if (payloadAttributes.getTargetBlobCount() != null) {
       message += ", targetBlobCount: {}";
-      builder =
-          builder
-              .setMessage(message)
-              .addArgument(payloadAttributes::getTargetBlobCount);
+      builder = builder.setMessage(message).addArgument(payloadAttributes::getTargetBlobCount);
     }
     builder.log();
   }

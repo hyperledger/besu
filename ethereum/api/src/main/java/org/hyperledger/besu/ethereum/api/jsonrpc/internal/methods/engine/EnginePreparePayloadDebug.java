@@ -115,6 +115,8 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
                     param.getFeeRecipient(),
                     Optional.of(withdrawals),
                     param.getParentBeaconBlockRoot(),
-                    Optional.empty())); // TODO SLD EIP-7742
+                    // TODO SLD EIP-7742 add targetBlobCount or refactor to inherit from
+                    // EnginePayloadAttributesParameter?
+                    Optional.empty()));
   }
 }
