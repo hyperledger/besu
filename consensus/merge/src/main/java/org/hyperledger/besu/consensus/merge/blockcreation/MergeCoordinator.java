@@ -270,7 +270,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             prevRandao,
             feeRecipient,
             withdrawals,
-            parentBeaconBlockRoot);
+            parentBeaconBlockRoot,
+            Optional.empty()); // TODO SLD EIP-7742
 
     if (blockCreationTasks.containsKey(payloadIdentifier)) {
       LOG.debug(
