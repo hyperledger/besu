@@ -46,7 +46,7 @@ dependencies {
   implementation 'org.hyperledger.besu:arithmetic'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation'org.hyperledger.besu:gnark'
-  implementation("io.consensys.protocols:jc-kzg-4844:2.0.0")
+  implementation 'io.consensys.protocols:jc-kzg-4844:2.0.0'
 
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
   compileOnly 'io.vertx:vertx-core'
