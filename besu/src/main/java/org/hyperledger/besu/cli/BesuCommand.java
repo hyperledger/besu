@@ -596,14 +596,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       defaultValue = "localhost,127.0.0.1")
   private final JsonRPCAllowlistHostsProperty hostsAllowlist = new JsonRPCAllowlistHostsProperty();
 
-  @Option(
-      names = {"--host-whitelist"},
-      hidden = true,
-      paramLabel = "<hostname>[,<hostname>...]... or * or all",
-      description =
-          "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
-  private final JsonRPCAllowlistHostsProperty hostsWhitelist = new JsonRPCAllowlistHostsProperty();
-
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
       names = {"--color-enabled"},

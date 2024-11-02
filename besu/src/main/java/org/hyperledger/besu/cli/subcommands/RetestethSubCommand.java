@@ -80,7 +80,7 @@ public class RetestethSubCommand implements Runnable {
   private final Integer rpcHttpPort = RETESTETH_PORT;
 
   @Option(
-      names = {"--host-allowlist", "--host-whitelist"},
+      names = {"--host-allowlist"},
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
       description =
           "Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
