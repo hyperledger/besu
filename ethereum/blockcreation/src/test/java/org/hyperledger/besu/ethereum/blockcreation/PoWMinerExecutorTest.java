@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -51,7 +51,7 @@ public class PoWMinerExecutorTest {
 
   @Test
   public void startingMiningWithoutCoinbaseThrowsException() {
-    final MiningParameters miningParameters = MiningParameters.newDefault();
+    final MiningConfiguration miningConfiguration = MiningConfiguration.newDefault();
 
     final TransactionPool transactionPool = createTransactionPool();
 
@@ -60,7 +60,7 @@ public class PoWMinerExecutorTest {
             null,
             null,
             transactionPool,
-            miningParameters,
+            miningConfiguration,
             new DefaultBlockScheduler(1L, 10, TestClock.fixed()),
             new EpochCalculator.DefaultEpochCalculator(),
             ethScheduler);
@@ -72,7 +72,7 @@ public class PoWMinerExecutorTest {
 
   @Test
   public void settingCoinbaseToNullThrowsException() {
-    final MiningParameters miningParameters = MiningParameters.newDefault();
+    final MiningConfiguration miningConfiguration = MiningConfiguration.newDefault();
 
     final TransactionPool transactionPool = createTransactionPool();
 
@@ -81,7 +81,7 @@ public class PoWMinerExecutorTest {
             null,
             null,
             transactionPool,
-            miningParameters,
+            miningConfiguration,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
             new EpochCalculator.DefaultEpochCalculator(),
             ethScheduler);

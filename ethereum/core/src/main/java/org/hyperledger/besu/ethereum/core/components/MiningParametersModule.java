@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.core.components;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 
 import javax.inject.Named;
 
@@ -29,36 +29,36 @@ public class MiningParametersModule {
 
   @Provides
   @Named("defaultMiningParameters")
-  protected MiningParameters createImmutableMiningParams() {
-    return ImmutableMiningParameters.builder().build();
+  protected MiningConfiguration createImmutableMiningParams() {
+    return ImmutableMiningConfiguration.builder().build();
   }
 
   @Provides
   @Named("noMining")
-  protected MiningParameters createNoMining() {
-    return ImmutableMiningParameters.builder()
+  protected MiningConfiguration createNoMining() {
+    return ImmutableMiningConfiguration.builder()
         .mutableInitValues(
-            ImmutableMiningParameters.MutableInitValues.builder().isMiningEnabled(false).build())
+            ImmutableMiningConfiguration.MutableInitValues.builder().isMiningEnabled(false).build())
         .build();
   }
 
   @Provides
   @Named("zeroGas")
-  MiningParameters createZeroGasMining(final @Named("emptyCoinbase") Address coinbase) {
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
+  MiningConfiguration createZeroGasMining(final @Named("emptyCoinbase") Address coinbase) {
+    final MiningConfiguration miningConfiguration =
+        ImmutableMiningConfiguration.builder()
             .mutableInitValues(
-                ImmutableMiningParameters.MutableInitValues.builder()
+                ImmutableMiningConfiguration.MutableInitValues.builder()
                     .isMiningEnabled(true)
                     .minTransactionGasPrice(Wei.ZERO)
                     .coinbase(coinbase)
                     .build())
             .build();
-    return miningParameters;
+    return miningConfiguration;
   }
 
   @Provides
-  MiningParameters provideMiningParameters() {
+  MiningConfiguration provideMiningParameters() {
     throw new IllegalStateException("unimplemented");
   }
 }

@@ -34,27 +34,29 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @Value.Enclosing
-public abstract class MiningParameters {
+public abstract class MiningConfiguration {
   public static final PositiveNumber DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME =
       PositiveNumber.fromInt((int) Duration.ofSeconds(5).toMillis());
   public static final PositiveNumber DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME =
       PositiveNumber.fromInt(75);
-  public static final MiningParameters MINING_DISABLED =
-      ImmutableMiningParameters.builder()
+  public static final MiningConfiguration MINING_DISABLED =
+      ImmutableMiningConfiguration.builder()
           .mutableInitValues(
-              ImmutableMiningParameters.MutableInitValues.builder().isMiningEnabled(false).build())
+              ImmutableMiningConfiguration.MutableInitValues.builder()
+                  .isMiningEnabled(false)
+                  .build())
           .build();
 
   @VisibleForTesting
-  public static final MiningParameters newDefault() {
-    return ImmutableMiningParameters.builder().build();
+  public static final MiningConfiguration newDefault() {
+    return ImmutableMiningConfiguration.builder().build();
   }
 
   public boolean isMiningEnabled() {
     return getMutableRuntimeValues().miningEnabled;
   }
 
-  public MiningParameters setMiningEnabled(final boolean miningEnabled) {
+  public MiningConfiguration setMiningEnabled(final boolean miningEnabled) {
     getMutableRuntimeValues().miningEnabled = miningEnabled;
     return this;
   }
@@ -63,7 +65,7 @@ public abstract class MiningParameters {
     return getMutableRuntimeValues().extraData;
   }
 
-  public MiningParameters setExtraData(final Bytes extraData) {
+  public MiningConfiguration setExtraData(final Bytes extraData) {
     getMutableRuntimeValues().extraData = extraData;
     return this;
   }
@@ -72,7 +74,7 @@ public abstract class MiningParameters {
     return getMutableRuntimeValues().minTransactionGasPrice;
   }
 
-  public MiningParameters setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
+  public MiningConfiguration setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
     getMutableRuntimeValues().minTransactionGasPrice = minTransactionGasPrice;
     return this;
   }
@@ -81,7 +83,7 @@ public abstract class MiningParameters {
     return getMutableRuntimeValues().minPriorityFeePerGas;
   }
 
-  public MiningParameters setMinPriorityFeePerGas(final Wei minPriorityFeePerGas) {
+  public MiningConfiguration setMinPriorityFeePerGas(final Wei minPriorityFeePerGas) {
     getMutableRuntimeValues().minPriorityFeePerGas = minPriorityFeePerGas;
     return this;
   }
@@ -90,7 +92,7 @@ public abstract class MiningParameters {
     return getMutableRuntimeValues().coinbase;
   }
 
-  public MiningParameters setCoinbase(final Address coinbase) {
+  public MiningConfiguration setCoinbase(final Address coinbase) {
     getMutableRuntimeValues().coinbase = Optional.of(coinbase);
     return this;
   }
@@ -99,7 +101,7 @@ public abstract class MiningParameters {
     return getMutableRuntimeValues().targetGasLimit;
   }
 
-  public MiningParameters setTargetGasLimit(final long targetGasLimit) {
+  public MiningConfiguration setTargetGasLimit(final long targetGasLimit) {
     getMutableRuntimeValues().targetGasLimit = OptionalLong.of(targetGasLimit);
     return this;
   }
@@ -108,7 +110,7 @@ public abstract class MiningParameters {
     return getMutableRuntimeValues().minBlockOccupancyRatio;
   }
 
-  public MiningParameters setMinBlockOccupancyRatio(final double minBlockOccupancyRatio) {
+  public MiningConfiguration setMinBlockOccupancyRatio(final double minBlockOccupancyRatio) {
     getMutableRuntimeValues().minBlockOccupancyRatio = minBlockOccupancyRatio;
     return this;
   }
@@ -117,7 +119,7 @@ public abstract class MiningParameters {
     return getMutableRuntimeValues().nonceGenerator;
   }
 
-  public MiningParameters setNonceGenerator(final Iterable<Long> nonceGenerator) {
+  public MiningConfiguration setNonceGenerator(final Iterable<Long> nonceGenerator) {
     getMutableRuntimeValues().nonceGenerator = Optional.of(nonceGenerator);
     return this;
   }
@@ -126,12 +128,12 @@ public abstract class MiningParameters {
     return getMutableRuntimeValues().blockPeriodSeconds;
   }
 
-  public MiningParameters setBlockPeriodSeconds(final int blockPeriodSeconds) {
+  public MiningConfiguration setBlockPeriodSeconds(final int blockPeriodSeconds) {
     getMutableRuntimeValues().blockPeriodSeconds = OptionalInt.of(blockPeriodSeconds);
     return this;
   }
 
-  public MiningParameters setEmptyBlockPeriodSeconds(final int emptyBlockPeriodSeconds) {
+  public MiningConfiguration setEmptyBlockPeriodSeconds(final int emptyBlockPeriodSeconds) {
     getMutableRuntimeValues().emptyBlockPeriodSeconds = OptionalInt.of(emptyBlockPeriodSeconds);
     return this;
   }
@@ -207,7 +209,7 @@ public abstract class MiningParameters {
     Wei DEFAULT_MIN_PRIORITY_FEE_PER_GAS = Wei.ZERO;
     double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
 
-    MutableInitValues DEFAULT = ImmutableMiningParameters.MutableInitValues.builder().build();
+    MutableInitValues DEFAULT = ImmutableMiningConfiguration.MutableInitValues.builder().build();
 
     @Value.Default
     default boolean isMiningEnabled() {
@@ -335,7 +337,7 @@ public abstract class MiningParameters {
     long DEFAULT_POS_BLOCK_CREATION_MAX_TIME = Duration.ofSeconds(12).toMillis();
     long DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION = Duration.ofMillis(500).toMillis();
 
-    MiningParameters.Unstable DEFAULT = ImmutableMiningParameters.Unstable.builder().build();
+    MiningConfiguration.Unstable DEFAULT = ImmutableMiningConfiguration.Unstable.builder().build();
 
     @Value.Default
     default int getRemoteSealersLimit() {

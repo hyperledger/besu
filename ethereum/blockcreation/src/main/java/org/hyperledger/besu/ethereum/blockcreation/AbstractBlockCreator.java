@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
@@ -84,7 +84,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private final ExtraDataCalculator extraDataCalculator;
   private final TransactionPool transactionPool;
-  protected final MiningParameters miningParameters;
+  protected final MiningConfiguration miningConfiguration;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
   protected final BlockHeaderFunctions blockHeaderFunctions;
@@ -92,14 +92,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
   protected AbstractBlockCreator(
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final EthScheduler ethScheduler) {
-    this.miningParameters = miningParameters;
+    this.miningConfiguration = miningConfiguration;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.extraDataCalculator = extraDataCalculator;
     this.transactionPool = transactionPool;
@@ -219,7 +219,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throwIfStopped();
 
       final PluginTransactionSelector pluginTransactionSelector =
-          miningParameters.getTransactionSelectionService().createPluginTransactionSelector();
+          miningConfiguration.getTransactionSelectionService().createPluginTransactionSelector();
 
       final BlockAwareOperationTracer operationTracer =
           pluginTransactionSelector.getOperationTracer();
@@ -377,7 +377,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
-            miningParameters,
+            miningConfiguration,
             transactionProcessor,
             protocolContext.getBlockchain(),
             disposableWorldState,
@@ -433,7 +433,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             .getGasLimitCalculator()
             .nextGasLimit(
                 parentHeader.getGasLimit(),
-                miningParameters.getTargetGasLimit().orElse(parentHeader.getGasLimit()),
+                miningConfiguration.getTargetGasLimit().orElse(parentHeader.getGasLimit()),
                 newBlockNumber);
 
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
@@ -457,7 +457,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(null);
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
-        .coinbase(miningParameters.getCoinbase().orElseThrow())
+        .coinbase(miningConfiguration.getCoinbase().orElseThrow())
         .difficulty(Difficulty.of(difficulty))
         .number(newBlockNumber)
         .gasLimit(gasLimit)

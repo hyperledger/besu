@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
@@ -40,7 +40,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
-      final MiningParameters miningParams,
+      final MiningConfiguration miningParams,
       final AbstractBlockScheduler blockScheduler,
       final EpochCalculator epochCalculator,
       final EthScheduler ethScheduler) {
@@ -62,7 +62,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
       final Subscribers<MinedBlockObserver> observers,
       final Subscribers<PoWObserver> ethHashObservers,
       final BlockHeader parentHeader) {
-    if (miningParameters.getCoinbase().isEmpty()) {
+    if (miningConfiguration.getCoinbase().isEmpty()) {
       throw new CoinbaseNotSetException("Unable to start mining without a coinbase.");
     }
     return super.startAsyncMining(observers, ethHashObservers, parentHeader);
@@ -79,7 +79,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
         protocolSchedule.getForNextBlockHeader(parentHeader, 0);
     final PoWSolver solver =
         new PoWSolver(
-            miningParameters,
+            miningConfiguration,
             nextBlockProtocolSpec.getPoWHasher().get(),
             stratumMiningEnabled,
             ethHashObservers,
@@ -87,8 +87,8 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     final Function<BlockHeader, PoWBlockCreator> blockCreator =
         (header) ->
             new PoWBlockCreator(
-                miningParameters,
-                parent -> miningParameters.getExtraData(),
+                miningConfiguration,
+                parent -> miningConfiguration.getExtraData(),
                 transactionPool,
                 protocolContext,
                 protocolSchedule,
@@ -103,7 +103,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     if (coinbase == null) {
       throw new IllegalArgumentException("Coinbase cannot be unset.");
     } else {
-      miningParameters.setCoinbase(Address.wrap(coinbase.copy()));
+      miningConfiguration.setCoinbase(Address.wrap(coinbase.copy()));
     }
   }
 
@@ -113,7 +113,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
 
   @Override
   public Optional<Address> getCoinbase() {
-    return miningParameters.getCoinbase();
+    return miningConfiguration.getCoinbase();
   }
 
   public EpochCalculator getEpochCalculator() {
