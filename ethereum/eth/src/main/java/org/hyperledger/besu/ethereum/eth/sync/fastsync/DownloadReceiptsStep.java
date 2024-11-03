@@ -22,10 +22,16 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.FutureUtils;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -33,24 +39,69 @@ import java.util.function.Function;
 
 public class DownloadReceiptsStep
     implements Function<List<Block>, CompletableFuture<List<BlockWithReceipts>>> {
+
+  private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
+  private final PeerTaskExecutor peerTaskExecutor;
+  private final SynchronizerConfiguration synchronizerConfiguration;
   private final MetricsSystem metricsSystem;
 
-  public DownloadReceiptsStep(final EthContext ethContext, final MetricsSystem metricsSystem) {
+  public DownloadReceiptsStep(
+      final ProtocolSchedule protocolSchedule,
+      final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final MetricsSystem metricsSystem) {
+    this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
+    this.peerTaskExecutor = peerTaskExecutor;
+    this.synchronizerConfiguration = synchronizerConfiguration;
     this.metricsSystem = metricsSystem;
   }
 
   @Override
   public CompletableFuture<List<BlockWithReceipts>> apply(final List<Block> blocks) {
     final List<BlockHeader> headers = blocks.stream().map(Block::getHeader).collect(toList());
-    final CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> getReceipts =
-        GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem).run();
-    final CompletableFuture<List<BlockWithReceipts>> combineWithBlocks =
-        getReceipts.thenApply(
-            receiptsByHeader -> combineBlocksAndReceipts(blocks, receiptsByHeader));
-    FutureUtils.propagateCancellation(combineWithBlocks, getReceipts);
-    return combineWithBlocks;
+    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+      return ethContext
+          .getScheduler()
+          .scheduleServiceTask(() -> getReceiptsWithPeerTaskSystem(headers))
+          .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts));
+
+    } else {
+      return GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem)
+          .run()
+          .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts));
+    }
+  }
+
+  private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>>
+      getReceiptsWithPeerTaskSystem(final List<BlockHeader> headers) {
+    Map<BlockHeader, List<TransactionReceipt>> getReceipts = new HashMap<>();
+    do {
+      GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(headers, protocolSchedule);
+      PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
+          peerTaskExecutor.execute(task);
+      if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
+          && getReceiptsResult.result().isPresent()) {
+        Map<BlockHeader, List<TransactionReceipt>> taskResult = getReceiptsResult.result().get();
+        taskResult
+            .keySet()
+            .forEach(
+                (blockHeader) ->
+                    getReceipts.merge(
+                        blockHeader,
+                        taskResult.get(blockHeader),
+                        (initialReceipts, newReceipts) -> {
+                          throw new IllegalStateException(
+                              "Unexpectedly got receipts for block header already populated!");
+                        }));
+        // remove all the headers we found receipts for
+        headers.removeAll(getReceipts.keySet());
+      }
+      // repeat until all headers have receipts
+    } while (!headers.isEmpty());
+    return CompletableFuture.completedFuture(getReceipts);
   }
 
   private List<BlockWithReceipts> combineBlocksAndReceipts(
@@ -60,8 +111,17 @@ public class DownloadReceiptsStep
             block -> {
               final List<TransactionReceipt> receipts =
                   receiptsByHeader.getOrDefault(block.getHeader(), emptyList());
+              if (block.getBody().getTransactions().size() != receipts.size()) {
+                throw new IllegalStateException(
+                    "PeerTask response code was success, but incorrect number of receipts returned. Header hash: "
+                        + block.getHeader().getHash()
+                        + ", Transactions: "
+                        + block.getBody().getTransactions().size()
+                        + ", receipts: "
+                        + receipts.size());
+              }
               return new BlockWithReceipts(block, receipts);
             })
-        .collect(toList());
+        .toList();
   }
 }

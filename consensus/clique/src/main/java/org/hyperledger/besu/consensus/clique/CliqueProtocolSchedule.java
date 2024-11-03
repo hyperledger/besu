@@ -110,7 +110,7 @@ public class CliqueProtocolSchedule {
 
     return new ProtocolScheduleBuilder(
             config,
-            DEFAULT_CHAIN_ID,
+            Optional.of(DEFAULT_CHAIN_ID),
             specAdapters,
             privacyParameters,
             isRevertReasonEnabled,

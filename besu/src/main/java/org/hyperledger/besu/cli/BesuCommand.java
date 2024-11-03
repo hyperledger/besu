@@ -37,7 +37,6 @@ import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
-import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
@@ -75,7 +74,6 @@ import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
-import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
 import org.hyperledger.besu.cli.subcommands.TxParseSubCommand;
 import org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
@@ -170,7 +168,6 @@ import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.p2p.P2PService;
 import org.hyperledger.besu.plugin.services.rlp.RlpConverterService;
@@ -332,7 +329,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
-  private final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
 
   private final PreSynchronizationTaskRunner preSynchronizationTaskRunner =
       new PreSynchronizationTaskRunner();
@@ -1108,7 +1104,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         PublicKeySubCommand.COMMAND_NAME, new PublicKeySubCommand(commandLine.getOut()));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(commandLine.getOut()));
-    commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
     commandLine.addSubcommand(
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(commandLine.getOut(), in));
     commandLine.addSubcommand(
@@ -1136,10 +1131,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(Hash.class, Hash::fromHexString);
     commandLine.registerConverter(Optional.class, Optional::of);
     commandLine.registerConverter(Double.class, Double::parseDouble);
-
-    metricCategoryConverter.addCategories(BesuMetricCategory.class);
-    metricCategoryConverter.addCategories(StandardMetricCategory.class);
-    commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
   }
 
   private void handleStableOptions() {
@@ -1174,6 +1165,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
+
+    metricCategoryRegistry.addCategories(BesuMetricCategory.class);
+    metricCategoryRegistry.addCategories(StandardMetricCategory.class);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
     besuPluginContext.addService(PermissioningService.class, permissioningService);
     besuPluginContext.addService(PrivacyPluginService.class, privacyPluginService);
@@ -1190,10 +1184,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     rocksDBPlugin = new RocksDBPlugin();
     rocksDBPlugin.register(besuPluginContext);
     new InMemoryStoragePlugin().register(besuPluginContext);
-
-    metricCategoryRegistry
-        .getMetricCategories()
-        .forEach(metricCategoryConverter::addRegistryCategory);
 
     // register default security module
     securityModuleService.register(
@@ -1891,6 +1881,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--metrics-push-interval",
             "--metrics-push-prometheus-job"));
 
+    metricsOptions.setMetricCategoryRegistry(metricCategoryRegistry);
+
+    metricsOptions.validate(commandLine);
+
     final MetricsConfiguration.Builder metricsConfigurationBuilder =
         metricsOptions.toDomainObject();
     metricsConfigurationBuilder
@@ -1903,7 +1897,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 ? p2PDiscoveryOptions.autoDiscoverDefaultIP().getHostAddress()
                 : metricsOptions.getMetricsPushHost())
         .hostsAllowlist(hostsAllowlist);
-    return metricsConfigurationBuilder.build();
+    final var metricsConfiguration = metricsConfigurationBuilder.build();
+    metricCategoryRegistry.setMetricsConfiguration(metricsConfiguration);
+    return metricsConfiguration;
   }
 
   private PrivacyParameters privacyParameters() {
