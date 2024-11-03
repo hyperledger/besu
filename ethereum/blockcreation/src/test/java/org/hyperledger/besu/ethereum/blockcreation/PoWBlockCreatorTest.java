@@ -31,9 +31,9 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -87,7 +87,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
   void createMainnetBlock1() throws IOException {
     final var genesisConfigFile = GenesisConfigFile.mainnet();
 
-    final MiningParameters miningParameters = createMiningParameters(BLOCK_1_NONCE);
+    final MiningConfiguration miningConfiguration = createMiningParameters(BLOCK_1_NONCE);
 
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder(genesisConfigFile)
@@ -99,7 +99,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
-                        MiningParameters.MINING_DISABLED,
+                        MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
                         new NoOpMetricsSystem())
@@ -108,7 +108,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
     final PoWSolver solver =
         new PoWSolver(
-            miningParameters,
+            miningConfiguration,
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
@@ -118,7 +118,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
-            miningParameters,
+            miningConfiguration,
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
@@ -146,7 +146,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final var genesisConfigFile =
         GenesisConfigFile.fromResource("/block-creation-fixed-difficulty-genesis.json");
 
-    final MiningParameters miningParameters = createMiningParameters(FIXED_DIFFICULTY_NONCE);
+    final MiningConfiguration miningConfiguration = createMiningParameters(FIXED_DIFFICULTY_NONCE);
 
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder(genesisConfigFile)
@@ -163,7 +163,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
-                        MiningParameters.MINING_DISABLED,
+                        MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
                         new NoOpMetricsSystem())
@@ -172,7 +172,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
     final PoWSolver solver =
         new PoWSolver(
-            miningParameters,
+            miningConfiguration,
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
@@ -182,7 +182,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
-            miningParameters,
+            miningConfiguration,
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
@@ -204,7 +204,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final var genesisConfigFile =
         GenesisConfigFile.fromResource("/block-creation-fixed-difficulty-genesis.json");
 
-    final MiningParameters miningParameters = createMiningParameters(FIXED_DIFFICULTY_NONCE);
+    final MiningConfiguration miningConfiguration = createMiningParameters(FIXED_DIFFICULTY_NONCE);
 
     ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
@@ -219,7 +219,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                 PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
-                MiningParameters.MINING_DISABLED,
+                MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
                 new NoOpMetricsSystem())
@@ -231,7 +231,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
     final PoWSolver solver =
         new PoWSolver(
-            miningParameters,
+            miningConfiguration,
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
@@ -241,7 +241,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
-            miningParameters,
+            miningConfiguration,
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
@@ -281,7 +281,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final var genesisConfigFile =
         GenesisConfigFile.fromResource("/block-creation-fixed-difficulty-genesis.json");
 
-    final MiningParameters miningParameters = createMiningParameters(FIXED_DIFFICULTY_NONCE);
+    final MiningConfiguration miningConfiguration = createMiningParameters(FIXED_DIFFICULTY_NONCE);
 
     ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
@@ -296,7 +296,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                 PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
-                MiningParameters.MINING_DISABLED,
+                MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
                 new NoOpMetricsSystem())
@@ -308,7 +308,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
     final PoWSolver solver =
         new PoWSolver(
-            miningParameters,
+            miningConfiguration,
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
@@ -318,7 +318,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
-            miningParameters,
+            miningConfiguration,
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
@@ -382,8 +382,8 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     return transactionPool;
   }
 
-  private MiningParameters createMiningParameters(final long nonce) {
-    return ImmutableMiningParameters.builder()
+  private MiningConfiguration createMiningParameters(final long nonce) {
+    return ImmutableMiningConfiguration.builder()
         .mutableInitValues(
             MutableInitValues.builder()
                 .nonceGenerator(Lists.newArrayList(nonce))

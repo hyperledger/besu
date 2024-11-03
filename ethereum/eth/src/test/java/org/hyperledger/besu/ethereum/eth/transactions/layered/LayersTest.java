@@ -36,7 +36,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -1404,7 +1404,7 @@ public class LayersTest extends BaseTransactionPoolTest {
               (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
               FeeMarket.london(0L),
               new BlobCache(),
-              MiningParameters.newDefault().setMinTransactionGasPrice(MIN_GAS_PRICE));
+              MiningConfiguration.newDefault().setMinTransactionGasPrice(MIN_GAS_PRICE));
 
       this.pending = new LayeredPendingTransactions(poolConfig, this.prio, ethScheduler);
 
