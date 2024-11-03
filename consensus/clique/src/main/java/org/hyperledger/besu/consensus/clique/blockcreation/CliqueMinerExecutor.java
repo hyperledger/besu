@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.blockcreation.AbstractMinerExecutor;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -70,7 +70,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
       final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
       final NodeKey nodeKey,
-      final MiningParameters miningParams,
+      final MiningConfiguration miningParams,
       final AbstractBlockScheduler blockScheduler,
       final EpochManager epochManager,
       final ForksSchedule<CliqueConfigOptions> forksSchedule,
@@ -97,7 +97,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
     final Function<BlockHeader, CliqueBlockCreator> blockCreator =
         (header) ->
             new CliqueBlockCreator(
-                miningParameters,
+                miningConfiguration,
                 this::calculateExtraData,
                 transactionPool,
                 protocolContext,
@@ -119,7 +119,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
 
   @Override
   public Optional<Address> getCoinbase() {
-    return miningParameters.getCoinbase();
+    return miningConfiguration.getCoinbase();
   }
 
   /**
@@ -134,7 +134,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
 
     final Bytes vanityDataToInsert =
         ConsensusHelpers.zeroLeftPad(
-            miningParameters.getExtraData(), CliqueExtraData.EXTRA_VANITY_LENGTH);
+            miningConfiguration.getExtraData(), CliqueExtraData.EXTRA_VANITY_LENGTH);
     // Building ON TOP of canonical head, if the next block is epoch, include validators.
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
 

@@ -22,18 +22,18 @@ public class MiningParametersMetrics {
   public static final String MIN_PRIORITY_FEE_GAUGE = "min_priority_fee";
 
   public MiningParametersMetrics(
-      final MetricsSystem metricsSystem, final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem, final MiningConfiguration miningConfiguration) {
 
     metricsSystem.createGauge(
         BesuMetricCategory.ETHEREUM,
         MIN_GAS_PRICE_GAUGE,
         "Gauge to measure the runtime value of min-gas-price",
-        () -> miningParameters.getMinTransactionGasPrice().toBigInteger().doubleValue());
+        () -> miningConfiguration.getMinTransactionGasPrice().toBigInteger().doubleValue());
 
     metricsSystem.createGauge(
         BesuMetricCategory.ETHEREUM,
         MIN_PRIORITY_FEE_GAUGE,
         "Gauge to measure the runtime value of min-priority-fee",
-        () -> miningParameters.getMinPriorityFeePerGas().toBigInteger().doubleValue());
+        () -> miningConfiguration.getMinPriorityFeePerGas().toBigInteger().doubleValue());
   }
 }

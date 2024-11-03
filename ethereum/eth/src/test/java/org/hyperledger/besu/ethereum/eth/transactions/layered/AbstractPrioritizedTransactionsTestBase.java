@@ -22,7 +22,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.N
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -47,8 +47,8 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
       new EnumMap<>(Map.of(TransactionType.BLOB, 2));
   protected final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
   protected final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
-  protected final MiningParameters miningParameters =
-      MiningParameters.newDefault()
+  protected final MiningConfiguration miningConfiguration =
+      MiningConfiguration.newDefault()
           .setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE)
           .setMinPriorityFeePerGas(DEFAULT_MIN_PRIORITY_FEE);
   protected AbstractPrioritizedTransactions transactions =
@@ -58,16 +58,17 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
               .maxPrioritizedTransactionsByType(MAX_TRANSACTIONS_BY_TYPE)
               .maxFutureBySender(MAX_TRANSACTIONS)
               .build(),
-          miningParameters);
+          miningConfiguration);
 
   private AbstractPrioritizedTransactions getSorter(
-      final TransactionPoolConfiguration poolConfig, final MiningParameters miningParameters) {
+      final TransactionPoolConfiguration poolConfig,
+      final MiningConfiguration miningConfiguration) {
     return getSorter(
         poolConfig,
         evictCollector,
         txPoolMetrics,
         (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
-        miningParameters);
+        miningConfiguration);
   }
 
   abstract AbstractPrioritizedTransactions getSorter(
@@ -76,7 +77,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
       final TransactionPoolMetrics txPoolMetrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
-      final MiningParameters miningParameters);
+      final MiningConfiguration miningConfiguration);
 
   abstract BlockHeader mockBlockHeader();
 
