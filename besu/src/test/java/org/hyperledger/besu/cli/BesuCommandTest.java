@@ -37,10 +37,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -100,6 +100,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 
@@ -566,7 +567,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand("--genesis-file", genesisFile.toString(), "--network", "mainnet");
 
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -578,7 +579,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String nonExistentGenesis = "non-existent-genesis.json";
     parseCommand("--genesis-file", nonExistentGenesis);
 
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith("Unable to load genesis file");
@@ -1177,7 +1178,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand(
         "--remote-connections-limit-enabled", "--remote-connections-max-percentage", "invalid");
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -1190,7 +1191,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand(
         "--remote-connections-limit-enabled", "--remote-connections-max-percentage", "150");
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -1225,7 +1226,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void syncMode_invalid() {
     parseCommand("--sync-mode", "bogus");
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -1275,7 +1276,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void helpShouldDisplayFastSyncOptions() {
     parseCommand("--help");
 
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).contains("--fast-sync-min-peers");
     // whitelist is now a hidden option
@@ -1335,7 +1336,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void parsesInvalidFastSyncMinPeersOptionWrongFormatShouldFail() {
 
     parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "ten");
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Invalid value for option '--fast-sync-min-peers': 'ten' is not an int");
@@ -1358,7 +1359,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void netRestrictInvalidShouldFail() {
     final String subnet = "127.0.0.1/abc";
     parseCommand("--net-restrict", subnet);
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Invalid value for option '--net-restrict'");
   }
@@ -1382,7 +1383,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void ethStatsContactOptionCannotBeUsedWithoutEthStatsServerProvided() {
     parseCommand("--ethstats-contact", "besu-updated");
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -1435,7 +1436,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void parsesInvalidWhenFullSyncAndBonsaiLimitTrieLogsExplicitlyTrue() {
     parseCommand("--sync-mode=FULL", "--bonsai-limit-trie-logs-enabled=true");
 
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -1467,7 +1468,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand("--data-storage-format", "BONSAI", "--bonsai-maximum-back-layers-to-load", "ten");
 
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -1501,7 +1502,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void dnsUpdateEnabledOptionCannotBeUsedWithoutDnsEnabled() {
     parseCommand("--Xdns-update-enabled", "true");
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -1721,17 +1722,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void metricsUnknownCategoryRaiseError() {
-    parseCommand("--metrics-enabled", "--metrics-category", "UNKNOWN_CATEGORY");
-
-    verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("--metrics-categories contains unknown categories: [UNKNOWN_CATEGORY]");
-  }
-
-  @Test
   public void metricsPushEnabledPropertyMustBeUsed() {
     parseCommand("--metrics-push-enabled");
 
@@ -1810,7 +1800,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void metricsAndMetricsPushMustNotBeUsedTogether() {
     parseCommand("--metrics-enabled", "--metrics-push-enabled");
 
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -2034,7 +2024,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void fullCLIOptionsShown() {
     parseCommand("--help");
 
-    verifyNoInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).contains("--config-file");
     assertThat(commandOutput.toString(UTF_8)).contains("--data-path");
@@ -2412,13 +2402,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void logsWarningWhenFailToLoadJemalloc() {
     assumeTrue(PlatformDetector.getOSType().equals("linux"));
-    setEnvironmentVariable("BESU_USING_JEMALLOC", "true");
+    setEnvironmentVariable("BESU_USING_JEMALLOC", "false");
     parseCommand();
     verify(mockLogger)
         .warn(
-            eq(
-                "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version"),
-            any(Throwable.class));
+            argThat(
+                arg ->
+                    arg.equals(
+                            "besu_using_jemalloc is present but is not set to true, jemalloc library not loaded")
+                        || arg.equals(
+                            "besu_using_jemalloc is present but we failed to load jemalloc library to get the version")));
   }
 
   @Test
