@@ -29,7 +29,7 @@ public class ExecutionWitnessParameter {
   private final VerkleProofParameter verkleProofParameter;
   private final Hash parentStateRoot;
 
-  // No-op contructor for testing
+  @VisibleForTesting
   public ExecutionWitnessParameter() {
     this.stateDiffParameter = null;
     this.verkleProofParameter = null;

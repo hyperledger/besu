@@ -19,13 +19,15 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.Objects;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class ExecutionWitness {
 
   private final StateDiff stateDiff;
   private final VerkleProof verkleProof;
   private final Hash parentStateRoot;
 
-  // No-op contructor for testing
+  @VisibleForTesting
   public ExecutionWitness() {
     this.stateDiff = null;
     this.verkleProof = null;
