@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -31,7 +31,7 @@ public class LineaProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
 
@@ -40,7 +40,7 @@ public class LineaProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration,
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
         // some Linea evm opcodes behave differently.
