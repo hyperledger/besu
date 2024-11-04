@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
@@ -65,7 +65,7 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
     debugSetHead =
         new DebugSetHead(
             new BlockchainQueries(
-                protocolSchedule, blockchain, archive, MiningParameters.MINING_DISABLED),
+                protocolSchedule, blockchain, archive, MiningConfiguration.MINING_DISABLED),
             protocolContext,
             // a value of 2 here exercises all the state rolling code paths
             2);

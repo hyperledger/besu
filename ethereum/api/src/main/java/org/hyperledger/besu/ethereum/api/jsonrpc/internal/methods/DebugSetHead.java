@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 
@@ -91,56 +91,70 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
 
       // Only DiffBasedWorldState's need to be moved:
       if (archive instanceof DiffBasedWorldStateProvider diffBasedArchive) {
-        rollWorldStateIncrementally(maybeBlockHeader.get(), blockchain, diffBasedArchive);
+        if (rollIncrementally(maybeBlockHeader.get(), blockchain, diffBasedArchive)) {
+          return JsonRpcSuccessResponse.SUCCESS_RESULT;
+        }
       }
     }
 
-    // finally move the blockchain
+    // If we are not rolling incrementally or if there was an error incrementally rolling,
+    // move the blockchain to the requested hash:
     blockchain.rewindToBlock(maybeBlockHeader.get().getBlockHash());
 
     return JsonRpcSuccessResponse.SUCCESS_RESULT;
   }
 
-  private void rollWorldStateIncrementally(
+  private boolean rollIncrementally(
       final BlockHeader target,
-      final Blockchain blockchain,
+      final MutableBlockchain blockchain,
       final DiffBasedWorldStateProvider archive) {
 
-    if (archive.isWorldStateAvailable(target.getStateRoot(), target.getBlockHash())) {
-      // WARNING, this can be dangerous for a DiffBasedWorldstate if a concurrent
-      //          process attempts to move or modify the head worldstate.
-      //          Ensure no block processing is occuring when using this feature.
-      //          No engine-api, block import, sync, mining or other rpc calls should be running.
+    try {
+      if (archive.isWorldStateAvailable(target.getStateRoot(), target.getBlockHash())) {
+        // WARNING, this can be dangerous for a DiffBasedWorldstate if a concurrent
+        //          process attempts to move or modify the head worldstate.
+        //          Ensure no block processing is occuring when using this feature.
+        //          No engine-api, block import, sync, mining or other rpc calls should be running.
 
-      Optional<BlockHeader> current =
-          archive
-              .getWorldStateKeyValueStorage()
-              .getWorldStateBlockHash()
-              .flatMap(blockchain::getBlockHeader);
+        Optional<BlockHeader> currentHead =
+            archive
+                .getWorldStateKeyValueStorage()
+                .getWorldStateBlockHash()
+                .flatMap(blockchain::getBlockHeader);
 
-      while (current.isPresent() && !target.getStateRoot().equals(current.get().getStateRoot())) {
-        long delta = current.get().getNumber() - target.getNumber();
+        while (currentHead.isPresent()
+            && !target.getStateRoot().equals(currentHead.get().getStateRoot())) {
+          long delta = currentHead.get().getNumber() - target.getNumber();
 
-        if (maxTrieLogsToRollAtOnce < Math.abs(delta)) {
-          // do we need to move forward or backward?
-          long distanceToMove = (delta > 0) ? -maxTrieLogsToRollAtOnce : maxTrieLogsToRollAtOnce;
+          if (maxTrieLogsToRollAtOnce < Math.abs(delta)) {
+            // do we need to move forward or backward?
+            long distanceToMove = (delta > 0) ? -maxTrieLogsToRollAtOnce : maxTrieLogsToRollAtOnce;
 
-          // Add distanceToMove to the current block number to get the interim target header
-          var interimHead = blockchain.getBlockHeader(current.get().getNumber() + distanceToMove);
+            // Add distanceToMove to the current block number to get the interim target header
+            var interimHead =
+                blockchain.getBlockHeader(currentHead.get().getNumber() + distanceToMove);
 
-          interimHead.ifPresent(
-              it -> {
-                archive.getMutable(it.getStateRoot(), it.getBlockHash());
-                LOG.info("incrementally rolled worldstate to {}", it.toLogString());
-              });
-          current = interimHead;
+            interimHead.ifPresent(
+                it -> {
+                  archive.getMutable(it.getStateRoot(), it.getBlockHash());
+                  blockchain.rewindToBlock(it.getBlockHash());
+                  LOG.info("incrementally rolled worldstate to {}", it.toLogString());
+                });
+            currentHead = interimHead;
 
-        } else {
-          archive.getMutable(target.getStateRoot(), target.getBlockHash());
-          LOG.info("finished rolling worldstate to {}", target.toLogString());
-          break;
+          } else {
+            archive.getMutable(target.getStateRoot(), target.getBlockHash());
+            blockchain.rewindToBlock(target.getBlockHash());
+            currentHead = Optional.of(target);
+            LOG.info("finished rolling worldstate to {}", target.toLogString());
+          }
         }
       }
+
+      return true;
+    } catch (Exception ex) {
+      LOG.error("Failed to incrementally roll blockchain to " + target.toLogString(), ex);
+      return false;
     }
   }
 
