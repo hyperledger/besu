@@ -136,15 +136,15 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
 
             interimHead.ifPresent(
                 it -> {
-                  archive.getMutable(it.getStateRoot(), it.getBlockHash());
                   blockchain.rewindToBlock(it.getBlockHash());
+                  archive.getMutable(it.getStateRoot(), it.getBlockHash());
                   LOG.info("incrementally rolled worldstate to {}", it.toLogString());
                 });
             currentHead = interimHead;
 
           } else {
-            archive.getMutable(target.getStateRoot(), target.getBlockHash());
             blockchain.rewindToBlock(target.getBlockHash());
+            archive.getMutable(target.getStateRoot(), target.getBlockHash());
             currentHead = Optional.of(target);
             LOG.info("finished rolling worldstate to {}", target.toLogString());
           }
