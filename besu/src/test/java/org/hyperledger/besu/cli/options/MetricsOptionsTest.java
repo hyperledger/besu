@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.cli.options;
 
-import org.hyperledger.besu.cli.options.stable.MetricsOptions;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.StandardMetricCategory;

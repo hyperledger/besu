@@ -17,7 +17,6 @@ package org.hyperledger.besu.cli.options;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 
 import java.util.Arrays;
