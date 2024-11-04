@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -101,7 +101,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final boolean revertReasonEnabled;
 
   private final String name;
-  private MiningParameters miningParameters;
+  private MiningConfiguration miningConfiguration;
   private TransactionPoolConfiguration txPoolConfiguration;
   private final List<String> runCommand;
   private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
@@ -139,7 +139,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   public BesuNode(
       final String name,
       final Optional<Path> dataPath,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final TransactionPoolConfiguration txPoolConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final Optional<JsonRpcConfiguration> engineRpcConfiguration,
@@ -191,7 +191,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         },
         () -> this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory));
     this.name = name;
-    this.miningParameters = miningParameters;
+    this.miningConfiguration = miningConfiguration;
     this.txPoolConfiguration = txPoolConfiguration;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.engineRpcConfiguration = engineRpcConfiguration;
@@ -678,12 +678,12 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.bootnodes.addAll(bootnodes);
   }
 
-  public MiningParameters getMiningParameters() {
-    return miningParameters;
+  public MiningConfiguration getMiningParameters() {
+    return miningConfiguration;
   }
 
-  public void setMiningParameters(final MiningParameters miningParameters) {
-    this.miningParameters = miningParameters;
+  public void setMiningParameters(final MiningConfiguration miningConfiguration) {
+    this.miningConfiguration = miningConfiguration;
   }
 
   public TransactionPoolConfiguration getTransactionPoolConfiguration() {

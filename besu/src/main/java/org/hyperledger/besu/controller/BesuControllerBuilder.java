@@ -43,7 +43,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -144,7 +144,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected BigInteger networkId;
 
   /** The Mining parameters. */
-  protected MiningParameters miningParameters;
+  protected MiningConfiguration miningConfiguration;
 
   /** The Metrics system. */
   protected ObservableMetricsSystem metricsSystem;
@@ -296,11 +296,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Mining parameters besu controller builder.
    *
-   * @param miningParameters the mining parameters
+   * @param miningConfiguration the mining parameters
    * @return the besu controller builder
    */
-  public BesuControllerBuilder miningParameters(final MiningParameters miningParameters) {
-    this.miningParameters = miningParameters;
+  public BesuControllerBuilder miningParameters(final MiningConfiguration miningConfiguration) {
+    this.miningConfiguration = miningConfiguration;
     return this;
   }
 
@@ -543,7 +543,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(syncConfig, "Missing sync config");
     checkNotNull(ethereumWireProtocolConfiguration, "Missing ethereum protocol configuration");
     checkNotNull(networkId, "Missing network ID");
-    checkNotNull(miningParameters, "Missing mining parameters");
+    checkNotNull(miningConfiguration, "Missing mining parameters");
     checkNotNull(metricsSystem, "Missing metrics system");
     checkNotNull(privacyParameters, "Missing privacy parameters");
     checkNotNull(dataDirectory, "Missing data directory"); // Why do we need this?
@@ -680,7 +680,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             transactionPoolConfiguration,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
-            miningParameters);
+            miningConfiguration);
 
     final List<PeerValidator> peerValidators = createPeerValidators(protocolSchedule);
 
@@ -734,7 +734,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             protocolSchedule,
             protocolContext,
             transactionPool,
-            miningParameters,
+            miningConfiguration,
             syncState,
             ethProtocolManager);
 
@@ -745,7 +745,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
-        createAdditionalJsonRpcMethodFactory(protocolContext, protocolSchedule, miningParameters);
+        createAdditionalJsonRpcMethodFactory(
+            protocolContext, protocolSchedule, miningConfiguration);
 
     if (DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
       final DiffBasedSubStorageConfiguration subStorageConfiguration =
@@ -779,7 +780,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         transactionPool,
         miningCoordinator,
         privacyParameters,
-        miningParameters,
+        miningConfiguration,
         additionalJsonRpcMethodFactory,
         nodeKey,
         closeables,
@@ -938,13 +939,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    *
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
-   * @param miningParameters the mining parameters
+   * @param miningConfiguration the mining parameters
    * @return the json rpc methods
    */
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     return apis -> Collections.emptyMap();
   }
 
@@ -972,7 +973,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param protocolSchedule the protocol schedule
    * @param protocolContext the protocol context
    * @param transactionPool the transaction pool
-   * @param miningParameters the mining parameters
+   * @param miningConfiguration the mining parameters
    * @param syncState the sync state
    * @param ethProtocolManager the eth protocol manager
    * @return the mining coordinator
@@ -981,7 +982,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       ProtocolSchedule protocolSchedule,
       ProtocolContext protocolContext,
       TransactionPool transactionPool,
-      MiningParameters miningParameters,
+      MiningConfiguration miningConfiguration,
       SyncState syncState,
       EthProtocolManager ethProtocolManager);
 

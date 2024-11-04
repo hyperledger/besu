@@ -39,7 +39,7 @@ public class ProtocolScheduleFixture {
           Optional.empty(),
           Optional.empty(),
           Optional.empty(),
-          MiningParameters.newDefault(),
+          MiningConfiguration.newDefault(),
           new BadBlockManager(),
           false,
           new NoOpMetricsSystem());

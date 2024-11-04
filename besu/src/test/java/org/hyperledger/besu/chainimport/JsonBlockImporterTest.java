@@ -32,8 +32,8 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -458,7 +458,7 @@ public abstract class JsonBlockImporterTest {
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.valueOf(10))
         .miningParameters(
-            ImmutableMiningParameters.builder()
+            ImmutableMiningConfiguration.builder()
                 .mutableInitValues(
                     MutableInitValues.builder()
                         .isMiningEnabled(true)

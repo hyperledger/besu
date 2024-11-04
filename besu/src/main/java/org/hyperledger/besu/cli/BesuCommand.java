@@ -113,7 +113,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParametersMetrics;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.VersionMetadata;
@@ -338,7 +338,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       Suppliers.memoize(this::readGenesisConfigFile);
   private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
-  private final Supplier<MiningParameters> miningParametersSupplier =
+  private final Supplier<MiningConfiguration> miningParametersSupplier =
       Suppliers.memoize(this::getMiningParameters);
 
   private RocksDBPlugin rocksDBPlugin;
@@ -2117,7 +2117,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return txPoolConfBuilder.build();
   }
 
-  private MiningParameters getMiningParameters() {
+  private MiningConfiguration getMiningParameters() {
     miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
     final var miningParameters = miningOptions.toDomainObject();
     getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
@@ -2169,8 +2169,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return dataStorageConfiguration;
   }
 
-  private void initMiningParametersMetrics(final MiningParameters miningParameters) {
-    new MiningParametersMetrics(getMetricsSystem(), miningParameters);
+  private void initMiningParametersMetrics(final MiningConfiguration miningConfiguration) {
+    new MiningParametersMetrics(getMetricsSystem(), miningConfiguration);
   }
 
   private OptionalInt getGenesisBlockPeriodSeconds(

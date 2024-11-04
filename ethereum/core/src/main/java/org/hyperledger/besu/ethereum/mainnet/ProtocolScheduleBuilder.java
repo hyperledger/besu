@@ -18,7 +18,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -51,7 +51,7 @@ public class ProtocolScheduleBuilder {
   private final BadBlockManager badBlockManager;
   private final boolean isParallelTxProcessingEnabled;
   private final MetricsSystem metricsSystem;
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -60,7 +60,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
@@ -73,7 +73,7 @@ public class ProtocolScheduleBuilder {
     this.badBlockManager = badBlockManager;
     this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
     this.metricsSystem = metricsSystem;
-    this.miningParameters = miningParameters;
+    this.miningConfiguration = miningConfiguration;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -93,7 +93,7 @@ public class ProtocolScheduleBuilder {
             config.getEcip1017EraRounds(),
             evmConfiguration.overrides(
                 config.getContractSizeLimit(), OptionalInt.empty(), config.getEvmStackSize()),
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem);
 

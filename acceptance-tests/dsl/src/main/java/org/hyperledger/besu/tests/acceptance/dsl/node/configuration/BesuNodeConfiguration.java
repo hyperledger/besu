@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -40,7 +40,7 @@ public class BesuNodeConfiguration {
 
   private final String name;
   private final Optional<Path> dataPath;
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
   private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
@@ -78,7 +78,7 @@ public class BesuNodeConfiguration {
   BesuNodeConfiguration(
       final String name,
       final Optional<Path> dataPath,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final Optional<JsonRpcConfiguration> engineRpcConfiguration,
@@ -113,7 +113,7 @@ public class BesuNodeConfiguration {
       final boolean strictTxReplayProtectionEnabled,
       final Map<String, String> environment) {
     this.name = name;
-    this.miningParameters = miningParameters;
+    this.miningConfiguration = miningConfiguration;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.engineRpcConfiguration = engineRpcConfiguration;
@@ -154,8 +154,8 @@ public class BesuNodeConfiguration {
     return name;
   }
 
-  public MiningParameters getMiningParameters() {
-    return miningParameters;
+  public MiningConfiguration getMiningParameters() {
+    return miningConfiguration;
   }
 
   public TransactionPoolConfiguration getTransactionPoolConfiguration() {

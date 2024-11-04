@@ -46,7 +46,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockSyncTestUtils;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -196,7 +196,7 @@ public final class RunnerTest {
             .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
             .build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
-    final var miningParameters = MiningParameters.newDefault();
+    final var miningParameters = MiningConfiguration.newDefault();
     final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
     // Setup Runner with blocks
     final BesuController controllerAhead =
@@ -415,11 +415,11 @@ public final class RunnerTest {
       final Path dataDir,
       final Path dbDir,
       final DataStorageConfiguration dataStorageConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     final var besuConfiguration = new BesuConfigurationImpl();
     besuConfiguration
         .init(dataDir, dbDir, dataStorageConfiguration)
-        .withMiningParameters(miningParameters);
+        .withMiningParameters(miningConfiguration);
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValueStorageFactory(
@@ -488,14 +488,14 @@ public final class RunnerTest {
       final NodeKey nodeKey,
       final StorageProvider storageProvider,
       final ObservableMetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     return new MainnetBesuControllerBuilder()
         .genesisConfigFile(genesisConfig)
         .synchronizerConfiguration(syncConfig)
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .dataDirectory(dataDir)
         .networkId(NETWORK_ID)
-        .miningParameters(miningParameters)
+        .miningParameters(miningConfiguration)
         .nodeKey(nodeKey)
         .storageProvider(storageProvider)
         .metricsSystem(metricsSystem)
