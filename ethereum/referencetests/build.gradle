@@ -191,6 +191,8 @@ dependencies {
   implementation 'io.tmio:tuweni-rlp'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
+  annotationProcessor 'com.google.dagger:dagger-compiler'
 
   referenceTestImplementation project(path: ':config')
   referenceTestImplementation project(path: ':datatypes')
