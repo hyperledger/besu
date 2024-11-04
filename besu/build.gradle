@@ -49,7 +49,6 @@ dependencies {
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:permissioning')
-  implementation project(':ethereum:retesteth')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
   implementation project(':ethereum:stratum')

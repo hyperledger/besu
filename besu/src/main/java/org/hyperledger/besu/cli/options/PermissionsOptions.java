@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.stable;
+package org.hyperledger.besu.cli.options;
 
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.datatypes.Address;
