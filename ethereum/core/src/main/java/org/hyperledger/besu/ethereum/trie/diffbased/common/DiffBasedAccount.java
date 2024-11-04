@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -225,5 +226,18 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
         + ", codeHash="
         + codeHash
         + '}';
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final DiffBasedAccount that = (DiffBasedAccount) o;
+    return nonce == that.nonce && balance.equals(that.balance) && codeHash.equals(that.codeHash);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(nonce, balance, codeHash);
   }
 }

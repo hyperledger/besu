@@ -178,10 +178,7 @@ public class BonsaiAccount extends DiffBasedAccount {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     final BonsaiAccount that = (BonsaiAccount) o;
-    return nonce == that.nonce
-        && balance.equals(that.balance)
-        && storageRoot.equals(that.storageRoot)
-        && codeHash.equals(that.codeHash);
+    return super.equals(o) && storageRoot.equals(that.storageRoot);
   }
 
   @Override
