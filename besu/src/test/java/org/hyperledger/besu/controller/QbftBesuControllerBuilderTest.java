@@ -32,7 +32,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
@@ -107,7 +107,7 @@ public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
     assertThatThrownBy(
             () ->
                 bftBesuControllerBuilder.createAdditionalJsonRpcMethodFactory(
-                    protocolContext, protocolSchedule, MiningParameters.newDefault()))
+                    protocolContext, protocolSchedule, MiningConfiguration.newDefault()))
         .isInstanceOf(NullPointerException.class)
         .hasMessage("transactionValidatorProvider should have been initialised");
   }

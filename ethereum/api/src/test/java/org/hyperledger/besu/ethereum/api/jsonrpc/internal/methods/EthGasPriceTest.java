@@ -39,7 +39,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -77,13 +77,13 @@ public class EthGasPriceTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private Blockchain blockchain;
   private EthGasPrice method;
-  private MiningParameters miningParameters;
+  private MiningConfiguration miningConfiguration;
 
   @BeforeEach
   public void setUp() {
     ApiConfiguration apiConfig = createDefaultApiConfiguration();
-    miningParameters =
-        MiningParameters.newDefault().setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE);
+    miningConfiguration =
+        MiningConfiguration.newDefault().setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE);
     method = createEthGasPriceMethod(apiConfig);
   }
 
@@ -96,7 +96,7 @@ public class EthGasPriceTest {
   public void shouldReturnMinValueWhenNoTransactionsExist() {
     final JsonRpcRequestContext request = requestWithParams();
     final String expectedWei = "0x4d2"; // minGasPrice > nextBlockBaseFee
-    miningParameters.setMinTransactionGasPrice(Wei.fromHexString(expectedWei));
+    miningConfiguration.setMinTransactionGasPrice(Wei.fromHexString(expectedWei));
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedWei);
 
@@ -117,7 +117,7 @@ public class EthGasPriceTest {
     final JsonRpcRequestContext request = requestWithParams();
     final String expectedWei =
         DEFAULT_BASE_FEE.toShortHexString(); // nextBlockBaseFee > minGasPrice
-    miningParameters.setMinTransactionGasPrice(Wei.fromHexString(expectedWei));
+    miningConfiguration.setMinTransactionGasPrice(Wei.fromHexString(expectedWei));
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedWei);
 
@@ -234,7 +234,7 @@ public class EthGasPriceTest {
   @MethodSource("ethGasPriceAtGenesis")
   public void ethGasPriceAtGenesis(
       final Wei minGasPrice, final Optional<Wei> maybeGenesisBaseFee, final Wei expectedGasPrice) {
-    miningParameters.setMinTransactionGasPrice(minGasPrice);
+    miningConfiguration.setMinTransactionGasPrice(minGasPrice);
 
     if (maybeGenesisBaseFee.isPresent()) {
       mockBaseFeeMarket();
@@ -267,7 +267,7 @@ public class EthGasPriceTest {
       final Long lowerBoundCoefficient,
       final Long upperBoundCoefficient,
       final long expectedGasPrice) {
-    miningParameters.setMinTransactionGasPrice(Wei.of(100));
+    miningConfiguration.setMinTransactionGasPrice(Wei.of(100));
 
     mockBaseFeeMarket();
 
@@ -423,7 +423,7 @@ public class EthGasPriceTest {
             Optional.empty(),
             Optional.empty(),
             apiConfig,
-            miningParameters),
+            miningConfiguration),
         apiConfig);
   }
 }

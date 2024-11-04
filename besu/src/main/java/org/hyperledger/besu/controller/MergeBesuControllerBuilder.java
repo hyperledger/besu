@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -68,7 +68,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
@@ -76,7 +76,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         protocolSchedule,
         protocolContext,
         transactionPool,
-        miningParameters,
+        miningConfiguration,
         syncState,
         new BackwardSyncContext(
             protocolContext,
@@ -144,7 +144,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
    * @param protocolSchedule the protocol schedule
    * @param protocolContext the protocol context
    * @param transactionPool the transaction pool
-   * @param miningParameters the mining parameters
+   * @param miningConfiguration the mining parameters
    * @param syncState the sync state
    * @param backwardSyncContext the backward sync context
    * @param ethScheduler the scheduler
@@ -154,7 +154,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final SyncState syncState,
       final BackwardSyncContext backwardSyncContext,
       final EthScheduler ethScheduler) {
@@ -169,7 +169,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         protocolSchedule,
         ethScheduler,
         transactionPool,
-        miningParameters,
+        miningConfiguration,
         backwardSyncContext,
         depositContractAddress);
   }
@@ -180,7 +180,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfigOptions,
         privacyParameters,
         isRevertReasonEnabled,
-        miningParameters,
+        miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
         metricsSystem);
