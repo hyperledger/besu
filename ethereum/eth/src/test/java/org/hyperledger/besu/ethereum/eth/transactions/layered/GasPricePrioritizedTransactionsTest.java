@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -44,7 +44,7 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
       final TransactionPoolMetrics txPoolMetrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
 
     return new GasPricePrioritizedTransactions(
         poolConfig,
@@ -53,7 +53,7 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
         txPoolMetrics,
         transactionReplacementTester,
         new BlobCache(),
-        miningParameters);
+        miningConfiguration);
   }
 
   @Override
