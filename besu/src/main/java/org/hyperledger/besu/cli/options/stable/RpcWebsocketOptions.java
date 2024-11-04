@@ -120,6 +120,53 @@ public class RpcWebsocketOptions {
       arity = "1")
   private final File rpcWsAuthenticationPublicKeyFile = null;
 
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-enabled"},
+      description = "Enable SSL/TLS for the WebSocket RPC service")
+  private boolean isRpcWsSslEnabled = false;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-keystore-file"},
+      paramLabel = "<FILE>",
+      description = "Path to the keystore file for the WebSocket RPC service")
+  private String rpcWsKeyStoreFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-keystore-password"},
+      paramLabel = "<PASSWORD>",
+      description = "Password for the WebSocket RPC keystore file")
+  private String rpcWsKeyStorePassword = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-keystore-type"},
+      paramLabel = "<TYPE>",
+      description = "Type of the WebSocket RPC keystore (JKS, PKCS12, PEM)")
+  private String rpcWsKeyStoreType = null;
+
+  // For client authentication (mTLS)
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-client-auth-enabled"},
+      description = "Enable client authentication for the WebSocket RPC service")
+  private boolean isRpcWsClientAuthEnabled = false;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-truststore-file"},
+      paramLabel = "<FILE>",
+      description = "Path to the truststore file for the WebSocket RPC service")
+  private String rpcWsTrustStoreFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-truststore-password"},
+      paramLabel = "<PASSWORD>",
+      description = "Password for the WebSocket RPC truststore file")
+  private String rpcWsTrustStorePassword = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-truststore-type"},
+      paramLabel = "<TYPE>",
+      description = "Type of the truststore (JKS, PKCS12, PEM)")
+  private String rpcWsTrustStoreType = null;
+
   /** Default Constructor. */
   public RpcWebsocketOptions() {}
 
@@ -222,6 +269,15 @@ public class RpcWebsocketOptions {
     webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
     webSocketConfiguration.setAuthenticationAlgorithm(rpcWebsocketsAuthenticationAlgorithm);
     webSocketConfiguration.setTimeoutSec(wsTimoutSec);
+    webSocketConfiguration.setSslEnabled(isRpcWsSslEnabled);
+    webSocketConfiguration.setKeyStorePath(rpcWsKeyStoreFile);
+    webSocketConfiguration.setKeyStorePassword(rpcWsKeyStorePassword);
+    webSocketConfiguration.setKeyStoreType(rpcWsKeyStoreType);
+    webSocketConfiguration.setClientAuthEnabled(isRpcWsClientAuthEnabled);
+    webSocketConfiguration.setTrustStorePath(rpcWsTrustStoreFile);
+    webSocketConfiguration.setTrustStorePassword(rpcWsTrustStorePassword);
+    webSocketConfiguration.setTrustStoreType(rpcWsTrustStoreType);
+
     return webSocketConfiguration;
   }
 
