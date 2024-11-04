@@ -63,7 +63,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
       rootWorld = (AbstractWorldUpdater<W, ? extends MutableAccount>) world;
     } else {
       throw new IllegalArgumentException(
-          "WorldUpdater must be a JournaledWorldUpdater or an AbstractWorldUpdater");
+              "WorldUpdater must be a JournaledWorldUpdater or an AbstractWorldUpdater");
     }
     undoMark = accounts.mark();
   }
@@ -129,9 +129,24 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   @Override
   public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
     JournaledAccount journaledAccount =
-        new JournaledAccount(rootWorld.createAccount(address, nonce, balance));
+            new JournaledAccount(rootWorld.createAccount(address, nonce, balance));
     accounts.put(address, journaledAccount);
     return new JournaledAccount(journaledAccount);
+  }
+
+  @Override
+  public Account getAccountNoTrack(final Address address) {
+    // We may have updated it already, so check that first.
+    final JournaledAccount existing = accounts.get(address);
+    if (existing != null) {
+      return existing;
+    }
+    if (deleted.contains(address)) {
+      return null;
+    }
+
+    // Otherwise, get it from our wrapped view.
+    return rootWorld.getAccountNoTrack(address);
   }
 
   @Override

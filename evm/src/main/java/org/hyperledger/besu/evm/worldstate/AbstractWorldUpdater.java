@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @param <A> the type parameter
  */
 public abstract class AbstractWorldUpdater<W extends WorldView, A extends Account>
-    implements WorldUpdater {
+        implements WorldUpdater {
 
   private final W world;
   private final EvmConfiguration evmConfiguration;
@@ -48,7 +48,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   /** The Deleted accounts. */
   protected Set<Address> deletedAccounts =
-      Collections.synchronizedSet(new BytesTrieSet<>(Address.SIZE));
+          Collections.synchronizedSet(new BytesTrieSet<>(Address.SIZE));
 
   /**
    * Instantiates a new Abstract world updater.
@@ -100,6 +100,21 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     if (deletedAccounts.contains(address)) {
       return null;
     }
+    return getForMutation(address);
+  }
+
+  @Override
+  public Account getAccountNoTrack(final Address address) {
+    // We may have updated it already, so check that first.
+    final Account existing = updatedAccounts.get(address);
+    if (existing != null) {
+      return existing;
+    }
+    if (deletedAccounts.contains(address)) {
+      return null;
+    }
+
+    // Otherwise, get it from our wrapped view.
     return getForMutation(address);
   }
 

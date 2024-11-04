@@ -32,7 +32,7 @@ public class PrivateMutableWorldStateUpdater implements WorldUpdater {
   protected final WorldUpdater privateWorldUpdater;
 
   public PrivateMutableWorldStateUpdater(
-      final WorldUpdater publicWorldUpdater, final WorldUpdater privateWorldUpdater) {
+          final WorldUpdater publicWorldUpdater, final WorldUpdater privateWorldUpdater) {
     this.publicWorldUpdater = publicWorldUpdater;
     this.privateWorldUpdater = privateWorldUpdater;
   }
@@ -45,6 +45,19 @@ public class PrivateMutableWorldStateUpdater implements WorldUpdater {
   @Override
   public MutableAccount createAccount(final Address address) {
     return privateWorldUpdater.createAccount(address);
+  }
+
+  @Override
+  public Account getAccountNoTrack(final Address address) {
+    final Account privateAccount = privateWorldUpdater.getAccountNoTrack(address);
+    if (privateAccount != null && !privateAccount.isEmpty()) {
+      return privateAccount;
+    }
+    final Account publicAccount = publicWorldUpdater.getAccountNoTrack(address);
+    if (publicAccount != null && !publicAccount.isEmpty()) {
+      return publicAccount;
+    }
+    return privateAccount;
   }
 
   @Override

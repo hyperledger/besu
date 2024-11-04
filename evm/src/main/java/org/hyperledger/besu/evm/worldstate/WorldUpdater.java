@@ -121,6 +121,14 @@ public interface WorldUpdater extends MutableWorldView {
   MutableAccount getAccount(Address address);
 
   /**
+   * Allows to retrieve an account without tracking it.
+   *
+   * @param address the address of which to get the account
+   * @return account details without tracking it.
+   */
+  Account getAccountNoTrack(final Address address);
+
+  /**
    * Retrieves the senders account, returning a modifiable object (whose updates are accumulated by
    * this updater).
    *
@@ -172,7 +180,7 @@ public interface WorldUpdater extends MutableWorldView {
   /** Clears any accounts that are empty */
   default void clearAccountsThatAreEmpty() {
     new ArrayList<>(getTouchedAccounts())
-        .stream().filter(Account::isEmpty).forEach(a -> deleteAccount(a.getAddress()));
+            .stream().filter(Account::isEmpty).forEach(a -> deleteAccount(a.getAddress()));
   }
 
   /** Mark transaction boundary. */
