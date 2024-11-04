@@ -273,7 +273,7 @@ class LogRollingTests {
         new VerkleWorldState(
             secondArchive,
             new VerkleWorldStateKeyValueStorage(
-                secondProvider,
+                provider,
                 new StemPreloader(),
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),
@@ -335,7 +335,7 @@ class LogRollingTests {
         new VerkleWorldState(
             secondArchive,
             new VerkleWorldStateKeyValueStorage(
-                secondProvider,
+                provider,
                 new StemPreloader(),
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),
@@ -405,7 +405,7 @@ class LogRollingTests {
         new VerkleWorldState(
             secondArchive,
             new VerkleWorldStateKeyValueStorage(
-                secondProvider,
+                provider,
                 new StemPreloader(),
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),

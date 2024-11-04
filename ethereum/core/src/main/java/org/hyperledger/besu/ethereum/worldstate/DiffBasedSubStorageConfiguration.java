@@ -78,7 +78,7 @@ public interface DiffBasedSubStorageConfiguration {
             .build();
 
     boolean DEFAULT_FULL_FLAT_DB_ENABLED = true;
-    boolean DEFAULT_STEM_FLAT_DB_ENABLED = true;
+    boolean DEFAULT_STEM_FLAT_DB_ENABLED = false;
     boolean DEFAULT_CODE_USING_CODE_HASH_ENABLED = true;
 
     boolean DEFAULT_PARALLEL_TRX_ENABLED = false;

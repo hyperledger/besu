@@ -29,13 +29,14 @@ import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 import java.util.NavigableMap;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class VerkleAccount extends DiffBasedAccount {
 
-  private final long codeSize;
+  private long codeSize;
   private int hashCode;
 
   public VerkleAccount(
@@ -101,6 +102,21 @@ public class VerkleAccount extends DiffBasedAccount {
 
     return new VerkleAccount(
         context, address, address.addressHash(), nonce, balance, codeSize, codeHash, mutable);
+  }
+
+  @Override
+  public Optional<Long> getCodeSize() {
+    return Optional.of(codeSize);
+  }
+
+  @Override
+  public void setCode(final Bytes code) {
+    super.setCode(code);
+    if (code == null || code.isEmpty()) {
+      this.codeSize = 0L;
+    } else {
+      this.codeSize = code.size();
+    }
   }
 
   @Override
@@ -184,7 +200,8 @@ public class VerkleAccount extends DiffBasedAccount {
     return Objects.equals(this.address, otherVerkleAccount.address)
         && this.nonce == otherVerkleAccount.nonce
         && Objects.equals(this.balance, otherVerkleAccount.balance)
-        && Objects.equals(this.codeHash, otherVerkleAccount.codeHash);
+        && Objects.equals(this.codeHash, otherVerkleAccount.codeHash)
+        && this.codeSize == otherVerkleAccount.codeSize;
   }
 
   @Override
@@ -199,6 +216,6 @@ public class VerkleAccount extends DiffBasedAccount {
   }
 
   private int computeHashCode() {
-    return Objects.hash(address, nonce, balance, codeHash);
+    return Objects.hash(address, nonce, balance, codeHash, codeSize);
   }
 }
