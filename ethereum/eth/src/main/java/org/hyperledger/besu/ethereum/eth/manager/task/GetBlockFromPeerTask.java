@@ -145,7 +145,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
 
     CompletableFuture<List<BlockHeader>> returnValue = new CompletableFuture<List<BlockHeader>>();
     if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
-      returnValue.completeExceptionally(new PeerDisconnectedException(assignedPeer.get()));
+      returnValue.completeExceptionally(new PeerDisconnectedException(taskResult.ethPeer()));
     } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
         || taskResult.result().isEmpty()) {
       returnValue.completeExceptionally(

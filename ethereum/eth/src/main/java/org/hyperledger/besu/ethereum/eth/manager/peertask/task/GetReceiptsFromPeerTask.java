@@ -132,4 +132,8 @@ public class GetReceiptsFromPeerTask
   public boolean isSuccess(final Map<BlockHeader, List<TransactionReceipt>> result) {
     return !result.isEmpty();
   }
+
+  public Collection<BlockHeader> getBlockHeaders() {
+    return blockHeaders;
+  }
 }

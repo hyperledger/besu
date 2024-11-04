@@ -124,6 +124,10 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
     return skip;
   }
 
+  public Direction getDirection() {
+    return direction;
+  }
+
   public enum Direction {
     FORWARD,
     REVERSE

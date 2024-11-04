@@ -143,6 +143,7 @@ public class RangeHeadersFetcher {
                         new GetHeadersFromPeerTask(
                             referenceHeader.getHash(),
                             referenceHeader.getNumber(),
+                            // + 1 because lastHeader will be returned as well.
                             headerCount + 1,
                             skip,
                             Direction.FORWARD,
