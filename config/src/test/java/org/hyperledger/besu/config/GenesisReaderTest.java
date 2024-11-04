@@ -17,7 +17,9 @@ package org.hyperledger.besu.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.config.GenesisReader.ALLOCATION_FIELD;
 import static org.hyperledger.besu.config.GenesisReader.CONFIG_FIELD;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -110,5 +112,20 @@ public class GenesisReaderTest {
     final ObjectNode entry = mapper.createObjectNode();
     entry.put("balance", balance.toShortHexString());
     return entry;
+  }
+
+  @Test
+  void testNonceHandlingAsStringAndInteger() {
+    ObjectNode accountNode = JsonNodeFactory.instance.objectNode();
+
+    accountNode.put("nonce", 10);
+    String nonceAsStringFromInt = JsonUtil.getValueAsString(accountNode, "nonce")
+            .orElse("");
+    assertEquals("10", nonceAsStringFromInt, "Nonce should convert integer to string correctly");
+
+    accountNode.put("nonce", "20");
+    String nonceAsStringDirect = JsonUtil.getValueAsString(accountNode, "nonce")
+            .orElse("");
+    assertEquals("20", nonceAsStringDirect, "Nonce should keep string as string correctly");
   }
 }
