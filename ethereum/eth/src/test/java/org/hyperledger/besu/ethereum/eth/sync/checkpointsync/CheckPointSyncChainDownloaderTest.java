@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -53,7 +53,6 @@ import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -161,53 +160,7 @@ public class CheckPointSyncChainDownloaderTest {
                   null);
             });
 
-    final Answer<PeerTaskExecutorResult<List<BlockHeader>>> getHeadersAnswer =
-        (invocationOnMock) -> {
-          GetHeadersFromPeerTask task =
-              invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
-          List<BlockHeader> getHeadersFromPeerTaskResult = new ArrayList<>();
-          BlockHeader initialHeader;
-          if (task.getBlockHash() != null) {
-            initialHeader = otherBlockchain.getBlockHeader(task.getBlockHash()).get();
-          } else {
-            initialHeader = otherBlockchain.getBlockHeader(task.getBlockNumber()).get();
-          }
-          getHeadersFromPeerTaskResult.add(initialHeader);
-
-          if (task.getMaxHeaders() > 1) {
-            if (task.getDirection() == Direction.FORWARD) {
-              int skip = task.getSkip() + 1;
-              long nextHeaderNumber = initialHeader.getNumber() + skip;
-              long getLimit = nextHeaderNumber + ((task.getMaxHeaders() - 1) * skip);
-              for (long i = nextHeaderNumber; i < getLimit; i += skip) {
-                Optional<BlockHeader> header = otherBlockchain.getBlockHeader(i);
-                if (header.isPresent()) {
-                  getHeadersFromPeerTaskResult.add(header.get());
-                } else {
-                  break;
-                }
-              }
-
-            } else {
-              int skip = task.getSkip() + 1;
-              long nextHeaderNumber = initialHeader.getNumber() - skip;
-              long getLimit = nextHeaderNumber - ((task.getMaxHeaders() - 1) * skip);
-              for (long i = initialHeader.getNumber() - 1; i > getLimit; i -= skip) {
-                Optional<BlockHeader> header = otherBlockchain.getBlockHeader(i);
-                if (header.isPresent()) {
-                  getHeadersFromPeerTaskResult.add(header.get());
-                } else {
-                  break;
-                }
-              }
-            }
-          }
-
-          return new PeerTaskExecutorResult<>(
-              Optional.of(getHeadersFromPeerTaskResult),
-              PeerTaskExecutorResponseCode.SUCCESS,
-              null);
-        };
+    final Answer<PeerTaskExecutorResult<List<BlockHeader>>> getHeadersAnswer = new GetHeadersFromPeerTaskExecutorAnswer(otherBlockchain);
     when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class))).thenAnswer(getHeadersAnswer);
     when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
         .thenAnswer(getHeadersAnswer);
