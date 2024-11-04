@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -29,7 +29,7 @@ public class MainnetProtocolSpecFactory {
   private final boolean isRevertReasonEnabled;
   private final OptionalLong ecip1017EraRounds;
   private final EvmConfiguration evmConfiguration;
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
   private final boolean isParallelTxProcessingEnabled;
   private final MetricsSystem metricsSystem;
 
@@ -38,14 +38,14 @@ public class MainnetProtocolSpecFactory {
       final boolean isRevertReasonEnabled,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     this.chainId = chainId;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.ecip1017EraRounds = ecip1017EraRounds;
     this.evmConfiguration = evmConfiguration;
-    this.miningParameters = miningParameters;
+    this.miningConfiguration = miningConfiguration;
     this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
     this.metricsSystem = metricsSystem;
   }
@@ -140,7 +140,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
@@ -152,7 +152,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
@@ -164,7 +164,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
@@ -175,7 +175,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
@@ -186,7 +186,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
@@ -197,7 +197,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
@@ -208,7 +208,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
@@ -219,7 +219,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
@@ -230,7 +230,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
@@ -252,7 +252,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
@@ -274,7 +274,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }

@@ -17,27 +17,27 @@ package org.hyperledger.besu.cli.options;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.MutableInitValues.DEFAULT_EXTRA_DATA;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.MutableInitValues.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.MutableInitValues.DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.MutableInitValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_MAX_OMMERS_DEPTH;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POW_JOB_TTL;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_LIMIT;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_TTL;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_EXTRA_DATA;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_MAX_OMMERS_DEPTH;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POW_JOB_TTL;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_REMOTE_SEALERS_LIMIT;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_REMOTE_SEALERS_TTL;
 
 import org.hyperledger.besu.cli.converter.PositiveNumberConverter;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
@@ -50,7 +50,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 
 /** The Mining CLI options. */
-public class MiningOptions implements CLIOptions<MiningParameters> {
+public class MiningOptions implements CLIOptions<MiningConfiguration> {
 
   @Option(
       names = {"--miner-enabled"},
@@ -300,43 +300,45 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     }
   }
 
-  static MiningOptions fromConfig(final MiningParameters miningParameters) {
+  static MiningOptions fromConfig(final MiningConfiguration miningConfiguration) {
     final MiningOptions miningOptions = MiningOptions.create();
-    miningOptions.setTransactionSelectionService(miningParameters.getTransactionSelectionService());
-    miningOptions.isMiningEnabled = miningParameters.isMiningEnabled();
-    miningOptions.iStratumMiningEnabled = miningParameters.isStratumMiningEnabled();
-    miningOptions.stratumNetworkInterface = miningParameters.getStratumNetworkInterface();
-    miningOptions.stratumPort = miningParameters.getStratumPort();
-    miningOptions.extraData = miningParameters.getExtraData();
-    miningOptions.minTransactionGasPrice = miningParameters.getMinTransactionGasPrice();
-    miningOptions.minPriorityFeePerGas = miningParameters.getMinPriorityFeePerGas();
-    miningOptions.minBlockOccupancyRatio = miningParameters.getMinBlockOccupancyRatio();
+    miningOptions.setTransactionSelectionService(
+        miningConfiguration.getTransactionSelectionService());
+    miningOptions.isMiningEnabled = miningConfiguration.isMiningEnabled();
+    miningOptions.iStratumMiningEnabled = miningConfiguration.isStratumMiningEnabled();
+    miningOptions.stratumNetworkInterface = miningConfiguration.getStratumNetworkInterface();
+    miningOptions.stratumPort = miningConfiguration.getStratumPort();
+    miningOptions.extraData = miningConfiguration.getExtraData();
+    miningOptions.minTransactionGasPrice = miningConfiguration.getMinTransactionGasPrice();
+    miningOptions.minPriorityFeePerGas = miningConfiguration.getMinPriorityFeePerGas();
+    miningOptions.minBlockOccupancyRatio = miningConfiguration.getMinBlockOccupancyRatio();
     miningOptions.nonPoaBlockTxsSelectionMaxTime =
-        miningParameters.getNonPoaBlockTxsSelectionMaxTime();
-    miningOptions.poaBlockTxsSelectionMaxTime = miningParameters.getPoaBlockTxsSelectionMaxTime();
+        miningConfiguration.getNonPoaBlockTxsSelectionMaxTime();
+    miningOptions.poaBlockTxsSelectionMaxTime =
+        miningConfiguration.getPoaBlockTxsSelectionMaxTime();
 
     miningOptions.unstableOptions.remoteSealersLimit =
-        miningParameters.getUnstable().getRemoteSealersLimit();
+        miningConfiguration.getUnstable().getRemoteSealersLimit();
     miningOptions.unstableOptions.remoteSealersTimeToLive =
-        miningParameters.getUnstable().getRemoteSealersTimeToLive();
+        miningConfiguration.getUnstable().getRemoteSealersTimeToLive();
     miningOptions.unstableOptions.powJobTimeToLive =
-        miningParameters.getUnstable().getPowJobTimeToLive();
+        miningConfiguration.getUnstable().getPowJobTimeToLive();
     miningOptions.unstableOptions.maxOmmersDepth =
-        miningParameters.getUnstable().getMaxOmmerDepth();
+        miningConfiguration.getUnstable().getMaxOmmerDepth();
     miningOptions.unstableOptions.stratumExtranonce =
-        miningParameters.getUnstable().getStratumExtranonce();
+        miningConfiguration.getUnstable().getStratumExtranonce();
     miningOptions.unstableOptions.posBlockCreationMaxTime =
-        miningParameters.getUnstable().getPosBlockCreationMaxTime();
+        miningConfiguration.getUnstable().getPosBlockCreationMaxTime();
     miningOptions.unstableOptions.posBlockCreationRepetitionMinDuration =
-        miningParameters.getUnstable().getPosBlockCreationRepetitionMinDuration();
+        miningConfiguration.getUnstable().getPosBlockCreationRepetitionMinDuration();
 
-    miningParameters.getCoinbase().ifPresent(coinbase -> miningOptions.coinbase = coinbase);
-    miningParameters.getTargetGasLimit().ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
+    miningConfiguration.getCoinbase().ifPresent(coinbase -> miningOptions.coinbase = coinbase);
+    miningConfiguration.getTargetGasLimit().ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
     return miningOptions;
   }
 
   @Override
-  public MiningParameters toDomainObject() {
+  public MiningConfiguration toDomainObject() {
     checkNotNull(
         transactionSelectionService,
         "transactionSelectionService must be set before using this object");
@@ -356,7 +358,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
       updatableInitValuesBuilder.coinbase(coinbase);
     }
 
-    return ImmutableMiningParameters.builder()
+    return ImmutableMiningConfiguration.builder()
         .transactionSelectionService(transactionSelectionService)
         .mutableInitValues(updatableInitValuesBuilder.build())
         .isStratumMiningEnabled(iStratumMiningEnabled)
@@ -365,7 +367,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
         .nonPoaBlockTxsSelectionMaxTime(nonPoaBlockTxsSelectionMaxTime)
         .poaBlockTxsSelectionMaxTime(poaBlockTxsSelectionMaxTime)
         .unstable(
-            ImmutableMiningParameters.Unstable.builder()
+            ImmutableMiningConfiguration.Unstable.builder()
                 .remoteSealersLimit(unstableOptions.remoteSealersLimit)
                 .remoteSealersTimeToLive(unstableOptions.remoteSealersTimeToLive)
                 .powJobTimeToLive(unstableOptions.powJobTimeToLive)
