@@ -59,6 +59,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.bouncycastle.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -152,6 +153,7 @@ public class ArchiverTests {
             null,
             null,
             null,
+            UInt64.ZERO,
             new MainnetBlockHeaderFunctions());
     return Optional.of(new Block(header, BlockBody.empty()));
   }

@@ -53,12 +53,11 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
-  private boolean isBonsaiLimitTrieLogsEnabled = false;
+  private boolean isLimitTrieLogsEnabled = false;
   private long trieLogRetentionLimit = 0;
   private Integer trieLogsPruningWindowSize = null;
   private boolean isSnapServerEnabled = false;
   private boolean isSnapSyncBftEnabled = false;
-  private boolean isSnapSyncToHeadEnabled = true;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
@@ -221,7 +220,7 @@ public class ConfigurationOverviewBuilder {
    * @return the builder
    */
   public ConfigurationOverviewBuilder setLimitTrieLogsEnabled() {
-    isBonsaiLimitTrieLogsEnabled = true;
+    isLimitTrieLogsEnabled = true;
     return this;
   }
 
@@ -255,18 +254,6 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setSnapSyncBftEnabled(final boolean snapSyncBftEnabled) {
     isSnapSyncBftEnabled = snapSyncBftEnabled;
-    return this;
-  }
-
-  /**
-   * Sets snap sync to head enabled/disabled
-   *
-   * @param snapSyncToHeadEnabled bool to indicate if snap sync to head is enabled
-   * @return the builder
-   */
-  public ConfigurationOverviewBuilder setSnapSyncToHeadEnabled(
-      final boolean snapSyncToHeadEnabled) {
-    isSnapSyncToHeadEnabled = snapSyncToHeadEnabled;
     return this;
   }
 
@@ -402,11 +389,7 @@ public class ConfigurationOverviewBuilder {
       lines.add("Experimental Snap Sync for BFT enabled");
     }
 
-    if (isSnapSyncToHeadEnabled) {
-      lines.add("Snap Sync to Head enabled");
-    }
-
-    if (isBonsaiLimitTrieLogsEnabled) {
+    if (isLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();
       trieLogPruningString
           .append("Limit trie logs enabled: retention: ")

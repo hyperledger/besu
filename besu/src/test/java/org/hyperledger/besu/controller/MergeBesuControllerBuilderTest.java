@@ -41,12 +41,10 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromHeadBlock;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromSafeBlock;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -76,15 +74,12 @@ import com.google.common.collect.Range;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Answers;
 import org.mockito.Mock;
-import org.mockito.MockedConstruction;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -95,15 +90,12 @@ public class MergeBesuControllerBuilderTest {
 
   @Mock GenesisConfigFile genesisConfigFile;
   @Mock GenesisConfigOptions genesisConfigOptions;
-
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  SynchronizerConfiguration synchronizerConfiguration;
-
+  @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
   @Mock CheckpointConfigOptions checkpointConfigOptions;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  MiningParameters miningParameters;
+  MiningConfiguration miningConfiguration;
 
   @Mock PrivacyParameters privacyParameters;
   @Mock Clock clock;
@@ -154,9 +146,6 @@ public class MergeBesuControllerBuilderTest {
     lenient().when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
     lenient().when(synchronizerConfiguration.getTransactionsParallelism()).thenReturn(1);
     lenient().when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);
-    lenient()
-        .when(synchronizerConfiguration.getSnapSyncConfiguration().isSnapSyncToHeadEnabled())
-        .thenReturn(false);
 
     lenient()
         .when(synchronizerConfiguration.getBlockPropagationRange())
@@ -178,7 +167,7 @@ public class MergeBesuControllerBuilderTest {
     lenient()
         .when(worldStateKeyValueStorage.updater())
         .thenReturn(mock(ForestWorldStateKeyValueStorage.Updater.class));
-    lenient().when(miningParameters.getTargetGasLimit()).thenReturn(OptionalLong.empty());
+    lenient().when(miningConfiguration.getTargetGasLimit()).thenReturn(OptionalLong.empty());
 
     besuControllerBuilder = visitWithMockConfigs(new MergeBesuControllerBuilder());
   }
@@ -190,7 +179,7 @@ public class MergeBesuControllerBuilderTest {
             .genesisConfigFile(genesisConfigFile)
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
-            .miningParameters(miningParameters)
+            .miningParameters(miningConfiguration)
             .metricsSystem(observableMetricsSystem)
             .privacyParameters(privacyParameters)
             .dataDirectory(tempDir)
@@ -300,32 +289,6 @@ public class MergeBesuControllerBuilderTest {
             this.besuControllerBuilder.createProtocolSchedule());
     assertThat(mergeContext).isNotNull();
     assertThat(mergeContext.getFinalized().get()).isEqualTo(finalizedHeader);
-  }
-
-  @Test
-  public void assertPivotSelectorFromSafeBlockIsCreated() {
-    MockedConstruction<PivotSelectorFromSafeBlock> mocked =
-        Mockito.mockConstruction(PivotSelectorFromSafeBlock.class);
-    lenient()
-        .when(synchronizerConfiguration.getSnapSyncConfiguration().isSnapSyncToHeadEnabled())
-        .thenReturn(false);
-
-    visitWithMockConfigs(new MergeBesuControllerBuilder()).build();
-
-    Assertions.assertEquals(1, mocked.constructed().size());
-  }
-
-  @Test
-  public void assertPivotSelectorFromHeadBlockIsCreated() {
-    MockedConstruction<PivotSelectorFromHeadBlock> mocked =
-        Mockito.mockConstruction(PivotSelectorFromHeadBlock.class);
-    lenient()
-        .when(synchronizerConfiguration.getSnapSyncConfiguration().isSnapSyncToHeadEnabled())
-        .thenReturn(true);
-
-    visitWithMockConfigs(new MergeBesuControllerBuilder()).build();
-
-    Assertions.assertEquals(1, mocked.constructed().size());
   }
 
   private BlockHeader finalizedBlockHeader() {

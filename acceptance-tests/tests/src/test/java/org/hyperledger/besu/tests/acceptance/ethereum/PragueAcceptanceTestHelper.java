@@ -22,7 +22,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions
 import java.io.IOException;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import okhttp3.Call;
 import okhttp3.MediaType;
@@ -74,17 +76,15 @@ public class PragueAcceptanceTestHelper {
     final Call getPayloadRequest = createEngineCall(createGetPayloadRequest(payloadId));
 
     final ObjectNode executionPayload;
+    final ArrayNode executionRequests;
     final String newBlockHash;
     final String parentBeaconBlockRoot;
     try (final Response getPayloadResponse = getPayloadRequest.execute()) {
       assertThat(getPayloadResponse.code()).isEqualTo(200);
 
-      executionPayload =
-          (ObjectNode)
-              mapper
-                  .readTree(getPayloadResponse.body().string())
-                  .get("result")
-                  .get("executionPayload");
+      JsonNode result = mapper.readTree(getPayloadResponse.body().string()).get("result");
+      executionPayload = (ObjectNode) result.get("executionPayload");
+      executionRequests = (ArrayNode) result.get("executionRequests");
 
       newBlockHash = executionPayload.get("blockHash").asText();
       parentBeaconBlockRoot = executionPayload.remove("parentBeaconBlockRoot").asText();
@@ -94,7 +94,8 @@ public class PragueAcceptanceTestHelper {
 
     final Call newPayloadRequest =
         createEngineCall(
-            createNewPayloadRequest(executionPayload.toString(), parentBeaconBlockRoot));
+            createNewPayloadRequest(
+                executionPayload.toString(), parentBeaconBlockRoot, executionRequests.toString()));
     try (final Response newPayloadResponse = newPayloadRequest.execute()) {
       assertThat(newPayloadResponse.code()).isEqualTo(200);
     }
@@ -168,7 +169,9 @@ public class PragueAcceptanceTestHelper {
   }
 
   private String createNewPayloadRequest(
-      final String executionPayload, final String parentBeaconBlockRoot) {
+      final String executionPayload,
+      final String parentBeaconBlockRoot,
+      final String executionRequests) {
     return "{"
         + "  \"jsonrpc\": \"2.0\","
         + "  \"method\": \"engine_newPayloadV4\","
@@ -178,6 +181,8 @@ public class PragueAcceptanceTestHelper {
         + "\""
         + parentBeaconBlockRoot
         + "\""
+        + ","
+        + executionRequests
         + "],"
         + "  \"id\": 67"
         + "}";

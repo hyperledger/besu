@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.cli.options.stable;
 
+import static com.google.common.base.Preconditions.checkState;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_INTEGER_FORMAT_HELP;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
@@ -24,6 +26,7 @@ import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAU
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
+import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.MetricsProtocol;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -36,6 +39,7 @@ import picocli.CommandLine;
 /** Command line options for configuring metrics. */
 // TODO: implement CLIOption<MetricsConfiguration>
 public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> {
+  private MetricCategoryRegistryImpl metricCategoryRegistry;
 
   /**
    * Returns a MetricsConfiguration.Builder because fields are often overridden from other domains,
@@ -77,7 +81,10 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
     metricsOptions.metricsHost = config.getHost();
     metricsOptions.metricsPort = config.getPort();
     metricsOptions.metricsProtocol = config.getProtocol();
-    metricsOptions.metricCategories = config.getMetricCategories();
+    metricsOptions.metricCategories =
+        config.getMetricCategories().stream()
+            .map(MetricCategory::getName)
+            .collect(toUnmodifiableSet());
     metricsOptions.metricsPrometheusJob = config.getPrometheusJob();
     metricsOptions.isMetricsPushEnabled = config.isPushEnabled();
     metricsOptions.metricsPushHost = config.getPushHost();
@@ -126,7 +133,8 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
       arity = "1..*",
       description =
           "Comma separated list of categories to track metrics for (default: ${DEFAULT-VALUE})")
-  private Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
+  private Set<String> metricCategories =
+      DEFAULT_METRIC_CATEGORIES.stream().map(MetricCategory::getName).collect(toUnmodifiableSet());
 
   @CommandLine.Option(
       names = {"--metrics-push-enabled"},
@@ -216,7 +224,13 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
    * @return the metric categories
    */
   public Set<MetricCategory> getMetricCategories() {
-    return metricCategories;
+    checkState(
+        metricCategoryRegistry != null, "Set metricCategoryRegistry before calling this method");
+
+    final var list =
+        metricCategories.stream().map(metricCategoryRegistry::getMetricCategory).toList();
+
+    return Set.copyOf(list);
   }
 
   /**
@@ -262,6 +276,33 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
    */
   public String getMetricsPrometheusJob() {
     return metricsPrometheusJob;
+  }
+
+  /**
+   * Perform final validation after all the options, and the metric category registry, have been set
+   *
+   * @param commandLine the command line
+   */
+  public void validate(final CommandLine commandLine) {
+    checkState(
+        metricCategoryRegistry != null, "Set metricCategoryRegistry before calling this method");
+    final var unknownCategories =
+        metricCategories.stream()
+            .filter(category -> !metricCategoryRegistry.containsMetricCategory(category))
+            .toList();
+    if (!unknownCategories.isEmpty()) {
+      throw new CommandLine.ParameterException(
+          commandLine, "--metrics-categories contains unknown categories: " + unknownCategories);
+    }
+  }
+
+  /**
+   * Set the metric category registry in order to support verification and conversion
+   *
+   * @param metricCategoryRegistry the metric category registry
+   */
+  public void setMetricCategoryRegistry(final MetricCategoryRegistryImpl metricCategoryRegistry) {
+    this.metricCategoryRegistry = metricCategoryRegistry;
   }
 
   @CommandLine.ArgGroup(validate = false)

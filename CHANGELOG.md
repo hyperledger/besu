@@ -1,14 +1,31 @@
 # Changelog
 
 ## [Unreleased]
-- Add `--ephemery` network support for Ephemery Testnet [#7563](https://github.com/hyperledger/besu/pull/7563) thanks to [@gconnect](https://github.com/gconnect)
-- Add configuration of Consolidation Request Contract Address via genesis configuration [#7647](https://github.com/hyperledger/besu/pull/7647)
+- Added isLabelsObserved to LabelledGauge in plugin-api. Default implementation returns false.
+
+### Breaking Changes
+- Removed Retesteth rpc service and commands [#7833](https://github.com/hyperledger/besu/pull/7783)
 
 ### Upcoming Breaking Changes
-- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
+
+### Additions and Improvements
+- Fine tune already seen txs tracker when a tx is removed from the pool [#7755](https://github.com/hyperledger/besu/pull/7755)
+- Create and publish Besu BOM (Bill of Materials) [#7615](https://github.com/hyperledger/besu/pull/7615) 
+- Update Java dependencies [#7786](https://github.com/hyperledger/besu/pull/7786)
+- Add a method to get all the transaction in the pool, to the `TransactionPoolService`, to easily access the transaction pool content from plugins [#7813](https://github.com/hyperledger/besu/pull/7813)
+- Add a method to check if a metric category is enabled to the plugin API [#7832](https://github.com/hyperledger/besu/pull/7832)
+
+### Bug fixes
+- Fix registering new metric categories from plugins [#7825](https://github.com/hyperledger/besu/pull/7825)
+
+## 24.10.0
 
 ### Breaking Changes
 - Besu will now fail to start if any plugins encounter errors during initialization. To allow Besu to continue running despite plugin errors, use the `--plugin-continue-on-error` option. [#7662](https://github.com/hyperledger/besu/pull/7662)
+
+### Upcoming Breaking Changes
+- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
+- `--host-whitelist` has been deprecated in favor of `--host-allowlist` since 2020 and will be removed in a future release
 
 ### Additions and Improvements
 - Remove privacy test classes support [#7569](https://github.com/hyperledger/besu/pull/7569)
@@ -19,8 +36,9 @@
 - Interrupt pending transaction processing on block creation timeout [#7673](https://github.com/hyperledger/besu/pull/7673)
 - Align gas cap calculation for transaction simulation to Geth approach [#7703](https://github.com/hyperledger/besu/pull/7703)
 - Expose chainId in the `BlockchainService` [7702](https://github.com/hyperledger/besu/pull/7702)
-- Use head block instead of safe block for snap sync [7536](https://github.com/hyperledger/besu/issues/7536)
 - Add support for `chainId` in `CallParameters` [#7720](https://github.com/hyperledger/besu/pull/7720)
+- Add `--ephemery` network support for Ephemery Testnet [#7563](https://github.com/hyperledger/besu/pull/7563) thanks to [@gconnect](https://github.com/gconnect)
+- Add configuration of Consolidation Request Contract Address via genesis configuration [#7647](https://github.com/hyperledger/besu/pull/7647)
 - Experimental Bonsai Archive support [#7475](https://github.com/hyperledger/besu/pull/7475)
 
 ### Bug fixes
@@ -32,6 +50,7 @@
 - Fix an unhandled PeerTable exception [#7733](https://github.com/hyperledger/besu/issues/7733)
 - Fix RocksDBException: Busy leading to MerkleTrieException: Unable to load trie node value [#7745](https://github.com/hyperledger/besu/pull/7745)
 - If a BFT validator node is syncing, pause block production until sync has completed [#7657](https://github.com/hyperledger/besu/pull/7657)
+- Fix eth_feeHistory rewards when bounded by configuration [#7750](https://github.com/hyperledger/besu/pull/7750)
 
 ## 24.9.1
 

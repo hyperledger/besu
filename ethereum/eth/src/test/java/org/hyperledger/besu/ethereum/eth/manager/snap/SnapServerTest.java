@@ -42,7 +42,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategyProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -70,6 +70,7 @@ import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -115,6 +116,7 @@ public class SnapServerTest {
         null,
         null,
         null,
+        UInt64.ZERO,
         new MainnetBlockHeaderFunctions());
   }
 
@@ -151,7 +153,7 @@ public class SnapServerTest {
     // force a full flat db with code stored by code hash:
     inMemoryStorage =
         new BonsaiWorldStateKeyValueStorage(
-            new FlatDbStrategyProvider(
+            new BonsaiFlatDbStrategyProvider(
                 noopMetrics,
                 dbMode == FlatDbMode.FULL
                     ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG

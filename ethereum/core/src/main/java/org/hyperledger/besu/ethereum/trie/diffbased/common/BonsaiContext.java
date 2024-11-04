@@ -12,9 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.common;
 
-import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;

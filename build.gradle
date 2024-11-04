@@ -24,10 +24,8 @@ import java.util.regex.Pattern
 
 plugins {
   id 'com.diffplug.spotless' version '6.25.0'
-  id 'com.github.ben-manes.versions' version '0.51.0'
   id 'com.github.jk1.dependency-license-report' version '2.9'
   id 'com.jfrog.artifactory' version '5.2.5'
-  id 'io.spring.dependency-management' version '1.1.6'
   id 'me.champeau.jmh' version '0.7.2' apply false
   id 'net.ltgt.errorprone' version '4.0.1'
   id 'maven-publish'
@@ -120,12 +118,10 @@ licenseReport {
   ]
 }
 
-allprojects {
+configure(allprojects - project(':platform')) {
   apply plugin: 'java-library'
-  apply plugin: 'io.spring.dependency-management'
   apply plugin: 'jacoco'
   apply plugin: 'net.ltgt.errorprone'
-  apply from: "${rootDir}/gradle/versions.gradle"
 
   version = calculateVersion()
 
@@ -185,6 +181,12 @@ allprojects {
   }
 
   dependencies {
+    api platform(project(':platform'))
+
+    annotationProcessor(platform(project(':platform')))
+
+    testAnnotationProcessor(platform(project(':platform')))
+
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
     // https://github.com/hyperledger/besu-errorprone-checks/
@@ -215,7 +217,7 @@ allprojects {
       // apply appropriate license header files.
       licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license").named("older").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
       licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license").named("older.year").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
-      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*(ConsenSys AG|Hyperledger Besu)\\.)")
     }
     // spotless check applied to build.gradle (groovy) files
     groovyGradle {
@@ -240,7 +242,7 @@ allprojects {
 
       licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license","^pragma solidity.+?").named("former").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
       licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license","^pragma solidity.+?").named("former.date").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
-      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license","^pragma solidity.+?").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license","^pragma solidity.+?").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*(ConsenSys AG|Hyperledger Besu)\\.)")
     }
   }
 
@@ -442,14 +444,16 @@ task checkMavenCoordinateCollisions {
   doLast {
     def coordinates = [:]
     getAllprojects().forEach {
-      if (it.properties.containsKey('publishing') && it.jar?.enabled) {
-        def coordinate = it.publishing?.publications[0].coordinates
-        if (coordinate.toString().startsWith("org") && coordinates.containsKey(coordinate)) {
-          throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
-          "both ${coordinates[coordinate]} and ${it.path}.\n" +
-          "Please add a `publishing` script block to one or both subprojects.")
+      if (it.properties.containsKey('publishing')) {
+        if(!it.properties.containsKey('jar') || it.jar.enabled) {
+          def coordinate = it.publishing?.publications[0].coordinates
+          if (coordinate.toString().startsWith("org") && coordinates.containsKey(coordinate)) {
+            throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
+            "both ${coordinates[coordinate]} and ${it.path}.\n" +
+            "Please add a `publishing` script block to one or both subprojects.")
+          }
+          coordinates[coordinate] = it.path
         }
-        coordinates[coordinate] = it.path
       }
     }
   }
@@ -522,7 +526,8 @@ subprojects {
     return result
   }
 
-  if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
+
+  if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport") || project.name == "platform") {
     apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'maven-publish'
 
@@ -597,7 +602,9 @@ subprojects {
 
 
   configurations {
+    testSupportAnnotationProcessor.extendsFrom annotationProcessor
     testSupportImplementation.extendsFrom implementation
+    integrationTestAnnotationProcessor.extendsFrom annotationProcessor
     integrationTestImplementation.extendsFrom implementation
     testSupportArtifacts
   }
@@ -622,7 +629,10 @@ subprojects {
       duplicateClassesStrategy = DuplicatesStrategy.WARN
     }
 
-    dependencies { jmh 'org.slf4j:slf4j-api' }
+    dependencies {
+      jmhAnnotationProcessor(platform(project(':platform')))
+      jmh 'org.slf4j:slf4j-api'
+    }
   }
 
   // making sure assemble task invokes integration test compile

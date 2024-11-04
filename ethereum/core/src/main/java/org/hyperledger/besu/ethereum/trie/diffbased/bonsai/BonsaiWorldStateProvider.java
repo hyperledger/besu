@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveFlatDbStrategy;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
@@ -94,7 +94,7 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
       // flatDB
       // although, in practice we can only serve canonical chain worldstates and need to fall back
       // to state rolling if the requested block is a fork.
-      if (this.worldStateKeyValueStorage.getFlatDbStrategy() instanceof ArchiveFlatDbStrategy
+      if (this.worldStateKeyValueStorage.getFlatDbStrategy() instanceof BonsaiArchiveFlatDbStrategy
           && trieLogManager.getTrieLogLayer(blockHeader.getBlockHash()).isPresent()) {
         var contextSafeCopy =
             ((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage).getContextSafeCopy();

@@ -31,7 +31,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
@@ -54,7 +54,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   protected final ForksSchedule<T> forksSchedule;
 
   /** The Mining parameters */
-  protected final MiningParameters miningParameters;
+  protected final MiningConfiguration miningConfiguration;
 
   private final TransactionPool transactionPool;
 
@@ -89,7 +89,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final ForksSchedule<T> forksSchedule,
-      final MiningParameters miningParams,
+      final MiningConfiguration miningParams,
       final Address localAddress,
       final BftExtraDataCodec bftExtraDataCodec,
       final EthScheduler ethScheduler) {
@@ -98,7 +98,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
     this.protocolSchedule = protocolSchedule;
     this.forksSchedule = forksSchedule;
     this.localAddress = localAddress;
-    this.miningParameters = miningParams;
+    this.miningConfiguration = miningParams;
     this.bftExtraDataCodec = bftExtraDataCodec;
     this.ethScheduler = ethScheduler;
   }
@@ -111,7 +111,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    */
   public BlockCreator create(final int round) {
     return new BftBlockCreator(
-        miningParameters,
+        miningConfiguration,
         forksSchedule,
         localAddress,
         ph -> createExtraData(round, ph),
@@ -128,7 +128,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    * @param minTransactionGasPrice the min transaction gas price
    */
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
-    miningParameters.setMinTransactionGasPrice(minTransactionGasPrice);
+    miningConfiguration.setMinTransactionGasPrice(minTransactionGasPrice);
   }
 
   /**
@@ -137,7 +137,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    * @return the min transaction gas price
    */
   public Wei getMinTransactionGasPrice() {
-    return miningParameters.getMinTransactionGasPrice();
+    return miningConfiguration.getMinTransactionGasPrice();
   }
 
   /**
@@ -146,7 +146,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    * @return min priority fee per gas
    */
   public Wei getMinPriorityFeePerGas() {
-    return miningParameters.getMinPriorityFeePerGas();
+    return miningConfiguration.getMinPriorityFeePerGas();
   }
 
   /**
@@ -171,7 +171,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
     final BftExtraData extraData =
         new BftExtraData(
             ConsensusHelpers.zeroLeftPad(
-                miningParameters.getExtraData(), BftExtraDataCodec.EXTRA_VANITY_LENGTH),
+                miningConfiguration.getExtraData(), BftExtraDataCodec.EXTRA_VANITY_LENGTH),
             Collections.emptyList(),
             toVote(proposal),
             round,
@@ -187,7 +187,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    */
   public void changeTargetGasLimit(final Long newTargetGasLimit) {
     if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
-      miningParameters.setTargetGasLimit(newTargetGasLimit);
+      miningConfiguration.setTargetGasLimit(newTargetGasLimit);
     } else {
       throw new UnsupportedOperationException("Specified target gas limit is invalid");
     }

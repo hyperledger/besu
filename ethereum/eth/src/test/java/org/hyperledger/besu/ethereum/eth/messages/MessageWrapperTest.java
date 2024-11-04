@@ -259,8 +259,7 @@ public class MessageWrapperTest {
             new BlockBody(
                 Collections.emptyList(),
                 Collections.emptyList(),
-                Optional.of(Collections.emptyList()),
-                Optional.empty()));
+                Optional.of(Collections.emptyList())));
   }
 
   @Test
@@ -284,8 +283,7 @@ public class MessageWrapperTest {
             new BlockBody(
                 Collections.emptyList(),
                 Collections.emptyList(),
-                Optional.of(Collections.emptyList()),
-                Optional.empty()));
+                Optional.of(Collections.emptyList())));
   }
 
   @Test
@@ -395,6 +393,7 @@ public class MessageWrapperTest {
           null,
           Hash.fromHexString(mixHash),
           Bytes.fromHexStringLenient(nonce).toLong(),
+          null,
           null,
           null,
           null,

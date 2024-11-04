@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -60,6 +61,7 @@ import java.util.TreeMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -841,10 +843,13 @@ public class BonsaiWorldStateKeyValueStorageTest {
         new NoOpMetricsSystem(),
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(DataStorageFormat.BONSAI)
-            .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiCodeStoredByCodeHashEnabled(useCodeHashStorage)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(DEFAULT_MAX_LAYERS_TO_LOAD)
+                    .unstable(
+                        ImmutableDiffBasedSubStorageConfiguration.DiffBasedUnstable.builder()
+                            .codeStoredByCodeHashEnabled(useCodeHashStorage)
+                            .build())
                     .build())
             .build());
   }
@@ -856,10 +861,14 @@ public class BonsaiWorldStateKeyValueStorageTest {
             new NoOpMetricsSystem(),
             ImmutableDataStorageConfiguration.builder()
                 .dataStorageFormat(DataStorageFormat.X_BONSAI_ARCHIVE)
-                .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-                .unstable(
-                    ImmutableDataStorageConfiguration.Unstable.builder()
-                        .bonsaiCodeStoredByCodeHashEnabled(useCodeHashStorage)
+                .diffBasedSubStorageConfiguration(
+                    ImmutableDiffBasedSubStorageConfiguration.builder()
+                        .maxLayersToLoad(3L)
+                        .limitTrieLogsEnabled(true)
+                        .unstable(
+                            ImmutableDiffBasedSubStorageConfiguration.DiffBasedUnstable.builder()
+                                .codeStoredByCodeHashEnabled(useCodeHashStorage)
+                                .build())
                         .build())
                 .build());
     archiveStorage
@@ -930,6 +939,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
             null,
             null,
             null,
+            UInt64.ZERO,
             new MainnetBlockHeaderFunctions());
     return header;
   }

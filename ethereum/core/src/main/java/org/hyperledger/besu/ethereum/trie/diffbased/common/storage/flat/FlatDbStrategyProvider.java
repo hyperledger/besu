@@ -18,16 +18,11 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiContext;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveFlatDbStrategy;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullFlatDbStrategy;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.PartialFlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -37,13 +32,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FlatDbStrategyProvider {
+public abstract class FlatDbStrategyProvider {
   private static final Logger LOG = LoggerFactory.getLogger(FlatDbStrategyProvider.class);
 
   // 0x666C61744462537461747573
   public static final byte[] FLAT_DB_MODE = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
   private final MetricsSystem metricsSystem;
-  private final DataStorageConfiguration dataStorageConfiguration;
+  protected final DataStorageConfiguration dataStorageConfiguration;
   protected FlatDbMode flatDbMode;
   protected FlatDbStrategy flatDbStrategy;
 
@@ -64,23 +59,52 @@ public class FlatDbStrategyProvider {
           deriveUseCodeStorageByHash(composedWorldStateStorage)
               ? new CodeHashCodeStorageStrategy()
               : new AccountHashCodeStorageStrategy();
-      if (flatDbMode == FlatDbMode.FULL) {
-        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, codeStorageStrategy);
-      } else if (flatDbMode == FlatDbMode.ARCHIVE) {
-        final BonsaiContext context = new BonsaiContext();
-        this.flatDbStrategy =
-            new ArchiveFlatDbStrategy(context, metricsSystem, codeStorageStrategy);
-      } else {
-        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem, codeStorageStrategy);
-      }
+      this.flatDbStrategy = createFlatDbStrategy(flatDbMode, metricsSystem, codeStorageStrategy);
     }
   }
 
+  protected boolean deriveUseCodeStorageByHash(
+      final SegmentedKeyValueStorage composedWorldStateStorage) {
+    final boolean configCodeUsingHash =
+        dataStorageConfiguration
+            .getDiffBasedSubStorageConfiguration()
+            .getUnstable()
+            .getCodeStoredByCodeHashEnabled();
+    boolean codeUsingCodeByHash =
+        detectCodeStorageByHash(composedWorldStateStorage)
+            .map(
+                dbCodeUsingHash -> {
+                  if (dbCodeUsingHash != configCodeUsingHash) {
+                    LOG.warn(
+                        "Bonsai db is using code storage mode {} but config specifies mode {}. Using mode from database",
+                        dbCodeUsingHash,
+                        configCodeUsingHash);
+                  }
+                  return dbCodeUsingHash;
+                })
+            .orElse(configCodeUsingHash);
+    LOG.info("DB mode with code stored using code hash enabled = {}", codeUsingCodeByHash);
+    return codeUsingCodeByHash;
+  }
+
+  private Optional<Boolean> detectCodeStorageByHash(
+      final SegmentedKeyValueStorage composedWorldStateStorage) {
+    return composedWorldStateStorage.stream(CODE_STORAGE)
+        .limit(1)
+        .findFirst()
+        .map(
+            keypair ->
+                CodeHashCodeStorageStrategy.isCodeHashValue(keypair.getKey(), keypair.getValue()));
+  }
+
   @VisibleForTesting
-  synchronized FlatDbMode deriveFlatDbStrategy(
+  private FlatDbMode deriveFlatDbStrategy(
       final SegmentedKeyValueStorage composedWorldStateStorage) {
     final FlatDbMode requestedFlatDbMode =
-        dataStorageConfiguration.getUnstable().getBonsaiFullFlatDbEnabled()
+        dataStorageConfiguration
+                .getDiffBasedSubStorageConfiguration()
+                .getUnstable()
+                .getFullFlatDbEnabled()
             ? (dataStorageConfiguration
                     .getDataStorageFormat()
                     .equals(DataStorageFormat.X_BONSAI_ARCHIVE)
@@ -103,9 +127,8 @@ public class FlatDbStrategyProvider {
                       //  - otherwise go with the requested mode
                       var flatDbModeVal =
                           existingTrieData
-                              ? FlatDbMode.PARTIAL.getVersion()
+                              ? alternativeFlatDbModeForExistingDatabase().getVersion()
                               : requestedFlatDbMode.getVersion();
-
                       // persist this config in the db
                       var setDbModeTx = composedWorldStateStorage.startTransaction();
                       setDbModeTx.put(
@@ -114,41 +137,9 @@ public class FlatDbStrategyProvider {
 
                       return flatDbModeVal;
                     }));
-
-    LOG.info("Bonsai flat db mode found {}", flatDbMode);
+    LOG.info("Flat db mode found {}", flatDbMode);
 
     return flatDbMode;
-  }
-
-  protected boolean deriveUseCodeStorageByHash(
-      final SegmentedKeyValueStorage composedWorldStateStorage) {
-    final boolean configCodeUsingHash =
-        dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
-    boolean codeUsingCodeByHash =
-        detectCodeStorageByHash(composedWorldStateStorage)
-            .map(
-                dbCodeUsingHash -> {
-                  if (dbCodeUsingHash != configCodeUsingHash) {
-                    LOG.warn(
-                        "Bonsai db is using code storage mode {} but config specifies mode {}. Using mode from database",
-                        dbCodeUsingHash,
-                        configCodeUsingHash);
-                  }
-                  return dbCodeUsingHash;
-                })
-            .orElse(configCodeUsingHash);
-    LOG.info("Bonsai db mode with code stored using code hash enabled = {}", codeUsingCodeByHash);
-    return codeUsingCodeByHash;
-  }
-
-  private Optional<Boolean> detectCodeStorageByHash(
-      final SegmentedKeyValueStorage composedWorldStateStorage) {
-    return composedWorldStateStorage.stream(CODE_STORAGE)
-        .limit(1)
-        .findFirst()
-        .map(
-            keypair ->
-                CodeHashCodeStorageStrategy.isCodeHashValue(keypair.getKey(), keypair.getValue()));
   }
 
   public FlatDbStrategy getFlatDbStrategy(
@@ -159,43 +150,17 @@ public class FlatDbStrategyProvider {
     return flatDbStrategy;
   }
 
-  public void upgradeToFullFlatDbMode(final SegmentedKeyValueStorage composedWorldStateStorage) {
-    final SegmentedKeyValueStorageTransaction transaction =
-        composedWorldStateStorage.startTransaction();
-    if (dataStorageConfiguration.getDataStorageFormat() == DataStorageFormat.BONSAI) {
-      LOG.info("setting FlatDbStrategy to FULL");
-      transaction.put(
-          TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
-    } else if (dataStorageConfiguration.getDataStorageFormat()
-        == DataStorageFormat.X_BONSAI_ARCHIVE) {
-      LOG.info("setting FlatDbStrategy to ARCHIVE");
-      transaction.put(
-          TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.ARCHIVE.getVersion().toArrayUnsafe());
-    }
-    transaction.commit();
-    loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy
-  }
-
-  public void downgradeToPartialFlatDbMode(
-      final SegmentedKeyValueStorage composedWorldStateStorage) {
-    final SegmentedKeyValueStorageTransaction transaction =
-        composedWorldStateStorage.startTransaction();
-    LOG.info("setting FlatDbStrategy to PARTIAL");
-    transaction.put(
-        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.PARTIAL.getVersion().toArrayUnsafe());
-    transaction.commit();
-    loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy
-  }
-
   public FlatDbMode getFlatDbMode() {
     return flatDbMode;
   }
 
-  public FlatDbStrategyProvider contextSafeClone() {
-    FlatDbStrategyProvider copy =
-        new FlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
-    copy.flatDbStrategy = flatDbStrategy.contextSafeClone();
-    copy.flatDbMode = flatDbMode;
-    return copy;
-  }
+  protected abstract FlatDbMode getRequestedFlatDbMode(
+      final DataStorageConfiguration dataStorageConfiguration);
+
+  protected abstract FlatDbMode alternativeFlatDbModeForExistingDatabase();
+
+  protected abstract FlatDbStrategy createFlatDbStrategy(
+      final FlatDbMode flatDbMode,
+      final MetricsSystem metricsSystem,
+      final CodeStorageStrategy codeStorageStrategy);
 }
