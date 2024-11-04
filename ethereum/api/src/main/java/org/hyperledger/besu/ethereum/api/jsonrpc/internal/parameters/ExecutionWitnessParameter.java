@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.witness.ExecutionWitness;
+
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -24,32 +27,38 @@ public class ExecutionWitnessParameter {
 
   private final StateDiffParameter stateDiffParameter;
   private final VerkleProofParameter verkleProofParameter;
+  private final Hash parentStateRoot;
 
-  // No-op contructor for testing
+  @VisibleForTesting
   public ExecutionWitnessParameter() {
     this.stateDiffParameter = null;
     this.verkleProofParameter = null;
+    this.parentStateRoot = null;
   }
 
   @JsonCreator
   public ExecutionWitnessParameter(
       @JsonProperty("stateDiff") final StateDiffParameter stateDiff,
-      @JsonProperty("verkleProof") final VerkleProofParameter verkleProof) {
+      @JsonProperty("verkleProof") final VerkleProofParameter verkleProof,
+      @JsonProperty("parentStateRoot") final Hash parentStateRoot) {
     this.stateDiffParameter = stateDiff;
     this.verkleProofParameter = verkleProof;
+    this.parentStateRoot = parentStateRoot;
   }
 
   public static ExecutionWitnessParameter fromExecutionWitness(
       final ExecutionWitness executionWitness) {
     return new ExecutionWitnessParameter(
         StateDiffParameter.fromStateDiff(executionWitness.getStateDiff()),
-        VerkleProofParameter.fromVerkleProof(executionWitness.getVerkleProof()));
+        VerkleProofParameter.fromVerkleProof(executionWitness.getVerkleProof()),
+        executionWitness.getParentStateRoot());
   }
 
   public ExecutionWitness toExecutionWitness() {
     return new ExecutionWitness(
         StateDiffParameter.toStateDiff(stateDiffParameter),
-        VerkleProofParameter.toVerkleProof(verkleProofParameter));
+        VerkleProofParameter.toVerkleProof(verkleProofParameter),
+        parentStateRoot);
   }
 
   @JsonGetter
@@ -62,21 +71,23 @@ public class ExecutionWitnessParameter {
     return verkleProofParameter;
   }
 
+  @JsonGetter
+  public Hash getParentStateRoot() {
+    return parentStateRoot;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
-    final ExecutionWitnessParameter that = (ExecutionWitnessParameter) o;
-
-    if (!stateDiffParameter.equals(that.stateDiffParameter)) return false;
-    return verkleProofParameter.equals(that.verkleProofParameter);
+    ExecutionWitnessParameter that = (ExecutionWitnessParameter) o;
+    return Objects.equals(stateDiffParameter, that.stateDiffParameter)
+        && Objects.equals(verkleProofParameter, that.verkleProofParameter)
+        && Objects.equals(parentStateRoot, that.parentStateRoot);
   }
 
   @Override
   public int hashCode() {
-    int result = stateDiffParameter.hashCode();
-    result = 31 * result + verkleProofParameter.hashCode();
-    return result;
+    return Objects.hash(stateDiffParameter, verkleProofParameter, parentStateRoot);
   }
 }

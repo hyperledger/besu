@@ -1411,50 +1411,50 @@ public class MainnetEVMs {
   }
 
   /**
-   * eip4762 evm.
+   * Verkle evm.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration
    * @return the evm
    */
-  public static EVM eip4762(
+  public static EVM verkle(
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
     return new EVM(
-        eip4762Operations(gasCalculator, chainId),
+        verkleOperations(gasCalculator, chainId),
         gasCalculator,
         evmConfiguration,
         EvmSpecVersion.PRAGUE);
   }
 
   /**
-   * Operation registry for eip472's operations.
+   * Operation registry for verkle's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
    * @return the operation registry
    */
-  public static OperationRegistry eip4762Operations(
+  public static OperationRegistry verkleOperations(
       final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
-    registerEip4762Operations(operationRegistry, gasCalculator, chainId);
+    registerVerkleOperations(operationRegistry, gasCalculator, chainId);
     return operationRegistry;
   }
 
   /**
-   * Register eip4762 operations.
+   * Register Verkle operations.
    *
    * @param registry the registry
    * @param gasCalculator the gas calculator
    * @param chainID the chain id
    */
-  public static void registerEip4762Operations(
+  public static void registerVerkleOperations(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
-    // basing off of shanghai for devnet-6
+    // basing off of shanghai for devnet-7
     registerShanghaiOperations(registry, gasCalculator, chainID);
     // EIP-6780 nerf self destruct
     registry.put(new SelfDestructOperation(gasCalculator, true));

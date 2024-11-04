@@ -213,9 +213,8 @@ public class MainnetProtocolSpecFactory {
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder pragueDefinition(final GenesisConfigOptions genesisConfigOptions) {
-    // TODO: this is for VERKLE devnet
-    return MainnetProtocolSpecs.eip4762Definition(
+  public ProtocolSpecBuilder verkleDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.verkleDefinition(
         chainId,
         isRevertReasonEnabled,
         genesisConfigOptions,
@@ -223,14 +222,17 @@ public class MainnetProtocolSpecFactory {
         miningParameters,
         isParallelTxProcessingEnabled,
         metricsSystem);
-    // return MainnetProtocolSpecs.pragueDefinition(
-    //    chainId,
-    //    isRevertReasonEnabled,
-    //    genesisConfigOptions,
-    //    evmConfiguration,
-    //    miningParameters,
-    //    isParallelTxProcessingEnabled,
-    //    metricsSystem);
+  }
+
+  public ProtocolSpecBuilder pragueDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.pragueDefinition(
+        chainId,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        evmConfiguration,
+        miningParameters,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   public ProtocolSpecBuilder osakaDefinition(final GenesisConfigOptions genesisConfigOptions) {
