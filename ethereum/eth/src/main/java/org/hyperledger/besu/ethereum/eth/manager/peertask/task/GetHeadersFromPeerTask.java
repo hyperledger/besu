@@ -35,6 +35,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   private final int maxHeaders;
   private final int skip;
   private final Direction direction;
+  private final int maximumRetriesAgainstDifferentPeers;
   private final ProtocolSchedule protocolSchedule;
   private final long requiredBlockchainHeight;
 
@@ -44,7 +45,24 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
       final int skip,
       final Direction direction,
       final ProtocolSchedule protocolSchedule) {
-    this(null, blockNumber, maxHeaders, skip, direction, protocolSchedule);
+    this(blockNumber, maxHeaders, skip, direction, 5, protocolSchedule);
+  }
+
+  public GetHeadersFromPeerTask(
+      final Long blockNumber,
+      final int maxHeaders,
+      final int skip,
+      final Direction direction,
+      final int maximumRetriesAgainstDifferentPeers,
+      final ProtocolSchedule protocolSchedule) {
+    this(
+        null,
+        blockNumber,
+        maxHeaders,
+        skip,
+        direction,
+        maximumRetriesAgainstDifferentPeers,
+        protocolSchedule);
   }
 
   public GetHeadersFromPeerTask(
@@ -54,11 +72,23 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
       final int skip,
       final Direction direction,
       final ProtocolSchedule protocolSchedule) {
+    this(blockHash, blockNumber, maxHeaders, skip, direction, 5, protocolSchedule);
+  }
+
+  public GetHeadersFromPeerTask(
+      final Hash blockHash,
+      final long blockNumber,
+      final int maxHeaders,
+      final int skip,
+      final Direction direction,
+      final int maximumRetriesAgainstDifferentPeers,
+      final ProtocolSchedule protocolSchedule) {
     this.blockHash = blockHash;
     this.blockNumber = blockNumber;
     this.maxHeaders = maxHeaders;
     this.skip = skip;
     this.direction = direction;
+    this.maximumRetriesAgainstDifferentPeers = maximumRetriesAgainstDifferentPeers;
     this.protocolSchedule = protocolSchedule;
 
     requiredBlockchainHeight =
@@ -106,6 +136,11 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   @Override
   public boolean isSuccess(final List<BlockHeader> result) {
     return !result.isEmpty();
+  }
+
+  @Override
+  public int getRetriesWithOtherPeer() {
+    return maximumRetriesAgainstDifferentPeers;
   }
 
   public Long getBlockNumber() {
