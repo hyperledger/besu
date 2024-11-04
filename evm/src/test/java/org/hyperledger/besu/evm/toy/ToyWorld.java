@@ -63,11 +63,11 @@ public class ToyWorld implements WorldUpdater {
   }
 
   public MutableAccount createAccount(
-          final Account parentAccount,
-          final Address address,
-          final long nonce,
-          final Wei balance,
-          final Bytes code) {
+      final Account parentAccount,
+      final Address address,
+      final long nonce,
+      final Wei balance,
+      final Bytes code) {
     ToyAccount account = new ToyAccount(parentAccount, address, nonce, balance, code);
     accounts.put(address, account);
     return account;
@@ -88,11 +88,11 @@ public class ToyWorld implements WorldUpdater {
         return null;
       } else {
         return createAccount(
-                parentAccount,
-                parentAccount.getAddress(),
-                parentAccount.getNonce(),
-                parentAccount.getBalance(),
-                parentAccount.getCode());
+            parentAccount,
+            parentAccount.getAddress(),
+            parentAccount.getNonce(),
+            parentAccount.getBalance(),
+            parentAccount.getCode());
       }
     } else {
       return null;
@@ -112,9 +112,9 @@ public class ToyWorld implements WorldUpdater {
   @Override
   public Collection<Address> getDeletedAccountAddresses() {
     return accounts.entrySet().stream()
-            .filter(e -> e.getValue() == null)
-            .map(Map.Entry::getKey)
-            .collect(Collectors.toList());
+        .filter(e -> e.getValue() == null)
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toList());
   }
 
   @Override

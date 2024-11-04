@@ -90,13 +90,13 @@ public class SimpleWorld implements WorldUpdater {
     Account parentAccount = parent == null ? null : parent.getAccount(address);
     if (parentAccount != null) {
       account =
-              Optional.of(
-                      new SimpleAccount(
-                              parentAccount,
-                              parentAccount.getAddress(),
-                              parentAccount.getNonce(),
-                              parentAccount.getBalance(),
-                              parentAccount.getCode()));
+          Optional.of(
+              new SimpleAccount(
+                  parentAccount,
+                  parentAccount.getAddress(),
+                  parentAccount.getNonce(),
+                  parentAccount.getBalance(),
+                  parentAccount.getCode()));
       accounts.put(address, account);
       return account.get();
     }
@@ -116,9 +116,9 @@ public class SimpleWorld implements WorldUpdater {
   @Override
   public Collection<Address> getDeletedAccountAddresses() {
     return accounts.entrySet().stream()
-            .filter(e -> e.getValue().isEmpty())
-            .map(Map.Entry::getKey)
-            .toList();
+        .filter(e -> e.getValue().isEmpty())
+        .map(Map.Entry::getKey)
+        .toList();
   }
 
   @Override
@@ -129,13 +129,13 @@ public class SimpleWorld implements WorldUpdater {
   @Override
   public void commit() {
     accounts.forEach(
-            (address, account) -> {
-              if (account.isEmpty() || !account.get().commit()) {
-                if (parent != null) {
-                  parent.accounts.put(address, account);
-                }
-              }
-            });
+        (address, account) -> {
+          if (account.isEmpty() || !account.get().commit()) {
+            if (parent != null) {
+              parent.accounts.put(address, account);
+            }
+          }
+        });
   }
 
   @Override

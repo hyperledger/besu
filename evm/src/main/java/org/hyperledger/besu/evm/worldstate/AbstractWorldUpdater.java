@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @param <A> the type parameter
  */
 public abstract class AbstractWorldUpdater<W extends WorldView, A extends Account>
-        implements WorldUpdater {
+    implements WorldUpdater {
 
   private final W world;
   private final EvmConfiguration evmConfiguration;
@@ -48,7 +48,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   /** The Deleted accounts. */
   protected Set<Address> deletedAccounts =
-          Collections.synchronizedSet(new BytesTrieSet<>(Address.SIZE));
+      Collections.synchronizedSet(new BytesTrieSet<>(Address.SIZE));
 
   /**
    * Instantiates a new Abstract world updater.

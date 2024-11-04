@@ -32,7 +32,7 @@ public class PrivateMutableWorldStateUpdater implements WorldUpdater {
   protected final WorldUpdater privateWorldUpdater;
 
   public PrivateMutableWorldStateUpdater(
-          final WorldUpdater publicWorldUpdater, final WorldUpdater privateWorldUpdater) {
+      final WorldUpdater publicWorldUpdater, final WorldUpdater privateWorldUpdater) {
     this.publicWorldUpdater = publicWorldUpdater;
     this.privateWorldUpdater = privateWorldUpdater;
   }
