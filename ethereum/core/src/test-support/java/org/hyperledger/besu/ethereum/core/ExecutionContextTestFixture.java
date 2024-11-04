@@ -157,7 +157,7 @@ public class ExecutionContextTestFixture {
                     new PrivacyParameters(),
                     false,
                     EvmConfiguration.DEFAULT,
-                    MiningParameters.MINING_DISABLED,
+                    MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
                     new NoOpMetricsSystem())
