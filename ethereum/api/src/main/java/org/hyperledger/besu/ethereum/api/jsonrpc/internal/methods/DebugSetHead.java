@@ -21,22 +21,41 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 
 import java.util.Optional;
 
-public class DebugSetHead extends AbstractBlockParameterMethod {
+import graphql.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
   private final ProtocolContext protocolContext;
+  private static final Logger LOG = LoggerFactory.getLogger(DebugSetHead.class);
+  private static final int DEFAULT_MAX_TRIE_LOGS_TO_ROLL_AT_ONCE = 512;
+
+  private final long maxTrieLogsToRollAtOnce;
 
   public DebugSetHead(final BlockchainQueries blockchain, final ProtocolContext protocolContext) {
-    super(blockchain);
+    this(blockchain, protocolContext, DEFAULT_MAX_TRIE_LOGS_TO_ROLL_AT_ONCE);
+  }
 
+  @VisibleForTesting
+  DebugSetHead(
+      final BlockchainQueries blockchain,
+      final ProtocolContext protocolContext,
+      final long maxTrieLogsToRollAtOnce) {
+    super(blockchain);
     this.protocolContext = protocolContext;
+    this.maxTrieLogsToRollAtOnce = Math.abs(maxTrieLogsToRollAtOnce);
   }
 
   @Override
@@ -45,26 +64,108 @@ public class DebugSetHead extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
+  protected BlockParameterOrBlockHash blockParameterOrBlockHash(
+      final JsonRpcRequestContext requestContext) {
     try {
-      return request.getRequiredParameter(0, BlockParameter.class);
+      return requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
     } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
-          "Invalid block parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block or block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
   }
 
   @Override
-  protected Object resultByBlockNumber(
-      final JsonRpcRequestContext request, final long blockNumber) {
-    final Optional<Hash> maybeBlockHash = getBlockchainQueries().getBlockHashByNumber(blockNumber);
+  protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
+    var blockchainQueries = getBlockchainQueries();
+    var blockchain = protocolContext.getBlockchain();
+    Optional<BlockHeader> maybeBlockHeader = blockchainQueries.getBlockHeaderByHash(blockHash);
+    Optional<Boolean> maybeMoveWorldstate = shouldMoveWorldstate(request);
 
-    if (maybeBlockHash.isEmpty()) {
+    if (maybeBlockHeader.isEmpty()) {
       return new JsonRpcErrorResponse(request.getRequest().getId(), UNKNOWN_BLOCK);
     }
 
-    protocolContext.getBlockchain().rewindToBlock(maybeBlockHash.get());
+    // Optionally move the worldstate to the specified blockhash, if it is present in the chain
+    if (maybeMoveWorldstate.orElse(Boolean.FALSE)) {
+      var archive = blockchainQueries.getWorldStateArchive();
+
+      // Only DiffBasedWorldState's need to be moved:
+      if (archive instanceof DiffBasedWorldStateProvider diffBasedArchive) {
+        if (rollIncrementally(maybeBlockHeader.get(), blockchain, diffBasedArchive)) {
+          return JsonRpcSuccessResponse.SUCCESS_RESULT;
+        }
+      }
+    }
+
+    // If we are not rolling incrementally or if there was an error incrementally rolling,
+    // move the blockchain to the requested hash:
+    blockchain.rewindToBlock(maybeBlockHeader.get().getBlockHash());
 
     return JsonRpcSuccessResponse.SUCCESS_RESULT;
+  }
+
+  private boolean rollIncrementally(
+      final BlockHeader target,
+      final MutableBlockchain blockchain,
+      final DiffBasedWorldStateProvider archive) {
+
+    try {
+      if (archive.isWorldStateAvailable(target.getStateRoot(), target.getBlockHash())) {
+        // WARNING, this can be dangerous for a DiffBasedWorldstate if a concurrent
+        //          process attempts to move or modify the head worldstate.
+        //          Ensure no block processing is occuring when using this feature.
+        //          No engine-api, block import, sync, mining or other rpc calls should be running.
+
+        Optional<BlockHeader> currentHead =
+            archive
+                .getWorldStateKeyValueStorage()
+                .getWorldStateBlockHash()
+                .flatMap(blockchain::getBlockHeader);
+
+        while (currentHead.isPresent()
+            && !target.getStateRoot().equals(currentHead.get().getStateRoot())) {
+          long delta = currentHead.get().getNumber() - target.getNumber();
+
+          if (maxTrieLogsToRollAtOnce < Math.abs(delta)) {
+            // do we need to move forward or backward?
+            long distanceToMove = (delta > 0) ? -maxTrieLogsToRollAtOnce : maxTrieLogsToRollAtOnce;
+
+            // Add distanceToMove to the current block number to get the interim target header
+            var interimHead =
+                blockchain.getBlockHeader(currentHead.get().getNumber() + distanceToMove);
+
+            interimHead.ifPresent(
+                it -> {
+                  blockchain.rewindToBlock(it.getBlockHash());
+                  archive.getMutable(it.getStateRoot(), it.getBlockHash());
+                  LOG.info("incrementally rolled worldstate to {}", it.toLogString());
+                });
+            currentHead = interimHead;
+
+          } else {
+            blockchain.rewindToBlock(target.getBlockHash());
+            archive.getMutable(target.getStateRoot(), target.getBlockHash());
+            currentHead = Optional.of(target);
+            LOG.info("finished rolling worldstate to {}", target.toLogString());
+          }
+        }
+      }
+
+      return true;
+    } catch (Exception ex) {
+      LOG.error("Failed to incrementally roll blockchain to " + target.toLogString(), ex);
+      return false;
+    }
+  }
+
+  private Optional<Boolean> shouldMoveWorldstate(final JsonRpcRequestContext request) {
+    try {
+      return request.getOptionalParameter(1, Boolean.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid should move worldstate boolean parameter (index 1)",
+          RpcErrorType.INVALID_PARAMS,
+          e);
+    }
   }
 }
