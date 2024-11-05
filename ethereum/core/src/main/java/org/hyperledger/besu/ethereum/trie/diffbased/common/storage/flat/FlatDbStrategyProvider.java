@@ -37,7 +37,7 @@ public abstract class FlatDbStrategyProvider {
 
   // 0x666C61744462537461747573
   public static final byte[] FLAT_DB_MODE = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
-  private final MetricsSystem metricsSystem;
+  protected final MetricsSystem metricsSystem;
   protected final DataStorageConfiguration dataStorageConfiguration;
   protected FlatDbMode flatDbMode;
   protected FlatDbStrategy flatDbStrategy;

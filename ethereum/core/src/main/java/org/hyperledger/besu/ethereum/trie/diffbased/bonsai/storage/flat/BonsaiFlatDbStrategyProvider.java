@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
-import org.hyperledger.besu.ethereum.bonsai.common.BonsaiContext;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategyProvider;
@@ -35,7 +35,11 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbStrategyProvider.class);
 
   public BonsaiFlatDbStrategyProvider contextSafeClone() {
-    return null;
+    BonsaiFlatDbStrategyProvider copy =
+        new BonsaiFlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
+    copy.flatDbStrategy = flatDbStrategy.contextSafeClone();
+    copy.flatDbMode = flatDbMode;
+    return copy;
   }
 
   public BonsaiFlatDbStrategyProvider(

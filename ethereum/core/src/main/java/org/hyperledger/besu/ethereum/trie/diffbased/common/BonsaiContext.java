@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.bonsai.common;
+package org.hyperledger.besu.ethereum.trie.diffbased.common;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -24,21 +24,38 @@ public class BonsaiContext {
 
   private final AtomicReference<BlockHeader> blockHeader;
 
+  /** Context for Bonsai storage i.e. the block the storage applies to */
   public BonsaiContext() {
     blockHeader = new AtomicReference<>();
   }
 
+  /**
+   * Create a copy the current context
+   *
+   * @return the copied context
+   */
   public BonsaiContext copy() {
     var newCtx = new BonsaiContext();
     Optional.ofNullable(blockHeader.get()).ifPresent(newCtx::setBlockHeader);
     return newCtx;
   }
 
+  /**
+   * Set the new block header for the context
+   *
+   * @param blockHeader the new block header
+   * @return the updated context
+   */
   public BonsaiContext setBlockHeader(final BlockHeader blockHeader) {
     this.blockHeader.set(blockHeader);
     return this;
   }
 
+  /**
+   * Get the block header currently applied to this context
+   *
+   * @return the optional block header
+   */
   public Optional<BlockHeader> getBlockHeader() {
     return Optional.ofNullable(blockHeader.get());
   }

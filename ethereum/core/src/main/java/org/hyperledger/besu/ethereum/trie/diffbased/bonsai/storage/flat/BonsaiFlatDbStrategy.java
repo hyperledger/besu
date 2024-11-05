@@ -171,6 +171,7 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
         .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
   }
 
+  @Override
   public FlatDbStrategy contextSafeClone() {
     // FlatDBStrategies that care about bonsai context changes should override this
     return this;

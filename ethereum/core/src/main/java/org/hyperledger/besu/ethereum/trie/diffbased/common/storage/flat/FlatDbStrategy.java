@@ -236,4 +236,9 @@ public abstract class FlatDbStrategy {
   }
 
   public abstract void updateBlockContext(final BlockHeader blockHeader);
+
+  public FlatDbStrategy contextSafeClone() {
+    // FlatDBStrategies that care about bonsai context changes should override this
+    return this;
+  }
 }
