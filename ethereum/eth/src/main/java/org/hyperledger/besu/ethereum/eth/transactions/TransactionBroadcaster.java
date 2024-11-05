@@ -37,7 +37,8 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TransactionBroadcaster implements TransactionBatchAddedListener {
+public class TransactionBroadcaster
+    implements TransactionBatchAddedListener, PendingTransactionDroppedListener {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionBroadcaster.class);
 
   private static final EnumSet<TransactionType> ANNOUNCE_HASH_ONLY_TX_TYPES = EnumSet.of(BLOB);
@@ -218,5 +219,10 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
     for (int i = sourceList.size() - 1; i >= stopIndex; i--) {
       destinationList.add(sourceList.remove(i));
     }
+  }
+
+  @Override
+  public void onTransactionDropped(final Transaction transaction, final RemovalReason reason) {
+    transactionTracker.onTransactionDropped(transaction, reason);
   }
 }
