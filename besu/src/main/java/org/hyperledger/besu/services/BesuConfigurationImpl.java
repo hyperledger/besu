@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
+import org.hyperledger.besu.cli.options.JsonRpcHttpOptions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
