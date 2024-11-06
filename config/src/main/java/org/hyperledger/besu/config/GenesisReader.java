@@ -80,7 +80,9 @@ interface GenesisReader {
                 final var on = normalizeKeys((ObjectNode) entry.getValue());
                 return new GenesisAccount(
                     Address.fromHexString(entry.getKey()),
-                    JsonUtil.getString(on, "nonce").map(ParserUtils::parseUnsignedLong).orElse(0L),
+                    JsonUtil.getValueAsString(on, "nonce")
+                        .map(ParserUtils::parseUnsignedLong)
+                        .orElse(0L),
                     JsonUtil.getString(on, "balance")
                         .map(ParserUtils::parseBalance)
                         .orElse(Wei.ZERO),

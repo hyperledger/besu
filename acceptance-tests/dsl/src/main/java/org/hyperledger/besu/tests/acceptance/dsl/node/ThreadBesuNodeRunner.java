@@ -36,8 +36,8 @@ import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -448,7 +448,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final BesuControllerBuilder builder,
         final MetricsSystem metricsSystem,
         final KeyValueStorageProvider storageProvider,
-        final MiningParameters miningParameters) {
+        final MiningConfiguration miningConfiguration) {
 
       builder
           .synchronizerConfiguration(synchronizerConfiguration)
@@ -461,7 +461,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           .evmConfiguration(EvmConfiguration.DEFAULT)
           .maxPeers(25)
           .maxRemotelyInitiatedPeers(15)
-          .miningParameters(miningParameters)
+          .miningParameters(miningConfiguration)
           .randomPeerPriority(false)
           .besuComponent(null);
       return builder.build();
@@ -494,6 +494,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final RpcEndpointServiceImpl rpcEndpointServiceImpl,
         final BesuConfiguration commonPluginConfiguration,
         final PermissioningServiceImpl permissioningService,
+        final MetricsConfiguration metricsConfiguration,
         final MetricCategoryRegistryImpl metricCategoryRegistry,
         final MetricsSystem metricsSystem,
         final @Named("ExtraCLIOptions") List<String> extraCLIOptions,
@@ -512,6 +513,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           TransactionSimulationService.class, transactionSimulationServiceImpl);
       besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
       besuPluginContext.addService(BesuConfiguration.class, commonPluginConfiguration);
+      metricCategoryRegistry.setMetricsConfiguration(metricsConfiguration);
       besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
       besuPluginContext.addService(MetricsSystem.class, metricsSystem);
 
@@ -564,11 +566,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
-    public MiningParameters provideMiningParameters(
+    public MiningConfiguration provideMiningParameters(
         final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
         final BesuNode node) {
       final var miningParameters =
-          ImmutableMiningParameters.builder()
+          ImmutableMiningConfiguration.builder()
               .from(node.getMiningParameters())
               .transactionSelectionService(transactionSelectionServiceImpl)
               .build();
@@ -579,11 +581,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     @Provides
     @Inject
     BesuConfiguration provideBesuConfiguration(
-        final Path dataDir, final MiningParameters miningParameters, final BesuNode node) {
+        final Path dataDir, final MiningConfiguration miningConfiguration, final BesuNode node) {
       final BesuConfigurationImpl commonPluginConfiguration = new BesuConfigurationImpl();
       commonPluginConfiguration.init(
           dataDir, dataDir.resolve(DATABASE_PATH), node.getDataStorageConfiguration());
-      commonPluginConfiguration.withMiningParameters(miningParameters);
+      commonPluginConfiguration.withMiningParameters(miningConfiguration);
       return commonPluginConfiguration;
     }
   }

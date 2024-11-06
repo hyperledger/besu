@@ -15,19 +15,19 @@
 package org.hyperledger.besu.cli.options;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.Unstable;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.IOException;
@@ -42,7 +42,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, MiningOptions> {
+public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguration, MiningOptions> {
 
   @Test
   public void besuDoesNotStartInMiningModeIfCoinbaseNotSet() {
@@ -390,13 +390,13 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   }
 
   @Override
-  protected MiningParameters createDefaultDomainObject() {
-    return MiningParameters.newDefault();
+  protected MiningConfiguration createDefaultDomainObject() {
+    return MiningConfiguration.newDefault();
   }
 
   @Override
-  protected MiningParameters createCustomizedDomainObject() {
-    return ImmutableMiningParameters.builder()
+  protected MiningConfiguration createCustomizedDomainObject() {
+    return ImmutableMiningConfiguration.builder()
         .mutableInitValues(
             MutableInitValues.builder()
                 .isMiningEnabled(true)
@@ -410,7 +410,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   }
 
   @Override
-  protected MiningOptions optionsFromDomainObject(final MiningParameters domainObject) {
+  protected MiningOptions optionsFromDomainObject(final MiningConfiguration domainObject) {
     return MiningOptions.fromConfig(domainObject);
   }
 
@@ -424,11 +424,11 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
     return new String[] {"transactionSelectionService"};
   }
 
-  private MiningParameters runtimeConfiguration(
-      final TestBesuCommand besuCommand, final MiningParameters miningParameters) {
+  private MiningConfiguration runtimeConfiguration(
+      final TestBesuCommand besuCommand, final MiningConfiguration miningConfiguration) {
     if (besuCommand.getGenesisConfigOptions().isPoa()) {
-      miningParameters.setBlockPeriodSeconds(POA_BLOCK_PERIOD_SECONDS);
+      miningConfiguration.setBlockPeriodSeconds(POA_BLOCK_PERIOD_SECONDS);
     }
-    return miningParameters;
+    return miningConfiguration;
   }
 }

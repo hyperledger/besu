@@ -40,36 +40,36 @@ import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
+import org.hyperledger.besu.cli.options.ApiConfigurationOptions;
+import org.hyperledger.besu.cli.options.ChainPruningOptions;
+import org.hyperledger.besu.cli.options.DnsOptions;
+import org.hyperledger.besu.cli.options.EngineRPCConfiguration;
+import org.hyperledger.besu.cli.options.EngineRPCOptions;
+import org.hyperledger.besu.cli.options.EthProtocolOptions;
+import org.hyperledger.besu.cli.options.EthstatsOptions;
+import org.hyperledger.besu.cli.options.EvmOptions;
+import org.hyperledger.besu.cli.options.GraphQlOptions;
+import org.hyperledger.besu.cli.options.InProcessRpcOptions;
+import org.hyperledger.besu.cli.options.IpcOptions;
+import org.hyperledger.besu.cli.options.JsonRpcHttpOptions;
+import org.hyperledger.besu.cli.options.LoggingLevelOption;
+import org.hyperledger.besu.cli.options.MetricsOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
+import org.hyperledger.besu.cli.options.NatOptions;
+import org.hyperledger.besu.cli.options.NativeLibraryOptions;
+import org.hyperledger.besu.cli.options.NetworkingOptions;
+import org.hyperledger.besu.cli.options.NodePrivateKeyFileOption;
+import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
+import org.hyperledger.besu.cli.options.P2PTLSConfigOptions;
+import org.hyperledger.besu.cli.options.PermissionsOptions;
+import org.hyperledger.besu.cli.options.PluginsConfigurationOptions;
+import org.hyperledger.besu.cli.options.PrivacyPluginOptions;
+import org.hyperledger.besu.cli.options.RPCOptions;
+import org.hyperledger.besu.cli.options.RpcWebsocketOptions;
+import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
-import org.hyperledger.besu.cli.options.stable.ApiConfigurationOptions;
-import org.hyperledger.besu.cli.options.stable.EngineRPCConfiguration;
-import org.hyperledger.besu.cli.options.stable.EngineRPCOptions;
-import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
-import org.hyperledger.besu.cli.options.stable.GraphQlOptions;
-import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
-import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
-import org.hyperledger.besu.cli.options.stable.MetricsOptions;
-import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
-import org.hyperledger.besu.cli.options.stable.P2PDiscoveryOptions;
-import org.hyperledger.besu.cli.options.stable.PermissionsOptions;
-import org.hyperledger.besu.cli.options.stable.PluginsConfigurationOptions;
-import org.hyperledger.besu.cli.options.stable.RpcWebsocketOptions;
 import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
 import org.hyperledger.besu.cli.options.storage.DiffBasedSubStorageOptions;
-import org.hyperledger.besu.cli.options.unstable.ChainPruningOptions;
-import org.hyperledger.besu.cli.options.unstable.DnsOptions;
-import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
-import org.hyperledger.besu.cli.options.unstable.EvmOptions;
-import org.hyperledger.besu.cli.options.unstable.InProcessRpcOptions;
-import org.hyperledger.besu.cli.options.unstable.IpcOptions;
-import org.hyperledger.besu.cli.options.unstable.NatOptions;
-import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
-import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
-import org.hyperledger.besu.cli.options.unstable.P2PTLSConfigOptions;
-import org.hyperledger.besu.cli.options.unstable.PrivacyPluginOptions;
-import org.hyperledger.besu.cli.options.unstable.RPCOptions;
-import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
@@ -113,7 +113,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParametersMetrics;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.VersionMetadata;
@@ -338,7 +338,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       Suppliers.memoize(this::readGenesisConfigFile);
   private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
-  private final Supplier<MiningParameters> miningParametersSupplier =
+  private final Supplier<MiningConfiguration> miningParametersSupplier =
       Suppliers.memoize(this::getMiningParameters);
 
   private RocksDBPlugin rocksDBPlugin;
@@ -2117,7 +2117,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return txPoolConfBuilder.build();
   }
 
-  private MiningParameters getMiningParameters() {
+  private MiningConfiguration getMiningParameters() {
     miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
     final var miningParameters = miningOptions.toDomainObject();
     getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
@@ -2169,8 +2169,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return dataStorageConfiguration;
   }
 
-  private void initMiningParametersMetrics(final MiningParameters miningParameters) {
-    new MiningParametersMetrics(getMetricsSystem(), miningParameters);
+  private void initMiningParametersMetrics(final MiningConfiguration miningConfiguration) {
+    new MiningParametersMetrics(getMetricsSystem(), miningConfiguration);
   }
 
   private OptionalInt getGenesisBlockPeriodSeconds(
