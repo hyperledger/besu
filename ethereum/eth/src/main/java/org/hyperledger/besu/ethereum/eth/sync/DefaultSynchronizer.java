@@ -99,6 +99,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     ChainHeadTracker.trackChainHeadForPeers(
         ethContext,
         protocolSchedule,
+        peerTaskExecutor,
+        syncConfig,
         protocolContext.getBlockchain(),
         this::calculateTrailingPeerRequirements,
         metricsSystem);
