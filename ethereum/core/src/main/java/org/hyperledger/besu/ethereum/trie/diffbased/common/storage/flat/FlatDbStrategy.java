@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -232,5 +233,12 @@ public abstract class FlatDbStrategy {
                 () -> new TreeMap<>(Comparator.comparing(Bytes::toHexString))));
     pairStream.close();
     return collected;
+  }
+
+  public abstract void updateBlockContext(final BlockHeader blockHeader);
+
+  public FlatDbStrategy contextSafeClone() {
+    // FlatDBStrategies that care about bonsai context changes should override this
+    return this;
   }
 }

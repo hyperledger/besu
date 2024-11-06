@@ -102,7 +102,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
   }
 
   @ParameterizedTest
-  @EnumSource(DataStorageFormat.class)
+  @EnumSource(names = {"BONSAI", "FOREST"})
   public void shouldUpdateCorrectMetadataFileForLatestVersion(
       final DataStorageFormat dataStorageFormat) throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
@@ -139,7 +139,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
   }
 
   @ParameterizedTest
-  @EnumSource(DataStorageFormat.class)
+  @EnumSource(names = {"BONSAI", "FOREST"})
   public void shouldUpdateCorrectMetadataFileForLatestVersionWithReceiptCompaction(
       final DataStorageFormat dataStorageFormat) throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");

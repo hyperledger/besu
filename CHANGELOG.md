@@ -39,6 +39,7 @@
 - Add support for `chainId` in `CallParameters` [#7720](https://github.com/hyperledger/besu/pull/7720)
 - Add `--ephemery` network support for Ephemery Testnet [#7563](https://github.com/hyperledger/besu/pull/7563) thanks to [@gconnect](https://github.com/gconnect)
 - Add configuration of Consolidation Request Contract Address via genesis configuration [#7647](https://github.com/hyperledger/besu/pull/7647)
+- Experimental Bonsai Archive support [#7475](https://github.com/hyperledger/besu/pull/7475)
 
 ### Bug fixes
 - Fix mounted data path directory permissions for besu user [#7575](https://github.com/hyperledger/besu/pull/7575)

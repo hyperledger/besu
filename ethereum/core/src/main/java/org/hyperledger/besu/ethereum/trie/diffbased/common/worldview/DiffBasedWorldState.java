@@ -157,6 +157,7 @@ public abstract class DiffBasedWorldState
 
     boolean success = false;
 
+    this.worldStateKeyValueStorage.getFlatDbStrategy().updateBlockContext(blockHeader);
     final DiffBasedWorldStateKeyValueStorage.Updater stateUpdater =
         worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
