@@ -59,7 +59,6 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.Unstable;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -190,7 +189,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     protocolContext =
         new ProtocolContext(blockchain, worldStateArchive, mergeContext, badBlockManager);
-    protocolContext.setSynchronizer(mock(Synchronizer.class));
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
