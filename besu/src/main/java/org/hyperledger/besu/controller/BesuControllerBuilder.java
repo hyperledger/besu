@@ -763,7 +763,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       }
     }
 
-    // TODO - do we want a flag to turn this on and off?
     if (DataStorageFormat.X_BONSAI_ARCHIVE.equals(
         dataStorageConfiguration.getDataStorageFormat())) {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
@@ -1155,7 +1154,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
             worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
 
-        // TODO, better integrate. Just for PoC, explicitly set our bonsai context chain head:
         worldStateKeyValueStorage
             .getFlatDbStrategy()
             .updateBlockContext(blockchain.getChainHeadHeader());

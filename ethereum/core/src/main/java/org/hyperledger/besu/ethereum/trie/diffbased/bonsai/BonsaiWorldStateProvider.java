@@ -89,11 +89,6 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     if (shouldPersistState) {
       return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
     } else {
-      // TODO this needs to be better integrated && ensure block is canonical
-      // HACK for kikori PoC, if we have the trielog for this block, we can assume we have it in
-      // flatDB
-      // although, in practice we can only serve canonical chain worldstates and need to fall back
-      // to state rolling if the requested block is a fork.
       if (this.worldStateKeyValueStorage.getFlatDbStrategy() instanceof BonsaiArchiveFlatDbStrategy
           && trieLogManager.getTrieLogLayer(blockHeader.getBlockHash()).isPresent()) {
         var contextSafeCopy =
