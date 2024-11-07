@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -845,7 +846,7 @@ public class TransactionPool implements BlockAddedObserver {
                         line -> {
                           final boolean isLocal = line.charAt(0) == 'l';
                           final Transaction tx =
-                              Transaction.readFrom(Bytes.fromBase64String(line.substring(1)));
+                            TransactionDecoder.readFrom(Bytes.fromBase64String(line.substring(1)));
 
                           final ValidationResult<TransactionInvalidReason> result =
                               addTransaction(tx, isLocal);

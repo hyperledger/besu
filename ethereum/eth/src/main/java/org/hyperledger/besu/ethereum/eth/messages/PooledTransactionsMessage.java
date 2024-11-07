@@ -44,7 +44,7 @@ public final class PooledTransactionsMessage extends AbstractMessageData {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeList(
         transactions,
-      PooledTransactionEncoder::encodeRLP);
+      PooledTransactionEncoder::writeTo);
     return new PooledTransactionsMessage(out.encoded());
   }
 
@@ -77,7 +77,7 @@ public final class PooledTransactionsMessage extends AbstractMessageData {
       final BytesValueRLPInput in = new BytesValueRLPInput(getData(), false);
       pooledTransactions =
           in.readList(
-            PooledTransactionDecoder::decodeRLP);
+            PooledTransactionDecoder::readFrom);
     }
     return pooledTransactions;
   }

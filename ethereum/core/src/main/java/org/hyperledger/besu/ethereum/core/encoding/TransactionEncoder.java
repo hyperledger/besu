@@ -50,7 +50,7 @@ public class TransactionEncoder {
    * @param transaction the transaction to encode
    * @param rlpOutput the RLP output stream
    */
-  public static void encodeRLP(
+  public static void writeTo(
       final Transaction transaction,
       final RLPOutput rlpOutput) {
     final TransactionType transactionType = getTransactionType(transaction);

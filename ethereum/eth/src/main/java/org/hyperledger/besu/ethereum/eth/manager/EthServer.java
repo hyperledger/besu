@@ -272,7 +272,7 @@ class EthServer {
       }
 
       final BytesValueRLPOutput txRlp = new BytesValueRLPOutput();
-      PooledTransactionEncoder.encodeRLP(maybeTx.get(), txRlp);
+      PooledTransactionEncoder.writeTo(maybeTx.get(), txRlp);
       final int encodedSize = txRlp.encodedSize();
       if (responseSizeEstimate + encodedSize > maxMessageSize) {
         break;

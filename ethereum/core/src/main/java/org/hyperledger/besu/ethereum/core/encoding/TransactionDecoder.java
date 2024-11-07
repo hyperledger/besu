@@ -52,13 +52,17 @@ public class TransactionDecoder {
    * @param rlpInput the RLP input
    * @return the decoded transaction
    */
-  public static Transaction decodeRLP(
+  public static Transaction readFrom(
       final RLPInput rlpInput) {
     if (isTypedTransaction(rlpInput)) {
       return decodeTypedTransaction(rlpInput);
     } else {
       return FrontierTransactionDecoder.decode(rlpInput);
     }
+  }
+
+  public static Transaction readFrom(final Bytes rlpBytes) {
+    return readFrom(RLP.input(rlpBytes));
   }
 
   /**
@@ -113,7 +117,7 @@ public class TransactionDecoder {
       return decodeTypedTransaction(opaqueBytes, transactionType.get());
     } else {
       // If the transaction type is not present, decode the opaque bytes as RLP
-      return decodeRLP(RLP.input(opaqueBytes));
+      return readFrom(RLP.input(opaqueBytes));
     }
   }
 

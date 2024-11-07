@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -88,7 +89,7 @@ public class IntrinsicGasTest {
   @MethodSource("data")
   public void validateGasCost(
       final GasCalculator gasCalculator, final long expectedGas, final String txRlp) {
-    Transaction t = Transaction.readFrom(RLP.input(Bytes.fromHexString(txRlp)));
+    Transaction t = TransactionDecoder.readFrom(RLP.input(Bytes.fromHexString(txRlp)));
     Assertions.assertThat(
             gasCalculator.transactionIntrinsicGasCost(t.getPayload(), t.isContractCreation()))
         .isEqualTo(expectedGas);

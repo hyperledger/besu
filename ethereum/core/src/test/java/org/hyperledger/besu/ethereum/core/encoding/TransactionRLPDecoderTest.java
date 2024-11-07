@@ -154,6 +154,6 @@ class TransactionRLPDecoderTest {
   }
 
   private Transaction decodeRLP(final RLPInput input) {
-    return PooledTransactionDecoder.decodeRLP(input);
+    return PooledTransactionDecoder.readFrom(input);
   }
 }

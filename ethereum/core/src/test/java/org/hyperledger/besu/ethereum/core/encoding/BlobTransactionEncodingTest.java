@@ -64,7 +64,7 @@ public class BlobTransactionEncodingTest {
     TransactionEncoder.encodeRLP(transaction.getType(), bytes, output);
 
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
-    PooledTransactionEncoder.encodeRLP(
+    PooledTransactionEncoder.writeTo(
         transaction, bytesValueRLPOutput);
     assertThat(transaction.getSize()).isEqualTo(bytes.size());
   }

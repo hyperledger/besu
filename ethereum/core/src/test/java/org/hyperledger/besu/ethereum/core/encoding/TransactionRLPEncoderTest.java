@@ -89,10 +89,10 @@ class TransactionRLPEncoderTest {
   }
 
   private Transaction decodeRLP(final RLPInput input) {
-    return TransactionDecoder.decodeRLP(input);
+    return TransactionDecoder.readFrom(input);
   }
 
   private void encodeRLP(final Transaction transaction, final BytesValueRLPOutput output) {
-    TransactionEncoder.encodeRLP(transaction, output);
+    TransactionEncoder.writeTo(transaction, output);
   }
 }

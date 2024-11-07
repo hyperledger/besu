@@ -57,7 +57,7 @@ public class DomainObjectDecodeUtilsTest {
   @Test
   public void testAccessListRLPSerDes() {
     final BytesValueRLPOutput encoded = new BytesValueRLPOutput();
-    PooledTransactionEncoder.encodeRLP(accessListTxn, encoded);
+    PooledTransactionEncoder.writeTo(accessListTxn, encoded);
     Transaction decoded =
         DomainObjectDecodeUtils.decodeRawTransaction(encoded.encoded().toHexString());
     Assertions.assertThat(decoded.getAccessList().isPresent()).isTrue();

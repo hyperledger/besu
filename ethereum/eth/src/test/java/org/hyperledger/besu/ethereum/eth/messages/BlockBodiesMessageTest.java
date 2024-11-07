@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -83,7 +84,7 @@ public final class BlockBodiesMessageTest {
       bodies.add(
           // We know the test data to only contain Frontier blocks
           new BlockBody(
-              oneBlock.readList(Transaction::readFrom),
+              oneBlock.readList(TransactionDecoder::readFrom),
               oneBlock.readList(
                   rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))));
     }

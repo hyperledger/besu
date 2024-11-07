@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
@@ -51,7 +52,7 @@ public final class ValidationTestUtils {
             false);
     input.enterList();
     input.skipNext();
-    final List<Transaction> transactions = input.readList(Transaction::readFrom);
+    final List<Transaction> transactions = input.readList(TransactionDecoder::readFrom);
     final List<BlockHeader> ommers =
         input.readList(rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()));
     final Optional<List<Withdrawal>> withdrawals =
