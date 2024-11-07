@@ -24,9 +24,8 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.PooledTransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.PooledTransactionEncoder;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.BaseTransactionPoolTest;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -210,11 +209,11 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
         prepareTransaction(TransactionType.BLOB, 10, Wei.of(500), Wei.of(50), 10, 1);
     Transaction txBlob = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    TransactionEncoder.encodeRLP(txBlob, rlpOut, EncodingContext.POOLED_TRANSACTION);
+    PooledTransactionEncoder.encodeRLP(txBlob, rlpOut);
 
     txBlob =
-        TransactionDecoder.decodeRLP(
-                new BytesValueRLPInput(rlpOut.encoded(), false), EncodingContext.POOLED_TRANSACTION)
+        PooledTransactionDecoder.decodeRLP(
+                new BytesValueRLPInput(rlpOut.encoded(), false))
             .detachedCopy();
     System.out.println(txBlob.getSender());
     System.out.println(txBlob.getHash());
@@ -242,11 +241,11 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
         prepareTransaction(TransactionType.BLOB, 10, Wei.of(500), Wei.of(50), 10, 1);
     Transaction txBlob = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    TransactionEncoder.encodeRLP(txBlob, rlpOut, EncodingContext.POOLED_TRANSACTION);
+    PooledTransactionEncoder.encodeRLP(txBlob, rlpOut);
 
     txBlob =
-        TransactionDecoder.decodeRLP(
-                new BytesValueRLPInput(rlpOut.encoded(), false), EncodingContext.POOLED_TRANSACTION)
+        PooledTransactionDecoder.decodeRLP(
+                new BytesValueRLPInput(rlpOut.encoded(), false))
             .detachedCopy();
     System.out.println(txBlob.getSender());
     System.out.println(txBlob.getHash());

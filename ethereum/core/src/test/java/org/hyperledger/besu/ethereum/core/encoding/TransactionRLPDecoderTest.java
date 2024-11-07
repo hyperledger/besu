@@ -15,10 +15,12 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -28,6 +30,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -67,7 +70,7 @@ class TransactionRLPDecoderTest {
     assertThatThrownBy(
             () ->
                 TransactionDecoder.decodeOpaqueBytes(
-                    Bytes.fromHexString(txWithBigFees), EncodingContext.BLOCK_BODY))
+                    Bytes.fromHexString(txWithBigFees)))
         .isInstanceOf(RLPException.class);
   }
 
@@ -113,7 +116,7 @@ class TransactionRLPDecoderTest {
     // Decode bytes into a transaction
     final Transaction transaction = decodeRLP(RLP.input(bytes));
     Bytes transactionBytes =
-        TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.POOLED_TRANSACTION);
+        PooledTransactionEncoder.encodeOpaqueBytes(transaction);
     // Bytes size should be equal to transaction size
     assertThat(transaction.getSize()).isEqualTo(transactionBytes.size());
   }
@@ -140,7 +143,17 @@ class TransactionRLPDecoderTest {
     }
   }
 
+  @Test
+  void shouldHaveDecodersForAllTransactionTypes(){
+    Stream.of(TransactionType.values())
+      .filter(v -> v != TransactionType.FRONTIER).forEach( v -> {
+          assertThatNoException().isThrownBy(() -> TransactionDecoder.getDecoder(v));
+          assertThatNoException().isThrownBy(() -> PooledTransactionDecoder.getDecoder(v));
+        }
+      );
+  }
+
   private Transaction decodeRLP(final RLPInput input) {
-    return TransactionDecoder.decodeRLP(input, EncodingContext.POOLED_TRANSACTION);
+    return PooledTransactionDecoder.decodeRLP(input);
   }
 }

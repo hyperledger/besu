@@ -15,7 +15,10 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
+import java.util.stream.Stream;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -75,11 +78,21 @@ class TransactionRLPEncoderTest {
     assertThat(output.encoded().toHexString()).isEqualTo(NONCE_64_BIT_MAX_MINUS_2_TX_RLP);
   }
 
+  @Test
+  void shouldHaveEncodersForAllTransactionTypes(){
+    Stream.of(TransactionType.values())
+      .filter(v -> v != TransactionType.FRONTIER).forEach( v -> {
+          assertThatNoException().isThrownBy(() -> TransactionEncoder.getEncoder(v));
+          assertThatNoException().isThrownBy(() -> PooledTransactionEncoder.getEncoder(v));
+        }
+      );
+  }
+
   private Transaction decodeRLP(final RLPInput input) {
-    return TransactionDecoder.decodeRLP(input, EncodingContext.BLOCK_BODY);
+    return TransactionDecoder.decodeRLP(input);
   }
 
   private void encodeRLP(final Transaction transaction, final BytesValueRLPOutput output) {
-    TransactionEncoder.encodeRLP(transaction, output, EncodingContext.BLOCK_BODY);
+    TransactionEncoder.encodeRLP(transaction, output);
   }
 }

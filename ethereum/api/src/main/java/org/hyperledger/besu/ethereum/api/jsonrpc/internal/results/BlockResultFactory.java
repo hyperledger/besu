@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
 import java.util.ArrayList;
@@ -97,8 +96,7 @@ public class BlockResultFactory {
     final List<String> txs =
         block.getBody().getTransactions().stream()
             .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
+              TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -110,8 +108,7 @@ public class BlockResultFactory {
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
             .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
+              TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -136,8 +133,7 @@ public class BlockResultFactory {
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
             .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
+              TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -156,8 +152,7 @@ public class BlockResultFactory {
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
             .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
+              TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
     final Optional<List<String>> requestsWithoutRequestId =
