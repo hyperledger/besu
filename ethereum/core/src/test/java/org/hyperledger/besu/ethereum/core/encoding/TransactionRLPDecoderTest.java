@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.registry.PooledTransactionDecoderProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -69,7 +71,7 @@ class TransactionRLPDecoderTest {
         "0x02f84e0101a1648a5f8b2dcad5ea5ba6b720ff069c1d87c21a4a6a5b3766b39e2c2792367bb066a1ffa5ffaf5b0560d3a9fb186c2ede2ae6751bc0b4fef9107cf36389630b6196a38805800180c0010203";
     assertThatThrownBy(
             () ->
-                TransactionDecoder.decodeOpaqueBytes(
+                TransactionDecoderProvider.decodeOpaqueBytes(
                     Bytes.fromHexString(txWithBigFees)))
         .isInstanceOf(RLPException.class);
   }
@@ -147,13 +149,13 @@ class TransactionRLPDecoderTest {
   void shouldHaveDecodersForAllTransactionTypes(){
     Stream.of(TransactionType.values())
       .filter(v -> v != TransactionType.FRONTIER).forEach( v -> {
-          assertThatNoException().isThrownBy(() -> TransactionDecoder.getDecoder(v));
-          assertThatNoException().isThrownBy(() -> PooledTransactionDecoder.getDecoder(v));
+          assertThatNoException().isThrownBy(() -> new MainnetTransactionDecoder().getDecoder(v));
+          assertThatNoException().isThrownBy(() -> new PooledMainnetTransactionDecoder().getDecoder(v));
         }
       );
   }
 
   private Transaction decodeRLP(final RLPInput input) {
-    return PooledTransactionDecoder.readFrom(input);
+    return PooledTransactionDecoderProvider.readFrom(input);
   }
 }

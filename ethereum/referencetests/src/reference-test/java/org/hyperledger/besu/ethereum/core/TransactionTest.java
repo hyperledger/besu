@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -174,7 +174,7 @@ public class TransactionTest {
       }
 
       // Test transaction deserialization (will throw an exception if it fails).
-      final Transaction transaction = TransactionDecoder.readFrom(RLP.input(rlp));
+      final Transaction transaction = TransactionDecoderProvider.readFrom(RLP.input(rlp));
       final ValidationResult<TransactionInvalidReason> validation =
           transactionValidator(milestone)
               .validate(transaction, baseFee, Optional.empty(), TransactionValidationParams.processingBlock());

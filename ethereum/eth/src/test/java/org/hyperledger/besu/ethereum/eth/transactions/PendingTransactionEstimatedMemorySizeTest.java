@@ -24,10 +24,10 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.core.encoding.PooledTransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.PooledTransactionEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.registry.PooledTransactionDecoderProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.BaseTransactionPoolTest;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -76,7 +76,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     TransactionEncoder.writeTo(txTo, rlpOut);
 
-    txTo = TransactionDecoder.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
+    txTo = TransactionDecoderProvider.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
     System.out.println(txTo.getSender());
     System.out.println(txTo.getHash());
     System.out.println(txTo.getSize());
@@ -120,7 +120,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     Transaction txPayload = preparedTx.createTransaction(KEYS1);
 
     txPayload =
-      TransactionDecoder.readFrom(new BytesValueRLPInput(txPayload.encoded(), false)).detachedCopy();
+      TransactionDecoderProvider.readFrom(new BytesValueRLPInput(txPayload.encoded(), false)).detachedCopy();
     System.out.println(txPayload.getSender());
     System.out.println(txPayload.getHash());
     System.out.println(txPayload.getSize());
@@ -212,7 +212,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     PooledTransactionEncoder.writeTo(txBlob, rlpOut);
 
     txBlob =
-        PooledTransactionDecoder.readFrom(
+        PooledTransactionDecoderProvider.readFrom(
                 new BytesValueRLPInput(rlpOut.encoded(), false))
             .detachedCopy();
     System.out.println(txBlob.getSender());
@@ -244,7 +244,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     PooledTransactionEncoder.writeTo(txBlob, rlpOut);
 
     txBlob =
-        PooledTransactionDecoder.readFrom(
+        PooledTransactionDecoderProvider.readFrom(
                 new BytesValueRLPInput(rlpOut.encoded(), false))
             .detachedCopy();
     System.out.println(txBlob.getSender());
@@ -271,7 +271,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     Transaction txPayload = preparedTx.createTransaction(KEYS1);
 
     txPayload =
-      TransactionDecoder.readFrom(new BytesValueRLPInput(txPayload.encoded(), false)).detachedCopy();
+      TransactionDecoderProvider.readFrom(new BytesValueRLPInput(txPayload.encoded(), false)).detachedCopy();
     System.out.println(txPayload.getSender());
     System.out.println(txPayload.getHash());
     System.out.println(txPayload.getSize());
@@ -301,7 +301,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     Transaction txAccessList = preparedTx.accessList(ales).createTransaction(KEYS1);
 
     txAccessList =
-      TransactionDecoder.readFrom(new BytesValueRLPInput(txAccessList.encoded(), false)).detachedCopy();
+      TransactionDecoderProvider.readFrom(new BytesValueRLPInput(txAccessList.encoded(), false)).detachedCopy();
     System.out.println(txAccessList.getSender());
     System.out.println(txAccessList.getHash());
     System.out.println(txAccessList.getSize());
@@ -341,7 +341,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     Transaction txEip1559 = createEIP1559Transaction(1, KEYS1, 10);
 
     txEip1559 =
-      TransactionDecoder.readFrom(new BytesValueRLPInput(txEip1559.encoded(), false)).detachedCopy();
+      TransactionDecoderProvider.readFrom(new BytesValueRLPInput(txEip1559.encoded(), false)).detachedCopy();
     System.out.println(txEip1559.getSender());
     System.out.println(txEip1559.getHash());
     System.out.println(txEip1559.getSize());
@@ -383,7 +383,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     Transaction txFrontier = createTransaction(TransactionType.FRONTIER, 1, Wei.of(500), 0, KEYS1);
 
     txFrontier =
-      TransactionDecoder.readFrom(new BytesValueRLPInput(txFrontier.encoded(), false)).detachedCopy();
+      TransactionDecoderProvider.readFrom(new BytesValueRLPInput(txFrontier.encoded(), false)).detachedCopy();
     System.out.println(txFrontier.getSender());
     System.out.println(txFrontier.getHash());
     System.out.println(txFrontier.getSize());

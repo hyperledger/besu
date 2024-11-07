@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -144,7 +144,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   public static BlockBody readFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
     return new BlockBody(
-        input.readList(TransactionDecoder::readFrom),
+        input.readList(TransactionDecoderProvider::readFrom),
         input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
         input.isEndOfCurrentList()
             ? Optional.empty()

@@ -6,9 +6,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import org.hyperledger.besu.datatypes.TransactionType;
 
-public class PooledTransactionDecoder extends TransactionDecoder{
+public class PooledMainnetTransactionDecoder extends MainnetTransactionDecoder {
 
-  private static final ImmutableMap<TransactionType, TransactionDecoder.Decoder> POOLED_TRANSACTION_DECODERS =
+  private static final ImmutableMap<TransactionType, MainnetTransactionDecoder.Decoder> POOLED_TRANSACTION_DECODERS =
     ImmutableMap.of(
       TransactionType.ACCESS_LIST,
       AccessListTransactionDecoder::decode,
@@ -26,7 +26,8 @@ public class PooledTransactionDecoder extends TransactionDecoder{
    * @return the decoder
    */
 @VisibleForTesting
-  protected static TransactionDecoder.Decoder getDecoder(
+@Override
+  protected MainnetTransactionDecoder.Decoder getDecoder(
     final TransactionType transactionType) {
     return checkNotNull(
       POOLED_TRANSACTION_DECODERS.get(transactionType),

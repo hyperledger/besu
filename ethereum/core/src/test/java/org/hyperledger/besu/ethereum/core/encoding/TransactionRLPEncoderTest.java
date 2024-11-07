@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -89,7 +90,7 @@ class TransactionRLPEncoderTest {
   }
 
   private Transaction decodeRLP(final RLPInput input) {
-    return TransactionDecoder.readFrom(input);
+    return TransactionDecoderProvider.readFrom(input);
   }
 
   private void encodeRLP(final Transaction transaction, final BytesValueRLPOutput output) {

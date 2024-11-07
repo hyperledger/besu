@@ -19,7 +19,6 @@ import static org.hyperledger.besu.cli.subcommands.TxParseSubCommand.COMMAND_NAM
 
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -30,6 +29,7 @@ import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
 import picocli.CommandLine;
 
 /**
@@ -104,7 +104,7 @@ public class TxParseSubCommand implements Runnable {
 
   void dump(final Bytes tx) {
     try {
-      var transaction = TransactionDecoder.decodeOpaqueBytes(tx);
+      var transaction = TransactionDecoderProvider.decodeOpaqueBytes(tx);
 
       // https://github.com/hyperledger/besu/blob/5fe49c60b30fe2954c7967e8475c3b3e9afecf35/ethereum/core/src/main/java/org/hyperledger/besu/ethereum/mainnet/MainnetTransactionValidator.java#L252
       if (transaction.getChainId().isPresent() && !transaction.getChainId().get().equals(chainId)) {

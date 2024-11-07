@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -142,13 +142,13 @@ public class T8nExecutor {
               new BytesValueRLPInput(Bytes.fromHexString(txNode.asText()), false);
           rlpInput.enterList();
           while (!rlpInput.isEndOfCurrentList()) {
-            Transaction tx = TransactionDecoder.readFrom(rlpInput);
+            Transaction tx = TransactionDecoderProvider.readFrom(rlpInput);
             transactions.add(tx);
           }
         } else if (txNode.isObject()) {
           if (txNode.has("txBytes")) {
             Transaction tx =
-              TransactionDecoder.readFrom(Bytes.fromHexString(txNode.get("txbytes").asText()));
+              TransactionDecoderProvider.readFrom(Bytes.fromHexString(txNode.get("txbytes").asText()));
             transactions.add(tx);
           } else {
             Transaction.Builder builder = Transaction.builder();

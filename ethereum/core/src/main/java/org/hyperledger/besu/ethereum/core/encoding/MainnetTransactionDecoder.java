@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
@@ -27,7 +28,7 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
-public class TransactionDecoder {
+public class MainnetTransactionDecoder implements TransactionDecoder {
 
   @FunctionalInterface
   protected interface Decoder {
@@ -52,16 +53,16 @@ public class TransactionDecoder {
    * @param rlpInput the RLP input
    * @return the decoded transaction
    */
-  public static Transaction readFrom(
-      final RLPInput rlpInput) {
-    if (isTypedTransaction(rlpInput)) {
+  public Transaction readFrom(
+    final RLPInput rlpInput) {
+    if (!rlpInput.nextIsList()) {
       return decodeTypedTransaction(rlpInput);
     } else {
       return FrontierTransactionDecoder.decode(rlpInput);
     }
   }
 
-  public static Transaction readFrom(final Bytes rlpBytes) {
+  public Transaction readFrom(final Bytes rlpBytes) {
     return readFrom(RLP.input(rlpBytes));
   }
 
@@ -72,7 +73,7 @@ public class TransactionDecoder {
    * @param rlpInput the RLP input
    * @return the decoded transaction
    */
-  private static Transaction decodeTypedTransaction(
+  private Transaction decodeTypedTransaction(
       final RLPInput rlpInput) {
     // Read the typed transaction bytes from the RLP input
     final Bytes typedTransactionBytes = rlpInput.readBytes();
@@ -93,7 +94,7 @@ public class TransactionDecoder {
    * @param transactionType the type of the transaction
    * @return the decoded transaction
    */
-  private static Transaction decodeTypedTransaction(
+  private Transaction decodeTypedTransaction(
       final Bytes transactionBytes,
       final TransactionType transactionType) {
     // Slice the transaction bytes to exclude the transaction type and prepare for decoding
@@ -110,7 +111,7 @@ public class TransactionDecoder {
    * @param opaqueBytes the opaque bytes
    * @return the decoded transaction
    */
-  public static Transaction decodeOpaqueBytes(
+  public Transaction decodeOpaqueBytes(
       final Bytes opaqueBytes) {
     var transactionType = getTransactionType(opaqueBytes);
     if (transactionType.isPresent()) {
@@ -139,21 +140,6 @@ public class TransactionDecoder {
     }
   }
 
-  /**
-   * Checks if the given RLP input is a typed transaction.
-   *
-   * <p>See EIP-2718
-   *
-   * <p>If it starts with a value in the range [0, 0x7f] then it is a new transaction type
-   *
-   * <p>if it starts with a value in the range [0xc0, 0xfe] then it is a legacy transaction type
-   *
-   * @param rlpInput the RLP input
-   * @return true if the RLP input is a typed transaction, false otherwise
-   */
-  private static boolean isTypedTransaction(final RLPInput rlpInput) {
-    return !rlpInput.nextIsList();
-  }
 
   /**
    * Gets the decoder for a given transaction type
@@ -162,7 +148,7 @@ public class TransactionDecoder {
    * @return the decoder
    */
   @VisibleForTesting
-  protected static Decoder getDecoder(
+  protected Decoder getDecoder(
       final TransactionType transactionType) {
     return checkNotNull(
         TYPED_TRANSACTION_DECODERS.get(transactionType),
