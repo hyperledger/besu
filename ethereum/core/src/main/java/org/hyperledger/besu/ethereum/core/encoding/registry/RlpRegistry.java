@@ -15,10 +15,12 @@
 package org.hyperledger.besu.ethereum.core.encoding.registry;
 
 import org.hyperledger.besu.ethereum.core.encoding.MainnetTransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.MainnetTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.PooledMainnetTransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.PooledMainnetTransactionEncoder;
 
-public class RLPRegistry {
-  private static RLPRegistry INSTANCE;
+public class RlpRegistry {
+  private static RlpRegistry INSTANCE;
 
   private TransactionDecoder transactionDecoder;
   private TransactionDecoder pooledTransactionDecoder;
@@ -26,13 +28,16 @@ public class RLPRegistry {
   private  TransactionEncoder transactionEncoder;
   private TransactionEncoder pooledTransactionEncoder;
 
-  private RLPRegistry() {
-    registerDefaultDecoders();
+  private RlpRegistry() {
+    transactionDecoder = new MainnetTransactionDecoder();
+    pooledTransactionDecoder = new PooledMainnetTransactionDecoder();
+    transactionEncoder =new MainnetTransactionEncoder();
+    pooledTransactionEncoder = new PooledMainnetTransactionEncoder();
   }
 
-  protected static RLPRegistry getInstance() {
+  protected static RlpRegistry getInstance() {
     if (INSTANCE == null) {
-      INSTANCE = new RLPRegistry();
+      INSTANCE = new RlpRegistry();
     }
     return INSTANCE;
   }
@@ -53,9 +58,6 @@ public class RLPRegistry {
     return pooledTransactionDecoder;
   }
 
-
-
-
   public void setTransactionEncoder(final TransactionEncoder encoder){
     this.transactionEncoder = encoder;
   }
@@ -70,10 +72,5 @@ public class RLPRegistry {
 
   public TransactionEncoder getPooledTransactionEncoder(){
     return pooledTransactionEncoder;
-  }
-
-  private void registerDefaultDecoders() {
-    setTransactionDecoder(new MainnetTransactionDecoder());
-    setPooledTransactionDecoder(new PooledMainnetTransactionDecoder());
   }
 }

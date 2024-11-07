@@ -17,10 +17,9 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.registry.PooledTransactionDecoderProvider;
-import org.hyperledger.besu.ethereum.core.encoding.registry.PooledTransactionEncoderProvider;
-import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
-import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionEncoderProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpPooledTransactionProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpPooledTransactionProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.io.BufferedReader;
@@ -62,13 +61,13 @@ public class BlobTransactionEncodingTest {
     Bytes bytes = argument.bytes;
     // Decode the transaction from the wire using the TransactionDecoder.
     final Transaction transaction =
-        PooledTransactionDecoderProvider.decodeOpaqueBytes(bytes);
+        RlpPooledTransactionProvider.decodeOpaqueBytes(bytes);
 
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
     new MainnetTransactionEncoder().encodeRLP(transaction.getType(), bytes, output);
 
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
-    PooledTransactionEncoderProvider.writeTo(
+    RlpPooledTransactionProvider.writeTo(
         transaction, bytesValueRLPOutput);
     assertThat(transaction.getSize()).isEqualTo(bytes.size());
   }
@@ -79,10 +78,10 @@ public class BlobTransactionEncodingTest {
     Bytes bytes = argument.bytes;
     // Decode the transaction from the wire using the TransactionDecoder.
     final Transaction transaction =
-    TransactionDecoderProvider.decodeOpaqueBytes(bytes);
+    RlpTransactionProvider.decodeOpaqueBytes(bytes);
 
     // Encode the transaction for wire using the TransactionEncoder.
-    Bytes encoded = TransactionEncoderProvider.encodeOpaqueBytes(transaction);
+    Bytes encoded = RlpTransactionProvider.encodeOpaqueBytes(transaction);
     // Assert that the encoded transaction matches the original bytes.
     assertThat(encoded.toHexString()).isEqualTo(bytes.toHexString());
 

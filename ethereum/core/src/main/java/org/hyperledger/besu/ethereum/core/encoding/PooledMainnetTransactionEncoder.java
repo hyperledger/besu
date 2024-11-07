@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import org.hyperledger.besu.datatypes.TransactionType;
-import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionEncoderProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 
 public class PooledMainnetTransactionEncoder extends MainnetTransactionEncoder {
 

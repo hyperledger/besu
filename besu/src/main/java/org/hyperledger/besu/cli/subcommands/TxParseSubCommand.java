@@ -29,7 +29,7 @@ import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 import picocli.CommandLine;
 
 /**
@@ -104,7 +104,7 @@ public class TxParseSubCommand implements Runnable {
 
   void dump(final Bytes tx) {
     try {
-      var transaction = TransactionDecoderProvider.decodeOpaqueBytes(tx);
+      var transaction = RlpTransactionProvider.decodeOpaqueBytes(tx);
 
       // https://github.com/hyperledger/besu/blob/5fe49c60b30fe2954c7967e8475c3b3e9afecf35/ethereum/core/src/main/java/org/hyperledger/besu/ethereum/mainnet/MainnetTransactionValidator.java#L252
       if (transaction.getChainId().isPresent() && !transaction.getChainId().get().equals(chainId)) {

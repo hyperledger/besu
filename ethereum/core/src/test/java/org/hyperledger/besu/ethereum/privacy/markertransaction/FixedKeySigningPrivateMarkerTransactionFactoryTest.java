@@ -24,7 +24,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 
 import java.util.Optional;
@@ -65,7 +65,7 @@ public class FixedKeySigningPrivateMarkerTransactionFactoryTest {
             .build();
 
     final Transaction transaction =
-      TransactionDecoderProvider.readFrom(factory.create(unsignedPrivateMarkerTransaction, privTransaction, ""));
+      RlpTransactionProvider.readFrom(factory.create(unsignedPrivateMarkerTransaction, privTransaction, ""));
 
     assertThat(transaction.getNonce()).isEqualTo(providedNonce);
     assertThat(transaction.getGasLimit()).isEqualTo(gasLimit);
@@ -77,7 +77,7 @@ public class FixedKeySigningPrivateMarkerTransactionFactoryTest {
     assertThat(transaction.getPayload()).isEqualTo(Bytes.fromBase64String(enclaveKey));
 
     final Transaction nextTransaction =
-      TransactionDecoderProvider.readFrom(factory.create(unsignedPrivateMarkerTransaction, privTransaction, ""));
+      RlpTransactionProvider.readFrom(factory.create(unsignedPrivateMarkerTransaction, privTransaction, ""));
     assertThat(nextTransaction.getSender()).isEqualTo(transaction.getSender());
   }
 }

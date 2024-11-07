@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.registry.PooledTransactionEncoderProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpPooledTransactionProvider;
 
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
@@ -273,7 +273,7 @@ class EthServer {
       }
 
       final BytesValueRLPOutput txRlp = new BytesValueRLPOutput();
-      PooledTransactionEncoderProvider.writeTo(maybeTx.get(), txRlp);
+      RlpPooledTransactionProvider.writeTo(maybeTx.get(), txRlp);
       final int encodedSize = txRlp.encodedSize();
       if (responseSizeEstimate + encodedSize > maxMessageSize) {
         break;

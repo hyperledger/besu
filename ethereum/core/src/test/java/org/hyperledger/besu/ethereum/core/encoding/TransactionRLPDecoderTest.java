@@ -23,9 +23,9 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.registry.PooledTransactionDecoderProvider;
-import org.hyperledger.besu.ethereum.core.encoding.registry.PooledTransactionEncoderProvider;
-import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpPooledTransactionProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpPooledTransactionProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -72,7 +72,7 @@ class TransactionRLPDecoderTest {
         "0x02f84e0101a1648a5f8b2dcad5ea5ba6b720ff069c1d87c21a4a6a5b3766b39e2c2792367bb066a1ffa5ffaf5b0560d3a9fb186c2ede2ae6751bc0b4fef9107cf36389630b6196a38805800180c0010203";
     assertThatThrownBy(
             () ->
-                TransactionDecoderProvider.decodeOpaqueBytes(
+                RlpTransactionProvider.decodeOpaqueBytes(
                     Bytes.fromHexString(txWithBigFees)))
         .isInstanceOf(RLPException.class);
   }
@@ -119,7 +119,7 @@ class TransactionRLPDecoderTest {
     // Decode bytes into a transaction
     final Transaction transaction = decodeRLP(RLP.input(bytes));
     Bytes transactionBytes =
-        PooledTransactionEncoderProvider.encodeOpaqueBytes(transaction);
+        RlpPooledTransactionProvider.encodeOpaqueBytes(transaction);
     // Bytes size should be equal to transaction size
     assertThat(transaction.getSize()).isEqualTo(transactionBytes.size());
   }
@@ -157,6 +157,6 @@ class TransactionRLPDecoderTest {
   }
 
   private Transaction decodeRLP(final RLPInput input) {
-    return PooledTransactionDecoderProvider.readFrom(input);
+    return RlpPooledTransactionProvider.readFrom(input);
   }
 }

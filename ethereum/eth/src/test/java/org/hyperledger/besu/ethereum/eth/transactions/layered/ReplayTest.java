@@ -27,7 +27,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -295,7 +295,7 @@ public class ReplayTest {
       final LayeredPendingTransactions pendingTransactions,
       final AbstractPrioritizedTransactions prioritizedTransactions) {
     final Bytes rlp = Bytes.fromHexString(commaSplit[commaSplit.length - 1]);
-    final Transaction tx = TransactionDecoderProvider.readFrom(rlp);
+    final Transaction tx = RlpTransactionProvider.readFrom(rlp);
     final Account mockAccount = mock(Account.class);
     final long nonce = Long.parseLong(commaSplit[4]);
     when(mockAccount.getNonce()).thenReturn(nonce);
@@ -319,7 +319,7 @@ public class ReplayTest {
   private void processInvalid(
       final String[] commaSplit, final AbstractPrioritizedTransactions prioritizedTransactions) {
     final Bytes rlp = Bytes.fromHexString(commaSplit[commaSplit.length - 1]);
-    final Transaction tx = TransactionDecoderProvider.readFrom(rlp);
+    final Transaction tx = RlpTransactionProvider.readFrom(rlp);
     if (tx.getSender().equals(senderToLog)) {
       LOG.warn("D {}, Before {}", tx.getNonce(), prioritizedTransactions.logSender(senderToLog));
     }

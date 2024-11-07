@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionEncoderProvider;
-import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -97,7 +96,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   }
 
   public void writeTo(final RLPOutput output) {
-    output.writeList(getTransactions(), TransactionEncoderProvider::writeTo);
+    output.writeList(getTransactions(), RlpTransactionProvider::writeTo);
     output.writeList(getOmmers(), BlockHeader::writeTo);
     withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
   }
@@ -144,7 +143,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   public static BlockBody readFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
     return new BlockBody(
-        input.readList(TransactionDecoderProvider::readFrom),
+        input.readList(RlpTransactionProvider::readFrom),
         input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
         input.isEndOfCurrentList()
             ? Optional.empty()

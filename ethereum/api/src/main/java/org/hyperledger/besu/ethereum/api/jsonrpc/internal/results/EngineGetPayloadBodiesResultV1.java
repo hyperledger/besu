@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.core.BlockBody;
-import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionEncoderProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 
 import java.util.Collections;
 import java.util.List;
@@ -53,7 +53,7 @@ public class EngineGetPayloadBodiesResultV1 {
       this.transactions =
           blockBody.getTransactions().stream()
               .map(
-                TransactionEncoderProvider::encodeOpaqueBytes)
+                RlpTransactionProvider::encodeOpaqueBytes)
               .map(Bytes::toHexString)
               .collect(Collectors.toList());
       this.withdrawals =

@@ -14,10 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding.registry;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+public interface RlpDecoder<T> {
+  T readFrom(final RLPInput input);
 
-public interface RLPEncoder<T> {
-
-  void writeTo(T t, RLPOutput output);
+  default T readFrom(final Bytes bytes) {
+    return readFrom(RLP.input(bytes));
+  }
 }
