@@ -12,9 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.unstable;
+package org.hyperledger.besu.cli.options;
 
-import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.List;
