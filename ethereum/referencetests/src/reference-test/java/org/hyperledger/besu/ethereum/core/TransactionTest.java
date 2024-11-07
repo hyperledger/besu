@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -184,7 +185,7 @@ public class TransactionTest {
       }
 
       // Test rlp encoding
-      final Bytes actualRlp = RLP.encode(transaction::writeTo);
+      final Bytes actualRlp = RLP.encode(output -> TransactionEncoder.writeTo(transaction, output));
       assertThat(expected.isSucceeds())
           .withFailMessage("Transaction " + name + "/" + milestone + " was supposed to be invalid")
           .isTrue();

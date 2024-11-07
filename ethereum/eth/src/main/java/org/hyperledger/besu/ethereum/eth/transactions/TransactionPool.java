@@ -800,12 +800,8 @@ public class TransactionPool implements BlockAddedObserver {
             allTxs.parallelStream()
                 .takeWhile(unused -> !isCancelled.get())
                 .map(
-                    ptx -> {
-                      final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-                      ptx.getTransaction().writeTo(rlp);
-                      return (ptx.isReceivedFromLocalSource() ? "l" : "r")
-                          + rlp.encoded().toBase64String();
-                    })
+                    ptx -> (ptx.isReceivedFromLocalSource() ? "l" : "r")
+                        + ptx.getTransaction().encoded().toBase64String())
                 .mapToInt(
                     line -> {
                       synchronized (bw) {

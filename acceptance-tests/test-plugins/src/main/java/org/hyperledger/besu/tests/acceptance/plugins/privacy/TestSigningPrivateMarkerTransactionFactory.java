@@ -72,9 +72,7 @@ public class TestSigningPrivateMarkerTransactionFactory implements PrivateMarker
 
     LOG.info("Signing PMT from {}", sender);
 
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    transaction.writeTo(out);
-    return out.encoded();
+    return transaction.encoded();
   }
 
   @Override

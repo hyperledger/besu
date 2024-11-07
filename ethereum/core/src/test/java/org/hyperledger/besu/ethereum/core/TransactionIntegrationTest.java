@@ -51,9 +51,7 @@ public class TransactionIntegrationTest {
     final Bytes encoded = Bytes.fromHexString(encodedString);
     final RLPInput input = RLP.input(encoded);
     final Transaction transaction = TransactionDecoder.readFrom(input);
-    final BytesValueRLPOutput output = new BytesValueRLPOutput();
-    transaction.writeTo(output);
-    assertThat(output.encoded().toString()).isEqualTo(encodedString);
+    assertThat(transaction.encoded().toString()).isEqualTo(encodedString);
   }
 
   @Test

@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -616,7 +617,7 @@ public class T8nExecutor {
             });
 
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    rlpOut.writeList(transactions, Transaction::writeTo);
+    rlpOut.writeList(transactions, TransactionEncoder::writeTo);
     TextNode bodyBytes = TextNode.valueOf(rlpOut.encoded().toHexString());
     return new T8nResult(allocObject, bodyBytes, resultObject);
   }

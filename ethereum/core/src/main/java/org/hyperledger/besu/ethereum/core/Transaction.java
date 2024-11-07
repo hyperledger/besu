@@ -469,15 +469,6 @@ public class Transaction
     return hashNoSignature;
   }
 
-  /**
-   * Writes the transaction to RLP
-   *
-   * @param out the output to write the transaction to
-   */
-  public void writeTo(final RLPOutput out) {
-    TransactionEncoder.writeTo(this, out);
-  }
-
   @Override
   public Bytes encoded() {
     final BytesValueRLPOutput rplOutput = new BytesValueRLPOutput();

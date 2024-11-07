@@ -278,11 +278,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         .addKeyValue("reason", result)
         .addKeyValue(
             "txrlp",
-            () -> {
-              final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-              pendingTransaction.getTransaction().writeTo(rlp);
-              return rlp.encoded().toHexString();
-            })
+            () -> pendingTransaction.getTransaction().encoded().toHexString())
         .log();
   }
 

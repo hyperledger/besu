@@ -40,8 +40,6 @@ public class SigningPrivateMarkerTransactionFactory {
             .payload(unsignedPrivateMarkerTransaction.getPayload())
             .signAndBuild(signingKey);
 
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    transaction.writeTo(out);
-    return out.encoded();
+    return transaction.encoded();
   }
 }

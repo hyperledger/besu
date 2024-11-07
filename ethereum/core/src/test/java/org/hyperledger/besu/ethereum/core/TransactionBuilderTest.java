@@ -25,6 +25,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
@@ -88,10 +89,6 @@ class TransactionBuilderTest {
     final Transaction copy = builder.copiedFrom(transaction).build();
     assertThat(copy).isEqualTo(transaction).isNotSameAs(transaction);
     assertThat(copy.getHash()).isEqualTo(transaction.getHash());
-    BytesValueRLPOutput sourceRLP = new BytesValueRLPOutput();
-    transaction.writeTo(sourceRLP);
-    BytesValueRLPOutput copyRLP = new BytesValueRLPOutput();
-    copy.writeTo(copyRLP);
-    assertEquals(sourceRLP.encoded(), copyRLP.encoded());
+    assertEquals(transaction.encoded(), copy.encoded());
   }
 }

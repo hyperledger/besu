@@ -61,8 +61,6 @@ public class DebugGetRawTransaction implements JsonRpcMethod {
   }
 
   private String toRawString(final Transaction transaction) {
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    transaction.writeTo(out);
-    return out.encoded().toHexString();
+    return transaction.encoded().toHexString();
   }
 }

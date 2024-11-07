@@ -527,9 +527,7 @@ public class TransactionAdapter extends AdapterBase {
    * @return an Optional containing a Bytes object representing the raw transaction data.
    */
   public Optional<Bytes> getRaw() {
-    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    transactionWithMetadata.getTransaction().writeTo(rlpOutput);
-    return Optional.of(rlpOutput.encoded());
+    return Optional.of(transactionWithMetadata.getTransaction().encoded());
   }
 
   /**

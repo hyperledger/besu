@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.encoding.PooledTransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.PooledTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.BaseTransactionPoolTest;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -73,7 +74,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     Transaction txTo =
         preparedTx.to(Optional.of(Address.extract(Bytes32.random()))).createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    txTo.writeTo(rlpOut);
+    TransactionEncoder.writeTo(txTo, rlpOut);
 
     txTo = TransactionDecoder.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
     System.out.println(txTo.getSender());
@@ -117,11 +118,9 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     TransactionTestFixture preparedTx =
         prepareTransaction(TransactionType.ACCESS_LIST, 10, Wei.of(500), Wei.ZERO, 10, 0);
     Transaction txPayload = preparedTx.createTransaction(KEYS1);
-    BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    txPayload.writeTo(rlpOut);
 
     txPayload =
-      TransactionDecoder.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
+      TransactionDecoder.readFrom(new BytesValueRLPInput(txPayload.encoded(), false)).detachedCopy();
     System.out.println(txPayload.getSender());
     System.out.println(txPayload.getHash());
     System.out.println(txPayload.getSize());
@@ -270,11 +269,9 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     TransactionTestFixture preparedTx =
         prepareTransaction(TransactionType.ACCESS_LIST, 10, Wei.of(500), Wei.ZERO, 10, 0);
     Transaction txPayload = preparedTx.createTransaction(KEYS1);
-    BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    txPayload.writeTo(rlpOut);
 
     txPayload =
-      TransactionDecoder.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
+      TransactionDecoder.readFrom(new BytesValueRLPInput(txPayload.encoded(), false)).detachedCopy();
     System.out.println(txPayload.getSender());
     System.out.println(txPayload.getHash());
     System.out.println(txPayload.getSize());
@@ -302,11 +299,9 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     TransactionTestFixture preparedTx =
         prepareTransaction(TransactionType.ACCESS_LIST, 0, Wei.of(500), Wei.ZERO, 0, 0);
     Transaction txAccessList = preparedTx.accessList(ales).createTransaction(KEYS1);
-    BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    txAccessList.writeTo(rlpOut);
 
     txAccessList =
-      TransactionDecoder.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
+      TransactionDecoder.readFrom(new BytesValueRLPInput(txAccessList.encoded(), false)).detachedCopy();
     System.out.println(txAccessList.getSender());
     System.out.println(txAccessList.getHash());
     System.out.println(txAccessList.getSize());
@@ -344,11 +339,9 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
   public void baseEIP1559AndEIP4844TransactionMemorySize() {
     System.setProperty("jol.magicFieldOffset", "true");
     Transaction txEip1559 = createEIP1559Transaction(1, KEYS1, 10);
-    BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    txEip1559.writeTo(rlpOut);
 
     txEip1559 =
-      TransactionDecoder.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
+      TransactionDecoder.readFrom(new BytesValueRLPInput(txEip1559.encoded(), false)).detachedCopy();
     System.out.println(txEip1559.getSender());
     System.out.println(txEip1559.getHash());
     System.out.println(txEip1559.getSize());
@@ -388,11 +381,9 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
   public void baseFrontierAndAccessListTransactionMemorySize() {
     System.setProperty("jol.magicFieldOffset", "true");
     Transaction txFrontier = createTransaction(TransactionType.FRONTIER, 1, Wei.of(500), 0, KEYS1);
-    BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    txFrontier.writeTo(rlpOut);
 
     txFrontier =
-      TransactionDecoder.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
+      TransactionDecoder.readFrom(new BytesValueRLPInput(txFrontier.encoded(), false)).detachedCopy();
     System.out.println(txFrontier.getSender());
     System.out.println(txFrontier.getHash());
     System.out.println(txFrontier.getSize());
