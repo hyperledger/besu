@@ -76,4 +76,6 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
+  testImplementation 'com.google.dagger:dagger'
+  testAnnotationProcessor 'com.google.dagger:dagger-compiler'
 }

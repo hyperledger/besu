@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -148,18 +148,15 @@ public class BlockchainReferenceTestTools {
   }
 
   static void verifyJournaledEVMAccountCompatability(
-      final MutableWorldState worldState, final ProtocolSpec protocolSpec) {
+          final MutableWorldState worldState, final ProtocolSpec protocolSpec) {
     EVM evm = protocolSpec.getEvm();
     if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
-      assumeThat(
+      assumeFalse(
               worldState
-                  .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-                  .anyMatch(AccountState::isEmpty))
-          .withFailMessage("Journaled account configured and empty account detected")
-          .isFalse();
-      assumeThat(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0)
-          .withFailMessage("Journaled account configured and fork prior to the merge specified")
-          .isFalse();
+                      .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE).anyMatch(AccountState::isEmpty),
+              "Journaled account configured and empty account detected");
+      assumeFalse(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0,
+              "Journaled account configured and fork prior to the merge specified");
     }
   }
 }

@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -120,6 +120,7 @@ public class BlockchainQueriesLogCacheTest {
             null,
             null,
             null,
+            null,
             new MainnetBlockHeaderFunctions());
     testHash = fakeHeader.getHash();
     final BlockBody fakeBody = new BlockBody(Collections.emptyList(), Collections.emptyList());
@@ -135,7 +136,7 @@ public class BlockchainQueriesLogCacheTest {
             worldStateArchive,
             Optional.of(cacheDir),
             Optional.of(scheduler),
-            MiningParameters.newDefault());
+            MiningConfiguration.newDefault());
   }
 
   /**
