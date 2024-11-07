@@ -109,8 +109,7 @@ class EthGetTransactionByHashTest {
   @Test
   void shouldReturnPendingTransactionWhenTransactionExistsAndIsPending() {
     final org.hyperledger.besu.ethereum.core.Transaction transaction =
-      RlpTransactionProvider.readFrom(
-            Bytes.fromHexString(VALID_TRANSACTION));
+        RlpTransactionProvider.readFrom(Bytes.fromHexString(VALID_TRANSACTION));
 
     when(transactionPool.getTransactionByHash(transaction.getHash()))
         .thenReturn(Optional.of(transaction));
@@ -132,8 +131,7 @@ class EthGetTransactionByHashTest {
   @Test
   void shouldReturnCompleteTransactionWhenTransactionExistsInBlockchain() {
     final org.hyperledger.besu.ethereum.core.Transaction transaction =
-      RlpTransactionProvider.readFrom(
-            Bytes.fromHexString(VALID_TRANSACTION));
+        RlpTransactionProvider.readFrom(Bytes.fromHexString(VALID_TRANSACTION));
     final TransactionWithMetadata transactionWithMetadata =
         new TransactionWithMetadata(transaction, 1, Optional.empty(), Hash.ZERO, 0);
 

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionEncoder;
@@ -24,6 +23,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -51,9 +51,7 @@ public class MainnetTransactionEncoder implements TransactionEncoder {
    * @param transaction the transaction to encode
    * @param rlpOutput the RLP output stream
    */
-  public void writeTo(
-      final Transaction transaction,
-      final RLPOutput rlpOutput) {
+  public void writeTo(final Transaction transaction, final RLPOutput rlpOutput) {
     final TransactionType transactionType = getTransactionType(transaction);
     Bytes opaqueBytes = encodeOpaqueBytes(transaction);
     encodeRLP(transactionType, opaqueBytes, rlpOutput);
@@ -83,8 +81,7 @@ public class MainnetTransactionEncoder implements TransactionEncoder {
    * @param transaction the transaction to encode
    * @return the encoded transaction as bytes
    */
-  public Bytes encodeOpaqueBytes(
-      final Transaction transaction) {
+  public Bytes encodeOpaqueBytes(final Transaction transaction) {
     final TransactionType transactionType = getTransactionType(transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
       return RLP.encode(rlpOutput -> FrontierTransactionEncoder.encode(transaction, rlpOutput));
@@ -97,15 +94,13 @@ public class MainnetTransactionEncoder implements TransactionEncoder {
     }
   }
 
-
   private static TransactionType getTransactionType(final Transaction transaction) {
     return checkNotNull(
         transaction.getType(), "Transaction type for %s was not specified.", transaction);
   }
 
   @VisibleForTesting
-  protected Encoder getEncoder(
-      final TransactionType transactionType) {
+  protected Encoder getEncoder(final TransactionType transactionType) {
     return checkNotNull(
         TYPED_TRANSACTION_ENCODERS.get(transactionType),
         "Developer Error. A supported transaction type %s has no associated encoding logic",

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoder;
@@ -25,6 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -53,8 +53,7 @@ public class MainnetTransactionDecoder implements TransactionDecoder {
    * @param rlpInput the RLP input
    * @return the decoded transaction
    */
-  public Transaction readFrom(
-    final RLPInput rlpInput) {
+  public Transaction readFrom(final RLPInput rlpInput) {
     if (!rlpInput.nextIsList()) {
       return decodeTypedTransaction(rlpInput);
     } else {
@@ -73,8 +72,7 @@ public class MainnetTransactionDecoder implements TransactionDecoder {
    * @param rlpInput the RLP input
    * @return the decoded transaction
    */
-  private Transaction decodeTypedTransaction(
-      final RLPInput rlpInput) {
+  private Transaction decodeTypedTransaction(final RLPInput rlpInput) {
     // Read the typed transaction bytes from the RLP input
     final Bytes typedTransactionBytes = rlpInput.readBytes();
 
@@ -95,8 +93,7 @@ public class MainnetTransactionDecoder implements TransactionDecoder {
    * @return the decoded transaction
    */
   private Transaction decodeTypedTransaction(
-      final Bytes transactionBytes,
-      final TransactionType transactionType) {
+      final Bytes transactionBytes, final TransactionType transactionType) {
     // Slice the transaction bytes to exclude the transaction type and prepare for decoding
     final RLPInput transactionInput = RLP.input(transactionBytes.slice(1));
     // Use the appropriate decoder for the transaction type to decode the remaining bytes
@@ -111,8 +108,7 @@ public class MainnetTransactionDecoder implements TransactionDecoder {
    * @param opaqueBytes the opaque bytes
    * @return the decoded transaction
    */
-  public Transaction decodeOpaqueBytes(
-      final Bytes opaqueBytes) {
+  public Transaction decodeOpaqueBytes(final Bytes opaqueBytes) {
     var transactionType = getTransactionType(opaqueBytes);
     if (transactionType.isPresent()) {
       return decodeTypedTransaction(opaqueBytes, transactionType.get());
@@ -140,7 +136,6 @@ public class MainnetTransactionDecoder implements TransactionDecoder {
     }
   }
 
-
   /**
    * Gets the decoder for a given transaction type
    *
@@ -148,8 +143,7 @@ public class MainnetTransactionDecoder implements TransactionDecoder {
    * @return the decoder
    */
   @VisibleForTesting
-  protected Decoder getDecoder(
-      final TransactionType transactionType) {
+  protected Decoder getDecoder(final TransactionType transactionType) {
     return checkNotNull(
         TYPED_TRANSACTION_DECODERS.get(transactionType),
         "Developer Error. A supported transaction type %s has no associated decoding logic",

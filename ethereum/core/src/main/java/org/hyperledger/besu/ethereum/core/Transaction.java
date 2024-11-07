@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.CodeDelegationEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.registry.RlpPooledTransactionProvider;
-
 import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -541,8 +540,7 @@ public class Transaction
     final Bytes bytes = RlpTransactionProvider.encodeOpaqueBytes(this);
     hash = Hash.hash(bytes);
     if (transactionType.supportsBlob() && getBlobsWithCommitments().isPresent()) {
-      final Bytes pooledBytes =
-          RlpPooledTransactionProvider.encodeOpaqueBytes(this);
+      final Bytes pooledBytes = RlpPooledTransactionProvider.encodeOpaqueBytes(this);
       size = pooledBytes.size();
       return;
     }

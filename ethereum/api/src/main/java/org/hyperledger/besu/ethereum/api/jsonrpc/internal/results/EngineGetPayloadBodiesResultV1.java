@@ -52,8 +52,7 @@ public class EngineGetPayloadBodiesResultV1 {
     public PayloadBody(final BlockBody blockBody) {
       this.transactions =
           blockBody.getTransactions().stream()
-              .map(
-                RlpTransactionProvider::encodeOpaqueBytes)
+              .map(RlpTransactionProvider::encodeOpaqueBytes)
               .map(Bytes::toHexString)
               .collect(Collectors.toList());
       this.withdrawals =

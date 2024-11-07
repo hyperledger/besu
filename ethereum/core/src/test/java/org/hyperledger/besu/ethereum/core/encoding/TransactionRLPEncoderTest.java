@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
-import java.util.stream.Stream;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -27,6 +26,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -80,13 +81,16 @@ class TransactionRLPEncoderTest {
   }
 
   @Test
-  void shouldHaveEncodersForAllTransactionTypes(){
+  void shouldHaveEncodersForAllTransactionTypes() {
     Stream.of(TransactionType.values())
-      .filter(v -> v != TransactionType.FRONTIER).forEach( v -> {
-          assertThatNoException().isThrownBy(() -> new MainnetTransactionEncoder().getEncoder(v));
-          assertThatNoException().isThrownBy(() -> new PooledMainnetTransactionEncoder().getEncoder(v));
-        }
-      );
+        .filter(v -> v != TransactionType.FRONTIER)
+        .forEach(
+            v -> {
+              assertThatNoException()
+                  .isThrownBy(() -> new MainnetTransactionEncoder().getEncoder(v));
+              assertThatNoException()
+                  .isThrownBy(() -> new PooledMainnetTransactionEncoder().getEncoder(v));
+            });
   }
 
   private Transaction decodeRLP(final RLPInput input) {

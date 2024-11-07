@@ -225,8 +225,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   public void shouldRejectTransactionsWithFullBlobs() {
 
     Bytes transactionWithBlobsBytes =
-        RlpPooledTransactionProvider.encodeOpaqueBytes(
-            createTransactionWithBlobs());
+        RlpPooledTransactionProvider.encodeOpaqueBytes(createTransactionWithBlobs());
 
     List<String> transactions = List.of(transactionWithBlobsBytes.toString());
 

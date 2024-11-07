@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -276,9 +275,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         .addKeyValue("txhash", pendingTransaction::getHash)
         .addKeyValue("txlog", pendingTransaction::toTraceLog)
         .addKeyValue("reason", result)
-        .addKeyValue(
-            "txrlp",
-            () -> pendingTransaction.getTransaction().encoded().toHexString())
+        .addKeyValue("txrlp", () -> pendingTransaction.getTransaction().encoded().toHexString())
         .log();
   }
 

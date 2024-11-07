@@ -171,7 +171,7 @@ public class TraceTransactionIntegrationTest {
     final DebugOperationTracer tracer =
         new DebugOperationTracer(new TraceOptions(true, true, true), false);
     final Transaction transaction =
-      RlpTransactionProvider.readFrom(
+        RlpTransactionProvider.readFrom(
             new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));
     final BlockHeader genesisBlockHeader = genesisBlock.getHeader();
     transactionProcessor.processTransaction(

@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.datatypes.TransactionType;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import org.hyperledger.besu.datatypes.TransactionType;
-import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 
 public class PooledMainnetTransactionEncoder extends MainnetTransactionEncoder {
 
@@ -35,10 +35,9 @@ public class PooledMainnetTransactionEncoder extends MainnetTransactionEncoder {
           CodeDelegationEncoder::encode);
 
   @VisibleForTesting
-  protected Encoder getEncoder(
-      final TransactionType transactionType) {
+  protected Encoder getEncoder(final TransactionType transactionType) {
     return checkNotNull(
-      POOLED_TRANSACTION_ENCODERS.get(transactionType),
+        POOLED_TRANSACTION_ENCODERS.get(transactionType),
         "Developer Error. A supported transaction type %s has no associated encoding logic",
         transactionType);
   }

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding.registry;
 
-
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 public interface RlpEncoder<T> {

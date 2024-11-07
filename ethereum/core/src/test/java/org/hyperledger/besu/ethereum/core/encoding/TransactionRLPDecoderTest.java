@@ -24,7 +24,6 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.registry.RlpPooledTransactionProvider;
-import org.hyperledger.besu.ethereum.core.encoding.registry.RlpPooledTransactionProvider;
 import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -71,9 +70,7 @@ class TransactionRLPDecoderTest {
     final String txWithBigFees =
         "0x02f84e0101a1648a5f8b2dcad5ea5ba6b720ff069c1d87c21a4a6a5b3766b39e2c2792367bb066a1ffa5ffaf5b0560d3a9fb186c2ede2ae6751bc0b4fef9107cf36389630b6196a38805800180c0010203";
     assertThatThrownBy(
-            () ->
-                RlpTransactionProvider.decodeOpaqueBytes(
-                    Bytes.fromHexString(txWithBigFees)))
+            () -> RlpTransactionProvider.decodeOpaqueBytes(Bytes.fromHexString(txWithBigFees)))
         .isInstanceOf(RLPException.class);
   }
 
@@ -118,8 +115,7 @@ class TransactionRLPDecoderTest {
     final Bytes bytes = Bytes.fromHexString(rlp_tx);
     // Decode bytes into a transaction
     final Transaction transaction = decodeRLP(RLP.input(bytes));
-    Bytes transactionBytes =
-        RlpPooledTransactionProvider.encodeOpaqueBytes(transaction);
+    Bytes transactionBytes = RlpPooledTransactionProvider.encodeOpaqueBytes(transaction);
     // Bytes size should be equal to transaction size
     assertThat(transaction.getSize()).isEqualTo(transactionBytes.size());
   }
@@ -147,13 +143,16 @@ class TransactionRLPDecoderTest {
   }
 
   @Test
-  void shouldHaveDecodersForAllTransactionTypes(){
+  void shouldHaveDecodersForAllTransactionTypes() {
     Stream.of(TransactionType.values())
-      .filter(v -> v != TransactionType.FRONTIER).forEach( v -> {
-          assertThatNoException().isThrownBy(() -> new MainnetTransactionDecoder().getDecoder(v));
-          assertThatNoException().isThrownBy(() -> new PooledMainnetTransactionDecoder().getDecoder(v));
-        }
-      );
+        .filter(v -> v != TransactionType.FRONTIER)
+        .forEach(
+            v -> {
+              assertThatNoException()
+                  .isThrownBy(() -> new MainnetTransactionDecoder().getDecoder(v));
+              assertThatNoException()
+                  .isThrownBy(() -> new PooledMainnetTransactionDecoder().getDecoder(v));
+            });
   }
 
   private Transaction decodeRLP(final RLPInput input) {

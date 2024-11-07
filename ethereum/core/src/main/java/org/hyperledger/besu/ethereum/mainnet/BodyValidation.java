@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
@@ -65,9 +65,7 @@ public final class BodyValidation {
         .forEach(
             i ->
                 trie.put(
-                    indexKey(i),
-                    RlpTransactionProvider.encodeOpaqueBytes(
-                        transactions.get(i))));
+                    indexKey(i), RlpTransactionProvider.encodeOpaqueBytes(transactions.get(i))));
 
     return Hash.wrap(trie.getRootHash());
   }

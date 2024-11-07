@@ -19,6 +19,7 @@ import static org.hyperledger.besu.cli.subcommands.TxParseSubCommand.COMMAND_NAM
 
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -29,7 +30,6 @@ import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 import picocli.CommandLine;
 
 /**

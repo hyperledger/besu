@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.registry.RlpPooledTransactionProvider;
 
-
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -102,9 +101,7 @@ public class TransactionPendingResult implements TransactionResult {
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
     this.publicKey = transaction.getPublicKey().orElse(null);
-    this.raw =
-        RlpPooledTransactionProvider.encodeOpaqueBytes(transaction)
-            .toString();
+    this.raw = RlpPooledTransactionProvider.encodeOpaqueBytes(transaction).toString();
     this.to = transaction.getTo().map(Address::toHexString).orElse(null);
     if (transactionType == TransactionType.FRONTIER) {
       this.type = Quantity.create(0);

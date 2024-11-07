@@ -95,8 +95,7 @@ public class BlockResultFactory {
   public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
     final List<String> txs =
         block.getBody().getTransactions().stream()
-            .map(
-              RlpTransactionProvider::encodeOpaqueBytes)
+            .map(RlpTransactionProvider::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -107,8 +106,7 @@ public class BlockResultFactory {
     final var blockWithReceipts = payload.blockWithReceipts();
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(
-              RlpTransactionProvider::encodeOpaqueBytes)
+            .map(RlpTransactionProvider::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -132,8 +130,7 @@ public class BlockResultFactory {
     final var blockWithReceipts = payload.blockWithReceipts();
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(
-              RlpTransactionProvider::encodeOpaqueBytes)
+            .map(RlpTransactionProvider::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -151,8 +148,7 @@ public class BlockResultFactory {
     final var blockWithReceipts = payload.blockWithReceipts();
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(
-              RlpTransactionProvider::encodeOpaqueBytes)
+            .map(RlpTransactionProvider::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
     final Optional<List<String>> requestsWithoutRequestId =

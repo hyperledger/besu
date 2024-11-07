@@ -25,13 +25,13 @@ public class RlpRegistry {
   private TransactionDecoder transactionDecoder;
   private TransactionDecoder pooledTransactionDecoder;
 
-  private  TransactionEncoder transactionEncoder;
+  private TransactionEncoder transactionEncoder;
   private TransactionEncoder pooledTransactionEncoder;
 
   private RlpRegistry() {
     transactionDecoder = new MainnetTransactionDecoder();
     pooledTransactionDecoder = new PooledMainnetTransactionDecoder();
-    transactionEncoder =new MainnetTransactionEncoder();
+    transactionEncoder = new MainnetTransactionEncoder();
     pooledTransactionEncoder = new PooledMainnetTransactionEncoder();
   }
 
@@ -42,35 +42,35 @@ public class RlpRegistry {
     return INSTANCE;
   }
 
-  public void setTransactionDecoder(final TransactionDecoder decoder){
+  public void setTransactionDecoder(final TransactionDecoder decoder) {
     this.transactionDecoder = decoder;
   }
-  
-  public TransactionDecoder getTransactionDecoder(){
+
+  public TransactionDecoder getTransactionDecoder() {
     return transactionDecoder;
   }
 
-  public void setPooledTransactionDecoder(final TransactionDecoder pooledTransactionDecoder){
+  public void setPooledTransactionDecoder(final TransactionDecoder pooledTransactionDecoder) {
     this.pooledTransactionDecoder = pooledTransactionDecoder;
   }
 
-  public TransactionDecoder getPooledTransactionDecoder(){
+  public TransactionDecoder getPooledTransactionDecoder() {
     return pooledTransactionDecoder;
   }
 
-  public void setTransactionEncoder(final TransactionEncoder encoder){
+  public void setTransactionEncoder(final TransactionEncoder encoder) {
     this.transactionEncoder = encoder;
   }
 
-  public TransactionEncoder getTransactionEncoder(){
+  public TransactionEncoder getTransactionEncoder() {
     return transactionEncoder;
   }
 
-  public void setPooledTransactionEncoder(final TransactionEncoder pooledTransactionEncoder){
+  public void setPooledTransactionEncoder(final TransactionEncoder pooledTransactionEncoder) {
     this.pooledTransactionEncoder = pooledTransactionEncoder;
   }
 
-  public TransactionEncoder getPooledTransactionEncoder(){
+  public TransactionEncoder getPooledTransactionEncoder() {
     return pooledTransactionEncoder;
   }
 }

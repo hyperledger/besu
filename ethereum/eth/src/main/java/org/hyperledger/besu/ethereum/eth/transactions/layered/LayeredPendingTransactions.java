@@ -234,8 +234,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .addArgument(pendingTransaction.getNonce())
         .addArgument(pendingTransaction.getTransaction().getType())
         .addArgument(pendingTransaction::getHash)
-        .addArgument(
-            () -> pendingTransaction.getTransaction().encoded().toHexString())
+        .addArgument(() -> pendingTransaction.getTransaction().encoded().toHexString())
         .log();
   }
 
@@ -251,17 +250,14 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .addArgument(pendingTransaction.getNonce())
         .addArgument(pendingTransaction.getTransaction().getType())
         .addArgument(pendingTransaction::getHash)
-        .addArgument(
-            () -> pendingTransaction.getTransaction().encoded().toHexString())
+        .addArgument(() -> pendingTransaction.getTransaction().encoded().toHexString())
         .log();
     LOG.atInfo()
         .addMarker(INVALID_TX_REMOVED)
         .addKeyValue("txhash", pendingTransaction::getHash)
         .addKeyValue("txlog", pendingTransaction::toTraceLog)
         .addKeyValue("reason", result)
-        .addKeyValue(
-            "txrlp",
-            () -> pendingTransaction.getTransaction().encoded().toHexString())
+        .addKeyValue("txrlp", () -> pendingTransaction.getTransaction().encoded().toHexString())
         .log();
   }
 

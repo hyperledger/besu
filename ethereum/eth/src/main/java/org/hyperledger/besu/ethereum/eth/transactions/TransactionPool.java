@@ -799,8 +799,9 @@ public class TransactionPool implements BlockAddedObserver {
             allTxs.parallelStream()
                 .takeWhile(unused -> !isCancelled.get())
                 .map(
-                    ptx -> (ptx.isReceivedFromLocalSource() ? "l" : "r")
-                        + ptx.getTransaction().encoded().toBase64String())
+                    ptx ->
+                        (ptx.isReceivedFromLocalSource() ? "l" : "r")
+                            + ptx.getTransaction().encoded().toBase64String())
                 .mapToInt(
                     line -> {
                       synchronized (bw) {
@@ -841,7 +842,8 @@ public class TransactionPool implements BlockAddedObserver {
                         line -> {
                           final boolean isLocal = line.charAt(0) == 'l';
                           final Transaction tx =
-                            RlpTransactionProvider.readFrom(Bytes.fromBase64String(line.substring(1)));
+                              RlpTransactionProvider.readFrom(
+                                  Bytes.fromBase64String(line.substring(1)));
 
                           final ValidationResult<TransactionInvalidReason> result =
                               addTransaction(tx, isLocal);

@@ -66,8 +66,7 @@ public class DomainObjectDecodeUtilsTest {
 
   @Test
   public void testAccessList2718OpaqueSerDes() {
-    final Bytes encoded =
-        RlpPooledTransactionProvider.encodeOpaqueBytes(accessListTxn);
+    final Bytes encoded = RlpPooledTransactionProvider.encodeOpaqueBytes(accessListTxn);
     Transaction decoded = DomainObjectDecodeUtils.decodeRawTransaction(encoded.toString());
     Assertions.assertThat(decoded.getAccessList().isPresent()).isTrue();
     Assertions.assertThat(decoded.getAccessList().map(List::size).get()).isEqualTo(1);

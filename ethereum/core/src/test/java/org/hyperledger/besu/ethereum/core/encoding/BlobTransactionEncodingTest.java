@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.registry.RlpPooledTransactionProvider;
-import org.hyperledger.besu.ethereum.core.encoding.registry.RlpPooledTransactionProvider;
 import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -60,15 +59,13 @@ public class BlobTransactionEncodingTest {
       final TypedTransactionBytesArgument argument) {
     Bytes bytes = argument.bytes;
     // Decode the transaction from the wire using the TransactionDecoder.
-    final Transaction transaction =
-        RlpPooledTransactionProvider.decodeOpaqueBytes(bytes);
+    final Transaction transaction = RlpPooledTransactionProvider.decodeOpaqueBytes(bytes);
 
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
     new MainnetTransactionEncoder().encodeRLP(transaction.getType(), bytes, output);
 
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
-    RlpPooledTransactionProvider.writeTo(
-        transaction, bytesValueRLPOutput);
+    RlpPooledTransactionProvider.writeTo(transaction, bytesValueRLPOutput);
     assertThat(transaction.getSize()).isEqualTo(bytes.size());
   }
 
@@ -77,8 +74,7 @@ public class BlobTransactionEncodingTest {
   public void blobTransactionEncodingDecodingTest(final TypedTransactionBytesArgument argument) {
     Bytes bytes = argument.bytes;
     // Decode the transaction from the wire using the TransactionDecoder.
-    final Transaction transaction =
-    RlpTransactionProvider.decodeOpaqueBytes(bytes);
+    final Transaction transaction = RlpTransactionProvider.decodeOpaqueBytes(bytes);
 
     // Encode the transaction for wire using the TransactionEncoder.
     Bytes encoded = RlpTransactionProvider.encodeOpaqueBytes(transaction);
@@ -86,7 +82,7 @@ public class BlobTransactionEncodingTest {
     assertThat(encoded.toHexString()).isEqualTo(bytes.toHexString());
 
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-     new MainnetTransactionEncoder().encodeRLP(transaction.getType(), bytes, rlpOutput);
+    new MainnetTransactionEncoder().encodeRLP(transaction.getType(), bytes, rlpOutput);
     assertThat(transaction.getSize()).isEqualTo(bytes.size());
   }
 

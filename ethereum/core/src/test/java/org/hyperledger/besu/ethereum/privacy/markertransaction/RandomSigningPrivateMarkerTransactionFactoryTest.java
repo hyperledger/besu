@@ -61,7 +61,8 @@ public class RandomSigningPrivateMarkerTransactionFactoryTest {
         new RandomSigningPrivateMarkerTransactionFactory();
 
     final Transaction transaction =
-      RlpTransactionProvider.readFrom(factory.create(unsignedPrivateMarkerTransaction, privTransaction, ""));
+        RlpTransactionProvider.readFrom(
+            factory.create(unsignedPrivateMarkerTransaction, privTransaction, ""));
 
     assertThat(transaction.getNonce()).isEqualTo(0);
     assertThat(transaction.getGasLimit()).isEqualTo(gasLimit);
@@ -71,7 +72,8 @@ public class RandomSigningPrivateMarkerTransactionFactoryTest {
     assertThat(transaction.getPayload()).isEqualTo(Bytes.fromBase64String(enclaveKey));
 
     final Transaction nextTransaction =
-      RlpTransactionProvider.readFrom(factory.create(unsignedPrivateMarkerTransaction, privTransaction, ""));
+        RlpTransactionProvider.readFrom(
+            factory.create(unsignedPrivateMarkerTransaction, privTransaction, ""));
     assertThat(nextTransaction.getSender()).isNotEqualTo(transaction.getSender());
   }
 }

@@ -147,7 +147,8 @@ public class T8nExecutor {
         } else if (txNode.isObject()) {
           if (txNode.has("txBytes")) {
             Transaction tx =
-              RlpTransactionProvider.readFrom(Bytes.fromHexString(txNode.get("txbytes").asText()));
+                RlpTransactionProvider.readFrom(
+                    Bytes.fromHexString(txNode.get("txbytes").asText()));
             transactions.add(tx);
           } else {
             Transaction.Builder builder = Transaction.builder();
