@@ -15,6 +15,7 @@
 
 ### Breaking Changes
 - Besu will now fail to start if any plugins encounter errors during initialization. To allow Besu to continue running despite plugin errors, use the `--plugin-continue-on-error` option. [#7662](https://github.com/hyperledger/besu/pull/7662)
+- Support for enabling and configuring TLS/mTLS in WebSocket service. [#7854](https://github.com/hyperledger/besu/pull/7854)
 
 ### Upcoming Breaking Changes
 - k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release

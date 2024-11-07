@@ -123,11 +123,11 @@ public class RpcWebsocketOptions {
   @CommandLine.Option(
       names = {"--rpc-ws-ssl-enabled"},
       description = "Enable SSL/TLS for the WebSocket RPC service")
-  private boolean isRpcWsSslEnabled = false;
+  private final Boolean isRpcWsSslEnabled = false;
 
   @CommandLine.Option(
       names = {"--rpc-ws-ssl-keystore-file"},
-      paramLabel = "<FILE>",
+      paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
       description = "Path to the keystore file for the WebSocket RPC service")
   private String rpcWsKeyStoreFile = null;
 
@@ -136,6 +136,18 @@ public class RpcWebsocketOptions {
       paramLabel = "<PASSWORD>",
       description = "Password for the WebSocket RPC keystore file")
   private String rpcWsKeyStorePassword = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-key-file"},
+      paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to the PEM key file for the WebSocket RPC service")
+  private String rpcWsKeyFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-cert-file"},
+      paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to the PEM cert file for the WebSocket RPC service")
+  private String rpcWsCertFile = null;
 
   @CommandLine.Option(
       names = {"--rpc-ws-ssl-keystore-type"},
@@ -147,11 +159,11 @@ public class RpcWebsocketOptions {
   @CommandLine.Option(
       names = {"--rpc-ws-ssl-client-auth-enabled"},
       description = "Enable client authentication for the WebSocket RPC service")
-  private boolean isRpcWsClientAuthEnabled = false;
+  private final Boolean isRpcWsClientAuthEnabled = false;
 
   @CommandLine.Option(
       names = {"--rpc-ws-ssl-truststore-file"},
-      paramLabel = "<FILE>",
+      paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
       description = "Path to the truststore file for the WebSocket RPC service")
   private String rpcWsTrustStoreFile = null;
 
@@ -160,6 +172,12 @@ public class RpcWebsocketOptions {
       paramLabel = "<PASSWORD>",
       description = "Password for the WebSocket RPC truststore file")
   private String rpcWsTrustStorePassword = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-trustcert-file"},
+      paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to the PEM trustcert file for the WebSocket RPC service")
+  private String rpcWsTrustCertFile = null;
 
   @CommandLine.Option(
       names = {"--rpc-ws-ssl-truststore-type"},
@@ -231,7 +249,61 @@ public class RpcWebsocketOptions {
             "--rpc-ws-authentication-enabled",
             "--rpc-ws-authentication-credentials-file",
             "--rpc-ws-authentication-public-key-file",
-            "--rpc-ws-authentication-jwt-algorithm"));
+            "--rpc-ws-authentication-jwt-algorithm",
+            "--rpc-ws-ssl-enabled"));
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--rpc-ws-ssl-enabled",
+        !isRpcWsSslEnabled,
+        List.of(
+            "--rpc-ws-ssl-keystore-file",
+            "--rpc-ws-ssl-keystore-type",
+            "--rpc-ws-ssl-client-auth-enabled"));
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--rpc-ws-ssl-client-auth-enabled",
+        !isRpcWsClientAuthEnabled,
+        List.of(
+            "--rpc-ws-ssl-truststore-file",
+            "--rpc-ws-ssl-truststore-type",
+            "--rpc-ws-ssl-trustcert-file"));
+
+    if (isRpcWsSslEnabled) {
+      if ("PEM".equalsIgnoreCase(rpcWsKeyStoreType)) {
+        CommandLineUtils.checkOptionDependencies(
+            logger,
+            commandLine,
+            "--rpc-ws-ssl-key-file",
+            rpcWsKeyFile == null,
+            List.of("--rpc-ws-ssl-cert-file"));
+        CommandLineUtils.checkOptionDependencies(
+            logger,
+            commandLine,
+            "--rpc-ws-ssl-cert-file",
+            rpcWsCertFile == null,
+            List.of("--rpc-ws-ssl-key-file"));
+      } else {
+        CommandLineUtils.checkOptionDependencies(
+            logger,
+            commandLine,
+            "--rpc-ws-ssl-keystore-file",
+            rpcWsKeyStoreFile == null,
+            List.of("--rpc-ws-ssl-keystore-password"));
+      }
+    }
+
+    if (isRpcWsClientAuthEnabled && !"PEM".equalsIgnoreCase(rpcWsTrustStoreType)) {
+      CommandLineUtils.checkOptionDependencies(
+          logger,
+          commandLine,
+          "--rpc-ws-ssl-truststore-file",
+          rpcWsTrustStoreFile == null,
+          List.of("--rpc-ws-ssl-truststore-password"));
+    }
 
     if (isRpcWsAuthenticationEnabled) {
       CommandLineUtils.checkOptionDependencies(
@@ -277,6 +349,9 @@ public class RpcWebsocketOptions {
     webSocketConfiguration.setTrustStorePath(rpcWsTrustStoreFile);
     webSocketConfiguration.setTrustStorePassword(rpcWsTrustStorePassword);
     webSocketConfiguration.setTrustStoreType(rpcWsTrustStoreType);
+    webSocketConfiguration.setKeyPath(rpcWsKeyFile);
+    webSocketConfiguration.setCertPath(rpcWsCertFile);
+    webSocketConfiguration.setTrustCertPath(rpcWsTrustCertFile);
 
     return webSocketConfiguration;
   }

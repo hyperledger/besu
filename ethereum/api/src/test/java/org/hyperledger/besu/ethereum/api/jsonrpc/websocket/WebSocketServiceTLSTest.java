@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.security.KeyStore;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +41,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.WebSocketClient;
 import io.vertx.core.http.WebSocketClientOptions;
 import io.vertx.core.net.JksOptions;
+import io.vertx.core.net.PemTrustOptions;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,11 +82,11 @@ public class WebSocketServiceTLSTest {
     SelfSignedCertificate ssc = new SelfSignedCertificate();
 
     // Create a temporary keystore file
-    File keystoreFile = File.createTempFile("keystore", ".p12");
+    File keystoreFile = File.createTempFile("keystore", ".jks");
     keystoreFile.deleteOnExit();
 
     // Create a PKCS12 keystore and load the self-signed certificate
-    KeyStore keyStore = KeyStore.getInstance("PKCS12");
+    KeyStore keyStore = KeyStore.getInstance("JKS");
     keyStore.load(null, null);
     keyStore.setKeyEntry(
         "alias",
@@ -100,7 +103,7 @@ public class WebSocketServiceTLSTest {
     config.setSslEnabled(true);
     config.setKeyStorePath(keystoreFile.getAbsolutePath());
     config.setKeyStorePassword("password");
-    config.setKeyStoreType("PKCS12");
+    config.setKeyStoreType("JKS");
 
     // Create and start WebSocketService
     WebSocketService webSocketService =
@@ -111,11 +114,11 @@ public class WebSocketServiceTLSTest {
     int port = webSocketService.socketAddress().getPort();
 
     // Create a temporary truststore file
-    File truststoreFile = File.createTempFile("truststore", ".p12");
+    File truststoreFile = File.createTempFile("truststore", ".jks");
     truststoreFile.deleteOnExit();
 
     // Create a PKCS12 truststore and load the server's certificate
-    KeyStore trustStore = KeyStore.getInstance("PKCS12");
+    KeyStore trustStore = KeyStore.getInstance("JKS");
     trustStore.load(null, null);
     trustStore.setCertificateEntry("alias", ssc.cert());
 
@@ -128,8 +131,86 @@ public class WebSocketServiceTLSTest {
     WebSocketClientOptions clientOptions =
         new WebSocketClientOptions()
             .setSsl(true)
-            .setTrustStoreOptions(
+            .setTrustOptions(
                 new JksOptions().setPath(truststoreFile.getAbsolutePath()).setPassword("password"))
+            .setVerifyHost(true);
+
+    WebSocketClient webSocketClient = vertx.createWebSocketClient(clientOptions);
+    webSocketClient
+        .connect(port, "localhost", "/")
+        .onSuccess(
+            ws -> {
+              assertThat(ws.isSsl()).isTrue();
+              ws.close();
+              testContext.completeNow();
+            })
+        .onFailure(testContext::failNow);
+
+    assertThat(testContext.awaitCompletion(5, TimeUnit.SECONDS)).isTrue();
+    if (testContext.failed()) {
+      throw testContext.causeOfFailure();
+    }
+
+    // Stop the WebSocketService after the test
+    webSocketService.stop().join();
+  }
+
+  @Test
+  public void shouldAcceptSecureWebSocketConnectionPEM(final VertxTestContext testContext)
+      throws Throwable {
+    // Generate a self-signed certificate
+    SelfSignedCertificate ssc = new SelfSignedCertificate();
+
+    // Create temporary PEM files for the certificate and key
+    File certFile = File.createTempFile("cert", ".pem");
+    certFile.deleteOnExit();
+    File keyFile = File.createTempFile("key", ".pem");
+    keyFile.deleteOnExit();
+
+    // Write the certificate and key to the PEM files
+    try (FileOutputStream certOut = new FileOutputStream(certFile);
+        FileOutputStream keyOut = new FileOutputStream(keyFile)) {
+      certOut.write("-----BEGIN CERTIFICATE-----\n".getBytes(UTF_8));
+      certOut.write(
+          Base64.getMimeEncoder(64, "\n".getBytes(UTF_8)).encode(ssc.cert().getEncoded()));
+      certOut.write("\n-----END CERTIFICATE-----\n".getBytes(UTF_8));
+
+      keyOut.write("-----BEGIN PRIVATE KEY-----\n".getBytes(UTF_8));
+      keyOut.write(Base64.getMimeEncoder(64, "\n".getBytes(UTF_8)).encode(ssc.key().getEncoded()));
+      keyOut.write("\n-----END PRIVATE KEY-----\n".getBytes(UTF_8));
+    }
+
+    // Configure WebSocket with SSL enabled using PEM files
+    config.setSslEnabled(true);
+    config.setKeyPath(keyFile.getAbsolutePath());
+    config.setCertPath(certFile.getAbsolutePath());
+    config.setKeyStoreType("PEM");
+
+    // Create and start WebSocketService
+    WebSocketService webSocketService =
+        new WebSocketService(vertx, config, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
+    webSocketService.start().join();
+
+    // Get the actual port
+    int port = webSocketService.socketAddress().getPort();
+
+    // Create a temporary PEM file for the trust store
+    File trustCertFile = File.createTempFile("trust-cert", ".pem");
+    trustCertFile.deleteOnExit();
+
+    // Write the server's certificate to the PEM file
+    try (FileOutputStream trustCertOut = new FileOutputStream(trustCertFile)) {
+      trustCertOut.write("-----BEGIN CERTIFICATE-----\n".getBytes(UTF_8));
+      trustCertOut.write(
+          Base64.getMimeEncoder(64, "\n".getBytes(UTF_8)).encode(ssc.cert().getEncoded()));
+      trustCertOut.write("\n-----END CERTIFICATE-----\n".getBytes(UTF_8));
+    }
+
+    // Configure the HTTP client with the trust store using PEM files
+    WebSocketClientOptions clientOptions =
+        new WebSocketClientOptions()
+            .setSsl(true)
+            .setTrustOptions(new PemTrustOptions().addCertPath(trustCertFile.getAbsolutePath()))
             .setVerifyHost(true);
 
     WebSocketClient webSocketClient = vertx.createWebSocketClient(clientOptions);
@@ -211,7 +292,7 @@ public class WebSocketServiceTLSTest {
     WebSocketClientOptions clientOptions =
         new WebSocketClientOptions()
             .setSsl(true)
-            .setTrustStoreOptions(
+            .setTrustOptions(
                 new JksOptions().setPath(truststoreFile.getAbsolutePath()).setPassword("password"))
             .setVerifyHost(true);
 
@@ -335,7 +416,7 @@ public class WebSocketServiceTLSTest {
                 new JksOptions()
                     .setPath(clientKeystoreFile.getAbsolutePath())
                     .setPassword("password"))
-            .setTrustStoreOptions(
+            .setTrustOptions(
                 new JksOptions()
                     .setPath(clientTruststoreFile.getAbsolutePath())
                     .setPassword("password"))

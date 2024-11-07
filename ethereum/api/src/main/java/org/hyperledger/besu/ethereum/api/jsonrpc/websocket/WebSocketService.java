@@ -121,32 +121,25 @@ public class WebSocketService {
 
     // Check if SSL/TLS is enabled in the configuration
     if (configuration.isSslEnabled()) {
-      if (configuration.getKeyStorePath().isPresent()
-          && configuration.getKeyStorePassword().isPresent()) {
+      serverOptions.setSsl(true);
 
-        String keystorePath = configuration.getKeyStorePath().get();
-        String keystorePassword = configuration.getKeyStorePassword().get();
-        String keystoreType = configuration.getKeyStoreType().orElse("JKS");
+      String keystorePath = configuration.getKeyStorePath().orElse(null);
+      String keystorePassword = configuration.getKeyStorePassword().orElse(null);
+      String keyPath = configuration.getKeyPath().orElse(null);
+      String certPath = configuration.getCertPath().orElse(null);
 
-        serverOptions.setSsl(true);
+      String keystoreType = configuration.getKeyStoreType().orElse("JKS");
 
-        if (keystorePath != null) {
-          switch (keystoreType.toUpperCase(Locale.getDefault())) {
-            case "PEM":
-              serverOptions.setPemKeyCertOptions(
-                  new PemKeyCertOptions()
-                      .setKeyPath(configuration.getKeyPath().get())
-                      .setCertPath(configuration.getCertPath().get()));
-              break;
-            case "JKS":
-            default:
-              serverOptions.setKeyStoreOptions(
-                  new JksOptions().setPath(keystorePath).setPassword(keystorePassword));
-              break;
-          }
-        } else {
-          throw new IllegalArgumentException("SSL is enabled but keystore path is not provided.");
-        }
+      switch (keystoreType.toUpperCase(Locale.getDefault())) {
+        case "PEM":
+          serverOptions.setKeyCertOptions(
+              new PemKeyCertOptions().setKeyPath(keyPath).setCertPath(certPath));
+          break;
+        case "JKS":
+        default:
+          serverOptions.setKeyCertOptions(
+              new JksOptions().setPath(keystorePath).setPassword(keystorePassword));
+          break;
       }
     }
 
@@ -157,22 +150,17 @@ public class WebSocketService {
       String truststorePath = configuration.getTrustStorePath().orElse(null);
       String truststorePassword = configuration.getTrustStorePassword().orElse("");
       String truststoreType = configuration.getTrustStoreType().orElse("JKS");
+      String trustCertPath = configuration.getTrustCertPath().orElse(null);
 
-      if (truststorePath != null) {
-        switch (truststoreType.toUpperCase(Locale.getDefault())) {
-          case "PEM":
-            serverOptions.setPemTrustOptions(
-                new PemTrustOptions().addCertPath(configuration.getTrustCertPath().get()));
-            break;
-          case "JKS":
-          default:
-            serverOptions.setTrustStoreOptions(
-                new JksOptions().setPath(truststorePath).setPassword(truststorePassword));
-            break;
-        }
-      } else {
-        throw new IllegalArgumentException(
-            "Client authentication is enabled but truststore path is not provided.");
+      switch (truststoreType.toUpperCase(Locale.getDefault())) {
+        case "PEM":
+          serverOptions.setTrustOptions(new PemTrustOptions().addCertPath(trustCertPath));
+          break;
+        case "JKS":
+        default:
+          serverOptions.setTrustOptions(
+              new JksOptions().setPath(truststorePath).setPassword(truststorePassword));
+          break;
       }
     }
 

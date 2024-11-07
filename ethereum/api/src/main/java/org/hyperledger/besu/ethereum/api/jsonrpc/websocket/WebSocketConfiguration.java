@@ -60,7 +60,7 @@ public class WebSocketConfiguration {
   private Optional<String> trustStorePassword = Optional.empty();
   private Optional<String> trustStoreType = Optional.of("JKS"); // Default to JKS
 
-  // For PEM format (if applicable)
+  // For PEM format
   private Optional<String> keyPath = Optional.empty();
   private Optional<String> certPath = Optional.empty();
   private Optional<String> trustCertPath = Optional.empty();
