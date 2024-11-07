@@ -228,11 +228,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   }
 
   @Override
-  protected String getSupportedProtocol() {
-    return besuControllerBuilderSchedule.get(0L).getSupportedProtocol();
-  }
-
-  @Override
   protected EthProtocolManager createEthProtocolManager(
       final ProtocolContext protocolContext,
       final SynchronizerConfiguration synchronizerConfiguration,
