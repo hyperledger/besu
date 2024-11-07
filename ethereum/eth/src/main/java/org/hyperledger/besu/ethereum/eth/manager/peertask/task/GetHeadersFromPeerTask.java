@@ -93,7 +93,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
 
     requiredBlockchainHeight =
         direction == Direction.FORWARD
-            ? blockNumber + (long) (maxHeaders - 1) * skip + 1
+            ? blockNumber + (long) (maxHeaders - 1) * (skip + 1)
             : blockNumber;
   }
 
