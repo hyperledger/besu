@@ -18,14 +18,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.TransactionType;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionEncoderProvider;
 
-public class PooledTransactionEncoder extends TransactionEncoder {
+public class PooledMainnetTransactionEncoder extends MainnetTransactionEncoder {
 
   private static final ImmutableMap<TransactionType, Encoder> POOLED_TRANSACTION_ENCODERS =
       ImmutableMap.of(
@@ -39,7 +35,7 @@ public class PooledTransactionEncoder extends TransactionEncoder {
           CodeDelegationEncoder::encode);
 
   @VisibleForTesting
-  protected static Encoder getEncoder(
+  protected Encoder getEncoder(
       final TransactionType transactionType) {
     return checkNotNull(
       POOLED_TRANSACTION_ENCODERS.get(transactionType),

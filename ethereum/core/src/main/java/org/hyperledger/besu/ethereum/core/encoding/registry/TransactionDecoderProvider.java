@@ -21,6 +21,6 @@ public class TransactionDecoderProvider {
 
   private static
   TransactionDecoder getDecoder(){
-    return DecoderRegistry.getInstance().getPooledTransactionDecoder();
+    return RLPRegistry.getInstance().getPooledTransactionDecoder();
   }
 }

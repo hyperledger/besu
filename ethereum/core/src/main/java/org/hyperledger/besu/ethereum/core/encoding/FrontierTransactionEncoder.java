@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import static org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.writeSignatureAndV;
+import static org.hyperledger.besu.ethereum.core.encoding.SignatureEncoder.writeSignatureAndV;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;

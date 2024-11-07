@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -26,7 +27,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
-public class TransactionEncoder {
+public class MainnetTransactionEncoder implements TransactionEncoder {
 
   @FunctionalInterface
   protected interface Encoder {
@@ -50,7 +51,7 @@ public class TransactionEncoder {
    * @param transaction the transaction to encode
    * @param rlpOutput the RLP output stream
    */
-  public static void writeTo(
+  public void writeTo(
       final Transaction transaction,
       final RLPOutput rlpOutput) {
     final TransactionType transactionType = getTransactionType(transaction);
@@ -65,7 +66,8 @@ public class TransactionEncoder {
    * @param opaqueBytes the bytes of the transaction
    * @param rlpOutput the RLP output stream
    */
-  public static void encodeRLP(
+  @VisibleForTesting
+  public void encodeRLP(
       final TransactionType transactionType, final Bytes opaqueBytes, final RLPOutput rlpOutput) {
     checkNotNull(transactionType, "Transaction type was not specified.");
     if (TransactionType.FRONTIER.equals(transactionType)) {
@@ -81,7 +83,7 @@ public class TransactionEncoder {
    * @param transaction the transaction to encode
    * @return the encoded transaction as bytes
    */
-  public static Bytes encodeOpaqueBytes(
+  public Bytes encodeOpaqueBytes(
       final Transaction transaction) {
     final TransactionType transactionType = getTransactionType(transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
@@ -95,20 +97,6 @@ public class TransactionEncoder {
     }
   }
 
-  static void writeSignatureAndV(final Transaction transaction, final RLPOutput out) {
-    out.writeBigIntegerScalar(transaction.getV());
-    writeSignature(transaction, out);
-  }
-
-  static void writeSignatureAndRecoveryId(final Transaction transaction, final RLPOutput out) {
-    out.writeIntScalar(transaction.getSignature().getRecId());
-    writeSignature(transaction, out);
-  }
-
-  static void writeSignature(final Transaction transaction, final RLPOutput out) {
-    out.writeBigIntegerScalar(transaction.getSignature().getR());
-    out.writeBigIntegerScalar(transaction.getSignature().getS());
-  }
 
   private static TransactionType getTransactionType(final Transaction transaction) {
     return checkNotNull(
@@ -116,7 +104,7 @@ public class TransactionEncoder {
   }
 
   @VisibleForTesting
-  protected static Encoder getEncoder(
+  protected Encoder getEncoder(
       final TransactionType transactionType) {
     return checkNotNull(
         TYPED_TRANSACTION_ENCODERS.get(transactionType),

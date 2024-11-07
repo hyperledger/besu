@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionEncoderProvider;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -96,7 +96,7 @@ public class BlockResultFactory {
     final List<String> txs =
         block.getBody().getTransactions().stream()
             .map(
-              TransactionEncoder::encodeOpaqueBytes)
+              TransactionEncoderProvider::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -108,7 +108,7 @@ public class BlockResultFactory {
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
             .map(
-              TransactionEncoder::encodeOpaqueBytes)
+              TransactionEncoderProvider::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -133,7 +133,7 @@ public class BlockResultFactory {
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
             .map(
-              TransactionEncoder::encodeOpaqueBytes)
+              TransactionEncoderProvider::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -152,7 +152,7 @@ public class BlockResultFactory {
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
             .map(
-              TransactionEncoder::encodeOpaqueBytes)
+              TransactionEncoderProvider::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
     final Optional<List<String>> requestsWithoutRequestId =

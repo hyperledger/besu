@@ -20,7 +20,8 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.PooledTransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.registry.PooledTransactionEncoderProvider;
+
 
 import java.util.List;
 
@@ -102,7 +103,7 @@ public class TransactionPendingResult implements TransactionResult {
     this.nonce = Quantity.create(transaction.getNonce());
     this.publicKey = transaction.getPublicKey().orElse(null);
     this.raw =
-        PooledTransactionEncoder.encodeOpaqueBytes(transaction)
+        PooledTransactionEncoderProvider.encodeOpaqueBytes(transaction)
             .toString();
     this.to = transaction.getTo().map(Address::toHexString).orElse(null);
     if (transactionType == TransactionType.FRONTIER) {

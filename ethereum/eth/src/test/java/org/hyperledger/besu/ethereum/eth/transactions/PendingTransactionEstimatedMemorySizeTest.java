@@ -24,8 +24,9 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.core.encoding.PooledTransactionEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.registry.PooledTransactionEncoderProvider;
+
+import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionEncoderProvider;
 import org.hyperledger.besu.ethereum.core.encoding.registry.PooledTransactionDecoderProvider;
 import org.hyperledger.besu.ethereum.core.encoding.registry.TransactionDecoderProvider;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.BaseTransactionPoolTest;
@@ -74,7 +75,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     Transaction txTo =
         preparedTx.to(Optional.of(Address.extract(Bytes32.random()))).createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    TransactionEncoder.writeTo(txTo, rlpOut);
+    TransactionEncoderProvider.writeTo(txTo, rlpOut);
 
     txTo = TransactionDecoderProvider.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
     System.out.println(txTo.getSender());
@@ -209,7 +210,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
         prepareTransaction(TransactionType.BLOB, 10, Wei.of(500), Wei.of(50), 10, 1);
     Transaction txBlob = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    PooledTransactionEncoder.writeTo(txBlob, rlpOut);
+    PooledTransactionEncoderProvider.writeTo(txBlob, rlpOut);
 
     txBlob =
         PooledTransactionDecoderProvider.readFrom(
@@ -241,7 +242,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
         prepareTransaction(TransactionType.BLOB, 10, Wei.of(500), Wei.of(50), 10, 1);
     Transaction txBlob = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    PooledTransactionEncoder.writeTo(txBlob, rlpOut);
+    PooledTransactionEncoderProvider.writeTo(txBlob, rlpOut);
 
     txBlob =
         PooledTransactionDecoderProvider.readFrom(

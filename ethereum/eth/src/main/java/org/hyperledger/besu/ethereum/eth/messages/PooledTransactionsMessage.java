@@ -15,7 +15,8 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.PooledTransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.registry.PooledTransactionEncoderProvider;
+
 import org.hyperledger.besu.ethereum.core.encoding.registry.PooledTransactionDecoderProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -44,7 +45,7 @@ public final class PooledTransactionsMessage extends AbstractMessageData {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeList(
         transactions,
-      PooledTransactionEncoder::writeTo);
+      PooledTransactionEncoderProvider::writeTo);
     return new PooledTransactionsMessage(out.encoded());
   }
 
