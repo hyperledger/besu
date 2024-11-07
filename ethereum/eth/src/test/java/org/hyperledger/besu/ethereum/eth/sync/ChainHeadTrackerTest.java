@@ -91,13 +91,25 @@ public class ChainHeadTrackerTest {
             .estimatedHeight(0)
             .build();
     peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
-    GetHeadersFromPeerTaskExecutorAnswer getHeadersAnswer = new GetHeadersFromPeerTaskExecutorAnswer(blockchain);
-    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class))).thenAnswer(getHeadersAnswer);
-    Mockito.when(peerTaskExecutor.executeAgainstPeer(Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class))).thenAnswer(getHeadersAnswer);
-    synchronizerConfiguration = SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(isPeerTaskSystemEnabled).build();
+    GetHeadersFromPeerTaskExecutorAnswer getHeadersAnswer =
+        new GetHeadersFromPeerTaskExecutorAnswer(blockchain);
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+        .thenAnswer(getHeadersAnswer);
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(getHeadersAnswer);
+    synchronizerConfiguration =
+        SynchronizerConfiguration.builder()
+            .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
+            .build();
     chainHeadTracker =
         new ChainHeadTracker(
-            ethProtocolManager.ethContext(), protocolSchedule, peerTaskExecutor, synchronizerConfiguration, new NoOpMetricsSystem());
+            ethProtocolManager.ethContext(),
+            protocolSchedule,
+            peerTaskExecutor,
+            synchronizerConfiguration,
+            new NoOpMetricsSystem());
   }
 
   @ParameterizedTest
@@ -123,13 +135,13 @@ public class ChainHeadTrackerTest {
   @ParameterizedTest
   @ArgumentsSource(ChainHeadTrackerTestArguments.class)
   public void shouldRequestHeaderChainHeadWhenNewPeerConnectsUsingPeerTaskSystem(
-          final DataStorageFormat storageFormat) {
+      final DataStorageFormat storageFormat) {
     setup(storageFormat, true);
     chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
 
     Assertions.assertThat(chainHeadState().getEstimatedHeight()).isZero();
     Assertions.assertThat(chainHeadState().getEstimatedHeight())
-            .isEqualTo(blockchain.getChainHeadBlockNumber());
+        .isEqualTo(blockchain.getChainHeadBlockNumber());
   }
 
   @ParameterizedTest
@@ -155,7 +167,7 @@ public class ChainHeadTrackerTest {
   @ParameterizedTest
   @ArgumentsSource(ChainHeadTrackerTestArguments.class)
   public void shouldIgnoreHeadersIfChainHeadHasAlreadyBeenUpdatedWhileWaitingUsingPeerTaskSystem(
-          final DataStorageFormat storageFormat) {
+      final DataStorageFormat storageFormat) {
     setup(storageFormat, true);
     chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
 
@@ -186,13 +198,14 @@ public class ChainHeadTrackerTest {
 
   @ParameterizedTest
   @ArgumentsSource(ChainHeadTrackerTestArguments.class)
-  public void shouldCheckTrialingPeerLimitsUsingPeerTaskSystem(final DataStorageFormat storageFormat) {
+  public void shouldCheckTrialingPeerLimitsUsingPeerTaskSystem(
+      final DataStorageFormat storageFormat) {
     setup(storageFormat, true);
     chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
 
     Assertions.assertThat(chainHeadState().getEstimatedHeight()).isZero();
     Assertions.assertThat(chainHeadState().getEstimatedHeight())
-            .isEqualTo(blockchain.getChainHeadBlockNumber());
+        .isEqualTo(blockchain.getChainHeadBlockNumber());
   }
 
   private ChainState chainHeadState() {

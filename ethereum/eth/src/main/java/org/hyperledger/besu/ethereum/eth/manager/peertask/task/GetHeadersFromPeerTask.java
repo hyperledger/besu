@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
-  private final Long blockNumber;
+  private final long blockNumber;
   private final Hash blockHash;
   private final int maxHeaders;
   private final int skip;
@@ -40,7 +40,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   private final long requiredBlockchainHeight;
 
   public GetHeadersFromPeerTask(
-      final Long blockNumber,
+      final long blockNumber,
       final int maxHeaders,
       final int skip,
       final Direction direction,
@@ -49,7 +49,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   }
 
   public GetHeadersFromPeerTask(
-      final Long blockNumber,
+      final long blockNumber,
       final int maxHeaders,
       final int skip,
       final Direction direction,
@@ -104,15 +104,12 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
 
   @Override
   public MessageData getRequestMessage() {
-    if (blockNumber != null) {
-      return GetBlockHeadersMessage.create(
-          blockNumber, maxHeaders, skip, direction == Direction.REVERSE);
-    } else if (blockHash != null) {
+    if (blockHash != null) {
       return GetBlockHeadersMessage.create(
           blockHash, maxHeaders, skip, direction == Direction.REVERSE);
     } else {
-      throw new IllegalStateException(
-          "Block number or block hash is required for GetHeadersFromPeerTask");
+      return GetBlockHeadersMessage.create(
+          blockNumber, maxHeaders, skip, direction == Direction.REVERSE);
     }
   }
 
@@ -120,7 +117,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   public List<BlockHeader> processResponse(final MessageData messageData)
       throws InvalidPeerTaskResponseException {
     if (messageData == null) {
-      throw new InvalidPeerTaskResponseException();
+      throw new InvalidPeerTaskResponseException("Response MessageData is null");
     }
     return BlockHeadersMessage.readFrom(messageData).getHeaders(protocolSchedule);
   }

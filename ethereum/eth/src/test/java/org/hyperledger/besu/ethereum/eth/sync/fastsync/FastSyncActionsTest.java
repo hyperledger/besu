@@ -503,6 +503,8 @@ public class FastSyncActionsTest {
                 ethContext,
                 metricsSystem,
                 genesisConfig,
+                peerTaskExecutor,
+                syncConfig,
                 () -> finalizedEvent,
                 () -> {}));
 

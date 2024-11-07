@@ -204,9 +204,15 @@ public class FastSyncActions {
                     if (taskResult.responseCode() == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE
                         || taskResult.responseCode()
                             == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
+                      LOG.error(
+                          "Failed to download pivot block header. Response Code was {}",
+                          taskResult.responseCode());
                       return CompletableFuture.failedFuture(new NoAvailablePeersException());
                     } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                         || taskResult.result().isEmpty()) {
+                      LOG.error(
+                          "Failed to download pivot block header. Response Code was {}",
+                          taskResult.responseCode());
                       return CompletableFuture.failedFuture(
                           new RuntimeException(
                               "Failed to download pivot block header. Response Code was "

@@ -148,8 +148,13 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
       returnValue.completeExceptionally(new PeerDisconnectedException(taskResult.ethPeer()));
     } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
         || taskResult.result().isEmpty()) {
-      returnValue.completeExceptionally(
-          new RuntimeException("Peer failed to successfully return requested block headers"));
+      String logMessage =
+          "Peer "
+              + taskResult.ethPeer().getLoggableId()
+              + " failed to successfully return requested block headers. Response code was "
+              + taskResult.responseCode();
+      returnValue.completeExceptionally(new RuntimeException(logMessage));
+      LOG.debug(logMessage);
     } else {
       returnValue.complete(taskResult.result().get());
     }

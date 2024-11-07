@@ -109,6 +109,7 @@ public class DownloadHeadersStep
             .getScheduler()
             .scheduleServiceTask(
                 () -> {
+                  LOG.info("Getting headers using peer task system");
                   GetHeadersFromPeerTask task =
                       new GetHeadersFromPeerTask(
                           range.getStart().getHash(),
@@ -121,9 +122,11 @@ public class DownloadHeadersStep
                       peerTaskExecutor.executeAgainstPeer(task, range.getSyncTarget());
                   if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                       || taskResult.result().isEmpty()) {
+                    LOG.info("Unable to download headers for range {}", range);
                     return CompletableFuture.failedFuture(
                         new RuntimeException("Unable to download headers for range " + range));
                   }
+                  LOG.info("Successfully downloaded headers");
                   return CompletableFuture.completedFuture(taskResult.result().get());
                 });
       } else {

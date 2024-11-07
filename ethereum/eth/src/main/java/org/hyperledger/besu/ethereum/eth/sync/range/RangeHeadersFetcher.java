@@ -133,7 +133,6 @@ public class RangeHeadersFetcher {
         .log();
     CompletableFuture<List<BlockHeader>> headersFuture;
     if (syncConfig.isPeerTaskSystemEnabled()) {
-      LOG.info("Using peer task system to fetch headers");
       headersFuture =
           ethContext
               .getScheduler()
@@ -152,7 +151,7 @@ public class RangeHeadersFetcher {
                         peerTaskExecutor.executeAgainstPeer(task, peer);
                     if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                         || taskResult.result().isEmpty()) {
-                      LOG.info(
+                      LOG.warn(
                           "Unsuccessfully used peer task system to fetch headers. Response code was {}",
                           taskResult.responseCode());
                       return CompletableFuture.failedFuture(
@@ -160,7 +159,6 @@ public class RangeHeadersFetcher {
                               "Unable to retrieve headers. Response code was "
                                   + taskResult.responseCode()));
                     }
-                    LOG.info("Successfully used peer task system to fetch headers");
                     return CompletableFuture.completedFuture(taskResult.result().get());
                   });
     } else {

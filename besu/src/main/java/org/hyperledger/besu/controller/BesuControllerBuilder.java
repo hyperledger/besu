@@ -701,7 +701,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final PivotBlockSelector pivotBlockSelector =
         createPivotSelector(
-            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem, blockchain);
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            peerTaskExecutor,
+            syncState,
+            metricsSystem,
+            blockchain);
 
     final DefaultSynchronizer synchronizer =
         createSynchronizer(
@@ -875,6 +881,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final Blockchain blockchain) {
@@ -912,6 +919,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           ethContext,
           metricsSystem,
           genesisConfigOptions,
+          peerTaskExecutor,
+          syncConfig,
           unverifiedForkchoiceSupplier,
           unsubscribeForkchoiceListener);
     } else {

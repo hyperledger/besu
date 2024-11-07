@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractGetHeadersFromPeerTask;
@@ -229,6 +230,14 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
                 taskResult = peerTaskExecutor.executeAgainstPeer(task, ethPeer.get());
               } else {
                 taskResult = peerTaskExecutor.execute(task);
+              }
+
+              if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                  || taskResult.result().isEmpty()) {
+                return CompletableFuture.failedFuture(
+                    new RuntimeException(
+                        "Failed to download headers. Response code was "
+                            + taskResult.responseCode()));
               }
               return CompletableFuture.completedFuture(taskResult);
             });
