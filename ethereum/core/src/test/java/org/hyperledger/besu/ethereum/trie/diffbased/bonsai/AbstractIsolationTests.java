@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.WorldStateHealerHelper.throwingWorldStateHealerSupplier;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
@@ -167,7 +168,8 @@ public abstract class AbstractIsolationTests {
             Optional.of(16L),
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            throwingWorldStateHealerSupplier());
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     protocolContext = new ProtocolContext(blockchain, archive, null, new BadBlockManager());
