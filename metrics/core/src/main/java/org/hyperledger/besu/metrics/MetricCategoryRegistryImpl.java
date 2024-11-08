@@ -14,31 +14,80 @@
  */
 package org.hyperledger.besu.metrics;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 /** The Metric category registry implementation. */
 public class MetricCategoryRegistryImpl implements MetricCategoryRegistry {
-
-  private final List<MetricCategory> metricCategories = new ArrayList<>();
+  private final Map<String, MetricCategory> metricCategories = new HashMap<>();
+  private MetricsConfiguration metricsConfiguration;
 
   /** Default constructor */
   public MetricCategoryRegistryImpl() {}
 
   /**
-   * Gets metric categories.
+   * Add Metrics categories.
    *
-   * @return the metric categories
+   * @param <T> the type parameter
+   * @param categoryEnum the category enum
    */
-  public List<MetricCategory> getMetricCategories() {
-    return metricCategories;
+  public <T extends Enum<T> & MetricCategory> void addCategories(final Class<T> categoryEnum) {
+    EnumSet.allOf(categoryEnum).forEach(this::addMetricCategory);
+  }
+
+  /**
+   * Add registry category.
+   *
+   * @param metricCategory the metric category
+   */
+  @Override
+  public void addMetricCategory(final MetricCategory metricCategory) {
+    metricCategories.put(metricCategory.getName().toUpperCase(Locale.ROOT), metricCategory);
   }
 
   @Override
-  public void addMetricCategory(final MetricCategory newMetricCategory) {
-    metricCategories.add(newMetricCategory);
+  public boolean isMetricCategoryEnabled(final MetricCategory metricCategory) {
+    checkNotNull(
+        metricsConfiguration, "Metrics configuration must be set before calling this method");
+    return (metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled())
+        && metricsConfiguration.getMetricCategories().contains(metricCategory);
+  }
+
+  /**
+   * Return true if a category with that name is already registered
+   *
+   * @param name the category name
+   * @return true if a category with that name is already registered
+   */
+  public boolean containsMetricCategory(final String name) {
+    return metricCategories.containsKey(name.toUpperCase(Locale.ROOT));
+  }
+
+  /**
+   * Return a metric category by name
+   *
+   * @param name the category name
+   * @return the metric category or null if not registered
+   */
+  public MetricCategory getMetricCategory(final String name) {
+    return metricCategories.get(name.toUpperCase(Locale.ROOT));
+  }
+
+  /**
+   * Set the metric configuration via a method since it is still not available when creating this
+   * object
+   *
+   * @param metricsConfiguration the metrics configuration
+   */
+  public void setMetricsConfiguration(final MetricsConfiguration metricsConfiguration) {
+    this.metricsConfiguration = metricsConfiguration;
   }
 }

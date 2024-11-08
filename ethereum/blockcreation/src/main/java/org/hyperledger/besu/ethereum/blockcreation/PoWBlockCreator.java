@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -39,7 +39,7 @@ public class PoWBlockCreator extends AbstractBlockCreator {
   private final PoWSolver nonceSolver;
 
   public PoWBlockCreator(
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
@@ -47,8 +47,8 @@ public class PoWBlockCreator extends AbstractBlockCreator {
       final PoWSolver nonceSolver,
       final EthScheduler ethScheduler) {
     super(
-        miningParameters,
-        __ -> miningParameters.getCoinbase().orElseThrow(),
+        miningConfiguration,
+        __ -> miningConfiguration.getCoinbase().orElseThrow(),
         extraDataCalculator,
         transactionPool,
         protocolContext,

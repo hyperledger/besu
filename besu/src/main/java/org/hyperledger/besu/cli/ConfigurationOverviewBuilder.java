@@ -53,7 +53,7 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
-  private boolean isBonsaiLimitTrieLogsEnabled = false;
+  private boolean isLimitTrieLogsEnabled = false;
   private long trieLogRetentionLimit = 0;
   private Integer trieLogsPruningWindowSize = null;
   private boolean isSnapServerEnabled = false;
@@ -220,7 +220,7 @@ public class ConfigurationOverviewBuilder {
    * @return the builder
    */
   public ConfigurationOverviewBuilder setLimitTrieLogsEnabled() {
-    isBonsaiLimitTrieLogsEnabled = true;
+    isLimitTrieLogsEnabled = true;
     return this;
   }
 
@@ -389,7 +389,7 @@ public class ConfigurationOverviewBuilder {
       lines.add("Experimental Snap Sync for BFT enabled");
     }
 
-    if (isBonsaiLimitTrieLogsEnabled) {
+    if (isLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();
       trieLogPruningString
           .append("Limit trie logs enabled: retention: ")

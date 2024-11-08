@@ -49,7 +49,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -128,7 +128,7 @@ public final class RunnerBuilderTest {
     when(besuController.getProtocolContext()).thenReturn(protocolContext);
     when(besuController.getProtocolSchedule()).thenReturn(protocolSchedule);
     when(besuController.getNodeKey()).thenReturn(nodeKey);
-    when(besuController.getMiningParameters()).thenReturn(mock(MiningParameters.class));
+    when(besuController.getMiningParameters()).thenReturn(mock(MiningConfiguration.class));
     when(besuController.getPrivacyParameters()).thenReturn(mock(PrivacyParameters.class));
     when(besuController.getTransactionPool())
         .thenReturn(mock(TransactionPool.class, RETURNS_DEEP_STUBS));

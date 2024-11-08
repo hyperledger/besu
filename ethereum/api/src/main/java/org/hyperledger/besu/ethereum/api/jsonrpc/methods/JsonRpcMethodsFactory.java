@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.RpcModules;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -67,7 +67,7 @@ public class JsonRpcMethodsFactory {
       final ProtocolContext protocolContext,
       final FilterManager filterManager,
       final TransactionPool transactionPool,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final MiningCoordinator miningCoordinator,
       final ObservableMetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
@@ -139,7 +139,7 @@ public class JsonRpcMethodsFactory {
                   webSocketConfiguration,
                   metricsConfiguration,
                   graphQLConfiguration),
-              new MinerJsonRpcMethods(miningParameters, miningCoordinator),
+              new MinerJsonRpcMethods(miningConfiguration, miningCoordinator),
               new PermJsonRpcMethods(accountsAllowlistController, nodeAllowlistController),
               new PrivJsonRpcMethods(
                   blockchainQueries,

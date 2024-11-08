@@ -20,5 +20,5 @@ Having Github, Discord, and Linux Foundation accounts is necessary for obtaining
 
 
 [Besu User Documentation]: https://besu.hyperledger.org
-[Besu channel on Discord]: https://discord.gg/hyperledger
+[Besu channel on Discord]: https://discord.com/invite/hyperledger
 [Contributing Guidelines]: CONTRIBUTING.md
