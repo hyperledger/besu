@@ -51,7 +51,7 @@ public class TestMetricsPlugin implements BesuPlugin {
         .createGauge(
             TestMetricCategory.TEST_METRIC_CATEGORY,
             "test_metric",
-            "Returns 1 on succes",
+            "Returns 1 on success",
             () -> 1.0);
   }
 
