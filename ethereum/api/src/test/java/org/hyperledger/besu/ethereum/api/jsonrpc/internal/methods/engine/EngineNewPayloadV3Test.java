@@ -48,7 +48,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.encoding.registry.RlpPooledTransactionProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpProvider;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -225,7 +225,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   public void shouldRejectTransactionsWithFullBlobs() {
 
     Bytes transactionWithBlobsBytes =
-        RlpPooledTransactionProvider.encodeOpaqueBytes(createTransactionWithBlobs());
+        RlpProvider.pooledTransaction().encodeOpaqueBytes(createTransactionWithBlobs());
 
     List<String> transactions = List.of(transactionWithBlobsBytes.toString());
 

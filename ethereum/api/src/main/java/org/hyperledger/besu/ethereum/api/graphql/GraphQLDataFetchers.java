@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpProvider;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -130,7 +130,7 @@ public class GraphQLDataFetchers {
             dataFetchingEnvironment.getGraphQlContext().get(GraphQLContextType.TRANSACTION_POOL);
         final Bytes rawTran = dataFetchingEnvironment.getArgument("data");
 
-        final Transaction transaction = RlpTransactionProvider.readFrom(RLP.input(rawTran));
+        final Transaction transaction = RlpProvider.transaction().readFrom(RLP.input(rawTran));
         final ValidationResult<TransactionInvalidReason> validationResult =
             transactionPool.addTransactionViaApi(transaction);
         if (validationResult.isValid()) {

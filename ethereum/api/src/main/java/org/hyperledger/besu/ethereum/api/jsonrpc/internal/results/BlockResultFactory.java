@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpProvider;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -95,7 +95,7 @@ public class BlockResultFactory {
   public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
     final List<String> txs =
         block.getBody().getTransactions().stream()
-            .map(RlpTransactionProvider::encodeOpaqueBytes)
+            .map(RlpProvider.transaction()::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -106,7 +106,7 @@ public class BlockResultFactory {
     final var blockWithReceipts = payload.blockWithReceipts();
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(RlpTransactionProvider::encodeOpaqueBytes)
+            .map(RlpProvider.transaction()::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -130,7 +130,7 @@ public class BlockResultFactory {
     final var blockWithReceipts = payload.blockWithReceipts();
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(RlpTransactionProvider::encodeOpaqueBytes)
+            .map(RlpProvider.transaction()::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -148,7 +148,7 @@ public class BlockResultFactory {
     final var blockWithReceipts = payload.blockWithReceipts();
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(RlpTransactionProvider::encodeOpaqueBytes)
+            .map(RlpProvider.transaction()::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
     final Optional<List<String>> requestsWithoutRequestId =

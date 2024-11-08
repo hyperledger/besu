@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpProvider;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -171,8 +171,8 @@ public class TraceTransactionIntegrationTest {
     final DebugOperationTracer tracer =
         new DebugOperationTracer(new TraceOptions(true, true, true), false);
     final Transaction transaction =
-        RlpTransactionProvider.readFrom(
-            new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));
+        RlpProvider.transaction()
+            .readFrom(new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));
     final BlockHeader genesisBlockHeader = genesisBlock.getHeader();
     transactionProcessor.processTransaction(
         worldStateArchive

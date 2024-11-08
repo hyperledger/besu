@@ -51,7 +51,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpProvider;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -220,7 +220,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       transactions =
           blockParam.getTransactions().stream()
               .map(Bytes::fromHexString)
-              .map(RlpTransactionProvider::decodeOpaqueBytes)
+              .map(RlpProvider.transaction()::decodeOpaqueBytes)
               .collect(Collectors.toList());
       transactions.forEach(
           transaction ->
