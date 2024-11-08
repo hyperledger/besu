@@ -35,6 +35,7 @@ public class PooledMainnetTransactionEncoder extends MainnetTransactionEncoder {
           CodeDelegationEncoder::encode);
 
   @VisibleForTesting
+  @Override
   protected Encoder getEncoder(final TransactionType transactionType) {
     return checkNotNull(
         POOLED_TRANSACTION_ENCODERS.get(transactionType),

@@ -51,6 +51,7 @@ public class MainnetTransactionEncoder implements TransactionEncoder {
    * @param transaction the transaction to encode
    * @param rlpOutput the RLP output stream
    */
+  @Override
   public void writeTo(final Transaction transaction, final RLPOutput rlpOutput) {
     final TransactionType transactionType = getTransactionType(transaction);
     Bytes opaqueBytes = encodeOpaqueBytes(transaction);
@@ -81,6 +82,7 @@ public class MainnetTransactionEncoder implements TransactionEncoder {
    * @param transaction the transaction to encode
    * @return the encoded transaction as bytes
    */
+  @Override
   public Bytes encodeOpaqueBytes(final Transaction transaction) {
     final TransactionType transactionType = getTransactionType(transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {

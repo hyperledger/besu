@@ -35,11 +35,11 @@ public class RlpTransactionProvider {
     return getDecoder().decodeOpaqueBytes(bytes);
   }
 
-  public static void writeTo(Transaction transaction, RLPOutput output) {
+  public static void writeTo(final Transaction transaction, final RLPOutput output) {
     getEncoder().writeTo(transaction, output);
   }
 
-  public static Bytes encodeOpaqueBytes(Transaction transaction) {
+  public static Bytes encodeOpaqueBytes(final Transaction transaction) {
     return getEncoder().encodeOpaqueBytes(transaction);
   }
 

@@ -53,6 +53,7 @@ public class MainnetTransactionDecoder implements TransactionDecoder {
    * @param rlpInput the RLP input
    * @return the decoded transaction
    */
+  @Override
   public Transaction readFrom(final RLPInput rlpInput) {
     if (!rlpInput.nextIsList()) {
       return decodeTypedTransaction(rlpInput);
@@ -61,6 +62,7 @@ public class MainnetTransactionDecoder implements TransactionDecoder {
     }
   }
 
+  @Override
   public Transaction readFrom(final Bytes rlpBytes) {
     return readFrom(RLP.input(rlpBytes));
   }
@@ -108,6 +110,7 @@ public class MainnetTransactionDecoder implements TransactionDecoder {
    * @param opaqueBytes the opaque bytes
    * @return the decoded transaction
    */
+  @Override
   public Transaction decodeOpaqueBytes(final Bytes opaqueBytes) {
     var transactionType = getTransactionType(opaqueBytes);
     if (transactionType.isPresent()) {
