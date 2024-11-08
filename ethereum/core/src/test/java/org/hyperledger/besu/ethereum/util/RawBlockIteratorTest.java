@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.encoding.registry.RlpTransactionProvider;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpProvider;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -99,7 +99,7 @@ public class RawBlockIteratorTest {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     block.getHeader().writeTo(out);
-    out.writeList(block.getBody().getTransactions(), RlpTransactionProvider::writeTo);
+    out.writeList(block.getBody().getTransactions(), RlpProvider.transaction()::writeTo);
     out.writeList(block.getBody().getOmmers(), BlockHeader::writeTo);
     out.endList();
     return out.encoded().toArray();
