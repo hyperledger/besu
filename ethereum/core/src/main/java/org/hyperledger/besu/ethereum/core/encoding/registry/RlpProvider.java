@@ -25,72 +25,49 @@ public class RlpProvider {
   private RlpProvider() {}
 
   public static TransactionHandler transaction() {
-    return new TransactionHandler();
+    return new TransactionHandler(
+        RlpRegistry.getInstance().getTransactionDecoder(),
+        RlpRegistry.getInstance().getTransactionEncoder());
   }
 
-  public static PooledTransactionHandler pooledTransaction() {
-    return new PooledTransactionHandler();
+  public static TransactionHandler pooledTransaction() {
+    return new TransactionHandler(
+        RlpRegistry.getInstance().getPooledTransactionDecoder(),
+        RlpRegistry.getInstance().getPooledTransactionEncoder());
   }
 
-  public static class TransactionHandler {
+  public static class TransactionHandler implements TransactionEncoder, TransactionDecoder {
+    private final TransactionDecoder decoder;
+    private final TransactionEncoder encoder;
 
+    public TransactionHandler(final TransactionDecoder decoder, final TransactionEncoder encoder) {
+      this.decoder = decoder;
+      this.encoder = encoder;
+    }
+
+    @Override
     public Transaction readFrom(final RLPInput rlpInput) {
-      return getDecoder().readFrom(rlpInput);
+      return decoder.readFrom(rlpInput);
     }
 
+    @Override
     public Transaction readFrom(final Bytes bytes) {
-      return getDecoder().readFrom(bytes);
+      return decoder.readFrom(bytes);
     }
 
+    @Override
     public Transaction decodeOpaqueBytes(final Bytes bytes) {
-      return getDecoder().decodeOpaqueBytes(bytes);
+      return decoder.decodeOpaqueBytes(bytes);
     }
 
+    @Override
     public void writeTo(final Transaction transaction, final RLPOutput output) {
-      getEncoder().writeTo(transaction, output);
+      encoder.writeTo(transaction, output);
     }
 
+    @Override
     public Bytes encodeOpaqueBytes(final Transaction transaction) {
-      return getEncoder().encodeOpaqueBytes(transaction);
-    }
-
-    private TransactionDecoder getDecoder() {
-      return RlpRegistry.getInstance().getTransactionDecoder();
-    }
-
-    private TransactionEncoder getEncoder() {
-      return RlpRegistry.getInstance().getTransactionEncoder();
-    }
-  }
-
-  public static class PooledTransactionHandler {
-
-    public Transaction readFrom(final RLPInput rlpInput) {
-      return getDecoder().readFrom(rlpInput);
-    }
-
-    public Transaction readFrom(final Bytes bytes) {
-      return getDecoder().readFrom(bytes);
-    }
-
-    public Transaction decodeOpaqueBytes(final Bytes bytes) {
-      return getDecoder().decodeOpaqueBytes(bytes);
-    }
-
-    public void writeTo(final Transaction transaction, final RLPOutput output) {
-      getEncoder().writeTo(transaction, output);
-    }
-
-    public Bytes encodeOpaqueBytes(final Transaction transaction) {
-      return getEncoder().encodeOpaqueBytes(transaction);
-    }
-
-    private TransactionDecoder getDecoder() {
-      return RlpRegistry.getInstance().getPooledTransactionDecoder();
-    }
-
-    private TransactionEncoder getEncoder() {
-      return RlpRegistry.getInstance().getPooledTransactionEncoder();
+      return encoder.encodeOpaqueBytes(transaction);
     }
   }
 }
