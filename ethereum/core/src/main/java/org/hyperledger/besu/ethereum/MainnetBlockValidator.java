@@ -181,7 +181,7 @@ public class MainnetBlockValidator implements BlockValidator {
             Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)));
       }
     } catch (MerkleTrieException ex) {
-      context.getSynchronizer().healWorldState(ex.getMaybeAddress(), ex.getLocation());
+      context.getWorldStateArchive().heal(ex.getMaybeAddress(), ex.getLocation());
       return new BlockProcessingResult(Optional.empty(), ex);
     } catch (StorageException ex) {
       var retval = new BlockProcessingResult(Optional.empty(), ex);

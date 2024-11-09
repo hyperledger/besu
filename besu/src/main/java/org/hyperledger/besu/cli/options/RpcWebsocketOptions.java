@@ -120,6 +120,71 @@ public class RpcWebsocketOptions {
       arity = "1")
   private final File rpcWsAuthenticationPublicKeyFile = null;
 
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-enabled"},
+      description = "Enable SSL/TLS for the WebSocket RPC service")
+  private final Boolean isRpcWsSslEnabled = false;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-keystore-file"},
+      paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to the keystore file for the WebSocket RPC service")
+  private String rpcWsKeyStoreFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-keystore-password"},
+      paramLabel = "<PASSWORD>",
+      description = "Password for the WebSocket RPC keystore file")
+  private String rpcWsKeyStorePassword = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-key-file"},
+      paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to the PEM key file for the WebSocket RPC service")
+  private String rpcWsKeyFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-cert-file"},
+      paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to the PEM cert file for the WebSocket RPC service")
+  private String rpcWsCertFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-keystore-type"},
+      paramLabel = "<TYPE>",
+      description = "Type of the WebSocket RPC keystore (JKS, PKCS12, PEM)")
+  private String rpcWsKeyStoreType = null;
+
+  // For client authentication (mTLS)
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-client-auth-enabled"},
+      description = "Enable client authentication for the WebSocket RPC service")
+  private final Boolean isRpcWsClientAuthEnabled = false;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-truststore-file"},
+      paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to the truststore file for the WebSocket RPC service")
+  private String rpcWsTrustStoreFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-truststore-password"},
+      paramLabel = "<PASSWORD>",
+      description = "Password for the WebSocket RPC truststore file")
+  private String rpcWsTrustStorePassword = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-trustcert-file"},
+      paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to the PEM trustcert file for the WebSocket RPC service")
+  private String rpcWsTrustCertFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-ssl-truststore-type"},
+      paramLabel = "<TYPE>",
+      description = "Type of the truststore (JKS, PKCS12, PEM)")
+  private String rpcWsTrustStoreType = null;
+
   /** Default Constructor. */
   public RpcWebsocketOptions() {}
 
@@ -184,7 +249,61 @@ public class RpcWebsocketOptions {
             "--rpc-ws-authentication-enabled",
             "--rpc-ws-authentication-credentials-file",
             "--rpc-ws-authentication-public-key-file",
-            "--rpc-ws-authentication-jwt-algorithm"));
+            "--rpc-ws-authentication-jwt-algorithm",
+            "--rpc-ws-ssl-enabled"));
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--rpc-ws-ssl-enabled",
+        !isRpcWsSslEnabled,
+        List.of(
+            "--rpc-ws-ssl-keystore-file",
+            "--rpc-ws-ssl-keystore-type",
+            "--rpc-ws-ssl-client-auth-enabled"));
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--rpc-ws-ssl-client-auth-enabled",
+        !isRpcWsClientAuthEnabled,
+        List.of(
+            "--rpc-ws-ssl-truststore-file",
+            "--rpc-ws-ssl-truststore-type",
+            "--rpc-ws-ssl-trustcert-file"));
+
+    if (isRpcWsSslEnabled) {
+      if ("PEM".equalsIgnoreCase(rpcWsKeyStoreType)) {
+        CommandLineUtils.checkOptionDependencies(
+            logger,
+            commandLine,
+            "--rpc-ws-ssl-key-file",
+            rpcWsKeyFile == null,
+            List.of("--rpc-ws-ssl-cert-file"));
+        CommandLineUtils.checkOptionDependencies(
+            logger,
+            commandLine,
+            "--rpc-ws-ssl-cert-file",
+            rpcWsCertFile == null,
+            List.of("--rpc-ws-ssl-key-file"));
+      } else {
+        CommandLineUtils.checkOptionDependencies(
+            logger,
+            commandLine,
+            "--rpc-ws-ssl-keystore-file",
+            rpcWsKeyStoreFile == null,
+            List.of("--rpc-ws-ssl-keystore-password"));
+      }
+    }
+
+    if (isRpcWsClientAuthEnabled && !"PEM".equalsIgnoreCase(rpcWsTrustStoreType)) {
+      CommandLineUtils.checkOptionDependencies(
+          logger,
+          commandLine,
+          "--rpc-ws-ssl-truststore-file",
+          rpcWsTrustStoreFile == null,
+          List.of("--rpc-ws-ssl-truststore-password"));
+    }
 
     if (isRpcWsAuthenticationEnabled) {
       CommandLineUtils.checkOptionDependencies(
@@ -222,6 +341,18 @@ public class RpcWebsocketOptions {
     webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
     webSocketConfiguration.setAuthenticationAlgorithm(rpcWebsocketsAuthenticationAlgorithm);
     webSocketConfiguration.setTimeoutSec(wsTimoutSec);
+    webSocketConfiguration.setSslEnabled(isRpcWsSslEnabled);
+    webSocketConfiguration.setKeyStorePath(rpcWsKeyStoreFile);
+    webSocketConfiguration.setKeyStorePassword(rpcWsKeyStorePassword);
+    webSocketConfiguration.setKeyStoreType(rpcWsKeyStoreType);
+    webSocketConfiguration.setClientAuthEnabled(isRpcWsClientAuthEnabled);
+    webSocketConfiguration.setTrustStorePath(rpcWsTrustStoreFile);
+    webSocketConfiguration.setTrustStorePassword(rpcWsTrustStorePassword);
+    webSocketConfiguration.setTrustStoreType(rpcWsTrustStoreType);
+    webSocketConfiguration.setKeyPath(rpcWsKeyFile);
+    webSocketConfiguration.setCertPath(rpcWsCertFile);
+    webSocketConfiguration.setTrustCertPath(rpcWsTrustCertFile);
+
     return webSocketConfiguration;
   }
 

@@ -139,6 +139,7 @@ public class TransactionPool implements BlockAddedObserver {
     subscribePendingTransactions(this::mapBlobsOnTransactionAdded);
     subscribeDroppedTransactions(
         (transaction, reason) -> unmapBlobsOnTransactionDropped(transaction));
+    subscribeDroppedTransactions(transactionBroadcaster);
   }
 
   private void initLogForReplay() {
