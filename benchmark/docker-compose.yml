@@ -1,6 +1,7 @@
-version: "2"
+version: '2'
 
-x-besu: &besu
+x-besu:
+  &besu
   container_name: besu
   image: "hyperledger/besu:develop"
   cpuset: 4-5
@@ -13,7 +14,8 @@ x-besu: &besu
   volumes:
     - ./config:/config:ro
 
-x-caliper: &caliper
+x-caliper:
+  &caliper
   container_name: caliper
   # TODO: this image is build using the custom branch
   # https://github.com/taccatisid/caliper/tree/besu-performance-benchmark-container. Once
@@ -28,7 +30,7 @@ x-caliper: &caliper
 
 services:
   caliper-offchain:
-    <<: *caliper
+    << : *caliper
     environment:
       - CALIPER_PROJECTCONFIG=/config/caliper-offchain.yaml
       - CALIPER_BIND_SUT=besu:latest
@@ -41,7 +43,7 @@ services:
         condition: service_healthy
 
   caliper-onchain:
-    <<: *caliper
+    << : *caliper
     environment:
       - CALIPER_PROJECTCONFIG=/config/caliper-onchain.yaml
       - CALIPER_BIND_SUT=besu:latest
@@ -54,52 +56,46 @@ services:
         condition: service_healthy
 
   besu-offchain:
-    <<: *besu
+    << : *besu
     entrypoint:
-      - /opt/besu/bin/besu
-      - --genesis-file=/config/genesis.json
-      - --node-private-key-file=/config/besu-keystore/key
-      - --min-gas-price=0
-      - --revert-reason-enabled
-      - --rpc-ws-enabled
-      - --rpc-ws-apis=admin,eth,miner,web3,net,priv,eea
-      - --rpc-ws-host=0.0.0.0
-      - --graphql-http-enabled
-      - --discovery-enabled=false
-      - --privacy-enabled=true
-      - --privacy-url=http://tessera:9101
-      - --privacy-public-key-file=/config/orion/key/orion.pub
+    - /opt/besu/bin/besu
+    - --genesis-file=/config/genesis.json
+    - --node-private-key-file=/config/besu-keystore/key
+    - --min-gas-price=0
+    - --revert-reason-enabled
+    - --rpc-ws-enabled
+    - --rpc-ws-apis=admin,eth,miner,web3,net,priv,eea
+    - --rpc-ws-host=0.0.0.0
+    - --host-whitelist=*
+    - --graphql-http-enabled
+    - --discovery-enabled=false
+    - --privacy-enabled=true
+    - --privacy-url=http://tessera:9101
+    - --privacy-public-key-file=/config/orion/key/orion.pub
 
   besu-onchain:
-    <<: *besu
+    << : *besu
     entrypoint:
-      - /opt/besu/bin/besu
-      - --genesis-file=/config/genesis.json
-      - --node-private-key-file=/config/besu-keystore/key
-      - --min-gas-price=0
-      - --revert-reason-enabled
-      - --rpc-ws-enabled
-      - --rpc-ws-apis=admin,eth,miner,web3,net,priv,eea
-      - --rpc-ws-host=0.0.0.0
-      - --graphql-http-enabled
-      - --discovery-enabled=false
-      - --privacy-enabled=true
-      - --privacy-url=http://tessera:9101
-      - --privacy-public-key-file=/config/orion/key/orion.pub
-      - --privacy-flexible-groups-enabled
+    - /opt/besu/bin/besu
+    - --genesis-file=/config/genesis.json
+    - --node-private-key-file=/config/besu-keystore/key
+    - --min-gas-price=0
+    - --revert-reason-enabled
+    - --rpc-ws-enabled
+    - --rpc-ws-apis=admin,eth,miner,web3,net,priv,eea
+    - --rpc-ws-host=0.0.0.0
+    - --host-whitelist=*
+    - --graphql-http-enabled
+    - --discovery-enabled=false
+    - --privacy-enabled=true
+    - --privacy-url=http://tessera:9101
+    - --privacy-public-key-file=/config/orion/key/orion.pub
+    - --privacy-flexible-groups-enabled
   tessera:
     container_name: tessera
     image: quorumengineering/tessera:latest
     healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--spider",
-          "--proxy",
-          "off",
-          "http://localhost:9000/upcheck",
-        ]
+      test: ["CMD", "wget", "--spider", "--proxy", "off", "http://localhost:9000/upcheck"]
       interval: 1s
       timeout: 1s
       retries: 10
