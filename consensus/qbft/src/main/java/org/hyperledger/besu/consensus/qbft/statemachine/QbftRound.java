@@ -332,7 +332,7 @@ public class QbftRound {
   private void peerIsCommitted(final Commit msg) {
     final boolean wasCommitted = roundState.isCommitted();
     roundState.addCommitMessage(msg);
-    if (wasCommitted != roundState.isCommitted()) {
+    if (!wasCommitted && roundState.isCommitted()) {
       importBlockToChain();
     }
   }
