@@ -23,7 +23,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.CachingPreImageStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedLayeredWorldStateKeyValueStorage;
@@ -118,11 +117,6 @@ public abstract class DiffBasedWorldState
     return !(worldStateKeyValueStorage instanceof DiffBasedSnapshotWorldStateKeyValueStorage);
   }
 
-  @Override
-  public CachingPreImageStorage getPreImageProxy() {
-    return worldStateKeyValueStorage.getPreImageProxy();
-  }
-
   /**
    * Reset the worldState to this block header
    *
@@ -166,7 +160,6 @@ public abstract class DiffBasedWorldState
     final DiffBasedWorldStateKeyValueStorage.Updater stateUpdater =
         worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
-
     try {
       final Hash calculatedRootHash;
 
@@ -190,10 +183,39 @@ public abstract class DiffBasedWorldState
         verifyWorldStateRoot(calculatedRootHash, blockHeader);
         saveTrieLog =
             () -> {
-              trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
+              var trieLog =
+                  trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
               // not save a frozen state in the cache
               if (!worldStateConfig.isFrozen()) {
                 cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
+              }
+
+              // TODO: maybe move this, make conditional so we don't affect performance
+              //  if we are not tracking preimages. using the trielog probably is going to get us
+              // duplicates
+              //  because we will get updates in addition to creates :frown:
+              if (trieLog.isPresent()) {
+                var log = trieLog.get();
+                var preImageUpdater = worldStateKeyValueStorage.getPreimageStorage().updater();
+                log.getAccountChanges()
+                    .keySet()
+                    .forEach(
+                        acct ->
+                            preImageUpdater.putAccountTrieKeyPreimage(acct.addressHash(), acct));
+                localCopy.getStorageToUpdate().values().stream()
+                    .flatMap(z -> z.keySet().stream())
+                    .filter(
+                        z -> {
+                          // TODO: we should add logic here to prevent writing
+                          //     common slot keys
+                          return z.getSlotKey().isPresent();
+                        })
+                    .distinct()
+                    .forEach(
+                        slot -> {
+                          preImageUpdater.putStorageTrieKeyPreimage(
+                              slot.getSlotHash(), slot.getSlotKey().get());
+                        });
               }
             };
 
@@ -303,12 +325,6 @@ public abstract class DiffBasedWorldState
   @Override
   public abstract Stream<StreamableAccount> streamAccounts(
       final Bytes32 startKeyHash, final int limit);
-
-  //  {
-  //    return preImageProxy
-  //        .streamAddressPreImages(startKeyHash, limit)
-  //        .map(address -> new StreamableAccount(Optional.of(address), get(address)));
-  //  }
 
   @Override
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {

@@ -24,12 +24,12 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.CachingPreImageStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -64,10 +64,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   private static final Logger LOG =
       LoggerFactory.getLogger(DiffBasedWorldStateKeyValueStorage.class);
 
-  // TODO: config this based on dataStorageConfiguration, use real storage where appropriate
-  //   currently hard-coded to Unbounded preimage store so ref/spec tests pass
-  private static final CachingPreImageStorage preImageProxy =
-      new CachingPreImageStorage.UnboundedPreImageStorage();
+  private final WorldStatePreimageStorage preImageProxy;
 
   // 0x776f726c64526f6f74
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
@@ -90,13 +87,16 @@ public abstract class DiffBasedWorldStateKeyValueStorage
                 ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
     this.trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+    this.preImageProxy = provider.createWorldStatePreimageStorage();
   }
 
   public DiffBasedWorldStateKeyValueStorage(
       final SegmentedKeyValueStorage composedWorldStateStorage,
-      final KeyValueStorage trieLogStorage) {
+      final KeyValueStorage trieLogStorage,
+      final WorldStatePreimageStorage preImageStorage) {
     this.composedWorldStateStorage = composedWorldStateStorage;
     this.trieLogStorage = trieLogStorage;
+    this.preImageProxy = preImageStorage;
   }
 
   public abstract FlatDbMode getFlatDbMode();
@@ -110,12 +110,12 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     return composedWorldStateStorage;
   }
 
-  public CachingPreImageStorage getPreImageProxy() {
-    return preImageProxy;
-  }
-
   public KeyValueStorage getTrieLogStorage() {
     return trieLogStorage;
+  }
+
+  public WorldStatePreimageStorage getPreimageStorage() {
+    return preImageProxy;
   }
 
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
