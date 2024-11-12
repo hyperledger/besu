@@ -60,7 +60,7 @@ public class TrieLogManager {
     this.trieLogFactory = setupTrieLogFactory(pluginContext);
   }
 
-  public synchronized Optional<TrieLog> saveTrieLog(
+  public synchronized void saveTrieLog(
       final DiffBasedWorldStateUpdateAccumulator<?> localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
@@ -80,7 +80,6 @@ public class TrieLogManager {
         trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
 
         success = true;
-        return Optional.of(trieLog);
       } finally {
         if (success) {
           stateUpdater.commit();
@@ -89,7 +88,6 @@ public class TrieLogManager {
         }
       }
     }
-    return Optional.empty();
   }
 
   private TrieLog prepareTrieLog(

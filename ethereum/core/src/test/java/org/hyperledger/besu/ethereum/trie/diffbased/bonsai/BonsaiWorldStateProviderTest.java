@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -57,6 +58,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -73,6 +75,10 @@ class BonsaiWorldStateProviderTest {
   @Mock StorageProvider storageProvider;
 
   @Mock SegmentedKeyValueStorage segmentedKeyValueStorage;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  WorldStatePreimageKeyValueStorage preimageStorage;
+
   @Mock KeyValueStorage trieLogStorage;
   @Mock SegmentedKeyValueStorageTransaction segmentedKeyValueStorageTransaction;
   BonsaiWorldStateProvider bonsaiWorldStateArchive;
@@ -82,8 +88,10 @@ class BonsaiWorldStateProviderTest {
 
   @BeforeEach
   public void setUp() {
+
     when(storageProvider.getStorageBySegmentIdentifiers(anyList()))
         .thenReturn(segmentedKeyValueStorage);
+    when(storageProvider.createWorldStatePreimageStorage()).thenReturn(preimageStorage);
     when(segmentedKeyValueStorage.startTransaction())
         .thenReturn(segmentedKeyValueStorageTransaction);
     when(storageProvider.getStorageBySegmentIdentifier(any())).thenReturn(trieLogStorage);

@@ -235,6 +235,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
           updater, Address.fromHexString(entry.getKey()), entry.getValue());
     }
     updater.commit();
+    // persist in order to save preimages
+    worldState.persist(null);
     return worldState;
   }
 
@@ -248,7 +250,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     }
 
     @Override
-    public synchronized Optional<TrieLog> saveTrieLog(
+    public synchronized void saveTrieLog(
         final DiffBasedWorldStateUpdateAccumulator<?> localUpdater,
         final Hash forWorldStateRootHash,
         final BlockHeader forBlockHeader,
@@ -257,7 +259,6 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
       TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);
       trieLogCache.put(forBlockHeader.getHash(), trieLogFactory.serialize(trieLog));
       trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
-      return Optional.of(trieLog);
     }
 
     @Override

@@ -180,7 +180,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
 
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Hash addressHash, final Bytes32 startKeyHash, final int limit) {
-    if (preImageProxy != null && preImageProxy.canSupportStreaming()) {
+    if (preImageProxy != null) {
       return streamFlatStorages(addressHash, startKeyHash, UInt256.MAX_VALUE, limit)
           .entrySet()
           // map back to slot keys using preImage provider:
@@ -201,28 +201,23 @@ public abstract class DiffBasedWorldStateKeyValueStorage
 
   public Stream<WorldState.StreamableAccount> streamAccounts(
       final DiffBasedWorldView context, final Bytes32 startKeyHash, final int limit) {
-    if (preImageProxy.canSupportStreaming()) {
-      return streamFlatAccounts(startKeyHash, UInt256.MAX_VALUE, limit)
-          .entrySet()
-          // map back to addresses using preImage provider:
-          .stream()
-          .map(
-              entry ->
-                  preImageProxy
-                      .getAccountTrieKeyPreimage(entry.getKey())
-                      .map(
-                          address ->
-                              new WorldState.StreamableAccount(
-                                  Optional.of(address),
-                                  BonsaiAccount.fromRLP(
-                                      context, address, entry.getValue(), false))))
-          .filter(Optional::isPresent)
-          .map(Optional::get)
-          .filter(acct -> context.updater().getAccount(acct.getAddress().orElse(null)) != null)
-          .sorted(Comparator.comparing(account -> account.getAddress().orElse(Address.ZERO)));
-    } else {
-      throw new RuntimeException("Not configured to support enumerating accounts");
-    }
+    return streamFlatAccounts(startKeyHash, UInt256.MAX_VALUE, limit)
+        .entrySet()
+        // map back to addresses using preImage provider:
+        .stream()
+        .map(
+            entry ->
+                preImageProxy
+                    .getAccountTrieKeyPreimage(entry.getKey())
+                    .map(
+                        address ->
+                            new WorldState.StreamableAccount(
+                                Optional.of(address),
+                                BonsaiAccount.fromRLP(context, address, entry.getValue(), false))))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .filter(acct -> context.updater().getAccount(acct.getAddress().orElse(null)) != null)
+        .sorted(Comparator.comparing(account -> account.getAddress().orElse(Address.ZERO)));
   }
 
   @Override
