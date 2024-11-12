@@ -29,7 +29,7 @@ public class NoOpTrieLogManager extends TrieLogManager {
   }
 
   @Override
-  public synchronized void saveTrieLog(
+  public synchronized Optional<TrieLog> saveTrieLog(
       final DiffBasedWorldStateUpdateAccumulator<?> localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
@@ -37,6 +37,7 @@ public class NoOpTrieLogManager extends TrieLogManager {
     // notify trie log added observers, synchronously
     TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);
     trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
+    return Optional.of(trieLog);
   }
 
   @Override

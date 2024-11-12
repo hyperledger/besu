@@ -25,16 +25,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/**
- * This store is used in Forest storage format, and expects to use an Updater to insert and commit
- * changes to storage, adjacent to worldstate commits. By not being part of the worldstate
- * transaction and commit data in this implementation can become out-of-sync (by failing to commit
- * preimages by hash) on abnormal exits of besu.
- *
- * <p>This implementation remains here for the deprecated forest storage format, and should be
- * retired along with Forest.
- */
-@Deprecated
 public class WorldStatePreimageKeyValueStorage implements WorldStatePreimageStorage {
   private final KeyValueStorage keyValueStorage;
 
@@ -57,6 +47,11 @@ public class WorldStatePreimageKeyValueStorage implements WorldStatePreimageStor
         .get(trieKey.toArrayUnsafe())
         .filter(val -> val.length == Address.SIZE)
         .map(val -> Address.wrap(Bytes.wrap(val)));
+  }
+
+  @Override
+  public boolean canSupportStreaming() {
+    return keyValueStorage.isPersistent();
   }
 
   @Override

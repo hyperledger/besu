@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.CachingPreImageStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
@@ -57,9 +56,6 @@ public interface DiffBasedWorldView extends WorldView {
   }
 
   boolean isPersisted();
-
-  // TODO: comments and naming
-  CachingPreImageStorage getPreImageProxy();
 
   DiffBasedWorldStateKeyValueStorage getWorldStateStorage();
 
