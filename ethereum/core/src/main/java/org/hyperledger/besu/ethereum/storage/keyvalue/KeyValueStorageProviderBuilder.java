@@ -23,8 +23,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.services.kvstore.LimitedInMemoryKeyValueStorage;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.function.Supplier;
 
 public class KeyValueStorageProviderBuilder {
 
@@ -58,22 +57,19 @@ public class KeyValueStorageProviderBuilder {
         "Cannot build a storage provider without the plugin common configuration.");
     checkNotNull(metricsSystem, "Cannot build a storage provider without a metrics system.");
 
-    // TODO: unhack this storage pre-init hack, maybe a memoized supplier
-    storageFactory.create(
-        new ArrayList<>(EnumSet.allOf(KeyValueSegmentIdentifier.class)),
-        commonConfiguration,
-        metricsSystem);
-
-    final KeyValueStorage worldStatePreImageStorage =
+    final Supplier<KeyValueStorage> preimageStorageSupplier =
         commonConfiguration.getDataStorageConfiguration().getHashPreImageStorageEnabled()
-            ? storageFactory.create(
-                KeyValueSegmentIdentifier.HASH_PREIMAGE_STORE, commonConfiguration, metricsSystem)
-            : new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE);
+            ? () ->
+                storageFactory.create(
+                    KeyValueSegmentIdentifier.HASH_PREIMAGE_STORE,
+                    commonConfiguration,
+                    metricsSystem)
+            : () -> new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE);
     ;
 
     return new KeyValueStorageProvider(
         segments -> storageFactory.create(segments, commonConfiguration, metricsSystem),
-        worldStatePreImageStorage,
+        preimageStorageSupplier,
         (ObservableMetricsSystem) metricsSystem);
   }
 }

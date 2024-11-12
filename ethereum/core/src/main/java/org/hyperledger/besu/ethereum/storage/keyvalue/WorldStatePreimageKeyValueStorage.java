@@ -50,11 +50,6 @@ public class WorldStatePreimageKeyValueStorage implements WorldStatePreimageStor
   }
 
   @Override
-  public boolean canSupportStreaming() {
-    return keyValueStorage.isPersistent();
-  }
-
-  @Override
   public Updater updater() {
     return new Updater(keyValueStorage.startTransaction());
   }
