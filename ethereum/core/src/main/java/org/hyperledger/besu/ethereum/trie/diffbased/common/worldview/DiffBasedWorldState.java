@@ -160,6 +160,33 @@ public abstract class DiffBasedWorldState
     final DiffBasedWorldStateKeyValueStorage.Updater stateUpdater =
         worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
+    Runnable savePreimages =
+        () -> {
+          var preImageUpdater = worldStateKeyValueStorage.getPreimageStorage().updater();
+          localCopy
+              .getAccountsToUpdate()
+              // log.getAccountChanges()
+              .keySet()
+              .forEach(acct -> preImageUpdater.putAccountTrieKeyPreimage(acct.addressHash(), acct));
+          localCopy.getStorageToUpdate().values().stream()
+              .flatMap(z -> z.keySet().stream())
+              .filter(
+                  z -> {
+                    // TODO: we should add logic here to prevent writing
+                    //     common slot keys
+                    return z.getSlotKey().isPresent();
+                  })
+              .distinct()
+              .forEach(
+                  slot -> {
+                    preImageUpdater.putStorageTrieKeyPreimage(
+                        slot.getSlotHash(), slot.getSlotKey().get());
+                  });
+          // prob need to override this in a bonsai implementation that simply defers to the trielog
+          // tx/commit
+          preImageUpdater.commit();
+        };
+
     try {
       final Hash calculatedRootHash;
 
@@ -183,39 +210,10 @@ public abstract class DiffBasedWorldState
         verifyWorldStateRoot(calculatedRootHash, blockHeader);
         saveTrieLog =
             () -> {
-              var trieLog =
-                  trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
+              trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
               // not save a frozen state in the cache
               if (!worldStateConfig.isFrozen()) {
                 cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
-              }
-
-              // TODO: maybe move this, make conditional so we don't affect performance
-              //  if we are not tracking preimages. using the trielog probably is going to get us
-              // duplicates
-              //  because we will get updates in addition to creates :frown:
-              if (trieLog.isPresent()) {
-                var log = trieLog.get();
-                var preImageUpdater = worldStateKeyValueStorage.getPreimageStorage().updater();
-                log.getAccountChanges()
-                    .keySet()
-                    .forEach(
-                        acct ->
-                            preImageUpdater.putAccountTrieKeyPreimage(acct.addressHash(), acct));
-                localCopy.getStorageToUpdate().values().stream()
-                    .flatMap(z -> z.keySet().stream())
-                    .filter(
-                        z -> {
-                          // TODO: we should add logic here to prevent writing
-                          //     common slot keys
-                          return z.getSlotKey().isPresent();
-                        })
-                    .distinct()
-                    .forEach(
-                        slot -> {
-                          preImageUpdater.putStorageTrieKeyPreimage(
-                              slot.getSlotHash(), slot.getSlotKey().get());
-                        });
               }
             };
 
@@ -238,6 +236,9 @@ public abstract class DiffBasedWorldState
         stateUpdater.commit();
         accumulator.reset();
         saveTrieLog.run();
+        // TODO: maybe move this, make conditional so we don't affect performance
+        //  if we are not tracking preimages.
+        savePreimages.run();
       } else {
         stateUpdater.rollback();
         accumulator.reset();
@@ -323,8 +324,9 @@ public abstract class DiffBasedWorldState
   }
 
   @Override
-  public abstract Stream<StreamableAccount> streamAccounts(
-      final Bytes32 startKeyHash, final int limit);
+  public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
+    return worldStateKeyValueStorage.streamAccounts(this, startKeyHash, limit);
+  }
 
   @Override
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {

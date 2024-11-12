@@ -28,14 +28,6 @@ public interface WorldStatePreimageStorage {
 
   Optional<Address> getAccountTrieKeyPreimage(Bytes32 trieKey);
 
-  /**
-   * This method indicates whether this Pre-Image store is "complete", meaning it has all of the
-   * hash preimages for all entries in the state trie.
-   *
-   * @return boolean indicating whether the pre-image store is complete or not
-   */
-  boolean canSupportStreaming();
-
   Updater updater();
 
   interface Updater {

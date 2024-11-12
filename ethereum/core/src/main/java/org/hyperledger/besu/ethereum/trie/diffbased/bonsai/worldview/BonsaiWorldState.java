@@ -433,11 +433,6 @@ public class BonsaiWorldState extends DiffBasedWorldState {
   }
 
   @Override
-  public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    return worldStateKeyValueStorage.streamAccounts(this, startKeyHash, limit);
-  }
-
-  @Override
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     return getStorageValue(address, storageKey);
   }
