@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.CachingPreImageStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
@@ -49,6 +48,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -61,6 +62,9 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     implements DiffBasedWorldView, TrieLogAccumulator {
   private static final Logger LOG =
       LoggerFactory.getLogger(DiffBasedWorldStateUpdateAccumulator.class);
+
+  final Cache<UInt256, Hash> slotCache = Caffeine.newBuilder().maximumSize(4000).build();
+
   protected final Consumer<DiffBasedValue<ACCOUNT>> accountPreloader;
   protected final Consumer<StorageSlotKey> storagePreloader;
 
@@ -260,7 +264,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
         createAccount(
             this,
             address,
-            hashAndSaveAccountPreImage(address),
+            address.addressHash(),
             nonce,
             balance,
             Hash.EMPTY_TRIE_HASH,
@@ -480,8 +484,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                         final UInt256 keyUInt = storageUpdate.getKey();
                         final StorageSlotKey slotKey =
                             new StorageSlotKey(
-                                world.getPreImageProxy().hashAndSaveSlotKeyPreImage(keyUInt),
-                                Optional.of(keyUInt));
+                                slotCache.get(keyUInt, Hash::hash), Optional.of(keyUInt));
                         final UInt256 value = storageUpdate.getValue();
                         final DiffBasedValue<UInt256> pendingValue =
                             pendingStorageUpdates.get(slotKey);
@@ -525,8 +528,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 slotKey) {
     StorageSlotKey storageSlotKey =
-        new StorageSlotKey(
-            world.getPreImageProxy().hashAndSaveSlotKeyPreImage(slotKey), Optional.of(slotKey));
+        new StorageSlotKey(slotCache.get(slotKey, Hash::hash), Optional.of(slotKey));
     return getStorageValueByStorageSlotKey(address, storageSlotKey).orElse(UInt256.ZERO);
   }
 
@@ -565,9 +567,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     StorageSlotKey storageSlotKey =
-        new StorageSlotKey(
-            world.getPreImageProxy().hashAndSaveSlotKeyPreImage(storageKey),
-            Optional.of(storageKey));
+        new StorageSlotKey(slotCache.get(storageKey, Hash::hash), Optional.of(storageKey));
     final Map<StorageSlotKey, DiffBasedValue<UInt256>> localAccountStorage =
         storageToUpdate.get(address);
     if (localAccountStorage != null) {
@@ -613,11 +613,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   @Override
   public DiffBasedWorldStateKeyValueStorage getWorldStateStorage() {
     return wrappedWorldView().getWorldStateStorage();
-  }
-
-  @Override
-  public CachingPreImageStorage getPreImageProxy() {
-    return wrappedWorldView().getPreImageProxy();
   }
 
   public void rollForward(final TrieLog layer) {
@@ -883,11 +878,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     resetAccumulatorStateChanged();
     updatedAccounts.clear();
     deletedAccounts.clear();
-  }
-
-  protected Hash hashAndSaveAccountPreImage(final Address address) {
-    // default to using address static hash cache:
-    return getPreImageProxy().hashAndSaveAddressPreImage(address);
   }
 
   public abstract DiffBasedWorldStateUpdateAccumulator<ACCOUNT> copy();

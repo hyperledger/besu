@@ -248,7 +248,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     }
 
     @Override
-    public synchronized void saveTrieLog(
+    public synchronized Optional<TrieLog> saveTrieLog(
         final DiffBasedWorldStateUpdateAccumulator<?> localUpdater,
         final Hash forWorldStateRootHash,
         final BlockHeader forBlockHeader,
@@ -257,6 +257,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
       TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);
       trieLogCache.put(forBlockHeader.getHash(), trieLogFactory.serialize(trieLog));
       trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
+      return Optional.of(trieLog);
     }
 
     @Override

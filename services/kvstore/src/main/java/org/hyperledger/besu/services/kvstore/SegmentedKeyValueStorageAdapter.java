@@ -130,6 +130,11 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
     return storage.isClosed();
   }
 
+  @Override
+  public boolean isPersistent() {
+    return storage.isPersistent();
+  }
+
   private void throwIfClosed() {
     if (storage.isClosed()) {
       LOG.error("Attempting to use a closed Storage instance.");
