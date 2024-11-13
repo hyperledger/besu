@@ -250,9 +250,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final MetricCategory category,
       final String name,
       final String help,
-      final Supplier<ExternalSummary> summarySupplier) {
-    throw new UnsupportedOperationException();
-  }
+      final Supplier<ExternalSummary> summarySupplier) {}
 
   @Override
   public LabelledMetric<OperationTimer> createLabelledTimer(
@@ -291,9 +289,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
 
   @Override
   public void createGuavaCacheCollector(
-      final MetricCategory category, final String name, final Cache<?, ?> cache) {
-    throw new UnsupportedOperationException();
-  }
+      final MetricCategory category, final String name, final Cache<?, ?> cache) {}
 
   @Override
   public LabelledGauge createLabelledGauge(

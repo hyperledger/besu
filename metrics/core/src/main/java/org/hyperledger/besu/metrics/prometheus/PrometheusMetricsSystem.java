@@ -64,7 +64,8 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
   private final Set<String> totalSuffixedCounters = new ConcurrentHashSet<>();
-  private final CacheMetricsCollector guavaCacheMetricsCollector = new CacheMetricsCollector();
+  private final Map<MetricCategory, CacheMetricsCollector> guavaCacheCollectors =
+      new ConcurrentHashMap<>();
   private final Set<String> guavaCacheNames = new ConcurrentHashSet<>();
 
   private final Set<MetricCategory> enabledCategories;
@@ -84,12 +85,16 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
 
   /** Init. */
   public void init() {
-    addCollector(StandardMetricCategory.PROCESS, StandardExports::new);
-    addCollector(StandardMetricCategory.JVM, MemoryPoolsExports::new);
-    addCollector(StandardMetricCategory.JVM, BufferPoolsExports::new);
-    addCollector(StandardMetricCategory.JVM, GarbageCollectorExports::new);
-    addCollector(StandardMetricCategory.JVM, ThreadExports::new);
-    addCollector(StandardMetricCategory.JVM, ClassLoadingExports::new);
+    if (isCategoryEnabled(StandardMetricCategory.PROCESS)) {
+      registerCollector(StandardMetricCategory.PROCESS, new StandardExports());
+    }
+    if (isCategoryEnabled(StandardMetricCategory.JVM)) {
+      registerCollector(StandardMetricCategory.JVM, new MemoryPoolsExports());
+      registerCollector(StandardMetricCategory.JVM, new BufferPoolsExports());
+      registerCollector(StandardMetricCategory.JVM, new GarbageCollectorExports());
+      registerCollector(StandardMetricCategory.JVM, new ThreadExports());
+      registerCollector(StandardMetricCategory.JVM, new ClassLoadingExports());
+    }
   }
 
   @Override
@@ -109,7 +114,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
         (k) -> {
           if (isCategoryEnabled(category)) {
             final Counter counter = Counter.build(metricName, help).labelNames(labelNames).create();
-            addCollectorUnchecked(category, counter);
+            registerCollector(category, counter);
             return new PrometheusCounter(counter);
           } else {
             return NoOpMetricsSystem.getCounterLabelledMetric(labelNames.length);
@@ -138,7 +143,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
                     .quantile(1.0, 0)
                     .labelNames(labelNames)
                     .create();
-            addCollectorUnchecked(category, summary);
+            registerCollector(category, summary);
             return new PrometheusTimer(summary);
           } else {
             return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
@@ -159,7 +164,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
           if (timersEnabled && isCategoryEnabled(category)) {
             final Histogram histogram =
                 Histogram.build(metricName, help).labelNames(labelNames).buckets(1D).create();
-            addCollectorUnchecked(category, histogram);
+            registerCollector(category, histogram);
             return new PrometheusSimpleTimer(histogram);
           } else {
             return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
@@ -176,7 +181,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     final String metricName = convertToPrometheusName(category, name);
     if (isCategoryEnabled(category)) {
       final Collector collector = new CurrentValueCollector(metricName, help, valueSupplier);
-      addCollectorUnchecked(category, collector);
+      registerCollector(category, collector);
     }
   }
 
@@ -210,7 +215,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
             }
           };
 
-      addCollectorUnchecked(category, externalSummaryCollector);
+      registerCollector(category, externalSummaryCollector);
     }
   }
 
@@ -222,7 +227,15 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
         throw new IllegalStateException("Cache already registered: " + name);
       }
       guavaCacheNames.add(name);
-      guavaCacheMetricsCollector.addCache(name, cache);
+      final var guavaCacheCollector =
+          guavaCacheCollectors.computeIfAbsent(
+              category,
+              unused -> {
+                final var cmc = new CacheMetricsCollector();
+                registerCollector(category, cmc);
+                return cmc;
+              });
+      guavaCacheCollector.addCache(name, cache);
     }
   }
 
@@ -235,46 +248,33 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     final String metricName = convertToPrometheusName(category, name);
     if (isCategoryEnabled(category)) {
       final PrometheusGauge gauge = new PrometheusGauge(metricName, help, List.of(labelNames));
-      addCollectorUnchecked(category, gauge);
+      registerCollector(category, gauge);
       return gauge;
     }
     return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
   }
 
-  /**
-   * Add collector.
-   *
-   * @param category the category
-   * @param metricSupplier the metric supplier
-   */
-  public void addCollector(
-      final MetricCategory category, final Supplier<Collector> metricSupplier) {
-    if (isCategoryEnabled(category)) {
-      addCollectorUnchecked(category, metricSupplier.get());
-    }
-  }
-
-  private void addCollectorUnchecked(final MetricCategory category, final Collector metric) {
-    final Collection<Collector> metrics =
+  private void registerCollector(final MetricCategory category, final Collector collector) {
+    final Collection<Collector> categoryCollectors =
         this.collectors.computeIfAbsent(
             category, key -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
 
     final List<String> newSamples =
-        metric.collect().stream().map(metricFamilySamples -> metricFamilySamples.name).toList();
+        collector.collect().stream().map(metricFamilySamples -> metricFamilySamples.name).toList();
 
-    metrics.stream()
+    categoryCollectors.stream()
         .filter(
-            collector ->
-                collector.collect().stream()
+            c ->
+                c.collect().stream()
                     .anyMatch(metricFamilySamples -> newSamples.contains(metricFamilySamples.name)))
         .findFirst()
         .ifPresent(
-            collector -> {
-              metrics.remove(collector);
-              registry.unregister(collector);
+            c -> {
+              categoryCollectors.remove(c);
+              registry.unregister(c);
             });
 
-    metrics.add(metric.register(registry));
+    categoryCollectors.add(collector.register(registry));
   }
 
   @Override
@@ -292,6 +292,11 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   @Override
   public void shutdown() {
     registry.clear();
+    collectors.clear();
+    cachedCounters.clear();
+    cachedTimers.clear();
+    guavaCacheCollectors.clear();
+    guavaCacheNames.clear();
   }
 
   private Stream<Observation> convertSamplesToObservations(
