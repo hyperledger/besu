@@ -18,6 +18,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -34,6 +35,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import com.google.common.cache.Cache;
 import com.google.common.collect.ImmutableSet;
 import io.prometheus.client.Collector;
 import io.prometheus.client.Collector.MetricFamilySamples;
@@ -42,6 +44,7 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
 import io.prometheus.client.Summary;
+import io.prometheus.client.guava.cache.CacheMetricsCollector;
 import io.prometheus.client.hotspot.BufferPoolsExports;
 import io.prometheus.client.hotspot.ClassLoadingExports;
 import io.prometheus.client.hotspot.GarbageCollectorExports;
@@ -52,6 +55,7 @@ import io.vertx.core.impl.ConcurrentHashSet;
 
 /** The Prometheus metrics system. */
 public class PrometheusMetricsSystem implements ObservableMetricsSystem {
+  private static final List<String> EXTERNAL_SUMMARY_LABELS = List.of("quantile");
 
   private final Map<MetricCategory, Collection<Collector>> collectors = new ConcurrentHashMap<>();
   private final CollectorRegistry registry = new CollectorRegistry(true);
@@ -60,6 +64,8 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
   private final Set<String> totalSuffixedCounters = new ConcurrentHashSet<>();
+  private final CacheMetricsCollector guavaCacheMetricsCollector = new CacheMetricsCollector();
+  private final Set<String> guavaCacheNames = new ConcurrentHashSet<>();
 
   private final Set<MetricCategory> enabledCategories;
   private final boolean timersEnabled;
@@ -175,6 +181,52 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
+  public void trackExternalSummary(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final Supplier<ExternalSummary> summarySupplier) {
+    if (isCategoryEnabled(category)) {
+      final var externalSummaryCollector =
+          new Collector() {
+            @Override
+            public List<MetricFamilySamples> collect() {
+              final var externalSummary = summarySupplier.get();
+
+              final var quantileValues =
+                  externalSummary.quantiles().stream()
+                      .map(
+                          quantile ->
+                              new Sample(
+                                  name,
+                                  EXTERNAL_SUMMARY_LABELS,
+                                  List.of(Double.toString(quantile.quantile())),
+                                  quantile.value()))
+                      .toList();
+
+              return List.of(
+                  new MetricFamilySamples(
+                      name, Type.SUMMARY, "RocksDB histogram for " + name, quantileValues));
+            }
+          };
+
+      addCollectorUnchecked(category, externalSummaryCollector);
+    }
+  }
+
+  @Override
+  public void createGuavaCacheCollector(
+      final MetricCategory category, final String name, final Cache<?, ?> cache) {
+    if (isCategoryEnabled(category)) {
+      if (guavaCacheNames.contains(name)) {
+        throw new IllegalStateException("Cache already registered: " + name);
+      }
+      guavaCacheNames.add(name);
+      guavaCacheMetricsCollector.addCache(name, cache);
+    }
+  }
+
+  @Override
   public LabelledGauge createLabelledGauge(
       final MetricCategory category,
       final String name,
@@ -235,6 +287,11 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   @Override
   public Stream<Observation> streamObservations() {
     return collectors.keySet().stream().flatMap(this::streamObservations);
+  }
+
+  @Override
+  public void shutdown() {
+    registry.clear();
   }
 
   private Stream<Observation> convertSamplesToObservations(
