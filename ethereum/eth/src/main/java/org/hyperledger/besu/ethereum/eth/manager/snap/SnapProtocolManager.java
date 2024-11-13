@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -53,11 +54,13 @@ public class SnapProtocolManager implements ProtocolManager {
       final SnapSyncConfiguration snapConfig,
       final EthPeers ethPeers,
       final EthMessages snapMessages,
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final Synchronizer synchronizer) {
     this.ethPeers = ethPeers;
     this.snapMessages = snapMessages;
     this.supportedCapabilities = calculateCapabilities();
-    new SnapServer(snapConfig, snapMessages, worldStateStorageCoordinator, protocolContext);
+    new SnapServer(
+        snapConfig, snapMessages, worldStateStorageCoordinator, protocolContext, synchronizer);
   }
 
   private List<Capability> calculateCapabilities() {
