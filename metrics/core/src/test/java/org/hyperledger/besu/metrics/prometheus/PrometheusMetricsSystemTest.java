@@ -20,6 +20,7 @@ import static java.util.Collections.singletonList;
 import static java.util.function.Predicate.not;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.metrics.BesuMetricCategory.BLOCKCHAIN;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.NETWORK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.PEERS;
@@ -39,7 +40,10 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import org.junit.jupiter.api.AfterEach;
@@ -284,9 +288,28 @@ public class PrometheusMetricsSystemTest {
     assertThat(localMetricSystem).isInstanceOf(PrometheusMetricsSystem.class);
   }
 
+  @Test
+  public void shouldCreateObservationFromGuavaCache() throws ExecutionException {
+    final Cache<String, String> guavaCache =
+        CacheBuilder.newBuilder().maximumSize(1).recordStats().build();
+    metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "test", guavaCache);
+
+    guavaCache.put("a", "b");
+    guavaCache.get("a", () -> "b");
+    guavaCache.get("z", () -> "x");
+
+    assertThat(metricsSystem.streamObservations())
+        .containsExactlyInAnyOrder(
+            new Observation(BLOCKCHAIN, "guava_cache_size", 1.0, List.of("test")),
+            new Observation(BLOCKCHAIN, "guava_cache_requests", 2.0, List.of("test")),
+            new Observation(BLOCKCHAIN, "guava_cache_hit", 1.0, List.of("test")),
+            new Observation(BLOCKCHAIN, "guava_cache_miss", 1.0, List.of("test")),
+            new Observation(BLOCKCHAIN, "guava_cache_eviction", 1.0, List.of("test")));
+  }
+
   private boolean isCreatedSample(final Observation obs) {
     // Simple client 0.10.0 add a _created sample to every counter, histogram and summary, that we
     // may want to ignore
-    return obs.getLabels().contains("created");
+    return obs.labels().contains("created");
   }
 }

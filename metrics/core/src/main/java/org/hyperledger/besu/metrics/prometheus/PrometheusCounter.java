@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.metrics.prometheus;
 
+import static org.hyperledger.besu.metrics.prometheus.PrometheusCollector.getLabelValues;
+
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -47,7 +49,7 @@ class PrometheusCounter extends CategorizedPrometheusCollector implements Labell
   }
 
   @Override
-  public String getName() {
+  public String getIdentifier() {
     return counter.getPrometheusName();
   }
 
@@ -67,10 +69,7 @@ class PrometheusCounter extends CategorizedPrometheusCollector implements Labell
         .map(
             sample ->
                 new Observation(
-                    category,
-                    name,
-                    sample.getValue(),
-                    PrometheusCollector.getLabelValues(sample.getLabels())));
+                    category, name, sample.getValue(), getLabelValues(sample.getLabels())));
   }
 
   private record UnlabelledCounter(CounterDataPoint counter) implements Counter {

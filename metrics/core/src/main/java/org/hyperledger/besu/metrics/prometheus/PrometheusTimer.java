@@ -49,7 +49,7 @@ class PrometheusTimer extends AbstractPrometheusSummary implements LabelledMetri
   }
 
   @Override
-  public String getName() {
+  public String getIdentifier() {
     return summary.getPrometheusName();
   }
 

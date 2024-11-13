@@ -134,7 +134,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
 
   @Override
   public Stream<Observation> streamObservations(final MetricCategory category) {
-    return streamObservations().filter(metricData -> metricData.getCategory().equals(category));
+    return streamObservations().filter(metricData -> metricData.category().equals(category));
   }
 
   @Override

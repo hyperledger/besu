@@ -20,6 +20,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -37,7 +38,6 @@ import java.util.stream.Stream;
 
 import com.google.common.cache.Cache;
 import com.google.common.collect.ImmutableSet;
-import io.prometheus.metrics.instrumentation.guava.CacheMetricsCollector;
 import io.prometheus.metrics.instrumentation.jvm.JvmBufferPoolMetrics;
 import io.prometheus.metrics.instrumentation.jvm.JvmClassLoadingMetrics;
 import io.prometheus.metrics.instrumentation.jvm.JvmCompilationMetrics;
@@ -69,9 +69,8 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       cachedCounters = new ConcurrentHashMap<>();
   private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
-  private final Map<MetricCategory, CacheMetricsCollector> guavaCacheCollectors =
-      new ConcurrentHashMap<>();
-  private final Set<String> guavaCacheNames = new ConcurrentHashSet<>();
+  private final PrometheusGuavaCache.Context guavaCacheCollectorContext =
+      new PrometheusGuavaCache.Context();
 
   private final Set<MetricCategory> enabledCategories;
   private final boolean timersEnabled;
@@ -112,7 +111,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public LabelledMetric<org.hyperledger.besu.plugin.services.metrics.Counter> createLabelledCounter(
+  public LabelledMetric<Counter> createLabelledCounter(
       final MetricCategory category,
       final String name,
       final String help,
@@ -213,11 +212,8 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   public void createGuavaCacheCollector(
       final MetricCategory category, final String name, final Cache<?, ?> cache) {
     if (isCategoryEnabled(category)) {
-      if (guavaCacheNames.contains(name)) {
-        throw new IllegalStateException("Cache already registered: " + name);
-      }
-      guavaCacheNames.add(name);
-      final var cacheCollector = new PrometheusGuavaCache(category, name, cache);
+      final var cacheCollector =
+          new PrometheusGuavaCache(category, guavaCacheCollectorContext, name, cache);
       registerCollector(category, cacheCollector);
     }
   }
@@ -229,7 +225,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
 
     // unregister if already present
     categoryCollectors.stream()
-        .filter(c -> c.getName().equals(collector.getName()))
+        .filter(c -> c.getIdentifier().equals(collector.getIdentifier()))
         .findFirst()
         .ifPresent(
             c -> {
@@ -262,7 +258,6 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     collectors.clear();
     cachedCounters.clear();
     cachedTimers.clear();
-    guavaCacheCollectors.clear();
-    guavaCacheNames.clear();
+    guavaCacheCollectorContext.clear();
   }
 }

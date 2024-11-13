@@ -52,7 +52,7 @@ class PrometheusExternalSummary extends AbstractPrometheusSummary {
   }
 
   @Override
-  public String getName() {
+  public String getIdentifier() {
     return summary.getPrometheusName();
   }
 

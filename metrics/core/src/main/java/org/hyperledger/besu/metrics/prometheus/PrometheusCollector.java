@@ -29,15 +29,24 @@ import io.prometheus.metrics.model.snapshots.Labels;
 public interface PrometheusCollector {
 
   /**
-   * Get the name of the collector
+   * Get the identifier of the collector
    *
-   * @return the name of the collector
+   * @return the identifier of the collector
    */
-  String getName();
+  String getIdentifier();
 
-  /** Get the native Prometheus collector */
+  /**
+   * Register this collector to the specified registry
+   *
+   * @param registry the registry
+   */
   void register(final PrometheusRegistry registry);
 
+  /**
+   * Unregister this collector from the specified registry
+   *
+   * @param registry the registry
+   */
   void unregister(final PrometheusRegistry registry);
 
   /**
@@ -57,6 +66,13 @@ public interface PrometheusCollector {
     return labels.stream().map(Label::getValue).toList();
   }
 
+  /**
+   * Add new values to an existing list of label values
+   *
+   * @param labelValues existing list of label values
+   * @param values the values to add
+   * @return a new list with new values appended to the original list
+   */
   static List<String> addLabelValues(final List<String> labelValues, final String... values) {
     final var newList = new ArrayList<String>(labelValues.size() + values.length);
     newList.addAll(labelValues);

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.metrics.prometheus;
 
+import static org.hyperledger.besu.metrics.prometheus.PrometheusCollector.getLabelValues;
+
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -93,7 +95,7 @@ public class PrometheusGauge extends CategorizedPrometheusCollector implements L
   }
 
   @Override
-  public String getName() {
+  public String getIdentifier() {
     return gauge.getPrometheusName();
   }
 
@@ -107,16 +109,16 @@ public class PrometheusGauge extends CategorizedPrometheusCollector implements L
     registry.unregister(gauge);
   }
 
-  private Observation convertToObservation(final GaugeSnapshot.GaugeDataPointSnapshot sample) {
-    final List<String> labelValues = PrometheusCollector.getLabelValues(sample.getLabels());
-
-    return new Observation(category, name, sample.getValue(), labelValues);
-  }
-
   @Override
   public Stream<Observation> streamObservations() {
     final var snapshot = gauge.collect();
     return snapshot.getDataPoints().stream().map(this::convertToObservation);
+  }
+
+  private Observation convertToObservation(final GaugeSnapshot.GaugeDataPointSnapshot sample) {
+    final List<String> labelValues = getLabelValues(sample.getLabels());
+
+    return new Observation(category, name, sample.getValue(), labelValues);
   }
 
   private record CallbackData(DoubleSupplier valueSupplier, String[] labelValues) {}

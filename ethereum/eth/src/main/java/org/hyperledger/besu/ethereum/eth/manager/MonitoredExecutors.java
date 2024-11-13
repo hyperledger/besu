@@ -155,13 +155,13 @@ public class MonitoredExecutors {
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.EXECUTORS,
-        metricName + "_completed_tasks_total",
+        metricName + "_completed_tasks",
         "Total number of tasks executed",
         executor::getCompletedTaskCount);
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.EXECUTORS,
-        metricName + "_submitted_tasks_total",
+        metricName + "_submitted_tasks",
         "Total number of tasks executed",
         executor::getTaskCount);
 

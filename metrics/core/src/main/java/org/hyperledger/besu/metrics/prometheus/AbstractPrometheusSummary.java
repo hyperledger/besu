@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.metrics.prometheus;
 
+import static org.hyperledger.besu.metrics.prometheus.PrometheusCollector.addLabelValues;
+import static org.hyperledger.besu.metrics.prometheus.PrometheusCollector.getLabelValues;
+
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
@@ -42,17 +45,14 @@ abstract class AbstractPrometheusSummary extends CategorizedPrometheusCollector 
     return collect().getDataPoints().stream()
         .flatMap(
             dataPoint -> {
-              final var labelValues = PrometheusCollector.getLabelValues(dataPoint.getLabels());
+              final var labelValues = getLabelValues(dataPoint.getLabels());
               final var quantiles = dataPoint.getQuantiles();
               final var observations = new ArrayList<Observation>(quantiles.size() + 2);
 
               if (dataPoint.hasSum()) {
                 observations.add(
                     new Observation(
-                        category,
-                        name,
-                        dataPoint.getSum(),
-                        PrometheusCollector.addLabelValues(labelValues, "sum")));
+                        category, name, dataPoint.getSum(), addLabelValues(labelValues, "sum")));
               }
 
               if (dataPoint.hasCount()) {
@@ -61,7 +61,7 @@ abstract class AbstractPrometheusSummary extends CategorizedPrometheusCollector 
                         category,
                         name,
                         dataPoint.getCount(),
-                        PrometheusCollector.addLabelValues(labelValues, "count")));
+                        addLabelValues(labelValues, "count")));
               }
 
               quantiles.forEach(
@@ -71,7 +71,7 @@ abstract class AbstractPrometheusSummary extends CategorizedPrometheusCollector 
                               category,
                               name,
                               quantile.getValue(),
-                              PrometheusCollector.addLabelValues(
+                              addLabelValues(
                                   labelValues,
                                   "quantile",
                                   Double.toString(quantile.getQuantile())))));

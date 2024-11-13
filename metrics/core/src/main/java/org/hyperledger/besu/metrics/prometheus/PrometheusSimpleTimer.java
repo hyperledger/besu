@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.metrics.prometheus;
 
+import static org.hyperledger.besu.metrics.prometheus.PrometheusCollector.addLabelValues;
+import static org.hyperledger.besu.metrics.prometheus.PrometheusCollector.getLabelValues;
+
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -53,7 +56,7 @@ class PrometheusSimpleTimer extends CategorizedPrometheusCollector
   }
 
   @Override
-  public String getName() {
+  public String getIdentifier() {
     return histogram.getPrometheusName();
   }
 
@@ -73,7 +76,7 @@ class PrometheusSimpleTimer extends CategorizedPrometheusCollector
     return snapshot.getDataPoints().stream()
         .flatMap(
             dataPoint -> {
-              final var labelValues = PrometheusCollector.getLabelValues(dataPoint.getLabels());
+              final var labelValues = getLabelValues(dataPoint.getLabels());
               if (!dataPoint.hasClassicHistogramData()) {
                 throw new IllegalStateException("Only classic histogram are supported");
               }
@@ -85,7 +88,7 @@ class PrometheusSimpleTimer extends CategorizedPrometheusCollector
                               category,
                               name,
                               bucket.getCount(),
-                              PrometheusCollector.addLabelValues(
+                              addLabelValues(
                                   labelValues, Double.toString(bucket.getUpperBound()))));
             });
   }

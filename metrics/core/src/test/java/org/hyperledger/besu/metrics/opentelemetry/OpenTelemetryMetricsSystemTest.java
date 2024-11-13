@@ -50,9 +50,9 @@ import org.junit.jupiter.api.Test;
 public class OpenTelemetryMetricsSystemTest {
 
   private static final Comparator<Observation> IGNORE_VALUES =
-      Comparator.<Observation, String>comparing(observation -> observation.getCategory().getName())
-          .thenComparing(Observation::getMetricName)
-          .thenComparing((o1, o2) -> o1.getLabels().equals(o2.getLabels()) ? 0 : 1);
+      Comparator.<Observation, String>comparing(observation -> observation.category().getName())
+          .thenComparing(Observation::metricName)
+          .thenComparing((o1, o2) -> o1.labels().equals(o2.labels()) ? 0 : 1);
 
   @BeforeEach
   public void resetGlobalOpenTelemetry() {
