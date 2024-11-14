@@ -22,7 +22,7 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -56,12 +56,12 @@ public class DefaultProtocolScheduleTest {
     builder =
         new ProtocolScheduleBuilder(
             config,
-            DEFAULT_CHAIN_ID,
+            Optional.of(DEFAULT_CHAIN_ID),
             ProtocolSpecAdapters.create(FIRST_TIMESTAMP_FORK, modifier),
             privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
-            MiningParameters.MINING_DISABLED,
+            MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
             new NoOpMetricsSystem());

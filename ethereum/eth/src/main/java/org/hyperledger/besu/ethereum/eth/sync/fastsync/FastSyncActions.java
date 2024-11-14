@@ -19,6 +19,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
@@ -48,6 +49,7 @@ public class FastSyncActions {
   protected final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
   protected final EthContext ethContext;
+  protected final PeerTaskExecutor peerTaskExecutor;
   protected final SyncState syncState;
   protected final PivotBlockSelector pivotBlockSelector;
   protected final MetricsSystem metricsSystem;
@@ -60,6 +62,7 @@ public class FastSyncActions {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final PivotBlockSelector pivotBlockSelector,
       final MetricsSystem metricsSystem) {
@@ -68,6 +71,7 @@ public class FastSyncActions {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.peerTaskExecutor = peerTaskExecutor;
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
     this.metricsSystem = metricsSystem;
@@ -164,6 +168,7 @@ public class FastSyncActions {
         protocolSchedule,
         protocolContext,
         ethContext,
+        peerTaskExecutor,
         syncState,
         metricsSystem,
         currentState,

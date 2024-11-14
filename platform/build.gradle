@@ -43,8 +43,14 @@ dependencies {
     api project(':acceptance-tests:dsl')
     api project(':besu')
     api project(':config')
+    api project(':consensus:clique')
+    api project(':consensus:common')
+    api project(':consensus:ibft')
+    api project(':consensus:merge')
+    api project(':consensus:qbft')
     api project(':crypto:algorithms')
     api project(':crypto:services')
+    api project(':datatypes')
     api project(':ethereum:api')
     api project(':ethereum:blockcreation')
     api project(':ethereum:core')
@@ -53,9 +59,12 @@ dependencies {
     api project(':ethereum:permissioning')
     api project(':ethereum:referencetests')
     api project(':ethereum:rlp')
+    api project(':ethereum:trie')
     api project(':evm')
-    api project(':datatypes')
+    api project(':metrics:core')
     api project(':plugin-api')
+    api project(':testutil')
+    api project(':util')
 
     api 'com.github.ben-manes.caffeine:caffeine:3.1.8'
 

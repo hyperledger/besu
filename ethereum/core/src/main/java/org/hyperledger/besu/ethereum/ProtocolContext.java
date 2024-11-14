@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum;
 
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -32,7 +31,6 @@ public class ProtocolContext {
   private final WorldStateArchive worldStateArchive;
   private final BadBlockManager badBlockManager;
   private final ConsensusContext consensusContext;
-  private Synchronizer synchronizer;
 
   /**
    * Constructs a new ProtocolContext with the given blockchain, world state archive, consensus
@@ -76,24 +74,6 @@ public class ProtocolContext {
         worldStateArchive,
         consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule),
         badBlockManager);
-  }
-
-  /**
-   * Gets the synchronizer of the protocol context.
-   *
-   * @return the synchronizer of the protocol context
-   */
-  public Synchronizer getSynchronizer() {
-    return synchronizer;
-  }
-
-  /**
-   * Sets the synchronizer of the protocol context.
-   *
-   * @param synchronizer the synchronizer to set
-   */
-  public void setSynchronizer(final Synchronizer synchronizer) {
-    this.synchronizer = synchronizer;
   }
 
   /**
