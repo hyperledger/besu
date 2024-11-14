@@ -14,12 +14,18 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
+import java.util.EnumSet;
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -63,5 +69,23 @@ public class MetricsOptionsTest
   @Override
   protected String[] getNonOptionFields() {
     return new String[] {"metricCategoryRegistry"};
+  }
+
+  @Test
+  public void enableRocksDbCategories() {
+    final var rocksDbMetricsCategories =
+        EnumSet.of(
+            BesuMetricCategory.KVSTORE_ROCKSDB,
+            BesuMetricCategory.KVSTORE_ROCKSDB_STATS,
+            BesuMetricCategory.KVSTORE_PRIVATE_ROCKSDB,
+            BesuMetricCategory.KVSTORE_PRIVATE_ROCKSDB_STATS);
+
+    internalTestSuccess(
+        metricsConfBuilder -> {
+          assertThat(metricsConfBuilder.build().getMetricCategories())
+              .containsExactlyInAnyOrderElementsOf(rocksDbMetricsCategories);
+        },
+        "--metrics-categories",
+        rocksDbMetricsCategories.stream().map(Enum::name).collect(Collectors.joining(",")));
   }
 }
