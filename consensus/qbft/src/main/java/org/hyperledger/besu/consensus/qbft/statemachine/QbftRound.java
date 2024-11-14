@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.qbft.statemachine;
 
 import static java.util.Collections.emptyList;
 
+import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
@@ -160,8 +161,16 @@ public class QbftRound {
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
-      blockToPublish = bestPreparedCertificate.get().getBlock();
+      Block preparedBlock = bestPreparedCertificate.get().getBlock();
+      final BftBlockInterface bftBlockInterface =
+              protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
+      blockToPublish  = bftBlockInterface.replaceRoundInBlock(
+              preparedBlock,
+              roundState.getRoundIdentifier().getRoundNumber(),
+              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     }
+
+    LOG.debug(" proposal - new/prepared block hash : {}", blockToPublish.getHash());
 
     updateStateWithProposalAndTransmit(
         blockToPublish,
@@ -332,7 +341,7 @@ public class QbftRound {
   private void peerIsCommitted(final Commit msg) {
     final boolean wasCommitted = roundState.isCommitted();
     roundState.addCommitMessage(msg);
-    if (!wasCommitted && roundState.isCommitted()) {
+    if (wasCommitted != roundState.isCommitted()) {
       importBlockToChain();
     }
   }

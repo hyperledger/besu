@@ -137,6 +137,10 @@ public class ProposalValidator {
         final PreparedRoundMetadata metadata =
             roundChangeWithLatestPreparedRound.get().getPayload().getPreparedRoundMetadata().get();
 
+        LOG.debug(
+                "Prepared Metadata blockhash : {}, proposal blockhash: {}, prepared round in message: {}, proposal round in message: {}",
+                metadata.getPreparedBlockHash(), proposal.getBlock().getHash(), metadata.getPreparedRound(), proposal.getRoundIdentifier().getRoundNumber());
+
         // The Hash in the roundchange/proposals is NOT the same as the value in the
         // prepares/roundchanges
         // as said payloads reference the block with an OLD round number in it - therefore, need
@@ -149,14 +153,14 @@ public class ProposalValidator {
             bftBlockInterface.replaceRoundInBlock(
                 proposal.getBlock(),
                 metadata.getPreparedRound(),
-                BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec));
+                BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
 
         final Hash expectedPriorBlockHash = currentBlockWithOldRound.getHash();
 
         if (!metadata.getPreparedBlockHash().equals(expectedPriorBlockHash)) {
           LOG.info(
-              "{}: Latest Prepared Metadata blockhash does not align with proposed block",
-              ERROR_PREFIX);
+              "{}: Latest Prepared Metadata blockhash does not align with proposed block. Expected: {}, Actual: {}",
+              ERROR_PREFIX, expectedPriorBlockHash, metadata.getPreparedBlockHash());
           return false;
         }
 
