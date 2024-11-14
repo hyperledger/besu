@@ -18,6 +18,7 @@
 
 ### Bug fixes
 - Fix registering new metric categories from plugins [#7825](https://github.com/hyperledger/besu/pull/7825)
+- Fix CVE-2024-47535 [7878](https://github.com/hyperledger/besu/pull/7878)
 
 ## 24.10.0
 
