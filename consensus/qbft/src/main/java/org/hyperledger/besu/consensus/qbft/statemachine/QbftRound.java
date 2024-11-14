@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.qbft.statemachine;
 
 import static java.util.Collections.emptyList;
 
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
@@ -163,8 +162,9 @@ public class QbftRound {
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
       Block preparedBlock = bestPreparedCertificate.get().getBlock();
       final BftBlockInterface bftBlockInterface =
-              protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
-      blockToPublish  = bftBlockInterface.replaceRoundInBlock(
+          protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
+      blockToPublish =
+          bftBlockInterface.replaceRoundInBlock(
               preparedBlock,
               roundState.getRoundIdentifier().getRoundNumber(),
               BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
