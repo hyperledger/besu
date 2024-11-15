@@ -46,7 +46,7 @@ responsibility for our work environment.
 7. Respect the privacy of others and the confidentiality of data you access.
 
 8. With respect to cultural differences, be conservative in what you do and liberal in what you
-   accept from others, but not to the point of accepting disrespectful, unprofessional or unfair or
+   accept from others, but not to the point of accepting disrespectful, unprofessional, unfair or
    [unwelcome behavior](#unwelcome-behavior) or [advances](#unwelcome-sexual-advance).
 
 9. Promote the rules of this Code and take action (especially if you are in a
@@ -57,7 +57,7 @@ responsibility for our work environment.
     discussions. Remember when you update an issue or respond to an email you are potentially
     sending to a large number of people.
 
-11. Step down considerately: Members of every project come and go, and the Hyperledger is no
+11. Step down considerately: Members of every project come and go, and Hyperledger is no
     different. When you leave or disengage from the project, in whole or in part, we ask that you do
     so in a way that minimizes disruption to the project. This means you should tell people you are
     leaving and take the proper steps to ensure that others can pick up where you left off.
@@ -100,7 +100,7 @@ includes the following persons:
 - Developers
 - Member representatives
 - Staff members
-- Anyone from the Public partaking in the Hyperledger work environment (e.g. contribute code,
+- Anyone from the public partaking in the Hyperledger work environment (e.g. contribute code,
   comment on our code or specs, email us, attend our conferences, functions, etc)
 
 ### Respect
@@ -122,7 +122,7 @@ Hard to define? Some questions to ask yourself are:
 - would I like an account of my behavior published in the organization's newsletter?
 - could my behavior offend or hurt other members of the work group?
 - could someone misinterpret my behavior as intentionally harmful or harassing?
-- would I treat my boss or a person I admire at work like that ?
+- would I treat my boss or a person I admire at work like that?
 - Summary: if you are unsure whether something might be welcome or unwelcome, don't do it.
 
 ### Unwelcome Sexual Advance
@@ -134,7 +134,7 @@ includes requests for sexual favors, and other verbal or physical conduct of a s
 - submission to or rejection of such conduct by an individual is used as a basis for employment
   decisions affecting the individual,
 - such conduct has the purpose or effect of unreasonably interfering with an individual's work
-  performance or creating an intimidating hostile or offensive working environment.
+  performance or creating an intimidating, hostile or offensive working environment.
 
 ### Workplace Bullying
 
@@ -145,7 +145,7 @@ against a co-worker or any professional relations.
 ### Work Environment
 
 is the set of all available means of collaboration, including, but not limited to messages to
-mailing lists, private correspondence, Web pages, chat channels, phone and video teleconferences,
+mailing lists, private correspondence, web pages, chat channels, phone and video teleconferences,
 and any kind of face-to-face meetings or discussions.
 
 ## Incident Procedure

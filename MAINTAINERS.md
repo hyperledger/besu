@@ -73,7 +73,7 @@ How to become a maintainer:
 
 The requirement to be able to be proposed as a maintainer is:
 
-- 5 significant changes on code have been authored in this repos by the proposed maintainer and accepted (merged PRs).
+- 5 significant changes to the code have been authored in this repos by the proposed maintainer and accepted (merged PRs).
   
 ### Maintainers approval process
 
@@ -83,7 +83,7 @@ The following steps must occur for a contributor to be "upgraded" as a maintaine
   - This sponsoring maintainer will create a proposal PR modifying the list of
     maintainers. (see [proposal PR template](#proposal-pr-template).)
   - The proposed maintainer accepts the nomination and expresses a willingness
-    to be a long-term (more than 6 month) committer by adding a comment in the proposal PR.
+    to be a long-term (more than 6 months) committer by adding a comment in the proposal PR.
   - The PR will be communicated in all appropriate communication channels
     including at least [besu-contributors channel on Discord](https://discord.com/invite/hyperledger),
     the [mailing list](https://lists.hyperledger.org/g/besu)
@@ -137,7 +137,7 @@ There is no contribution prescription delay.
 ```markdown
 I propose to add [maintainer github handle] as a Besu project maintainer.
 
-[maintainer github handle] contributed with many high quality commits:
+[maintainer github handle] has contributed with many high-quality commits:
 
 - [list significant achievements]
 
@@ -145,5 +145,5 @@ Here are [their past contributions on Besu project](https://github.com/hyperledg
 
 Voting ends two weeks from today.
 
-For more information on this process see the Becoming a Maintainer section in the MAINTAINERS.md file.
+For more information on this process, see the Becoming a Maintainer section in the MAINTAINERS.md file.
 ```
