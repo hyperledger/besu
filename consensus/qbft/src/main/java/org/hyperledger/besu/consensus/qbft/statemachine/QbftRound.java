@@ -211,8 +211,9 @@ public class QbftRound {
         proposal.getSignedPayload().getPayload().getProposedBlock(),
         roundChanges,
         prepares);
-    updateStateWithProposedBlock(proposal);
-    sendPrepare(block);
+    if (updateStateWithProposedBlock(proposal)) {
+      sendPrepare(block);
+    }
   }
 
   /**
