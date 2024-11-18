@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -135,7 +135,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
             protocolSchedule1,
             mockProtocolContext,
             mock(TransactionPool.class),
-            mock(MiningParameters.class),
+            mock(MiningConfiguration.class),
             mock(SyncState.class),
             mock(EthProtocolManager.class));
 

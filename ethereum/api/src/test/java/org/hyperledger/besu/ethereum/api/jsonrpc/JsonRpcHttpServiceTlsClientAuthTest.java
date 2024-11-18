@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.api.tls.SelfSignedP12Certificate;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -127,14 +127,14 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                 synchronizer,
                 MainnetProtocolSchedule.fromConfig(
                     new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
-                    MiningParameters.MINING_DISABLED,
+                    MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
                     new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
                 mock(TransactionPool.class),
-                mock(MiningParameters.class),
+                mock(MiningConfiguration.class),
                 mock(PoWMiningCoordinator.class),
                 new NoOpMetricsSystem(),
                 supportedCapabilities,

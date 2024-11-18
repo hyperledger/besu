@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -46,7 +46,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
   /**
    * Instantiates a new Bft block creator.
    *
-   * @param miningParameters the mining parameters
+   * @param miningConfiguration the mining parameters
    * @param forksSchedule the forks schedule
    * @param localAddress the local address
    * @param extraDataCalculator the extra data calculator
@@ -57,7 +57,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
    * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public BftBlockCreator(
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final ForksSchedule<? extends BftConfigOptions> forksSchedule,
       final Address localAddress,
       final ExtraDataCalculator extraDataCalculator,
@@ -67,7 +67,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final BftExtraDataCodec bftExtraDataCodec,
       final EthScheduler ethScheduler) {
     super(
-        miningParameters.setCoinbase(localAddress),
+        miningConfiguration.setCoinbase(localAddress),
         miningBeneficiaryCalculator(localAddress, forksSchedule),
         extraDataCalculator,
         transactionPool,

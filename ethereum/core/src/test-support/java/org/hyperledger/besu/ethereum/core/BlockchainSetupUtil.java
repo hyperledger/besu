@@ -152,7 +152,7 @@ public class BlockchainSetupUtil {
     return MainnetProtocolSchedule.fromConfig(
         genesisConfigFile.getConfigOptions(),
         EvmConfiguration.DEFAULT,
-        MiningParameters.newDefault(),
+        MiningConfiguration.newDefault(),
         new BadBlockManager(),
         false,
         new NoOpMetricsSystem());
@@ -194,7 +194,6 @@ public class BlockchainSetupUtil {
 
       genesisState.writeStateTo(worldArchive.getMutable());
       final ProtocolContext protocolContext = protocolContextProvider.get(blockchain, worldArchive);
-      protocolContext.setSynchronizer(new DummySynchronizer());
 
       final Path blocksPath = Path.of(chainResources.getBlocksURL().toURI());
       final List<Block> blocks = new ArrayList<>();
