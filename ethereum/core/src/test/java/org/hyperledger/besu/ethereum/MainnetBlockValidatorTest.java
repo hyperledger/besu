@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
@@ -91,7 +90,6 @@ public class MainnetBlockValidatorTest {
 
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
-    when(protocolContext.getSynchronizer()).thenReturn(mock(Synchronizer.class));
     when(worldStateArchive.getMutable(any(BlockHeader.class), anyBoolean()))
         .thenReturn(Optional.of(worldState));
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
