@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -140,7 +139,7 @@ public class PrivateTransactionSimulator {
             transaction,
             protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
             OperationTracer.NO_TRACING,
-            new CachingBlockHashLookup(header, blockchain),
+            protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, header),
             privacyGroupId);
 
     return Optional.of(result);
