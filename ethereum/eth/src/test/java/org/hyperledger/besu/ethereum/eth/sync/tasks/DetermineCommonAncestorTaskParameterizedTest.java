@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -151,7 +152,11 @@ public class DetermineCommonAncestorTaskParameterizedTest {
 
     final EthContext ethContext = ethProtocolManager.ethContext();
     final ProtocolContext protocolContext =
-        new ProtocolContext(localBlockchain, worldStateArchive, null, new BadBlockManager());
+        new ProtocolContext(
+            localBlockchain,
+            worldStateArchive,
+            mock(ConsensusContext.class),
+            new BadBlockManager());
 
     final EthTask<BlockHeader> task =
         DetermineCommonAncestorTask.create(
