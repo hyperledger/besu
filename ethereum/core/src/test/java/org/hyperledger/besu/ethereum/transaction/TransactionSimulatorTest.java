@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
@@ -95,7 +95,7 @@ public class TransactionSimulatorTest {
 
   @BeforeEach
   public void setUp() {
-    final var miningParameters = MiningParameters.newDefault();
+    final var miningParameters = MiningConfiguration.newDefault();
     this.transactionSimulator =
         new TransactionSimulator(
             blockchain, worldStateArchive, protocolSchedule, miningParameters, 0);

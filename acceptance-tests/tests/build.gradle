@@ -31,6 +31,7 @@ dependencies {
   api 'org.slf4j:slf4j-api'
 
   implementation project(':crypto:algorithms')
+  implementation project(':ethereum:eth')
 
   testImplementation project(':acceptance-tests:dsl')
   testImplementation project(':acceptance-tests:test-plugins')
@@ -42,6 +43,7 @@ dependencies {
   testImplementation project(':ethereum:api')
   testImplementation project(':ethereum:core')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':ethereum:eth')
   testImplementation project(':ethereum:p2p')
   testImplementation project(':ethereum:permissioning')
   testImplementation project(':ethereum:rlp')
@@ -68,21 +70,19 @@ dependencies {
   testImplementation 'io.opentracing:opentracing-api'
   testImplementation 'io.opentracing:opentracing-util'
   testImplementation 'io.vertx:vertx-core'
-  testImplementation 'junit:junit'
   testImplementation 'org.apache.commons:commons-compress'
   testImplementation 'org.apache.logging.log4j:log4j-core'
   testImplementation 'io.tmio:tuweni-crypto'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'
-  testImplementation 'org.testcontainers:testcontainers'
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
   testImplementation 'org.web3j:core'
   testImplementation 'org.wiremock:wiremock'
+  testImplementation 'com.google.dagger:dagger'
+  testAnnotationProcessor 'com.google.dagger:dagger-compiler'
   testImplementation project(path: ':acceptance-tests:tests:shanghai')
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
 test.enabled = false

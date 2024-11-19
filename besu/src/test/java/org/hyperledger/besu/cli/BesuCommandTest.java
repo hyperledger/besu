@@ -16,7 +16,6 @@ package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
@@ -33,14 +32,16 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SEPOLIA_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SEPOLIA_DISCOVERY_URL;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
-import static org.junit.Assume.assumeThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -57,7 +58,7 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -100,7 +101,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 
@@ -278,8 +278,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(ethNetworkArg.capture(), any());
-    final ArgumentCaptor<MiningParameters> miningArg =
-        ArgumentCaptor.forClass(MiningParameters.class);
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
     verify(mockControllerBuilder).dataDirectory(isNotNull());
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
@@ -567,7 +567,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand("--genesis-file", genesisFile.toString(), "--network", "mainnet");
 
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -579,7 +579,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String nonExistentGenesis = "non-existent-genesis.json";
     parseCommand("--genesis-file", nonExistentGenesis);
 
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith("Unable to load genesis file");
@@ -1178,7 +1178,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand(
         "--remote-connections-limit-enabled", "--remote-connections-max-percentage", "invalid");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -1191,7 +1191,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand(
         "--remote-connections-limit-enabled", "--remote-connections-max-percentage", "150");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -1226,7 +1226,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void syncMode_invalid() {
     parseCommand("--sync-mode", "bogus");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -1276,7 +1276,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void helpShouldDisplayFastSyncOptions() {
     parseCommand("--help");
 
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).contains("--fast-sync-min-peers");
     // whitelist is now a hidden option
@@ -1336,7 +1336,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void parsesInvalidFastSyncMinPeersOptionWrongFormatShouldFail() {
 
     parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "ten");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Invalid value for option '--fast-sync-min-peers': 'ten' is not an int");
@@ -1359,7 +1359,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void netRestrictInvalidShouldFail() {
     final String subnet = "127.0.0.1/abc";
     parseCommand("--net-restrict", subnet);
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Invalid value for option '--net-restrict'");
   }
@@ -1383,7 +1383,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void ethStatsContactOptionCannotBeUsedWithoutEthStatsServerProvided() {
     parseCommand("--ethstats-contact", "besu-updated");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -1391,7 +1391,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void bonsaiLimitTrieLogsEnabledByDefault() {
+  public void diffbasedLimitTrieLogsEnabledByDefault() {
     parseCommand();
     verify(mockControllerBuilder)
         .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
@@ -1399,7 +1399,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isTrue();
+    assertThat(
+            dataStorageConfiguration
+                .getDiffBasedSubStorageConfiguration()
+                .getLimitTrieLogsEnabled())
+        .isTrue();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1414,7 +1418,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isFalse();
+    assertThat(
+            dataStorageConfiguration
+                .getDiffBasedSubStorageConfiguration()
+                .getLimitTrieLogsEnabled())
+        .isFalse();
     verify(mockLogger)
         .warn(
             "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
@@ -1428,7 +1436,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void parsesInvalidWhenFullSyncAndBonsaiLimitTrieLogsExplicitlyTrue() {
     parseCommand("--sync-mode=FULL", "--bonsai-limit-trie-logs-enabled=true");
 
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -1449,7 +1457,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad()).isEqualTo(11);
+    assertThat(dataStorageConfiguration.getDiffBasedSubStorageConfiguration().getMaxLayersToLoad())
+        .isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1459,7 +1468,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand("--data-storage-format", "BONSAI", "--bonsai-maximum-back-layers-to-load", "ten");
 
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -1493,7 +1502,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void dnsUpdateEnabledOptionCannotBeUsedWithoutDnsEnabled() {
     parseCommand("--Xdns-update-enabled", "true");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -1713,6 +1722,17 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void metricsUnknownCategoryRaiseError() {
+    parseCommand("--metrics-enabled", "--metrics-category", "UNKNOWN_CATEGORY");
+
+    verifyNoInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith("--metrics-categories contains unknown categories: [UNKNOWN_CATEGORY]");
+  }
+
+  @Test
   public void metricsPushEnabledPropertyMustBeUsed() {
     parseCommand("--metrics-push-enabled");
 
@@ -1791,7 +1811,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void metricsAndMetricsPushMustNotBeUsedTogether() {
     parseCommand("--metrics-enabled", "--metrics-push-enabled");
 
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -2015,7 +2035,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void fullCLIOptionsShown() {
     parseCommand("--help");
 
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).contains("--config-file");
     assertThat(commandOutput.toString(UTF_8)).contains("--data-path");
@@ -2392,19 +2412,22 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void logsWarningWhenFailToLoadJemalloc() {
-    assumeThat(PlatformDetector.getOSType(), is("linux"));
-    setEnvironmentVariable("BESU_USING_JEMALLOC", "true");
+    assumeTrue(PlatformDetector.getOSType().equals("linux"));
+    setEnvironmentVariable("BESU_USING_JEMALLOC", "false");
     parseCommand();
     verify(mockLogger)
         .warn(
-            eq(
-                "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version"),
-            any(Throwable.class));
+            argThat(
+                arg ->
+                    arg.equals(
+                            "besu_using_jemalloc is present but is not set to true, jemalloc library not loaded")
+                        || arg.equals(
+                            "besu_using_jemalloc is present but we failed to load jemalloc library to get the version")));
   }
 
   @Test
   public void logsSuggestInstallingJemallocWhenEnvVarNotPresent() {
-    assumeThat(PlatformDetector.getOSType(), is("linux"));
+    assumeTrue(PlatformDetector.getOSType().equals("linux"));
     parseCommand();
     verify(mockLogger)
         .info("jemalloc library not found, memory usage may be reduced by installing it");
@@ -2552,8 +2575,9 @@ public class BesuCommandTest extends CommandTestAbstract {
             besuCommand
                 .getDataStorageOptions()
                 .toDomainObject()
+                .getDiffBasedSubStorageConfiguration()
                 .getUnstable()
-                .getBonsaiFullFlatDbEnabled())
+                .getFullFlatDbEnabled())
         .isTrue();
   }
 
@@ -2564,8 +2588,9 @@ public class BesuCommandTest extends CommandTestAbstract {
             besuCommand
                 .dataStorageOptions
                 .toDomainObject()
+                .getDiffBasedSubStorageConfiguration()
                 .getUnstable()
-                .getBonsaiFullFlatDbEnabled())
+                .getFullFlatDbEnabled())
         .isFalse();
   }
 

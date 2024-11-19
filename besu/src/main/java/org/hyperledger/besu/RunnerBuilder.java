@@ -23,7 +23,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIV
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
+import org.hyperledger.besu.cli.options.EthstatsOptions;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -70,7 +70,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -697,7 +697,7 @@ public class RunnerBuilder {
     final List<EnodeURL> bootnodes = discoveryConfiguration.getBootnodes();
 
     final Synchronizer synchronizer = besuController.getSynchronizer();
-    final MiningParameters miningParameters = besuController.getMiningParameters();
+    final MiningConfiguration miningParameters = besuController.getMiningParameters();
 
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(
@@ -775,6 +775,7 @@ public class RunnerBuilder {
 
     final TransactionPool transactionPool = besuController.getTransactionPool();
     final MiningCoordinator miningCoordinator = besuController.getMiningCoordinator();
+    final MiningConfiguration miningConfiguration = besuController.getMiningParameters();
 
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
@@ -784,7 +785,7 @@ public class RunnerBuilder {
             Optional.of(dataDir.resolve(CACHE_PATH)),
             Optional.of(besuController.getProtocolManager().ethContext().getScheduler()),
             apiConfiguration,
-            miningParameters);
+            miningConfiguration);
 
     final PrivacyParameters privacyParameters = besuController.getPrivacyParameters();
 
@@ -803,7 +804,7 @@ public class RunnerBuilder {
 
     Optional<StratumServer> stratumServer = Optional.empty();
 
-    if (miningParameters.isStratumMiningEnabled()) {
+    if (miningConfiguration.isStratumMiningEnabled()) {
       if (!(miningCoordinator instanceof PoWMiningCoordinator powMiningCoordinator)) {
         throw new IllegalArgumentException(
             "Stratum mining requires the network option(--network) to be set to CLASSIC. Stratum server requires a PoWMiningCoordinator not "
@@ -814,9 +815,9 @@ public class RunnerBuilder {
               new StratumServer(
                   vertx,
                   powMiningCoordinator,
-                  miningParameters.getStratumPort(),
-                  miningParameters.getStratumNetworkInterface(),
-                  miningParameters.getUnstable().getStratumExtranonce(),
+                  miningConfiguration.getStratumPort(),
+                  miningConfiguration.getStratumNetworkInterface(),
+                  miningConfiguration.getUnstable().getStratumExtranonce(),
                   metricsSystem));
       miningCoordinator.addEthHashObserver(stratumServer.get());
       LOG.debug("added ethash observer: {}", stratumServer.get());
@@ -850,7 +851,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
-              miningParameters,
+              miningConfiguration,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -898,7 +899,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
-              miningParameters,
+              miningConfiguration,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -993,7 +994,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
-              miningParameters,
+              miningConfiguration,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -1075,7 +1076,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
-              miningParameters,
+              miningConfiguration,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -1117,7 +1118,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
-              miningParameters,
+              miningConfiguration,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -1280,7 +1281,7 @@ public class RunnerBuilder {
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
       final TransactionPool transactionPool,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final MiningCoordinator miningCoordinator,
       final ObservableMetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
@@ -1316,7 +1317,7 @@ public class RunnerBuilder {
                 protocolContext,
                 filterManager,
                 transactionPool,
-                miningParameters,
+                miningConfiguration,
                 miningCoordinator,
                 metricsSystem,
                 supportedCapabilities,

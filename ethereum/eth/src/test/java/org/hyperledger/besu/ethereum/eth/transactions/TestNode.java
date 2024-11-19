@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -123,7 +123,7 @@ public class TestNode implements Closeable {
             GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
             false,
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
+            MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
             new NoOpMetricsSystem());
@@ -136,7 +136,7 @@ public class TestNode implements Closeable {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     genesisState.writeStateTo(worldStateArchive.getMutable());
     final ProtocolContext protocolContext =
-        ProtocolContext.create(
+        new ProtocolContext(
             blockchain, worldStateArchive, mock(ConsensusContext.class), new BadBlockManager());
 
     final SyncState syncState = mock(SyncState.class);
@@ -183,7 +183,7 @@ public class TestNode implements Closeable {
             syncState,
             TransactionPoolConfiguration.DEFAULT,
             new BlobCache(),
-            MiningParameters.newDefault());
+            MiningConfiguration.newDefault());
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(

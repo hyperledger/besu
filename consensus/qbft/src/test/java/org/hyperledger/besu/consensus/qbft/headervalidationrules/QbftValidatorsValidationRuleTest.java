@@ -44,7 +44,7 @@ public class QbftValidatorsValidationRuleTest {
     final QbftValidatorsValidationRule qbftValidatorsValidationRule =
         new QbftValidatorsValidationRule(true);
     final ProtocolContext context =
-        ProtocolContext.create(
+        new ProtocolContext(
             null,
             null,
             setupContextWithBftExtraData(BftContext.class, Collections.emptyList(), bftExtraData),
@@ -63,7 +63,7 @@ public class QbftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        ProtocolContext.create(
+        new ProtocolContext(
             null,
             null,
             setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
@@ -81,7 +81,7 @@ public class QbftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        ProtocolContext.create(
+        new ProtocolContext(
             null,
             null,
             setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
@@ -95,7 +95,7 @@ public class QbftValidatorsValidationRuleTest {
     final QbftValidatorsValidationRule qbftValidatorsValidationRule =
         new QbftValidatorsValidationRule(true);
     final ProtocolContext context =
-        ProtocolContext.create(
+        new ProtocolContext(
             null,
             null,
             setupContextWithBftExtraData(BftContext.class, Collections.emptyList(), bftExtraData),

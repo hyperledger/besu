@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 /** The Migrating protocol context. */
 public class MigratingProtocolContext extends ProtocolContext {
 
-  private ForksSchedule<ConsensusContext> consensusContextSchedule;
+  private final ForksSchedule<ConsensusContext> consensusContextSchedule;
 
   /**
    * Instantiates a new Migrating protocol context.
@@ -33,35 +33,13 @@ public class MigratingProtocolContext extends ProtocolContext {
    * @param migratingConsensusContext the consensus context
    * @param badBlockManager the cache to use to keep invalid blocks
    */
-  private MigratingProtocolContext(
+  public MigratingProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final MigratingConsensusContext migratingConsensusContext,
       final BadBlockManager badBlockManager) {
     super(blockchain, worldStateArchive, migratingConsensusContext, badBlockManager);
     this.consensusContextSchedule = migratingConsensusContext.getConsensusContextSchedule();
-  }
-
-  /**
-   * Init protocol context.
-   *
-   * @param blockchain the blockchain
-   * @param worldStateArchive the world state archive
-   * @param badBlockManager the cache to use to keep invalid blocks
-   * @return the protocol context
-   */
-  public static MigratingProtocolContext create(
-      final MutableBlockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final MigratingConsensusContext migratingConsensusContext,
-      final BadBlockManager badBlockManager) {
-    return new MigratingProtocolContext(
-        blockchain, worldStateArchive, migratingConsensusContext, badBlockManager);
-  }
-
-  public void setConsensusContextSchedule(
-      final ForksSchedule<ConsensusContext> consensusContextSchedule) {
-    this.consensusContextSchedule = consensusContextSchedule;
   }
 
   @Override

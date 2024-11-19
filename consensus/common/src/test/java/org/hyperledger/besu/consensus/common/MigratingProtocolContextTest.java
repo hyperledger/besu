@@ -45,7 +45,7 @@ public class MigratingProtocolContextTest {
         new ForksSchedule<>(List.of(new ForkSpec<>(0L, context1), new ForkSpec<>(10L, context2)));
 
     final MigratingProtocolContext migratingProtocolContext =
-        MigratingProtocolContext.create(
+        new MigratingProtocolContext(
             blockchain,
             worldStateArchive,
             new MigratingConsensusContext(contextSchedule),

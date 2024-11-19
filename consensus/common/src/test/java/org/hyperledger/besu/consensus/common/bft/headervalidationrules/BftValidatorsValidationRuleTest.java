@@ -45,7 +45,7 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        ProtocolContext.create(
+        new ProtocolContext(
             null,
             null,
             setupContextWithBftExtraData(validators, bftExtraData),
@@ -63,7 +63,7 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        ProtocolContext.create(
+        new ProtocolContext(
             null,
             null,
             setupContextWithBftExtraData(validators, bftExtraData),
@@ -84,7 +84,7 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(2), AddressHelpers.ofValue(3), AddressHelpers.ofValue(4));
 
     final ProtocolContext context =
-        ProtocolContext.create(
+        new ProtocolContext(
             null,
             null,
             setupContextWithBftExtraData(storedValidators, bftExtraData),

@@ -124,7 +124,7 @@ public class IbftRoundIntegrationTest {
     when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
 
     protocolContext =
-        ProtocolContext.create(
+        new ProtocolContext(
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(emptyList(), bftExtraDataEncoder),

@@ -59,7 +59,7 @@ public class BlockMinerTest {
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
     final ProtocolContext protocolContext =
-        ProtocolContext.create(null, null, mock(ConsensusContext.class), new BadBlockManager());
+        new ProtocolContext(null, null, mock(ConsensusContext.class), new BadBlockManager());
 
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
@@ -103,7 +103,7 @@ public class BlockMinerTest {
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
     final ProtocolContext protocolContext =
-        ProtocolContext.create(null, null, mock(ConsensusContext.class), new BadBlockManager());
+        new ProtocolContext(null, null, mock(ConsensusContext.class), new BadBlockManager());
 
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
@@ -151,7 +151,7 @@ public class BlockMinerTest {
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
     final ProtocolContext protocolContext =
-        ProtocolContext.create(null, null, mock(ConsensusContext.class), new BadBlockManager());
+        new ProtocolContext(null, null, mock(ConsensusContext.class), new BadBlockManager());
 
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =

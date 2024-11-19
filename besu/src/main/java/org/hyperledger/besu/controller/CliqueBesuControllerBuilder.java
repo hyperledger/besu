@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -78,8 +78,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final MiningParameters miningParameters) {
-    return new CliqueJsonRpcMethods(protocolContext, protocolSchedule, miningParameters);
+      final MiningConfiguration miningConfiguration) {
+    return new CliqueJsonRpcMethods(protocolContext, protocolSchedule, miningConfiguration);
   }
 
   @Override
@@ -87,7 +87,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
     final CliqueMinerExecutor miningExecutor =
@@ -96,7 +96,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             protocolSchedule,
             transactionPool,
             nodeKey,
-            miningParameters,
+            miningConfiguration,
             new CliqueBlockScheduler(
                 clock,
                 protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider(),
@@ -117,7 +117,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         .getBlockchain()
         .observeBlockAdded(
             o ->
-                miningParameters.setBlockPeriodSeconds(
+                miningConfiguration.setBlockPeriodSeconds(
                     forksSchedule
                         .getFork(o.getBlock().getHeader().getNumber() + 1)
                         .getValue()
@@ -139,7 +139,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
         metricsSystem,
@@ -179,7 +179,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  public MiningParameters getMiningParameterOverrides(final MiningParameters fromCli) {
+  public MiningConfiguration getMiningParameterOverrides(final MiningConfiguration fromCli) {
     // Clique mines by default, reflect that with in the mining parameters:
     return fromCli.setMiningEnabled(true);
   }

@@ -99,7 +99,7 @@ public class ProposalValidatorTest {
   @BeforeEach
   public void setup() {
     protocolContext =
-        ProtocolContext.create(
+        new ProtocolContext(
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataEncoder),

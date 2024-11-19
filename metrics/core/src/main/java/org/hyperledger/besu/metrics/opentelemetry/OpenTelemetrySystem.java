@@ -20,6 +20,7 @@ import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -40,9 +41,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.inject.Singleton;
 
+import com.google.common.cache.Cache;
 import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
@@ -243,6 +246,13 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   }
 
   @Override
+  public void trackExternalSummary(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final Supplier<ExternalSummary> summarySupplier) {}
+
+  @Override
   public LabelledMetric<OperationTimer> createLabelledTimer(
       final MetricCategory category,
       final String name,
@@ -276,6 +286,10 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
           .buildWithCallback(res -> res.record(valueSupplier.getAsDouble(), Attributes.empty()));
     }
   }
+
+  @Override
+  public void createGuavaCacheCollector(
+      final MetricCategory category, final String name, final Cache<?, ?> cache) {}
 
   @Override
   public LabelledGauge createLabelledGauge(
@@ -376,6 +390,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   }
 
   /** Shuts down the OpenTelemetry exporters, blocking until they have completed orderly. */
+  @Override
   public void shutdown() {
     final CompletableResultCode result =
         CompletableResultCode.ofAll(

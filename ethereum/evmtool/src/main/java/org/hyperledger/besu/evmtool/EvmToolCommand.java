@@ -529,9 +529,7 @@ public class EvmToolCommand implements Runnable {
               messageFrame
                   .getExceptionalHaltReason()
                   .ifPresent(haltReason -> out.println(haltReason));
-              messageFrame
-                  .getRevertReason()
-                  .ifPresent(bytes -> out.println(new String(bytes.toArrayUnsafe(), UTF_8)));
+              messageFrame.getRevertReason().ifPresent(bytes -> out.println(bytes.toHexString()));
             }
           }
         }

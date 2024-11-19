@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -46,7 +46,7 @@ public class BlockchainImporter {
     protocolSchedule =
         MainnetProtocolSchedule.fromConfig(
             GenesisConfigFile.fromConfig(genesisJson).getConfigOptions(),
-            MiningParameters.newDefault(),
+            MiningConfiguration.newDefault(),
             new BadBlockManager(),
             false,
             new NoOpMetricsSystem());

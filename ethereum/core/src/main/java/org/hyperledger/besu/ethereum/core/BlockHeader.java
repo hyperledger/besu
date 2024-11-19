@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /** A mined Ethereum block header. */
 public class BlockHeader extends SealableBlockHeader
@@ -64,7 +65,8 @@ public class BlockHeader extends SealableBlockHeader
       final Long blobGasUsed,
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
-      final Hash requestsRoot,
+      final Hash requestsHash,
+      final UInt64 targetBlobCount,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -86,7 +88,8 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestsRoot);
+        requestsHash,
+        targetBlobCount);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -100,8 +103,8 @@ public class BlockHeader extends SealableBlockHeader
             .map(wsRoot -> wsRoot.equals(Hash.EMPTY_TRIE_HASH))
             .orElse(true)
         && blockHeader
-            .getRequestsRoot()
-            .map(reqRoot -> reqRoot.equals(Hash.EMPTY_TRIE_HASH))
+            .getRequestsHash()
+            .map(reqHash -> reqHash.equals(Hash.EMPTY_REQUESTS_HASH))
             .orElse(true);
   }
 
@@ -185,8 +188,11 @@ public class BlockHeader extends SealableBlockHeader
       if (parentBeaconBlockRoot == null) break;
       out.writeBytes(parentBeaconBlockRoot);
 
-      if (requestsRoot == null) break;
-      out.writeBytes(requestsRoot);
+      if (requestsHash == null) break;
+      out.writeBytes(requestsHash);
+
+      if (targetBlobCount == null) break;
+      out.writeUInt64Scalar(targetBlobCount);
     } while (false);
     out.endList();
   }
@@ -218,7 +224,8 @@ public class BlockHeader extends SealableBlockHeader
     final BlobGas excessBlobGas =
         !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
-    final Hash requestsRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+    final Hash requestsHash = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+    final UInt64 targetBlobCount = !input.isEndOfCurrentList() ? input.readUInt64Scalar() : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -241,7 +248,8 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestsRoot,
+        requestsHash,
+        targetBlobCount,
         blockHeaderFunctions);
   }
 
@@ -292,8 +300,11 @@ public class BlockHeader extends SealableBlockHeader
     if (parentBeaconBlockRoot != null) {
       sb.append("parentBeaconBlockRoot=").append(parentBeaconBlockRoot).append(", ");
     }
-    if (requestsRoot != null) {
-      sb.append("requestsRoot=").append(requestsRoot);
+    if (requestsHash != null) {
+      sb.append("requestsHash=").append(requestsHash);
+    }
+    if (targetBlobCount != null) {
+      sb.append("targetBlobCount=").append(targetBlobCount);
     }
     return sb.append("}").toString();
   }
@@ -326,9 +337,10 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getExcessBlobGas().map(BlobGas.class::cast).orElse(null),
         pluginBlockHeader.getParentBeaconBlockRoot().orElse(null),
         pluginBlockHeader
-            .getRequestsRoot()
+            .getRequestsHash()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
+        pluginBlockHeader.getTargetBlobCount().orElse(null),
         blockHeaderFunctions);
   }
 

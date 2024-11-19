@@ -152,7 +152,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
 
     final EthContext ethContext = ethProtocolManager.ethContext();
     final ProtocolContext protocolContext =
-        ProtocolContext.create(
+        new ProtocolContext(
             localBlockchain,
             worldStateArchive,
             mock(ConsensusContext.class),

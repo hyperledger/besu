@@ -69,7 +69,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
@@ -172,7 +172,7 @@ public class QbftBlockHeightManagerTest {
     when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
 
     protocolContext =
-        ProtocolContext.create(
+        new ProtocolContext(
             blockchain,
             null,
             setupContextWithBftExtraDataEncoder(
@@ -182,12 +182,12 @@ public class QbftBlockHeightManagerTest {
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(
             new StubGenesisConfigOptions(),
-            BigInteger.ONE,
+            Optional.of(BigInteger.ONE),
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
+            MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
             new NoOpMetricsSystem());

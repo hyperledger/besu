@@ -49,9 +49,9 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -116,7 +116,7 @@ public class CliqueBlockCreatorTest {
             PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
+            MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
             new NoOpMetricsSystem(),
@@ -128,7 +128,7 @@ public class CliqueBlockCreatorTest {
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
     blockchain = createInMemoryBlockchain(genesis);
     protocolContext =
-        ProtocolContext.create(blockchain, stateArchive, cliqueContext, new BadBlockManager());
+        new ProtocolContext(blockchain, stateArchive, cliqueContext, new BadBlockManager());
     epochManager = new EpochManager(10);
 
     // Add a block above the genesis
@@ -150,11 +150,11 @@ public class CliqueBlockCreatorTest {
 
     final Address coinbase = AddressHelpers.ofValue(1);
 
-    final MiningParameters miningParameters = createMiningParameters(extraData, coinbase);
+    final MiningConfiguration miningConfiguration = createMiningParameters(extraData, coinbase);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
-            miningParameters,
+            miningConfiguration,
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
@@ -179,11 +179,11 @@ public class CliqueBlockCreatorTest {
     when(voteProvider.getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
-    final MiningParameters miningParameters = createMiningParameters(extraData, coinbase);
+    final MiningConfiguration miningConfiguration = createMiningParameters(extraData, coinbase);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
-            miningParameters,
+            miningConfiguration,
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
@@ -213,11 +213,11 @@ public class CliqueBlockCreatorTest {
     when(mockVoteProvider.getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
-    final MiningParameters miningParameters = createMiningParameters(extraData, coinbase);
+    final MiningConfiguration miningConfiguration = createMiningParameters(extraData, coinbase);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
-            miningParameters,
+            miningConfiguration,
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
@@ -256,10 +256,10 @@ public class CliqueBlockCreatorTest {
     return transactionPool;
   }
 
-  private static MiningParameters createMiningParameters(
+  private static MiningConfiguration createMiningParameters(
       final Bytes extraData, final Address coinbase) {
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
+    final MiningConfiguration miningConfiguration =
+        ImmutableMiningConfiguration.builder()
             .mutableInitValues(
                 MutableInitValues.builder()
                     .extraData(extraData)
@@ -268,6 +268,6 @@ public class CliqueBlockCreatorTest {
                     .coinbase(coinbase)
                     .build())
             .build();
-    return miningParameters;
+    return miningConfiguration;
   }
 }

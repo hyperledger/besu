@@ -27,7 +27,7 @@
         "blobGasUsed": "0x00",
         "excessBlobGas": "0x00",
         "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "requestsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+        "requestsHash": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
         "hash": "0x367310df4a31070aa9a5c92cb61ab8bb2742db0162619ed77594fbec6f0ddbd9"
       },
       "pre": {
@@ -219,7 +219,7 @@
             "blobGasUsed": "0x00",
             "excessBlobGas": "0x00",
             "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "requestsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+            "requestsHash": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
             "hash": "0xfb5d1d0e218fa7873bc188f07f3e0a7c78027ff6e6e199c48ba1facd3c3726fd"
           },
           "transactions": [

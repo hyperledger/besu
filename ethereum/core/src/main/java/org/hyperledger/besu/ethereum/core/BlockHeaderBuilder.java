@@ -34,6 +34,7 @@ import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /** A utility class for building block headers. */
 public class BlockHeaderBuilder {
@@ -49,7 +50,7 @@ public class BlockHeaderBuilder {
   private Hash transactionsRoot;
 
   private Hash withdrawalsRoot = null;
-  private Hash requestsRoot = null;
+  private Hash requestsHash = null;
 
   private Hash receiptsRoot;
 
@@ -80,6 +81,7 @@ public class BlockHeaderBuilder {
   private Long blobGasUsed = null;
   private BlobGas excessBlobGas = null;
   private Bytes32 parentBeaconBlockRoot = null;
+  private UInt64 targetBlobCount = null;
 
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
@@ -128,7 +130,8 @@ public class BlockHeaderBuilder {
         .blobGasUsed(header.getBlobGasUsed().orElse(null))
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
-        .requestsRoot(header.getRequestsRoot().orElse(null));
+        .requestsHash(header.getRequestsHash().orElse(null))
+        .targetBlobCount(header.getTargetBlobCount().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -152,7 +155,8 @@ public class BlockHeaderBuilder {
             .withdrawalsRoot(fromBuilder.withdrawalsRoot)
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
-            .requestsRoot(fromBuilder.requestsRoot)
+            .requestsHash(fromBuilder.requestsHash)
+            .targetBlobCount(fromBuilder.targetBlobCount)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -161,7 +165,7 @@ public class BlockHeaderBuilder {
   public static BlockHeaderBuilder createPending(
       final ProtocolSpec protocolSpec,
       final BlockHeader parentHeader,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final long timestamp,
       final Optional<Bytes32> maybePrevRandao,
       final Optional<Bytes32> maybeParentBeaconBlockRoot) {
@@ -172,7 +176,7 @@ public class BlockHeaderBuilder {
             .getGasLimitCalculator()
             .nextGasLimit(
                 parentHeader.getGasLimit(),
-                miningParameters.getTargetGasLimit().orElse(parentHeader.getGasLimit()),
+                miningConfiguration.getTargetGasLimit().orElse(parentHeader.getGasLimit()),
                 newBlockNumber);
 
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
@@ -197,7 +201,7 @@ public class BlockHeaderBuilder {
 
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
-        .coinbase(miningParameters.getCoinbase().orElseThrow())
+        .coinbase(miningConfiguration.getCoinbase().orElseThrow())
         .difficulty(difficulty)
         .number(newBlockNumber)
         .gasLimit(gasLimit)
@@ -231,7 +235,8 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestsRoot,
+        requestsHash,
+        targetBlobCount,
         blockHeaderFunctions);
   }
 
@@ -247,7 +252,8 @@ public class BlockHeaderBuilder {
         timestamp,
         baseFee,
         mixHashOrPrevRandao,
-        parentBeaconBlockRoot);
+        parentBeaconBlockRoot,
+        targetBlobCount);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -273,7 +279,8 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestsRoot);
+        requestsHash,
+        targetBlobCount);
   }
 
   private void validateBlockHeader() {
@@ -313,6 +320,7 @@ public class BlockHeaderBuilder {
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
     processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     processableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
+    processableBlockHeader.getTargetBlobCount().ifPresent(this::targetBlobCount);
     return this;
   }
 
@@ -337,7 +345,8 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getBlobGasUsed().ifPresent(this::blobGasUsed);
     sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
-    requestsRoot(sealableBlockHeader.getRequestsRoot().orElse(null));
+    requestsHash(sealableBlockHeader.getRequestsHash().orElse(null));
+    sealableBlockHeader.getTargetBlobCount().ifPresent(this::targetBlobCount);
     return this;
   }
 
@@ -452,8 +461,8 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder requestsRoot(final Hash hash) {
-    this.requestsRoot = hash;
+  public BlockHeaderBuilder requestsHash(final Hash hash) {
+    this.requestsHash = hash;
     return this;
   }
 
@@ -469,6 +478,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder parentBeaconBlockRoot(final Bytes32 parentBeaconBlockRoot) {
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
+    return this;
+  }
+
+  public BlockHeaderBuilder targetBlobCount(final UInt64 targetBlobCount) {
+    this.targetBlobCount = targetBlobCount;
     return this;
   }
 }

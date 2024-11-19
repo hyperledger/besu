@@ -104,7 +104,7 @@ public abstract class AbstractBlockPropagationManagerTest {
     protocolSchedule = blockchainUtil.getProtocolSchedule();
     final ProtocolContext tempProtocolContext = blockchainUtil.getProtocolContext();
     protocolContext =
-        ProtocolContext.create(
+        new ProtocolContext(
             blockchain,
             tempProtocolContext.getWorldStateArchive(),
             tempProtocolContext.getConsensusContext(ConsensusContext.class),
