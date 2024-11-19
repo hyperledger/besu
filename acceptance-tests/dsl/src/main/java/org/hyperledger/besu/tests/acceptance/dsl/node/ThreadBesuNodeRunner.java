@@ -494,6 +494,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final RpcEndpointServiceImpl rpcEndpointServiceImpl,
         final BesuConfiguration commonPluginConfiguration,
         final PermissioningServiceImpl permissioningService,
+        final MetricsConfiguration metricsConfiguration,
         final MetricCategoryRegistryImpl metricCategoryRegistry,
         final MetricsSystem metricsSystem,
         final @Named("ExtraCLIOptions") List<String> extraCLIOptions,
@@ -512,6 +513,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           TransactionSimulationService.class, transactionSimulationServiceImpl);
       besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
       besuPluginContext.addService(BesuConfiguration.class, commonPluginConfiguration);
+      metricCategoryRegistry.setMetricsConfiguration(metricsConfiguration);
       besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
       besuPluginContext.addService(MetricsSystem.class, metricsSystem);
 
