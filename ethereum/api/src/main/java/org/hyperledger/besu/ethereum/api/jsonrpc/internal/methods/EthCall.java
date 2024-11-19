@@ -120,14 +120,13 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   @VisibleForTesting
   protected Optional<AccountOverrideMap> getAddressAccountOverrideMap(
       final JsonRpcRequestContext request) {
-    Optional<AccountOverrideMap> maybeStateOverrides;
     try {
-      maybeStateOverrides = request.getOptionalParameter(2, AccountOverrideMap.class);
+      return request.getOptionalParameter(2, AccountOverrideMap.class);
     } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcRequestException(
           "Invalid account overrides parameter (index 2)", RpcErrorType.INVALID_CALL_PARAMS, e);
     }
-    return maybeStateOverrides;
+    return Optional.empty();
   }
 
   @Override
