@@ -15,7 +15,6 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.metrics.rocksdb.RocksDBStats;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -107,10 +106,7 @@ public class RocksDBMetricsFactory {
                 "database")
             .labels(rocksDbConfiguration.getLabel());
 
-    if (metricsSystem instanceof PrometheusMetricsSystem) {
-      RocksDBStats.registerRocksDBMetrics(
-          stats, (PrometheusMetricsSystem) metricsSystem, statsDbMetricCategory);
-    }
+    RocksDBStats.registerRocksDBMetrics(stats, metricsSystem, statsDbMetricCategory);
 
     metricsSystem.createLongGauge(
         rocksDbMetricCategory,

@@ -17,42 +17,25 @@ package org.hyperledger.besu.metrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
-import java.util.Set;
 import java.util.stream.Stream;
 
-/** The interface Observable metrics system. */
+/** The observable metrics system is used to inspect metrics for debug reasons */
 public interface ObservableMetricsSystem extends MetricsSystem {
-
   /**
-   * Stream observations.
+   * Stream observations by category
    *
    * @param category the category
-   * @return the stream
+   * @return the observations stream
    */
   Stream<Observation> streamObservations(MetricCategory category);
 
   /**
-   * Stream observations.
+   * Stream observations
    *
-   * @return the stream
+   * @return the observations stream
    */
   Stream<Observation> streamObservations();
 
-  /**
-   * Provides an immutable view into the metric categories enabled for metric collection.
-   *
-   * @return the set of enabled metric categories.
-   */
-  Set<MetricCategory> getEnabledCategories();
-
-  /**
-   * Checks if a particular category of metrics is enabled.
-   *
-   * @param category the category to check
-   * @return true if the category is enabled, false otherwise
-   */
-  default boolean isCategoryEnabled(final MetricCategory category) {
-    return getEnabledCategories().stream()
-        .anyMatch(metricCategory -> metricCategory.getName().equals(category.getName()));
-  }
+  /** Unregister all the collectors and perform other cleanup tasks */
+  void shutdown();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,33 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.ConsensusContext;
 
-/** The Migrating context. */
-public class MigratingContext implements ConsensusContext {
-
-  private final ForksSchedule<ConsensusContext> consensusContextSchedule;
-
-  /**
-   * Instantiates a new Migrating context.
-   *
-   * @param consensusContextSchedule the consensus context schedule
-   */
-  public MigratingContext(final ForksSchedule<ConsensusContext> consensusContextSchedule) {
-    this.consensusContextSchedule = consensusContextSchedule;
-  }
-
-  /**
-   * Gets consensus context schedule.
-   *
-   * @return the consensus context schedule
-   */
-  public ForksSchedule<ConsensusContext> getConsensusContextSchedule() {
-    return consensusContextSchedule;
-  }
-
+public class ConsensusContextFixture implements ConsensusContext {
   @Override
   public <C extends ConsensusContext> C as(final Class<C> klass) {
     return klass.cast(this);
