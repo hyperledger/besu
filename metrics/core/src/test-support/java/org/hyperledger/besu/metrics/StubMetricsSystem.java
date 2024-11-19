@@ -18,6 +18,7 @@ import static java.util.Arrays.asList;
 
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -29,7 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import com.google.common.cache.Cache;
 
 public class StubMetricsSystem implements ObservableMetricsSystem {
 
@@ -85,6 +89,13 @@ public class StubMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
+  public void trackExternalSummary(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final Supplier<ExternalSummary> summarySupplier) {}
+
+  @Override
   public void createGauge(
       final MetricCategory category,
       final String name,
@@ -92,6 +103,10 @@ public class StubMetricsSystem implements ObservableMetricsSystem {
       final DoubleSupplier valueSupplier) {
     gauges.put(name, valueSupplier);
   }
+
+  @Override
+  public void createGuavaCacheCollector(
+      final MetricCategory category, final String name, final Cache<?, ?> cache) {}
 
   public double getGaugeValue(final String name) {
     final DoubleSupplier gauge = gauges.get(name);
@@ -114,6 +129,12 @@ public class StubMetricsSystem implements ObservableMetricsSystem {
   @Override
   public Set<MetricCategory> getEnabledCategories() {
     return Collections.emptySet();
+  }
+
+  @Override
+  public void shutdown() {
+    counters.clear();
+    gauges.clear();
   }
 
   public static class StubLabelledCounter implements LabelledMetric<Counter> {
