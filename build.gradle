@@ -417,9 +417,6 @@ configure(allprojects - project(':platform')) {
       '-org.hyperledger.besu.ethereum.permissioning.*,' +
       // referencetests module
       '-org.hyperledger.besu.ethereum.referencetests,' +
-      // retesteth module
-      '-org.hyperledger.besu.ethereum.retesteth.methods,' +
-      '-org.hyperledger.besu.ethereum.retesteth,' +
       //rlp module
       '-org.hyperledger.besu.ethereum.rlp,' +
       // stratum module

@@ -45,6 +45,5 @@ dependencies {
   implementation 'org.web3j:crypto'
   implementation 'org.wiremock:wiremock'
 
-  implementation 'org.testcontainers:testcontainers'
   implementation 'org.junit.jupiter:junit-jupiter'
 }

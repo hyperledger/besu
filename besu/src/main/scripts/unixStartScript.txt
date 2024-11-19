@@ -182,19 +182,19 @@ APP_ARGS=`save "\$@"`
 # Collect all arguments for the java command, following the shell quoting and substitution rules
 eval set -- \$DEFAULT_JVM_OPTS \$JAVA_OPTS \$${optsEnvironmentVar} <% if ( appNameSystemProperty ) { %>"\"-D${appNameSystemProperty}=\$APP_BASE_NAME\"" <% } %>-classpath "\"\$CLASSPATH\"" <% if ( mainClassName.startsWith('--module ') ) { %>--module-path "\"\$MODULE_PATH\"" <% } %>${mainClassName} "\$APP_ARGS"
 
-unset BESU_USING_JEMALLOC
 if [ "\$darwin" = "false" -a "\$msys" = "false" ]; then
-  # check if jemalloc is available
-  TEST_JEMALLOC=\$(LD_PRELOAD=libjemalloc.so sh -c true 2>&1)
+      if [ "\$BESU_USING_JEMALLOC" != "FALSE" -a "\$BESU_USING_JEMALLOC" != "false" ]; then
+      # check if jemalloc is available
+      TEST_JEMALLOC=\$(LD_PRELOAD=libjemalloc.so sh -c true 2>&1)
 
-  # if jemalloc is available the output is empty, otherwise the output has an error line
-  if [ -z "\$TEST_JEMALLOC" ]; then
-    export LD_PRELOAD=libjemalloc.so
-    export BESU_USING_JEMALLOC=true
-  else
-    # jemalloc not available, as fallback limit malloc to 2 arenas
-    export MALLOC_ARENA_MAX=2
-  fi
+      # if jemalloc is available the output is empty, otherwise the output has an error line
+      if [ -z "\$TEST_JEMALLOC" ]; then
+        export LD_PRELOAD=libjemalloc.so
+      else
+        # jemalloc not available, as fallback limit malloc to 2 arenas
+        export MALLOC_ARENA_MAX=2
+      fi
+    fi
 fi
 
 exec "\$JAVACMD" "\$@"

@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -447,7 +447,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber =
@@ -458,7 +458,7 @@ public abstract class MainnetProtocolSpecs {
     } else if (genesisConfigOptions.isFixedBaseFee()) {
       londonFeeMarket =
           FeeMarket.fixedBaseFee(
-              londonForkBlockNumber, miningParameters.getMinTransactionGasPrice());
+              londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
     } else {
       londonFeeMarket =
           FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
@@ -533,7 +533,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return londonDefinition(
@@ -541,7 +541,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration,
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
         .difficultyCalculator(MainnetDifficultyCalculators.ARROW_GLACIER)
@@ -553,7 +553,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return arrowGlacierDefinition(
@@ -561,7 +561,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration,
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
         .difficultyCalculator(MainnetDifficultyCalculators.GRAY_GLACIER)
@@ -573,7 +573,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
 
@@ -582,7 +582,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration,
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
         .evmBuilder(
@@ -601,7 +601,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return parisDefinition(
@@ -609,7 +609,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration,
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
         // gas calculator has new code to support EIP-3860 limit and meter initcode
@@ -660,7 +660,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
@@ -670,7 +670,7 @@ public abstract class MainnetProtocolSpecs {
     } else if (genesisConfigOptions.isFixedBaseFee()) {
       cancunFeeMarket =
           FeeMarket.fixedBaseFee(
-              londonForkBlockNumber, miningParameters.getMinTransactionGasPrice());
+              londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
     } else {
       cancunFeeMarket =
           FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
@@ -681,7 +681,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration,
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
         .feeMarket(cancunFeeMarket)
@@ -741,7 +741,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
 
@@ -751,7 +751,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration,
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem);
     return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("CancunEOF");
@@ -762,7 +762,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
 
@@ -774,7 +774,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration,
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
         // EIP-3074 AUTH and AUTCALL gas
@@ -820,7 +820,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
 
@@ -830,7 +830,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration,
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem);
     return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("Osaka");
@@ -863,7 +863,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return osakaDefinition(
@@ -871,7 +871,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration,
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
         // Use Future EIP configured EVM
@@ -898,7 +898,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
 
@@ -907,7 +907,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration,
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
         .evmBuilder(
