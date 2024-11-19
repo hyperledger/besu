@@ -22,6 +22,7 @@
 | Luis Pinto       | lu-pinto         | lu-pinto         |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
 | Sally MacFarlane | macfarla         | macfarla         |
+| Matilda Clerke   | Matilda-Clerke   | MatildaClerke    |
 | Karim Taam       | matkt            | matkt            |
 | Matthew Whitehead| matthew1001      | matthew.whitehead      |
 | Meredith Baxter  | mbaxter          | mbaxter          |
