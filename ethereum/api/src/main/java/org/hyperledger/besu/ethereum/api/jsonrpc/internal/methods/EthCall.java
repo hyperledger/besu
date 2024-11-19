@@ -126,7 +126,6 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
       throw new InvalidJsonRpcRequestException(
           "Invalid account overrides parameter (index 2)", RpcErrorType.INVALID_CALL_PARAMS, e);
     }
-    return Optional.empty();
   }
 
   @Override
