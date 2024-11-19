@@ -18,6 +18,7 @@
 
 ### Bug fixes
 - Fix registering new metric categories from plugins [#7825](https://github.com/hyperledger/besu/pull/7825)
+- Fix CVE-2024-47535 [7878](https://github.com/hyperledger/besu/pull/7878)
 
 ## 24.10.0
 
@@ -103,6 +104,7 @@ This release version has been deprecated release due to CI bug
 - Remove long-deprecated `perm*whitelist*` methods [#7401](https://github.com/hyperledger/besu/pull/7401)
 
 ### Additions and Improvements
+- Allow optional loading of `jemalloc` (if installed) by setting the environment variable `BESU_USING_JEMALLOC` to true/false. It that env is not set at all it will behave as if it is set to `true`
 - Expose set finalized/safe block in plugin api BlockchainService. These method can be used by plugins to set finalized/safe block for a PoA network (such as QBFT, IBFT and Clique).[#7382](https://github.com/hyperledger/besu/pull/7382)
 - In process RPC service [#7395](https://github.com/hyperledger/besu/pull/7395)
 - Added support for tracing private transactions using `priv_traceTransaction` API. [#6161](https://github.com/hyperledger/besu/pull/6161)
