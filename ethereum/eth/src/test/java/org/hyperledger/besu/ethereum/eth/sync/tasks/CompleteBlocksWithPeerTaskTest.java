@@ -229,10 +229,7 @@ public class CompleteBlocksWithPeerTaskTest {
     final Block block1 =
         new Block(
             header1,
-            new BlockBody(
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Optional.empty()));
+            new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
     final Block block2 =
         new Block(
             header2,

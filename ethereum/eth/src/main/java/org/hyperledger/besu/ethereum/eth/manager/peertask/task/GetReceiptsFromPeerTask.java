@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 public class GetReceiptsFromPeerTask
     implements PeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
