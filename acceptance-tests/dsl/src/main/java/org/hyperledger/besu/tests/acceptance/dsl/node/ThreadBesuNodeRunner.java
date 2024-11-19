@@ -332,7 +332,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     @Singleton
     BlockchainServiceImpl provideBlockchainService(final BesuController besuController) {
       BlockchainServiceImpl retval = new BlockchainServiceImpl();
-      retval.init(besuController.getProtocolContext(), besuController.getProtocolSchedule());
+      retval.init(
+          besuController.getProtocolContext().getBlockchain(),
+          besuController.getProtocolSchedule());
       return retval;
     }
 

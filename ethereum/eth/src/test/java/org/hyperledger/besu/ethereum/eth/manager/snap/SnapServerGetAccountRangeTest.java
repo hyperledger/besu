@@ -15,10 +15,12 @@
 package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
@@ -70,7 +72,8 @@ public class SnapServerGetAccountRangeTest {
                 snapSyncConfiguration,
                 new EthMessages(),
                 worldStateStorageCoordinator,
-                protocolContext)
+                protocolContext,
+                mock(Synchronizer.class))
             .start();
     initAccounts();
   }

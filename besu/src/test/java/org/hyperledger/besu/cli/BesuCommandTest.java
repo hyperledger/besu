@@ -37,6 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -2412,13 +2413,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void logsWarningWhenFailToLoadJemalloc() {
     assumeTrue(PlatformDetector.getOSType().equals("linux"));
-    setEnvironmentVariable("BESU_USING_JEMALLOC", "true");
+    setEnvironmentVariable("BESU_USING_JEMALLOC", "false");
     parseCommand();
     verify(mockLogger)
         .warn(
-            eq(
-                "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version"),
-            any(Throwable.class));
+            argThat(
+                arg ->
+                    arg.equals(
+                            "besu_using_jemalloc is present but is not set to true, jemalloc library not loaded")
+                        || arg.equals(
+                            "besu_using_jemalloc is present but we failed to load jemalloc library to get the version")));
   }
 
   @Test
