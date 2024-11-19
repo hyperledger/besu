@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -76,7 +75,10 @@ public class PrivateBlockTracer {
               transaction,
               header.getCoinbase(),
               tracer,
-              new CachingBlockHashLookup(header, blockchain),
+              blockReplay
+                  .getProtocolSpec(header)
+                  .getBlockHashProcessor()
+                  .createBlockHashLookup(blockchain, header),
               Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)));
 
       final List<TraceFrame> traceFrames = tracer.copyTraceFrames();
