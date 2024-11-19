@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
@@ -511,7 +510,10 @@ public class EvmToolCommand implements Runnable {
                 .blockValues(blockHeader)
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
-                .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
+                .blockHashLookup(
+                    protocolSpec
+                        .getBlockHashProcessor()
+                        .createBlockHashLookup(component.getBlockchain(), blockHeader))
                 .accessListWarmAddresses(addressList)
                 .build();
         Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
