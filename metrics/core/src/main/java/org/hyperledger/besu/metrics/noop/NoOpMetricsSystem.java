@@ -17,6 +17,7 @@ package org.hyperledger.besu.metrics.noop;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -27,9 +28,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.base.Preconditions;
+import com.google.common.cache.Cache;
 
 /** The NoOp metrics system. */
 public class NoOpMetricsSystem implements ObservableMetricsSystem {
@@ -114,6 +117,13 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
+  public void trackExternalSummary(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final Supplier<ExternalSummary> summarySupplier) {}
+
+  @Override
   public LabelledMetric<OperationTimer> createLabelledTimer(
       final MetricCategory category,
       final String name,
@@ -143,6 +153,10 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
       final String name,
       final String help,
       final DoubleSupplier valueSupplier) {}
+
+  @Override
+  public void createGuavaCacheCollector(
+      final MetricCategory category, final String name, final Cache<?, ?> cache) {}
 
   @Override
   public LabelledGauge createLabelledGauge(
@@ -186,6 +200,9 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   public Set<MetricCategory> getEnabledCategories() {
     return Collections.emptySet();
   }
+
+  @Override
+  public void shutdown() {}
 
   /**
    * The Label counting NoOp metric.
