@@ -87,9 +87,8 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   protected Object resultByBlockHeader(
       final JsonRpcRequestContext request, final BlockHeader header) {
     JsonCallParameter callParams = JsonCallParameterUtil.validateAndGetCallParams(request);
-    // TODO check whether there are any state overrides
     Optional<AccountOverrideMap> maybeStateOverrides = getAddressAccountOverrideMap(request);
-    // TODO check for block overrides
+    // TODO implement for block overrides
 
     return transactionSimulator
         .process(
