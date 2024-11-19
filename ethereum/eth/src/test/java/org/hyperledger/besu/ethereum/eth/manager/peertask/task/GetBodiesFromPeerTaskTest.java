@@ -61,7 +61,7 @@ public class GetBodiesFromPeerTaskTest {
           EncodingContext.BLOCK_BODY);
   public static final List<Transaction> TRANSACTION_LIST = List.of(TX);
   public static final BlockBody BLOCK_BODY =
-      new BlockBody(TRANSACTION_LIST, Collections.emptyList(), Optional.empty(), Optional.empty());
+      new BlockBody(TRANSACTION_LIST, Collections.emptyList(), Optional.empty());
   private static ProtocolSchedule protocolSchedule;
 
   @BeforeAll
@@ -119,7 +119,7 @@ public class GetBodiesFromPeerTaskTest {
     BlockBodiesMessage bodiesMessage = BlockBodiesMessage.create(List.of(BLOCK_BODY));
 
     Assertions.assertThrows(
-        InvalidPeerTaskResponseException.class, () -> task.parseResponse(bodiesMessage));
+        InvalidPeerTaskResponseException.class, () -> task.processResponse(bodiesMessage));
   }
 
   @Test
@@ -132,7 +132,7 @@ public class GetBodiesFromPeerTaskTest {
 
     final BlockBodiesMessage blockBodiesMessage = BlockBodiesMessage.create(List.of(BLOCK_BODY));
 
-    List<Block> result = task.parseResponse(blockBodiesMessage);
+    List<Block> result = task.processResponse(blockBodiesMessage);
 
     assertThat(result.size()).isEqualTo(1);
     assertThat(result.getFirst().getBody().getTransactions()).isEqualTo(TRANSACTION_LIST);
@@ -192,7 +192,6 @@ public class GetBodiesFromPeerTaskTest {
         .thenReturn(Hash.fromHexStringLenient(transactionsRootHexString));
     when(blockHeader.getOmmersHash()).thenReturn(Hash.EMPTY_LIST_HASH);
     when(blockHeader.getWithdrawalsRoot()).thenReturn(Optional.empty());
-    when(blockHeader.getRequestsRoot()).thenReturn(Optional.empty());
     return blockHeader;
   }
 

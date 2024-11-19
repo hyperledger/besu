@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -373,12 +373,12 @@ public class TransactionPoolFactoryTest {
     schedule =
         new ProtocolScheduleBuilder(
                 config,
-                DEFAULT_CHAIN_ID,
+                Optional.of(DEFAULT_CHAIN_ID),
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
-                MiningParameters.MINING_DISABLED,
+                MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
                 new NoOpMetricsSystem())
@@ -413,7 +413,7 @@ public class TransactionPoolFactoryTest {
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
         new BlobCache(),
-        MiningParameters.newDefault());
+        MiningConfiguration.newDefault());
   }
 
   private TransactionPool createAndEnableTransactionPool(

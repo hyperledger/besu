@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class BlockHeaderTestFixture {
 
@@ -50,11 +51,12 @@ public class BlockHeaderTestFixture {
   private Hash mixHash = Hash.EMPTY;
   private long nonce = 0;
   private Optional<Hash> withdrawalsRoot = Optional.empty();
-  private Optional<Hash> requestsRoot = Optional.empty();
+  private Optional<Hash> requestsHash = Optional.empty();
   private BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
   private Optional<BlobGas> excessBlobGas = Optional.empty();
   private Optional<Long> blobGasUsed = Optional.empty();
   private Optional<Bytes32> parentBeaconBlockRoot = Optional.empty();
+  private Optional<UInt64> targetBlobCount = Optional.empty();
 
   public BlockHeader buildHeader() {
     final BlockHeaderBuilder builder = BlockHeaderBuilder.create();
@@ -78,8 +80,9 @@ public class BlockHeaderTestFixture {
     withdrawalsRoot.ifPresent(builder::withdrawalsRoot);
     excessBlobGas.ifPresent(builder::excessBlobGas);
     blobGasUsed.ifPresent(builder::blobGasUsed);
-    requestsRoot.ifPresent(builder::requestsRoot);
+    requestsHash.ifPresent(builder::requestsHash);
     parentBeaconBlockRoot.ifPresent(builder::parentBeaconBlockRoot);
+    targetBlobCount.ifPresent(builder::targetBlobCount);
     builder.blockHeaderFunctions(blockHeaderFunctions);
 
     return builder.buildBlockHeader();
@@ -175,8 +178,8 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
-  public BlockHeaderTestFixture requestsRoot(final Hash requestsRoot) {
-    this.requestsRoot = Optional.ofNullable(requestsRoot);
+  public BlockHeaderTestFixture requestsHash(final Hash requestsHash) {
+    this.requestsHash = Optional.ofNullable(requestsHash);
     return this;
   }
 
@@ -199,6 +202,11 @@ public class BlockHeaderTestFixture {
   public BlockHeaderTestFixture parentBeaconBlockRoot(
       final Optional<Bytes32> parentBeaconBlockRoot) {
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
+    return this;
+  }
+
+  public BlockHeaderTestFixture targetBlobCount(final UInt64 targetBlobCount) {
+    this.targetBlobCount = Optional.of(targetBlobCount);
     return this;
   }
 }

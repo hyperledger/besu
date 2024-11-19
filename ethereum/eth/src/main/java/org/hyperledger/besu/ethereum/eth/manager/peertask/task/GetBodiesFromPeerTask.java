@@ -123,17 +123,6 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
     } else if (blockHeader.getWithdrawalsRoot().isPresent()) {
       return false;
     }
-    if (blockBody.getRequests().isPresent()) {
-      if (blockHeader.getRequestsRoot().isEmpty()) {
-        return false;
-      }
-      if (!BodyValidation.requestsRoot(blockBody.getRequests().get())
-          .equals(blockHeader.getRequestsRoot().get())) {
-        return false;
-      }
-    } else if (blockHeader.getRequestsRoot().isPresent()) {
-      return false;
-    }
     return true;
   }
 

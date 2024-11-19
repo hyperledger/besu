@@ -63,7 +63,6 @@ public class CheckpointSyncActions extends FastSyncActions {
         syncConfig,
         worldStateStorageCoordinator,
         protocolSchedule,
-        currentProtocolSpecSupplier,
         protocolContext,
         ethContext,
         peerTaskExecutor,

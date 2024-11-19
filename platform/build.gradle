@@ -15,7 +15,6 @@
 plugins {
   id 'java-platform'
   id 'com.diffplug.spotless'
-  id 'maven-publish'
 }
 
 repositories {
@@ -44,8 +43,14 @@ dependencies {
     api project(':acceptance-tests:dsl')
     api project(':besu')
     api project(':config')
+    api project(':consensus:clique')
+    api project(':consensus:common')
+    api project(':consensus:ibft')
+    api project(':consensus:merge')
+    api project(':consensus:qbft')
     api project(':crypto:algorithms')
     api project(':crypto:services')
+    api project(':datatypes')
     api project(':ethereum:api')
     api project(':ethereum:blockcreation')
     api project(':ethereum:core')
@@ -54,9 +59,12 @@ dependencies {
     api project(':ethereum:permissioning')
     api project(':ethereum:referencetests')
     api project(':ethereum:rlp')
+    api project(':ethereum:trie')
     api project(':evm')
-    api project(':datatypes')
+    api project(':metrics:core')
     api project(':plugin-api')
+    api project(':testutil')
+    api project(':util')
 
     api 'com.github.ben-manes.caffeine:caffeine:3.1.8'
 
@@ -128,6 +136,8 @@ dependencies {
 
     api 'org.fusesource.jansi:jansi:2.4.1'
 
+    api 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
+
     api 'org.hyperledger.besu:arithmetic:0.9.7'
     api 'org.hyperledger.besu:blake2bf:0.9.7'
     api 'org.hyperledger.besu:bls12-381:0.9.7'
@@ -156,8 +166,6 @@ dependencies {
     api 'org.rocksdb:rocksdbjni:8.3.2'
 
     api 'org.springframework.security:spring-security-crypto:6.3.3'
-
-    api 'org.testcontainers:testcontainers:1.20.2'
 
     api 'org.wiremock:wiremock:3.9.1'
 

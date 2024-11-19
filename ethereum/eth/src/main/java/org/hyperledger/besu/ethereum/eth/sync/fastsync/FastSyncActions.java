@@ -170,7 +170,6 @@ public class FastSyncActions {
         syncConfig,
         worldStateStorageCoordinator,
         protocolSchedule,
-        currentProtocolSpecSupplier,
         protocolContext,
         ethContext,
         peerTaskExecutor,

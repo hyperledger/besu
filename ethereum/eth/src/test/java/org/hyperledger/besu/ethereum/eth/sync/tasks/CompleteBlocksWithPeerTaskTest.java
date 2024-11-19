@@ -211,7 +211,6 @@ public class CompleteBlocksWithPeerTaskTest {
     when(blockHeader.getTransactionsRoot()).thenReturn(Hash.EMPTY_TRIE_HASH);
     when(blockHeader.getOmmersHash()).thenReturn(Hash.EMPTY_LIST_HASH);
     when(blockHeader.getWithdrawalsRoot()).thenReturn(Optional.empty());
-    when(blockHeader.getRequestsRoot()).thenReturn(Optional.empty());
     return blockHeader;
   }
 
@@ -222,7 +221,6 @@ public class CompleteBlocksWithPeerTaskTest {
         .thenReturn(Hash.fromHexStringLenient(transactionsRootHexString));
     when(blockHeader.getOmmersHash()).thenReturn(Hash.fromHexStringLenient(ommersHash));
     when(blockHeader.getWithdrawalsRoot()).thenReturn(Optional.empty());
-    when(blockHeader.getRequestsRoot()).thenReturn(Optional.empty());
     return blockHeader;
   }
 
@@ -234,7 +232,6 @@ public class CompleteBlocksWithPeerTaskTest {
             new BlockBody(
                 Collections.emptyList(),
                 Collections.emptyList(),
-                Optional.empty(),
                 Optional.empty()));
     final Block block2 =
         new Block(
@@ -242,8 +239,7 @@ public class CompleteBlocksWithPeerTaskTest {
             new BlockBody(
                 Collections.emptyList(),
                 Collections.emptyList(),
-                Optional.of(Collections.emptyList()),
-                Optional.empty()));
+                Optional.of(Collections.emptyList())));
 
     return asList(block1, block2);
   }

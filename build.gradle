@@ -417,9 +417,6 @@ configure(allprojects - project(':platform')) {
       '-org.hyperledger.besu.ethereum.permissioning.*,' +
       // referencetests module
       '-org.hyperledger.besu.ethereum.referencetests,' +
-      // retesteth module
-      '-org.hyperledger.besu.ethereum.retesteth.methods,' +
-      '-org.hyperledger.besu.ethereum.retesteth,' +
       //rlp module
       '-org.hyperledger.besu.ethereum.rlp,' +
       // stratum module
@@ -526,7 +523,8 @@ subprojects {
     return result
   }
 
-  if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
+
+  if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport") || project.name == "platform") {
     apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'maven-publish'
 

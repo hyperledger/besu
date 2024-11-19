@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -57,6 +58,7 @@ import org.mockito.Mockito;
 public class DownloadReceiptsStepTest {
 
   private static ProtocolContext protocolContext;
+  private static ProtocolSchedule protocolSchedule;
   private static MutableBlockchain blockchain;
 
   private PeerTaskExecutor peerTaskExecutor;
@@ -67,6 +69,7 @@ public class DownloadReceiptsStepTest {
     final BlockchainSetupUtil setupUtil = BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
     setupUtil.importFirstBlocks(20);
     protocolContext = setupUtil.getProtocolContext();
+    protocolSchedule = setupUtil.getProtocolSchedule();
     blockchain = setupUtil.getBlockchain();
   }
 
@@ -88,7 +91,7 @@ public class DownloadReceiptsStepTest {
   public void shouldDownloadReceiptsForBlocks() {
     DownloadReceiptsStep downloadReceiptsStep =
         new DownloadReceiptsStep(
-            () -> null,
+            protocolSchedule,
             ethProtocolManager.ethContext(),
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
@@ -114,7 +117,7 @@ public class DownloadReceiptsStepTest {
       throws ExecutionException, InterruptedException {
     DownloadReceiptsStep downloadReceiptsStep =
         new DownloadReceiptsStep(
-            () -> null,
+            protocolSchedule,
             ethProtocolManager.ethContext(),
             peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),

@@ -14,10 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
-import static org.hyperledger.besu.ethereum.mainnet.requests.ConsolidationRequestProcessor.CONSOLIDATION_REQUEST_CONTRACT_ADDRESS;
-import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
-import static org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestProcessor.DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS;
-
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 
@@ -25,6 +21,13 @@ public class RequestContractAddresses {
   private final Address withdrawalRequestContractAddress;
   private final Address depositContractAddress;
   private final Address consolidationRequestContractAddress;
+
+  public static final Address DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS =
+      Address.fromHexString("0x09FC772D0857550724B07B850A4323F39112AAAA");
+  public static final Address DEFAULT_CONSOLIDATION_REQUEST_CONTRACT_ADDRESS =
+      Address.fromHexString("0x01ABEA29659E5E97C95107F20BB753CD3E09BBBB");
+  public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
+      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
   public RequestContractAddresses(
       final Address withdrawalRequestContractAddress,
@@ -44,7 +47,7 @@ public class RequestContractAddresses {
         genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS),
         genesisConfigOptions
             .getConsolidationRequestContractAddress()
-            .orElse(CONSOLIDATION_REQUEST_CONTRACT_ADDRESS));
+            .orElse(DEFAULT_CONSOLIDATION_REQUEST_CONTRACT_ADDRESS));
   }
 
   public Address getWithdrawalRequestContractAddress() {
