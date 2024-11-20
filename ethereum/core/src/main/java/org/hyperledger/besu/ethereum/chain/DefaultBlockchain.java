@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static org.hyperledger.besu.metrics.BesuMetricCategory.BLOCKCHAIN;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage.Updater;
@@ -32,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.util.InvalidConfigurationException;
@@ -56,7 +56,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
-import io.prometheus.client.guava.cache.CacheMetricsCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,13 +133,12 @@ public class DefaultBlockchain implements MutableBlockchain {
       totalDifficultyCache =
           Optional.of(
               CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
-      CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
-      cacheMetrics.addCache("blockHeaders", blockHeadersCache.get());
-      cacheMetrics.addCache("blockBodies", blockBodiesCache.get());
-      cacheMetrics.addCache("transactionReceipts", transactionReceiptsCache.get());
-      cacheMetrics.addCache("totalDifficulty", totalDifficultyCache.get());
-      if (metricsSystem instanceof PrometheusMetricsSystem prometheusMetricsSystem)
-        prometheusMetricsSystem.addCollector(BesuMetricCategory.BLOCKCHAIN, () -> cacheMetrics);
+      metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "blockHeaders", blockHeadersCache.get());
+      metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "blockBodies", blockBodiesCache.get());
+      metricsSystem.createGuavaCacheCollector(
+          BLOCKCHAIN, "transactionReceipts", transactionReceiptsCache.get());
+      metricsSystem.createGuavaCacheCollector(
+          BLOCKCHAIN, "totalDifficulty", totalDifficultyCache.get());
     } else {
       blockHeadersCache = Optional.empty();
       blockBodiesCache = Optional.empty();
@@ -155,11 +153,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   private void createCounters(final MetricsSystem metricsSystem) {
     gasUsedCounter =
         metricsSystem.createCounter(
-            BesuMetricCategory.BLOCKCHAIN, "chain_head_gas_used_counter", "Counter for Gas used");
+            BLOCKCHAIN, "chain_head_gas_used_counter", "Counter for Gas used");
 
     numberOfTransactionsCounter =
         metricsSystem.createCounter(
-            BesuMetricCategory.BLOCKCHAIN,
+            BLOCKCHAIN,
             "chain_head_transaction_count_counter",
             "Counter for the number of transactions");
   }
@@ -184,37 +182,37 @@ public class DefaultBlockchain implements MutableBlockchain {
         this::getSafeBlockNumber);
 
     metricsSystem.createGauge(
-        BesuMetricCategory.BLOCKCHAIN,
+        BLOCKCHAIN,
         "difficulty_total",
         "Total difficulty of the chainhead",
         () -> this.getChainHead().getTotalDifficulty().toBigInteger().doubleValue());
 
     metricsSystem.createLongGauge(
-        BesuMetricCategory.BLOCKCHAIN,
+        BLOCKCHAIN,
         "chain_head_timestamp",
         "Timestamp from the current chain head",
         () -> getChainHeadHeader().getTimestamp());
 
     metricsSystem.createLongGauge(
-        BesuMetricCategory.BLOCKCHAIN,
+        BLOCKCHAIN,
         "chain_head_gas_used",
         "Gas used by the current chain head block",
         () -> getChainHeadHeader().getGasUsed());
 
     metricsSystem.createLongGauge(
-        BesuMetricCategory.BLOCKCHAIN,
+        BLOCKCHAIN,
         "chain_head_gas_limit",
         "Block gas limit of the current chain head block",
         () -> getChainHeadHeader().getGasLimit());
 
     metricsSystem.createIntegerGauge(
-        BesuMetricCategory.BLOCKCHAIN,
+        BLOCKCHAIN,
         "chain_head_transaction_count",
         "Number of transactions in the current chain head block",
         () -> chainHeadTransactionCount);
 
     metricsSystem.createIntegerGauge(
-        BesuMetricCategory.BLOCKCHAIN,
+        BLOCKCHAIN,
         "chain_head_ommer_count",
         "Number of ommers in the current chain head block",
         () -> chainHeadOmmerCount);
