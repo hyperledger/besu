@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
-import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
@@ -40,7 +40,7 @@ public class TestPermissioningPlugin implements BesuPlugin {
   PermissioningService service;
 
   @Override
-  public void register(final BesuContext context) {
+  public void register(final ServiceManager context) {
     context.getService(PicoCLIOptions.class).orElseThrow().addPicoCLIOptions("permissioning", this);
     service = context.getService(PermissioningService.class).orElseThrow();
   }
