@@ -18,11 +18,11 @@ import org.hyperledger.besu.plugin.services.BesuService;
 
 import java.util.Optional;
 
-/** Allows plugins to access Besu services. */
-public interface BesuContext {
+/** Adds and accesses BesuServices for plugins to provide or use. */
+public interface ServiceManager {
 
   /**
-   * Add service.
+   * Add service. Used by core besu or other plugins to add services to the service manager.
    *
    * @param <T> the type parameter
    * @param serviceType the service type
@@ -39,7 +39,7 @@ public interface BesuContext {
    *       BesuPlugin#start()} method is called
    *   <li>The service is not supported by this version of Besu
    *   <li>The service may not be applicable to the current configuration. For example some services
-   *       may only be available when a proof of authority network is in use
+   *       may only be available when a proof of authority network is in use, or when user provided.
    * </ul>
    *
    * <p>Since plugins are automatically loaded, unless the user has specifically requested
