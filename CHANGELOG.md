@@ -8,6 +8,13 @@
 ### Upcoming Breaking Changes
 - Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
+- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
+- `--host-whitelist` has been deprecated in favor of `--host-allowlist` since 2020 and will be removed in a future release
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Tessera privacy
+  - Smart-contract-based permissioning
+  - Proof of Work consensus
+  - Fast Sync
 
 ### Additions and Improvements
 - Fine tune already seen txs tracker when a tx is removed from the pool [#7755](https://github.com/hyperledger/besu/pull/7755)
