@@ -22,8 +22,8 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
@@ -190,22 +190,40 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final String help,
       final DoubleSupplier valueSupplier) {
     if (isCategoryEnabled(category)) {
-      registerCollector(category, new PrometheusGauge(category, name, help, valueSupplier));
+      final var gauge = new PrometheusSuppliedGauge(category, name, help);
+      gauge.labels(valueSupplier);
+      registerCollector(category, gauge);
     }
   }
 
   @Override
-  public LabelledGauge createLabelledGauge(
+  public LabelledSuppliedMetric createLabelledSuppliedCounter(
       final MetricCategory category,
       final String name,
       final String help,
       final String... labelNames) {
     if (isCategoryEnabled(category)) {
-      final PrometheusGauge gauge = new PrometheusGauge(category, name, help, labelNames);
+      final PrometheusSuppliedCounter counter =
+          new PrometheusSuppliedCounter(category, name, help, labelNames);
+      registerCollector(category, counter);
+      return counter;
+    }
+    return NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
+  }
+
+  @Override
+  public LabelledSuppliedMetric createLabelledSuppliedGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    if (isCategoryEnabled(category)) {
+      final PrometheusSuppliedGauge gauge =
+          new PrometheusSuppliedGauge(category, name, help, labelNames);
       registerCollector(category, gauge);
       return gauge;
     }
-    return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
+    return NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
   }
 
   @Override

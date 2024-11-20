@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,12 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.metrics;
+package org.hyperledger.besu.ethereum.util;
 
-/**
- * The interface Labelled gauge.
- *
- * @deprecated Use {@link LabelledSuppliedMetric}
- */
-@Deprecated(forRemoval = true)
-public interface LabelledGauge extends LabelledSuppliedMetric {}
+import org.hyperledger.besu.datatypes.Address;
+
+import java.util.HashMap;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class AccountOverrideMap extends HashMap<Address, AccountOverride> {
+
+  public AccountOverrideMap() {}
+}

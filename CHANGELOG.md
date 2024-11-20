@@ -5,23 +5,11 @@
 
 ### Breaking Changes
 - Removed Retesteth rpc service and commands [#7833](https://github.com/hyperledger/besu/pull/7783)
-- With the upgrade of the Prometheus Java Metrics library, gauge names are not allowed to end with `total`, therefore the following list of metrics is losing the `_total` suffix: 
+- With the upgrade of the Prometheus Java Metrics library, gauge names are not allowed to end with `total`, therefore the following metric is losing the `_total` suffix:
 ```
-1. besu_blockchain_difficulty_total
-2. besu_executors_ethscheduler_blockcreation_completed_tasks_total
-3. besu_executors_ethscheduler_blockcreation_submitted_tasks_total
-4. besu_executors_ethscheduler_computation_completed_tasks_total
-5. besu_executors_ethscheduler_computation_submitted_tasks_total
-6. besu_executors_ethscheduler_services_completed_tasks_total
-7. besu_executors_ethscheduler_services_submitted_tasks_total
-8. besu_executors_ethscheduler_timer_completed_tasks_total
-9. besu_executors_ethscheduler_timer_submitted_tasks_total
-10. besu_executors_ethscheduler_transactions_completed_tasks_total
-11. besu_executors_ethscheduler_transactions_submitted_tasks_total
-12. besu_executors_ethscheduler_workers_completed_tasks_total
-13. besu_executors_ethscheduler_workers_submitted_tasks_total
+besu_blockchain_difficulty_total
 ```
-[Grafana Besu Full dashboard](https://grafana.com/grafana/dashboards/16455-besu-full/) will support both names for a smooth transition, but if you use these metrics outside of this dashboard, you have to update your custom solution, to support the new names. 
+if you use these metrics you have to update your custom solution, to support the new name.
 
 ### Upcoming Breaking Changes
 
@@ -32,6 +20,7 @@
 - Update Java dependencies [#7786](https://github.com/hyperledger/besu/pull/7786)
 - Add a method to get all the transaction in the pool, to the `TransactionPoolService`, to easily access the transaction pool content from plugins [#7813](https://github.com/hyperledger/besu/pull/7813)
 - Add a method to check if a metric category is enabled to the plugin API [#7832](https://github.com/hyperledger/besu/pull/7832)
+- Add account and state overrides to `eth_call` and `eth_estimateGas` [#7801](https://github.com/hyperledger/besu/pull/7801)
 - Prometheus Java Metrics library upgraded to version 1.3.3 [#7880](https://github.com/hyperledger/besu/pull/7880)
 
 ### Bug fixes

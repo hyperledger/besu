@@ -21,8 +21,8 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
@@ -292,7 +292,21 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final MetricCategory category, final String name, final Cache<?, ?> cache) {}
 
   @Override
-  public LabelledGauge createLabelledGauge(
+  public LabelledSuppliedMetric createLabelledSuppliedCounter(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    LOG.trace("Creating a labelled supplied counter {}", name);
+    if (isCategoryEnabled(category)) {
+      return new OpenTelemetrySuppliedCounter(
+          name, help, sdkMeterProvider.get(category.getName()), List.of(labelNames));
+    }
+    return NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
+  }
+
+  @Override
+  public LabelledSuppliedMetric createLabelledSuppliedGauge(
       final MetricCategory category,
       final String name,
       final String help,
@@ -302,7 +316,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       return new OpenTelemetryGauge(
           name, help, sdkMeterProvider.get(category.getName()), List.of(labelNames));
     }
-    return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
+    return NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
   }
 
   @Override

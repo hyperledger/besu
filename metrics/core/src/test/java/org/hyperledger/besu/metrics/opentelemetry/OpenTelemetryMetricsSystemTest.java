@@ -31,8 +31,8 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Collections;
@@ -231,8 +231,8 @@ public class OpenTelemetryMetricsSystemTest {
 
   @Test
   public void shouldCreateLabelledGauge() {
-    LabelledGauge labelledGauge =
-        metricsSystem.createLabelledGauge(RPC, "gaugeName", "help", "a", "b");
+    LabelledSuppliedMetric labelledGauge =
+        metricsSystem.createLabelledSuppliedGauge(RPC, "gaugeName", "help", "a", "b");
     labelledGauge.labels(() -> 1.0, "a1", "b1");
     labelledGauge.labels(() -> 11.0, "a2", "b2");
     labelledGauge.labels(() -> 21.0, "a3", "b3");
