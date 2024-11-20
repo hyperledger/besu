@@ -14,12 +14,11 @@
  */
 package org.hyperledger.besu.controller;
 
-import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueBlockChoiceRule;
-
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueForksSchedulesFactory;
+import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueBlockScheduler;
@@ -29,7 +28,6 @@ import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethods;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -45,8 +43,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +55,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   private EpochManager epochManager;
   private final BlockInterface blockInterface = new CliqueBlockInterface();
   private ForksSchedule<CliqueConfigOptions> forksSchedule;
-  private final AtomicReference<ValidatorProvider> validatorProviderRef = new AtomicReference<>();
 
   /** Default constructor. */
   public CliqueBesuControllerBuilder() {}
@@ -142,8 +137,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        validatorProviderRef::get);
+        metricsSystem);
   }
 
   @Override
@@ -166,16 +160,15 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    validatorProviderRef.set(createValidatorProvider(blockchain));
     final CliqueContext cliqueContext =
-        new CliqueContext(validatorProviderRef.get(), epochManager, blockInterface);
-    installCliqueBlockChoiceRule(blockchain, cliqueContext);
+        new CliqueContext(
+            BlockValidatorProvider.nonForkingValidatorProvider(
+                blockchain, epochManager, blockInterface),
+            epochManager,
+            blockInterface);
+    CliqueHelpers.setCliqueContext(cliqueContext);
+    CliqueHelpers.installCliqueBlockChoiceRule(blockchain, cliqueContext);
     return cliqueContext;
-  }
-
-  private ValidatorProvider createValidatorProvider(final Blockchain blockchain) {
-    return BlockValidatorProvider.nonForkingValidatorProvider(
-        blockchain, epochManager, blockInterface);
   }
 
   @Override

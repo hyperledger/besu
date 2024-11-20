@@ -73,8 +73,7 @@ public class CliqueProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            () -> null);
+            new NoOpMetricsSystem());
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
     final ProtocolSpec tangerineWhistleSpec = protocolSchedule.getByBlockHeader(blockHeader(2));
@@ -101,8 +100,7 @@ public class CliqueProtocolScheduleTest {
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                new NoOpMetricsSystem(),
-                () -> null)
+                new NoOpMetricsSystem())
             .getByBlockHeader(blockHeader(0));
 
     assertThat(homestead.getName()).isEqualTo("Frontier");
@@ -129,8 +127,7 @@ public class CliqueProtocolScheduleTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    new NoOpMetricsSystem(),
-                    () -> null))
+                    new NoOpMetricsSystem()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -153,8 +150,7 @@ public class CliqueProtocolScheduleTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    new NoOpMetricsSystem(),
-                    () -> null))
+                    new NoOpMetricsSystem()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -181,8 +177,7 @@ public class CliqueProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            () -> null);
+            new NoOpMetricsSystem());
 
     BlockHeader emptyFrontierParent =
         headerBuilder

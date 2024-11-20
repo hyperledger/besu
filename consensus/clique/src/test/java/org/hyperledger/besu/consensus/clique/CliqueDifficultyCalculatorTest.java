@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.Util;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +41,6 @@ public class CliqueDifficultyCalculatorTest {
   private Address localAddr;
 
   private final List<Address> validatorList = Lists.newArrayList();
-  private Supplier<ValidatorProvider> validatorProviderSupplier;
   private BlockHeaderTestFixture blockHeaderBuilder;
 
   @BeforeEach
@@ -54,14 +52,13 @@ public class CliqueDifficultyCalculatorTest {
 
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
-    validatorProviderSupplier = () -> validatorProvider;
+    CliqueHelpers.setCliqueContext(new CliqueContext(validatorProvider, null, null));
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
 
   @Test
   public void inTurnValidatorProducesDifficultyOfTwo() {
-    final CliqueDifficultyCalculator calculator =
-        new CliqueDifficultyCalculator(localAddr, validatorProviderSupplier);
+    final CliqueDifficultyCalculator calculator = new CliqueDifficultyCalculator(localAddr);
 
     final BlockHeader parentHeader = blockHeaderBuilder.number(1).buildHeader();
 
@@ -70,8 +67,7 @@ public class CliqueDifficultyCalculatorTest {
 
   @Test
   public void outTurnValidatorProducesDifficultyOfOne() {
-    final CliqueDifficultyCalculator calculator =
-        new CliqueDifficultyCalculator(localAddr, validatorProviderSupplier);
+    final CliqueDifficultyCalculator calculator = new CliqueDifficultyCalculator(localAddr);
 
     final BlockHeader parentHeader = blockHeaderBuilder.number(2).buildHeader();
 

@@ -14,19 +14,16 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
-import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 
 import java.math.BigInteger;
-import java.util.function.Supplier;
 
 /** The Clique difficulty calculator. */
 public class CliqueDifficultyCalculator implements DifficultyCalculator {
 
   private final Address localAddress;
-  private final Supplier<ValidatorProvider> validatorProviderSupplier;
 
   private final BigInteger IN_TURN_DIFFICULTY = BigInteger.valueOf(2);
   private final BigInteger OUT_OF_TURN_DIFFICULTY = BigInteger.ONE;
@@ -35,19 +32,15 @@ public class CliqueDifficultyCalculator implements DifficultyCalculator {
    * Instantiates a new Clique difficulty calculator.
    *
    * @param localAddress the local address
-   * @param validatorProviderSupplier the validator provider supplier
    */
-  public CliqueDifficultyCalculator(
-      final Address localAddress, final Supplier<ValidatorProvider> validatorProviderSupplier) {
+  public CliqueDifficultyCalculator(final Address localAddress) {
     this.localAddress = localAddress;
-    this.validatorProviderSupplier = validatorProviderSupplier;
   }
 
   @Override
   public BigInteger nextDifficulty(final long time, final BlockHeader parent) {
 
-    final Address nextProposer =
-        CliqueHelpers.getProposerForBlockAfter(parent, validatorProviderSupplier.get());
+    final Address nextProposer = CliqueHelpers.getProposerForBlockAfter(parent);
     return nextProposer.equals(localAddress) ? IN_TURN_DIFFICULTY : OUT_OF_TURN_DIFFICULTY;
   }
 }

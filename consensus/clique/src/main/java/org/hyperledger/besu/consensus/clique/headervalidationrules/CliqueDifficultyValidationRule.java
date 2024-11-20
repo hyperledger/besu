@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.clique.headervalidationrules;
 
-import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueDifficultyCalculator;
 import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.datatypes.Address;
@@ -39,10 +38,8 @@ public class CliqueDifficultyValidationRule implements AttachedBlockHeaderValida
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     final Address actualBlockCreator = CliqueHelpers.getProposerOfBlock(header);
-    final var cliqueContext = protocolContext.getConsensusContext(CliqueContext.class);
     final CliqueDifficultyCalculator diffCalculator =
-        new CliqueDifficultyCalculator(
-            actualBlockCreator, () -> cliqueContext.getValidatorProvider());
+        new CliqueDifficultyCalculator(actualBlockCreator);
     final BigInteger expectedDifficulty = diffCalculator.nextDifficulty(0, parent);
 
     final BigInteger actualDifficulty = header.getDifficulty().toBigInteger();
