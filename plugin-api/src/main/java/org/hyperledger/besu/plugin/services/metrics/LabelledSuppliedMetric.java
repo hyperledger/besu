@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,8 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin;
+package org.hyperledger.besu.plugin.services.metrics;
 
-/** Deprecated in favor of the more precisely named ServiceManager interface. */
-@Deprecated(since = "24.11.0", forRemoval = true)
-public interface BesuContext extends ServiceManager {}
+import java.util.function.DoubleSupplier;
+
+/** The interface Labelled gauge. */
+public interface LabelledSuppliedMetric {
+  /**
+   * Labels.
+   *
+   * @param valueSupplier the value supplier
+   * @param labelValues the label values
+   */
+  void labels(final DoubleSupplier valueSupplier, final String... labelValues);
+}

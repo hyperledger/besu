@@ -26,6 +26,7 @@ import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
+import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -98,6 +99,7 @@ public class CliqueMinerExecutorTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
+    CliqueHelpers.setCliqueContext(cliqueContext);
     cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
     cliqueProtocolSchedule =
         CliqueProtocolSchedule.create(
@@ -119,7 +121,7 @@ public class CliqueMinerExecutorTest {
   public void extraDataCreatedOnEpochBlocksContainsValidators() {
     final Bytes vanityData = generateRandomVanityData();
 
-    final MiningConfiguration miningConfiguration = createMiningParameters(vanityData);
+    final MiningConfiguration miningConfiguration = createMiningConfiguration(vanityData);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -155,7 +157,7 @@ public class CliqueMinerExecutorTest {
   public void extraDataForNonEpochBlocksDoesNotContainValidaors() {
     final Bytes vanityData = generateRandomVanityData();
 
-    final MiningConfiguration miningConfiguration = createMiningParameters(vanityData);
+    final MiningConfiguration miningConfiguration = createMiningConfiguration(vanityData);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -191,7 +193,7 @@ public class CliqueMinerExecutorTest {
     final Bytes initialVanityData = generateRandomVanityData();
     final Bytes modifiedVanityData = generateRandomVanityData();
 
-    final MiningConfiguration miningConfiguration = createMiningParameters(initialVanityData);
+    final MiningConfiguration miningConfiguration = createMiningConfiguration(initialVanityData);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -255,7 +257,7 @@ public class CliqueMinerExecutorTest {
     return Bytes.wrap(vanityData);
   }
 
-  private static MiningConfiguration createMiningParameters(final Bytes vanityData) {
+  private static MiningConfiguration createMiningConfiguration(final Bytes vanityData) {
     return ImmutableMiningConfiguration.builder()
         .mutableInitValues(
             MutableInitValues.builder()

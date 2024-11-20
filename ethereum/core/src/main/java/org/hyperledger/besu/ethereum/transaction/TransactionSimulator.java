@@ -124,6 +124,21 @@ public class TransactionSimulator {
         blockHeader);
   }
 
+  public Optional<TransactionSimulatorResult> process(
+      final CallParameter callParams,
+      final Optional<AccountOverrideMap> maybeStateOverrides,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
+      final BlockHeader blockHeader) {
+    return process(
+        callParams,
+        maybeStateOverrides,
+        transactionValidationParams,
+        operationTracer,
+        (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
+        blockHeader);
+  }
+
   public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
     final var chainHeadHash = blockchain.getChainHeadHash();
     return process(

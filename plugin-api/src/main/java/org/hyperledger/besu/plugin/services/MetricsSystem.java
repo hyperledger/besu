@@ -18,6 +18,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
@@ -46,6 +47,23 @@ public interface MetricsSystem extends BesuService {
   }
 
   /**
+   * Creates a Counter that gets its value from the specified supplier. To be used when the value of
+   * the counter is calculated outside the metric system.
+   *
+   * @param category The {@link MetricCategory} this counter is assigned to.
+   * @param name A name for this metric.
+   * @param help A human readable description of the metric.
+   * @param valueSupplier The supplier of the value.
+   */
+  default void createCounter(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final DoubleSupplier valueSupplier) {
+    createLabelledSuppliedCounter(category, name, help).labels(valueSupplier);
+  }
+
+  /**
    * Creates a Counter with assigned labels.
    *
    * @param category The {@link MetricCategory} this counter is assigned to.
@@ -58,7 +76,42 @@ public interface MetricsSystem extends BesuService {
       MetricCategory category, String name, String help, String... labelNames);
 
   /**
-   * Creates a Gauge with assigned labels.
+   * Creates a Counter with assigned labels, that gets its values from suppliers. To be used when
+   * the values of the counter are calculated outside the metric system.
+   *
+   * @param category The {@link MetricCategory} this counter is assigned to.
+   * @param name A name for this metric.
+   * @param help A human readable description of the metric.
+   * @param labelNames An array of labels to assign to the Counter.
+   * @return The created LabelledSupplierMetric instance.
+   */
+  LabelledSuppliedMetric createLabelledSuppliedCounter(
+      MetricCategory category, String name, String help, String... labelNames);
+
+  /**
+   * Creates a Gauge with assigned labels, that gets its values from suppliers. To be used when the
+   * values of the gauge are calculated outside the metric system.
+   *
+   * @param category The {@link MetricCategory} this gauge is assigned to.
+   * @param name A name for this metric.
+   * @param help A human readable description of the metric.
+   * @param labelNames An array of labels to assign to the Gauge.
+   * @return The created LabelledGauge instance.
+   * @deprecated Use {@link #createLabelledSuppliedGauge(MetricCategory, String, String, String...)}
+   */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("removal") // remove when deprecated LabelledGauge is removed
+  default LabelledGauge createLabelledGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    return (LabelledGauge) createLabelledSuppliedGauge(category, name, help, labelNames);
+  }
+
+  /**
+   * Creates a Gauge with assigned labels, that gets its values from suppliers. To be used when the
+   * values of the gauge are calculated outside the metric system.
    *
    * @param category The {@link MetricCategory} this gauge is assigned to.
    * @param name A name for this metric.
@@ -66,7 +119,7 @@ public interface MetricsSystem extends BesuService {
    * @param labelNames An array of labels to assign to the Gauge.
    * @return The created LabelledGauge instance.
    */
-  LabelledGauge createLabelledGauge(
+  LabelledSuppliedMetric createLabelledSuppliedGauge(
       MetricCategory category, String name, String help, String... labelNames);
 
   /**

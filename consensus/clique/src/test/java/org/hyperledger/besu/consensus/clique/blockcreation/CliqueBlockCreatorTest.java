@@ -122,6 +122,7 @@ public class CliqueBlockCreatorTest {
             new NoOpMetricsSystem());
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
+    CliqueHelpers.setCliqueContext(cliqueContext);
 
     final Block genesis =
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
@@ -149,7 +150,7 @@ public class CliqueBlockCreatorTest {
 
     final Address coinbase = AddressHelpers.ofValue(1);
 
-    final MiningConfiguration miningConfiguration = createMiningParameters(extraData, coinbase);
+    final MiningConfiguration miningConfiguration = createMiningConfiguration(extraData, coinbase);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
@@ -178,7 +179,7 @@ public class CliqueBlockCreatorTest {
     when(voteProvider.getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
-    final MiningConfiguration miningConfiguration = createMiningParameters(extraData, coinbase);
+    final MiningConfiguration miningConfiguration = createMiningConfiguration(extraData, coinbase);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
@@ -212,7 +213,7 @@ public class CliqueBlockCreatorTest {
     when(mockVoteProvider.getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
-    final MiningConfiguration miningConfiguration = createMiningParameters(extraData, coinbase);
+    final MiningConfiguration miningConfiguration = createMiningConfiguration(extraData, coinbase);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
@@ -255,7 +256,7 @@ public class CliqueBlockCreatorTest {
     return transactionPool;
   }
 
-  private static MiningConfiguration createMiningParameters(
+  private static MiningConfiguration createMiningConfiguration(
       final Bytes extraData, final Address coinbase) {
     final MiningConfiguration miningConfiguration =
         ImmutableMiningConfiguration.builder()

@@ -437,8 +437,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                 newBlockNumber);
 
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
-    final BigInteger difficulty =
-        difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);
+    final BigInteger difficulty = difficultyCalculator.nextDifficulty(timestamp, parentHeader);
 
     final Wei baseFee =
         Optional.of(protocolSpec.getFeeMarket())
