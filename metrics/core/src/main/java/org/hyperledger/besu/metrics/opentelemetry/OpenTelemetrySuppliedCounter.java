@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,31 +14,30 @@
  */
 package org.hyperledger.besu.metrics.opentelemetry;
 
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
-
 import java.util.List;
 
 import io.opentelemetry.api.metrics.Meter;
 
-/** The Open telemetry gauge. */
-@SuppressWarnings("removal") // remove when deprecated LabelledGauge is removed
-public class OpenTelemetryGauge extends OpenTelemetryLabelledSuppliedMetric
-    implements LabelledGauge {
+/** The Open telemetry supplied counter. */
+public class OpenTelemetrySuppliedCounter extends OpenTelemetryLabelledSuppliedMetric {
   /**
-   * Instantiates a new Open telemetry gauge.
+   * Instantiates a new Open telemetry supplied counter.
    *
    * @param metricName the metric name
    * @param help the help
    * @param meter the meter
    * @param labelNames the label names
    */
-  public OpenTelemetryGauge(
+  public OpenTelemetrySuppliedCounter(
       final String metricName,
       final String help,
       final Meter meter,
       final List<String> labelNames) {
     super(labelNames);
-
-    meter.gaugeBuilder(metricName).setDescription(help).buildWithCallback(this::updater);
+    meter
+        .counterBuilder(metricName)
+        .setDescription(help)
+        .ofDoubles()
+        .buildWithCallback(this::updater);
   }
 }
