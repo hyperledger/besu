@@ -101,4 +101,9 @@ public class InMemoryKeyValueStorage extends SegmentedKeyValueStorageAdapter {
   public void dump(final PrintStream ps) {
     ((SegmentedInMemoryKeyValueStorage) storage).dump(ps);
   }
+
+  @Override
+  public boolean isPersistent() {
+    return false;
+  }
 }

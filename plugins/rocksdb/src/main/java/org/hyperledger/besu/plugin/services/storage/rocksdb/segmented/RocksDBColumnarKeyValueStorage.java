@@ -482,4 +482,9 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
       return String.format("'%s'(%s)", name, Bytes.of(id).toHexString());
     }
   }
+
+  @Override
+  public boolean isPersistent() {
+    return true;
+  }
 }

@@ -311,6 +311,11 @@ public class SegmentedInMemoryKeyValueStorage
   }
 
   @Override
+  public boolean isPersistent() {
+    return false;
+  }
+
+  @Override
   public SegmentedInMemoryKeyValueStorage takeSnapshot() {
     // need to clone the submaps also:
     return new SegmentedInMemoryKeyValueStorage(
