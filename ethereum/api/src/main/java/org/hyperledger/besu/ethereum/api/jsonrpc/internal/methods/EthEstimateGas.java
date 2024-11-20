@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
@@ -27,10 +29,12 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.util.AccountOverrideMap;
 import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +59,8 @@ public class EthEstimateGas extends AbstractEstimateGas {
 
     final CallParameter modifiedCallParams =
         overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
+    Optional<AccountOverrideMap> maybeStateOverrides = getAddressAccountOverrideMap(requestContext);
+    // TODO implement for block overrides
 
     final boolean isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
 
@@ -68,7 +74,11 @@ public class EthEstimateGas extends AbstractEstimateGas {
     LOG.debug("Processing transaction with params: {}", modifiedCallParams);
     final var maybeResult =
         transactionSimulator.process(
-            modifiedCallParams, transactionValidationParams, operationTracer, blockHeader);
+            modifiedCallParams,
+            maybeStateOverrides,
+            transactionValidationParams,
+            operationTracer,
+            blockHeader);
 
     final Optional<JsonRpcErrorResponse> maybeErrorResponse =
         validateSimulationResult(requestContext, maybeResult);
@@ -81,6 +91,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
     final var lowResult =
         transactionSimulator.process(
             overrideGasLimitAndPrice(callParams, low),
+            maybeStateOverrides,
             transactionValidationParams,
             operationTracer,
             blockHeader);
@@ -97,6 +108,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
       var binarySearchResult =
           transactionSimulator.process(
               overrideGasLimitAndPrice(callParams, mid),
+              maybeStateOverrides,
               transactionValidationParams,
               operationTracer,
               blockHeader);
@@ -126,5 +138,16 @@ public class EthEstimateGas extends AbstractEstimateGas {
       return Optional.of(errorResponse(requestContext, maybeResult.get()));
     }
     return Optional.empty();
+  }
+
+  @VisibleForTesting
+  protected Optional<AccountOverrideMap> getAddressAccountOverrideMap(
+      final JsonRpcRequestContext request) {
+    try {
+      return request.getOptionalParameter(2, AccountOverrideMap.class);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcRequestException(
+          "Invalid account overrides parameter (index 2)", RpcErrorType.INVALID_CALL_PARAMS, e);
+    }
   }
 }
