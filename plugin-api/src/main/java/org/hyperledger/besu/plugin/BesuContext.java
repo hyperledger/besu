@@ -12,12 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services;
+package org.hyperledger.besu.plugin;
 
-import org.hyperledger.besu.plugin.ServiceManager;
-
-/**
- * All services that can be resolved via {@link ServiceManager#getService(Class)} must implement
- * {@link BesuService}
- */
-public interface BesuService {}
+/** Deprecated in favor of the more precisely named ServiceManager interface. */
+@Deprecated
+public interface BesuContext extends ServiceManager {}

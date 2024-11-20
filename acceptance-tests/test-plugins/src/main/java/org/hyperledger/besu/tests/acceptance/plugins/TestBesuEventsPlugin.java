@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
-import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.services.BesuEvents;

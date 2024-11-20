@@ -16,8 +16,8 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
 import java.io.File;

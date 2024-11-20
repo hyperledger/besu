@@ -6,6 +6,7 @@
 - Removed Retesteth rpc service and commands [#7833](https://github.com/hyperledger/besu/pull/7783)
 
 ### Upcoming Breaking Changes
+- Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
 
 ### Additions and Improvements

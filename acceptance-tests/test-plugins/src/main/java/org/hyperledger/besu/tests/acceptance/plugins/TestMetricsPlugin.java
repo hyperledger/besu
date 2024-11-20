@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
-import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;

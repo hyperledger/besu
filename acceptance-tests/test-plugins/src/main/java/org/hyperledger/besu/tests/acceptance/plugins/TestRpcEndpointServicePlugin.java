@@ -16,8 +16,8 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 
