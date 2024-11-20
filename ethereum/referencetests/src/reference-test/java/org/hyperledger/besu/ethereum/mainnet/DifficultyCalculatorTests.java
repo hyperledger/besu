@@ -181,7 +181,7 @@ public class DifficultyCalculatorTests {
           UInt256.fromHexString(value.get("currentDifficulty").asText());
       final var spec = protocolSchedule.getByBlockHeader(testHeader);
       final var calculator = spec.getDifficultyCalculator();
-      assertThat(UInt256.valueOf(calculator.nextDifficulty(currentTime, testHeader, null)))
+      assertThat(UInt256.valueOf(calculator.nextDifficulty(currentTime, testHeader)))
           .describedAs("File %s Test %s", testFile, entry.getKey())
           .isEqualTo(currentDifficulty);
     }

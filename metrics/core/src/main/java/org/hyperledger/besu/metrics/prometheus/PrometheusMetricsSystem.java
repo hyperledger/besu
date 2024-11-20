@@ -19,8 +19,8 @@ import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
@@ -240,18 +240,37 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public LabelledGauge createLabelledGauge(
+  public LabelledSuppliedMetric createLabelledSuppliedCounter(
       final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    return createLabelledSuppliedMetric(category, Collector.Type.COUNTER, name, help, labelNames);
+  }
+
+  @Override
+  public LabelledSuppliedMetric createLabelledSuppliedGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    return createLabelledSuppliedMetric(category, Collector.Type.GAUGE, name, help, labelNames);
+  }
+
+  private LabelledSuppliedMetric createLabelledSuppliedMetric(
+      final MetricCategory category,
+      final Collector.Type type,
       final String name,
       final String help,
       final String... labelNames) {
     final String metricName = convertToPrometheusName(category, name);
     if (isCategoryEnabled(category)) {
-      final PrometheusGauge gauge = new PrometheusGauge(metricName, help, List.of(labelNames));
-      registerCollector(category, gauge);
-      return gauge;
+      final PrometheusSuppliedValueCollector suppliedValueCollector =
+          new PrometheusSuppliedValueCollector(type, metricName, help, List.of(labelNames));
+      registerCollector(category, suppliedValueCollector);
+      return suppliedValueCollector;
     }
-    return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
+    return NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
   }
 
   private void registerCollector(final MetricCategory category, final Collector collector) {
