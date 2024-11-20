@@ -12,9 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.util;
-
-import org.hyperledger.besu.datatypes.Wei;
+package org.hyperledger.besu.datatypes;
 
 import java.util.Map;
 import java.util.Objects;

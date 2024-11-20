@@ -19,6 +19,8 @@ import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalcu
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccountOverride;
+import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -34,8 +36,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.util.AccountOverride;
-import org.hyperledger.besu.ethereum.util.AccountOverrideMap;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -105,6 +105,7 @@ public class TransactionSimulator {
     final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
     return process(
         callParams,
+        Optional.empty(),
         transactionValidationParams,
         operationTracer,
         (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
@@ -118,6 +119,22 @@ public class TransactionSimulator {
       final BlockHeader blockHeader) {
     return process(
         callParams,
+        Optional.empty(),
+        transactionValidationParams,
+        operationTracer,
+        (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
+        blockHeader);
+  }
+
+  public Optional<TransactionSimulatorResult> process(
+      final CallParameter callParams,
+      final Optional<AccountOverrideMap> maybeStateOverrides,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
+      final BlockHeader blockHeader) {
+    return process(
+        callParams,
+        maybeStateOverrides,
         transactionValidationParams,
         operationTracer,
         (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
