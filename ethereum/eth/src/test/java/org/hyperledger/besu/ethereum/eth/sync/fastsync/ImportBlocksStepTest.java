@@ -73,8 +73,7 @@ public class ImportBlocksStepTest {
             validationPolicy,
             ommerValidationPolicy,
             null,
-            pivotHeader,
-            BodyValidationMode.FULL);
+            pivotHeader);
   }
 
   @Test

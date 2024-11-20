@@ -50,10 +50,35 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final Block block,
       final List<TransactionReceipt> receipts,
       final Hash worldStateRootHash,
-      final HeaderValidationMode ommerValidationMode) {
+      final HeaderValidationMode ommerValidationMode,
+      final BodyValidationMode bodyValidationMode) {
+    if (bodyValidationMode == BodyValidationMode.NONE) {
+      return true;
+    }
 
-    if (!validateBodyLight(
-        context, block, receipts, ommerValidationMode, BodyValidationMode.FULL)) {
+    if (!validateBodyLight(context, block, receipts, ommerValidationMode)) {
+      return false;
+    }
+
+    if (bodyValidationMode == BodyValidationMode.LIGHT) {
+      return true;
+    }
+
+    return validateBodyFull(block, receipts, worldStateRootHash);
+  }
+
+  private boolean validateBodyFull(
+      final Block block, final List<TransactionReceipt> receipts, final Hash worldStateRootHash) {
+    final BlockHeader header = block.getHeader();
+    final BlockBody body = block.getBody();
+
+    final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
+    if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
+      return false;
+    }
+
+    final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
+    if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
       return false;
     }
 
@@ -65,36 +90,16 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
               LOG.warn("Transaction receipt found in the invalid block {}", receipt.toString()));
       return false;
     }
-
     return true;
   }
 
-  @Override
-  public boolean validateBodyLight(
+  protected boolean validateBodyLight(
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final HeaderValidationMode ommerValidationMode,
-      final BodyValidationMode bodyValidationMode) {
-    if (bodyValidationMode == BodyValidationMode.NONE) {
-      return true;
-    }
+      final HeaderValidationMode ommerValidationMode) {
 
     final BlockHeader header = block.getHeader();
-    final BlockBody body = block.getBody();
-
-    // these checks are only needed for full validation and can be skipped for light validation
-    if (bodyValidationMode == BodyValidationMode.FULL) {
-      final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
-      if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
-        return false;
-      }
-
-      final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
-      if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
-        return false;
-      }
-    }
 
     final long gasUsed =
         receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
@@ -113,7 +118,6 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     if (!validateWithdrawals(block)) {
       return false;
     }
-
     return true;
   }
 
@@ -175,7 +179,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  private static boolean validateStateRoot(
+  protected boolean validateStateRoot(
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
       LOG.warn(

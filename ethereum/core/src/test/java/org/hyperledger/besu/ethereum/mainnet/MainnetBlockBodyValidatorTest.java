@@ -18,6 +18,7 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.NONE;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -95,11 +96,7 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(),
-                    block,
-                    emptyList(),
-                    NONE,
-                    BodyValidationMode.FULL))
+                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
         .isTrue();
   }
 
@@ -123,11 +120,7 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(),
-                    block,
-                    emptyList(),
-                    NONE,
-                    BodyValidationMode.FULL))
+                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
         .isFalse();
   }
 
@@ -151,11 +144,7 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(),
-                    block,
-                    emptyList(),
-                    NONE,
-                    BodyValidationMode.FULL))
+                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
         .isFalse();
   }
 
@@ -168,10 +157,11 @@ class MainnetBlockBodyValidatorTest {
     final MainnetBlockBodyValidator bodyValidator = new MainnetBlockBodyValidator(protocolSchedule);
 
     assertThat(
-            bodyValidator.validateBodyLight(
+            bodyValidator.validateBody(
                 blockchainSetupUtil.getProtocolContext(),
                 block,
                 receipts,
+                Hash.ZERO,
                 NONE,
                 BodyValidationMode.NONE))
         .isTrue();
@@ -198,10 +188,11 @@ class MainnetBlockBodyValidatorTest {
     final MainnetBlockBodyValidator bodyValidatorSpy = spy(bodyValidator);
 
     assertThat(
-            bodyValidatorSpy.validateBodyLight(
+            bodyValidatorSpy.validateBody(
                 blockchainSetupUtil.getProtocolContext(),
                 block,
                 emptyList(),
+                Hash.ZERO,
                 NONE,
                 BodyValidationMode.LIGHT))
         .isTrue();
@@ -228,10 +219,11 @@ class MainnetBlockBodyValidatorTest {
     final MainnetBlockBodyValidator bodyValidatorSpy = spy(bodyValidator);
 
     assertThat(
-            bodyValidatorSpy.validateBodyLight(
+            bodyValidatorSpy.validateBody(
                 blockchainSetupUtil.getProtocolContext(),
                 block,
                 emptyList(),
+                block.getHeader().getStateRoot(),
                 NONE,
                 BodyValidationMode.FULL))
         .isTrue();
@@ -241,5 +233,6 @@ class MainnetBlockBodyValidatorTest {
         .validateReceiptsRoot(block.getHeader(), receiptsRoot, receiptsRoot);
     verify(bodyValidatorSpy, times(1))
         .validateTransactionsRoot(block.getHeader(), transactionsRoot, transactionsRoot);
+    verify(bodyValidatorSpy, times(1)).validateStateRoot(eq(block.getHeader()), any(), any());
   }
 }

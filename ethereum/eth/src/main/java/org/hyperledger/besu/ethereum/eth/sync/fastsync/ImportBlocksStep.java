@@ -54,15 +54,17 @@ public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
       final ValidationPolicy headerValidationPolicy,
       final ValidationPolicy ommerValidationPolicy,
       final EthContext ethContext,
-      final BlockHeader pivotHeader,
-      final BodyValidationMode bodyValidationMode) {
+      final BlockHeader pivotHeader) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.headerValidationPolicy = headerValidationPolicy;
     this.ommerValidationPolicy = ommerValidationPolicy;
     this.ethContext = ethContext;
     this.pivotHeader = pivotHeader;
-    this.bodyValidationMode = bodyValidationMode;
+    bodyValidationMode =
+        protocolSchedule.anyMatch(scheduledProtocolSpec -> scheduledProtocolSpec.spec().isPoS())
+            ? BodyValidationMode.NONE
+            : BodyValidationMode.LIGHT;
   }
 
   @Override
