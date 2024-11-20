@@ -1332,7 +1332,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void setReleaseMetrics() {
     besuComponent
         .getMetricsSystem()
-        .createLabelledGauge(
+        .createLabelledSuppliedGauge(
             StandardMetricCategory.PROCESS, "release", "Release information", "version")
         .labels(() -> 1, BesuInfo.version());
   }
