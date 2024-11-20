@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -66,6 +67,7 @@ public class CliqueProtocolScheduleTest {
             config,
             new ForksSchedule<>(List.of()),
             NODE_KEY,
+            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
@@ -92,6 +94,7 @@ public class CliqueProtocolScheduleTest {
                 GenesisConfigFile.DEFAULT.getConfigOptions(),
                 forksSchedule,
                 NODE_KEY,
+                PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,
@@ -118,6 +121,7 @@ public class CliqueProtocolScheduleTest {
                     genesisConfig,
                     new ForksSchedule<>(List.of()),
                     NODE_KEY,
+                    PrivacyParameters.DEFAULT,
                     false,
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
@@ -140,6 +144,7 @@ public class CliqueProtocolScheduleTest {
                     genesisConfig,
                     new ForksSchedule<>(List.of()),
                     NODE_KEY,
+                    PrivacyParameters.DEFAULT,
                     false,
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
@@ -166,6 +171,7 @@ public class CliqueProtocolScheduleTest {
             config,
             forksSchedule,
             NODE_KEY,
+            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,22 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.ethereum.util;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.datatypes.Address;
 
-import java.math.BigInteger;
+import java.util.HashMap;
 
-/** Calculates block difficulties. */
-@FunctionalInterface
-public interface DifficultyCalculator {
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-  /**
-   * Calculates the block difficulty for a block.
-   *
-   * @param time the time the block was generated
-   * @param parent the block's parent block header
-   * @return the block difficulty
-   */
-  BigInteger nextDifficulty(long time, BlockHeader parent);
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class AccountOverrideMap extends HashMap<Address, AccountOverride> {
+
+  public AccountOverrideMap() {}
 }
