@@ -24,7 +24,6 @@ import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -193,11 +192,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory) {
+      final ConsensusContext consensusContext) {
     final ProtocolContext protocolContext =
-        super.createProtocolContext(
-            blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
+        super.createProtocolContext(blockchain, worldStateArchive, consensusContext);
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     return protocolContext;
   }
