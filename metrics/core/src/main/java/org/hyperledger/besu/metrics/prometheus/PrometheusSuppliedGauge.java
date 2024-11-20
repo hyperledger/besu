@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -29,7 +29,8 @@ import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
 
 /** The Prometheus gauge. */
 @SuppressWarnings("removal")
-public class PrometheusSuppliedGauge extends PrometheusSuppliedCollector implements LabelledGauge {
+public class PrometheusSuppliedGauge extends PrometheusSuppliedValueCollector
+    implements LabelledGauge {
 
   /**
    * Instantiates a new labelled Prometheus gauge.

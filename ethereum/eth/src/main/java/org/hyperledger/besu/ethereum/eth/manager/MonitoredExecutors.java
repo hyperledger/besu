@@ -155,13 +155,13 @@ public class MonitoredExecutors {
 
     metricsSystem.createCounter(
         BesuMetricCategory.EXECUTORS,
-        metricName + "_completed_tasks",
+        metricName + "_completed_tasks_total",
         "Total number of tasks executed",
         executor::getCompletedTaskCount);
 
     metricsSystem.createCounter(
         BesuMetricCategory.EXECUTORS,
-        metricName + "_submitted_tasks",
+        metricName + "_submitted_tasks_total",
         "Total number of tasks executed",
         executor::getTaskCount);
 

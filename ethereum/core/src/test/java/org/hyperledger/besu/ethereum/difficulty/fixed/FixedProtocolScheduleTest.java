@@ -49,21 +49,21 @@ public class FixedProtocolScheduleTest {
             schedule
                 .getByBlockHeader(blockHeader(0))
                 .getDifficultyCalculator()
-                .nextDifficulty(1, parentHeader, null))
+                .nextDifficulty(1, parentHeader))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
 
     assertThat(
             schedule
                 .getByBlockHeader(blockHeader(500))
                 .getDifficultyCalculator()
-                .nextDifficulty(1, parentHeader, null))
+                .nextDifficulty(1, parentHeader))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
 
     assertThat(
             schedule
                 .getByBlockHeader(blockHeader(500_000))
                 .getDifficultyCalculator()
-                .nextDifficulty(1, parentHeader, null))
+                .nextDifficulty(1, parentHeader))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
   }
 

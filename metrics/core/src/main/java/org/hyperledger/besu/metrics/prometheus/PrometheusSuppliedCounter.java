@@ -27,7 +27,7 @@ import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
 
 /** The Prometheus supplied counter. */
-public class PrometheusSuppliedCounter extends PrometheusSuppliedCollector {
+public class PrometheusSuppliedCounter extends PrometheusSuppliedValueCollector {
 
   /**
    * Instantiates a new labelled Prometheus supplied counter.

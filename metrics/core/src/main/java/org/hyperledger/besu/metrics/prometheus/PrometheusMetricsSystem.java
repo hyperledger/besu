@@ -170,6 +170,19 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
+  public void createGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final DoubleSupplier valueSupplier) {
+    if (isCategoryEnabled(category)) {
+      final var gauge = new PrometheusSuppliedGauge(category, name, help);
+      gauge.labels(valueSupplier);
+      registerCollector(category, gauge);
+    }
+  }
+
+  @Override
   public void trackExternalSummary(
       final MetricCategory category,
       final String name,
@@ -184,15 +197,12 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public void createGauge(
-      final MetricCategory category,
-      final String name,
-      final String help,
-      final DoubleSupplier valueSupplier) {
+  public void createGuavaCacheCollector(
+      final MetricCategory category, final String name, final Cache<?, ?> cache) {
     if (isCategoryEnabled(category)) {
-      final var gauge = new PrometheusSuppliedGauge(category, name, help);
-      gauge.labels(valueSupplier);
-      registerCollector(category, gauge);
+      final var cacheCollector =
+          new PrometheusGuavaCache(category, guavaCacheCollectorContext, name, cache);
+      registerCollector(category, cacheCollector);
     }
   }
 
@@ -224,16 +234,6 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       return gauge;
     }
     return NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
-  }
-
-  @Override
-  public void createGuavaCacheCollector(
-      final MetricCategory category, final String name, final Cache<?, ?> cache) {
-    if (isCategoryEnabled(category)) {
-      final var cacheCollector =
-          new PrometheusGuavaCache(category, guavaCacheCollectorContext, name, cache);
-      registerCollector(category, cacheCollector);
-    }
   }
 
   private void registerCollector(
