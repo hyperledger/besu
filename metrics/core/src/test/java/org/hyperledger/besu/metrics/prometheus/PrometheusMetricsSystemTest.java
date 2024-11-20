@@ -33,8 +33,8 @@ import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Collections;
@@ -129,8 +129,8 @@ public class PrometheusMetricsSystemTest {
 
   @Test
   public void shouldCreateSeparateObservationsForEachLabelledGaugeValue() {
-    final LabelledGauge gauge =
-        metricsSystem.createLabelledGauge(PEERS, "test", "test help", "a", "b", "c");
+    final LabelledSuppliedMetric gauge =
+        metricsSystem.createLabelledSuppliedGauge(PEERS, "test", "test help", "a", "b", "c");
     final double value1 = 1.0;
     final double value2 = 11.0;
 
@@ -145,8 +145,8 @@ public class PrometheusMetricsSystemTest {
 
   @Test
   public void shouldNotUseSameLabelsTwiceOnSameGauge() {
-    final LabelledGauge gauge =
-        metricsSystem.createLabelledGauge(PEERS, "test", "test help", "a", "b", "c");
+    final LabelledSuppliedMetric gauge =
+        metricsSystem.createLabelledSuppliedGauge(PEERS, "test", "test help", "a", "b", "c");
     final double value1 = 1.0;
 
     gauge.labels(() -> value1, "a1", "b1", "c1");

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,10 +14,15 @@
  */
 package org.hyperledger.besu.plugin.services.metrics;
 
-/**
- * The interface Labelled gauge.
- *
- * @deprecated Use {@link LabelledSuppliedMetric}
- */
-@Deprecated(forRemoval = true)
-public interface LabelledGauge extends LabelledSuppliedMetric {}
+import java.util.function.DoubleSupplier;
+
+/** The interface Labelled gauge. */
+public interface LabelledSuppliedMetric {
+  /**
+   * Labels.
+   *
+   * @param valueSupplier the value supplier
+   * @param labelValues the label values
+   */
+  void labels(final DoubleSupplier valueSupplier, final String... labelValues);
+}
