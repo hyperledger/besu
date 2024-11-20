@@ -20,8 +20,11 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.provider.Arguments;
 
+// TODO SLD
+@Disabled("TODO SLD - Enable when Prague spec is finalized")
 public class ExecutionEnginePragueAcceptanceTest extends AbstractJsonRpcTest {
   private static final String GENESIS_FILE = "/jsonrpc/engine/prague/genesis.json";
   private static final String TEST_CASE_PATH = "/jsonrpc/engine/prague/test-cases/";

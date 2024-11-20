@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionCon
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.MinPriorityFeePerGasTransactionSelector;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -46,11 +46,11 @@ public class MinPriorityFeePerGasTransactionSelectorTest {
 
   @BeforeEach
   public void initialize() {
-    MiningParameters miningParameters =
-        MiningParameters.newDefault().setMinPriorityFeePerGas(Wei.of(minPriorityFeeParameter));
+    MiningConfiguration miningConfiguration =
+        MiningConfiguration.newDefault().setMinPriorityFeePerGas(Wei.of(minPriorityFeeParameter));
     BlockSelectionContext context =
         new BlockSelectionContext(
-            miningParameters, null, null, null, pendingBlockHeader, null, null, null, null);
+            miningConfiguration, null, null, null, pendingBlockHeader, null, null, null, null);
     transactionSelector = new MinPriorityFeePerGasTransactionSelector(context);
   }
 

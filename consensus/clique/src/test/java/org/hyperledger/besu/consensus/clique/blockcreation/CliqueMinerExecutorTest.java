@@ -39,9 +39,10 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -103,9 +104,10 @@ public class CliqueMinerExecutorTest {
             GENESIS_CONFIG_OPTIONS,
             new ForksSchedule<>(List.of()),
             proposerNodeKey,
+            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
+            MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
             new NoOpMetricsSystem());
@@ -117,7 +119,7 @@ public class CliqueMinerExecutorTest {
   public void extraDataCreatedOnEpochBlocksContainsValidators() {
     final Bytes vanityData = generateRandomVanityData();
 
-    final MiningParameters miningParameters = createMiningParameters(vanityData);
+    final MiningConfiguration miningConfiguration = createMiningParameters(vanityData);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -125,7 +127,7 @@ public class CliqueMinerExecutorTest {
             cliqueProtocolSchedule,
             createTransactionPool(),
             proposerNodeKey,
-            miningParameters,
+            miningConfiguration,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             null,
@@ -153,7 +155,7 @@ public class CliqueMinerExecutorTest {
   public void extraDataForNonEpochBlocksDoesNotContainValidaors() {
     final Bytes vanityData = generateRandomVanityData();
 
-    final MiningParameters miningParameters = createMiningParameters(vanityData);
+    final MiningConfiguration miningConfiguration = createMiningParameters(vanityData);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -161,7 +163,7 @@ public class CliqueMinerExecutorTest {
             cliqueProtocolSchedule,
             createTransactionPool(),
             proposerNodeKey,
-            miningParameters,
+            miningConfiguration,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             null,
@@ -189,7 +191,7 @@ public class CliqueMinerExecutorTest {
     final Bytes initialVanityData = generateRandomVanityData();
     final Bytes modifiedVanityData = generateRandomVanityData();
 
-    final MiningParameters miningParameters = createMiningParameters(initialVanityData);
+    final MiningConfiguration miningConfiguration = createMiningParameters(initialVanityData);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -197,13 +199,13 @@ public class CliqueMinerExecutorTest {
             cliqueProtocolSchedule,
             createTransactionPool(),
             proposerNodeKey,
-            miningParameters,
+            miningConfiguration,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             null,
             ethScheduler);
 
-    miningParameters.setExtraData(modifiedVanityData);
+    miningConfiguration.setExtraData(modifiedVanityData);
     final Bytes extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());
 
     final CliqueExtraData cliqueExtraData =
@@ -253,8 +255,8 @@ public class CliqueMinerExecutorTest {
     return Bytes.wrap(vanityData);
   }
 
-  private static MiningParameters createMiningParameters(final Bytes vanityData) {
-    return ImmutableMiningParameters.builder()
+  private static MiningConfiguration createMiningParameters(final Bytes vanityData) {
+    return ImmutableMiningConfiguration.builder()
         .mutableInitValues(
             MutableInitValues.builder()
                 .extraData(vanityData)

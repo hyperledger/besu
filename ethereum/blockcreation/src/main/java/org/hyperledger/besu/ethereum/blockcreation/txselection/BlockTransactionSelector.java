@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.MinPrio
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.ProcessingResultTransactionSelector;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -108,7 +108,7 @@ public class BlockTransactionSelector {
   private volatile TransactionEvaluationContext currTxEvaluationContext;
 
   public BlockTransactionSelector(
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
       final MutableWorldState worldState,
@@ -132,7 +132,7 @@ public class BlockTransactionSelector {
     this.ethScheduler = ethScheduler;
     this.blockSelectionContext =
         new BlockSelectionContext(
-            miningParameters,
+            miningConfiguration,
             gasCalculator,
             gasLimitCalculator,
             blockHashProcessor,
@@ -146,7 +146,7 @@ public class BlockTransactionSelector {
     this.operationTracer =
         new InterruptibleOperationTracer(pluginTransactionSelector.getOperationTracer());
     blockWorldStateUpdater = worldState.updater();
-    blockTxsSelectionMaxTime = miningParameters.getBlockTxsSelectionMaxTime();
+    blockTxsSelectionMaxTime = miningConfiguration.getBlockTxsSelectionMaxTime();
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -315,7 +315,7 @@ public class BlockTransactionSelector {
         pendingTransaction,
         Stopwatch.createStarted(),
         transactionGasPriceInBlock,
-        blockSelectionContext.miningParameters().getMinTransactionGasPrice());
+        blockSelectionContext.miningConfiguration().getMinTransactionGasPrice());
   }
 
   /**
