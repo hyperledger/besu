@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.math.BigInteger;
@@ -28,8 +27,7 @@ public interface DifficultyCalculator {
    *
    * @param time the time the block was generated
    * @param parent the block's parent block header
-   * @param context the context in which the difficulty calculator should operate
    * @return the block difficulty
    */
-  BigInteger nextDifficulty(long time, BlockHeader parent, ProtocolContext context);
+  BigInteger nextDifficulty(long time, BlockHeader parent);
 }

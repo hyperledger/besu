@@ -39,7 +39,7 @@ public class CalculatedDifficultyValidationRule implements AttachedBlockHeaderVa
 
     final BigInteger actualDifficulty = new BigInteger(1, header.getDifficulty().toArray());
     final BigInteger expectedDifficulty =
-        difficultyCalculator.nextDifficulty(header.getTimestamp(), parent, context);
+        difficultyCalculator.nextDifficulty(header.getTimestamp(), parent);
 
     if (actualDifficulty.compareTo(expectedDifficulty) != 0) {
       LOG.info(
