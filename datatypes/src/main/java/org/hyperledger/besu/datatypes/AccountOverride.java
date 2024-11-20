@@ -12,9 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.util;
-
-import org.hyperledger.besu.datatypes.Wei;
+package org.hyperledger.besu.datatypes;
 
 import java.util.Map;
 import java.util.Objects;
@@ -26,11 +24,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// similar to AccountDiff
-// BUT
-// there are more fields that need to be added
-// stateDiff
-// movePrecompileToAddress
+/** Account Override parameter class */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonDeserialize(builder = AccountOverride.Builder.class)
 public class AccountOverride {
@@ -52,22 +46,43 @@ public class AccountOverride {
     this.stateDiff = stateDiff;
   }
 
+  /**
+   * Gets the balance override
+   *
+   * @return the balance if present
+   */
   public Optional<Wei> getBalance() {
     return balance;
   }
 
+  /**
+   * Gets the nonce override
+   *
+   * @return the nonce if present
+   */
   public Optional<Long> getNonce() {
     return nonce;
   }
 
+  /**
+   * Gets the code override
+   *
+   * @return the code if present
+   */
   public Optional<String> getCode() {
     return code;
   }
 
+  /**
+   * Gets the state override map
+   *
+   * @return the state override map if present
+   */
   public Optional<Map<String, String>> getStateDiff() {
     return stateDiff;
   }
 
+  /** Builder class for Account overrides */
   public static class Builder {
     private Optional<Wei> balance = Optional.empty();
     private Optional<Long> nonce = Optional.empty();
@@ -77,31 +92,66 @@ public class AccountOverride {
     /** Default constructor. */
     public Builder() {}
 
+    /**
+     * Sets the balance override
+     *
+     * @param balance the balance override
+     * @return the builder
+     */
     public Builder withBalance(final Wei balance) {
       this.balance = Optional.ofNullable(balance);
       return this;
     }
 
+    /**
+     * Sets the nonce override
+     *
+     * @param nonce the nonce override
+     * @return the builder
+     */
     public Builder withNonce(final Long nonce) {
       this.nonce = Optional.ofNullable(nonce);
       return this;
     }
 
+    /**
+     * Sets the code override
+     *
+     * @param code the code override
+     * @return the builder
+     */
     public Builder withCode(final String code) {
       this.code = Optional.ofNullable(code);
       return this;
     }
 
+    /**
+     * Sets the state diff override
+     *
+     * @param stateDiff the map of state overrides
+     * @return the builder
+     */
     public Builder withStateDiff(final Map<String, String> stateDiff) {
       this.stateDiff = Optional.ofNullable(stateDiff);
       return this;
     }
 
+    /**
+     * build the account override from the builder
+     *
+     * @return account override
+     */
     public AccountOverride build() {
       return new AccountOverride(balance, nonce, code, stateDiff);
     }
   }
 
+  /**
+   * utility method to log unknown properties
+   *
+   * @param key key for the unrecognized value
+   * @param value the unrecognized value
+   */
   @JsonAnySetter
   public void withUnknownProperties(final String key, final Object value) {
     LOG.debug(
