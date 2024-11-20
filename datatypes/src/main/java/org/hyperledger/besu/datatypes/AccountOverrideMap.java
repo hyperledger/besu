@@ -18,8 +18,10 @@ import java.util.HashMap;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+/** Map of account overrides, indexed by address */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AccountOverrideMap extends HashMap<Address, AccountOverride> {
 
+  /** Default constructor */
   public AccountOverrideMap() {}
 }
