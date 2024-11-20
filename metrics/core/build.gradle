@@ -57,6 +57,7 @@ dependencies {
 
   implementation 'io.prometheus:simpleclient'
   implementation 'io.prometheus:simpleclient_common'
+  implementation 'io.prometheus:simpleclient_guava'
   implementation 'io.prometheus:simpleclient_hotspot'
   implementation 'io.prometheus:simpleclient_pushgateway'
   implementation 'io.vertx:vertx-core'
