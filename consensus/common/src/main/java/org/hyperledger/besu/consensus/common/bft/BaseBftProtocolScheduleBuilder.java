@@ -133,7 +133,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
-        .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
+        .difficultyCalculator((time, parent) -> BigInteger.ONE)
         .skipZeroBlockRewards(true)
         .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
         .blockReward(Wei.of(configOptions.getBlockRewardWei()))

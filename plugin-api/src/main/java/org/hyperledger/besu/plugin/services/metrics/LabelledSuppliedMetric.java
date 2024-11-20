@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,22 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.plugin.services.metrics;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import java.util.function.DoubleSupplier;
 
-import java.math.BigInteger;
-
-/** Calculates block difficulties. */
-@FunctionalInterface
-public interface DifficultyCalculator {
-
+/** The interface Labelled gauge. */
+public interface LabelledSuppliedMetric {
   /**
-   * Calculates the block difficulty for a block.
+   * Labels.
    *
-   * @param time the time the block was generated
-   * @param parent the block's parent block header
-   * @return the block difficulty
+   * @param valueSupplier the value supplier
+   * @param labelValues the label values
    */
-  BigInteger nextDifficulty(long time, BlockHeader parent);
+  void labels(final DoubleSupplier valueSupplier, final String... labelValues);
 }

@@ -342,7 +342,8 @@ public class EthCallTest {
   public void shouldUseCorrectBlockNumberWhenEarliest() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), "earliest");
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.ZERO));
-    when(transactionSimulator.process(any(), eq(Optional.empty()), any(), any(), any(), any()))
+    when(transactionSimulator.process(
+            any(), any(), any(TransactionValidationParams.class), any(), any(BlockHeader.class)))
         .thenReturn(Optional.empty());
     when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
