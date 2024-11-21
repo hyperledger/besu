@@ -100,6 +100,7 @@ public class MainnetBlockValidatorTest {
     when(blockHeaderValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
     when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any()))
         .thenReturn(true);
+    when(blockBodyValidator.validateBodyLight(any(), any(), any(), any())).thenReturn(true);
     when(blockProcessor.processBlock(any(), any(), any())).thenReturn(successfulProcessingResult);
     when(blockProcessor.processBlock(any(), any(), any(), any()))
         .thenReturn(successfulProcessingResult);

@@ -43,4 +43,19 @@ public interface BlockBodyValidator {
       final Hash worldStateRootHash,
       final HeaderValidationMode ommerValidationMode,
       final BodyValidationMode bodyValidationMode);
+
+  /**
+   * Validates that the block body is valid, but skips state root validation.
+   *
+   * @param context The context to validate against
+   * @param block The block to validate
+   * @param receipts The receipts that correspond to the blocks transactions
+   * @param ommerValidationMode The validation mode to use for ommer headers
+   * @return {@code true} if valid; otherwise {@code false}
+   */
+  boolean validateBodyLight(
+      ProtocolContext context,
+      Block block,
+      List<TransactionReceipt> receipts,
+      final HeaderValidationMode ommerValidationMode);
 }

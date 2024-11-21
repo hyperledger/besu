@@ -56,18 +56,22 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return true;
     }
 
-    if (!validateBodyLight(context, block, receipts, ommerValidationMode)) {
-      return false;
+    if (bodyValidationMode == BodyValidationMode.LIGHT
+        || bodyValidationMode == BodyValidationMode.FULL) {
+      if (!validateBodyLight(context, block, receipts, ommerValidationMode)) {
+        return false;
+      }
     }
 
-    if (bodyValidationMode == BodyValidationMode.LIGHT) {
-      return true;
+    if (bodyValidationMode == BodyValidationMode.ROOT_ONLY
+        || bodyValidationMode == BodyValidationMode.FULL) {
+      return validateBodyRoots(block, receipts, worldStateRootHash);
     }
-
-    return validateBodyFull(block, receipts, worldStateRootHash);
+    return true;
   }
 
-  private boolean validateBodyFull(
+  @VisibleForTesting
+  protected boolean validateBodyRoots(
       final Block block, final List<TransactionReceipt> receipts, final Hash worldStateRootHash) {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
@@ -93,7 +97,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  protected boolean validateBodyLight(
+  @Override
+  public boolean validateBodyLight(
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
@@ -121,11 +126,10 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  @VisibleForTesting
-  protected boolean validateTransactionsRoot(
+  private boolean validateTransactionsRoot(
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
-      LOG.info(
+      LOG.warn(
           "Invalid block {}: transaction root mismatch (expected={}, actual={})",
           header.toLogString(),
           expected,
@@ -164,8 +168,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  @VisibleForTesting
-  protected boolean validateReceiptsRoot(
+  private boolean validateReceiptsRoot(
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
       LOG.warn(
@@ -179,7 +182,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  protected boolean validateStateRoot(
+  private boolean validateStateRoot(
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
       LOG.warn(

@@ -18,7 +18,6 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.NONE;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -170,19 +169,8 @@ class MainnetBlockBodyValidatorTest {
   }
 
   @Test
-  public void lightValidationDoesNotCheckTransactionRootOrReceiptRoot() {
-    final Block block =
-        blockDataGenerator.block(
-            new BlockOptions()
-                .setBlockNumber(1)
-                .setGasUsed(0)
-                .hasTransactions(false)
-                .hasOmmers(false)
-                .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
-                .setWithdrawals(Optional.of(withdrawals)));
-    blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
+  public void lightValidationDoesNotCheckRoots() {
+    final Block block = setupBlock();
 
     final MainnetBlockBodyValidator bodyValidator = new MainnetBlockBodyValidator(protocolSchedule);
     final MainnetBlockBodyValidator bodyValidatorSpy = spy(bodyValidator);
@@ -196,24 +184,34 @@ class MainnetBlockBodyValidatorTest {
                 NONE,
                 BodyValidationMode.LIGHT))
         .isTrue();
-    verify(bodyValidatorSpy, never()).validateReceiptsRoot(any(), any(), any());
-    verify(bodyValidatorSpy, never()).validateTransactionsRoot(any(), any(), any());
+    verify(bodyValidatorSpy, times(1)).validateBodyLight(any(), any(), any(), any());
+    verify(bodyValidatorSpy, never()).validateBodyRoots(any(), any(), any());
   }
 
   @Test
-  public void fullValidationChecksTransactionRootAndReceiptRoot() {
-    final Block block =
-        blockDataGenerator.block(
-            new BlockOptions()
-                .setBlockNumber(1)
-                .setGasUsed(0)
-                .hasTransactions(false)
-                .hasOmmers(false)
-                .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
-                .setWithdrawals(Optional.of(withdrawals)));
-    blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
+  public void hashOnlyValidationChecksOnlyRoots() {
+    final Block block = setupBlock();
+
+    final MainnetBlockBodyValidator bodyValidator = new MainnetBlockBodyValidator(protocolSchedule);
+    final MainnetBlockBodyValidator bodyValidatorSpy = spy(bodyValidator);
+
+    assertThat(
+            bodyValidatorSpy.validateBody(
+                blockchainSetupUtil.getProtocolContext(),
+                block,
+                emptyList(),
+                block.getHeader().getStateRoot(),
+                NONE,
+                BodyValidationMode.ROOT_ONLY))
+        .isTrue();
+
+    verify(bodyValidatorSpy, never()).validateBodyLight(any(), any(), any(), any());
+    verify(bodyValidatorSpy, times(1)).validateBodyRoots(any(), any(), any());
+  }
+
+  @Test
+  public void fullValidationChecksRootsAndContent() {
+    final Block block = setupBlock();
 
     final MainnetBlockBodyValidator bodyValidator = new MainnetBlockBodyValidator(protocolSchedule);
     final MainnetBlockBodyValidator bodyValidatorSpy = spy(bodyValidator);
@@ -227,12 +225,23 @@ class MainnetBlockBodyValidatorTest {
                 NONE,
                 BodyValidationMode.FULL))
         .isTrue();
-    final Hash receiptsRoot = BodyValidation.receiptsRoot(emptyList());
-    final Hash transactionsRoot = BodyValidation.transactionsRoot(emptyList());
-    verify(bodyValidatorSpy, times(1))
-        .validateReceiptsRoot(block.getHeader(), receiptsRoot, receiptsRoot);
-    verify(bodyValidatorSpy, times(1))
-        .validateTransactionsRoot(block.getHeader(), transactionsRoot, transactionsRoot);
-    verify(bodyValidatorSpy, times(1)).validateStateRoot(eq(block.getHeader()), any(), any());
+    verify(bodyValidatorSpy, times(1)).validateBodyLight(any(), any(), any(), any());
+    verify(bodyValidatorSpy, times(1)).validateBodyRoots(any(), any(), any());
+  }
+
+  private Block setupBlock() {
+    Block block =
+        blockDataGenerator.block(
+            new BlockOptions()
+                .setBlockNumber(1)
+                .setGasUsed(0)
+                .hasTransactions(false)
+                .hasOmmers(false)
+                .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
+                .setLogsBloom(LogsBloomFilter.empty())
+                .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
+                .setWithdrawals(Optional.of(withdrawals)));
+    blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
+    return block;
   }
 }

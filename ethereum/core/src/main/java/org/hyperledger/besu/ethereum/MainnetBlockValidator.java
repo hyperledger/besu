@@ -264,8 +264,11 @@ public class MainnetBlockValidator implements BlockValidator {
       return false;
     }
 
-    if (!blockBodyValidator.validateBody(
-        context, block, receipts, null, ommerValidationMode, bodyValidationMode)) {
+    if (bodyValidationMode == BodyValidationMode.NONE) {
+      return true;
+    }
+
+    if (!blockBodyValidator.validateBodyLight(context, block, receipts, ommerValidationMode)) {
       badBlockManager.addBadBlock(
           block, BadBlockCause.fromValidationFailure("Failed body validation (light)"));
       return false;
