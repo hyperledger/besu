@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBu
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterRepository;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.metrics.RpcMetrics;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
@@ -185,7 +186,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             transactionPoolMock,
             miningConfiguration,
             miningCoordinatorMock,
-            new NoOpMetricsSystem(),
+            new RpcMetrics(new NoOpMetricsSystem()),
             supportedCapabilities,
             Optional.empty(),
             Optional.empty(),
@@ -221,7 +222,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             vertx,
             folder,
             config,
-            new NoOpMetricsSystem(),
+            new RpcMetrics(new NoOpMetricsSystem()),
             natService,
             methods,
             HealthService.ALWAYS_HEALTHY,

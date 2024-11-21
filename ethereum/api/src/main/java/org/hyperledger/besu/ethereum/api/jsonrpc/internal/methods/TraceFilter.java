@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
+import org.hyperledger.besu.ethereum.api.jsonrpc.metrics.RpcTraceMetricsCollectors;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -42,11 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
 import java.util.ArrayList;
@@ -68,22 +65,16 @@ import org.slf4j.LoggerFactory;
 public class TraceFilter extends TraceBlock {
   private static final Logger LOG = LoggerFactory.getLogger(TraceFilter.class);
   private final Long maxRange;
-  private final LabelledMetric<Counter> outputCounter;
+  private final RpcTraceMetricsCollectors rpcTraceMetricsCollectors;
 
   public TraceFilter(
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
       final Long maxRange,
-      final MetricsSystem metricsSystem) {
-    super(protocolSchedule, blockchainQueries, metricsSystem);
+      final RpcTraceMetricsCollectors rpcTraceMetricsCollectors) {
+    super(protocolSchedule, blockchainQueries, rpcTraceMetricsCollectors);
     this.maxRange = maxRange;
-    this.outputCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.BLOCKCHAIN,
-            "transactions_tracefilter_pipeline_processed_total",
-            "Number of transactions processed for trace_filter",
-            "step",
-            "action");
+    this.rpcTraceMetricsCollectors = rpcTraceMetricsCollectors;
   }
 
   @Override
@@ -185,7 +176,7 @@ public class TraceFilter extends TraceBlock {
                               "getTransactions",
                               traceFilterSource,
                               4,
-                              outputCounter,
+                              rpcTraceMetricsCollectors.traceFilterTxsProcessedCounter(),
                               false,
                               "trace_block_transactions")
                           .thenProcess("executeTransaction", executeTransactionStep)

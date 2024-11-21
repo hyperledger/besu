@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.function.Predicate.not;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.NETWORK;
@@ -86,26 +87,18 @@ public class PrometheusMetricsSystemTest {
   }
 
   @Test
-  public void shouldHandleDuplicateCounterCreation() {
-    final LabelledMetric<Counter> counter1 =
-        metricsSystem.createLabelledCounter(PEERS, "connected", "Some help string");
-    final LabelledMetric<Counter> counter2 =
-        metricsSystem.createLabelledCounter(PEERS, "connected", "Some help string");
-    assertThat(counter1).isEqualTo(counter2);
-
-    counter1.labels().inc();
-    assertThat(metricsSystem.streamObservations())
-        .usingElementComparator(this::compareCounters)
-        .containsExactly(
-            new Observation(PEERS, "connected", 1.0, emptyList()),
-            new Observation(PEERS, "connected", null, List.of("created")));
-
-    counter2.labels().inc();
-    assertThat(metricsSystem.streamObservations())
-        .usingElementComparator(this::compareCounters)
-        .containsExactly(
-            new Observation(PEERS, "connected", 2.0, emptyList()),
-            new Observation(PEERS, "connected", null, List.of("created")));
+  public void shouldFailOnDuplicateCounterCreation() {
+    assertThatIllegalArgumentException()
+        .isThrownBy(
+            () -> {
+              final LabelledMetric<Counter> counter1 =
+                  metricsSystem.createLabelledCounter(PEERS, "connected", "Some help string");
+              final LabelledMetric<Counter> counter2 =
+                  metricsSystem.createLabelledCounter(PEERS, "connected", "Some help string");
+              assertThat(counter1).isEqualTo(counter2);
+            })
+        .withMessage(
+            "Failed to register Collector of type Counter: besu_peers_connected_total is already in use by another Collector of type Counter");
   }
 
   @Test
@@ -196,12 +189,18 @@ public class PrometheusMetricsSystemTest {
   }
 
   @Test
-  public void shouldHandleDuplicateTimerCreation() {
-    final LabelledMetric<OperationTimer> timer1 =
-        metricsSystem.createLabelledTimer(RPC, "request", "Some help");
-    final LabelledMetric<OperationTimer> timer2 =
-        metricsSystem.createLabelledTimer(RPC, "request", "Some help");
-    assertThat(timer1).isEqualTo(timer2);
+  public void shouldFailOnDuplicateTimerCreation() {
+    assertThatIllegalArgumentException()
+        .isThrownBy(
+            () -> {
+              final LabelledMetric<OperationTimer> timer1 =
+                  metricsSystem.createLabelledTimer(RPC, "request", "Some help");
+              final LabelledMetric<OperationTimer> timer2 =
+                  metricsSystem.createLabelledTimer(RPC, "request", "Some help");
+              assertThat(timer1).isEqualTo(timer2);
+            })
+        .withMessage(
+            "Failed to register Collector of type Summary: besu_rpc_request_count is already in use by another Collector of type Summary");
   }
 
   @Test
@@ -248,13 +247,17 @@ public class PrometheusMetricsSystemTest {
   }
 
   @Test
-  public void shouldAllowDuplicateGaugeCreation() {
-    // When we are pushing the same gauge, the first one will be unregistered and the new one will
-    // be used
-    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0);
-    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0);
-    assertThat(metricsSystem.streamObservations())
-        .containsExactlyInAnyOrder(new Observation(JVM, "myValue", 7.0, emptyList()));
+  public void shouldFailOnDuplicateGaugeCreation() {
+    // When we are pushing twice the same gauge, the first time it will be registered and the second
+    // time it will fail
+    assertThatIllegalArgumentException()
+        .isThrownBy(
+            () -> {
+              metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0);
+              metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0);
+            })
+        .withMessage(
+            "Failed to register Collector of type PrometheusSuppliedValueCollector: jvm_myValue is already in use by another Collector of type PrometheusSuppliedValueCollector");
   }
 
   @Test

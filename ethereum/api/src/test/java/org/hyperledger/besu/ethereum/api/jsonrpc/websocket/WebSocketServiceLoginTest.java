@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.metrics.RpcMetrics;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -189,7 +190,7 @@ public class WebSocketServiceLoginTest {
                     mock(TransactionPool.class),
                     mock(MiningConfiguration.class),
                     mock(PoWMiningCoordinator.class),
-                    new NoOpMetricsSystem(),
+                    new RpcMetrics(new NoOpMetricsSystem()),
                     supportedCapabilities,
                     Optional.empty(),
                     Optional.empty(),

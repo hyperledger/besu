@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.metrics.RpcMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.nat.NatService;
 
@@ -224,7 +225,7 @@ public class JsonRpcHttpServiceCorsTest {
             vertx,
             folder,
             config,
-            new NoOpMetricsSystem(),
+            new RpcMetrics(new NoOpMetricsSystem()),
             natService,
             new HashMap<>(),
             HealthService.ALWAYS_HEALTHY,

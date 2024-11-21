@@ -29,18 +29,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.execution.TracedJsonRpcProcesso
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.Logging403ErrorHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.metrics.RpcMetrics;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.opentelemetry.OpenTelemetrySystem;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.util.ExceptionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
@@ -54,13 +50,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.api.trace.TracerProvider;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.TextMapGetter;
 import io.opentelemetry.context.propagation.TextMapPropagator;
@@ -123,9 +116,6 @@ public class JsonRpcHttpService {
   private final Map<String, JsonRpcMethod> rpcMethods;
   private final NatService natService;
   private final Path dataDir;
-  private final LabelledMetric<OperationTimer> requestTimer;
-  private TracerProvider tracerProvider;
-  private Tracer tracer;
   private final int maxActiveConnections;
   private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
@@ -134,7 +124,7 @@ public class JsonRpcHttpService {
   private HttpServer httpServer;
   private final HealthService livenessService;
   private final HealthService readinessService;
-  private final MetricsSystem metricsSystem;
+  private final RpcMetrics rpcMetrics;
 
   /**
    * Construct a JsonRpcHttpService handler
@@ -142,7 +132,7 @@ public class JsonRpcHttpService {
    * @param vertx The vertx process that will be running this service
    * @param dataDir The data directory where requests can be buffered
    * @param config Configuration for the rpc methods being loaded
-   * @param metricsSystem The metrics service that activities should be reported to
+   * @param rpcMetrics The RPC metrics
    * @param natService The NAT environment manager.
    * @param methods The json rpc methods that should be enabled
    * @param livenessService A service responsible for reporting whether this node is live
@@ -152,7 +142,7 @@ public class JsonRpcHttpService {
       final Vertx vertx,
       final Path dataDir,
       final JsonRpcConfiguration config,
-      final MetricsSystem metricsSystem,
+      final RpcMetrics rpcMetrics,
       final NatService natService,
       final Map<String, JsonRpcMethod> methods,
       final HealthService livenessService,
@@ -161,7 +151,7 @@ public class JsonRpcHttpService {
         vertx,
         dataDir,
         config,
-        metricsSystem,
+        rpcMetrics,
         natService,
         methods,
         DefaultAuthenticationService.create(vertx, config),
@@ -173,25 +163,15 @@ public class JsonRpcHttpService {
       final Vertx vertx,
       final Path dataDir,
       final JsonRpcConfiguration config,
-      final MetricsSystem metricsSystem,
+      final RpcMetrics rpcMetrics,
       final NatService natService,
       final Map<String, JsonRpcMethod> methods,
       final Optional<AuthenticationService> authenticationService,
       final HealthService livenessService,
       final HealthService readinessService) {
     this.dataDir = dataDir;
-    requestTimer =
-        metricsSystem.createLabelledTimer(
-            BesuMetricCategory.RPC,
-            "request_time",
-            "Time taken to process a JSON-RPC request",
-            "methodName");
 
-    metricsSystem.createIntegerGauge(
-        BesuMetricCategory.RPC,
-        "active_http_connection_count",
-        "Total no of active rpc http connections",
-        activeConnectionsCount::intValue);
+    rpcMetrics.initActiveHttpConnectionCounter(activeConnectionsCount::intValue);
 
     validateConfig(config);
     this.config = config;
@@ -202,10 +182,7 @@ public class JsonRpcHttpService {
     this.livenessService = livenessService;
     this.readinessService = readinessService;
     this.maxActiveConnections = config.getMaxActiveConnections();
-    if (metricsSystem instanceof OpenTelemetrySystem) {
-      this.tracerProvider = ((OpenTelemetrySystem) metricsSystem).getTracerProvider();
-    }
-    this.metricsSystem = metricsSystem;
+    this.rpcMetrics = rpcMetrics;
   }
 
   private void validateConfig(final JsonRpcConfiguration config) {
@@ -220,11 +197,7 @@ public class JsonRpcHttpService {
   public CompletableFuture<?> start() {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
     LOG.debug("max number of active connections {}", maxActiveConnections);
-    if (this.tracerProvider != null) {
-      this.tracer = tracerProvider.get("org.hyperledger.besu.jsonrpc", "1.0.0");
-    } else {
-      this.tracer = OpenTelemetry.noop().getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
-    }
+
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
 
@@ -347,12 +320,12 @@ public class JsonRpcHttpService {
               new JsonRpcExecutor(
                   new AuthenticatedJsonRpcProcessor(
                       new TimedJsonRpcProcessor(
-                          new TracedJsonRpcProcessor(new BaseJsonRpcProcessor(), metricsSystem),
-                          requestTimer),
+                          new TracedJsonRpcProcessor(new BaseJsonRpcProcessor(), rpcMetrics),
+                          rpcMetrics),
                       authenticationService.get(),
                       config.getNoAuthRpcApis()),
                   rpcMethods),
-              tracer,
+              rpcMetrics.getTracer(),
               config),
           false);
     } else {
@@ -360,10 +333,10 @@ public class JsonRpcHttpService {
           HandlerFactory.jsonRpcExecutor(
               new JsonRpcExecutor(
                   new TimedJsonRpcProcessor(
-                      new TracedJsonRpcProcessor(new BaseJsonRpcProcessor(), metricsSystem),
-                      requestTimer),
+                      new TracedJsonRpcProcessor(new BaseJsonRpcProcessor(), rpcMetrics),
+                      rpcMetrics),
                   rpcMethods),
-              tracer,
+              rpcMetrics.getTracer(),
               config),
           false);
     }
@@ -390,7 +363,8 @@ public class JsonRpcHttpService {
     Context parent =
         traceFormats.extract(Context.current(), routingContext.request(), requestAttributesGetter);
     final Span serverSpan =
-        tracer
+        rpcMetrics
+            .getTracer()
             .spanBuilder(address.host() + ":" + address.port())
             .setParent(parent)
             .setSpanKind(SpanKind.SERVER)

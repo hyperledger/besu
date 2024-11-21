@@ -184,7 +184,13 @@ public interface MetricsSystem extends BesuService {
    * @param help A human readable description of the metric.
    * @param valueSupplier A supplier for the double value to be presented.
    */
-  void createGauge(MetricCategory category, String name, String help, DoubleSupplier valueSupplier);
+  default void createGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final DoubleSupplier valueSupplier) {
+    createLabelledSuppliedGauge(category, name, help).labels(valueSupplier);
+  }
 
   /**
    * Creates a gauge for displaying integer values.
