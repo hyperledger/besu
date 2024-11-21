@@ -1311,6 +1311,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // after start has been called on plugins
 
     if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
+      logger.warn(
+          "--Xprivacy-plugin-enabled and related options are " + PRIVACY_DEPRECATION_PREFIX);
 
       if (privacyOptionGroup.privateMarkerTransactionSigningKeyPath != null
           && privacyPluginService != null
