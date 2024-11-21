@@ -1940,6 +1940,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
+      logger.warn("--privacy-enabled and related options are " + PRIVACY_DEPRECATION_PREFIX);
       final String errorSuffix = "cannot be enabled with privacy.";
       if (syncMode == SyncMode.FAST) {
         throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
