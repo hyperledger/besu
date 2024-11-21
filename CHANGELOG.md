@@ -4,11 +4,21 @@
 
 ### Breaking Changes
 - Removed Retesteth rpc service and commands [#7833](https://github.com/hyperledger/besu/pull/7783)
-- With the upgrade of the Prometheus Java Metrics library, gauge names are not allowed to end with `total`, therefore the following metric is losing the `_total` suffix:
-```
-besu_blockchain_difficulty_total
-```
-if you use these metrics you have to update your custom solution, to support the new name.
+- With the upgrade of the Prometheus Java Metrics library, there are the following changes:
+  - Gauge names are not allowed to end with `total`, therefore the metric `besu_blockchain_difficulty_total` is losing the `_total` suffix
+  - The `_created` timestamps are not returned by default, you can set the env var `BESU_OPTS="-Dio.prometheus.exporter.includeCreatedTimestamps=true"` to enabled them
+  - Some JVM metrics have changed name to adhere to the OTEL standard (see the table below), [Besu Full Grafana dashboard](https://grafana.com/grafana/dashboards/16455-besu-full/) is updated to support both names
+
+    | Old Name                        | New Name                        |
+    |---------------------------------|---------------------------------|
+    | jvm_memory_bytes_committed      | jvm_memory_committed_bytes      |
+    | jvm_memory_bytes_init           | jvm_memory_init_bytes           |
+    | jvm_memory_bytes_max            | jvm_memory_max_bytes            |
+    | jvm_memory_bytes_used           | jvm_memory_used_bytes           |
+    | jvm_memory_pool_bytes_committed | jvm_memory_pool_committed_bytes |
+    | jvm_memory_pool_bytes_init      | jvm_memory_pool_init_bytes      |
+    | jvm_memory_pool_bytes_max       | jvm_memory_pool_max_bytes       |
+    | jvm_memory_pool_bytes_used      | jvm_memory_pool_used_bytes      |
 
 ### Upcoming Breaking Changes
 - Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
