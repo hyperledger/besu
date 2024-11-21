@@ -382,8 +382,8 @@ public class MainnetBlockValidatorTest {
   @Test
   public void validateBlockValidation_onFailedBodyForSyncing() {
     final HeaderValidationMode headerValidationMode = HeaderValidationMode.FULL;
-    when(blockBodyValidator.validateBody(
-            eq(protocolContext), eq(block), any(), any(), eq(headerValidationMode), any()))
+    when(blockBodyValidator.validateBodyLight(
+            eq(protocolContext), eq(block), any(), eq(headerValidationMode)))
         .thenReturn(false);
 
     final boolean isValid =
