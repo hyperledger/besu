@@ -15,6 +15,7 @@
 ##
 
 status=0
+my_array=()
 while IFS= read -r -a line; do
   my_array+=( "$line" )
   done < <( git branch -r | grep -v origin/HEAD )
