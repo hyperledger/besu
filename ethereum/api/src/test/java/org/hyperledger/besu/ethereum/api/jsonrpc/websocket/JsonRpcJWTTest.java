@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService.ParamSourc
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.MutableJsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.metrics.RpcMetrics;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -134,7 +135,7 @@ public class JsonRpcJWTTest {
             vertx,
             bufferDir,
             jsonRpcConfiguration,
-            new NoOpMetricsSystem(),
+            new RpcMetrics(new NoOpMetricsSystem()),
             new NatService(Optional.empty(), true),
             websocketMethods,
             Optional.empty(),
@@ -193,7 +194,7 @@ public class JsonRpcJWTTest {
             vertx,
             bufferDir,
             jsonRpcConfiguration,
-            new NoOpMetricsSystem(),
+            new RpcMetrics(new NoOpMetricsSystem()),
             new NatService(Optional.empty(), true),
             websocketMethods,
             Optional.empty(),
@@ -267,7 +268,7 @@ public class JsonRpcJWTTest {
                 vertx,
                 bufferDir,
                 strictHost,
-                new NoOpMetricsSystem(),
+                new RpcMetrics(new NoOpMetricsSystem()),
                 new NatService(Optional.empty(), true),
                 websocketMethods,
                 Optional.empty(),
@@ -329,7 +330,7 @@ public class JsonRpcJWTTest {
                 vertx,
                 bufferDir,
                 strictHost,
-                new NoOpMetricsSystem(),
+                new RpcMetrics(new NoOpMetricsSystem()),
                 new NatService(Optional.empty(), true),
                 websocketMethods,
                 Optional.empty(),
@@ -384,7 +385,7 @@ public class JsonRpcJWTTest {
             vertx,
             bufferDir,
             jsonRpcConfiguration,
-            new NoOpMetricsSystem(),
+            new RpcMetrics(new NoOpMetricsSystem()),
             new NatService(Optional.empty(), true),
             websocketMethods,
             Optional.empty(),

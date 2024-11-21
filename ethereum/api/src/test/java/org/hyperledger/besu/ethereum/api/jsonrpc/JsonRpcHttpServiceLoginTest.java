@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.NetVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3ClientVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3Sha3;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.metrics.RpcMetrics;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
@@ -153,7 +154,7 @@ public class JsonRpcHttpServiceLoginTest {
                 mock(TransactionPool.class),
                 mock(MiningConfiguration.class),
                 mock(PoWMiningCoordinator.class),
-                new NoOpMetricsSystem(),
+                new RpcMetrics(new NoOpMetricsSystem()),
                 supportedCapabilities,
                 Optional.empty(),
                 Optional.empty(),
@@ -194,7 +195,7 @@ public class JsonRpcHttpServiceLoginTest {
         vertx,
         folder,
         config,
-        new NoOpMetricsSystem(),
+        new RpcMetrics(new NoOpMetricsSystem()),
         natService,
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,

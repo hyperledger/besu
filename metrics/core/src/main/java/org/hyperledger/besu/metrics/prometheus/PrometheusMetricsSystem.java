@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -59,10 +58,6 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
 
   private final Map<MetricCategory, Collection<Collector>> collectors = new ConcurrentHashMap<>();
   private final CollectorRegistry registry = new CollectorRegistry(true);
-  private final Map<String, LabelledMetric<org.hyperledger.besu.plugin.services.metrics.Counter>>
-      cachedCounters = new ConcurrentHashMap<>();
-  private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
-      new ConcurrentHashMap<>();
   private final Set<String> totalSuffixedCounters = new ConcurrentHashSet<>();
   private final Map<MetricCategory, CacheMetricsCollector> guavaCacheCollectors =
       new ConcurrentHashMap<>();
@@ -109,17 +104,12 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final String help,
       final String... labelNames) {
     final String metricName = convertToPrometheusCounterName(category, name);
-    return cachedCounters.computeIfAbsent(
-        metricName,
-        (k) -> {
-          if (isCategoryEnabled(category)) {
-            final Counter counter = Counter.build(metricName, help).labelNames(labelNames).create();
-            registerCollector(category, counter);
-            return new PrometheusCounter(counter);
-          } else {
-            return NoOpMetricsSystem.getCounterLabelledMetric(labelNames.length);
-          }
-        });
+    if (isCategoryEnabled(category)) {
+      final Counter counter = Counter.build(metricName, help).labelNames(labelNames).create();
+      registerCollector(category, counter);
+      return new PrometheusCounter(counter);
+    }
+    return NoOpMetricsSystem.getCounterLabelledMetric(labelNames.length);
   }
 
   @Override
@@ -129,26 +119,21 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final String help,
       final String... labelNames) {
     final String metricName = convertToPrometheusName(category, name);
-    return cachedTimers.computeIfAbsent(
-        metricName,
-        (k) -> {
-          if (timersEnabled && isCategoryEnabled(category)) {
-            final Summary summary =
-                Summary.build(metricName, help)
-                    .quantile(0.2, 0.02)
-                    .quantile(0.5, 0.05)
-                    .quantile(0.8, 0.02)
-                    .quantile(0.95, 0.005)
-                    .quantile(0.99, 0.001)
-                    .quantile(1.0, 0)
-                    .labelNames(labelNames)
-                    .create();
-            registerCollector(category, summary);
-            return new PrometheusTimer(summary);
-          } else {
-            return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
-          }
-        });
+    if (timersEnabled && isCategoryEnabled(category)) {
+      final Summary summary =
+          Summary.build(metricName, help)
+              .quantile(0.2, 0.02)
+              .quantile(0.5, 0.05)
+              .quantile(0.8, 0.02)
+              .quantile(0.95, 0.005)
+              .quantile(0.99, 0.001)
+              .quantile(1.0, 0)
+              .labelNames(labelNames)
+              .create();
+      registerCollector(category, summary);
+      return new PrometheusTimer(summary);
+    }
+    return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
   }
 
   @Override
@@ -158,31 +143,13 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final String help,
       final String... labelNames) {
     final String metricName = convertToPrometheusName(category, name);
-    return cachedTimers.computeIfAbsent(
-        metricName,
-        (k) -> {
-          if (timersEnabled && isCategoryEnabled(category)) {
-            final Histogram histogram =
-                Histogram.build(metricName, help).labelNames(labelNames).buckets(1D).create();
-            registerCollector(category, histogram);
-            return new PrometheusSimpleTimer(histogram);
-          } else {
-            return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
-          }
-        });
-  }
-
-  @Override
-  public void createGauge(
-      final MetricCategory category,
-      final String name,
-      final String help,
-      final DoubleSupplier valueSupplier) {
-    final String metricName = convertToPrometheusName(category, name);
-    if (isCategoryEnabled(category)) {
-      final Collector collector = new CurrentValueCollector(metricName, help, valueSupplier);
-      registerCollector(category, collector);
+    if (timersEnabled && isCategoryEnabled(category)) {
+      final Histogram histogram =
+          Histogram.build(metricName, help).labelNames(labelNames).buckets(1D).create();
+      registerCollector(category, histogram);
+      return new PrometheusSimpleTimer(histogram);
     }
+    return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
   }
 
   @Override
@@ -278,21 +245,6 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
         this.collectors.computeIfAbsent(
             category, key -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
 
-    final List<String> newSamples =
-        collector.collect().stream().map(metricFamilySamples -> metricFamilySamples.name).toList();
-
-    categoryCollectors.stream()
-        .filter(
-            c ->
-                c.collect().stream()
-                    .anyMatch(metricFamilySamples -> newSamples.contains(metricFamilySamples.name)))
-        .findFirst()
-        .ifPresent(
-            c -> {
-              categoryCollectors.remove(c);
-              registry.unregister(c);
-            });
-
     categoryCollectors.add(collector.register(registry));
   }
 
@@ -312,8 +264,6 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   public void shutdown() {
     registry.clear();
     collectors.clear();
-    cachedCounters.clear();
-    cachedTimers.clear();
     guavaCacheCollectors.clear();
     guavaCacheNames.clear();
   }

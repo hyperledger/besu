@@ -14,49 +14,25 @@
  */
 package org.hyperledger.besu.metrics.vertx;
 
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import io.vertx.core.spi.metrics.PoolMetrics;
 
 final class PoolMetricsAdapter implements PoolMetrics<Object> {
-
   private final Counter submittedCounter;
   private final Counter completedCounter;
   private final Counter rejectedCounter;
 
   public PoolMetricsAdapter(
-      final MetricsSystem metricsSystem, final String poolType, final String poolName) {
-    submittedCounter =
-        metricsSystem
-            .createLabelledCounter(
-                BesuMetricCategory.NETWORK,
-                "vertx_worker_pool_submitted_total",
-                "Total number of tasks submitted to the Vertx worker pool",
-                "poolType",
-                "poolName")
-            .labels(poolType, poolName);
-
-    completedCounter =
-        metricsSystem
-            .createLabelledCounter(
-                BesuMetricCategory.NETWORK,
-                "vertx_worker_pool_completed_total",
-                "Total number of tasks completed by the Vertx worker pool",
-                "poolType",
-                "poolName")
-            .labels(poolType, poolName);
-
-    rejectedCounter =
-        metricsSystem
-            .createLabelledCounter(
-                BesuMetricCategory.NETWORK,
-                "vertx_worker_pool_rejected_total",
-                "Total number of tasks rejected by the Vertx worker pool",
-                "poolType",
-                "poolName")
-            .labels(poolType, poolName);
+      final VertxMetricsCollectors vertxMetricsCollectors,
+      final String poolType,
+      final String poolName) {
+    this.submittedCounter =
+        vertxMetricsCollectors.submittedLabelledCounter().labels(poolType, poolName);
+    this.completedCounter =
+        vertxMetricsCollectors.completedLabelledCounter().labels(poolType, poolName);
+    this.rejectedCounter =
+        vertxMetricsCollectors.rejectedLabelledCounter().labels(poolType, poolName);
   }
 
   @Override

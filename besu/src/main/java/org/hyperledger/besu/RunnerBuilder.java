@@ -53,6 +53,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.metrics.RpcMetrics;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketMessageHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
@@ -839,6 +840,8 @@ public class RunnerBuilder {
 
     Optional<JsonRpcHttpService> jsonRpcHttpService = Optional.empty();
 
+    final var rpcMetrics = new RpcMetrics(metricsSystem);
+
     if (jsonRpcConfiguration.isEnabled()) {
       final Map<String, JsonRpcMethod> nonEngineMethods =
           jsonRpcMethods(
@@ -851,7 +854,7 @@ public class RunnerBuilder {
               transactionPool,
               miningConfiguration,
               miningCoordinator,
-              metricsSystem,
+              rpcMetrics,
               supportedCapabilities,
               jsonRpcConfiguration.getRpcApis().stream()
                   .filter(apiGroup -> !apiGroup.toLowerCase(Locale.ROOT).startsWith("engine"))
@@ -875,7 +878,7 @@ public class RunnerBuilder {
                   vertx,
                   dataDir,
                   jsonRpcConfiguration,
-                  metricsSystem,
+                  rpcMetrics,
                   natService,
                   nonEngineMethods,
                   new HealthService(new LivenessCheck()),
@@ -898,7 +901,7 @@ public class RunnerBuilder {
               transactionPool,
               miningConfiguration,
               miningCoordinator,
-              metricsSystem,
+              rpcMetrics,
               supportedCapabilities,
               engineJsonRpcConfiguration.get().getRpcApis(),
               filterManager,
@@ -938,7 +941,7 @@ public class RunnerBuilder {
                   vertx,
                   dataDir,
                   engineJsonRpcConfiguration.orElse(JsonRpcConfiguration.createEngineDefault()),
-                  metricsSystem,
+                  rpcMetrics,
                   natService,
                   websocketMethodsFactory.methods(),
                   Optional.ofNullable(engineSocketConfig),
@@ -991,7 +994,7 @@ public class RunnerBuilder {
               transactionPool,
               miningConfiguration,
               miningCoordinator,
-              metricsSystem,
+              rpcMetrics,
               supportedCapabilities,
               webSocketConfiguration.getRpcApis().stream()
                   .filter(apiGroup -> !apiGroup.toLowerCase(Locale.ROOT).startsWith("engine"))
@@ -1072,7 +1075,7 @@ public class RunnerBuilder {
               transactionPool,
               miningConfiguration,
               miningCoordinator,
-              metricsSystem,
+              rpcMetrics,
               supportedCapabilities,
               jsonRpcIpcConfiguration.getEnabledApis().stream()
                   .filter(apiGroup -> !apiGroup.toLowerCase(Locale.ROOT).startsWith("engine"))
@@ -1113,7 +1116,7 @@ public class RunnerBuilder {
               transactionPool,
               miningConfiguration,
               miningCoordinator,
-              metricsSystem,
+              rpcMetrics,
               supportedCapabilities,
               inProcessRpcConfiguration.getInProcessRpcApis(),
               filterManager,
@@ -1275,7 +1278,7 @@ public class RunnerBuilder {
       final TransactionPool transactionPool,
       final MiningConfiguration miningConfiguration,
       final MiningCoordinator miningCoordinator,
-      final ObservableMetricsSystem metricsSystem,
+      final RpcMetrics rpcMetrics,
       final Set<Capability> supportedCapabilities,
       final Collection<String> jsonRpcApis,
       final FilterManager filterManager,
@@ -1310,7 +1313,7 @@ public class RunnerBuilder {
                 transactionPool,
                 miningConfiguration,
                 miningCoordinator,
-                metricsSystem,
+                rpcMetrics,
                 supportedCapabilities,
                 accountAllowlistController,
                 nodeAllowlistController,

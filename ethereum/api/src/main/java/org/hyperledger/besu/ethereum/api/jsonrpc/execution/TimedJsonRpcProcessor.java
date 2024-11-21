@@ -18,20 +18,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestId;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.metrics.RpcMetrics;
 
 import io.opentelemetry.api.trace.Span;
 
 public class TimedJsonRpcProcessor implements JsonRpcProcessor {
 
   private final JsonRpcProcessor rpcProcessor;
-  private final LabelledMetric<OperationTimer> requestTimer;
+  private final RpcMetrics rpcMetrics;
 
-  public TimedJsonRpcProcessor(
-      final JsonRpcProcessor rpcProcessor, final LabelledMetric<OperationTimer> requestTimer) {
+  public TimedJsonRpcProcessor(final JsonRpcProcessor rpcProcessor, final RpcMetrics rpcMetrics) {
     this.rpcProcessor = rpcProcessor;
-    this.requestTimer = requestTimer;
+    this.rpcMetrics = rpcMetrics;
   }
 
   @Override
@@ -40,8 +38,7 @@ public class TimedJsonRpcProcessor implements JsonRpcProcessor {
       final JsonRpcMethod method,
       final Span metricSpan,
       final JsonRpcRequestContext request) {
-    try (final OperationTimer.TimingContext ignored =
-        requestTimer.labels(request.getRequest().getMethod()).startTimer()) {
+    try (final var ignored = rpcMetrics.startRequestTimer(request.getRequest())) {
       return rpcProcessor.process(id, method, metricSpan, request);
     }
   }

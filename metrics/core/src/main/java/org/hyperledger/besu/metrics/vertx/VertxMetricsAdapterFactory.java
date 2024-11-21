@@ -23,7 +23,7 @@ import io.vertx.core.spi.metrics.VertxMetrics;
 /** The Vertx metrics adapter factory. */
 public class VertxMetricsAdapterFactory implements VertxMetricsFactory {
 
-  private final MetricsSystem metricsSystem;
+  private final VertxMetricsCollectors vertxMetricsCollectors;
 
   /**
    * Instantiates a new Vertx metrics adapter factory.
@@ -31,11 +31,11 @@ public class VertxMetricsAdapterFactory implements VertxMetricsFactory {
    * @param metricsSystem the metrics system
    */
   public VertxMetricsAdapterFactory(final MetricsSystem metricsSystem) {
-    this.metricsSystem = metricsSystem;
+    this.vertxMetricsCollectors = VertxMetricsCollectors.create(metricsSystem);
   }
 
   @Override
   public VertxMetrics metrics(final VertxOptions options) {
-    return new VertxMetricsAdapter(metricsSystem);
+    return new VertxMetricsAdapter(vertxMetricsCollectors);
   }
 }

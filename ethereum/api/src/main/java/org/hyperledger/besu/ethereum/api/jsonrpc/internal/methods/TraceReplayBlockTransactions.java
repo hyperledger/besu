@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceReplayResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.metrics.RpcTraceMetricsCollectors;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -37,11 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
 import java.util.Optional;
@@ -59,21 +56,15 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceReplayBlockTransactions.class);
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private final ProtocolSchedule protocolSchedule;
-  private final LabelledMetric<Counter> outputCounter;
+  private final RpcTraceMetricsCollectors rpcTraceMetricsCollectors;
 
   public TraceReplayBlockTransactions(
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries queries,
-      final MetricsSystem metricsSystem) {
+      final RpcTraceMetricsCollectors rpcTraceMetricsCollectors) {
     super(queries);
     this.protocolSchedule = protocolSchedule;
-    this.outputCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.BLOCKCHAIN,
-            "transactions_tracereplayblock_pipeline_processed_total",
-            "Number of transactions processed for each block",
-            "step",
-            "action");
+    this.rpcTraceMetricsCollectors = rpcTraceMetricsCollectors;
   }
 
   @Override
@@ -165,7 +156,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
                           "getTransactions",
                           transactionSource,
                           4,
-                          outputCounter,
+                          rpcTraceMetricsCollectors.traceReplayBlockTxsProcessedCounter(),
                           false,
                           "trace_replay_block_transactions")
                       .thenProcess("executeTransaction", executeTransactionStep)

@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.metrics.RpcMetrics;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
@@ -219,7 +220,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                 mock(TransactionPool.class),
                 mock(MiningConfiguration.class),
                 mock(PoWMiningCoordinator.class),
-                new NoOpMetricsSystem(),
+                new RpcMetrics(new NoOpMetricsSystem()),
                 supportedCapabilities,
                 Optional.of(mock(AccountLocalConfigPermissioningController.class)),
                 Optional.of(mock(NodeLocalConfigPermissioningController.class)),
@@ -241,7 +242,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             vertx,
             folder,
             config,
-            new NoOpMetricsSystem(),
+            new RpcMetrics(new NoOpMetricsSystem()),
             natService,
             rpcMethods,
             HealthService.ALWAYS_HEALTHY,
@@ -330,7 +331,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                 mock(TransactionPool.class),
                 mock(MiningConfiguration.class),
                 mock(PoWMiningCoordinator.class),
-                new NoOpMetricsSystem(),
+                new RpcMetrics(new NoOpMetricsSystem()),
                 supportedCapabilities,
                 Optional.of(mock(AccountLocalConfigPermissioningController.class)),
                 Optional.of(mock(NodeLocalConfigPermissioningController.class)),
@@ -352,7 +353,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             vertx,
             folder,
             jsonRpcConfiguration,
-            new NoOpMetricsSystem(),
+            new RpcMetrics(new NoOpMetricsSystem()),
             natService,
             rpcMethods,
             HealthService.ALWAYS_HEALTHY,

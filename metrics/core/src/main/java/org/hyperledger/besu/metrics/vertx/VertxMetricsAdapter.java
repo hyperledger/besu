@@ -14,28 +14,26 @@
  */
 package org.hyperledger.besu.metrics.vertx;
 
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 
 /** The Vertx metrics adapter. */
 public class VertxMetricsAdapter implements VertxMetrics {
 
-  private final MetricsSystem metricsSystem;
+  private final VertxMetricsCollectors vertxMetricsCollectors;
 
   /**
    * Instantiates a new Vertx metrics adapter.
    *
-   * @param metricsSystem the metrics system
+   * @param vertxMetricsCollectors the Vertx metrics collectors
    */
-  public VertxMetricsAdapter(final MetricsSystem metricsSystem) {
-    this.metricsSystem = metricsSystem;
+  public VertxMetricsAdapter(final VertxMetricsCollectors vertxMetricsCollectors) {
+    this.vertxMetricsCollectors = vertxMetricsCollectors;
   }
 
   @Override
   public PoolMetrics<?> createPoolMetrics(
       final String poolType, final String poolName, final int maxPoolSize) {
-    return new PoolMetricsAdapter(metricsSystem, poolType, poolName);
+    return new PoolMetricsAdapter(vertxMetricsCollectors, poolType, poolName);
   }
 }

@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.RpcModules;
+import org.hyperledger.besu.ethereum.api.jsonrpc.metrics.RpcMetrics;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -36,7 +37,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.BesuPlugin;
@@ -69,7 +69,7 @@ public class JsonRpcMethodsFactory {
       final TransactionPool transactionPool,
       final MiningConfiguration miningConfiguration,
       final MiningCoordinator miningCoordinator,
-      final ObservableMetricsSystem metricsSystem,
+      final RpcMetrics rpcMetrics,
       final Set<Capability> supportedCapabilities,
       final Optional<AccountLocalConfigPermissioningController> accountsAllowlistController,
       final Optional<NodeLocalConfigPermissioningController> nodeAllowlistController,
@@ -107,7 +107,7 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries,
                   protocolContext,
                   protocolSchedule,
-                  metricsSystem,
+                  rpcMetrics.getObservableMetricsSystem(),
                   transactionPool,
                   synchronizer,
                   dataDir,
@@ -155,7 +155,7 @@ public class JsonRpcMethodsFactory {
                   protocolSchedule,
                   protocolContext,
                   apiConfiguration,
-                  metricsSystem),
+                  rpcMetrics.getRpcTraceMetrics()),
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 
