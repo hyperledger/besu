@@ -28,7 +28,7 @@ import io.prometheus.metrics.model.registry.Collector;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
 
-abstract class PrometheusSuppliedValueCollector extends CategorizedPrometheusCollector
+abstract class AbstractPrometheusSuppliedValueCollector extends CategorizedPrometheusCollector
     implements LabelledSuppliedMetric {
   /** The collector */
   protected final Collector collector;
@@ -36,7 +36,7 @@ abstract class PrometheusSuppliedValueCollector extends CategorizedPrometheusCol
   /** Map label values with the collector callback data */
   protected final Map<List<String>, CallbackData> labelledCallbackData = new ConcurrentHashMap<>();
 
-  protected PrometheusSuppliedValueCollector(
+  protected AbstractPrometheusSuppliedValueCollector(
       final MetricCategory category,
       final String name,
       final String help,

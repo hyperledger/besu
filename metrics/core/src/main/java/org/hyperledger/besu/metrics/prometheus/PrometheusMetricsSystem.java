@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -65,9 +64,9 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   private final Map<MetricCategory, Collection<PrometheusCollector>> collectors =
       new ConcurrentHashMap<>();
   private final PrometheusRegistry registry = PrometheusRegistry.defaultRegistry;
-  private final Map<String, LabelledMetric<org.hyperledger.besu.plugin.services.metrics.Counter>>
-      cachedCounters = new ConcurrentHashMap<>();
-  private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
+  private final Map<CachedMetricKey, LabelledMetric<Counter>> cachedCounters =
+      new ConcurrentHashMap<>();
+  private final Map<CachedMetricKey, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
   private final PrometheusGuavaCache.Context guavaCacheCollectorContext =
       new PrometheusGuavaCache.Context();
@@ -117,15 +116,14 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final String help,
       final String... labelNames) {
     return cachedCounters.computeIfAbsent(
-        name,
-        (k) -> {
+        CachedMetricKey.of(category, name),
+        k -> {
           if (isCategoryEnabled(category)) {
             final var counter = new PrometheusCounter(category, name, help, labelNames);
             registerCollector(category, counter);
             return counter;
-          } else {
-            return NoOpMetricsSystem.getCounterLabelledMetric(labelNames.length);
           }
+          return NoOpMetricsSystem.getCounterLabelledMetric(labelNames.length);
         });
   }
 
@@ -136,16 +134,15 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final String help,
       final String... labelNames) {
     return cachedTimers.computeIfAbsent(
-        name,
-        (k) -> {
+        CachedMetricKey.of(category, name),
+        k -> {
           if (timersEnabled && isCategoryEnabled(category)) {
             final var summary =
                 new PrometheusTimer(category, name, help, DEFAULT_SUMMARY_QUANTILES, labelNames);
             registerCollector(category, summary);
             return summary;
-          } else {
-            return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
           }
+          return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
         });
   }
 
@@ -156,30 +153,16 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final String help,
       final String... labelNames) {
     return cachedTimers.computeIfAbsent(
-        name,
-        (k) -> {
+        CachedMetricKey.of(category, name),
+        k -> {
           if (timersEnabled && isCategoryEnabled(category)) {
             final var histogram =
                 new PrometheusSimpleTimer(category, name, help, new double[] {1D}, labelNames);
             registerCollector(category, histogram);
             return histogram;
-          } else {
-            return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
           }
+          return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
         });
-  }
-
-  @Override
-  public void createGauge(
-      final MetricCategory category,
-      final String name,
-      final String help,
-      final DoubleSupplier valueSupplier) {
-    if (isCategoryEnabled(category)) {
-      final var gauge = new PrometheusSuppliedGauge(category, name, help);
-      gauge.labels(valueSupplier);
-      registerCollector(category, gauge);
-    }
   }
 
   @Override
@@ -277,5 +260,11 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     cachedCounters.clear();
     cachedTimers.clear();
     guavaCacheCollectorContext.clear();
+  }
+
+  private record CachedMetricKey(MetricCategory category, String name) {
+    static CachedMetricKey of(final MetricCategory category, final String name) {
+      return new CachedMetricKey(category, name);
+    }
   }
 }
