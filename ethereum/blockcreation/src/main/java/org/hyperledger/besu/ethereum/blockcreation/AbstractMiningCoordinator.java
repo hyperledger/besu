@@ -80,6 +80,16 @@ public abstract class AbstractMiningCoordinator<
   }
 
   @Override
+  public Optional<Block> createBlock(
+      final BlockHeader parentHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final long timestamp) {
+    final M miner = executor.createMiner(minedBlockObservers, ethHashObservers, parentHeader);
+    return Optional.of(miner.createBlock(parentHeader, transactions, ommers, timestamp).getBlock());
+  }
+
+  @Override
   public void start() {
     synchronized (this) {
       if (state != State.IDLE) {

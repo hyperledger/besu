@@ -242,6 +242,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
+  public Optional<Block> createBlock(
+      final BlockHeader parentHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final long timestamp) {
+    throw new UnsupportedOperationException("random is required");
+  }
+
+  @Override
   public void changeTargetGasLimit(final Long newTargetGasLimit) {
     if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
       this.miningConfiguration.setTargetGasLimit(newTargetGasLimit);

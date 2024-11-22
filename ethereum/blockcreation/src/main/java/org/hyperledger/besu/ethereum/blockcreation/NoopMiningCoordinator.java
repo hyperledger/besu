@@ -85,5 +85,14 @@ public class NoopMiningCoordinator implements MiningCoordinator {
   }
 
   @Override
+  public Optional<Block> createBlock(
+      final BlockHeader parentHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final long timestamp) {
+    return Optional.empty();
+  }
+
+  @Override
   public void changeTargetGasLimit(final Long targetGasLimit) {}
 }

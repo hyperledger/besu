@@ -128,6 +128,17 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
+  public Optional<Block> createBlock(
+      final BlockHeader parentHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final long timestamp) {
+    return dispatchFunctionAccordingToMergeState(
+        (MiningCoordinator coordinator) ->
+            coordinator.createBlock(parentHeader, transactions, ommers, timestamp));
+  }
+
+  @Override
   public void addEthHashObserver(final PoWObserver observer) {
     if (this.miningCoordinator instanceof PoWMiningCoordinator) {
       miningCoordinator.addEthHashObserver(observer);
