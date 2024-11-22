@@ -25,6 +25,7 @@ import org.apache.tuweni.bytes.Bytes;
  * Allows you to register a provider that will dictate how the payload of a privacy marker
  * transaction is handled.
  */
+@Deprecated(since = "24.11.0")
 public interface PrivacyPluginPayloadProvider {
 
   /**

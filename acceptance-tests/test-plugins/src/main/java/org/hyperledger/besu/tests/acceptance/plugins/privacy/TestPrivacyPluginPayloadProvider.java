@@ -28,6 +28,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Deprecated(since = "24.11.0")
 public class TestPrivacyPluginPayloadProvider implements PrivacyPluginPayloadProvider {
   private static final Logger LOG = LoggerFactory.getLogger(TestPrivacyPluginPayloadProvider.class);
   private String prefix;
