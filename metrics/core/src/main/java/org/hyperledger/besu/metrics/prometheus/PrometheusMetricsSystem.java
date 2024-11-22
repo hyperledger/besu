@@ -22,6 +22,7 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -163,6 +164,16 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
           }
           return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
         });
+  }
+
+  @Override
+  public LabelledMetric<Histogram> createLabelledHistogram(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final double[] buckets,
+      final String... labelNames) {
+    return null;
   }
 
   @Override

@@ -19,6 +19,7 @@ import static java.util.Arrays.asList;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -111,6 +112,16 @@ public class StubMetricsSystem implements ObservableMetricsSystem {
       final String help,
       final DoubleSupplier valueSupplier) {
     gauges.put(name, valueSupplier);
+  }
+
+  @Override
+  public LabelledMetric<Histogram> createLabelledHistogram(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final double[] buckets,
+      final String... labelNames) {
+    return NoOpMetricsSystem.getHistogramLabelledMetric(labelNames.length);
   }
 
   @Override
