@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
 import java.util.Optional;
 
+@Deprecated(since = "24.11.0")
 public class EthHashrate implements JsonRpcMethod {
 
   private final MiningCoordinator miningCoordinator;
