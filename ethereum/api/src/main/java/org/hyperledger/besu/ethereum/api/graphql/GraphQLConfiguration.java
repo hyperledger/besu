@@ -18,6 +18,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +46,13 @@ public class GraphQLConfiguration {
   private List<String> corsAllowedDomains = Collections.emptyList();
   private List<String> hostsAllowlist = Arrays.asList("localhost", DEFAULT_GRAPHQL_HTTP_HOST);
   private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+
+  private String tlsKeyStorePath;
+  private String tlsKeyStorePasswordFile;
+  private String tlsTrustStorePath;
+  private String tlsTrustStorePasswordFile;
+  private boolean tlsEnabled;
+  private boolean mtlsEnabled;
 
   /**
    * Creates a default configuration for GraphQL.
@@ -172,6 +182,58 @@ public class GraphQLConfiguration {
    */
   public void setHttpTimeoutSec(final long httpTimeoutSec) {
     this.httpTimeoutSec = httpTimeoutSec;
+  }
+
+  public String getTlsKeyStorePath() {
+    return tlsKeyStorePath;
+  }
+
+  public void setTlsKeyStorePath(final String tlsKeyStorePath) {
+    this.tlsKeyStorePath = tlsKeyStorePath;
+  }
+
+  public String getTlsKeyStorePassword() throws Exception {
+    return new String(
+            Files.readAllBytes(Paths.get(tlsKeyStorePasswordFile)), Charset.defaultCharset())
+        .trim();
+  }
+
+  public void setTlsKeyStorePasswordFile(final String tlsKeyStorePasswordFile) {
+    this.tlsKeyStorePasswordFile = tlsKeyStorePasswordFile;
+  }
+
+  public String getTlsTrustStorePath() {
+    return tlsTrustStorePath;
+  }
+
+  public void setTlsTrustStorePath(final String tlsTrustStorePath) {
+    this.tlsTrustStorePath = tlsTrustStorePath;
+  }
+
+  public String getTlsTrustStorePassword() throws Exception {
+    return new String(
+            Files.readAllBytes(Paths.get(tlsTrustStorePasswordFile)), Charset.defaultCharset())
+        .trim();
+  }
+
+  public void setTlsTrustStorePasswordFile(final String tlsTrustStorePasswordFile) {
+    this.tlsTrustStorePasswordFile = tlsTrustStorePasswordFile;
+  }
+
+  public boolean isTlsEnabled() {
+    return tlsEnabled;
+  }
+
+  public void setTlsEnabled(final boolean tlsEnabled) {
+    this.tlsEnabled = tlsEnabled;
+  }
+
+  public boolean isMtlsEnabled() {
+    return mtlsEnabled;
+  }
+
+  public void setMtlsEnabled(final boolean mtlsEnabled) {
+    this.mtlsEnabled = mtlsEnabled;
   }
 
   @Override
