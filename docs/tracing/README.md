@@ -2,7 +2,7 @@
 
 Hyperledger Besu integrates with the [open-telemetry](https://opentelemetry.io/) project to integrate tracing reporting.
 
-This allows to report all JSON-RPC traffic as traces.
+This allows reporting all JSON-RPC traffic as traces.
 
 To try out this example, start the Open Telemetry Collector and the Zipkin service with:
 
