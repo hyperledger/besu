@@ -21,6 +21,7 @@ import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedSummary;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
@@ -67,15 +68,19 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
 
   /** The constant NO_OP_LABELLED_1_GAUGE. */
   public static final LabelledSuppliedMetric NO_OP_LABELLED_1_GAUGE =
-      new LabelledSuppliedNoOpMetric(1, NO_OP_GAUGE);
+      new LabelledSuppliedNoOpMetric(1);
 
   /** The constant NO_OP_LABELLED_2_GAUGE. */
   public static final LabelledSuppliedMetric NO_OP_LABELLED_2_GAUGE =
-      new LabelledSuppliedNoOpMetric(2, NO_OP_GAUGE);
+      new LabelledSuppliedNoOpMetric(2);
 
   /** The constant NO_OP_LABELLED_3_GAUGE. */
   public static final LabelledSuppliedMetric NO_OP_LABELLED_3_GAUGE =
-      new LabelledSuppliedNoOpMetric(3, NO_OP_GAUGE);
+      new LabelledSuppliedNoOpMetric(3);
+
+  /** The constant NO_OP_LABELLED_1_SUMMARY. */
+  public static final LabelledSuppliedSummary NO_OP_LABELLED_1_SUMMARY =
+      new LabelledSuppliedNoOpMetric(1);
 
   /** Default constructor */
   public NoOpMetricsSystem() {}
@@ -96,16 +101,12 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
    * @return the counter labelled metric
    */
   public static LabelledMetric<Counter> getCounterLabelledMetric(final int labelCount) {
-    switch (labelCount) {
-      case 1:
-        return NO_OP_LABELLED_1_COUNTER;
-      case 2:
-        return NO_OP_LABELLED_2_COUNTER;
-      case 3:
-        return NO_OP_LABELLED_3_COUNTER;
-      default:
-        return new LabelCountingNoOpMetric<>(labelCount, NO_OP_COUNTER);
-    }
+    return switch (labelCount) {
+      case 1 -> NO_OP_LABELLED_1_COUNTER;
+      case 2 -> NO_OP_LABELLED_2_COUNTER;
+      case 3 -> NO_OP_LABELLED_3_COUNTER;
+      default -> new LabelCountingNoOpMetric<>(labelCount, NO_OP_COUNTER);
+    };
   }
 
   @Override
@@ -118,11 +119,13 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public void trackExternalSummary(
+  public LabelledSuppliedSummary createLabelledSuppliedSummary(
       final MetricCategory category,
       final String name,
       final String help,
-      final Supplier<ExternalSummary> summarySupplier) {}
+      final String... labelNames) {
+    return getLabelledSuppliedSummary(labelNames.length);
+  }
 
   @Override
   public LabelledMetric<OperationTimer> createLabelledTimer(
@@ -184,16 +187,25 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
    * @return the labelled gauge
    */
   public static LabelledSuppliedMetric getLabelledSuppliedMetric(final int labelCount) {
-    switch (labelCount) {
-      case 1:
-        return NO_OP_LABELLED_1_GAUGE;
-      case 2:
-        return NO_OP_LABELLED_2_GAUGE;
-      case 3:
-        return NO_OP_LABELLED_3_GAUGE;
-      default:
-        return new LabelledSuppliedNoOpMetric(labelCount, NO_OP_GAUGE);
-    }
+    return switch (labelCount) {
+      case 1 -> NO_OP_LABELLED_1_GAUGE;
+      case 2 -> NO_OP_LABELLED_2_GAUGE;
+      case 3 -> NO_OP_LABELLED_3_GAUGE;
+      default -> new LabelledSuppliedNoOpMetric(labelCount);
+    };
+  }
+
+  /**
+   * Gets labelled supplied histogram.
+   *
+   * @param labelCount the label count
+   * @return the labelled gauge
+   */
+  public static LabelledSuppliedSummary getLabelledSuppliedSummary(final int labelCount) {
+    return switch (labelCount) {
+      case 1 -> NO_OP_LABELLED_1_SUMMARY;
+      default -> new LabelledSuppliedNoOpMetric(labelCount);
+    };
   }
 
   @Override
@@ -249,7 +261,8 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
 
   /** The Labelled supplied NoOp metric. */
   @SuppressWarnings("removal") // remove when deprecated LabelledGauge is removed
-  public static class LabelledSuppliedNoOpMetric implements LabelledSuppliedMetric, LabelledGauge {
+  public static class LabelledSuppliedNoOpMetric
+      implements LabelledSuppliedMetric, LabelledGauge, LabelledSuppliedSummary {
     /** The Label count. */
     final int labelCount;
 
@@ -257,22 +270,26 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
     final List<String> labelValuesCache = new ArrayList<>();
 
     /**
-     * Instantiates a new Labelled gauge NoOp metric.
+     * Instantiates a new Labelled supplied NoOp metric.
      *
      * @param labelCount the label count
-     * @param fakeMetric the fake metric
      */
-    public LabelledSuppliedNoOpMetric(
-        final int labelCount, final LabelledSuppliedMetric fakeMetric) {
+    public LabelledSuppliedNoOpMetric(final int labelCount) {
       this.labelCount = labelCount;
-      this.fakeMetric = fakeMetric;
     }
-
-    /** The Fake metric. */
-    final LabelledSuppliedMetric fakeMetric;
 
     @Override
     public void labels(final DoubleSupplier valueSupplier, final String... labelValues) {
+      internalLabels(valueSupplier, labelValues);
+    }
+
+    @Override
+    public void labels(
+        final Supplier<ExternalSummary> summarySupplier, final String... labelValues) {
+      internalLabels(summarySupplier, labelValues);
+    }
+
+    private void internalLabels(final Object valueSupplier, final String... labelValues) {
       final String labelValuesString = String.join(",", labelValues);
       Preconditions.checkArgument(
           !labelValuesCache.contains(labelValuesString),
@@ -281,6 +298,7 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
           labelValues.length == labelCount,
           "The count of labels used must match the count of labels expected.");
       Preconditions.checkNotNull(valueSupplier, "No valueSupplier specified");
+      labelValuesCache.add(labelValuesString);
     }
   }
 }
