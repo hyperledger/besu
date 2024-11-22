@@ -15,6 +15,7 @@
 - Update Java dependencies [#7786](https://github.com/hyperledger/besu/pull/7786)
 - Add a method to get all the transaction in the pool, to the `TransactionPoolService`, to easily access the transaction pool content from plugins [#7813](https://github.com/hyperledger/besu/pull/7813)
 - Add a method to check if a metric category is enabled to the plugin API [#7832](https://github.com/hyperledger/besu/pull/7832)
+- Add TLS/mTLS options and configure the GraphQL HTTP service[#7910](https://github.com/hyperledger/besu/pull/7910)
 
 ### Bug fixes
 - Fix registering new metric categories from plugins [#7825](https://github.com/hyperledger/besu/pull/7825)
