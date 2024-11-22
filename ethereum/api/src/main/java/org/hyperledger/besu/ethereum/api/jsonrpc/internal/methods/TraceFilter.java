@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -45,7 +44,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
@@ -58,7 +57,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
@@ -68,17 +66,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TraceFilter extends TraceBlock {
-
   private static final Logger LOG = LoggerFactory.getLogger(TraceFilter.class);
   private final Long maxRange;
+  private final LabelledMetric<Counter> outputCounter;
 
   public TraceFilter(
-      final Supplier<BlockTracer> blockTracerSupplier,
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
-      final Long maxRange) {
-    super(protocolSchedule, blockchainQueries);
+      final Long maxRange,
+      final MetricsSystem metricsSystem) {
+    super(protocolSchedule, blockchainQueries, metricsSystem);
     this.maxRange = maxRange;
+    this.outputCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "transactions_tracefilter_pipeline_processed_total",
+            "Number of transactions processed for trace_filter",
+            "step",
+            "action");
   }
 
   @Override
@@ -157,15 +162,6 @@ public class TraceFilter extends TraceBlock {
                   final MainnetTransactionProcessor transactionProcessor =
                       protocolSpec.getTransactionProcessor();
                   final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
-                  final LabelledMetric<Counter> outputCounter =
-                      new PrometheusMetricsSystem(
-                              BesuMetricCategory.DEFAULT_METRIC_CATEGORIES, false)
-                          .createLabelledCounter(
-                              BesuMetricCategory.BLOCKCHAIN,
-                              "transactions_tracefilter_pipeline_processed_total",
-                              "Number of transactions processed for trace_filter",
-                              "step",
-                              "action");
 
                   DebugOperationTracer debugOperationTracer =
                       new DebugOperationTracer(new TraceOptions(false, false, true), false);

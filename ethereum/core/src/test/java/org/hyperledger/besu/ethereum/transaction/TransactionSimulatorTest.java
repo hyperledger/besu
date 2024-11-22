@@ -20,11 +20,13 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccountOverride;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
@@ -49,15 +51,18 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
+import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -98,6 +103,42 @@ public class TransactionSimulatorTest {
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, 0);
     this.cappedTransactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, GAS_CAP);
+  }
+
+  @Test
+  public void testOverrides_whenNoOverrides_noUpdates() {
+    MutableAccount mutableAccount = mock(MutableAccount.class);
+    when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM); // called from logging
+    AccountOverride.Builder builder = new AccountOverride.Builder();
+    AccountOverride override = builder.build();
+    transactionSimulator.applyOverrides(mutableAccount, override);
+    verify(mutableAccount).getAddress();
+    verifyNoMoreInteractions(mutableAccount);
+  }
+
+  @Test
+  public void testOverrides_whenBalanceOverrides_balanceIsUpdated() {
+    MutableAccount mutableAccount = mock(MutableAccount.class);
+    when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM);
+    AccountOverride.Builder builder = new AccountOverride.Builder().withBalance(Wei.of(99));
+    AccountOverride override = builder.build();
+    transactionSimulator.applyOverrides(mutableAccount, override);
+    verify(mutableAccount).setBalance(eq(Wei.of(99)));
+  }
+
+  @Test
+  public void testOverrides_whenStateDiffOverrides_stateIsUpdated() {
+    MutableAccount mutableAccount = mock(MutableAccount.class);
+    when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM);
+    final String storageKey = "0x01a2";
+    final String storageValue = "0x00ff";
+    AccountOverride.Builder builder =
+        new AccountOverride.Builder().withStateDiff(Map.of(storageKey, storageValue));
+    AccountOverride override = builder.build();
+    transactionSimulator.applyOverrides(mutableAccount, override);
+    verify(mutableAccount)
+        .setStorageValue(
+            eq(UInt256.fromHexString(storageKey)), eq(UInt256.fromHexString(storageValue)));
   }
 
   @Test

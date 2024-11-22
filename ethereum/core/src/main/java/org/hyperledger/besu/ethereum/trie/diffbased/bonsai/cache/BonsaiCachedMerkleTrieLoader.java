@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache;
 
+import static org.hyperledger.besu.metrics.BesuMetricCategory.BLOCKCHAIN;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -22,9 +24,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -33,7 +33,6 @@ import java.util.function.Function;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import io.prometheus.client.guava.cache.CacheMetricsCollector;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -47,12 +46,8 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       CacheBuilder.newBuilder().recordStats().maximumSize(STORAGE_CACHE_SIZE).build();
 
   public BonsaiCachedMerkleTrieLoader(final ObservableMetricsSystem metricsSystem) {
-
-    CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
-    cacheMetrics.addCache("accountsNodes", accountNodes);
-    cacheMetrics.addCache("storageNodes", storageNodes);
-    if (metricsSystem instanceof PrometheusMetricsSystem prometheusMetricsSystem)
-      prometheusMetricsSystem.addCollector(BesuMetricCategory.BLOCKCHAIN, () -> cacheMetrics);
+    metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "accountsNodes", accountNodes);
+    metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "storageNodes", storageNodes);
   }
 
   public void preLoadAccount(

@@ -1233,7 +1233,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void startPlugins(final Runner runner) {
     blockchainServiceImpl.init(
-        besuController.getProtocolContext(), besuController.getProtocolSchedule());
+        besuController.getProtocolContext().getBlockchain(), besuController.getProtocolSchedule());
     transactionSimulationServiceImpl.init(
         besuController.getProtocolContext().getBlockchain(),
         new TransactionSimulator(
@@ -1332,7 +1332,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void setReleaseMetrics() {
     besuComponent
         .getMetricsSystem()
-        .createLabelledGauge(
+        .createLabelledSuppliedGauge(
             StandardMetricCategory.PROCESS, "release", "Release information", "version")
         .labels(() -> 1, BesuInfo.version());
   }
