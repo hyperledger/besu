@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -101,7 +102,17 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       final MutableAccount contract = frame.getWorldUpdater().getOrCreate(contractAddress);
       long statelessGasCost =
           evm.getGasCalculator().proofOfAbsenceCost(frame, contract.getAddress());
+      if (handleInsufficientGas(
+          frame,
+          statelessGasCost,
+          () ->
+              String.format(
+                  "Not enough gas to cover proof of absence fee for %s: remaining gas = %d < %d = creation fee",
+                  frame.getContractAddress(), frame.getRemainingGas(), statelessGasCost))) {
+        return;
+      }
       frame.decrementRemainingGas(statelessGasCost);
+
       if (accountExists(contract)) {
         LOG.trace(
             "Contract creation error: account has already been created for address {}",
@@ -111,6 +122,20 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         operationTracer.traceAccountCreationResult(
             frame, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
       } else {
+        final long accountCreationFee =
+            evm.getGasCalculator().completedCreateContractGasCost(frame);
+        if (handleInsufficientGas(
+            frame,
+            accountCreationFee,
+            () ->
+                String.format(
+                    "Not enough gas to pay the contract creation fee for %s: "
+                        + "remaining gas = %d < %d = creation fee",
+                    frame.getContractAddress(), frame.getRemainingGas(), accountCreationFee))) {
+          return;
+        }
+        frame.decrementRemainingGas(accountCreationFee);
+
         frame.addCreate(contractAddress);
         contract.incrementBalance(frame.getValue());
         contract.setNonce(initialContractNonce);
@@ -132,65 +157,62 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
 
     final long depositFee = evm.getGasCalculator().codeDepositGasCost(frame, contractCode.size());
 
-    if (frame.getRemainingGas() < depositFee) {
-      LOG.trace(
-          "Not enough gas to pay the code deposit fee for {}: "
-              + "remaining gas = {} < {} = deposit fee",
-          frame.getContractAddress(),
-          frame.getRemainingGas(),
-          depositFee);
+    if (handleInsufficientGas(
+        frame,
+        depositFee,
+        () ->
+            String.format(
+                "Not enough gas to pay the code deposit fee for %s: "
+                    + "remaining gas = %d < %d = deposit fee",
+                frame.getContractAddress(), frame.getRemainingGas(), depositFee))) {
+
       if (requireCodeDepositToSucceed) {
-        LOG.trace("Contract creation error: insufficient funds for code deposit");
-        frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-        frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         operationTracer.traceAccountCreationResult(
             frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
       }
-    } else {
-      final var invalidReason =
-          contractValidationRules.stream()
-              .map(rule -> rule.validate(contractCode, frame, evm))
-              .filter(Optional::isPresent)
-              .findFirst();
-      if (invalidReason.isEmpty()) {
-        frame.decrementRemainingGas(depositFee);
-
-        final long statelessContractCompletionFee =
-            evm.getGasCalculator().completedCreateContractGasCost(frame);
-        if (frame.getRemainingGas() < statelessContractCompletionFee) {
-          LOG.trace(
-              "Not enough gas to pay the contract creation completion fee for {}: "
-                  + "remaining gas = {} < {} = deposit fee",
-              frame.getContractAddress(),
-              frame.getRemainingGas(),
-              statelessContractCompletionFee);
-          frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-          frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-        } else {
-          frame.decrementRemainingGas(statelessContractCompletionFee);
-          // Finalize contract creation, setting the contract code.
-          final MutableAccount contract =
-              frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
-          contract.setCode(contractCode);
-          LOG.trace(
-              "Successful creation of contract {} with code of size {} (Gas remaining: {})",
-              frame.getContractAddress(),
-              contractCode.size(),
-              frame.getRemainingGas());
-          frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
-        }
-
-        if (operationTracer.isExtendedTracing()) {
-          operationTracer.traceAccountCreationResult(frame, Optional.empty());
-        }
-      } else {
-        final Optional<ExceptionalHaltReason> exceptionalHaltReason = invalidReason.get();
-        frame.setExceptionalHaltReason(exceptionalHaltReason);
-        frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-        operationTracer.traceAccountCreationResult(frame, exceptionalHaltReason);
-      }
+      return;
     }
+
+    final var invalidReason =
+        contractValidationRules.stream()
+            .map(rule -> rule.validate(contractCode, frame, evm))
+            .filter(Optional::isPresent)
+            .findFirst();
+    if (invalidReason.isPresent()) {
+      final Optional<ExceptionalHaltReason> exceptionalHaltReason = invalidReason.get();
+      frame.setExceptionalHaltReason(exceptionalHaltReason);
+      frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+      operationTracer.traceAccountCreationResult(frame, exceptionalHaltReason);
+      return;
+    }
+
+    frame.decrementRemainingGas(depositFee);
+
+    // Finalize contract creation, setting the contract code.
+    final MutableAccount contract = frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
+    contract.setCode(contractCode);
+    LOG.trace(
+        "Successful creation of contract {} with code of size {} (Gas remaining: {})",
+        frame.getContractAddress(),
+        contractCode.size(),
+        frame.getRemainingGas());
+    frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
+
+    if (operationTracer.isExtendedTracing()) {
+      operationTracer.traceAccountCreationResult(frame, Optional.empty());
+    }
+  }
+
+  private static boolean handleInsufficientGas(
+      final MessageFrame frame, final long gasFee, final Supplier<String> message) {
+    if (frame.getRemainingGas() < gasFee) {
+      LOG.trace(message.get());
+      frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+      return true;
+    }
+    return false;
   }
 }

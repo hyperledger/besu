@@ -258,7 +258,7 @@ dependencies {
   }
   verkleRefTestImplemention dependencies.create('ethereum:execution-spec-tests') {
     version {
-      strictly 'verkle@v0.0.5'
+      strictly 'verkle@v0.0.8'
     }
     artifact {
       name = 'fixtures'

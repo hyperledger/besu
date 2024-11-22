@@ -40,11 +40,6 @@ public class Eip4762AccessWitness implements AccessWitness {
 
   private static final Logger LOG = LoggerFactory.getLogger(Eip4762AccessWitness.class);
   private static final TrieKeyAdapter TRIE_KEY_ADAPTER = new TrieKeyAdapter(new PedersenHasher());
-  private static final long WITNESS_BRANCH_COST = 1900;
-  private static final long WITNESS_CHUNK_COST = 200;
-  private static final long SUBTREE_EDIT_COST = 3000;
-  private static final long CHUNK_EDIT_COST = 500;
-  private static final long CHUNK_FILL_COST = 6200;
 
   private static final UInt256 zeroTreeIndex = UInt256.ZERO;
   private final Map<LeafAccessKey, Integer> leaves;
@@ -289,87 +284,55 @@ public class Eip4762AccessWitness implements AccessWitness {
     final short accessEvents = touchAddress(address, treeIndex, subIndex, accessMode);
     long gas = 0;
     if (AccessEvents.isBranchRead(accessEvents)) {
-      gas = clampedAdd(gas, WITNESS_BRANCH_COST);
-      final long gasView = gas;
-      LOG.atDebug().log(
-          () ->
-              "touchAddressAndChargeGas WITNESS_BRANCH_COST "
-                  + address
-                  + " "
-                  + treeIndex
-                  + " "
-                  + subIndex
-                  + " "
-                  + AccessMode.toString(accessMode)
-                  + " "
-                  + gasView);
+      gas = clampedAdd(gas, AccessEvents.getBranchReadCost());
     }
     if (AccessEvents.isLeafRead(accessEvents)) {
-      gas = clampedAdd(gas, WITNESS_CHUNK_COST);
-      final long gasView = gas;
-      LOG.atDebug().log(
-          () ->
-              "touchAddressAndChargeGas WITNESS_CHUNK_COST "
-                  + address
-                  + " "
-                  + treeIndex
-                  + " "
-                  + subIndex
-                  + " "
-                  + AccessMode.toString(accessMode)
-                  + " "
-                  + gasView);
+      gas = clampedAdd(gas, AccessEvents.getLeafReadCost());
     }
     if (AccessEvents.isBranchWrite(accessEvents)) {
-      gas = clampedAdd(gas, SUBTREE_EDIT_COST);
-      final long gasView = gas;
-      LOG.atDebug().log(
-          () ->
-              "touchAddressAndChargeGas SUBTREE_EDIT_COST "
-                  + address
-                  + " "
-                  + treeIndex
-                  + " "
-                  + subIndex
-                  + " "
-                  + AccessMode.toString(accessMode)
-                  + " "
-                  + gasView);
+      gas = clampedAdd(gas, AccessEvents.getBranchWriteCost());
     }
     if (AccessEvents.isLeafReset(accessEvents)) {
-      gas = clampedAdd(gas, CHUNK_EDIT_COST);
-      final long gasView = gas;
-      LOG.atDebug().log(
-          () ->
-              "touchAddressAndChargeGas CHUNK_EDIT_COST "
-                  + address
-                  + " "
-                  + treeIndex
-                  + " "
-                  + subIndex
-                  + " "
-                  + AccessMode.toString(accessMode)
-                  + " "
-                  + gasView);
+      gas = clampedAdd(gas, AccessEvents.getLeafResetCost());
     }
     if (AccessEvents.isLeafSet(accessEvents)) {
-      gas = clampedAdd(gas, CHUNK_FILL_COST);
-      final long gasView = gas;
-      LOG.atDebug().log(
-          () ->
-              "touchAddressAndChargeGas CHUNK_FILL_COST "
-                  + address
-                  + " "
-                  + treeIndex
-                  + " "
-                  + subIndex
-                  + " "
-                  + AccessMode.toString(accessMode)
-                  + " "
-                  + gasView);
+      gas = clampedAdd(gas, AccessEvents.getLeafSetCost());
     }
 
+    final long gasView = gas;
+    LOG.atDebug().log(
+        () ->
+            "touch witness "
+                + address
+                + " "
+                + treeIndex.toShortHexString()
+                + " "
+                + subIndex.toShortHexString()
+                + "\ntotal charges "
+                + gasView
+                + costSchedulePrettyPrint(accessEvents));
+
     return gas;
+  }
+
+  private static String costSchedulePrettyPrint(final short accessEvents) {
+    String message = "";
+    if (AccessEvents.isBranchRead(accessEvents)) {
+      message += "\n\tWITNESS_BRANCH_COST " + AccessEvents.getBranchReadCost();
+    }
+    if (AccessEvents.isLeafRead(accessEvents)) {
+      message += "\n\tWITNESS_CHUNK_COST " + AccessEvents.getLeafReadCost();
+    }
+    if (AccessEvents.isBranchWrite(accessEvents)) {
+      message += "\n\tSUBTREE_EDIT_COST " + AccessEvents.getBranchWriteCost();
+    }
+    if (AccessEvents.isLeafReset(accessEvents)) {
+      message += "\n\tCHUNK_EDIT_COST " + AccessEvents.getLeafResetCost();
+    }
+    if (AccessEvents.isLeafSet(accessEvents)) {
+      message += "\n\tCHUNK_FILL_COST " + AccessEvents.getLeafSetCost();
+    }
+    return message;
   }
 
   public short touchAddress(
