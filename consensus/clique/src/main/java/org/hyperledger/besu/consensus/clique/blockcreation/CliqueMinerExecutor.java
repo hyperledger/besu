@@ -38,6 +38,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -120,6 +121,11 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
   @Override
   public Optional<Address> getCoinbase() {
     return miningConfiguration.getCoinbase();
+  }
+
+  @Override
+  public OptionalLong getTargetGasLimit() {
+    return miningConfiguration.getTargetGasLimit();
   }
 
   /**

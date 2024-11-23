@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -269,6 +270,25 @@ public class TransactionSimulator {
       final OperationTracer operationTracer,
       final BlockHeader header,
       final WorldUpdater updater) {
+    return processWithWorldUpdater(
+        callParams,
+        maybeStateOverrides,
+        transactionValidationParams,
+        operationTracer,
+        header,
+        updater,
+        protocolSchedule.getByBlockHeader(header).getMiningBeneficiaryCalculator());
+  }
+
+  @Nonnull
+  public Optional<TransactionSimulatorResult> processWithWorldUpdater(
+      final CallParameter callParams,
+      final Optional<AccountOverrideMap> maybeStateOverrides,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
+      final BlockHeader header,
+      final WorldUpdater updater,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator) {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
 
     final Address senderAddress =
@@ -335,9 +355,7 @@ public class TransactionSimulator {
             updater,
             blockHeaderToProcess,
             transaction,
-            protocolSpec
-                .getMiningBeneficiaryCalculator()
-                .calculateBeneficiary(blockHeaderToProcess),
+            miningBeneficiaryCalculator.calculateBeneficiary(blockHeaderToProcess),
             new CachingBlockHashLookup(blockHeaderToProcess, blockchain),
             false,
             transactionValidationParams,

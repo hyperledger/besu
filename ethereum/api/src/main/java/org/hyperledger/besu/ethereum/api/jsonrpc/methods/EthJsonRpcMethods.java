@@ -60,6 +60,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewPendingT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSimulateV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitHashRate;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitWork;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSyncing;
@@ -132,6 +133,12 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
                 apiConfiguration.getGasCap())),
+        new EthSimulateV1(
+            blockchainQueries,
+            protocolSchedule,
+            apiConfiguration.getGasCap(),
+            miningCoordinator,
+            blockResult),
         new EthFeeHistory(protocolSchedule, blockchainQueries, miningCoordinator, apiConfiguration),
         new EthGetCode(blockchainQueries),
         new EthGetLogs(blockchainQueries, apiConfiguration.getMaxLogsRange()),

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.cache.Cache;
@@ -64,6 +65,11 @@ public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMine
   @Override
   public void setCoinbase(final Address coinbase) {
     executor.setCoinbase(coinbase);
+  }
+
+  @Override
+  public OptionalLong getTargetGasLimit() {
+    return executor.getTargetGasLimit();
   }
 
   public void setStratumMiningEnabled(final boolean stratumMiningEnabled) {

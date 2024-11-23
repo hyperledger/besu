@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public class NoopMiningCoordinator implements MiningCoordinator {
 
@@ -69,6 +70,11 @@ public class NoopMiningCoordinator implements MiningCoordinator {
   @Override
   public Optional<Address> getCoinbase() {
     return miningConfiguration.getCoinbase();
+  }
+
+  @Override
+  public OptionalLong getTargetGasLimit() {
+    return miningConfiguration.getTargetGasLimit();
   }
 
   @Override

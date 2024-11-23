@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.function.Function;
 
 public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
@@ -114,6 +115,11 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
   @Override
   public Optional<Address> getCoinbase() {
     return miningConfiguration.getCoinbase();
+  }
+
+  @Override
+  public OptionalLong getTargetGasLimit() {
+    return miningConfiguration.getTargetGasLimit();
   }
 
   public EpochCalculator getEpochCalculator() {

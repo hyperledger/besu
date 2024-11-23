@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public interface MiningCoordinator {
 
@@ -64,6 +65,8 @@ public interface MiningCoordinator {
   }
 
   Optional<Address> getCoinbase();
+
+  OptionalLong getTargetGasLimit();
 
   default Optional<Long> hashesPerSecond() {
     return Optional.empty();

@@ -29,6 +29,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -223,6 +224,11 @@ public abstract class AbstractMiningCoordinator<
   @Override
   public Optional<Address> getCoinbase() {
     return executor.getCoinbase();
+  }
+
+  @Override
+  public OptionalLong getTargetGasLimit() {
+    return executor.getTargetGasLimit();
   }
 
   protected abstract boolean newChainHeadInvalidatesMiningOperation(

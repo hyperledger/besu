@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
@@ -163,6 +164,11 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
   @Override
   public Optional<Address> getCoinbase() {
     return Optional.of(blockCreatorFactory.getLocalAddress());
+  }
+
+  @Override
+  public OptionalLong getTargetGasLimit() {
+    return blockCreatorFactory.getTargetGasLimit();
   }
 
   @Override

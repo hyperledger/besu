@@ -14,56 +14,75 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Transaction;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.transaction.BlockSimulationResult;
+import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
+import org.hyperledger.besu.ethereum.transaction.BlockStateCall;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockContext;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.BlockSimulationService;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class BlockSimulatorServiceImpl implements BlockSimulationService {
-  private final MiningCoordinator miningCoordinator;
+  private final BlockSimulator blockSimulator;
 
-  public BlockSimulatorServiceImpl(final MiningCoordinator miningCoordinator) {
-    this.miningCoordinator = miningCoordinator;
+  public BlockSimulatorServiceImpl(
+      final WorldStateArchive worldStateArchive,
+      final Blockchain blockchain,
+      final MiningConfiguration miningConfiguration,
+      final ProtocolSchedule protocolSchedule,
+      final long rpcGasCap) {
+
+    blockSimulator =
+        new BlockSimulator(
+            blockchain,
+            worldStateArchive,
+            protocolSchedule,
+            rpcGasCap,
+            () -> miningConfiguration.getCoinbase().orElseThrow(),
+            miningConfiguration::getTargetGasLimit);
   }
 
   @Override
   public BlockContext simulate(
       final BlockHeader parentHeader,
       final List<? extends Transaction> transactions,
-      final long timestamp) {
+      final BlockOverrides blockOverrides) {
 
     org.hyperledger.besu.ethereum.core.BlockHeader parentHeaderCore =
         (org.hyperledger.besu.ethereum.core.BlockHeader) parentHeader;
 
-    List<org.hyperledger.besu.ethereum.core.Transaction> coreTransactions =
-        transactions.stream().map(t -> (org.hyperledger.besu.ethereum.core.Transaction) t).toList();
+    List<CallParameter> callParameters =
+        transactions.stream().map(CallParameter::fromTransaction).toList();
 
-    Block block =
-        miningCoordinator
-            .createBlock(parentHeaderCore, coreTransactions, Collections.emptyList(), timestamp)
-            .orElseThrow(() -> new IllegalArgumentException("Unable to create block."));
+    BlockStateCall blockStateCall = new BlockStateCall(callParameters, blockOverrides);
 
-    return blockContext(block::getHeader, block::getBody);
-  }
+    BlockSimulationResult result = blockSimulator.simulate(parentHeaderCore, blockStateCall);
 
-  private BlockContext blockContext(
-      final Supplier<BlockHeader> headerSupplier, final Supplier<BlockBody> bodySupplier) {
+    if (result.getResult().isFailed()) {
+      throw new IllegalArgumentException("Unable to create block.");
+    }
+
+    if (result.getBlock().isEmpty()) {
+      throw new IllegalArgumentException("Unable to create block.");
+    }
     return new BlockContext() {
       @Override
       public BlockHeader getBlockHeader() {
-        return headerSupplier.get();
+        return result.getBlock().get().getHeader();
       }
 
       @Override
       public BlockBody getBlockBody() {
-        return bodySupplier.get();
+        return result.getBlock().get().getBody();
       }
     };
   }

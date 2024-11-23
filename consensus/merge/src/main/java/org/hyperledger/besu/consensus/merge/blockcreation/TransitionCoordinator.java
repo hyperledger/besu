@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -109,6 +110,11 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public Optional<Address> getCoinbase() {
     return dispatchFunctionAccordingToMergeState(MiningCoordinator::getCoinbase);
+  }
+
+  @Override
+  public OptionalLong getTargetGasLimit() {
+    return dispatchFunctionAccordingToMergeState(MiningCoordinator::getTargetGasLimit);
   }
 
   @Override
