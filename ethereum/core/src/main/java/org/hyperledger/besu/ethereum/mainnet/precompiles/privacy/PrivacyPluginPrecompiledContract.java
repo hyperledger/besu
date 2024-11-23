@@ -34,6 +34,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Deprecated(since = "24.11.0")
 public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract {
   private static final Logger LOG = LoggerFactory.getLogger(PrivacyPluginPrecompiledContract.class);
   private final PrivacyParameters privacyParameters;

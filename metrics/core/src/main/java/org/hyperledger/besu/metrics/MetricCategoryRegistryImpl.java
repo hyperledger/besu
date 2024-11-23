@@ -40,7 +40,8 @@ public class MetricCategoryRegistryImpl implements MetricCategoryRegistry {
    * @param categoryEnum the category enum
    */
   public <T extends Enum<T> & MetricCategory> void addCategories(final Class<T> categoryEnum) {
-    EnumSet.allOf(categoryEnum).forEach(this::addMetricCategory);
+    EnumSet.allOf(categoryEnum)
+        .forEach(category -> metricCategories.put(category.name(), category));
   }
 
   /**

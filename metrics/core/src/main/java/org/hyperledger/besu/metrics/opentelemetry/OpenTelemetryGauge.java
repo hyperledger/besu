@@ -16,23 +16,14 @@ package org.hyperledger.besu.metrics.opentelemetry;
 
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.DoubleSupplier;
 
-import com.google.common.base.Preconditions;
-import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.api.metrics.Meter;
-import io.opentelemetry.api.metrics.ObservableDoubleMeasurement;
 
 /** The Open telemetry gauge. */
-public class OpenTelemetryGauge implements LabelledGauge {
-  private final List<String> labelNames;
-  private final Map<Attributes, DoubleSupplier> observationsMap = new ConcurrentHashMap<>();
-
+@SuppressWarnings("removal") // remove when deprecated LabelledGauge is removed
+public class OpenTelemetryGauge extends OpenTelemetryLabelledSuppliedMetric
+    implements LabelledGauge {
   /**
    * Instantiates a new Open telemetry gauge.
    *
@@ -46,41 +37,8 @@ public class OpenTelemetryGauge implements LabelledGauge {
       final String help,
       final Meter meter,
       final List<String> labelNames) {
-    this.labelNames = labelNames;
+    super(labelNames);
 
     meter.gaugeBuilder(metricName).setDescription(help).buildWithCallback(this::updater);
-  }
-
-  @Override
-  public void labels(final DoubleSupplier valueSupplier, final String... labelValues) {
-    Preconditions.checkArgument(
-        labelValues.length == labelNames.size(),
-        "label values and label names need the same number of elements");
-    final Attributes labels = getLabels(labelValues);
-    if (observationsMap.putIfAbsent(labels, valueSupplier) != null) {
-      throw new IllegalStateException(
-          "Already registered a gauge with labels " + Arrays.toString(labelValues));
-    }
-  }
-
-  @Override
-  public boolean isLabelsObserved(final String... labelValues) {
-    Preconditions.checkArgument(
-        labelValues.length == labelNames.size(),
-        "label values and label names need the same number of elements");
-    return observationsMap.containsKey(getLabels(labelValues));
-  }
-
-  private Attributes getLabels(final String... labelValues) {
-    final AttributesBuilder labelsBuilder = Attributes.builder();
-    for (int i = 0; i < labelNames.size(); i++) {
-      labelsBuilder.put(labelNames.get(i), labelValues[i]);
-    }
-    return labelsBuilder.build();
-  }
-
-  private void updater(final ObservableDoubleMeasurement measurement) {
-    observationsMap.forEach(
-        (labels, valueSupplier) -> measurement.record(valueSupplier.getAsDouble(), labels));
   }
 }

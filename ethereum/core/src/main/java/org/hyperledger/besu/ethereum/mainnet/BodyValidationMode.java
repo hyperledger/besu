@@ -21,6 +21,9 @@ public enum BodyValidationMode {
   /** Skip receipts and transactions root validation */
   LIGHT,
 
+  /** Validate transactions, state, and receipts root */
+  ROOT_ONLY,
+
   /** Fully validate the body */
   FULL;
 }

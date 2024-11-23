@@ -26,7 +26,6 @@ import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -605,9 +604,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       genesisState.writeStateTo(worldStateArchive.getMutable());
     }
 
+    final var consensusContext =
+        createConsensusContext(blockchain, worldStateArchive, protocolSchedule);
+
     final ProtocolContext protocolContext =
-        createProtocolContext(
-            blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
+        createProtocolContext(blockchain, worldStateArchive, consensusContext);
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
@@ -624,7 +625,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled());
     final EthPeers ethPeers =
         new EthPeers(
-            getSupportedProtocol(),
+            EthProtocol.NAME,
             currentProtocolSpecSupplier,
             clock,
             metricsSystem,
@@ -976,7 +977,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Create mining coordinator mining coordinator.
+   * Create mining coordinator.
    *
    * @param protocolSchedule the protocol schedule
    * @param protocolContext the protocol context
@@ -1017,18 +1018,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the consensus context
    */
   protected abstract ConsensusContext createConsensusContext(
-      Blockchain blockchain,
-      WorldStateArchive worldStateArchive,
-      ProtocolSchedule protocolSchedule);
-
-  /**
-   * Gets supported protocol.
-   *
-   * @return the supported protocol
-   */
-  protected String getSupportedProtocol() {
-    return EthProtocol.NAME;
-  }
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule);
 
   /**
    * Create eth protocol manager eth protocol manager.
@@ -1079,17 +1071,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    *
    * @param blockchain the blockchain
    * @param worldStateArchive the world state archive
-   * @param protocolSchedule the protocol schedule
-   * @param consensusContextFactory the consensus context factory
+   * @param consensusContext the consensus context
    * @return the protocol context
    */
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory) {
-    return ProtocolContext.init(
-        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory, badBlockManager);
+      final ConsensusContext consensusContext) {
+    return new ProtocolContext(blockchain, worldStateArchive, consensusContext, badBlockManager);
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
