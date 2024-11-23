@@ -151,7 +151,11 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientNodeName),
               new TraceJsonRpcMethods(
-                  blockchainQueries, protocolSchedule, protocolContext, apiConfiguration),
+                  blockchainQueries,
+                  protocolSchedule,
+                  protocolContext,
+                  apiConfiguration,
+                  metricsSystem),
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 
