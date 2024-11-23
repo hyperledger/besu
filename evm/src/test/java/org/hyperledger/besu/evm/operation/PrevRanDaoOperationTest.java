@@ -41,7 +41,7 @@ class PrevRanDaoOperationTest {
     when(blockHeader.getMixHashOrPrevRandao()).thenReturn(prevRandao);
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
     EVM evm = mock(EVM.class);
-    Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
+    OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
     assertThat(r.getHaltReason()).isNull();
     verify(messageFrame).pushStackItem(prevRandao);
   }
@@ -57,7 +57,7 @@ class PrevRanDaoOperationTest {
     when(blockHeader.getMixHashOrPrevRandao()).thenReturn(prevRandao);
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
     EVM evm = mock(EVM.class);
-    Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
+    OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
     assertThat(r.getHaltReason()).isNull();
     verify(messageFrame).pushStackItem(prevRandao);
   }

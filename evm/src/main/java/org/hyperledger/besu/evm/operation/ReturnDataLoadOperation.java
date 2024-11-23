@@ -40,7 +40,7 @@ public class ReturnDataLoadOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     Code code = frame.getCode();
     if (code.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+      return OperationResult.invalidOperation();
     }
 
     final int offset = clampedToInt(frame.popStackItem());
@@ -57,6 +57,6 @@ public class ReturnDataLoadOperation extends AbstractOperation {
     }
 
     frame.pushStackItem(value);
-    return new OperationResult(3L, null);
+    return new OperationResult(3L);
   }
 }

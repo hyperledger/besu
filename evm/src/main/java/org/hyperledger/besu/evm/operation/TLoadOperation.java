@@ -15,10 +15,8 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -38,17 +36,13 @@ public class TLoadOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final long cost = gasCalculator().getTransientLoadOperationGasCost();
-    try {
-      final Bytes32 slot = UInt256.fromBytes(frame.popStackItem());
-      if (frame.getRemainingGas() < cost) {
-        return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      } else {
-        frame.pushStackItem(frame.getTransientStorageValue(frame.getRecipientAddress(), slot));
+    final Bytes32 slot = UInt256.fromBytes(frame.popStackItem());
+    if (frame.getRemainingGas() < cost) {
+      return OperationResult.insufficientGas();
+    } else {
+      frame.pushStackItem(frame.getTransientStorageValue(frame.getRecipientAddress(), slot));
 
-        return new OperationResult(cost, null);
-      }
-    } catch (final UnderflowException ufe) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+      return new OperationResult(cost);
     }
   }
 }

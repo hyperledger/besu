@@ -20,11 +20,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.code.EOFLayout;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.OverflowException;
-import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper;
 
@@ -72,46 +69,39 @@ public class ExtCodeSizeOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      final Address address = Words.toAddress(frame.popStackItem());
-      final boolean accountIsWarm =
-          frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-      final long cost = cost(accountIsWarm);
-      if (frame.getRemainingGas() < cost) {
-        return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      } else {
-        final Account account = frame.getWorldUpdater().get(address);
+    final Address address = Words.toAddress(frame.popStackItem());
+    final boolean accountIsWarm =
+        frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
+    final long cost = cost(accountIsWarm);
+    if (frame.getRemainingGas() < cost) {
+      return OperationResult.insufficientGas();
+    } else {
+      final Account account = frame.getWorldUpdater().get(address);
 
-        if (account != null) {
-          final DelegatedCodeGasCostHelper.Result result =
-              deductDelegatedCodeGasCost(frame, gasCalculator(), account);
-          if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-            return new Operation.OperationResult(
-                result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
-          }
+      if (account != null) {
+        final DelegatedCodeGasCostHelper.Result result =
+            deductDelegatedCodeGasCost(frame, gasCalculator(), account);
+        if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
+          return OperationResult.insufficientGas();
         }
-
-        Bytes codeSize;
-        if (account == null) {
-          codeSize = Bytes.EMPTY;
-        } else {
-          final Bytes code = account.getCode();
-          if (enableEIP3540
-              && code.size() >= 2
-              && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
-              && code.get(1) == 0) {
-            codeSize = EOF_SIZE;
-          } else {
-            codeSize = Words.intBytes(code.size());
-          }
-        }
-        frame.pushStackItem(codeSize);
-        return new OperationResult(cost, null);
       }
-    } catch (final UnderflowException ufe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
-    } catch (final OverflowException ofe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+
+      Bytes codeSize;
+      if (account == null) {
+        codeSize = Bytes.EMPTY;
+      } else {
+        final Bytes code = account.getCode();
+        if (enableEIP3540
+            && code.size() >= 2
+            && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
+            && code.get(1) == 0) {
+          codeSize = EOF_SIZE;
+        } else {
+          codeSize = Words.intBytes(code.size());
+        }
+      }
+      frame.pushStackItem(codeSize);
+      return new OperationResult(cost);
     }
   }
 }

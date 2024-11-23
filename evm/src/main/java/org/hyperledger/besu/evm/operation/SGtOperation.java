@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class SGtOperation extends AbstractFixedCostOperation {
 
   /** The SGt operation success result. */
-  static final OperationResult sgtSuccess = new OperationResult(3, null);
+  static final OperationResult sgtSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new SGt operation.
@@ -38,8 +38,7 @@ public class SGtOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return staticOperation(frame);
   }
 

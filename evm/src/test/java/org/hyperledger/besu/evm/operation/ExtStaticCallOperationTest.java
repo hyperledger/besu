@@ -139,7 +139,9 @@ public class ExtStaticCallOperationTest {
 
     var result = operation.execute(messageFrame, EOF_EVM);
 
-    assertThat(result.getGasCost()).isEqualTo(chargedGas);
+    if (result.getHaltReason() == null) {
+      assertThat(result.getGasCost()).isEqualTo(chargedGas);
+    }
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
 
     MessageFrame childFrame = messageFrame.getMessageFrameStack().getFirst();

@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.code.EOFLayout;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
@@ -91,7 +90,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     final long cost = cost(frame, memOffset, numBytes, accountIsWarm);
 
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return OperationResult.insufficientGas();
     }
 
     final Account account = frame.getWorldUpdater().get(address);
@@ -100,8 +99,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
       final DelegatedCodeGasCostHelper.Result result =
           deductDelegatedCodeGasCost(frame, gasCalculator(), account);
       if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-        return new Operation.OperationResult(
-            result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
+        return OperationResult.insufficientGas();
       }
     }
 
@@ -116,6 +114,6 @@ public class ExtCodeCopyOperation extends AbstractOperation {
       frame.writeMemory(memOffset, sourceOffset, numBytes, code);
     }
 
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

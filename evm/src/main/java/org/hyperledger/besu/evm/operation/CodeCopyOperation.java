@@ -18,7 +18,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -42,13 +41,13 @@ public class CodeCopyOperation extends AbstractOperation {
 
     final long cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return OperationResult.insufficientGas();
     }
 
     final Code code = frame.getCode();
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, code.getBytes(), true);
 
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

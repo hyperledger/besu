@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -34,10 +33,6 @@ public class SStoreOperation extends AbstractOperation {
 
   /** The constant EIP_1706_MINIMUM. */
   public static final long EIP_1706_MINIMUM = 2300L;
-
-  /** The constant ILLEGAL_STATE_CHANGE. */
-  protected static final OperationResult ILLEGAL_STATE_CHANGE =
-      new OperationResult(0L, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
 
   private final long minimumGasRemaining;
 
@@ -69,7 +64,7 @@ public class SStoreOperation extends AbstractOperation {
 
     final MutableAccount account = frame.getWorldUpdater().getAccount(frame.getRecipientAddress());
     if (account == null) {
-      return ILLEGAL_STATE_CHANGE;
+      return OperationResult.illegalStateChange();
     }
 
     final Address address = account.getAddress();
@@ -85,11 +80,11 @@ public class SStoreOperation extends AbstractOperation {
 
     final long remainingGas = frame.getRemainingGas();
     if (frame.isStatic()) {
-      return new OperationResult(remainingGas, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      return OperationResult.illegalStateChange();
     } else if (remainingGas < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return OperationResult.insufficientGas();
     } else if (remainingGas <= minimumGasRemaining) {
-      return new OperationResult(minimumGasRemaining, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return OperationResult.insufficientGas();
     }
 
     // Increment the refund counter.
@@ -99,6 +94,6 @@ public class SStoreOperation extends AbstractOperation {
 
     account.setStorageValue(key, newValue);
     frame.storageWasUpdated(key, newValue);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

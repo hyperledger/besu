@@ -23,7 +23,6 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.code.CodeV0;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -38,10 +37,6 @@ import org.apache.tuweni.bytes.Bytes;
  * execute, and then updates the current message context based on its execution.
  */
 public abstract class AbstractCallOperation extends AbstractOperation {
-
-  /** The constant UNDERFLOW_RESPONSE. */
-  protected static final OperationResult UNDERFLOW_RESPONSE =
-      new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
   static final Bytes LEGACY_SUCCESS_STACK_ITEM = BYTES_ONE;
   static final Bytes LEGACY_FAILURE_STACK_ITEM = Bytes.EMPTY;
@@ -177,14 +172,14 @@ public abstract class AbstractCallOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     // manual check because some reads won't come until the "complete" step.
     if (frame.stackSize() < getStackItemsConsumed()) {
-      return UNDERFLOW_RESPONSE;
+      return OperationResult.underFlow();
     }
 
     final Address to = to(frame);
     final boolean accountIsWarm = frame.warmUpAddress(to) || gasCalculator().isPrecompile(to);
     final long cost = cost(frame, accountIsWarm);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return OperationResult.insufficientGas();
     }
     frame.decrementRemainingGas(cost);
 
@@ -196,8 +191,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       final DelegatedCodeGasCostHelper.Result result =
           deductDelegatedCodeGasCost(frame, gasCalculator(), contract);
       if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-        return new Operation.OperationResult(
-            result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
+        return OperationResult.insufficientGas();
       }
     }
 
@@ -213,7 +207,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
-      return new OperationResult(cost, null);
+      return new OperationResult(cost);
     }
 
     final Bytes inputData = frame.readMutableMemory(inputDataOffset(frame), inputDataLength(frame));
@@ -225,7 +219,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
-      return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
+      return OperationResult.invalidCode();
     }
 
     MessageFrame.builder()
@@ -246,7 +240,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.incrementRemainingGas(cost);
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
-    return new OperationResult(cost, null, 0);
+    return new OperationResult(cost, 0);
   }
 
   /**

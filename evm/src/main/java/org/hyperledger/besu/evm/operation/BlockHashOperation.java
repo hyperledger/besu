@@ -52,8 +52,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Bytes blockArg = frame.popStackItem().trimLeadingZeros();
 
     // Short-circuit if value is unreasonably large

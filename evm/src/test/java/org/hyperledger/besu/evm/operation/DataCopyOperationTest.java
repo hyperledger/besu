@@ -147,11 +147,13 @@ class DataCopyOperationTest {
             .code(code)
             .build();
 
-    Operation.OperationResult result = subject.execute(frame, evm);
+    OperationResult result = subject.execute(frame, evm);
 
     assertThat(frame.memoryWordSize()).isEqualTo((expected.size() + 31) / 32);
     assertThat(frame.readMemory(0, expected.size())).isEqualTo(expected);
-    assertThat(result.getGasCost()).isEqualTo(gasCost);
+    if (result.getHaltReason() == null) {
+      assertThat(result.getGasCost()).isEqualTo(gasCost);
+    }
   }
 
   @Test
@@ -170,7 +172,7 @@ class DataCopyOperationTest {
             .pc(6)
             .build();
 
-    Operation.OperationResult result = subject.execute(frame, evm);
+    OperationResult result = subject.execute(frame, evm);
     assertThat(result.getGasCost()).isZero();
     assertThat(result.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_OPERATION);
   }

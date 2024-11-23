@@ -124,7 +124,7 @@
               "pc" : 0,
               "sub" : null
             }, {
-              "cost" : 30000,
+              "cost" : 0,
               "ex" : null,
               "pc" : 21,
               "sub" : null
@@ -255,7 +255,7 @@
               "pc" : 0,
               "sub" : null
             }, {
-              "cost" : 30000,
+              "cost" : 0,
               "ex" : null,
               "pc" : 21,
               "sub" : null

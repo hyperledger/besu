@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.code.CodeSection;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.ReturnStack;
@@ -29,10 +28,7 @@ public class CallFOperation extends AbstractOperation {
   public static final int OPCODE = 0xe3;
 
   /** The Call F success. */
-  static final OperationResult callfSuccess = new OperationResult(5, null);
-
-  static final OperationResult callfStackOverflow =
-      new OperationResult(5, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+  static final OperationResult callfSuccess = new OperationResult(5);
 
   /**
    * Instantiates a new Call F operation.
@@ -47,7 +43,7 @@ public class CallFOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     Code code = frame.getCode();
     if (code.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+      return OperationResult.invalidOperation();
     }
 
     int pc = frame.getPC();
@@ -55,7 +51,7 @@ public class CallFOperation extends AbstractOperation {
     CodeSection info = code.getCodeSection(section);
     int operandStackSize = frame.stackSize();
     if (operandStackSize > 1024 - info.getMaxStackHeight() + info.getInputs()) {
-      return callfStackOverflow;
+      return OperationResult.overFlow();
     }
     frame.getReturnStack().push(new ReturnStack.ReturnStackItem(frame.getSection(), pc + 2));
     frame.setPC(info.getEntryPoint() - 1); // will be +1ed at end of operations loop

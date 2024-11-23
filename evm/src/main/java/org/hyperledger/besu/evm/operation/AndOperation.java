@@ -24,7 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class AndOperation extends AbstractFixedCostOperation {
 
   /** The And operation success result. */
-  static final OperationResult andSuccess = new OperationResult(3, null);
+  static final OperationResult andSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new And operation.
@@ -36,8 +36,7 @@ public class AndOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return staticOperation(frame);
   }
 

@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.operation;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -41,12 +40,12 @@ public class MLoadOperation extends AbstractOperation {
 
     final long cost = gasCalculator().mLoadOperationGasCost(frame, location);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return OperationResult.insufficientGas();
     }
 
     final Bytes value = frame.readMutableMemory(location, 32, true).copy();
 
     frame.pushStackItem(value);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

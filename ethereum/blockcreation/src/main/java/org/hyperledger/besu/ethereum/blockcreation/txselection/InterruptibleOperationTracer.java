@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.operation.OperationResult;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -67,8 +67,7 @@ public class InterruptibleOperationTracer implements BlockAwareOperationTracer {
   }
 
   @Override
-  public void tracePostExecution(
-      final MessageFrame frame, final Operation.OperationResult operationResult) {
+  public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     checkInterrupt();
     delegate.tracePostExecution(frame, operationResult);
   }

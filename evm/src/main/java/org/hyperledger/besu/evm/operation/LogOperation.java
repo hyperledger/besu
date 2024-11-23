@@ -19,7 +19,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.Log;
@@ -51,9 +50,9 @@ public class LogOperation extends AbstractOperation {
 
     final long cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
     if (frame.isStatic()) {
-      return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      return OperationResult.illegalStateChange();
     } else if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return OperationResult.insufficientGas();
     }
 
     final Address address = frame.getRecipientAddress();
@@ -67,6 +66,6 @@ public class LogOperation extends AbstractOperation {
     }
 
     frame.addLog(new Log(address, data, builder.build()));
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

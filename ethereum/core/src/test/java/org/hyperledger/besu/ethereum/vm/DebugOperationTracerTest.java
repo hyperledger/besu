@@ -33,7 +33,7 @@ import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.operation.AbstractOperation;
 import org.hyperledger.besu.evm.operation.CallOperation;
 import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.operation.OperationResult;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
@@ -62,7 +62,7 @@ class DebugOperationTracerTest {
       new AbstractOperation(0x02, "MUL", 2, 1, null) {
         @Override
         public OperationResult execute(final MessageFrame frame, final EVM evm) {
-          return new OperationResult(20L, null);
+          return new OperationResult(20L);
         }
       };
 
@@ -193,8 +193,7 @@ class DebugOperationTracerTest {
 
     final DebugOperationTracer tracer =
         new DebugOperationTracer(new TraceOptions(true, true, true), false);
-    tracer.tracePostExecution(
-        frame, new OperationResult(50L, ExceptionalHaltReason.INSUFFICIENT_GAS));
+    tracer.tracePostExecution(frame, OperationResult.insufficientGas());
 
     final TraceFrame traceFrame = getOnlyTraceFrame(tracer);
     assertThat(traceFrame.getExceptionalHaltReason())

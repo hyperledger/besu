@@ -49,7 +49,7 @@ class CallFOperationTest {
             .build();
 
     CallFOperation callF = new CallFOperation(gasCalculator);
-    Operation.OperationResult callfResult = callF.execute(messageFrame, null);
+    OperationResult callfResult = callF.execute(messageFrame, null);
 
     assertThat(callfResult.getHaltReason()).isNull();
     assertThat(callfResult.getPcIncrement()).isEqualTo(1);

@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class Push0Operation extends AbstractFixedCostOperation {
 
   /** The Push0 operation success result. */
-  static final OperationResult push0Success = new OperationResult(2, null);
+  static final OperationResult push0Success = new OperationResult(2);
 
   /**
    * Instantiates a new Push 0 operation.

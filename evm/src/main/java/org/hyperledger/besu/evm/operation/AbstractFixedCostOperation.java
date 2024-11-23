@@ -15,23 +15,14 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.OverflowException;
-import org.hyperledger.besu.evm.internal.UnderflowException;
 
 /** The Abstract fixed cost operation. */
 abstract class AbstractFixedCostOperation extends AbstractOperation {
 
   /** The Success response. */
   protected final OperationResult successResponse;
-
-  /** The Out of gas response. */
-  protected final OperationResult outOfGasResponse;
-
-  private final OperationResult underflowResponse;
-  private final OperationResult overflowResponse;
 
   /** The Gas cost. */
   protected final long gasCost;
@@ -55,25 +46,15 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
       final long fixedCost) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator);
     gasCost = fixedCost;
-    successResponse = new OperationResult(gasCost, null);
-    outOfGasResponse = new OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-    underflowResponse =
-        new OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
-    overflowResponse = new OperationResult(gasCost, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+    successResponse = new OperationResult(gasCost);
   }
 
   @Override
   public final OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      if (frame.getRemainingGas() < gasCost) {
-        return outOfGasResponse;
-      } else {
-        return executeFixedCostOperation(frame, evm);
-      }
-    } catch (final UnderflowException ufe) {
-      return underflowResponse;
-    } catch (final OverflowException ofe) {
-      return overflowResponse;
+    if (frame.getRemainingGas() < gasCost) {
+      return OperationResult.insufficientGas();
+    } else {
+      return executeFixedCostOperation(frame, evm);
     }
   }
 

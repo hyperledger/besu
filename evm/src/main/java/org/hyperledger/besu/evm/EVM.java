@@ -38,7 +38,6 @@ import org.hyperledger.besu.evm.operation.DivOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
 import org.hyperledger.besu.evm.operation.GtOperation;
-import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.IsZeroOperation;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.JumpOperation;
@@ -49,8 +48,8 @@ import org.hyperledger.besu.evm.operation.MulModOperation;
 import org.hyperledger.besu.evm.operation.MulOperation;
 import org.hyperledger.besu.evm.operation.NotOperation;
 import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
+import org.hyperledger.besu.evm.operation.OperationResult;
 import org.hyperledger.besu.evm.operation.OrOperation;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
@@ -76,14 +75,6 @@ import org.slf4j.LoggerFactory;
 /** The Evm. */
 public class EVM {
   private static final Logger LOG = LoggerFactory.getLogger(EVM.class);
-
-  /** The constant OVERFLOW_RESPONSE. */
-  protected static final OperationResult OVERFLOW_RESPONSE =
-      new OperationResult(0L, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
-
-  /** The constant UNDERFLOW_RESPONSE. */
-  protected static final OperationResult UNDERFLOW_RESPONSE =
-      new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
   private final OperationRegistry operations;
   private final GasCalculator gasCalculator;
@@ -241,7 +232,8 @@ public class EVM {
               case 0x09 -> MulModOperation.staticOperation(frame);
               case 0x0a -> ExpOperation.staticOperation(frame, gasCalculator);
               case 0x0b -> SignExtendOperation.staticOperation(frame);
-              case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperation.INVALID_RESULT;
+              case 0x0c, 0x0d, 0x0e, 0x0f -> OperationResult.invalidOperation();
+
               case 0x10 -> LtOperation.staticOperation(frame);
               case 0x11 -> GtOperation.staticOperation(frame);
               case 0x12 -> SLtOperation.staticOperation(frame);
@@ -259,7 +251,7 @@ public class EVM {
               case 0x5f ->
                   enableShanghai
                       ? Push0Operation.staticOperation(frame)
-                      : InvalidOperation.INVALID_RESULT;
+                      : OperationResult.invalidOperation();
               case 0x60, // PUSH1-32
                       0x61,
                       0x62,
@@ -333,9 +325,9 @@ public class EVM {
               }
             };
       } catch (final OverflowException oe) {
-        result = OVERFLOW_RESPONSE;
+        result = OperationResult.overFlow();
       } catch (final UnderflowException ue) {
-        result = UNDERFLOW_RESPONSE;
+        result = OperationResult.underFlow();
       }
       final ExceptionalHaltReason haltReason = result.getHaltReason();
       if (haltReason != null) {

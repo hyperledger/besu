@@ -37,7 +37,7 @@ public class DataSizeOperation extends AbstractFixedCostOperation {
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Code code = frame.getCode();
     if (code.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+      return OperationResult.invalidOperation();
     }
     final int size = code.getDataSize();
     frame.pushStackItem(Bytes.ofUnsignedInt(size));

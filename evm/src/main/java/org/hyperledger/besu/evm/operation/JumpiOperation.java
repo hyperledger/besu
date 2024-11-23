@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -25,10 +24,8 @@ import org.apache.tuweni.bytes.Bytes;
 /** The JUMPI operation. */
 public class JumpiOperation extends AbstractFixedCostOperation {
 
-  private static final OperationResult invalidJumpResponse =
-      new Operation.OperationResult(10L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-  private static final OperationResult jumpiResponse = new OperationResult(10L, null, 0);
-  private static final OperationResult nojumpResponse = new OperationResult(10L, null);
+  private static final OperationResult jumpiResponse = new OperationResult(10L, 0);
+  private static final OperationResult nojumpResponse = new OperationResult(10L);
 
   /**
    * Instantiates a new JUMPI operation.
@@ -55,18 +52,18 @@ public class JumpiOperation extends AbstractFixedCostOperation {
     final Bytes condition = frame.popStackItem().trimLeadingZeros();
 
     // If condition is zero (false), no jump is will be performed. Therefore, skip the test.
-    if (condition.size() == 0) {
+    if (condition.isEmpty()) {
       return nojumpResponse;
     } else {
       final int jumpDestination;
       try {
         jumpDestination = dest.toInt();
       } catch (final RuntimeException re) {
-        return invalidJumpResponse;
+        return OperationResult.invalidJumpDestination();
       }
       final Code code = frame.getCode();
       if (code.isJumpDestInvalid(jumpDestination)) {
-        return invalidJumpResponse;
+        return OperationResult.invalidJumpDestination();
       }
       frame.setPC(jumpDestination);
       return jumpiResponse;

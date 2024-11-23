@@ -32,12 +32,12 @@
           "pc" : 0,
           "sub" : null
         }, {
-          "cost" : 8,
+          "cost" : 0,
           "ex" : {
             "mem" : null,
             "push" : [ ],
             "store" : null,
-            "used" : 16756191
+            "used" : 16756199
           },
           "pc" : 2,
           "sub" : null

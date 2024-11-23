@@ -33,8 +33,7 @@ public class CodeSizeOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Code code = frame.getCode();
     frame.pushStackItem(Words.intBytes(code.getSize()));
 

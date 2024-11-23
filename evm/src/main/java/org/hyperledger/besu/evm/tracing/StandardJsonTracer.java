@@ -19,6 +19,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.AbstractCallOperation;
 import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.operation.OperationResult;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -167,7 +168,7 @@ public class StandardJsonTracer implements OperationTracer {
 
   @Override
   public void tracePostExecution(
-      final MessageFrame messageFrame, final Operation.OperationResult executeResult) {
+      final MessageFrame messageFrame, final OperationResult executeResult) {
     final Operation currentOp = messageFrame.getCurrentOperation();
     if (currentOp.isVirtualOperation()) {
       return;

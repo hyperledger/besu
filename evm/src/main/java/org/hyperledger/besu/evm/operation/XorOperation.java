@@ -24,7 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class XorOperation extends AbstractFixedCostOperation {
 
   /** The XOR operation success result. */
-  static final OperationResult xorSuccess = new OperationResult(3, null);
+  static final OperationResult xorSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new Xor operation.
@@ -36,8 +36,7 @@ public class XorOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return staticOperation(frame);
   }
 

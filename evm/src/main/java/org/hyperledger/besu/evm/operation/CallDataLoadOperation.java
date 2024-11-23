@@ -35,8 +35,7 @@ public class CallDataLoadOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Bytes startWord = frame.popStackItem().trimLeadingZeros();
 
     // If the start index doesn't fit in an int, it comes after anything in data, and so the

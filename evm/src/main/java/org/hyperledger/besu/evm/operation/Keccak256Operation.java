@@ -18,7 +18,6 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -43,11 +42,11 @@ public class Keccak256Operation extends AbstractOperation {
 
     final long cost = gasCalculator().keccak256OperationGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return OperationResult.insufficientGas();
     }
 
     final Bytes bytes = frame.readMutableMemory(from, length);
     frame.pushStackItem(keccak256(bytes));
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

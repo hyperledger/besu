@@ -32,8 +32,7 @@ public class GasPriceOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Wei gasPrice = frame.getGasPrice();
     frame.pushStackItem(gasPrice.toBytes());
 

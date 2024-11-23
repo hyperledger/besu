@@ -20,7 +20,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 
 import java.util.List;
 
@@ -65,7 +64,9 @@ class ChainIdOperationTest {
     Bytes32 chainId = Bytes32.fromHexString(chainIdString);
     ChainIdOperation operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
     final OperationResult result = operation.execute(messageFrame, null);
-    assertThat(result.getGasCost()).isEqualTo(expectedGas);
+    if (result.getHaltReason() == null) {
+      assertThat(result.getGasCost()).isEqualTo(expectedGas);
+    }
   }
 
   @Test

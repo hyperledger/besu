@@ -54,7 +54,7 @@ public class BlobHashOperation extends AbstractOperation {
       if (trimmedIndex.size() > 4) {
         // won't fit in an int
         frame.pushStackItem(Bytes.EMPTY);
-        return new OperationResult(3, null);
+        return new OperationResult(3);
       }
       int versionedHashIndex = trimmedIndex.toInt();
       if (versionedHashIndex < versionedHashes.size() && versionedHashIndex >= 0) {
@@ -66,6 +66,6 @@ public class BlobHashOperation extends AbstractOperation {
     } else {
       frame.pushStackItem(Bytes.EMPTY);
     }
-    return new OperationResult(3, null);
+    return new OperationResult(3);
   }
 }

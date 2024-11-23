@@ -47,7 +47,7 @@ class RelativeJumpOperationTest {
     when(messageFrame.getPC()).thenReturn(rjumpOperationIndex);
 
     RelativeJumpOperation rjump = new RelativeJumpOperation(gasCalculator);
-    Operation.OperationResult rjumpResult = rjump.execute(messageFrame, null);
+    OperationResult rjumpResult = rjump.execute(messageFrame, null);
 
     assertThat(rjumpResult.getPcIncrement())
         .isEqualTo(mockCode.getBytes().size() - rjumpOperationIndex + jumpLength);
@@ -68,7 +68,7 @@ class RelativeJumpOperationTest {
             .build();
 
     RelativeJumpIfOperation rjumpi = new RelativeJumpIfOperation(gasCalculator);
-    Operation.OperationResult rjumpResult = rjumpi.execute(messageFrame, null);
+    OperationResult rjumpResult = rjumpi.execute(messageFrame, null);
 
     assertThat(rjumpResult.getPcIncrement()).isEqualTo(2 + 1);
   }
@@ -88,7 +88,7 @@ class RelativeJumpOperationTest {
             .build();
 
     RelativeJumpIfOperation rjumpi = new RelativeJumpIfOperation(gasCalculator);
-    Operation.OperationResult rjumpResult = rjumpi.execute(messageFrame, null);
+    OperationResult rjumpResult = rjumpi.execute(messageFrame, null);
 
     assertThat(rjumpResult.getPcIncrement()).isEqualTo(-1);
   }
@@ -113,7 +113,7 @@ class RelativeJumpOperationTest {
             .build();
 
     RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
-    Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
+    OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
 
     assertThat(rjumpResult.getPcIncrement()).isEqualTo(1 + 2 * jumpVectorSize + 1);
   }
@@ -163,7 +163,7 @@ class RelativeJumpOperationTest {
             .pushStackItem(Bytes.fromHexString(stackValue))
             .build();
 
-    Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
+    OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
 
     assertThat(rjumpResult.getPcIncrement()).isEqualTo(1 + 2 * jumpVectorSize + 1);
   }
@@ -190,7 +190,7 @@ class RelativeJumpOperationTest {
             .pushStackItem(Bytes.fromHexString(stackValue))
             .build();
 
-    Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
+    OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
 
     assertThat(rjumpResult.getPcIncrement()).isEqualTo(2 + 2 * jumpVectorSize + jumpLength);
   }
@@ -212,7 +212,7 @@ class RelativeJumpOperationTest {
             .build();
 
     RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
-    Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
+    OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
 
     assertThat(rjumpResult.getPcIncrement()).isEqualTo(2 + 2 * jumpVectorSize + 0x5678);
   }

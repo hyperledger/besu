@@ -22,7 +22,6 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.code.CodeV0;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
@@ -100,7 +99,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     Code callingCode = frame.getCode();
     if (callingCode.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+      return OperationResult.invalidOperation();
     }
 
     final Bytes toBytes = frame.getStackItem(STACK_TO).trimLeadingZeros();
@@ -111,15 +110,10 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
 
     GasCalculator gasCalculator = gasCalculator();
     if (!zeroValue && isStatic(frame)) {
-      return new OperationResult(
-          gasCalculator.callValueTransferGasCost(), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      return OperationResult.illegalStateChange();
     }
     if (toBytes.size() > Address.SIZE) {
-      return new OperationResult(
-          gasCalculator.memoryExpansionGasCost(frame, inputOffset, inputLength)
-              + (zeroValue ? 0 : gasCalculator.callValueTransferGasCost())
-              + gasCalculator.getColdAccountAccessCost(),
-          ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
+      return OperationResult.addressOutOfRange();
     }
     Address to = Words.toAddress(toBytes);
     final Account contract = frame.getWorldUpdater().get(to);
@@ -128,8 +122,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
       final DelegatedCodeGasCostHelper.Result result =
           deductDelegatedCodeGasCost(frame, gasCalculator, contract);
       if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-        return new Operation.OperationResult(
-            result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
+        return OperationResult.insufficientGas();
       }
     }
 
@@ -143,7 +136,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
             + (accountCreation ? gasCalculator.newAccountGasCost() : 0);
     long currentGas = frame.getRemainingGas() - cost;
     if (currentGas < 0) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return OperationResult.insufficientGas();
     }
 
     final Code code =
@@ -153,7 +146,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
-      return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
+      return OperationResult.invalidCode();
     }
 
     // last exceptional failure, prepare for call or soft failures
@@ -202,13 +195,13 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
         .build();
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
-    return new OperationResult(cost + childGas, null, 0);
+    return new OperationResult(cost + childGas, 0);
   }
 
   private @Nonnull OperationResult softFailure(final MessageFrame frame, final long cost) {
     frame.popStackItems(getStackItemsConsumed());
     frame.pushStackItem(EOF1_EXCEPTION_STACK_ITEM);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 
   @Override

@@ -40,7 +40,7 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
   protected OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     Code code = frame.getCode();
     if (code.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+      return OperationResult.invalidOperation();
     }
     int offsetCase;
     try {
@@ -59,7 +59,6 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
             : 0; // if offsetCase is outside the vector the jump delta is zero / next opcode.
     return new OperationResult(
         gasCost,
-        null,
         2 // Opcode + length immediate
             + 2 * vectorSize // vector size
             + jumpDelta);

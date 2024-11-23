@@ -19,7 +19,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
@@ -70,9 +69,9 @@ public class SelfDestructOperation extends AbstractOperation {
 
     // With the cost we can test for two early WithdrawalRequests: static or not enough gas.
     if (frame.isStatic()) {
-      return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      return OperationResult.illegalStateChange();
     } else if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return OperationResult.insufficientGas();
     }
 
     // We passed preliminary checks, get mutable accounts.
@@ -97,6 +96,6 @@ public class SelfDestructOperation extends AbstractOperation {
     // Set frame to CODE_SUCCESS so that the frame performs a normal halt.
     frame.setState(MessageFrame.State.CODE_SUCCESS);
 
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

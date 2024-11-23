@@ -28,7 +28,7 @@ public class ExchangeOperation extends AbstractFixedCostOperation {
   public static final int OPCODE = 0xe8;
 
   /** The Exchange operation success result. */
-  static final OperationResult exchangeSuccess = new OperationResult(3, null);
+  static final OperationResult exchangeSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new Exchange operation.
@@ -43,7 +43,7 @@ public class ExchangeOperation extends AbstractFixedCostOperation {
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     Code code = frame.getCode();
     if (code.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+      return OperationResult.invalidOperation();
     }
     int pc = frame.getPC();
     int imm = code.readU8(pc + 1);

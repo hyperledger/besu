@@ -18,7 +18,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -45,7 +44,7 @@ public class ReturnContractOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     Code code = frame.getCode();
     if (code.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+      return OperationResult.invalidOperation();
     }
 
     int pc = frame.getPC();
@@ -56,27 +55,27 @@ public class ReturnContractOperation extends AbstractOperation {
 
     final long cost = gasCalculator().memoryExpansionGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return OperationResult.insufficientGas();
     }
 
     if (index >= code.getSubcontainerCount()) {
-      return new OperationResult(cost, ExceptionalHaltReason.NONEXISTENT_CONTAINER);
+      return OperationResult.nonExistentContainer();
     }
 
     Bytes auxData = frame.readMemory(from, length);
     if (code.getDataSize() + auxData.size() > evm.getMaxCodeSize()) {
-      return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
+      return OperationResult.codeTooLarge();
     }
     if (code.getDataSize() + auxData.size() < code.getDeclaredDataSize()) {
-      return new OperationResult(cost, ExceptionalHaltReason.DATA_TOO_SMALL);
+      return OperationResult.dataTooSmall();
     }
     Optional<Code> newCode = code.getSubContainer(index, auxData, evm);
     if (newCode.isEmpty()) {
-      return new OperationResult(cost, ExceptionalHaltReason.INVALID_CONTAINER);
+      return OperationResult.invalidContainer();
     }
 
     frame.setCreatedCode(newCode.get());
     frame.setState(MessageFrame.State.CODE_SUCCESS);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

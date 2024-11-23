@@ -19,7 +19,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
@@ -89,7 +88,7 @@ public class CallOperation extends AbstractCallOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     if (frame.isStatic() && !value(frame).isZero()) {
-      return new OperationResult(cost(frame, true), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      return OperationResult.illegalStateChange();
     } else {
       return super.execute(frame, evm);
     }

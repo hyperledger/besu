@@ -37,14 +37,6 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Abstract create operation. */
 public abstract class AbstractCreateOperation extends AbstractOperation {
 
-  /** The constant UNDERFLOW_RESPONSE. */
-  protected static final OperationResult UNDERFLOW_RESPONSE =
-      new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
-
-  /** The constant UNDERFLOW_RESPONSE. */
-  protected static final OperationResult INVALID_OPERATION =
-      new OperationResult(0L, ExceptionalHaltReason.INVALID_OPERATION);
-
   /** The EOF Version this create operation requires initcode to be in */
   protected final int eofVersion;
 
@@ -72,21 +64,21 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     if (frame.getCode().getEofVersion() != eofVersion) {
-      return INVALID_OPERATION;
+      return OperationResult.invalidOperation();
     }
 
     // manual check because some reads won't come until the "complete" step.
     if (frame.stackSize() < getStackItemsConsumed()) {
-      return UNDERFLOW_RESPONSE;
+      return OperationResult.underFlow();
     }
 
     Supplier<Code> codeSupplier = Suppliers.memoize(() -> getInitCode(frame, evm));
 
     final long cost = cost(frame, codeSupplier);
     if (frame.isStatic()) {
-      return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      return OperationResult.illegalStateChange();
     } else if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return OperationResult.insufficientGas();
     }
     final Wei value = Wei.wrap(frame.getStackItem(0));
 
@@ -99,7 +91,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     if (code != null && code.getSize() > evm.getMaxInitcodeSize()) {
       frame.popStackItems(getStackItemsConsumed());
-      return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
+      return OperationResult.codeTooLarge();
     }
 
     if (value.compareTo(account.getBalance()) > 0
@@ -119,7 +111,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         frame.incrementRemainingGas(cost);
       }
     }
-    return new OperationResult(cost, null, getPcIncrement());
+    return new OperationResult(cost, getPcIncrement());
   }
 
   /**

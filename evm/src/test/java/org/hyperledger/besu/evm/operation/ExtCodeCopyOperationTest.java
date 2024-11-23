@@ -187,7 +187,7 @@ class ExtCodeCopyOperationTest {
             .pushStackItem(REQUESTED_ADDRESS)
             .build();
 
-    Operation.OperationResult result = subject.execute(frame, evm);
+    OperationResult result = subject.execute(frame, evm);
 
     assertThat(frame.readMemory(0, expected.size())).isEqualTo(expected);
     assertThat(frame.memoryWordSize()).isEqualTo((expected.size() + 31) / 32);
@@ -211,7 +211,7 @@ class ExtCodeCopyOperationTest {
             .build();
     frame.warmUpAddress(REQUESTED_ADDRESS);
 
-    Operation.OperationResult result = subject.execute(frame, evm);
+    OperationResult result = subject.execute(frame, evm);
 
     assertThat(frame.readMemory(0, 9)).isEqualTo(code);
     assertThat(frame.memoryWordSize()).isEqualTo(1);
@@ -235,7 +235,7 @@ class ExtCodeCopyOperationTest {
             .build();
     frame.writeMemory(0, 15, Bytes.fromHexString("0x112233445566778899aabbccddeeff"));
 
-    Operation.OperationResult result = subject.execute(frame, evm);
+    OperationResult result = subject.execute(frame, evm);
 
     assertThat(frame.readMemory(0, 16))
         .isEqualTo(Bytes.fromHexString("0xEF0000000000000000aabbccddeeff00"));

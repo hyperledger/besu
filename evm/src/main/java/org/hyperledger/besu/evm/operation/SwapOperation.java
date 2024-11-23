@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -28,12 +27,9 @@ public class SwapOperation extends AbstractFixedCostOperation {
   public static final int SWAP_BASE = 0x8F;
 
   /** The Swap operation success result. */
-  static final OperationResult swapSuccess = new OperationResult(3, null);
+  static final OperationResult swapSuccess = new OperationResult(3);
 
   private final int index;
-
-  /** The operation result due to underflow. */
-  protected final Operation.OperationResult underflowResponse;
 
   /**
    * Instantiates a new Swap operation.
@@ -50,13 +46,10 @@ public class SwapOperation extends AbstractFixedCostOperation {
         gasCalculator,
         gasCalculator.getVeryLowTierGasCost());
     this.index = index;
-    this.underflowResponse =
-        new Operation.OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return staticOperation(frame, index);
   }
 
