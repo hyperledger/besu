@@ -15,29 +15,54 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.plugin.data.BlockBody;
+import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.TransactionReceipt;
 
+import java.util.List;
 import java.util.Optional;
 
-public class BlockSimulationResult {
-  final Block block;
+public class BlockSimulationResult
+    implements org.hyperledger.besu.plugin.data.BlockSimulationResult {
+  final BlockHeader blockHeader;
+  final BlockBody blockBody;
+  final List<? extends TransactionReceipt> receipts;
   final BlockProcessingResult result;
 
-  public BlockSimulationResult(final Block block, final BlockProcessingResult result) {
-    this.block = block;
-    this.result = result;
-  }
-
   public BlockSimulationResult(final BlockProcessingResult result) {
-    this.block = null;
+    this.receipts = null;
+    this.blockHeader = null;
+    this.blockBody = null;
     this.result = result;
   }
 
-  public Optional<Block> getBlock() {
-    return Optional.ofNullable(block);
+  public BlockSimulationResult(
+      final BlockHeader blockHeader,
+      final BlockBody blockBody,
+      final List<? extends TransactionReceipt> receipts,
+      final BlockProcessingResult result) {
+    this.blockHeader = blockHeader;
+    this.blockBody = blockBody;
+    this.receipts = receipts;
+    this.result = result;
   }
 
   public BlockProcessingResult getResult() {
     return result;
+  }
+
+  @Override
+  public Optional<BlockHeader> getBlockHeader() {
+    return Optional.ofNullable(blockHeader);
+  }
+
+  @Override
+  public Optional<BlockBody> getBlockBody() {
+    return Optional.ofNullable(blockBody);
+  }
+
+  @Override
+  public Optional<List<? extends TransactionReceipt>> getReceipts() {
+    return Optional.ofNullable(receipts);
   }
 }

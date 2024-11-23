@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -60,13 +60,16 @@ public class BlockSimulator {
   private final Supplier<Address> coinbaseSupplier;
   private final Supplier<OptionalLong> nextGasSupplier;
 
+  private final MutableBlockchain blockchain;
+
   public BlockSimulator(
-      final Blockchain blockchain,
+      final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final long rpcGasCap,
       final Supplier<Address> coinbaseSupplier,
       final Supplier<OptionalLong> nextGasSupplier) {
+    this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
     this.coinbaseSupplier = coinbaseSupplier;
@@ -77,6 +80,11 @@ public class BlockSimulator {
 
   public BlockSimulationResult simulate(
       final BlockHeader header, final BlockStateCall blockStateCall) {
+    return simulate(header, blockStateCall, false);
+  }
+
+  public BlockSimulationResult simulate(
+      final BlockHeader header, final BlockStateCall blockStateCall, final boolean shouldPersist) {
 
     long currentGasUsed = 0;
     final List<TransactionReceipt> receipts = new ArrayList<>();
@@ -94,7 +102,7 @@ public class BlockSimulator {
     final MiningBeneficiaryCalculator miningBeneficiaryCalculator =
         getMiningBeneficiaryCalculator(blockOverrides, newProtocolSpec);
 
-    try (final MutableWorldState ws = getWorldState(header)) {
+    try (final MutableWorldState ws = getWorldState(header, shouldPersist)) {
       WorldUpdater updater = ws.updater();
 
       for (CallParameter callParameter : blockStateCall.getCalls()) {
@@ -140,12 +148,18 @@ public class BlockSimulator {
 
       updater.commit();
       BlockHeader finalBlockHeader =
-          createFinalBlockHeader(blockHeader, ws, transactions, receipts, currentGasUsed);
+          createFinalBlockHeader(
+              blockHeader, ws, transactions, blockOverrides, receipts, currentGasUsed);
 
+      if (shouldPersist) {
+        ws.persist(finalBlockHeader);
+        blockchain.storeBlock(
+            new Block(finalBlockHeader, new BlockBody(transactions, List.of())), receipts);
+      }
       Block block = new Block(finalBlockHeader, new BlockBody(transactions, List.of()));
       BlockProcessingOutputs outputs = new BlockProcessingOutputs(ws, receipts);
       BlockProcessingResult result = new BlockProcessingResult(Optional.of(outputs));
-      return new BlockSimulationResult(block, result);
+      return new BlockSimulationResult(block.getHeader(), block.getBody(), receipts, result);
 
     } catch (final Exception e) {
       throw new RuntimeException("Error simulating block", e);
@@ -162,7 +176,8 @@ public class BlockSimulator {
     return BlockHeaderBuilder.createDefault()
         .parentHash(header.getHash())
         .coinbase(blockOverrides.getFeeRecipient().orElse(coinbaseSupplier.get()))
-        .difficulty(Difficulty.of(getNextDifficulty(newProtocolSpec, header, timestamp)))
+        .difficulty(
+            Difficulty.of(getNextDifficulty(blockOverrides, newProtocolSpec, header, timestamp)))
         .number(blockNumber)
         .gasLimit(
             blockOverrides
@@ -174,7 +189,7 @@ public class BlockSimulator {
                 .getBaseFeePerGas()
                 .orElse(getNextBaseFee(newProtocolSpec, header, blockNumber)))
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
-        .extraData(Bytes.wrap(new byte[32 + 65]))
+        .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
         .buildBlockHeader();
   }
 
@@ -182,27 +197,28 @@ public class BlockSimulator {
       final BlockHeader blockHeader,
       final MutableWorldState ws,
       final List<Transaction> transactions,
+      final BlockOverrides blockOverrides,
       final List<TransactionReceipt> receipts,
       final long currentGasUsed) {
 
     return BlockHeaderBuilder.createDefault()
         .populateFrom(blockHeader)
         .ommersHash(BodyValidation.ommersHash(List.of()))
-        .stateRoot(ws.rootHash())
+        .stateRoot(blockOverrides.getStateRoot().orElse(ws.rootHash()))
         .transactionsRoot(BodyValidation.transactionsRoot(transactions))
         .receiptsRoot(BodyValidation.receiptsRoot(receipts))
         .logsBloom(BodyValidation.logsBloom(receipts))
         .gasUsed(currentGasUsed)
         .withdrawalsRoot(null)
         .requestsHash(null)
-        .extraData(Bytes.wrap(new byte[32 + 65]))
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+        .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
         .buildBlockHeader();
   }
 
-  private MutableWorldState getWorldState(final BlockHeader header) {
+  private MutableWorldState getWorldState(final BlockHeader header, final boolean shouldPersist) {
     return worldStateArchive
-        .getMutable(header, false)
+        .getMutable(header, shouldPersist)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
@@ -226,9 +242,17 @@ public class BlockSimulator {
   }
 
   private BigInteger getNextDifficulty(
-      final ProtocolSpec protocolSpec, final BlockHeader parentHeader, final long timestamp) {
-    final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
-    return difficultyCalculator.nextDifficulty(timestamp, parentHeader);
+      final BlockOverrides blockOverrides,
+      final ProtocolSpec protocolSpec,
+      final BlockHeader parentHeader,
+      final long timestamp) {
+
+    if (blockOverrides.getDifficulty().isPresent()) {
+      return blockOverrides.getDifficulty().get();
+    } else {
+      final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
+      return difficultyCalculator.nextDifficulty(timestamp, parentHeader);
+    }
   }
 
   private MiningBeneficiaryCalculator getMiningBeneficiaryCalculator(

@@ -16,7 +16,7 @@ package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Transaction;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulationResult;
@@ -24,8 +24,6 @@ import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 import org.hyperledger.besu.ethereum.transaction.BlockStateCall;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.data.BlockBody;
-import org.hyperledger.besu.plugin.data.BlockContext;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.BlockSimulationService;
 
@@ -36,7 +34,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
 
   public BlockSimulatorServiceImpl(
       final WorldStateArchive worldStateArchive,
-      final Blockchain blockchain,
+      final MutableBlockchain blockchain,
       final MiningConfiguration miningConfiguration,
       final ProtocolSchedule protocolSchedule,
       final long rpcGasCap) {
@@ -52,10 +50,11 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
   }
 
   @Override
-  public BlockContext simulate(
+  public BlockSimulationResult simulate(
       final BlockHeader parentHeader,
       final List<? extends Transaction> transactions,
-      final BlockOverrides blockOverrides) {
+      final BlockOverrides blockOverrides,
+      final boolean shouldPersist) {
 
     org.hyperledger.besu.ethereum.core.BlockHeader parentHeaderCore =
         (org.hyperledger.besu.ethereum.core.BlockHeader) parentHeader;
@@ -65,25 +64,12 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
 
     BlockStateCall blockStateCall = new BlockStateCall(callParameters, blockOverrides);
 
-    BlockSimulationResult result = blockSimulator.simulate(parentHeaderCore, blockStateCall);
+    BlockSimulationResult result =
+        blockSimulator.simulate(parentHeaderCore, blockStateCall, shouldPersist);
 
     if (result.getResult().isFailed()) {
       throw new IllegalArgumentException("Unable to create block.");
     }
-
-    if (result.getBlock().isEmpty()) {
-      throw new IllegalArgumentException("Unable to create block.");
-    }
-    return new BlockContext() {
-      @Override
-      public BlockHeader getBlockHeader() {
-        return result.getBlock().get().getHeader();
-      }
-
-      @Override
-      public BlockBody getBlockBody() {
-        return result.getBlock().get().getBody();
-      }
-    };
+    return result;
   }
 }

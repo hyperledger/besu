@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 public class BlockOverrides {
   private final Optional<Long> timestamp;
@@ -28,6 +29,9 @@ public class BlockOverrides {
   private final Optional<Address> feeRecipient;
   private final Optional<Wei> baseFeePerGas;
   private final Optional<Long> blobBaseFee;
+  private final Optional<Hash> stateRoot;
+  private final Optional<BigInteger> difficulty;
+  private final Optional<Bytes> extraData;
 
   @JsonCreator
   public BlockOverrides(
@@ -37,7 +41,10 @@ public class BlockOverrides {
       @JsonProperty("gasLimit") final Optional<Long> gasLimit,
       @JsonProperty("feeRecipient") final Optional<Address> feeRecipient,
       @JsonProperty("baseFeePerGas") final Optional<Wei> baseFeePerGas,
-      @JsonProperty("blobBaseFee") final Optional<Long> blobBaseFee) {
+      @JsonProperty("blobBaseFee") final Optional<Long> blobBaseFee,
+      @JsonProperty("stateRoot") final Optional<Hash> stateRoot,
+      @JsonProperty("difficult") final Optional<BigInteger> difficulty,
+      @JsonProperty("extraData") final Optional<Bytes> extraData) {
     this.timestamp = timestamp;
     this.blockNumber = blockNumber;
     this.prevRandao = prevRandao;
@@ -45,6 +52,9 @@ public class BlockOverrides {
     this.feeRecipient = feeRecipient;
     this.baseFeePerGas = baseFeePerGas;
     this.blobBaseFee = blobBaseFee;
+    this.stateRoot = stateRoot;
+    this.difficulty = difficulty;
+    this.extraData = extraData;
   }
 
   private BlockOverrides(final Builder builder) {
@@ -55,6 +65,10 @@ public class BlockOverrides {
     this.feeRecipient = Optional.ofNullable(builder.feeRecipient);
     this.baseFeePerGas = Optional.ofNullable(builder.baseFeePerGas);
     this.blobBaseFee = Optional.ofNullable(builder.blobBaseFee);
+    this.stateRoot = Optional.ofNullable(builder.stateRoot);
+    this.difficulty = Optional.ofNullable(builder.difficulty);
+    this.extraData = Optional.ofNullable(builder.extraData);
+    ;
   }
 
   public Optional<Long> getBlockNumber() {
@@ -85,6 +99,18 @@ public class BlockOverrides {
     return blobBaseFee;
   }
 
+  public Optional<Hash> getStateRoot() {
+    return stateRoot;
+  }
+
+  public Optional<BigInteger> getDifficulty() {
+    return difficulty;
+  }
+
+  public Optional<Bytes> getExtraData() {
+    return extraData;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -97,6 +123,9 @@ public class BlockOverrides {
     private Address feeRecipient;
     private Wei baseFeePerGas;
     private Long blobBaseFee;
+    private Hash stateRoot;
+    private BigInteger difficulty;
+    private Bytes extraData;
 
     public Builder timestamp(final Long timestamp) {
       this.timestamp = timestamp;
@@ -130,6 +159,21 @@ public class BlockOverrides {
 
     public Builder blobBaseFee(final Long blobBaseFee) {
       this.blobBaseFee = blobBaseFee;
+      return this;
+    }
+
+    public Builder stateRoot(final Hash stateRoot) {
+      this.stateRoot = stateRoot;
+      return this;
+    }
+
+    public Builder difficulty(final BigInteger difficulty) {
+      this.difficulty = difficulty;
+      return this;
+    }
+
+    public Builder extraData(final Bytes extraData) {
+      this.extraData = extraData;
       return this;
     }
 

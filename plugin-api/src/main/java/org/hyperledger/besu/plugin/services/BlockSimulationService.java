@@ -16,8 +16,8 @@ package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Transaction;
-import org.hyperledger.besu.plugin.data.BlockContext;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.BlockSimulationResult;
 
 import java.util.List;
 
@@ -31,8 +31,9 @@ public interface BlockSimulationService extends BesuService {
    * @param blockOverrides the blockSimulationOverride of the block
    * @return the block context
    */
-  BlockContext simulate(
+  BlockSimulationResult simulate(
       final BlockHeader parentHeader,
       final List<? extends Transaction> transactions,
-      final BlockOverrides blockOverrides);
+      final BlockOverrides blockOverrides,
+      final boolean shouldPersist);
 }

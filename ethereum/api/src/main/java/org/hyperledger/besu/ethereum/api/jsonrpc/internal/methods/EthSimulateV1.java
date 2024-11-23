@@ -29,6 +29,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulationResult;
@@ -48,7 +50,7 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
     this.blockResultFactory = blockResultFactory;
     this.blockSimulator =
         new BlockSimulator(
-            blockchainQueries.getBlockchain(),
+            null,
             blockchainQueries.getWorldStateArchive(),
             protocolSchedule,
             rpcGasCap,
@@ -91,8 +93,12 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
       BlockSimulationResult result =
           blockSimulator.simulate(header, parameter.getBlockStateCalls().getFirst());
 
-      if (result.getResult().isSuccessful() && result.getBlock().isPresent()) {
-        return blockResultFactory.transactionComplete(result.getBlock().get());
+      if (result.getResult().isSuccessful()) {
+        Block block =
+            new Block(
+                (BlockHeader) result.getBlockHeader().get(),
+                (BlockBody) result.getBlockBody().get());
+        return blockResultFactory.transactionComplete(block);
       }
       return null;
     } catch (JsonRpcParameterException e) {
