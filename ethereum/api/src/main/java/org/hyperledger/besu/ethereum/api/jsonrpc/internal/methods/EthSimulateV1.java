@@ -50,7 +50,7 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
     this.blockResultFactory = blockResultFactory;
     this.blockSimulator =
         new BlockSimulator(
-            null,
+            blockchainQueries.getBlockchain(),
             blockchainQueries.getWorldStateArchive(),
             protocolSchedule,
             rpcGasCap,

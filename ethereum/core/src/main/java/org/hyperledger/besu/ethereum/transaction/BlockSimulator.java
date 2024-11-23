@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -60,16 +60,13 @@ public class BlockSimulator {
   private final Supplier<Address> coinbaseSupplier;
   private final Supplier<OptionalLong> nextGasSupplier;
 
-  private final MutableBlockchain blockchain;
-
   public BlockSimulator(
-      final MutableBlockchain blockchain,
+      final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final long rpcGasCap,
       final Supplier<Address> coinbaseSupplier,
       final Supplier<OptionalLong> nextGasSupplier) {
-    this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
     this.coinbaseSupplier = coinbaseSupplier;
@@ -153,8 +150,6 @@ public class BlockSimulator {
 
       if (shouldPersist) {
         ws.persist(finalBlockHeader);
-        blockchain.storeBlock(
-            new Block(finalBlockHeader, new BlockBody(transactions, List.of())), receipts);
       }
       Block block = new Block(finalBlockHeader, new BlockBody(transactions, List.of()));
       BlockProcessingOutputs outputs = new BlockProcessingOutputs(ws, receipts);

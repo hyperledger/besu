@@ -16,5 +16,6 @@ package org.hyperledger.besu.plugin.services;
 
 public interface MiningService extends BesuService {
   void start();
+
   void stop();
 }
