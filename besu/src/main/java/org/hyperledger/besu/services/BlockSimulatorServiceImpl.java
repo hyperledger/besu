@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -45,7 +46,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
             worldStateArchive,
             protocolSchedule,
             rpcGasCap,
-            () -> miningConfiguration.getCoinbase().orElseThrow(),
+            miningConfiguration::getCoinbase,
             miningConfiguration::getTargetGasLimit);
   }
 
@@ -62,10 +63,11 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
     List<CallParameter> callParameters =
         transactions.stream().map(CallParameter::fromTransaction).toList();
 
-    BlockStateCall blockStateCall = new BlockStateCall(callParameters, blockOverrides);
+    BlockStateCall blockStateCall =
+        new BlockStateCall(callParameters, blockOverrides, new AccountOverrideMap());
 
     BlockSimulationResult result =
-        blockSimulator.simulate(parentHeaderCore, blockStateCall, shouldPersist);
+        blockSimulator.simulate(parentHeaderCore, blockStateCall, true, shouldPersist);
 
     if (result.getResult().isFailed()) {
       throw new IllegalArgumentException("Unable to create block.");

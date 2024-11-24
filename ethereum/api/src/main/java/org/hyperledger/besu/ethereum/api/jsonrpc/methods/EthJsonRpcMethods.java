@@ -69,6 +69,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -87,6 +88,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ProtocolSchedule protocolSchedule;
   private final FilterManager filterManager;
   private final TransactionPool transactionPool;
+  private final MiningConfiguration miningConfiguration;
   private final MiningCoordinator miningCoordinator;
   private final Set<Capability> supportedCapabilities;
   private final ApiConfiguration apiConfiguration;
@@ -97,6 +99,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final ProtocolSchedule protocolSchedule,
       final FilterManager filterManager,
       final TransactionPool transactionPool,
+      final MiningConfiguration miningConfiguration,
       final MiningCoordinator miningCoordinator,
       final Set<Capability> supportedCapabilities,
       final ApiConfiguration apiConfiguration) {
@@ -105,6 +108,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.protocolSchedule = protocolSchedule;
     this.filterManager = filterManager;
     this.transactionPool = transactionPool;
+    this.miningConfiguration = miningConfiguration;
     this.miningCoordinator = miningCoordinator;
     this.supportedCapabilities = supportedCapabilities;
     this.apiConfiguration = apiConfiguration;
@@ -137,7 +141,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             blockchainQueries,
             protocolSchedule,
             apiConfiguration.getGasCap(),
-            miningCoordinator,
+            miningConfiguration,
             blockResult),
         new EthFeeHistory(protocolSchedule, blockchainQueries, miningCoordinator, apiConfiguration),
         new EthGetCode(blockchainQueries),

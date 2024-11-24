@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -27,14 +27,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulationResult;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
+
+import java.util.List;
 
 public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
   private final BlockSimulator blockSimulator;
@@ -44,18 +49,19 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final long rpcGasCap,
-      final MiningCoordinator miningCoordinator,
+      final MiningConfiguration miningConfiguration,
       final BlockResultFactory blockResultFactory) {
     super(blockchainQueries);
     this.blockResultFactory = blockResultFactory;
+
     this.blockSimulator =
         new BlockSimulator(
             blockchainQueries.getBlockchain(),
             blockchainQueries.getWorldStateArchive(),
             protocolSchedule,
             rpcGasCap,
-            () -> miningCoordinator.getCoinbase().orElseThrow(),
-            miningCoordinator::getTargetGasLimit);
+            miningConfiguration::getCoinbase,
+            miningConfiguration::getTargetGasLimit);
   }
 
   @Override
@@ -91,14 +97,15 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
       BlockStateCallsParameter parameter =
           request.getRequiredParameter(0, BlockStateCallsParameter.class);
       BlockSimulationResult result =
-          blockSimulator.simulate(header, parameter.getBlockStateCalls().getFirst());
+          blockSimulator.simulate(
+              header, parameter.getBlockStateCalls().getFirst(), parameter.isValidation(), false);
 
       if (result.getResult().isSuccessful()) {
         Block block =
             new Block(
                 (BlockHeader) result.getBlockHeader().get(),
                 (BlockBody) result.getBlockBody().get());
-        return blockResultFactory.transactionComplete(block);
+        return blockResultFactory.transactionHash(blockByHashWithTxHashes(block));
       }
       return null;
     } catch (JsonRpcParameterException e) {
@@ -114,5 +121,18 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
   private JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
     return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
+  }
+
+  public BlockWithMetadata<Hash, Hash> blockByHashWithTxHashes(final Block block) {
+    final int size = block.calculateSize();
+
+    final List<Hash> txs =
+        block.getBody().getTransactions().stream().map(Transaction::getHash).toList();
+
+    final List<Hash> ommers =
+        block.getBody().getOmmers().stream().map(BlockHeader::getHash).toList();
+
+    return new BlockWithMetadata<>(
+        block.getHeader(), txs, ommers, Difficulty.ZERO, size, block.getBody().getWithdrawals());
   }
 }

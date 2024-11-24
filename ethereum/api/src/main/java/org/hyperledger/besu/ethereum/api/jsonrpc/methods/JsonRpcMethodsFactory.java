@@ -129,6 +129,7 @@ public class JsonRpcMethodsFactory {
                   protocolSchedule,
                   filterManager,
                   transactionPool,
+                  miningConfiguration,
                   miningCoordinator,
                   supportedCapabilities,
                   apiConfiguration),

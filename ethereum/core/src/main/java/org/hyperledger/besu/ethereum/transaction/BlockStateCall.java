@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
+import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.BlockOverrides;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class BlockStateCall {
 
@@ -24,14 +27,24 @@ public class BlockStateCall {
 
   private final List<? extends CallParameter> calls;
 
+  private final AccountOverrideMap accountOverrides;
+
   public BlockStateCall(
-      final List<? extends CallParameter> calls, final BlockOverrides blockOverrides) {
-    this.calls = calls;
-    this.blockOverrides = blockOverrides;
+      final List<? extends CallParameter> calls,
+      final BlockOverrides blockOverrides,
+      final AccountOverrideMap accountOverrides) {
+    this.calls = calls != null ? calls : new ArrayList<>();
+    this.blockOverrides =
+        blockOverrides != null ? blockOverrides : BlockOverrides.builder().build();
+    this.accountOverrides = accountOverrides;
   }
 
   public BlockOverrides getBlockOverrides() {
     return blockOverrides;
+  }
+
+  public Optional<AccountOverrideMap> getAccountOverrides() {
+    return Optional.of(accountOverrides);
   }
 
   public List<? extends CallParameter> getCalls() {

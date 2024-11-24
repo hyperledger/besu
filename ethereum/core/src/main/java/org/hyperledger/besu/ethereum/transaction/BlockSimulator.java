@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
+import org.hyperledger.besu.datatypes.AccountOverride;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Wei;
@@ -40,6 +41,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -51,13 +53,14 @@ import java.util.OptionalLong;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockSimulator {
   private final TransactionSimulator transactionSimulator;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
 
-  private final Supplier<Address> coinbaseSupplier;
+  private final Supplier<Optional<Address>> coinbaseSupplier;
   private final Supplier<OptionalLong> nextGasSupplier;
 
   public BlockSimulator(
@@ -65,7 +68,7 @@ public class BlockSimulator {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final long rpcGasCap,
-      final Supplier<Address> coinbaseSupplier,
+      final Supplier<Optional<Address>> coinbaseSupplier,
       final Supplier<OptionalLong> nextGasSupplier) {
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
@@ -76,19 +79,16 @@ public class BlockSimulator {
   }
 
   public BlockSimulationResult simulate(
-      final BlockHeader header, final BlockStateCall blockStateCall) {
-    return simulate(header, blockStateCall, false);
-  }
-
-  public BlockSimulationResult simulate(
-      final BlockHeader header, final BlockStateCall blockStateCall, final boolean shouldPersist) {
+      final BlockHeader header,
+      final BlockStateCall blockStateCall,
+      final boolean shouldValidate,
+      final boolean shouldPersist) {
 
     long currentGasUsed = 0;
     final List<TransactionReceipt> receipts = new ArrayList<>();
     final List<Transaction> transactions = new ArrayList<>();
 
     final BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
-
     long timestamp = blockOverrides.getTimestamp().orElse(header.getTimestamp() + 1);
     final ProtocolSpec newProtocolSpec = protocolSchedule.getForNextBlockHeader(header, timestamp);
 
@@ -102,13 +102,21 @@ public class BlockSimulator {
     try (final MutableWorldState ws = getWorldState(header, shouldPersist)) {
       WorldUpdater updater = ws.updater();
 
+      if (blockStateCall.getAccountOverrides().isPresent()) {
+        for (Address accountToOverride : blockStateCall.getAccountOverrides().get().keySet()) {
+          final AccountOverride overrides =
+              blockStateCall.getAccountOverrides().get().get(accountToOverride);
+          applyOverrides(updater.getOrCreate(accountToOverride), overrides);
+        }
+      }
+
       for (CallParameter callParameter : blockStateCall.getCalls()) {
         final WorldUpdater localUpdater = updater.updater();
         final Optional<TransactionSimulatorResult> transactionSimulatorResult =
             transactionSimulator.processWithWorldUpdater(
                 callParameter,
                 Optional.empty(),
-                buildTransactionValidationParams(),
+                buildTransactionValidationParams(shouldValidate),
                 OperationTracer.NO_TRACING,
                 blockHeader,
                 localUpdater,
@@ -124,8 +132,7 @@ public class BlockSimulator {
 
         if (transactionProcessingResult.isSuccessful()) {
           localUpdater.commit();
-          currentGasUsed +=
-              callParameter.getGasLimit() - transactionProcessingResult.getGasRemaining();
+          currentGasUsed += transactionProcessingResult.getEstimateGasUsedByTransaction();
 
           Transaction transaction = transactionSimulatorResult.get().transaction();
           transactions.add(transaction);
@@ -161,6 +168,22 @@ public class BlockSimulator {
     }
   }
 
+  private void applyOverrides(final MutableAccount account, final AccountOverride override) {
+    override.getNonce().ifPresent(account::setNonce);
+    if (override.getBalance().isPresent()) {
+      account.setBalance(override.getBalance().get());
+    }
+    override.getCode().ifPresent(n -> account.setCode(Bytes.fromHexString(n)));
+    override
+        .getStateDiff()
+        .ifPresent(
+            d ->
+                d.forEach(
+                    (key, value) ->
+                        account.setStorageValue(
+                            UInt256.fromHexString(key), UInt256.fromHexString(value))));
+  }
+
   private BlockHeader overrideBlockHeader(
       final BlockHeader header,
       final BlockOverrides blockOverrides,
@@ -170,7 +193,7 @@ public class BlockSimulator {
 
     return BlockHeaderBuilder.createDefault()
         .parentHash(header.getHash())
-        .coinbase(blockOverrides.getFeeRecipient().orElse(coinbaseSupplier.get()))
+        .coinbase(blockOverrides.getFeeRecipient().orElse(coinbaseSupplier.get().orElseThrow()))
         .difficulty(
             Difficulty.of(getNextDifficulty(blockOverrides, newProtocolSpec, header, timestamp)))
         .number(blockNumber)
@@ -220,9 +243,18 @@ public class BlockSimulator {
                     "Public world state not available for block " + header.toLogString()));
   }
 
-  private ImmutableTransactionValidationParams buildTransactionValidationParams() {
+  private ImmutableTransactionValidationParams buildTransactionValidationParams(
+      final boolean shouldValidate) {
+
+    if (shouldValidate) {
+      return ImmutableTransactionValidationParams.builder()
+          .from(TransactionValidationParams.processingBlock())
+          .build();
+    }
+
     return ImmutableTransactionValidationParams.builder()
-        .from(TransactionValidationParams.processingBlock())
+        .from(TransactionValidationParams.transactionSimulator())
+        .isAllowExceedingBalance(true)
         .build();
   }
 

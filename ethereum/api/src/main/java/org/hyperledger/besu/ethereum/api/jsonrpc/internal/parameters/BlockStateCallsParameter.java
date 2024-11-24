@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class BlockStateCallsParameter {
   @JsonProperty("blockStateCalls")
-  private List<JsonBlockStateCall> blockStateCalls;
+  private final List<JsonBlockStateCall> blockStateCalls = new ArrayList<>();
 
   @JsonProperty("validation")
   private boolean validation;
@@ -40,16 +41,5 @@ public class BlockStateCallsParameter {
 
   public boolean isTraceTransfers() {
     return traceTransfers;
-  }
-
-  public static class StateOverride {
-    @JsonProperty("balance")
-    private String balance;
-
-    // Getters
-
-    public String getBalance() {
-      return balance;
-    }
   }
 }

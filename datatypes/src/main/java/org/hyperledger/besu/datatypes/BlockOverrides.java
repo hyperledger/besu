@@ -14,17 +14,21 @@
  */
 package org.hyperledger.besu.datatypes;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.math.BigInteger;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.checkerframework.checker.signedness.qual.Unsigned;
 
 public class BlockOverrides {
   private final Optional<Long> timestamp;
   private final Optional<Long> blockNumber;
-  private final Optional<BigInteger> prevRandao;
+  private final Optional<Bytes32> prevRandao;
   private final Optional<Long> gasLimit;
   private final Optional<Address> feeRecipient;
   private final Optional<Wei> baseFeePerGas;
@@ -35,23 +39,23 @@ public class BlockOverrides {
 
   @JsonCreator
   public BlockOverrides(
-      @JsonProperty("timestamp") final Optional<Long> timestamp,
-      @JsonProperty("blockNumber") final Optional<Long> blockNumber,
-      @JsonProperty("prevRandao") final Optional<BigInteger> prevRandao,
-      @JsonProperty("gasLimit") final Optional<Long> gasLimit,
+      @JsonProperty("timestamp") final Optional<UnsignedLongParameter> timestamp,
+      @JsonProperty("number") final Optional<UnsignedLongParameter> blockNumber,
+      @JsonProperty("prevRandao") final Optional<Bytes32> prevRandao,
+      @JsonProperty("gasLimit") final Optional<UnsignedLongParameter> gasLimit,
       @JsonProperty("feeRecipient") final Optional<Address> feeRecipient,
       @JsonProperty("baseFeePerGas") final Optional<Wei> baseFeePerGas,
-      @JsonProperty("blobBaseFee") final Optional<Long> blobBaseFee,
+      @JsonProperty("blobBaseFee") final Optional<UnsignedLongParameter> blobBaseFee,
       @JsonProperty("stateRoot") final Optional<Hash> stateRoot,
       @JsonProperty("difficult") final Optional<BigInteger> difficulty,
       @JsonProperty("extraData") final Optional<Bytes> extraData) {
-    this.timestamp = timestamp;
-    this.blockNumber = blockNumber;
+    this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
+    this.blockNumber = blockNumber.map(UnsignedLongParameter::getValue);
     this.prevRandao = prevRandao;
-    this.gasLimit = gasLimit;
+    this.gasLimit = gasLimit.map(UnsignedLongParameter::getValue);
     this.feeRecipient = feeRecipient;
     this.baseFeePerGas = baseFeePerGas;
-    this.blobBaseFee = blobBaseFee;
+    this.blobBaseFee = blobBaseFee.map(UnsignedLongParameter::getValue);
     this.stateRoot = stateRoot;
     this.difficulty = difficulty;
     this.extraData = extraData;
@@ -68,14 +72,13 @@ public class BlockOverrides {
     this.stateRoot = Optional.ofNullable(builder.stateRoot);
     this.difficulty = Optional.ofNullable(builder.difficulty);
     this.extraData = Optional.ofNullable(builder.extraData);
-    ;
   }
 
   public Optional<Long> getBlockNumber() {
     return blockNumber;
   }
 
-  public Optional<BigInteger> getPrevRandao() {
+  public Optional<Bytes32> getPrevRandao() {
     return prevRandao;
   }
 
@@ -118,7 +121,7 @@ public class BlockOverrides {
   public static class Builder {
     private Long timestamp;
     private Long blockNumber;
-    private BigInteger prevRandao;
+    private Bytes32 prevRandao;
     private Long gasLimit;
     private Address feeRecipient;
     private Wei baseFeePerGas;
@@ -137,7 +140,7 @@ public class BlockOverrides {
       return this;
     }
 
-    public Builder prevRandao(final BigInteger prevRandao) {
+    public Builder prevRandao(final Bytes32 prevRandao) {
       this.prevRandao = prevRandao;
       return this;
     }
@@ -179,6 +182,30 @@ public class BlockOverrides {
 
     public BlockOverrides build() {
       return new BlockOverrides(this);
+    }
+  }
+
+  private static class UnsignedLongParameter {
+
+    @Unsigned private final long value;
+
+    @JsonCreator
+    public UnsignedLongParameter(final String value) {
+      checkArgument(value != null);
+      if (value.startsWith("0x")) {
+        this.value = Long.parseUnsignedLong(value.substring(2), 16);
+      } else {
+        this.value = Long.parseUnsignedLong(value, 16);
+      }
+    }
+
+    @JsonCreator
+    public UnsignedLongParameter(final @Unsigned long value) {
+      this.value = value;
+    }
+
+    public @Unsigned long getValue() {
+      return value;
     }
   }
 }
