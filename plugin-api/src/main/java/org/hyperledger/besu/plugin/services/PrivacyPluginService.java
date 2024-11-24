@@ -26,6 +26,7 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
  * optionally register a {@link PrivateMarkerTransactionFactory} and a {@link
  * PrivacyGroupGenesisProvider}*
  */
+@Deprecated(since = "24.11.0")
 public interface PrivacyPluginService extends BesuService {
 
   /**

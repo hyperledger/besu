@@ -160,7 +160,12 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
         new DebugOperationTracer(buildTraceOptions(traceTypes), false);
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
         transactionSimulator.processWithWorldUpdater(
-            callParameter, buildTransactionValidationParams(), tracer, header, worldUpdater);
+            callParameter,
+            Optional.empty(),
+            buildTransactionValidationParams(),
+            tracer,
+            header,
+            worldUpdater);
 
     LOG.trace("Executing {} call for transaction {}", traceTypeParameter, callParameter);
     if (maybeSimulatorResult.isEmpty()) {

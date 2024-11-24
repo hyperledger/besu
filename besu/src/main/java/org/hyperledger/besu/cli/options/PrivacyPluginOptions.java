@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.options;
 import static picocli.CommandLine.Option;
 
 /** The Privacy plugin Cli options. */
+@Deprecated(since = "24.11.0")
 public class PrivacyPluginOptions {
   /** Default Constructor. */
   PrivacyPluginOptions() {}
@@ -33,7 +34,7 @@ public class PrivacyPluginOptions {
   @Option(
       names = "--Xprivacy-plugin-enabled",
       description =
-          "Enables the use of a plugin to implement your own privacy strategy (default: ${DEFAULT-VALUE})",
+          "Deprecated. Tessera-based privacy is deprecated. See CHANGELOG for alternative options. Enables the use of a plugin to implement your own privacy strategy (default: ${DEFAULT-VALUE})",
       hidden = true)
   private final Boolean isPrivacyPluginEnabled = false;
 

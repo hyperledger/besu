@@ -27,8 +27,19 @@ import java.util.Comparator;
 
 /** The Clique helpers. */
 public class CliqueHelpers {
+  private static CliqueContext cliqueContext;
+
   /** Default constructor. */
   CliqueHelpers() {}
+
+  /**
+   * Set the clique consensus context
+   *
+   * @param cliqueContext the clique consensus context
+   */
+  public static void setCliqueContext(final CliqueContext cliqueContext) {
+    CliqueHelpers.cliqueContext = cliqueContext;
+  }
 
   /**
    * Gets proposer of block.
@@ -45,12 +56,11 @@ public class CliqueHelpers {
    * Gets proposer for block after.
    *
    * @param parent the parent
-   * @param validatorProvider the validator provider
    * @return the proposer for block after
    */
-  static Address getProposerForBlockAfter(
-      final BlockHeader parent, final ValidatorProvider validatorProvider) {
-    final CliqueProposerSelector proposerSelector = new CliqueProposerSelector(validatorProvider);
+  static Address getProposerForBlockAfter(final BlockHeader parent) {
+    final CliqueProposerSelector proposerSelector =
+        new CliqueProposerSelector(cliqueContext.getValidatorProvider());
     return proposerSelector.selectProposerForNextBlock(parent);
   }
 

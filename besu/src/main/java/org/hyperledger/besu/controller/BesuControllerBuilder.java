@@ -26,7 +26,6 @@ import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -45,6 +44,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
@@ -93,6 +93,7 @@ import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive.WorldStateHealer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -113,6 +114,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -589,17 +591,24 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             .map(BesuComponent::getCachedMerkleTrieLoader)
             .orElseGet(() -> new BonsaiCachedMerkleTrieLoader(metricsSystem));
 
+    final var worldStateHealerSupplier = new AtomicReference<WorldStateHealer>();
+
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(
-            worldStateStorageCoordinator, blockchain, bonsaiCachedMerkleTrieLoader);
+            worldStateStorageCoordinator,
+            blockchain,
+            bonsaiCachedMerkleTrieLoader,
+            worldStateHealerSupplier::get);
 
     if (maybeStoredGenesisBlockHash.isEmpty()) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
     }
 
+    final var consensusContext =
+        createConsensusContext(blockchain, worldStateArchive, protocolSchedule);
+
     final ProtocolContext protocolContext =
-        createProtocolContext(
-            blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
+        createProtocolContext(blockchain, worldStateArchive, consensusContext);
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
@@ -616,7 +625,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled());
     final EthPeers ethPeers =
         new EthPeers(
-            getSupportedProtocol(),
+            EthProtocol.NAME,
             currentProtocolSpecSupplier,
             clock,
             metricsSystem,
@@ -713,6 +722,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethProtocolManager,
             pivotBlockSelector);
 
+    worldStateHealerSupplier.set(synchronizer::healWorldState);
+
     ethPeers.setTrailingPeerRequirementsSupplier(synchronizer::calculateTrailingPeerRequirements);
 
     if (syncConfig.getSyncMode() == SyncMode.SNAP
@@ -723,11 +734,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       ethPeers.snapServerPeersNeeded(false);
     }
 
-    protocolContext.setSynchronizer(synchronizer);
-
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(
-            protocolContext, worldStateStorageCoordinator, ethPeers, snapMessages);
+            protocolContext, worldStateStorageCoordinator, ethPeers, snapMessages, synchronizer);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -968,7 +977,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Create mining coordinator mining coordinator.
+   * Create mining coordinator.
    *
    * @param protocolSchedule the protocol schedule
    * @param protocolContext the protocol context
@@ -1009,18 +1018,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the consensus context
    */
   protected abstract ConsensusContext createConsensusContext(
-      Blockchain blockchain,
-      WorldStateArchive worldStateArchive,
-      ProtocolSchedule protocolSchedule);
-
-  /**
-   * Gets supported protocol.
-   *
-   * @return the supported protocol
-   */
-  protected String getSupportedProtocol() {
-    return EthProtocol.NAME;
-  }
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule);
 
   /**
    * Create eth protocol manager eth protocol manager.
@@ -1071,37 +1071,37 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    *
    * @param blockchain the blockchain
    * @param worldStateArchive the world state archive
-   * @param protocolSchedule the protocol schedule
-   * @param consensusContextFactory the consensus context factory
+   * @param consensusContext the consensus context
    * @return the protocol context
    */
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory) {
-    return ProtocolContext.init(
-        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory, badBlockManager);
+      final ConsensusContext consensusContext) {
+    return new ProtocolContext(blockchain, worldStateArchive, consensusContext, badBlockManager);
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
       final ProtocolContext protocolContext,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final EthPeers ethPeers,
-      final EthMessages snapMessages) {
+      final EthMessages snapMessages,
+      final Synchronizer synchronizer) {
     return Optional.of(
         new SnapProtocolManager(
             worldStateStorageCoordinator,
             syncConfig.getSnapSyncConfiguration(),
             ethPeers,
             snapMessages,
-            protocolContext));
+            protocolContext,
+            synchronizer));
   }
 
   WorldStateArchive createWorldStateArchive(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final Blockchain blockchain,
-      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader) {
+      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
+      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> {
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
@@ -1116,7 +1116,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                     .getMaxLayersToLoad()),
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
-            evmConfiguration);
+            evmConfiguration,
+            worldStateHealerSupplier);
       }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =

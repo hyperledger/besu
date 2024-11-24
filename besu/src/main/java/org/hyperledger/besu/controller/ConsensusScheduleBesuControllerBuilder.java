@@ -20,13 +20,12 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.MigratingContext;
+import org.hyperledger.besu.consensus.common.MigratingConsensusContext;
 import org.hyperledger.besu.consensus.common.MigratingMiningCoordinator;
 import org.hyperledger.besu.consensus.common.MigratingProtocolContext;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -168,10 +167,12 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory) {
-    return MigratingProtocolContext.init(
-        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory, badBlockManager);
+      final ConsensusContext consensusContext) {
+    return new MigratingProtocolContext(
+        blockchain,
+        worldStateArchive,
+        consensusContext.as(MigratingConsensusContext.class),
+        badBlockManager);
   }
 
   @Override
@@ -188,10 +189,10 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
                         e.getValue()
                             .createConsensusContext(
                                 blockchain, worldStateArchive, protocolSchedule)))
-            .collect(Collectors.toList());
+            .toList();
     final ForksSchedule<ConsensusContext> consensusContextsSchedule =
         new ForksSchedule<>(consensusContextSpecs);
-    return new MigratingContext(consensusContextsSchedule);
+    return new MigratingConsensusContext(consensusContextsSchedule);
   }
 
   @Override
@@ -225,11 +226,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   @Override
   protected void validateContext(final ProtocolContext context) {
     besuControllerBuilderSchedule.get(GENESIS_BLOCK_NUMBER).validateContext(context);
-  }
-
-  @Override
-  protected String getSupportedProtocol() {
-    return besuControllerBuilderSchedule.get(0L).getSupportedProtocol();
   }
 
   @Override
