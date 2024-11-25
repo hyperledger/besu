@@ -24,38 +24,48 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import java.util.stream.Stream;
 
 import io.prometheus.metrics.core.datapoints.CounterDataPoint;
-import io.prometheus.metrics.model.registry.Collector;
-import io.prometheus.metrics.model.snapshots.CounterSnapshot;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 
 class PrometheusCounter extends CategorizedPrometheusCollector implements LabelledMetric<Counter> {
+  private final io.prometheus.metrics.core.metrics.Counter counter;
 
   public PrometheusCounter(
       final MetricCategory category,
       final String name,
       final String help,
       final String... labelNames) {
-    super(category, name, help, labelNames);
-  }
-
-  @Override
-  protected Collector createCollector(final String help, final String... labelNames) {
-    return io.prometheus.metrics.core.metrics.Counter.builder()
-        .name(this.prefixedName)
-        .help(help)
-        .labelNames(labelNames)
-        .build();
+    super(category, name);
+    this.counter =
+        io.prometheus.metrics.core.metrics.Counter.builder()
+            .name(this.prefixedName)
+            .help(help)
+            .labelNames(labelNames)
+            .build();
   }
 
   @Override
   public Counter labels(final String... labels) {
-    return new UnlabelledCounter(
-        ((io.prometheus.metrics.core.metrics.Counter) collector).labelValues(labels));
+    return new UnlabelledCounter(counter.labelValues(labels));
+  }
+
+  @Override
+  public String getIdentifier() {
+    return counter.getPrometheusName();
+  }
+
+  @Override
+  public void register(final PrometheusRegistry registry) {
+    registry.register(counter);
+  }
+
+  @Override
+  public void unregister(final PrometheusRegistry registry) {
+    registry.unregister(counter);
   }
 
   @Override
   public Stream<Observation> streamObservations() {
-    return collector.collect().getDataPoints().stream()
-        .map(CounterSnapshot.CounterDataPointSnapshot.class::cast)
+    return counter.collect().getDataPoints().stream()
         .map(
             sample ->
                 new Observation(

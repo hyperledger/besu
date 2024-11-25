@@ -27,7 +27,6 @@ import java.util.stream.Stream;
 
 import com.google.common.cache.Cache;
 import io.prometheus.metrics.instrumentation.guava.CacheMetricsCollector;
-import io.prometheus.metrics.model.registry.Collector;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
@@ -47,17 +46,12 @@ class PrometheusGuavaCache extends CategorizedPrometheusCollector {
       final Context context,
       final String name,
       final Cache<?, ?> cache) {
-    super(category, name, "");
+    super(category, name);
     if (context.alreadyExists(name)) {
       throw new IllegalStateException("Cache already registered: " + name);
     }
     this.cache = cache;
     this.context = context;
-  }
-
-  @Override
-  protected Collector createCollector(final String help, final String... labelNames) {
-    return null;
   }
 
   @Override

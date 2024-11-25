@@ -16,14 +16,8 @@ package org.hyperledger.besu.metrics.prometheus;
 
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
-import io.prometheus.metrics.model.registry.Collector;
-import io.prometheus.metrics.model.registry.PrometheusRegistry;
-
 /** A Prometheus collector that is assigned to a category */
-abstract class CategorizedPrometheusCollector implements PrometheusCollector {
-  /** The collector */
-  protected final Collector collector;
-
+public abstract class CategorizedPrometheusCollector implements PrometheusCollector {
   /** The {@link MetricCategory} this collector is assigned to */
   protected final MetricCategory category;
 
@@ -40,25 +34,11 @@ abstract class CategorizedPrometheusCollector implements PrometheusCollector {
    * @param category The {@link MetricCategory} this collector is assigned to
    * @param name The name of this collector
    */
-  protected CategorizedPrometheusCollector(
-      final MetricCategory category,
-      final String name,
-      final String help,
-      final String... labelNames) {
+  protected CategorizedPrometheusCollector(final MetricCategory category, final String name) {
     this.category = category;
     this.name = name;
     this.prefixedName = prefixedName(category, name);
-    this.collector = createCollector(help, labelNames);
   }
-
-  /**
-   * Create the actual collector
-   *
-   * @param help the help
-   * @param labelNames the label names
-   * @return the created collector
-   */
-  protected abstract Collector createCollector(final String help, final String... labelNames);
 
   private static String categoryPrefix(final MetricCategory category) {
     return category.getApplicationPrefix().orElse("") + category.getName() + "_";
@@ -66,20 +46,5 @@ abstract class CategorizedPrometheusCollector implements PrometheusCollector {
 
   private static String prefixedName(final MetricCategory category, final String name) {
     return categoryPrefix(category) + name;
-  }
-
-  @Override
-  public String getIdentifier() {
-    return collector.getPrometheusName();
-  }
-
-  @Override
-  public void register(final PrometheusRegistry registry) {
-    registry.register(collector);
-  }
-
-  @Override
-  public void unregister(final PrometheusRegistry registry) {
-    registry.unregister(collector);
   }
 }

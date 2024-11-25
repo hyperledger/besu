@@ -29,7 +29,7 @@ import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
 
 /** The Prometheus gauge. */
 @SuppressWarnings("removal")
-class PrometheusSuppliedGauge extends AbstractPrometheusSuppliedValueCollector
+public class PrometheusSuppliedGauge extends AbstractPrometheusSuppliedValueCollector
     implements LabelledGauge {
 
   /**
