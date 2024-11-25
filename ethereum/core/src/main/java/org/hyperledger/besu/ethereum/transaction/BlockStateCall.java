@@ -44,7 +44,7 @@ public class BlockStateCall {
   }
 
   public Optional<AccountOverrideMap> getAccountOverrides() {
-    return Optional.of(accountOverrides);
+    return Optional.ofNullable(accountOverrides);
   }
 
   public List<? extends CallParameter> getCalls() {

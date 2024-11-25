@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.datatypes.AccountOverride;
+import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Wei;
@@ -94,7 +95,8 @@ public class BlockSimulator {
 
     final var transactionReceiptFactory = newProtocolSpec.getTransactionReceiptFactory();
 
-    final BlockHeader blockHeader = overrideBlockHeader(header, blockOverrides, newProtocolSpec);
+    final BlockHeader blockHeader =
+        applyBlockHeaderOverrides(header, blockOverrides, newProtocolSpec);
 
     final MiningBeneficiaryCalculator miningBeneficiaryCalculator =
         getMiningBeneficiaryCalculator(blockOverrides, newProtocolSpec);
@@ -103,11 +105,7 @@ public class BlockSimulator {
       WorldUpdater updater = ws.updater();
 
       if (blockStateCall.getAccountOverrides().isPresent()) {
-        for (Address accountToOverride : blockStateCall.getAccountOverrides().get().keySet()) {
-          final AccountOverride overrides =
-              blockStateCall.getAccountOverrides().get().get(accountToOverride);
-          applyOverrides(updater.getOrCreate(accountToOverride), overrides);
-        }
+        applyStateOverrides(blockStateCall.getAccountOverrides().get(), updater);
       }
 
       for (CallParameter callParameter : blockStateCall.getCalls()) {
@@ -168,23 +166,28 @@ public class BlockSimulator {
     }
   }
 
-  private void applyOverrides(final MutableAccount account, final AccountOverride override) {
-    override.getNonce().ifPresent(account::setNonce);
-    if (override.getBalance().isPresent()) {
-      account.setBalance(override.getBalance().get());
+  private void applyStateOverrides(
+      final AccountOverrideMap accountOverrideMap, WorldUpdater updater) {
+    for (Address accountToOverride : accountOverrideMap.keySet()) {
+      final AccountOverride override = accountOverrideMap.get(accountToOverride);
+      MutableAccount account = updater.getOrCreate(accountToOverride);
+      override.getNonce().ifPresent(account::setNonce);
+      if (override.getBalance().isPresent()) {
+        account.setBalance(override.getBalance().get());
+      }
+      override.getCode().ifPresent(n -> account.setCode(Bytes.fromHexString(n)));
+      override
+          .getStateDiff()
+          .ifPresent(
+              d ->
+                  d.forEach(
+                      (key, value) ->
+                          account.setStorageValue(
+                              UInt256.fromHexString(key), UInt256.fromHexString(value))));
     }
-    override.getCode().ifPresent(n -> account.setCode(Bytes.fromHexString(n)));
-    override
-        .getStateDiff()
-        .ifPresent(
-            d ->
-                d.forEach(
-                    (key, value) ->
-                        account.setStorageValue(
-                            UInt256.fromHexString(key), UInt256.fromHexString(value))));
   }
 
-  private BlockHeader overrideBlockHeader(
+  private BlockHeader applyBlockHeaderOverrides(
       final BlockHeader header,
       final BlockOverrides blockOverrides,
       final ProtocolSpec newProtocolSpec) {
