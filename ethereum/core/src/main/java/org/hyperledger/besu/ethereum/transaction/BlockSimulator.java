@@ -78,63 +78,50 @@ public class BlockSimulator {
   }
 
   public Optional<BlockSimulationResult> simulate(
-      final BlockHeader header,
-      final BlockStateCall blockStateCall,
-      final boolean shouldValidate,
-      final boolean shouldPersist) {
+      final BlockHeader header, final BlockStateCall blockStateCall) {
 
-    final BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
-    long timestamp = blockOverrides.getTimestamp().orElse(header.getTimestamp() + 1);
-    final ProtocolSpec newProtocolSpec = protocolSchedule.getForNextBlockHeader(header, timestamp);
+    try (final MutableWorldState ws = getWorldState(header)) {
 
-    final BlockHeader blockHeader =
-        applyBlockHeaderOverrides(header, blockOverrides, newProtocolSpec);
-
-    final MiningBeneficiaryCalculator miningBeneficiaryCalculator =
-        getMiningBeneficiaryCalculator(blockOverrides, newProtocolSpec);
-
-    try (final MutableWorldState ws = getWorldState(header, shouldPersist)) {
       WorldUpdater updater = ws.updater();
+      final BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
+      long timestamp = blockOverrides.getTimestamp().orElse(header.getTimestamp() + 1);
+      final ProtocolSpec newProtocolSpec =
+          protocolSchedule.getForNextBlockHeader(header, timestamp);
+
+      final BlockHeader blockHeader =
+          applyBlockHeaderOverrides(header, blockOverrides, newProtocolSpec);
+
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator =
+          getMiningBeneficiaryCalculator(blockOverrides, newProtocolSpec);
 
       if (blockStateCall.getAccountOverrides().isPresent()) {
         applyStateOverrides(blockStateCall.getAccountOverrides().get(), updater);
       }
-      BlockSimulationResult.BlockTransactionSimulationResult blockTransactionSimulationResult =
-          processTransactions(
-              blockHeader, blockStateCall, updater, shouldValidate, miningBeneficiaryCalculator);
-
+      List<TransactionSimulatorResult> transactionSimulatorResults =
+          processTransactions(blockHeader, blockStateCall, updater, miningBeneficiaryCalculator);
       updater.commit();
 
       return Optional.of(
           processPostExecution(
-              blockHeader,
-              ws,
-              blockTransactionSimulationResult,
-              blockOverrides,
-              newProtocolSpec,
-              shouldPersist));
-
+              blockHeader, ws, transactionSimulatorResults, blockOverrides, newProtocolSpec));
     } catch (final Exception e) {
-      return Optional.empty();
+      throw new RuntimeException("Error simulating block", e);
     }
   }
 
-  private BlockSimulationResult.BlockTransactionSimulationResult processTransactions(
+  private List<TransactionSimulatorResult> processTransactions(
       final BlockHeader blockHeader,
       final BlockStateCall blockStateCall,
       final WorldUpdater updater,
-      final boolean shouldValidate,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator) {
-    BlockSimulationResult.BlockTransactionSimulationResult blockTransactionSimulationResult =
-        new BlockSimulationResult.BlockTransactionSimulationResult();
-
+    List<TransactionSimulatorResult> transactionSimulations = new ArrayList<>();
     for (CallParameter callParameter : blockStateCall.getCalls()) {
       final WorldUpdater localUpdater = updater.updater();
       final Optional<TransactionSimulatorResult> transactionSimulatorResult =
           transactionSimulator.processWithWorldUpdater(
               callParameter,
               Optional.empty(),
-              buildTransactionValidationParams(shouldValidate),
+              buildTransactionValidationParams(blockStateCall.isValidate()),
               OperationTracer.NO_TRACING,
               blockHeader,
               localUpdater,
@@ -143,9 +130,7 @@ public class BlockSimulator {
       if (transactionSimulatorResult.isEmpty()) {
         throw new RuntimeException("Transaction simulator result is empty");
       }
-
-      blockTransactionSimulationResult.add(transactionSimulatorResult.get());
-
+      transactionSimulations.add(transactionSimulatorResult.get());
       TransactionProcessingResult transactionProcessingResult =
           transactionSimulatorResult.get().result();
 
@@ -153,31 +138,27 @@ public class BlockSimulator {
         localUpdater.commit();
       }
     }
-    return blockTransactionSimulationResult;
+    return transactionSimulations;
   }
 
   private BlockSimulationResult processPostExecution(
       final BlockHeader blockHeader,
       final MutableWorldState ws,
-      final BlockSimulationResult.BlockTransactionSimulationResult blockTransactionSimulationResult,
+      final List<TransactionSimulatorResult> transactionSimulations,
       final BlockOverrides blockOverrides,
-      final ProtocolSpec newProtocolSpec,
-      final boolean shouldPersist) {
+      final ProtocolSpec newProtocolSpec) {
 
     long currentGasUsed = 0;
     final var transactionReceiptFactory = newProtocolSpec.getTransactionReceiptFactory();
     final List<TransactionReceipt> receipts = new ArrayList<>();
     final List<Transaction> transactions = new ArrayList<>();
 
-    for (TransactionSimulatorResult transactionSimulatorResult :
-        blockTransactionSimulationResult.getCalls()) {
+    for (TransactionSimulatorResult transactionSimulatorResult : transactionSimulations) {
       TransactionProcessingResult transactionProcessingResult = transactionSimulatorResult.result();
 
       if (transactionProcessingResult.isSuccessful()) {
         final Transaction transaction = transactionSimulatorResult.transaction();
-
-        currentGasUsed += transactionProcessingResult.getEstimateGasUsedByTransaction();
-
+        currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
         final TransactionReceipt transactionReceipt =
             transactionReceiptFactory.create(
                 transaction.getType(), transactionProcessingResult, ws, currentGasUsed);
@@ -191,11 +172,7 @@ public class BlockSimulator {
             blockHeader, ws, transactions, blockOverrides, receipts, currentGasUsed);
 
     Block block = new Block(finalBlockHeader, new BlockBody(transactions, List.of()));
-
-    if (shouldPersist) {
-      ws.persist(finalBlockHeader);
-    }
-    return BlockSimulationResult.successful(block, receipts, blockTransactionSimulationResult);
+    return new BlockSimulationResult(block, receipts, transactionSimulations);
   }
 
   private void applyStateOverrides(
@@ -230,7 +207,10 @@ public class BlockSimulator {
         .parentHash(header.getHash())
         .coinbase(blockOverrides.getFeeRecipient().orElse(coinbaseSupplier.get().orElseThrow()))
         .difficulty(
-            Difficulty.of(getNextDifficulty(blockOverrides, newProtocolSpec, header, timestamp)))
+            Difficulty.of(
+                blockOverrides
+                    .getDifficulty()
+                    .orElse(getNextDifficulty(newProtocolSpec, header, timestamp))))
         .number(blockNumber)
         .gasLimit(
             blockOverrides
@@ -269,9 +249,9 @@ public class BlockSimulator {
         .buildBlockHeader();
   }
 
-  private MutableWorldState getWorldState(final BlockHeader header, final boolean shouldPersist) {
+  private MutableWorldState getWorldState(final BlockHeader header) {
     return worldStateArchive
-        .getMutable(header, shouldPersist)
+        .getMutable(header, false)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
@@ -304,17 +284,9 @@ public class BlockSimulator {
   }
 
   private BigInteger getNextDifficulty(
-      final BlockOverrides blockOverrides,
-      final ProtocolSpec protocolSpec,
-      final BlockHeader parentHeader,
-      final long timestamp) {
-
-    if (blockOverrides.getDifficulty().isPresent()) {
-      return blockOverrides.getDifficulty().get();
-    } else {
-      final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
-      return difficultyCalculator.nextDifficulty(timestamp, parentHeader);
-    }
+      final ProtocolSpec protocolSpec, final BlockHeader parentHeader, final long timestamp) {
+    final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
+    return difficultyCalculator.nextDifficulty(timestamp, parentHeader);
   }
 
   private MiningBeneficiaryCalculator getMiningBeneficiaryCalculator(

@@ -100,8 +100,7 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
 
       List<BlockResult> results = new ArrayList<>();
       for (var blockStateCall : parameter.getBlockStateCalls()) {
-        var result =
-            blockSimulator.simulate(header, blockStateCall, parameter.isValidation(), false);
+        var result = blockSimulator.simulate(header, blockStateCall);
 
         results.add(
             result

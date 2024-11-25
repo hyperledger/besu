@@ -22,60 +22,37 @@ import org.hyperledger.besu.plugin.data.TransactionReceipt;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BlockSimulationResult
-    implements org.hyperledger.besu.plugin.data.BlockSimulationResult {
+public class BlockSimulationResult {
   final Block block;
-  final BlockTransactionSimulationResult blockTransactionSimulationResult;
   final List<TransactionReceipt> receipts;
+  List<TransactionSimulatorResult> transactionSimulations = new ArrayList<>();
 
-  private BlockSimulationResult(
+  public BlockSimulationResult(
       final Block block,
       final List<? extends TransactionReceipt> receipts,
-      final BlockTransactionSimulationResult blockTransactionSimulationResult) {
+      final List<TransactionSimulatorResult> transactionSimulations) {
     this.block = block;
     this.receipts = new ArrayList<>(receipts);
-    this.blockTransactionSimulationResult = blockTransactionSimulationResult;
+    this.transactionSimulations = transactionSimulations;
   }
 
-  public static BlockSimulationResult successful(
-      final Block block,
-      final List<org.hyperledger.besu.ethereum.core.TransactionReceipt> receipts,
-      final BlockTransactionSimulationResult blockTransactionSimulationResult) {
-    return new BlockSimulationResult(block, receipts, blockTransactionSimulationResult);
-  }
-
-  @Override
   public BlockHeader getBlockHeader() {
     return block.getHeader();
   }
 
-  @Override
   public BlockBody getBlockBody() {
     return block.getBody();
   }
 
-  public Block getBlock() {
-    return block;
-  }
-
-  @Override
-  public List<TransactionReceipt> getReceipts() {
+  public List<? extends TransactionReceipt> getReceipts() {
     return receipts;
   }
 
-  public BlockTransactionSimulationResult getBlockTransactionSimulationResult() {
-    return blockTransactionSimulationResult;
+  public List<TransactionSimulatorResult> getTransactionSimulations() {
+    return transactionSimulations;
   }
 
-  public static class BlockTransactionSimulationResult {
-    List<TransactionSimulatorResult> calls = new ArrayList<>();
-
-    void add(final TransactionSimulatorResult callResult) {
-      calls.add(callResult);
-    }
-
-    List<TransactionSimulatorResult> getCalls() {
-      return calls;
-    }
+  public Block getBlock() {
+    return block;
   }
 }

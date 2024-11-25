@@ -16,10 +16,23 @@ package org.hyperledger.besu.plugin.data;
 
 import java.util.List;
 
-public interface BlockSimulationResult {
-  BlockHeader getBlockHeader();
+public class BlockSimulationResult {
 
-  BlockBody getBlockBody();
+  final BlockHeader blockHeader;
+  final List<TransactionSimulationResult> transactionSimulationResults;
 
-  List<? extends TransactionReceipt> getReceipts();
+  public BlockSimulationResult(
+      final BlockHeader blockHeader,
+      final List<TransactionSimulationResult> transactionSimulationResults) {
+    this.blockHeader = blockHeader;
+    this.transactionSimulationResults = transactionSimulationResults;
+  }
+
+  public BlockHeader getBlockHeader() {
+    return blockHeader;
+  }
+
+  public List<TransactionSimulationResult> getTransactionSimulationResults() {
+    return transactionSimulationResults;
+  }
 }

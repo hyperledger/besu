@@ -30,7 +30,8 @@ public class JsonBlockStateCall extends BlockStateCall {
   public JsonBlockStateCall(
       @JsonProperty("calls") final List<JsonCallParameter> calls,
       @JsonProperty("blockOverrides") final BlockOverrides blockOverrides,
-      @JsonProperty("stateOverrides") final AccountOverrideMap stateOverrides) {
-    super(calls, blockOverrides, stateOverrides);
+      @JsonProperty("stateOverrides") final AccountOverrideMap stateOverrides,
+      @JsonProperty("validation") final boolean validation) {
+    super(calls, blockOverrides, stateOverrides, validation);
   }
 }

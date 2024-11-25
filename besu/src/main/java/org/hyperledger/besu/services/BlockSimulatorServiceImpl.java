@@ -20,12 +20,13 @@ import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.transaction.BlockSimulationResult;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 import org.hyperledger.besu.ethereum.transaction.BlockStateCall;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.BlockSimulationResult;
+import org.hyperledger.besu.plugin.data.TransactionSimulationResult;
 import org.hyperledger.besu.plugin.services.BlockSimulationService;
 
 import java.util.List;
@@ -64,10 +65,19 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
         transactions.stream().map(CallParameter::fromTransaction).toList();
 
     BlockStateCall blockStateCall =
-        new BlockStateCall(callParameters, blockOverrides, new AccountOverrideMap());
+        new BlockStateCall(callParameters, blockOverrides, new AccountOverrideMap(), true);
 
-    var result = blockSimulator.simulate(parentHeaderCore, blockStateCall, true, shouldPersist);
+    var result = blockSimulator.simulate(parentHeaderCore, blockStateCall);
 
-    return result.orElseThrow();
+    if (result.isEmpty()) {
+      throw new RuntimeException("Block simulation failed");
+    }
+    return new BlockSimulationResult(
+        result.get().getBlockHeader(),
+        result.get().getTransactionSimulations().stream()
+            .map(
+                simulation ->
+                    new TransactionSimulationResult(simulation.transaction(), simulation.result()))
+            .toList());
   }
 }

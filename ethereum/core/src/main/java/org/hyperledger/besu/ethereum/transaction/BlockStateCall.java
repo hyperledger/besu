@@ -29,14 +29,22 @@ public class BlockStateCall {
 
   private final AccountOverrideMap accountOverrides;
 
+  private final boolean validation;
+
   public BlockStateCall(
       final List<? extends CallParameter> calls,
       final BlockOverrides blockOverrides,
-      final AccountOverrideMap accountOverrides) {
+      final AccountOverrideMap accountOverrides,
+      final boolean validation) {
     this.calls = calls != null ? calls : new ArrayList<>();
     this.blockOverrides =
         blockOverrides != null ? blockOverrides : BlockOverrides.builder().build();
     this.accountOverrides = accountOverrides;
+    this.validation = validation;
+  }
+
+  public boolean isValidate() {
+    return validation;
   }
 
   public BlockOverrides getBlockOverrides() {
