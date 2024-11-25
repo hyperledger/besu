@@ -24,15 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
 
-import io.prometheus.metrics.model.registry.Collector;
-import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
 
 abstract class AbstractPrometheusSuppliedValueCollector extends CategorizedPrometheusCollector
     implements LabelledSuppliedMetric {
-  /** The collector */
-  protected final Collector collector;
-
   /** Map label values with the collector callback data */
   protected final Map<List<String>, CallbackData> labelledCallbackData = new ConcurrentHashMap<>();
 
@@ -41,18 +36,8 @@ abstract class AbstractPrometheusSuppliedValueCollector extends CategorizedProme
       final String name,
       final String help,
       final String... labelNames) {
-    super(category, name);
-    this.collector = createCollector(help, labelNames);
+    super(category, name, help, labelNames);
   }
-
-  /**
-   * Create the actual collector
-   *
-   * @param help the help
-   * @param labelNames the label names
-   * @return the created collector
-   */
-  protected abstract Collector createCollector(final String help, final String... labelNames);
 
   @Override
   public synchronized void labels(final DoubleSupplier valueSupplier, final String... labelValues) {
@@ -63,21 +48,6 @@ abstract class AbstractPrometheusSuppliedValueCollector extends CategorizedProme
     }
 
     labelledCallbackData.put(valueList, new CallbackData(valueSupplier, labelValues));
-  }
-
-  @Override
-  public String getIdentifier() {
-    return collector.getPrometheusName();
-  }
-
-  @Override
-  public void register(final PrometheusRegistry registry) {
-    registry.register(collector);
-  }
-
-  @Override
-  public void unregister(final PrometheusRegistry registry) {
-    registry.unregister(collector);
   }
 
   @Override

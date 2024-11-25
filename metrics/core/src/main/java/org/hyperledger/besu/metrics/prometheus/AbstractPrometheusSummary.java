@@ -23,14 +23,9 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import java.util.ArrayList;
 import java.util.stream.Stream;
 
-import io.prometheus.metrics.model.registry.Collector;
-import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.SummarySnapshot;
 
 abstract class AbstractPrometheusSummary extends CategorizedPrometheusCollector {
-  /** The collector */
-  protected final Collector collector;
-
   /**
    * Create a new collector assigned to the given category and with the given name, and computed the
    * prefixed name.
@@ -43,32 +38,7 @@ abstract class AbstractPrometheusSummary extends CategorizedPrometheusCollector 
       final String name,
       final String help,
       final String... labelNames) {
-    super(category, name);
-    this.collector = createCollector(help, labelNames);
-  }
-
-  /**
-   * Create the actual collector
-   *
-   * @param help the help
-   * @param labelNames the label names
-   * @return the created collector
-   */
-  protected abstract Collector createCollector(final String help, final String... labelNames);
-
-  @Override
-  public String getIdentifier() {
-    return collector.getPrometheusName();
-  }
-
-  @Override
-  public void register(final PrometheusRegistry registry) {
-    registry.register(collector);
-  }
-
-  @Override
-  public void unregister(final PrometheusRegistry registry) {
-    registry.unregister(collector);
+    super(category, name, help, labelNames);
   }
 
   private SummarySnapshot collect() {

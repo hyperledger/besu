@@ -25,12 +25,12 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import java.util.stream.Stream;
 
 import io.prometheus.metrics.core.metrics.Histogram;
-import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import io.prometheus.metrics.model.registry.Collector;
 
 class PrometheusSimpleTimer extends CategorizedPrometheusCollector
     implements LabelledMetric<OperationTimer> {
 
-  private final Histogram histogram;
+  private final double[] buckets;
 
   public PrometheusSimpleTimer(
       final MetricCategory category,
@@ -38,41 +38,30 @@ class PrometheusSimpleTimer extends CategorizedPrometheusCollector
       final String help,
       final double[] buckets,
       final String... labelNames) {
-    super(category, name);
-    this.histogram =
-        Histogram.builder()
-            .name(this.prefixedName)
-            .help(help)
-            .labelNames(labelNames)
-            .classicOnly()
-            .classicUpperBounds(buckets)
-            .build();
+    super(category, name, help, labelNames);
+    this.buckets = buckets;
+  }
+
+  @Override
+  protected Collector createCollector(final String help, final String... labelNames) {
+    return Histogram.builder()
+        .name(this.prefixedName)
+        .help(help)
+        .labelNames(labelNames)
+        .classicOnly()
+        .classicUpperBounds(buckets)
+        .build();
   }
 
   @Override
   public OperationTimer labels(final String... labels) {
-    final var ddp = histogram.labelValues(labels);
+    final var ddp = ((Histogram) collector).labelValues(labels);
     return () -> ddp.startTimer()::observeDuration;
   }
 
   @Override
-  public String getIdentifier() {
-    return histogram.getPrometheusName();
-  }
-
-  @Override
-  public void register(final PrometheusRegistry registry) {
-    registry.register(histogram);
-  }
-
-  @Override
-  public void unregister(final PrometheusRegistry registry) {
-    registry.unregister(histogram);
-  }
-
-  @Override
   public Stream<Observation> streamObservations() {
-    final var snapshot = histogram.collect();
+    final var snapshot = ((Histogram) collector).collect();
     return snapshot.getDataPoints().stream()
         .flatMap(
             dataPoint -> {

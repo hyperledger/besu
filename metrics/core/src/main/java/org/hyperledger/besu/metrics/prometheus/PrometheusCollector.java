@@ -26,7 +26,7 @@ import io.prometheus.metrics.model.snapshots.Label;
 import io.prometheus.metrics.model.snapshots.Labels;
 
 /** Wraps a native Prometheus collector inside the metric system */
-public interface PrometheusCollector {
+interface PrometheusCollector {
 
   /**
    * Get the identifier of the collector
