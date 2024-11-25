@@ -15,14 +15,19 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
+import java.util.Set;
 import java.util.function.DoubleSupplier;
 import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
+import java.util.function.Supplier;
+
+import com.google.common.cache.Cache;
 
 /** An interface for creating various Metrics components. */
 public interface MetricsSystem extends BesuService {
@@ -158,5 +163,46 @@ public interface MetricsSystem extends BesuService {
       final String help,
       final LongSupplier valueSupplier) {
     createGauge(category, name, help, () -> (double) valueSupplier.getAsLong());
+  }
+
+  /**
+   * Track a summary that is computed externally to this metric system. Useful when existing
+   * libraries calculate the summary data on their own, and we want to export that summary via the
+   * configured metric system. A notable example are RocksDB statistics.
+   *
+   * @param category The {@link MetricCategory} this external summary is assigned to.
+   * @param name A name for the metric.
+   * @param help A human readable description of the metric.
+   * @param summarySupplier A supplier to retrieve the summary data when needed.
+   */
+  void trackExternalSummary(
+      MetricCategory category, String name, String help, Supplier<ExternalSummary> summarySupplier);
+
+  /**
+   * Collect metrics from Guava cache.
+   *
+   * @param category The {@link MetricCategory} this Guava cache is assigned to.
+   * @param name the name to identify this Guava cache, must be unique.
+   * @param cache the Guava cache
+   */
+  void createGuavaCacheCollector(MetricCategory category, String name, Cache<?, ?> cache);
+
+  /**
+   * Provides an immutable view into the metric categories enabled for metric collection.
+   *
+   * @return the set of enabled metric categories.
+   */
+  Set<MetricCategory> getEnabledCategories();
+
+  /**
+   * Checks if a particular category of metrics is enabled.
+   *
+   * @param category the category to check
+   * @return true if the category is enabled, false otherwise
+   */
+  default boolean isCategoryEnabled(final MetricCategory category) {
+    return getEnabledCategories().stream()
+        .map(MetricCategory::getName)
+        .anyMatch(category.getName()::equals);
   }
 }

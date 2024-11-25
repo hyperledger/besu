@@ -113,6 +113,11 @@ public class ForestWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
+  public void heal(final Optional<Address> maybeAccountToRepair, final Bytes location) {
+    // no heal needed for Forest
+  }
+
+  @Override
   public void close() {
     // no op
   }

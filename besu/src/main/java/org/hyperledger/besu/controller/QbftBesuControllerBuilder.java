@@ -113,10 +113,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected Supplier<BftExtraDataCodec> bftExtraDataCodec() {
-    return Suppliers.memoize(
-        () -> {
-          return new QbftExtraDataCodec();
-        });
+    return Suppliers.memoize(QbftExtraDataCodec::new);
   }
 
   @Override

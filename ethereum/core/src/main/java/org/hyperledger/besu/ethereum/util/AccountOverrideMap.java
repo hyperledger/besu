@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,20 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.testfuzz.javafuzz;
+package org.hyperledger.besu.ethereum.util;
 
-/**
- * Adapted from <a
- * href="https://gitlab.com/gitlab-org/security-products/analyzers/fuzzers/javafuzz">...</a> because
- * I wanted it to be a functional interface
- */
-@FunctionalInterface
-public interface FuzzTarget {
+import org.hyperledger.besu.datatypes.Address;
 
-  /**
-   * The target to fuzz
-   *
-   * @param data data provided by the fuzzer
-   */
-  void fuzz(byte[] data);
+import java.util.HashMap;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class AccountOverrideMap extends HashMap<Address, AccountOverride> {
+
+  public AccountOverrideMap() {}
 }

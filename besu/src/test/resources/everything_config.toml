@@ -120,6 +120,19 @@ rpc-ws-max-frame-size=65535
 rpc-ws-authentication-enabled=false
 rpc-ws-authentication-credentials-file="none"
 rpc-ws-authentication-jwt-public-key-file="none"
+rpc-ws-ssl-enabled=false
+rpc-ws-ssl-keystore-file="none.pfx"
+rpc-ws-ssl-keystore-password="none.passwd"
+rpc-ws-ssl-keystore-type="none"
+rpc-ws-ssl-client-auth-enabled=false
+rpc-ws-ssl-truststore-file="none.pfx"
+rpc-ws-ssl-truststore-password="none.passwd"
+rpc-ws-ssl-truststore-type="none"
+rpc-ws-ssl-key-file="none.pfx"
+rpc-ws-ssl-cert-file="none.pfx"
+rpc-ws-ssl-trustcert-file="none.pfx"
+
+
 
 # API
 api-gas-price-blocks=100
