@@ -22,7 +22,6 @@ import java.util.Map;
 
 import io.prometheus.metrics.core.datapoints.DistributionDataPoint;
 import io.prometheus.metrics.core.metrics.Summary;
-import io.prometheus.metrics.model.registry.Collector;
 
 /**
  * An implementation of Besu timer backed by a Prometheus summary. The summary provides a total
@@ -30,7 +29,6 @@ import io.prometheus.metrics.model.registry.Collector;
  * a sliding time window.
  */
 class PrometheusTimer extends AbstractPrometheusSummary implements LabelledMetric<OperationTimer> {
-  private final Map<Double, Double> quantiles;
 
   public PrometheusTimer(
       final MetricCategory category,
@@ -38,16 +36,11 @@ class PrometheusTimer extends AbstractPrometheusSummary implements LabelledMetri
       final String help,
       final Map<Double, Double> quantiles,
       final String... labelNames) {
-    super(category, name, help, labelNames);
-    this.quantiles = quantiles;
-  }
-
-  @Override
-  protected Collector createCollector(final String help, final String... labelNames) {
+    super(category, name);
     final var summaryBuilder =
         Summary.builder().name(this.prefixedName).help(help).labelNames(labelNames);
     quantiles.forEach(summaryBuilder::quantile);
-    return summaryBuilder.build();
+    this.collector = summaryBuilder.build();
   }
 
   @Override

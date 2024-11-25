@@ -24,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import io.prometheus.metrics.core.metrics.SummaryWithCallback;
-import io.prometheus.metrics.model.registry.Collector;
 import io.prometheus.metrics.model.snapshots.Quantile;
 import io.prometheus.metrics.model.snapshots.Quantiles;
 
@@ -43,17 +42,14 @@ class PrometheusSuppliedSummary extends AbstractPrometheusSummary
       final String name,
       final String help,
       final String... labelNames) {
-    super(category, name, help, labelNames);
-  }
-
-  @Override
-  protected Collector createCollector(final String help, final String... labelNames) {
-    return SummaryWithCallback.builder()
-        .name(name)
-        .help(help)
-        .labelNames(labelNames)
-        .callback(this::callback)
-        .build();
+    super(category, name);
+    this.collector =
+        SummaryWithCallback.builder()
+            .name(name)
+            .help(help)
+            .labelNames(labelNames)
+            .callback(this::callback)
+            .build();
   }
 
   private void callback(final SummaryWithCallback.Callback callback) {

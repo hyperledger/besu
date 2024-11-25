@@ -34,33 +34,17 @@ import io.prometheus.metrics.model.snapshots.SummarySnapshot;
  */
 abstract class AbstractPrometheusSummary extends CategorizedPrometheusCollector {
   /** The Prometheus collector */
-  protected final Collector collector;
+  protected Collector collector;
 
   /**
    * Constructs a new AbstractPrometheusSummary.
    *
    * @param category The {@link MetricCategory} this collector is assigned to
    * @param name The name of this collector
-   * @param help The help description for this collector
-   * @param labelNames The label names for this collector
    */
-  protected AbstractPrometheusSummary(
-      final MetricCategory category,
-      final String name,
-      final String help,
-      final String... labelNames) {
+  protected AbstractPrometheusSummary(final MetricCategory category, final String name) {
     super(category, name);
-    this.collector = createCollector(help, labelNames);
   }
-
-  /**
-   * Creates the actual Prometheus collector.
-   *
-   * @param help The help description for this collector
-   * @param labelNames The label names for this collector
-   * @return The created Prometheus collector
-   */
-  protected abstract Collector createCollector(final String help, final String... labelNames);
 
   /**
    * Gets the identifier for this collector.

@@ -256,7 +256,6 @@ public interface MetricsSystem extends BesuService {
       final Supplier<ExternalSummary> summarySupplier) {
     createLabelledSuppliedSummary(category, name, help).labels(summarySupplier);
   }
-  ;
 
   /**
    * Collect metrics from Guava cache.

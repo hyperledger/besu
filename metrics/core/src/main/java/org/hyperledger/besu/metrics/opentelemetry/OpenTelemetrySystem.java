@@ -250,7 +250,8 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    return null;
+    // not yet supported
+    return (LabelledSuppliedSummary) NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
   }
 
   @Override

@@ -42,9 +42,6 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   /** The constant NO_OP_COUNTER. */
   public static final Counter NO_OP_COUNTER = new NoOpCounter();
 
-  /** The constant NO_OP_GAUGE. */
-  public static final LabelledSuppliedMetric NO_OP_GAUGE = new NoOpValueCollector();
-
   private static final OperationTimer.TimingContext NO_OP_TIMING_CONTEXT = () -> 0;
 
   /** The constant NO_OP_OPERATION_TIMER. */
