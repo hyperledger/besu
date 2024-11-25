@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.List;
 
+@Deprecated(since = "24.11.0")
 public class PrivGetFilterLogs implements JsonRpcMethod {
 
   private final PrivacyController privacyController;

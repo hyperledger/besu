@@ -48,6 +48,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Deprecated(since = "24.11.0")
 public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivDistributeRawTransaction.class);

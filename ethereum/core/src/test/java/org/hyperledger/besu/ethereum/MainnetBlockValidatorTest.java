@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -97,8 +98,9 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getMutable()).thenReturn(worldState);
     when(blockHeaderValidator.validateHeader(any(), any(), any())).thenReturn(true);
     when(blockHeaderValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
-    when(blockBodyValidator.validateBody(any(), any(), any(), any(), any())).thenReturn(true);
-    when(blockBodyValidator.validateBodyLight(any(), any(), any(), any(), any())).thenReturn(true);
+    when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any()))
+        .thenReturn(true);
+    when(blockBodyValidator.validateBodyLight(any(), any(), any(), any())).thenReturn(true);
     when(blockProcessor.processBlock(any(), any(), any())).thenReturn(successfulProcessingResult);
     when(blockProcessor.processBlock(any(), any(), any(), any()))
         .thenReturn(successfulProcessingResult);
@@ -163,7 +165,8 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void validateAndProcessBlock_whenBlockBodyInvalid() {
-    when(blockBodyValidator.validateBody(any(), eq(block), any(), any(), any())).thenReturn(false);
+    when(blockBodyValidator.validateBody(any(), eq(block), any(), any(), any(), any()))
+        .thenReturn(false);
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
@@ -350,7 +353,7 @@ public class MainnetBlockValidatorTest {
             Collections.emptyList(),
             HeaderValidationMode.FULL,
             HeaderValidationMode.FULL,
-            BodyValidationMode.FULL);
+            BodyValidationMode.LIGHT);
 
     assertThat(isValid).isTrue();
     assertNoBadBlocks();
@@ -362,7 +365,6 @@ public class MainnetBlockValidatorTest {
     when(blockHeaderValidator.validateHeader(
             any(BlockHeader.class), eq(protocolContext), eq(headerValidationMode)))
         .thenReturn(false);
-    final BodyValidationMode bodyValidationMode = BodyValidationMode.FULL;
 
     final boolean isValid =
         mainnetBlockValidator.validateBlockForSyncing(
@@ -371,7 +373,7 @@ public class MainnetBlockValidatorTest {
             Collections.emptyList(),
             headerValidationMode,
             headerValidationMode,
-            bodyValidationMode);
+            BodyValidationMode.LIGHT);
 
     assertThat(isValid).isFalse();
     assertBadBlockIsTracked(block);
@@ -380,13 +382,8 @@ public class MainnetBlockValidatorTest {
   @Test
   public void validateBlockValidation_onFailedBodyForSyncing() {
     final HeaderValidationMode headerValidationMode = HeaderValidationMode.FULL;
-    final BodyValidationMode bodyValidationMode = BodyValidationMode.FULL;
     when(blockBodyValidator.validateBodyLight(
-            eq(protocolContext),
-            eq(block),
-            any(),
-            eq(headerValidationMode),
-            eq(bodyValidationMode)))
+            eq(protocolContext), eq(block), any(), eq(headerValidationMode)))
         .thenReturn(false);
 
     final boolean isValid =
@@ -396,10 +393,25 @@ public class MainnetBlockValidatorTest {
             Collections.emptyList(),
             headerValidationMode,
             headerValidationMode,
-            bodyValidationMode);
+            BodyValidationMode.LIGHT);
 
     assertThat(isValid).isFalse();
     assertBadBlockIsTracked(block);
+  }
+
+  @Test
+  public void shouldThrowIfValidateForSyncingWithFullBodyValidation() {
+    final HeaderValidationMode headerValidationMode = HeaderValidationMode.FULL;
+    assertThrows(
+        UnsupportedOperationException.class,
+        () ->
+            mainnetBlockValidator.validateBlockForSyncing(
+                protocolContext,
+                block,
+                Collections.emptyList(),
+                headerValidationMode,
+                headerValidationMode,
+                BodyValidationMode.FULL));
   }
 
   private void assertNoBadBlocks() {

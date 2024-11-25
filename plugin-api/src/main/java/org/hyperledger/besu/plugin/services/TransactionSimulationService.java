@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -36,6 +37,23 @@ public interface TransactionSimulationService extends BesuService {
    */
   Optional<TransactionSimulationResult> simulate(
       Transaction transaction,
+      Hash blockHash,
+      OperationTracer operationTracer,
+      boolean isAllowExceedingBalance);
+
+  /**
+   * Simulate transaction execution at the block identified by the hash
+   *
+   * @param transaction tx
+   * @param accountOverrides state overrides to apply to this simulation
+   * @param blockHash the hash of the block
+   * @param operationTracer the tracer
+   * @param isAllowExceedingBalance should ignore the sender balance during the simulation?
+   * @return the result of the simulation
+   */
+  Optional<TransactionSimulationResult> simulate(
+      Transaction transaction,
+      Optional<AccountOverrideMap> accountOverrides,
       Hash blockHash,
       OperationTracer operationTracer,
       boolean isAllowExceedingBalance);

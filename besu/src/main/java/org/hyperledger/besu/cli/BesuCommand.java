@@ -169,6 +169,7 @@ import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.mining.MiningService;
 import org.hyperledger.besu.plugin.services.p2p.P2PService;
 import org.hyperledger.besu.plugin.services.rlp.RlpConverterService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
@@ -181,6 +182,7 @@ import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
+import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.P2PServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
@@ -505,77 +507,95 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.ArgGroup(validate = false, heading = "@|bold In-Process RPC Options|@%n")
   InProcessRpcOptions inProcessRpcOptions = InProcessRpcOptions.create();
 
+  private static final String PRIVACY_DEPRECATION_PREFIX =
+      "Deprecated. Tessera-based privacy is deprecated. See CHANGELOG for alternative options. ";
+
   // Privacy Options Group
-  @CommandLine.ArgGroup(validate = false, heading = "@|bold Privacy Options|@%n")
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold (Deprecated) Privacy Options |@%n")
   PrivacyOptionGroup privacyOptionGroup = new PrivacyOptionGroup();
 
   static class PrivacyOptionGroup {
     @Option(
         names = {"--privacy-tls-enabled"},
         paramLabel = MANDATORY_FILE_FORMAT_HELP,
-        description = "Enable TLS for connecting to privacy enclave (default: ${DEFAULT-VALUE})")
+        description =
+            PRIVACY_DEPRECATION_PREFIX
+                + "Enable TLS for connecting to privacy enclave (default: ${DEFAULT-VALUE})")
     private final Boolean isPrivacyTlsEnabled = false;
 
     @Option(
         names = "--privacy-tls-keystore-file",
         paramLabel = MANDATORY_FILE_FORMAT_HELP,
         description =
-            "Path to a PKCS#12 formatted keystore; used to enable TLS on inbound connections.")
+            PRIVACY_DEPRECATION_PREFIX
+                + "Path to a PKCS#12 formatted keystore; used to enable TLS on inbound connections.")
     private final Path privacyKeyStoreFile = null;
 
     @Option(
         names = "--privacy-tls-keystore-password-file",
         paramLabel = MANDATORY_FILE_FORMAT_HELP,
-        description = "Path to a file containing the password used to decrypt the keystore.")
+        description =
+            PRIVACY_DEPRECATION_PREFIX
+                + "Path to a file containing the password used to decrypt the keystore.")
     private final Path privacyKeyStorePasswordFile = null;
 
     @Option(
         names = "--privacy-tls-known-enclave-file",
         paramLabel = MANDATORY_FILE_FORMAT_HELP,
         description =
-            "Path to a file containing the fingerprints of the authorized privacy enclave.")
+            PRIVACY_DEPRECATION_PREFIX
+                + "Path to a file containing the fingerprints of the authorized privacy enclave.")
     private final Path privacyTlsKnownEnclaveFile = null;
 
     @Option(
         names = {"--privacy-enabled"},
-        description = "Enable private transactions (default: ${DEFAULT-VALUE})")
+        description =
+            PRIVACY_DEPRECATION_PREFIX + "Enable private transactions (default: ${DEFAULT-VALUE})")
     private final Boolean isPrivacyEnabled = false;
 
     @Option(
         names = {"--privacy-multi-tenancy-enabled"},
-        description = "Enable multi-tenant private transactions (default: ${DEFAULT-VALUE})")
+        description =
+            PRIVACY_DEPRECATION_PREFIX
+                + "Enable multi-tenant private transactions (default: ${DEFAULT-VALUE})")
     private final Boolean isPrivacyMultiTenancyEnabled = false;
 
     @Option(
         names = {"--privacy-url"},
-        description = "The URL on which the enclave is running")
+        description = PRIVACY_DEPRECATION_PREFIX + "The URL on which the enclave is running")
     private final URI privacyUrl = PrivacyParameters.DEFAULT_ENCLAVE_URL;
 
     @Option(
         names = {"--privacy-public-key-file"},
-        description = "The enclave's public key file")
+        description = PRIVACY_DEPRECATION_PREFIX + "The enclave's public key file")
     private final File privacyPublicKeyFile = null;
 
     @Option(
         names = {"--privacy-marker-transaction-signing-key-file"},
         description =
-            "The name of a file containing the private key used to sign privacy marker transactions. If unset, each will be signed with a random key.")
+            PRIVACY_DEPRECATION_PREFIX
+                + "The name of a file containing the private key used to sign privacy marker transactions. If unset, each will be signed with a random key.")
     private final Path privateMarkerTransactionSigningKeyPath = null;
 
     @Option(
         names = {"--privacy-enable-database-migration"},
-        description = "Enable private database metadata migration (default: ${DEFAULT-VALUE})")
+        description =
+            PRIVACY_DEPRECATION_PREFIX
+                + "Enable private database metadata migration (default: ${DEFAULT-VALUE})")
     private final Boolean migratePrivateDatabase = false;
 
     @Option(
         names = {"--privacy-flexible-groups-enabled"},
-        description = "Enable flexible privacy groups (default: ${DEFAULT-VALUE})")
+        description =
+            PRIVACY_DEPRECATION_PREFIX
+                + "Enable flexible privacy groups (default: ${DEFAULT-VALUE})")
     private final Boolean isFlexiblePrivacyGroupsEnabled = false;
 
     @Option(
         names = {"--privacy-nonce-always-increments"},
         description =
-            "Enable private nonce "
+            PRIVACY_DEPRECATION_PREFIX
+                + "Enable private nonce "
                 + "incrementation even if the transaction didn't succeeded (default: ${DEFAULT-VALUE})")
     private final Boolean isPrivateNonceAlwaysIncrementsEnabled = false;
   }
@@ -1283,6 +1303,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 miningParametersSupplier.get()),
             besuController.getProtocolSchedule()));
 
+    besuPluginContext.addService(
+        MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
+
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
   }
@@ -1293,6 +1316,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // after start has been called on plugins
 
     if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
+      logger.warn(
+          "--Xprivacy-plugin-enabled and related options are " + PRIVACY_DEPRECATION_PREFIX);
 
       if (privacyOptionGroup.privateMarkerTransactionSigningKeyPath != null
           && privacyPluginService != null
@@ -1332,7 +1357,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void setReleaseMetrics() {
     besuComponent
         .getMetricsSystem()
-        .createLabelledGauge(
+        .createLabelledSuppliedGauge(
             StandardMetricCategory.PROCESS, "release", "Release information", "version")
         .labels(() -> 1, BesuInfo.version());
   }
@@ -1922,6 +1947,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
+      logger.warn("--privacy-enabled and related options are " + PRIVACY_DEPRECATION_PREFIX);
       final String errorSuffix = "cannot be enabled with privacy.";
       if (syncMode == SyncMode.FAST) {
         throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
