@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,8 +39,8 @@ public final class AccountRangeMessageTest {
   @Test
   public void roundTripTest() {
     final Map<Bytes32, Bytes> keys = new HashMap<>();
-    final StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(1L, Wei.of(2L), Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
+    final PmtStateTrieAccountValue accountValue =
+        new PmtStateTrieAccountValue(1L, Wei.of(2L), Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
     keys.put(Hash.wrap(Bytes32.leftPad(Bytes.of(1))), RLP.encode(accountValue::writeTo));
 
     final List<Bytes> proofs = new ArrayList<>();
@@ -65,8 +65,8 @@ public final class AccountRangeMessageTest {
     Wei balance = Wei.of(2L);
 
     // Create a StateTrieAccountValue with the given nonce and balance
-    final StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(nonce, balance, Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
+    final PmtStateTrieAccountValue accountValue =
+        new PmtStateTrieAccountValue(nonce, balance, Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
 
     // Encode the account value to RLP
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
@@ -104,8 +104,8 @@ public final class AccountRangeMessageTest {
     Wei balance = Wei.of(2L);
 
     // Create a StateTrieAccountValue with the given nonce and balance
-    final StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(nonce, balance, Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
+    final PmtStateTrieAccountValue accountValue =
+        new PmtStateTrieAccountValue(nonce, balance, Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
 
     // Encode the account value to RLP
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
