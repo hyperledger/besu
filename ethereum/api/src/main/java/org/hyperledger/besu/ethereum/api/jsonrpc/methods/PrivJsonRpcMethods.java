@@ -46,6 +46,7 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 
 import java.util.Map;
 
+@Deprecated(since = "24.11.0")
 public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   private final FilterManager filterManager;
