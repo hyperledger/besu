@@ -81,7 +81,8 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     final var pendingBlockHeader = transactionSimulator.simulatePendingBlockHeader();
     final TransactionSimulationFunction simulationFunction =
         (cp, op) ->
-            transactionSimulator.processOnPending(cp, validationParams, op, pendingBlockHeader);
+            transactionSimulator.processOnPending(
+                cp, Optional.empty(), validationParams, op, pendingBlockHeader);
     return simulate(
         requestContext, jsonCallParameter, pendingBlockHeader.getGasLimit(), simulationFunction);
   }
@@ -104,7 +105,9 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
       final BlockHeader blockHeader) {
     final var validationParams = getTransactionValidationParams(jsonCallParameter);
     final TransactionSimulationFunction simulationFunction =
-        (cp, op) -> transactionSimulator.processOnPending(cp, validationParams, op, blockHeader);
+        (cp, op) ->
+            transactionSimulator.processOnPending(
+                cp, Optional.empty(), validationParams, op, blockHeader);
     return simulate(
         requestContext, jsonCallParameter, blockHeader.getGasLimit(), simulationFunction);
   }

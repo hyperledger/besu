@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -26,9 +27,8 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStatePr
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.ServiceManager;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -52,7 +52,7 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
-      final BesuContext pluginContext,
+      final ServiceManager pluginContext,
       final EvmConfiguration evmConfiguration,
       final Supplier<WorldStateHealer> worldStateHealerSupplier) {
     super(worldStateKeyValueStorage, blockchain, maxLayersToLoad, pluginContext);
@@ -120,7 +120,7 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
       accountTrie
           .get(accountHash)
           .map(RLP::input)
-          .map(StateTrieAccountValue::readFrom)
+          .map(PmtStateTrieAccountValue::readFrom)
           .ifPresent(
               account -> {
                 final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =

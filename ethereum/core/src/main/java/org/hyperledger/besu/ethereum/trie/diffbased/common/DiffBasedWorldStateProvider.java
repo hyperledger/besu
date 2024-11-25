@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.worldstate.WorldState;
-import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
-      final BesuContext pluginContext) {
+      final ServiceManager pluginContext) {
 
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     // TODO: de-dup constructors

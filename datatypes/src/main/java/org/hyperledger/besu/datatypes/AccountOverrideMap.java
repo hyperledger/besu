@@ -12,16 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.util;
-
-import org.hyperledger.besu.datatypes.Address;
+package org.hyperledger.besu.datatypes;
 
 import java.util.HashMap;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+/** Map of account overrides, indexed by address */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AccountOverrideMap extends HashMap<Address, AccountOverride> {
 
+  /** Default constructor */
   public AccountOverrideMap() {}
 }

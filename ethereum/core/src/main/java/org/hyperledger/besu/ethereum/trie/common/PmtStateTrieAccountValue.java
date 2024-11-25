@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.trie.common;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -26,43 +26,17 @@ import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-/** Represents the raw values associated with an account in the world state trie. */
-public class StateTrieAccountValue implements AccountValue {
+/** Represents the raw values associated with an account in the world state patricia merkle trie. */
+public class PmtStateTrieAccountValue extends AbstractStateTrieAccountValue
+    implements AccountValue {
 
-  protected final long nonce;
-  protected final Wei balance;
   protected final Hash storageRoot;
-  protected final Hash codeHash;
 
-  public StateTrieAccountValue(
+  public PmtStateTrieAccountValue(
       final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
-    checkNotNull(balance, "balance cannot be null");
+    super(nonce, balance, codeHash);
     checkNotNull(storageRoot, "storageRoot cannot be null");
-    checkNotNull(codeHash, "codeHash cannot be null");
-    this.nonce = nonce;
-    this.balance = balance;
     this.storageRoot = storageRoot;
-    this.codeHash = codeHash;
-  }
-
-  /**
-   * The account nonce, that is the number of transactions sent from that account.
-   *
-   * @return the account nonce.
-   */
-  @Override
-  public long getNonce() {
-    return nonce;
-  }
-
-  /**
-   * The available balance of that account.
-   *
-   * @return the balance, in Wei, of the account.
-   */
-  @Override
-  public Wei getBalance() {
-    return balance;
   }
 
   /**
@@ -75,25 +49,15 @@ public class StateTrieAccountValue implements AccountValue {
     return storageRoot;
   }
 
-  /**
-   * The hash of the EVM bytecode associated with this account.
-   *
-   * @return the hash of the account code (which may be {@link Hash#EMPTY}).
-   */
-  @Override
-  public Hash getCodeHash() {
-    return codeHash;
-  }
-
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    final StateTrieAccountValue that = (StateTrieAccountValue) o;
+    PmtStateTrieAccountValue that = (PmtStateTrieAccountValue) o;
     return nonce == that.nonce
-        && balance.equals(that.balance)
-        && storageRoot.equals(that.storageRoot)
-        && codeHash.equals(that.codeHash);
+        && Objects.equals(balance, that.balance)
+        && Objects.equals(storageRoot, that.storageRoot)
+        && Objects.equals(codeHash, that.codeHash);
   }
 
   @Override
@@ -109,11 +73,10 @@ public class StateTrieAccountValue implements AccountValue {
     out.writeUInt256Scalar(balance);
     out.writeBytes(storageRoot);
     out.writeBytes(codeHash);
-
     out.endList();
   }
 
-  public static StateTrieAccountValue readFrom(final RLPInput in) {
+  public static PmtStateTrieAccountValue readFrom(final RLPInput in) {
     in.enterList();
 
     final long nonce = in.readLongScalar();
@@ -132,9 +95,9 @@ public class StateTrieAccountValue implements AccountValue {
     } else {
       codeHash = in.readBytes32();
     }
-
     in.leaveList();
 
-    return new StateTrieAccountValue(nonce, balance, Hash.wrap(storageRoot), Hash.wrap(codeHash));
+    return new PmtStateTrieAccountValue(
+        nonce, balance, Hash.wrap(storageRoot), Hash.wrap(codeHash));
   }
 }
