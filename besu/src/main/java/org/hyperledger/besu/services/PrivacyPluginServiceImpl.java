@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The Privacy plugin service implementation. */
+@Deprecated(since = "24.11.0")
 public class PrivacyPluginServiceImpl implements PrivacyPluginService {
   private static final Logger LOG = LoggerFactory.getLogger(PrivacyPluginServiceImpl.class);
 

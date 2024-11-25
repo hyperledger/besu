@@ -14,26 +14,10 @@
  */
 package org.hyperledger.besu.plugin.services.metrics;
 
-import java.util.function.DoubleSupplier;
-
-/** The interface Labelled gauge. */
-public interface LabelledGauge {
-  /**
-   * Labels.
-   *
-   * @param valueSupplier the value supplier
-   * @param labelValues the label values
-   */
-  void labels(final DoubleSupplier valueSupplier, final String... labelValues);
-
-  /**
-   * Checks whether the supplied labelValues are already observed by this LabelledGauge
-   *
-   * @param labelValues The labelValues to check
-   * @return true if the supplied labelValues are already observed by this LabelledGauge, false
-   *     otherwise
-   */
-  default boolean isLabelsObserved(final String... labelValues) {
-    return false;
-  }
-}
+/**
+ * The interface Labelled gauge.
+ *
+ * @deprecated Use {@link LabelledSuppliedMetric}
+ */
+@Deprecated(forRemoval = true)
+public interface LabelledGauge extends LabelledSuppliedMetric {}

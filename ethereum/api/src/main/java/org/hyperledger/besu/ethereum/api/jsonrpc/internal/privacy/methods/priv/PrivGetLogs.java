@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+@Deprecated(since = "24.11.0")
 public class PrivGetLogs implements JsonRpcMethod {
 
   private final BlockchainQueries blockchainQueries;

@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
+@Deprecated(since = "24.11.0")
 public class PrivCall extends AbstractBlockParameterMethod {
 
   private final PrivacyIdProvider privacyIdProvider;
