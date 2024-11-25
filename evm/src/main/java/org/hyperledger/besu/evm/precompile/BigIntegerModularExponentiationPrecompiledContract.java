@@ -25,7 +25,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.arithmetic.LibArithmetic;
 
 import java.math.BigInteger;
-import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import com.sun.jna.ptr.IntByReference;
@@ -258,8 +257,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
       return PrecompileContractResult.success(Bytes.wrap(result, 0, o_len.getValue()));
     } else {
       LOG.trace("Error executing precompiled contract {}: {}", getName(), errorNo);
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
     }
   }
 }

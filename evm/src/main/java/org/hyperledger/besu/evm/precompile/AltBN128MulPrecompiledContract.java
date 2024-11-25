@@ -23,7 +23,6 @@ import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -81,8 +80,7 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
     if (input.size() >= 64 && input.slice(0, 64).equals(POINT_AT_INFINITY)) {
-      return new PrecompileContractResult(
-          POINT_AT_INFINITY, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
+      return PrecompileContractResult.success(POINT_AT_INFINITY);
     }
 
     if (useNative) {
@@ -100,8 +98,7 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
 
     final AltBn128Point p = new AltBn128Point(Fq.create(x), Fq.create(y));
     if (!p.isOnCurve() || n.compareTo(MAX_N) > 0) {
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
     }
     final AltBn128Point product = p.multiply(n);
 

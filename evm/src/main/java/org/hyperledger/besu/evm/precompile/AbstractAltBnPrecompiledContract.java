@@ -21,7 +21,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
 
-import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import com.sun.jna.ptr.IntByReference;
@@ -130,8 +129,7 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
       final String errorString = new String(error, 0, err_len.getValue(), UTF_8);
       messageFrame.setRevertReason(Bytes.wrap(error, 0, err_len.getValue()));
       LOG.trace("Error executing precompiled contract {}: '{}'", getName(), errorString);
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
     }
   }
 }

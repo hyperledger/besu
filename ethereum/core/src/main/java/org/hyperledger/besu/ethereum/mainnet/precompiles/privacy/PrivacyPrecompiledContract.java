@@ -50,7 +50,6 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Base64;
-import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -68,9 +67,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivacyPrecompiledContract.class);
 
-  static final PrecompileContractResult NO_RESULT =
-      new PrecompileContractResult(
-          Bytes.EMPTY, true, MessageFrame.State.CODE_EXECUTING, Optional.empty());
+  static final PrecompileContractResult NO_RESULT = PrecompileContractResult.executing(Bytes.EMPTY);
 
   public PrivacyPrecompiledContract(
       final GasCalculator gasCalculator,
@@ -219,8 +216,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
     }
 
-    return new PrecompileContractResult(
-        result.getOutput(), true, MessageFrame.State.CODE_EXECUTING, Optional.empty());
+    return PrecompileContractResult.executing(result.getOutput());
   }
 
   protected void maybeApplyGenesisToPrivateWorldState(

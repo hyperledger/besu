@@ -23,7 +23,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
-import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -69,13 +68,11 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
     if (input.size() != MESSAGE_LENGTH_BYTES) {
       LOG.trace(
           "Incorrect input length.  Expected {} and got {}", MESSAGE_LENGTH_BYTES, input.size());
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
     }
     if ((input.get(212) & 0xFE) != 0) {
       LOG.trace("Incorrect finalization flag, expected 0 or 1 and got {}", input.get(212));
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
     }
     return PrecompileContractResult.success(Hash.blake2bf(input));
   }

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
@@ -59,7 +61,7 @@ public interface PrecompiledContract {
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final Bytes result = compute(input, messageFrame);
     if (result == null) {
-      return PrecompileContractResult.halt(null, Optional.of(ExceptionalHaltReason.NONE));
+      return PrecompileContractResult.halt(ExceptionalHaltReason.NONE);
     } else {
       return PrecompileContractResult.success(result);
     }
@@ -94,8 +96,7 @@ public interface PrecompiledContract {
      *     ExceptionalHalt)
      * @param haltReason the exceptional halt reason
      */
-    // TOO JDK17 use a record
-    public PrecompileContractResult(
+    private PrecompileContractResult(
         final Bytes output,
         final boolean refundGas,
         final MessageFrame.State state,
@@ -118,6 +119,17 @@ public interface PrecompiledContract {
     }
 
     /**
+     * precompile contract result with code executing state.
+     *
+     * @param output the output
+     * @return the precompile contract result
+     */
+    public static PrecompileContractResult executing(final Bytes output) {
+      return new PrecompileContractResult(
+          output, true, MessageFrame.State.CODE_EXECUTING, Optional.empty());
+    }
+
+    /**
      * precompile contract result with revert state.
      *
      * @param output the output
@@ -131,17 +143,13 @@ public interface PrecompiledContract {
     /**
      * precompile contract result with Halt state.
      *
-     * @param output the output
      * @param haltReason the halt reason
      * @return the precompile contract result
      */
-    public static PrecompileContractResult halt(
-        final Bytes output, final Optional<ExceptionalHaltReason> haltReason) {
-      if (haltReason.isEmpty()) {
-        throw new IllegalArgumentException("Halt reason cannot be empty");
-      }
+    public static PrecompileContractResult halt(final ExceptionalHaltReason haltReason) {
+      checkNotNull(haltReason, "haltReason is null");
       return new PrecompileContractResult(
-          output, false, MessageFrame.State.EXCEPTIONAL_HALT, haltReason);
+          null, false, MessageFrame.State.EXCEPTIONAL_HALT, Optional.of(haltReason));
     }
 
     /**

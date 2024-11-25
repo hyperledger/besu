@@ -20,7 +20,6 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 
-import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import com.sun.jna.ptr.IntByReference;
@@ -115,8 +114,7 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
       final String errorMessage = new String(error, 0, err_len.getValue(), UTF_8);
       messageFrame.setRevertReason(Bytes.wrap(error, 0, err_len.getValue()));
       LOG.trace("Error executing precompiled contract {}: '{}'", name, errorMessage);
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
     }
   }
 

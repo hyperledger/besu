@@ -116,7 +116,6 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
           pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
     }
 
-    return new PrecompileContractResult(
-        result.getOutput(), true, MessageFrame.State.CODE_EXECUTING, Optional.empty());
+    return PrecompileContractResult.executing(result.getOutput());
   }
 }
