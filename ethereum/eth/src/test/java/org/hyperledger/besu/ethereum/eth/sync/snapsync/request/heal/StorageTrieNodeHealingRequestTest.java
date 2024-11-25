@@ -23,10 +23,10 @@ import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -92,8 +92,8 @@ class StorageTrieNodeHealingRequestTest {
     account0StorageRoot =
         trie.get(account0Hash)
             .map(RLP::input)
-            .map(StateTrieAccountValue::readFrom)
-            .map(StateTrieAccountValue::getStorageRoot)
+            .map(PmtStateTrieAccountValue::readFrom)
+            .map(PmtStateTrieAccountValue::getStorageRoot)
             .orElseThrow();
   }
 

@@ -38,6 +38,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Deprecated(since = "24.11.0")
 public class PrivGetPrivateTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivGetPrivateTransaction.class);

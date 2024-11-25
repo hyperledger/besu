@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -121,7 +121,7 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
 
   @VisibleForTesting
   public static Bytes toFullAccount(final RLPInput rlpInput) {
-    final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(rlpInput);
+    final PmtStateTrieAccountValue accountValue = PmtStateTrieAccountValue.readFrom(rlpInput);
 
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     rlpOutput.startList();
@@ -135,7 +135,7 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
   }
 
   public static Bytes toSlimAccount(final RLPInput rlpInput) {
-    StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(rlpInput);
+    PmtStateTrieAccountValue accountValue = PmtStateTrieAccountValue.readFrom(rlpInput);
     var rlpOutput = new BytesValueRLPOutput();
     rlpOutput.startList();
     rlpOutput.writeLongScalar(accountValue.getNonce());

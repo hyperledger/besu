@@ -27,6 +27,7 @@ import io.vertx.ext.auth.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Deprecated(since = "24.11.0")
 public class MultiTenancyRpcMethodDecorator implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(MultiTenancyRpcMethodDecorator.class);
   private final JsonRpcMethod rpcMethod;
