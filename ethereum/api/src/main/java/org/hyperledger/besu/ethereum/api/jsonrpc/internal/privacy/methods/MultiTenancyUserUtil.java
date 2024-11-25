@@ -18,6 +18,7 @@ import java.util.Optional;
 
 import io.vertx.ext.auth.User;
 
+@Deprecated(since = "24.11.0")
 public class MultiTenancyUserUtil {
   private static final String PRIVACY_USER_ID_CLAIM = "privacyUserId";
   private static final String ENCLAVE_PRIVACY_PUBLIC_KEY_CLAIM = "privacyPublicKey";

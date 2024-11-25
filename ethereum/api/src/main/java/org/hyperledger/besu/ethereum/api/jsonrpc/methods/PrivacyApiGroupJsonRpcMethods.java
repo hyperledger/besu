@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Deprecated(since = "24.11.0")
 public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;

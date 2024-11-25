@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 
 import java.util.Optional;
 
@@ -51,15 +51,16 @@ public class TrieLogLayerTests {
   @Test
   public void testAddAccountChange() {
     Address address = Address.fromHexString("0x00");
-    StateTrieAccountValue oldValue = new StateTrieAccountValue(0, Wei.ZERO, Hash.EMPTY, Hash.EMPTY);
-    StateTrieAccountValue newValue =
-        new StateTrieAccountValue(1, Wei.fromEth(1), Hash.EMPTY, Hash.EMPTY);
+    PmtStateTrieAccountValue oldValue =
+        new PmtStateTrieAccountValue(0, Wei.ZERO, Hash.EMPTY, Hash.EMPTY);
+    PmtStateTrieAccountValue newValue =
+        new PmtStateTrieAccountValue(1, Wei.fromEth(1), Hash.EMPTY, Hash.EMPTY);
 
     Address otherAddress = Address.fromHexString("0x000000");
-    StateTrieAccountValue otherOldValue =
-        new StateTrieAccountValue(0, Wei.ZERO, Hash.EMPTY, Hash.EMPTY);
-    StateTrieAccountValue otherNewValue =
-        new StateTrieAccountValue(1, Wei.fromEth(1), Hash.EMPTY, Hash.EMPTY);
+    PmtStateTrieAccountValue otherOldValue =
+        new PmtStateTrieAccountValue(0, Wei.ZERO, Hash.EMPTY, Hash.EMPTY);
+    PmtStateTrieAccountValue otherNewValue =
+        new PmtStateTrieAccountValue(1, Wei.fromEth(1), Hash.EMPTY, Hash.EMPTY);
 
     trieLogLayer.addAccountChange(address, oldValue, newValue);
     otherTrieLogLayer.addAccountChange(otherAddress, otherOldValue, otherNewValue);

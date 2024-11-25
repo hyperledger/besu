@@ -27,10 +27,10 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
@@ -81,8 +81,8 @@ public class TaskGenerator {
       accountRangeDataRequest.addResponse(worldStateProofProvider, accounts, new ArrayDeque<>());
     }
 
-    final StateTrieAccountValue stateTrieAccountValue =
-        StateTrieAccountValue.readFrom(RLP.input(accounts.firstEntry().getValue()));
+    final PmtStateTrieAccountValue stateTrieAccountValue =
+        PmtStateTrieAccountValue.readFrom(RLP.input(accounts.firstEntry().getValue()));
     final Hash accountHash = Hash.wrap(accounts.firstKey());
 
     final StorageRangeDataRequest storageRangeDataRequest =
