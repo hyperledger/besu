@@ -211,7 +211,7 @@ class PivotBlockConfirmer {
       do {
         if (isCancelled.get()) {
           return CompletableFuture.failedFuture(
-              new InterruptedException("Pivot block confirmation has been cancelled"));
+              new CancellationException("Pivot block confirmation has been cancelled"));
         }
         maybeEthPeer =
             ethContext
