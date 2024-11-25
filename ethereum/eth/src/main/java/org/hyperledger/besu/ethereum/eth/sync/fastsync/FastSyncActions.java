@@ -198,6 +198,7 @@ public class FastSyncActions {
                             1,
                             0,
                             GetHeadersFromPeerTask.Direction.FORWARD,
+                            Integer.MAX_VALUE,
                             protocolSchedule);
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
                         peerTaskExecutor.execute(task);
