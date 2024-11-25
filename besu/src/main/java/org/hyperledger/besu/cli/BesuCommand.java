@@ -170,6 +170,7 @@ import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.mining.MiningService;
 import org.hyperledger.besu.plugin.services.p2p.P2PService;
 import org.hyperledger.besu.plugin.services.rlp.RlpConverterService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
@@ -183,6 +184,7 @@ import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockSimulatorServiceImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
+import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.P2PServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
@@ -1302,6 +1304,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 besuController.getProtocolContext().getWorldStateArchive(),
                 miningParametersSupplier.get()),
             besuController.getProtocolSchedule()));
+
+    besuPluginContext.addService(
+        MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
 
     besuPluginContext.addService(
         BlockSimulationService.class,
