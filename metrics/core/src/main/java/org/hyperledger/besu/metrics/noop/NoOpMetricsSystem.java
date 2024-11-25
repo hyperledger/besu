@@ -65,18 +65,6 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   public static final LabelledMetric<OperationTimer> NO_OP_LABELLED_1_OPERATION_TIMER =
       new LabelCountingNoOpMetric<>(1, NO_OP_OPERATION_TIMER);
 
-  /** The constant NO_OP_LABELLED_1_GAUGE. */
-  public static final LabelledSuppliedMetric NO_OP_LABELLED_1_GAUGE =
-      new LabelledSuppliedNoOpMetric(1, NO_OP_GAUGE);
-
-  /** The constant NO_OP_LABELLED_2_GAUGE. */
-  public static final LabelledSuppliedMetric NO_OP_LABELLED_2_GAUGE =
-      new LabelledSuppliedNoOpMetric(2, NO_OP_GAUGE);
-
-  /** The constant NO_OP_LABELLED_3_GAUGE. */
-  public static final LabelledSuppliedMetric NO_OP_LABELLED_3_GAUGE =
-      new LabelledSuppliedNoOpMetric(3, NO_OP_GAUGE);
-
   /** Default constructor */
   public NoOpMetricsSystem() {}
 
@@ -96,16 +84,7 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
    * @return the counter labelled metric
    */
   public static LabelledMetric<Counter> getCounterLabelledMetric(final int labelCount) {
-    switch (labelCount) {
-      case 1:
-        return NO_OP_LABELLED_1_COUNTER;
-      case 2:
-        return NO_OP_LABELLED_2_COUNTER;
-      case 3:
-        return NO_OP_LABELLED_3_COUNTER;
-      default:
-        return new LabelCountingNoOpMetric<>(labelCount, NO_OP_COUNTER);
-    }
+    return new LabelCountingNoOpMetric<>(labelCount, NO_OP_COUNTER);
   }
 
   @Override
@@ -141,11 +120,7 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
    */
   public static LabelledMetric<OperationTimer> getOperationTimerLabelledMetric(
       final int labelCount) {
-    if (labelCount == 1) {
-      return NO_OP_LABELLED_1_OPERATION_TIMER;
-    } else {
-      return new LabelCountingNoOpMetric<>(labelCount, NO_OP_OPERATION_TIMER);
-    }
+    return new LabelCountingNoOpMetric<>(labelCount, NO_OP_OPERATION_TIMER);
   }
 
   @Override
@@ -184,16 +159,7 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
    * @return the labelled gauge
    */
   public static LabelledSuppliedMetric getLabelledSuppliedMetric(final int labelCount) {
-    switch (labelCount) {
-      case 1:
-        return NO_OP_LABELLED_1_GAUGE;
-      case 2:
-        return NO_OP_LABELLED_2_GAUGE;
-      case 3:
-        return NO_OP_LABELLED_3_GAUGE;
-      default:
-        return new LabelledSuppliedNoOpMetric(labelCount, NO_OP_GAUGE);
-    }
+    return new LabelledSuppliedNoOpMetric(labelCount, NO_OP_GAUGE);
   }
 
   @Override
