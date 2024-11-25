@@ -66,12 +66,8 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
     BlockStateCall blockStateCall =
         new BlockStateCall(callParameters, blockOverrides, new AccountOverrideMap());
 
-    BlockSimulationResult result =
-        blockSimulator.simulate(parentHeaderCore, blockStateCall, true, shouldPersist);
+    var result = blockSimulator.simulate(parentHeaderCore, blockStateCall, true, shouldPersist);
 
-    if (result.getResult().isFailed()) {
-      throw new IllegalArgumentException("Unable to create block.");
-    }
-    return result;
+    return result.orElseThrow();
   }
 }

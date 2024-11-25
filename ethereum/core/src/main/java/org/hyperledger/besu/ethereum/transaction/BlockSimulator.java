@@ -19,8 +19,6 @@ import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
-import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -79,21 +77,15 @@ public class BlockSimulator {
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, rpcGasCap);
   }
 
-  public BlockSimulationResult simulate(
+  public Optional<BlockSimulationResult> simulate(
       final BlockHeader header,
       final BlockStateCall blockStateCall,
       final boolean shouldValidate,
       final boolean shouldPersist) {
 
-    long currentGasUsed = 0;
-    final List<TransactionReceipt> receipts = new ArrayList<>();
-    final List<Transaction> transactions = new ArrayList<>();
-
     final BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
     long timestamp = blockOverrides.getTimestamp().orElse(header.getTimestamp() + 1);
     final ProtocolSpec newProtocolSpec = protocolSchedule.getForNextBlockHeader(header, timestamp);
-
-    final var transactionReceiptFactory = newProtocolSpec.getTransactionReceiptFactory();
 
     final BlockHeader blockHeader =
         applyBlockHeaderOverrides(header, blockOverrides, newProtocolSpec);
@@ -107,67 +99,107 @@ public class BlockSimulator {
       if (blockStateCall.getAccountOverrides().isPresent()) {
         applyStateOverrides(blockStateCall.getAccountOverrides().get(), updater);
       }
-
-      for (CallParameter callParameter : blockStateCall.getCalls()) {
-        final WorldUpdater localUpdater = updater.updater();
-        final Optional<TransactionSimulatorResult> transactionSimulatorResult =
-            transactionSimulator.processWithWorldUpdater(
-                callParameter,
-                Optional.empty(),
-                buildTransactionValidationParams(shouldValidate),
-                OperationTracer.NO_TRACING,
-                blockHeader,
-                localUpdater,
-                miningBeneficiaryCalculator);
-
-        if (transactionSimulatorResult.isEmpty()) {
-          return new BlockSimulationResult(
-              new BlockProcessingResult(Optional.empty(), "Transaction processing failed"));
-        }
-
-        TransactionProcessingResult transactionProcessingResult =
-            transactionSimulatorResult.get().result();
-
-        if (transactionProcessingResult.isSuccessful()) {
-          localUpdater.commit();
-          currentGasUsed += transactionProcessingResult.getEstimateGasUsedByTransaction();
-
-          Transaction transaction = transactionSimulatorResult.get().transaction();
-          transactions.add(transaction);
-          final TransactionReceipt transactionReceipt =
-              transactionReceiptFactory.create(
-                  transaction.getType(), transactionProcessingResult, ws, currentGasUsed);
-          receipts.add(transactionReceipt);
-        } else {
-          return new BlockSimulationResult(
-              new BlockProcessingResult(
-                  Optional.empty(),
-                  transactionProcessingResult
-                      .getInvalidReason()
-                      .orElse("Transaction processing failed")));
-        }
-      }
+      BlockSimulationResult.BlockTransactionSimulationResult blockTransactionSimulationResult =
+          processTransactions(
+              blockHeader, blockStateCall, updater, shouldValidate, miningBeneficiaryCalculator);
 
       updater.commit();
-      BlockHeader finalBlockHeader =
-          createFinalBlockHeader(
-              blockHeader, ws, transactions, blockOverrides, receipts, currentGasUsed);
 
-      if (shouldPersist) {
-        ws.persist(finalBlockHeader);
-      }
-      Block block = new Block(finalBlockHeader, new BlockBody(transactions, List.of()));
-      BlockProcessingOutputs outputs = new BlockProcessingOutputs(ws, receipts);
-      BlockProcessingResult result = new BlockProcessingResult(Optional.of(outputs));
-      return new BlockSimulationResult(block.getHeader(), block.getBody(), receipts, result);
+      return Optional.of(
+          processPostExecution(
+              blockHeader,
+              ws,
+              blockTransactionSimulationResult,
+              blockOverrides,
+              newProtocolSpec,
+              shouldPersist));
 
     } catch (final Exception e) {
-      throw new RuntimeException("Error simulating block", e);
+      return Optional.empty();
     }
   }
 
+  private BlockSimulationResult.BlockTransactionSimulationResult processTransactions(
+      final BlockHeader blockHeader,
+      final BlockStateCall blockStateCall,
+      final WorldUpdater updater,
+      final boolean shouldValidate,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator) {
+    BlockSimulationResult.BlockTransactionSimulationResult blockTransactionSimulationResult =
+        new BlockSimulationResult.BlockTransactionSimulationResult();
+
+    for (CallParameter callParameter : blockStateCall.getCalls()) {
+      final WorldUpdater localUpdater = updater.updater();
+      final Optional<TransactionSimulatorResult> transactionSimulatorResult =
+          transactionSimulator.processWithWorldUpdater(
+              callParameter,
+              Optional.empty(),
+              buildTransactionValidationParams(shouldValidate),
+              OperationTracer.NO_TRACING,
+              blockHeader,
+              localUpdater,
+              miningBeneficiaryCalculator);
+
+      if (transactionSimulatorResult.isEmpty()) {
+        throw new RuntimeException("Transaction simulator result is empty");
+      }
+
+      blockTransactionSimulationResult.add(transactionSimulatorResult.get());
+
+      TransactionProcessingResult transactionProcessingResult =
+          transactionSimulatorResult.get().result();
+
+      if (transactionProcessingResult.isSuccessful()) {
+        localUpdater.commit();
+      }
+    }
+    return blockTransactionSimulationResult;
+  }
+
+  private BlockSimulationResult processPostExecution(
+      final BlockHeader blockHeader,
+      final MutableWorldState ws,
+      final BlockSimulationResult.BlockTransactionSimulationResult blockTransactionSimulationResult,
+      final BlockOverrides blockOverrides,
+      final ProtocolSpec newProtocolSpec,
+      final boolean shouldPersist) {
+
+    long currentGasUsed = 0;
+    final var transactionReceiptFactory = newProtocolSpec.getTransactionReceiptFactory();
+    final List<TransactionReceipt> receipts = new ArrayList<>();
+    final List<Transaction> transactions = new ArrayList<>();
+
+    for (TransactionSimulatorResult transactionSimulatorResult :
+        blockTransactionSimulationResult.getCalls()) {
+      TransactionProcessingResult transactionProcessingResult = transactionSimulatorResult.result();
+
+      if (transactionProcessingResult.isSuccessful()) {
+        final Transaction transaction = transactionSimulatorResult.transaction();
+
+        currentGasUsed += transactionProcessingResult.getEstimateGasUsedByTransaction();
+
+        final TransactionReceipt transactionReceipt =
+            transactionReceiptFactory.create(
+                transaction.getType(), transactionProcessingResult, ws, currentGasUsed);
+        receipts.add(transactionReceipt);
+        transactions.add(transaction);
+      }
+    }
+
+    BlockHeader finalBlockHeader =
+        createFinalBlockHeader(
+            blockHeader, ws, transactions, blockOverrides, receipts, currentGasUsed);
+
+    Block block = new Block(finalBlockHeader, new BlockBody(transactions, List.of()));
+
+    if (shouldPersist) {
+      ws.persist(finalBlockHeader);
+    }
+    return BlockSimulationResult.successful(block, receipts, blockTransactionSimulationResult);
+  }
+
   private void applyStateOverrides(
-      final AccountOverrideMap accountOverrideMap, WorldUpdater updater) {
+      final AccountOverrideMap accountOverrideMap, final WorldUpdater updater) {
     for (Address accountToOverride : accountOverrideMap.keySet()) {
       final AccountOverride override = accountOverrideMap.get(accountToOverride);
       MutableAccount account = updater.getOrCreate(accountToOverride);

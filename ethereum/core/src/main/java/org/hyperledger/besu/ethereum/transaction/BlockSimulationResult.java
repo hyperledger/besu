@@ -14,55 +14,67 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
-import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.TransactionReceipt;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class BlockSimulationResult
     implements org.hyperledger.besu.plugin.data.BlockSimulationResult {
-  final BlockHeader blockHeader;
-  final BlockBody blockBody;
-  final List<? extends TransactionReceipt> receipts;
-  final BlockProcessingResult result;
+  final Block block;
+  final BlockTransactionSimulationResult blockTransactionSimulationResult;
+  final List<TransactionReceipt> receipts;
 
-  public BlockSimulationResult(final BlockProcessingResult result) {
-    this.receipts = null;
-    this.blockHeader = null;
-    this.blockBody = null;
-    this.result = result;
-  }
-
-  public BlockSimulationResult(
-      final BlockHeader blockHeader,
-      final BlockBody blockBody,
+  private BlockSimulationResult(
+      final Block block,
       final List<? extends TransactionReceipt> receipts,
-      final BlockProcessingResult result) {
-    this.blockHeader = blockHeader;
-    this.blockBody = blockBody;
-    this.receipts = receipts;
-    this.result = result;
+      final BlockTransactionSimulationResult blockTransactionSimulationResult) {
+    this.block = block;
+    this.receipts = new ArrayList<>(receipts);
+    this.blockTransactionSimulationResult = blockTransactionSimulationResult;
   }
 
-  public BlockProcessingResult getResult() {
-    return result;
-  }
-
-  @Override
-  public Optional<BlockHeader> getBlockHeader() {
-    return Optional.ofNullable(blockHeader);
+  public static BlockSimulationResult successful(
+      final Block block,
+      final List<org.hyperledger.besu.ethereum.core.TransactionReceipt> receipts,
+      final BlockTransactionSimulationResult blockTransactionSimulationResult) {
+    return new BlockSimulationResult(block, receipts, blockTransactionSimulationResult);
   }
 
   @Override
-  public Optional<BlockBody> getBlockBody() {
-    return Optional.ofNullable(blockBody);
+  public BlockHeader getBlockHeader() {
+    return block.getHeader();
   }
 
   @Override
-  public Optional<List<? extends TransactionReceipt>> getReceipts() {
-    return Optional.ofNullable(receipts);
+  public BlockBody getBlockBody() {
+    return block.getBody();
+  }
+
+  public Block getBlock() {
+    return block;
+  }
+
+  public List<TransactionReceipt> getTransactionReceipts() {
+    return receipts;
+  }
+
+  public BlockTransactionSimulationResult getBlockTransactionSimulationResult() {
+    return blockTransactionSimulationResult;
+  }
+
+  public static class BlockTransactionSimulationResult {
+    List<TransactionSimulatorResult> calls = new ArrayList<>();
+
+    void add(final TransactionSimulatorResult callResult) {
+      calls.add(callResult);
+    }
+
+    List<TransactionSimulatorResult> getCalls() {
+      return calls;
+    }
   }
 }

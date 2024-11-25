@@ -14,13 +14,8 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import java.util.List;
-import java.util.Optional;
-
 public interface BlockSimulationResult {
-  Optional<BlockHeader> getBlockHeader();
+  BlockHeader getBlockHeader();
 
-  Optional<BlockBody> getBlockBody();
-
-  Optional<List<? extends TransactionReceipt>> getReceipts();
+  BlockBody getBlockBody();
 }

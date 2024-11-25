@@ -25,20 +25,21 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockStateC
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.transaction.BlockSimulationResult;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
@@ -96,18 +97,21 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
     try {
       BlockStateCallsParameter parameter =
           request.getRequiredParameter(0, BlockStateCallsParameter.class);
-      BlockSimulationResult result =
-          blockSimulator.simulate(
-              header, parameter.getBlockStateCalls().getFirst(), parameter.isValidation(), false);
 
-      if (result.getResult().isSuccessful()) {
-        Block block =
-            new Block(
-                (BlockHeader) result.getBlockHeader().get(),
-                (BlockBody) result.getBlockBody().get());
-        return blockResultFactory.transactionHash(blockByHashWithTxHashes(block));
+      List<BlockResult> results = new ArrayList<>();
+      for (var blockStateCall : parameter.getBlockStateCalls()) {
+        var result =
+            blockSimulator.simulate(header, blockStateCall, parameter.isValidation(), false);
+
+        results.add(
+            result
+                .map(
+                    blockSimulationResult ->
+                        blockResultFactory.transactionHash(
+                            blockByHashWithTxHashes(blockSimulationResult.getBlock())))
+                .orElse(null));
       }
-      return null;
+      return new JsonRpcSuccessResponse(request.getRequest().getId(), results);
     } catch (JsonRpcParameterException e) {
       throw new RuntimeException(e);
     }
