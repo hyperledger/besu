@@ -14,8 +14,12 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import java.util.List;
+
 public interface BlockSimulationResult {
   BlockHeader getBlockHeader();
 
   BlockBody getBlockBody();
+
+  List<? extends TransactionReceipt> getReceipts();
 }

@@ -58,7 +58,8 @@ public class BlockSimulationResult
     return block;
   }
 
-  public List<TransactionReceipt> getTransactionReceipts() {
+  @Override
+  public List<TransactionReceipt> getReceipts() {
     return receipts;
   }
 

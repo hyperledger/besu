@@ -29,8 +29,6 @@ public class BlockStateCallsParameter {
   @JsonProperty("traceTransfers")
   private boolean traceTransfers;
 
-  // Getters
-
   public List<JsonBlockStateCall> getBlockStateCalls() {
     return blockStateCalls;
   }
