@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
@@ -167,11 +166,6 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
   }
 
   @Override
-  public OptionalLong getTargetGasLimit() {
-    return blockCreatorFactory.getTargetGasLimit();
-  }
-
-  @Override
   public Optional<Block> createBlock(
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
@@ -182,16 +176,6 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
 
   @Override
   public Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp) {
-    // One-off block creation has not been implemented
-    return Optional.empty();
-  }
-
-  @Override
-  public Optional<Block> createBlock(
-      final BlockHeader parentHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final long timestamp) {
     // One-off block creation has not been implemented
     return Optional.empty();
   }

@@ -29,7 +29,6 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -78,16 +77,6 @@ public abstract class AbstractMiningCoordinator<
   public Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp) {
     final M miner = executor.createMiner(minedBlockObservers, ethHashObservers, parentHeader);
     return Optional.of(miner.createBlock(parentHeader, timestamp).getBlock());
-  }
-
-  @Override
-  public Optional<Block> createBlock(
-      final BlockHeader parentHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final long timestamp) {
-    final M miner = executor.createMiner(minedBlockObservers, ethHashObservers, parentHeader);
-    return Optional.of(miner.createBlock(parentHeader, transactions, ommers, timestamp).getBlock());
   }
 
   @Override
@@ -224,11 +213,6 @@ public abstract class AbstractMiningCoordinator<
   @Override
   public Optional<Address> getCoinbase() {
     return executor.getCoinbase();
-  }
-
-  @Override
-  public OptionalLong getTargetGasLimit() {
-    return executor.getTargetGasLimit();
   }
 
   protected abstract boolean newChainHeadInvalidatesMiningOperation(

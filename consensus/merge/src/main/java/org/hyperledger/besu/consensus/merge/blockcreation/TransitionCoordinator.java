@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -113,11 +112,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public OptionalLong getTargetGasLimit() {
-    return dispatchFunctionAccordingToMergeState(MiningCoordinator::getTargetGasLimit);
-  }
-
-  @Override
   public Optional<Block> createBlock(
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
@@ -131,17 +125,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   public Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp) {
     return dispatchFunctionAccordingToMergeState(
         (MiningCoordinator coordinator) -> coordinator.createBlock(parentHeader, timestamp));
-  }
-
-  @Override
-  public Optional<Block> createBlock(
-      final BlockHeader parentHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final long timestamp) {
-    return dispatchFunctionAccordingToMergeState(
-        (MiningCoordinator coordinator) ->
-            coordinator.createBlock(parentHeader, transactions, ommers, timestamp));
   }
 
   @Override

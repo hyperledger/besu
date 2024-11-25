@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -114,11 +113,6 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
   }
 
   @Override
-  public OptionalLong getTargetGasLimit() {
-    return activeMiningCoordinator.getTargetGasLimit();
-  }
-
-  @Override
   public Optional<Block> createBlock(
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
@@ -128,15 +122,6 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
 
   @Override
   public Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp) {
-    return Optional.empty();
-  }
-
-  @Override
-  public Optional<Block> createBlock(
-      final BlockHeader parentHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final long timestamp) {
     return Optional.empty();
   }
 
