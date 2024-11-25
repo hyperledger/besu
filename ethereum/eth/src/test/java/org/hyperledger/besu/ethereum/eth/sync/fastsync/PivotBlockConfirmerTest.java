@@ -319,7 +319,7 @@ public class PivotBlockConfirmerTest {
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                    Optional.empty()))
+                Optional.empty()))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, Optional.empty()))
@@ -327,7 +327,7 @@ public class PivotBlockConfirmerTest {
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                    Optional.empty()));
+                Optional.empty()));
 
     // Execute task
     final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();

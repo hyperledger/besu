@@ -139,7 +139,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                             1,
                             0,
                             GetHeadersFromPeerTask.Direction.FORWARD,
-                                PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER,
+                            PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER,
                             protocolSchedule);
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
                         peerTaskExecutor.executeAgainstPeer(task, bestPeer);
@@ -158,7 +158,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
               ethContext,
               metricsSystem,
               pivotBlockHeader.getNumber(),
-                  PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER);
+              PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER);
       task.assignPeer(bestPeer);
       headersFuture =
           ethContext
@@ -166,7 +166,9 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
               // Task is a retrying task. Make sure that the timeout is long enough to allow for
               // retries.
               .timeout(
-                  task, Duration.ofSeconds(PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER * SECONDS_PER_REQUEST + 2));
+                  task,
+                  Duration.ofSeconds(
+                      PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER * SECONDS_PER_REQUEST + 2));
     }
     return headersFuture
         .thenCompose(

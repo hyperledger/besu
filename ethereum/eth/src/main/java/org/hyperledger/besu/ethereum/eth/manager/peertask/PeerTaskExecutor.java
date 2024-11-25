@@ -145,7 +145,9 @@ public class PeerTaskExecutor {
           peer.recordUsefulResponse();
           executorResult =
               new PeerTaskExecutorResult<>(
-                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS, Optional.of(peer));
+                  Optional.ofNullable(result),
+                  PeerTaskExecutorResponseCode.SUCCESS,
+                  Optional.of(peer));
         } else {
           // At this point, the result is most likely empty. Technically, this is a valid result, so
           // we don't penalise the peer, but it's also a useless result, so we return
@@ -154,13 +156,17 @@ public class PeerTaskExecutor {
               "Empty response found for {} from peer {}", taskClassName, peer.getLoggableId());
           executorResult =
               new PeerTaskExecutorResult<>(
-                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.INVALID_RESPONSE, Optional.of(peer));
+                  Optional.ofNullable(result),
+                  PeerTaskExecutorResponseCode.INVALID_RESPONSE,
+                  Optional.of(peer));
         }
 
       } catch (PeerNotConnected e) {
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.PEER_DISCONNECTED, Optional.of(peer));
+                Optional.empty(),
+                PeerTaskExecutorResponseCode.PEER_DISCONNECTED,
+                Optional.of(peer));
 
       } catch (InterruptedException | TimeoutException e) {
         peer.recordRequestTimeout(requestMessageData.getCode());
@@ -183,7 +189,9 @@ public class PeerTaskExecutor {
         LOG.error("Server error found for {} from peer {}", taskClassName, peer.getLoggableId(), e);
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR, Optional.of(peer));
+                Optional.empty(),
+                PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR,
+                Optional.of(peer));
       }
     } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
