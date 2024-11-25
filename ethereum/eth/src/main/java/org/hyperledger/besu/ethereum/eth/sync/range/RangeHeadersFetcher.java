@@ -159,6 +159,10 @@ public class RangeHeadersFetcher {
                               "Unable to retrieve headers. Response code was "
                                   + taskResult.responseCode()));
                     }
+                    taskResult
+                        .ethPeer()
+                        .ifPresent(
+                            (p) -> p.chainState().update(taskResult.result().get().getLast()));
                     return CompletableFuture.completedFuture(taskResult.result().get());
                   });
     } else {

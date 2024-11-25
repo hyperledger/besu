@@ -25,8 +25,11 @@ import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
@@ -119,7 +122,27 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
     if (messageData == null) {
       throw new InvalidPeerTaskResponseException("Response MessageData is null");
     }
-    return BlockHeadersMessage.readFrom(messageData).getHeaders(protocolSchedule);
+    List<BlockHeader> blockHeaders =
+        BlockHeadersMessage.readFrom(messageData).getHeaders(protocolSchedule);
+    List<BlockHeader> result;
+
+    if (blockHeaders.isEmpty()) {
+      // Message contains no data - nothing to do
+      result = Collections.emptyList();
+    } else if (blockHeaders.size() > maxHeaders) {
+      // Too many headers - this isn't our response
+      result = Collections.emptyList();
+    } else if ((blockHash != null && blockHeaders.get(0).getHash().equals(blockHash))
+        || (blockHash == null && blockHeaders.get(0).getNumber() == blockNumber)) {
+      // This isn't our message - nothing to do
+      result = Collections.emptyList();
+    } else if (!isBlockHeadersMatchingRequest(blockHeaders)) {
+      result = Collections.emptyList();
+    } else {
+      result = blockHeaders;
+    }
+
+    return result;
   }
 
   @Override
@@ -133,6 +156,42 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   @Override
   public boolean isSuccess(final List<BlockHeader> result) {
     return !result.isEmpty();
+  }
+
+  @Override
+  public Optional<DisconnectMessage.DisconnectReason> shouldDisconnectPeer(
+      final List<BlockHeader> blockHeaders) {
+    if (blockHeaders.size() < 2) {
+      // 0 or 1 result returned, nothing we can do here
+      return Optional.empty();
+    }
+    if (skip > 0) {
+      // non-sequential results expected, nothing we can do here
+      return Optional.empty();
+    }
+
+    Optional<DisconnectMessage.DisconnectReason> result = Optional.empty();
+    // if headers are supposed to be sequential check if a chain is formed
+    for (int i = 0; i < blockHeaders.size() - 1; i++) {
+      BlockHeader parentHeader = null;
+      BlockHeader childHeader = null;
+      switch (direction) {
+        case FORWARD:
+          parentHeader = blockHeaders.get(i);
+          childHeader = blockHeaders.get(i + 1);
+          break;
+        case REVERSE:
+          childHeader = blockHeaders.get(i);
+          parentHeader = blockHeaders.get(i + 1);
+          break;
+      }
+      if (!parentHeader.getHash().equals(childHeader.getParentHash())) {
+        result =
+            Optional.of(
+                DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS);
+      }
+    }
+    return result;
   }
 
   @Override
@@ -163,5 +222,20 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   public enum Direction {
     FORWARD,
     REVERSE
+  }
+
+  private boolean isBlockHeadersMatchingRequest(final List<BlockHeader> blockHeaders) {
+    BlockHeader prevBlockHeader = blockHeaders.getFirst();
+    final int expectedDelta = direction == Direction.REVERSE ? -(skip + 1) : (skip + 1);
+    BlockHeader header = null;
+    for (int i = 1; i < blockHeaders.size(); i++) {
+      header = blockHeaders.get(i);
+      if (header.getNumber() != prevBlockHeader.getNumber() + expectedDelta) {
+        // Skip doesn't match, this isn't our data
+        return false;
+      }
+      prevBlockHeader = header;
+    }
+    return true;
   }
 }

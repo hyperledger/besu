@@ -137,6 +137,9 @@ public class PeerTaskExecutor {
               requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
 
           result = peerTask.processResponse(responseMessageData);
+          peerTask
+              .shouldDisconnectPeer(result)
+              .ifPresent((disconnectReason) -> peer.disconnect(disconnectReason));
         } finally {
           inflightRequestCountForThisTaskClass.decrementAndGet();
         }

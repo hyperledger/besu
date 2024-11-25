@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
@@ -25,9 +26,12 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPee
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -109,6 +113,43 @@ public class GetHeadersFromPeerTaskTest {
     Assertions.assertFalse(task.getPeerRequirementFilter().test(failForIncorrectProtocol));
     Assertions.assertFalse(task.getPeerRequirementFilter().test(failForShortChainHeight));
     Assertions.assertTrue(task.getPeerRequirementFilter().test(successfulCandidate));
+  }
+
+  @Test
+  public void testShouldDisconnectPeerForTooSmallResultSize() {
+    GetHeadersFromPeerTask task = new GetHeadersFromPeerTask(5, 1, 0, Direction.FORWARD, null);
+    Assertions.assertEquals(Optional.empty(), task.shouldDisconnectPeer(Collections.emptyList()));
+  }
+
+  @Test
+  public void testShouldDisconnectPeerForNonZeroSkip() {
+    GetHeadersFromPeerTask task = new GetHeadersFromPeerTask(5, 1, 1, Direction.FORWARD, null);
+
+    BlockHeader header1 = Mockito.mock(BlockHeader.class);
+    BlockHeader header2 = Mockito.mock(BlockHeader.class);
+    BlockHeader header3 = Mockito.mock(BlockHeader.class);
+
+    Assertions.assertEquals(
+        Optional.empty(), task.shouldDisconnectPeer(List.of(header1, header2, header3)));
+  }
+
+  @Test
+  public void testShouldDisconnectPeerForNonSequentialHeaders() {
+    GetHeadersFromPeerTask task = new GetHeadersFromPeerTask(5, 1, 0, Direction.FORWARD, null);
+
+    Hash block1Hash = Hash.fromHexStringLenient("01");
+    Hash block2Hash = Hash.fromHexStringLenient("02");
+    BlockHeader header1 = Mockito.mock(BlockHeader.class);
+    Mockito.when(header1.getHash()).thenReturn(block1Hash);
+    BlockHeader header2 = Mockito.mock(BlockHeader.class);
+    Mockito.when(header2.getHash()).thenReturn(block2Hash);
+    Mockito.when(header2.getParentHash()).thenReturn(block1Hash);
+    BlockHeader header3 = Mockito.mock(BlockHeader.class);
+    Mockito.when(header3.getParentHash()).thenReturn(Hash.ZERO);
+
+    Assertions.assertEquals(
+        Optional.of(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS),
+        task.shouldDisconnectPeer(List.of(header1, header2, header3)));
   }
 
   private EthPeer mockPeer(final String protocol, final long chainHeight) {

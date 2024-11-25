@@ -36,6 +36,7 @@ import org.hyperledger.besu.util.FutureUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -127,6 +128,16 @@ public class DownloadHeadersStep
                         new RuntimeException("Unable to download headers for range " + range));
                   }
                   LOG.info("Successfully downloaded headers");
+                  final AtomicReference<BlockHeader> highestBlockHeader =
+                      new AtomicReference<>(taskResult.result().get().getFirst());
+                  for (BlockHeader blockHeader : taskResult.result().get()) {
+                    if (highestBlockHeader.get().getNumber() < blockHeader.getNumber()) {
+                      highestBlockHeader.set(blockHeader);
+                    }
+                  }
+                  taskResult
+                      .ethPeer()
+                      .ifPresent((peer) -> peer.chainState().update(highestBlockHeader.get()));
                   return CompletableFuture.completedFuture(taskResult.result().get());
                 });
       } else {

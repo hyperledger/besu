@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Optional;
@@ -73,11 +74,47 @@ public class PeerTaskExecutorTest {
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenReturn(responseMessageData);
     Mockito.when(peerTask.processResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.shouldDisconnectPeer(responseObject)).thenReturn(Optional.empty());
     Mockito.when(peerTask.isSuccess(responseObject)).thenReturn(true);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
 
     Mockito.verify(ethPeer).recordUsefulResponse();
+
+    Assertions.assertNotNull(result);
+    Assertions.assertTrue(result.result().isPresent());
+    Assertions.assertSame(responseObject, result.result().get());
+    Assertions.assertEquals(PeerTaskExecutorResponseCode.SUCCESS, result.responseCode());
+  }
+
+  @Test
+  public void testExecuteAgainstPeerWithNoRetriesAndSuccessfulFlowButPeerShouldBeDisconnected()
+      throws PeerConnection.PeerNotConnected,
+          ExecutionException,
+          InterruptedException,
+          TimeoutException,
+          InvalidPeerTaskResponseException {
+
+    Object responseObject = new Object();
+
+    Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
+    Mockito.when(peerTask.getRetriesWithSamePeer()).thenReturn(0);
+    Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
+    Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
+    Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
+        .thenReturn(responseMessageData);
+    Mockito.when(peerTask.processResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.shouldDisconnectPeer(responseObject))
+        .thenReturn(
+            Optional.of(
+                DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS));
+    Mockito.when(peerTask.isSuccess(responseObject)).thenReturn(true);
+
+    PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
+
+    Mockito.verify(ethPeer).recordUsefulResponse();
+    Mockito.verify(ethPeer)
+        .disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS);
 
     Assertions.assertNotNull(result);
     Assertions.assertTrue(result.result().isPresent());
@@ -102,6 +139,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenReturn(responseMessageData);
     Mockito.when(peerTask.processResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.shouldDisconnectPeer(responseObject)).thenReturn(Optional.empty());
     Mockito.when(peerTask.isSuccess(responseObject)).thenReturn(false);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
@@ -131,6 +169,7 @@ public class PeerTaskExecutorTest {
         .thenReturn(responseMessageData);
     Mockito.when(requestMessageData.getCode()).thenReturn(requestMessageDataCode);
     Mockito.when(peerTask.processResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.shouldDisconnectPeer(responseObject)).thenReturn(Optional.empty());
     Mockito.when(peerTask.isSuccess(responseObject)).thenReturn(true);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
@@ -237,6 +276,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenReturn(responseMessageData);
     Mockito.when(peerTask.processResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.shouldDisconnectPeer(responseObject)).thenReturn(Optional.empty());
     Mockito.when(peerTask.isSuccess(responseObject)).thenReturn(true);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
@@ -275,6 +315,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, peer2))
         .thenReturn(responseMessageData);
     Mockito.when(peerTask.processResponse(responseMessageData)).thenReturn(responseObject);
+    Mockito.when(peerTask.shouldDisconnectPeer(responseObject)).thenReturn(Optional.empty());
     Mockito.when(peerTask.isSuccess(responseObject)).thenReturn(true);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.execute(peerTask);
