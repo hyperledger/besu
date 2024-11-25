@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.proof;
 
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.Proof;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,14 +29,14 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class WorldStateProof {
 
-  private final StateTrieAccountValue stateTrieAccountValue;
+  private final PmtStateTrieAccountValue stateTrieAccountValue;
 
   private final Proof<Bytes> accountProof;
 
   private final Map<UInt256, Proof<Bytes>> storageProofs;
 
   public WorldStateProof(
-      final StateTrieAccountValue stateTrieAccountValue,
+      final PmtStateTrieAccountValue stateTrieAccountValue,
       final Proof<Bytes> accountProof,
       final SortedMap<UInt256, Proof<Bytes>> storageProofs) {
     this.stateTrieAccountValue = stateTrieAccountValue;
@@ -44,7 +44,7 @@ public class WorldStateProof {
     this.storageProofs = storageProofs;
   }
 
-  public StateTrieAccountValue getStateTrieAccountValue() {
+  public PmtStateTrieAccountValue getStateTrieAccountValue() {
     return stateTrieAccountValue;
   }
 

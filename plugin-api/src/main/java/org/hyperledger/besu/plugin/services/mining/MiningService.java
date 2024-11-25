@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,21 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
+package org.hyperledger.besu.plugin.services.mining;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.plugin.services.BesuService;
 
-@Deprecated(since = "24.11.0")
-public class JsonRpcErrorResponseException extends RuntimeException {
+/** The MiningService interface provides methods to start and stop the mining process. */
+public interface MiningService extends BesuService {
 
-  private final RpcErrorType jsonRpcError;
+  /** Starts the mining process. */
+  void start();
 
-  public JsonRpcErrorResponseException(final RpcErrorType error) {
-    super();
-    this.jsonRpcError = error;
-  }
-
-  public RpcErrorType getJsonRpcError() {
-    return jsonRpcError;
-  }
+  /** Stops the mining process. */
+  void stop();
 }
