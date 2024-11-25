@@ -14,12 +14,11 @@
  */
 package org.hyperledger.besu.controller;
 
-import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueBlockChoiceRule;
-
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueForksSchedulesFactory;
+import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueBlockScheduler;
@@ -167,7 +166,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
                 blockchain, epochManager, blockInterface),
             epochManager,
             blockInterface);
-    installCliqueBlockChoiceRule(blockchain, cliqueContext);
+    CliqueHelpers.setCliqueContext(cliqueContext);
+    CliqueHelpers.installCliqueBlockChoiceRule(blockchain, cliqueContext);
     return cliqueContext;
   }
 

@@ -43,9 +43,13 @@ public class MigratingProtocolContextTest {
 
     final ForksSchedule<ConsensusContext> contextSchedule =
         new ForksSchedule<>(List.of(new ForkSpec<>(0L, context1), new ForkSpec<>(10L, context2)));
+
     final MigratingProtocolContext migratingProtocolContext =
         new MigratingProtocolContext(
-            blockchain, worldStateArchive, contextSchedule, new BadBlockManager());
+            blockchain,
+            worldStateArchive,
+            new MigratingConsensusContext(contextSchedule),
+            new BadBlockManager());
 
     assertThat(migratingProtocolContext.getConsensusContext(ConsensusContext.class))
         .isSameAs(context1);
