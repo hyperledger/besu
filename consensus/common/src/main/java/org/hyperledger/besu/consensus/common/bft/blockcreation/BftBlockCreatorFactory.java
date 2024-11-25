@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -139,15 +138,6 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    */
   public Wei getMinTransactionGasPrice() {
     return miningConfiguration.getMinTransactionGasPrice();
-  }
-
-  /**
-   * Gets target gas limit.
-   *
-   * @return the target gas limit
-   */
-  public OptionalLong getTargetGasLimit() {
-    return miningConfiguration.getTargetGasLimit();
   }
 
   /**

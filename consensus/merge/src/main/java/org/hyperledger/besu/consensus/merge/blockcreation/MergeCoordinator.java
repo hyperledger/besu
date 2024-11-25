@@ -53,7 +53,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -230,11 +229,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public OptionalLong getTargetGasLimit() {
-    return miningConfiguration.getTargetGasLimit();
-  }
-
-  @Override
   public Optional<Block> createBlock(
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
@@ -244,15 +238,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp) {
-    throw new UnsupportedOperationException("random is required");
-  }
-
-  @Override
-  public Optional<Block> createBlock(
-      final BlockHeader parentHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final long timestamp) {
     throw new UnsupportedOperationException("random is required");
   }
 

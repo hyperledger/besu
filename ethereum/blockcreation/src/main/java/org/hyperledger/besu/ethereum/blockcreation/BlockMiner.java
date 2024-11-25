@@ -124,24 +124,6 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
     return blockCreator.createBlock(Optional.empty(), Optional.empty(), timestamp, parentHeader);
   }
 
-  /**
-   * Create a block with the given transactions, ommers and timestamp.
-   *
-   * @param parentHeader The header of the parent of the block to be produced
-   * @param transactions The list of transactions which may be included.
-   * @param ommers The list of ommers to include.
-   * @param timestamp unix timestamp of the new block.
-   * @return the newly created block.
-   */
-  public BlockCreationResult createBlock(
-      final BlockHeader parentHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final long timestamp) {
-    final BlockCreator blockCreator = this.blockCreatorFactory.apply(parentHeader);
-    return blockCreator.createBlock(transactions, ommers, timestamp, parentHeader);
-  }
-
   protected boolean shouldImportBlock(final Block block) throws InterruptedException {
     return true;
   }
