@@ -38,6 +38,16 @@ public class VerkleStateTrieAccountValue extends AbstractStateTrieAccountValue
   }
 
   @Override
+  public Hash getStorageRoot() {
+    return super.getStorageRoot();
+  }
+
+  /**
+   * The size of the EVM bytecode associated with this account.
+   *
+   * @return the size of the account code (which may be {@link Optional#empty()}).
+   */
+  @Override
   public Optional<Long> getCodeSize() {
     return codeSize;
   }
@@ -66,7 +76,6 @@ public class VerkleStateTrieAccountValue extends AbstractStateTrieAccountValue
     out.writeLongScalar(nonce);
     out.writeBytes(codeHash);
     codeSize.ifPresent(out::writeLongScalar);
-    System.out.println("write code size " + codeSize);
     out.endList();
   }
 

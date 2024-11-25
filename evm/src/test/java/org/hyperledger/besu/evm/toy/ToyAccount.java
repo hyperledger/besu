@@ -135,8 +135,8 @@ public class ToyAccount implements MutableAccount {
   }
 
   @Override
-  public Optional<Integer> getCodeSize() {
-    return Optional.of(this.code == null ? 0 : this.code.size());
+  public Optional<Long> getCodeSize() {
+    return Optional.of((long) (this.code == null ? 0 : this.code.size()));
   }
 
   @Override

@@ -154,18 +154,20 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   public synchronized Optional<MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash) {
 
-    /*Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
-    if(blockHeader.isPresent()){
-      Optional<BlockHeader> parentHeader = blockchain.getBlockHeader(blockHeader.get().getParentHash());
-      if(parentHeader.isPresent()){
-        Optional<MutableWorldState> worldState = rollMutableStateToBlockHash(persistedState, parentHeader.get().getBlockHash());
-        if(worldState.isEmpty()){
-          System.out.println("failed rollback to "+parentHeader.get().getNumber());
+    Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
+    if (blockHeader.isPresent()) {
+      Optional<BlockHeader> parentHeader =
+          blockchain.getBlockHeader(blockHeader.get().getParentHash());
+      if (parentHeader.isPresent()) {
+        Optional<MutableWorldState> worldState =
+            rollMutableStateToBlockHash(persistedState, parentHeader.get().getBlockHash());
+        if (worldState.isEmpty()) {
+          System.out.println("failed rollback to " + parentHeader.get().getNumber());
           throw new RuntimeException("invalid trielog");
         }
-        System.out.println("rollback to "+parentHeader.get().getNumber());
+        System.out.println("rollback to " + parentHeader.get().getNumber());
       }
-    }*/
+    }
     return rollMutableStateToBlockHash(persistedState, blockHash);
   }
 
@@ -189,7 +191,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
           // roll back from persisted to even with target
           Hash persistedBlockHash = persistedHeader.getBlockHash();
           while (persistedHeader.getNumber() > targetHeader.getNumber()) {
-            LOG.info("Rollback {}", persistedBlockHash);
+            LOG.debug("Rollback {}", persistedBlockHash);
             rollBacks.add(trieLogManager.getTrieLogLayer(persistedBlockHash).get());
             persistedHeader = blockchain.getBlockHeader(persistedHeader.getParentHash()).get();
             persistedBlockHash = persistedHeader.getBlockHash();
@@ -197,7 +199,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
           // roll forward to target
           Hash targetBlockHash = targetHeader.getBlockHash();
           while (persistedHeader.getNumber() < targetHeader.getNumber()) {
-            LOG.info("Rollforward {}", targetBlockHash);
+            LOG.debug("Rollforward {}", targetBlockHash);
             rollForwards.add(trieLogManager.getTrieLogLayer(targetBlockHash).get());
             targetHeader = blockchain.getBlockHeader(targetHeader.getParentHash()).get();
             targetBlockHash = targetHeader.getBlockHash();
@@ -223,19 +225,19 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
             (DiffBasedWorldStateUpdateAccumulator<?>) mutableState.updater();
         try {
           for (final TrieLog rollBack : rollBacks) {
-            LOG.info("Attempting Rollback of {}", rollBack.getBlockHash());
+            LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
             diffBasedUpdater.rollBack(rollBack);
           }
           for (int i = rollForwards.size() - 1; i >= 0; i--) {
             final var forward = rollForwards.get(i);
-            LOG.info("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
+            LOG.debug("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
             diffBasedUpdater.rollForward(forward);
           }
           diffBasedUpdater.commit();
 
           mutableState.persist(blockchain.getBlockHeader(blockHash).get());
 
-          LOG.info(
+          LOG.debug(
               "Archive rolling finished, {} now at {}",
               mutableState.getWorldStateStorage().getClass().getSimpleName(),
               blockHash);

@@ -65,11 +65,6 @@ public interface DiffBasedSubStorageConfiguration {
             .fullFlatDbEnabled(false)
             .build();
 
-    DiffBasedSubStorageConfiguration.DiffBasedUnstable STEM_MODE =
-        ImmutableDiffBasedSubStorageConfiguration.DiffBasedUnstable.builder()
-            .stemFlatDbEnabled(true)
-            .build();
-
     DiffBasedSubStorageConfiguration.DiffBasedUnstable DISABLED =
         ImmutableDiffBasedSubStorageConfiguration.DiffBasedUnstable.builder()
             .fullFlatDbEnabled(false)
@@ -78,7 +73,6 @@ public interface DiffBasedSubStorageConfiguration {
             .build();
 
     boolean DEFAULT_FULL_FLAT_DB_ENABLED = true;
-    boolean DEFAULT_STEM_FLAT_DB_ENABLED = false;
     boolean DEFAULT_CODE_USING_CODE_HASH_ENABLED = true;
 
     boolean DEFAULT_PARALLEL_TRX_ENABLED = false;
@@ -86,11 +80,6 @@ public interface DiffBasedSubStorageConfiguration {
     @Value.Default
     default boolean getFullFlatDbEnabled() {
       return DEFAULT_FULL_FLAT_DB_ENABLED;
-    }
-
-    @Value.Default
-    default boolean getStemFlatDbEnabled() {
-      return DEFAULT_STEM_FLAT_DB_ENABLED;
     }
 
     @Value.Default

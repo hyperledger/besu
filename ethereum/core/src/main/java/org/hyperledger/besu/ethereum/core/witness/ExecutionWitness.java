@@ -14,22 +14,31 @@
  */
 package org.hyperledger.besu.ethereum.core.witness;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+
+import java.util.Objects;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class ExecutionWitness {
 
   private final StateDiff stateDiff;
   private final VerkleProof verkleProof;
+  private final Hash parentStateRoot;
 
-  // No-op contructor for testing
+  @VisibleForTesting
   public ExecutionWitness() {
     this.stateDiff = null;
     this.verkleProof = null;
+    this.parentStateRoot = null;
   }
 
-  public ExecutionWitness(final StateDiff stateDiff, final VerkleProof verkleProof) {
+  public ExecutionWitness(
+      final StateDiff stateDiff, final VerkleProof verkleProof, final Hash parentStateRoot) {
     this.stateDiff = stateDiff;
     this.verkleProof = verkleProof;
+    this.parentStateRoot = parentStateRoot;
   }
 
   @SuppressWarnings("unused")
@@ -39,7 +48,14 @@ public class ExecutionWitness {
 
   @Override
   public String toString() {
-    return "ExecutionWitness{" + "stateDiff=" + stateDiff + ", verkleProof=" + verkleProof + '}';
+    return "ExecutionWitness{"
+        + "stateDiff="
+        + stateDiff
+        + ", verkleProof="
+        + verkleProof
+        + ", parentStateRoot="
+        + parentStateRoot
+        + '}';
   }
 
   public StateDiff getStateDiff() {
@@ -50,21 +66,22 @@ public class ExecutionWitness {
     return verkleProof;
   }
 
+  public Hash getParentStateRoot() {
+    return parentStateRoot;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
-    final ExecutionWitness that = (ExecutionWitness) o;
-
-    if (!stateDiff.equals(that.stateDiff)) return false;
-    return verkleProof.equals(that.verkleProof);
+    ExecutionWitness that = (ExecutionWitness) o;
+    return Objects.equals(stateDiff, that.stateDiff)
+        && Objects.equals(verkleProof, that.verkleProof)
+        && Objects.equals(parentStateRoot, that.parentStateRoot);
   }
 
   @Override
   public int hashCode() {
-    int result = stateDiff.hashCode();
-    result = 31 * result + verkleProof.hashCode();
-    return result;
+    return Objects.hash(stateDiff, verkleProof, parentStateRoot);
   }
 }

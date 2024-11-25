@@ -33,7 +33,6 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-@SuppressWarnings("unchecked")
 public class VerkleWorldStateUpdateAccumulator
     extends DiffBasedWorldStateUpdateAccumulator<VerkleAccount> {
 
@@ -76,7 +75,6 @@ public class VerkleWorldStateUpdateAccumulator
       final Address address,
       final AccountValue stateTrieAccount,
       final boolean mutable) {
-    System.out.println("create account " + stateTrieAccount.getClass());
     return new VerkleAccount(context, address, stateTrieAccount, mutable);
   }
 

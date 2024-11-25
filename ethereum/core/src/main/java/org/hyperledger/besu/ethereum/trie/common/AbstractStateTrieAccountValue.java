@@ -68,11 +68,21 @@ public abstract class AbstractStateTrieAccountValue implements AccountValue {
     return codeHash;
   }
 
+  /**
+   * The hash of the root of the storage trie associated with this account.
+   *
+   * @return the hash of the root node of the storage trie.
+   */
   @Override
   public Hash getStorageRoot() {
     return Hash.EMPTY_TRIE_HASH;
   }
 
+  /**
+   * The size of the EVM bytecode associated with this account.
+   *
+   * @return the size of the account code (which may be {@link Optional#empty()}).
+   */
   @Override
   public Optional<Long> getCodeSize() {
     return Optional.empty();

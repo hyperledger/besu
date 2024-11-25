@@ -32,7 +32,7 @@ public class VerkleFlatDbStrategyProvider extends FlatDbStrategyProvider {
   protected FlatDbMode getRequestedFlatDbMode(
       final DataStorageConfiguration dataStorageConfiguration) {
     return dataStorageConfiguration
-            .getDiffBasedSubStorageConfiguration()
+            .getVerkleSubStorageConfiguration()
             .getUnstable()
             .getStemFlatDbEnabled()
         ? FlatDbMode.STEM

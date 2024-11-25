@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.cli.options.storage;
 
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DiffBasedUnstable.DEFAULT_STEM_FLAT_DB_ENABLED;
+import static org.hyperledger.besu.ethereum.worldstate.VerkleSubStorageConfiguration.VerkleUnstable.DEFAULT_STEM_FLAT_DB_ENABLED;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
-import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableVerkleSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.VerkleSubStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -28,7 +28,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 /** The Data storage CLI options. */
-public class VerkleSubStorageOptions implements CLIOptions<DiffBasedSubStorageConfiguration> {
+public class VerkleSubStorageOptions implements CLIOptions<VerkleSubStorageConfiguration> {
 
   @CommandLine.ArgGroup(validate = false)
   private final VerkleSubStorageOptions.Unstable unstableOptions = new Unstable();
@@ -87,7 +87,7 @@ public class VerkleSubStorageOptions implements CLIOptions<DiffBasedSubStorageCo
   }
 
   @Override
-  public final DiffBasedSubStorageConfiguration toDomainObject() {
+  public final VerkleSubStorageConfiguration toDomainObject() {
     return ImmutableVerkleSubStorageConfiguration.builder()
         .unstable(
             ImmutableVerkleSubStorageConfiguration.VerkleUnstable.builder()

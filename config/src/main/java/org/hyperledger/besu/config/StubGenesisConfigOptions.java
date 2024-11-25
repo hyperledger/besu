@@ -51,6 +51,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private OptionalLong cancunEOFTime = OptionalLong.empty();
   private OptionalLong pragueTime = OptionalLong.empty();
   private OptionalLong osakaTime = OptionalLong.empty();
+  private OptionalLong verkleTime = OptionalLong.empty();
   private OptionalLong futureEipsTime = OptionalLong.empty();
   private OptionalLong experimentalEipsTime = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
@@ -254,6 +255,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public OptionalLong getOsakaTime() {
     return osakaTime;
+  }
+
+  @Override
+  public OptionalLong getVerkleTime() {
+    return verkleTime;
   }
 
   @Override
@@ -678,6 +684,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions osakaTime(final long timestamp) {
     osakaTime = OptionalLong.of(timestamp);
+    return this;
+  }
+
+  /**
+   * Verkle time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions verkleTime(final long timestamp) {
+    verkleTime = OptionalLong.of(timestamp);
     return this;
   }
 

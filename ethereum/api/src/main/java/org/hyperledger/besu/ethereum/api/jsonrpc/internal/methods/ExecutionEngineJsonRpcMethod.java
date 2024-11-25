@@ -101,7 +101,6 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
                                 .setCause(t)
                                 .log();
                           } else {
-                            t.printStackTrace(System.out);
                             LOG.atError()
                                 .setMessage("failed to exec consensus method {}, error: {}")
                                 .addArgument(this.getName())
