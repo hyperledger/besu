@@ -135,8 +135,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(referenceHeader)),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                respondingEthPeer.getEthPeer()));
-
+                Optional.of(respondingEthPeer.getEthPeer())));
     final EthTask<List<BlockHeader>> task =
         DownloadHeaderSequenceTask.endingAtHeader(
             protocolSchedule,
@@ -219,7 +218,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
                         referenceHeader,
                         blockchain.getBlockHeader(referenceHeader.getNumber() - 1).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                respondingPeer.getEthPeer()));
+                Optional.of(respondingPeer.getEthPeer())));
 
     final EthTask<List<BlockHeader>> task =
         DownloadHeaderSequenceTask.endingAtHeader(
@@ -311,7 +310,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
               return new PeerTaskExecutorResult<List<BlockHeader>>(
                   Optional.of(headers),
                   PeerTaskExecutorResponseCode.SUCCESS,
-                  respondingPeer.getEthPeer());
+                  Optional.of(respondingPeer.getEthPeer()));
             });
 
     // Execute the task

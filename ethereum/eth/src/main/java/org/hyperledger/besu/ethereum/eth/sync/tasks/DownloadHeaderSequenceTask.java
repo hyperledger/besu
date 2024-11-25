@@ -255,7 +255,9 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
 
   private CompletableFuture<List<BlockHeader>> processHeadersUsingPeerTask(
       final PeerTaskExecutorResult<List<BlockHeader>> headersResult) {
-    return processHeaders(headersResult.result().get(), headersResult.ethPeer());
+      final List<BlockHeader> blockHeaders = headersResult.result().orElseThrow(() -> new RuntimeException("Expected blockHeaders in PeerTaskExecutorResult"));
+      final EthPeer ethPeer = headersResult.ethPeer().orElseThrow(() -> new RuntimeException("Expected a peer in PeerTaskExecutorResult"));
+    return processHeaders(blockHeaders, ethPeer);
   }
 
   private CompletableFuture<List<BlockHeader>> processHeaders(

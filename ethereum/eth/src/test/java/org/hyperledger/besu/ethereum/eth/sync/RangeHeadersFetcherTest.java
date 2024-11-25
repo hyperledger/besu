@@ -79,7 +79,7 @@ public class RangeHeadersFetcherTest {
           }
         }
         return new PeerTaskExecutorResult<List<BlockHeader>>(
-            Optional.of(resultList), PeerTaskExecutorResponseCode.SUCCESS, null);
+            Optional.of(resultList), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
       };
 
   private EthProtocolManager ethProtocolManager;

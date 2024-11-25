@@ -144,13 +144,13 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
     }
 
     CompletableFuture<List<BlockHeader>> returnValue = new CompletableFuture<List<BlockHeader>>();
-    if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
-      returnValue.completeExceptionally(new PeerDisconnectedException(taskResult.ethPeer()));
+    if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED && taskResult.ethPeer().isPresent()) {
+      returnValue.completeExceptionally(new PeerDisconnectedException(taskResult.ethPeer().get()));
     } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
         || taskResult.result().isEmpty()) {
       String logMessage =
           "Peer "
-              + taskResult.ethPeer().getLoggableId()
+              + taskResult.ethPeer().map(EthPeer::getLoggableId).orElse("UNKNOWN")
               + " failed to successfully return requested block headers. Response code was "
               + taskResult.responseCode();
       returnValue.completeExceptionally(new RuntimeException(logMessage));

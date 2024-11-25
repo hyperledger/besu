@@ -19,4 +19,4 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import java.util.Optional;
 
 public record PeerTaskExecutorResult<T>(
-    Optional<T> result, PeerTaskExecutorResponseCode responseCode, EthPeer ethPeer) {}
+    Optional<T> result, PeerTaskExecutorResponseCode responseCode, Optional<EthPeer> ethPeer) {}

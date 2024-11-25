@@ -77,6 +77,6 @@ public class GetHeadersFromPeerTaskExecutorAnswer
     }
 
     return new PeerTaskExecutorResult<>(
-        Optional.of(getHeadersFromPeerTaskResult), PeerTaskExecutorResponseCode.SUCCESS, null);
+        Optional.of(getHeadersFromPeerTaskResult), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
   }
 }

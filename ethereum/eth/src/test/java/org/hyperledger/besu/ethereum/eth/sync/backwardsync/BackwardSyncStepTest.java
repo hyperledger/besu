@@ -335,11 +335,11 @@ public class BackwardSyncStepTest {
     when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class)))
         .thenReturn(
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.SUCCESS, null));
+                Optional.empty(), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty()));
     when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
         .thenReturn(
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.SUCCESS, null));
+                Optional.empty(), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty()));
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 

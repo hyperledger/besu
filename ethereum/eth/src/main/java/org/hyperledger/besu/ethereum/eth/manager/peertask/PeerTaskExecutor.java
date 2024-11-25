@@ -101,7 +101,7 @@ public class PeerTaskExecutor {
       if (peer.isEmpty()) {
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE, null);
+                Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE, Optional.empty());
         continue;
       }
       usedEthPeers.add(peer.get());
@@ -145,7 +145,7 @@ public class PeerTaskExecutor {
           peer.recordUsefulResponse();
           executorResult =
               new PeerTaskExecutorResult<>(
-                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS, peer);
+                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS, Optional.of(peer));
         } else {
           // At this point, the result is most likely empty. Technically, this is a valid result, so
           // we don't penalise the peer, but it's also a useless result, so we return
@@ -154,20 +154,20 @@ public class PeerTaskExecutor {
               "Empty response found for {} from peer {}", taskClassName, peer.getLoggableId());
           executorResult =
               new PeerTaskExecutorResult<>(
-                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.INVALID_RESPONSE, peer);
+                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.INVALID_RESPONSE, Optional.of(peer));
         }
 
       } catch (PeerNotConnected e) {
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.PEER_DISCONNECTED, peer);
+                Optional.empty(), PeerTaskExecutorResponseCode.PEER_DISCONNECTED, Optional.of(peer));
 
       } catch (InterruptedException | TimeoutException e) {
         peer.recordRequestTimeout(requestMessageData.getCode());
         timeoutCounter.labels(taskClassName).inc();
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, peer);
+                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, Optional.of(peer));
 
       } catch (InvalidPeerTaskResponseException e) {
         peer.recordUselessResponse(e.getMessage());
@@ -176,14 +176,14 @@ public class PeerTaskExecutor {
             "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId(), e);
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE, peer);
+                Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE, Optional.of(peer));
 
       } catch (Exception e) {
         internalExceptionCounter.labels(taskClassName).inc();
         LOG.error("Server error found for {} from peer {}", taskClassName, peer.getLoggableId(), e);
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR, peer);
+                Optional.empty(), PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR, Optional.of(peer));
       }
     } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS

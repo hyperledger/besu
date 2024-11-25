@@ -157,7 +157,7 @@ public class CheckPointSyncChainDownloaderTest {
               return new PeerTaskExecutorResult<>(
                   Optional.of(getReceiptsFromPeerTaskResult),
                   PeerTaskExecutorResponseCode.SUCCESS,
-                  null);
+                      Optional.empty());
             });
 
     final Answer<PeerTaskExecutorResult<List<BlockHeader>>> getHeadersAnswer =
