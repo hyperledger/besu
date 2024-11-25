@@ -15,6 +15,7 @@
 package org.hyperledger.besu.metrics.prometheus;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 
 import org.hyperledger.besu.metrics.MetricsService;
 
@@ -157,7 +158,7 @@ public class MetricsHttpService implements MetricsService {
     public void handle(final HttpExchange exchange) throws IOException {
       if (!exchange.getRequestURI().getPath().equals("/")) {
         try {
-          exchange.sendResponseHeaders(404, -1);
+          exchange.sendResponseHeaders(HTTP_NOT_FOUND, -1);
         } finally {
           exchange.close();
         }

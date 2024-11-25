@@ -123,7 +123,7 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
    */
   public static LabelledMetric<OperationTimer> getOperationTimerLabelledMetric(
       final int labelCount) {
-      return new LabelCountingNoOpMetric<>(labelCount, NO_OP_OPERATION_TIMER);
+    return new LabelCountingNoOpMetric<>(labelCount, NO_OP_OPERATION_TIMER);
   }
 
   @Override
@@ -162,7 +162,7 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
    * @return the labelled gauge
    */
   public static LabelledSuppliedMetric getLabelledSuppliedMetric(final int labelCount) {
-      return new LabelledSuppliedNoOpMetric(labelCount);
+    return new LabelledSuppliedNoOpMetric(labelCount);
   }
 
   /**
@@ -172,7 +172,7 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
    * @return the labelled gauge
    */
   public static LabelledSuppliedSummary getLabelledSuppliedSummary(final int labelCount) {
-      return new LabelledSuppliedNoOpMetric(labelCount);
+    return new LabelledSuppliedNoOpMetric(labelCount);
   }
 
   @Override

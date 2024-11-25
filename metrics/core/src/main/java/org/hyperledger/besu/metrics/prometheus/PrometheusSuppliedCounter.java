@@ -26,17 +26,13 @@ import io.prometheus.metrics.model.registry.Collector;
 import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
 
-/** The Prometheus supplied counter. */
-public class PrometheusSuppliedCounter extends AbstractPrometheusSuppliedValueCollector {
+/**
+ * A Prometheus supplied counter collector. A supplied counter collector is one which actual value
+ * is kept outside the metric system, for example in an external library or to calculate the value
+ * only on demand when a metric scrape occurs.
+ */
+class PrometheusSuppliedCounter extends AbstractPrometheusSuppliedValueCollector {
 
-  /**
-   * Instantiates a new labelled Prometheus supplied counter.
-   *
-   * @param category the {@link MetricCategory} this supplied counter is assigned to
-   * @param name the metric name
-   * @param help the help
-   * @param labelNames the label names
-   */
   public PrometheusSuppliedCounter(
       final MetricCategory category,
       final String name,

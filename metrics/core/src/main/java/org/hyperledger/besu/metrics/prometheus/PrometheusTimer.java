@@ -24,6 +24,11 @@ import io.prometheus.metrics.core.datapoints.DistributionDataPoint;
 import io.prometheus.metrics.core.metrics.Summary;
 import io.prometheus.metrics.model.registry.Collector;
 
+/**
+ * An implementation of Besu timer backed by a Prometheus summary. The summary provides a total
+ * count of durations and a sum of all observed durations, it calculates configurable quantiles over
+ * a sliding time window.
+ */
 class PrometheusTimer extends AbstractPrometheusSummary implements LabelledMetric<OperationTimer> {
   private final Map<Double, Double> quantiles;
 

@@ -27,19 +27,15 @@ import io.prometheus.metrics.model.registry.Collector;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
 
-/** The Prometheus gauge. */
+/**
+ * A Prometheus supplied gauge collector. A supplied gauge collector is one which actual value is
+ * kept outside the metric system, for example in an external library or to calculate the value only
+ * on demand when a metric scrape occurs.
+ */
 @SuppressWarnings("removal")
-public class PrometheusSuppliedGauge extends AbstractPrometheusSuppliedValueCollector
+class PrometheusSuppliedGauge extends AbstractPrometheusSuppliedValueCollector
     implements LabelledGauge {
 
-  /**
-   * Instantiates a new labelled Prometheus gauge.
-   *
-   * @param category the {@link MetricCategory} this gauge is assigned to
-   * @param name the metric name
-   * @param help the help
-   * @param labelNames the label names
-   */
   public PrometheusSuppliedGauge(
       final MetricCategory category,
       final String name,

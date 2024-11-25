@@ -28,6 +28,11 @@ import io.prometheus.metrics.model.registry.Collector;
 import io.prometheus.metrics.model.snapshots.Quantile;
 import io.prometheus.metrics.model.snapshots.Quantiles;
 
+/**
+ * A Prometheus supplied summary collector. A supplied summary collector is one which actual value
+ * is kept outside the metric system, for example in an external library or to calculate the value
+ * only on demand when a metric scrape occurs.
+ */
 class PrometheusSuppliedSummary extends AbstractPrometheusSummary
     implements LabelledSuppliedSummary {
   /** Map label values with the collector callback data */
