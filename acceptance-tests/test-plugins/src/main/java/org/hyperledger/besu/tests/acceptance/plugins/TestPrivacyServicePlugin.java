@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
-import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.tests.acceptance.plugins.privacy.TestPrivacyGroupGenesisProvider;
@@ -32,7 +32,7 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(TestPrivacyServicePlugin.class);
 
   PrivacyPluginService pluginService;
-  BesuContext context;
+  ServiceManager context;
 
   TestPrivacyGroupGenesisProvider privacyGroupGenesisProvider =
       new TestPrivacyGroupGenesisProvider();
@@ -40,7 +40,7 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
       new TestSigningPrivateMarkerTransactionFactory();
 
   @Override
-  public void register(final BesuContext context) {
+  public void register(final ServiceManager context) {
     this.context = context;
 
     context

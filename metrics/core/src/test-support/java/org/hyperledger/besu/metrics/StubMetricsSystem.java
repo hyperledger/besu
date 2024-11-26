@@ -19,8 +19,8 @@ import static java.util.Arrays.asList;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
@@ -50,12 +50,21 @@ public class StubMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public LabelledGauge createLabelledGauge(
+  public LabelledSuppliedMetric createLabelledSuppliedCounter(
       final MetricCategory category,
       final String name,
       final String help,
       final String... labelNames) {
-    return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
+    return NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
+  }
+
+  @Override
+  public LabelledSuppliedMetric createLabelledSuppliedGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    return NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
   }
 
   public long getCounterValue(final String name, final String... labels) {
