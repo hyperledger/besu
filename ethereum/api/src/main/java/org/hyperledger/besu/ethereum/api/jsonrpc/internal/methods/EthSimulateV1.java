@@ -27,8 +27,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionHashResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -36,22 +38,21 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.transaction.BlockSimulationResult;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
   private final BlockSimulator blockSimulator;
-  private final BlockResultFactory blockResultFactory;
 
   public EthSimulateV1(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final long rpcGasCap,
-      final MiningConfiguration miningConfiguration,
-      final BlockResultFactory blockResultFactory) {
+      final MiningConfiguration miningConfiguration) {
     super(blockchainQueries);
-    this.blockResultFactory = blockResultFactory;
 
     this.blockSimulator =
         new BlockSimulator(
@@ -98,10 +99,7 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
 
       var response =
           blockSimulator.process(header, parameter.getBlockStateCalls()).stream()
-              .map(
-                  blockSimulationResult ->
-                      blockResultFactory.transactionHash(
-                          blockByHashWithTxHashes(blockSimulationResult.getBlock())));
+              .map(this::mapResponse);
 
       return new JsonRpcSuccessResponse(request.getRequest().getId(), response);
     } catch (JsonRpcParameterException e) {
@@ -114,16 +112,38 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
     return new JsonRpcErrorResponse(request.getRequest().getId(), new JsonRpcError(rpcErrorType));
   }
 
-  public BlockWithMetadata<Hash, Hash> blockByHashWithTxHashes(final Block block) {
+  public BlockResult mapResponse(final BlockSimulationResult result) {
+    Block block = result.getBlock();
     final int size = block.calculateSize();
 
     final List<Hash> txs =
         block.getBody().getTransactions().stream().map(Transaction::getHash).toList();
 
-    final List<Hash> ommers =
-        block.getBody().getOmmers().stream().map(BlockHeader::getHash).toList();
+    var transactionResults =
+        result.getTransactionSimulations().stream()
+            .map(
+                r ->
+                    new TransactionProcessingResult(
+                        r.result().isSuccessful() ? 1 : 0,
+                        r.result().getOutput(),
+                        r.result().getGasRemaining(),
+                        null,
+                        null))
+            .toList();
 
-    return new BlockWithMetadata<>(
-        block.getHeader(), txs, ommers, Difficulty.ZERO, size, block.getBody().getWithdrawals());
+    final List<TransactionResult> transactionHashes =
+        txs.stream()
+            .map(Hash::toString)
+            .map(TransactionHashResult::new)
+            .collect(Collectors.toList());
+    return new BlockResult(
+        block.getHeader(),
+        transactionHashes,
+        List.of(),
+        transactionResults,
+        Difficulty.ZERO,
+        size,
+        false,
+        block.getBody().getWithdrawals());
   }
 }
