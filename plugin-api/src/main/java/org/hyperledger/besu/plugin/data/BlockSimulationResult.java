@@ -19,17 +19,31 @@ import java.util.List;
 public class BlockSimulationResult {
 
   final BlockHeader blockHeader;
+  final BlockBody blockBody;
+  final List<? extends TransactionReceipt> receipts;
   final List<TransactionSimulationResult> transactionSimulationResults;
 
   public BlockSimulationResult(
       final BlockHeader blockHeader,
+      final BlockBody blockBody,
+      final List<? extends TransactionReceipt> receipts,
       final List<TransactionSimulationResult> transactionSimulationResults) {
     this.blockHeader = blockHeader;
+    this.blockBody = blockBody;
+    this.receipts = receipts;
     this.transactionSimulationResults = transactionSimulationResults;
   }
 
   public BlockHeader getBlockHeader() {
     return blockHeader;
+  }
+
+  public BlockBody getBlockBody() {
+      return blockBody;
+  }
+
+  public List<? extends TransactionReceipt> getReceipts() {
+      return receipts;
   }
 
   public List<TransactionSimulationResult> getTransactionSimulationResults() {

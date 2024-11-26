@@ -34,6 +34,8 @@ public interface BlockSimulationService extends BesuService {
   BlockSimulationResult simulate(
       final BlockHeader parentHeader,
       final List<? extends Transaction> transactions,
-      final BlockOverrides blockOverrides,
-      final boolean shouldPersist);
+      final BlockOverrides blockOverrides);
+
+  BlockSimulationResult simulateAndPersist(
+      BlockHeader header, List<? extends Transaction> transactions, BlockOverrides blockOverrides);
 }
