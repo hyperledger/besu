@@ -12,7 +12,7 @@ Using EVM Tool in execution-specification-tests
 
 Current as of 26 Jun 2024.
 
-MacOS users will typically encounter two problems,one relating to the
+MacOS users will typically encounter two problems, one relating to the
 version of Python used and one relating to zsh.
 
 Homebrew will only install the most recent version of Python
