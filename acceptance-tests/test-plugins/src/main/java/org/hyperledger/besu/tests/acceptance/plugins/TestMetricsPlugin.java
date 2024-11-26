@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
+import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -33,7 +34,8 @@ public class TestMetricsPlugin implements BesuPlugin {
   private ServiceManager serviceManager;
 
   @Override
-  public void register(final ServiceManager context) {
+  @SuppressWarnings("removal")
+  public void register(final BesuContext context) {
     LOG.info("Registering TestMetricsPlugin");
     serviceManager = context;
     context
