@@ -32,7 +32,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
+  private static final Logger LOG = LoggerFactory.getLogger(GetHeadersFromPeerTask.class);
   private final long blockNumber;
   private final Hash blockHash;
   private final int maxHeaders;
@@ -86,6 +90,13 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
       final Direction direction,
       final int maximumRetriesAgainstDifferentPeers,
       final ProtocolSchedule protocolSchedule) {
+    LOG.debug(
+        "Constructing GetHeadersFromPeerTask with hash {}, number {}, maxHeaders {}, skip {}, direction {}",
+        blockHash,
+        blockNumber,
+        maxHeaders,
+        skip,
+        direction);
     this.blockHash = blockHash;
     this.blockNumber = blockNumber;
     this.maxHeaders = maxHeaders;
@@ -128,17 +139,30 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
 
     if (blockHeaders.isEmpty()) {
       // Message contains no data - nothing to do
+      LOG.debug(
+          "No blockheaders returned for query starting at {}",
+          blockHash != null ? blockHash : blockNumber);
       result = Collections.emptyList();
     } else if (blockHeaders.size() > maxHeaders) {
       // Too many headers - this isn't our response
+      LOG.debug(
+          "Too many blockheaders returned for query starting at {}",
+          blockHash != null ? blockHash : blockNumber);
       result = Collections.emptyList();
-    } else if ((blockHash != null && blockHeaders.get(0).getHash().equals(blockHash))
-        || (blockHash == null && blockHeaders.get(0).getNumber() == blockNumber)) {
+    } else if ((blockHash != null && !blockHeaders.getFirst().getHash().equals(blockHash))
+        || (blockHash == null && blockHeaders.getFirst().getNumber() != blockNumber)) {
       // This isn't our message - nothing to do
+      LOG.debug(
+          "First header returned doesn't match query starting at {}",
+          blockHash != null ? blockHash : blockNumber);
       result = Collections.emptyList();
     } else if (!isBlockHeadersMatchingRequest(blockHeaders)) {
+      LOG.debug(
+          "Blockheaders do not match expected headers from request for query starting at {}",
+          blockHash != null ? blockHash : blockNumber);
       result = Collections.emptyList();
     } else {
+      LOG.debug("Blockheaders pass initial validation");
       result = blockHeaders;
     }
 
@@ -186,6 +210,9 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
           break;
       }
       if (!parentHeader.getHash().equals(childHeader.getParentHash())) {
+        LOG.warn(
+            "Blockheaders were non-sequential for query starting at {}",
+            blockHash != null ? blockHash : blockNumber);
         result =
             Optional.of(
                 DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS);
