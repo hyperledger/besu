@@ -20,9 +20,9 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
@@ -74,8 +74,9 @@ public class TrieGenerator {
           });
       final Bytes code = Bytes32.leftPad(Bytes.of(i + 10));
       final Hash codeHash = Hash.hash(code);
-      final StateTrieAccountValue accountValue =
-          new StateTrieAccountValue(1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
+      final PmtStateTrieAccountValue accountValue =
+          new PmtStateTrieAccountValue(
+              1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
       accountStateTrie.put(accounts.get(i), RLP.encode(accountValue::writeTo));
       applyForStrategy(
           updater,

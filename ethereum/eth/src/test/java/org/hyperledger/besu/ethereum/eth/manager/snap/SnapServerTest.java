@@ -37,13 +37,13 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -71,7 +71,7 @@ public class SnapServerTest {
 
   record SnapTestAccount(
       Hash addressHash,
-      StateTrieAccountValue accountValue,
+      PmtStateTrieAccountValue accountValue,
       MerkleTrie<Bytes32, Bytes> storage,
       Bytes code) {
     Bytes accountRLP() {
@@ -722,7 +722,7 @@ public class SnapServerTest {
   static SnapTestAccount createTestAccount(final String hexAddr) {
     return new SnapTestAccount(
         Hash.wrap(Bytes32.rightPad(Bytes.fromHexString(hexAddr))),
-        new StateTrieAccountValue(
+        new PmtStateTrieAccountValue(
             rand.nextInt(0, 1), Wei.of(rand.nextLong(0L, 1L)), Hash.EMPTY_TRIE_HASH, Hash.EMPTY),
         new SimpleMerklePatriciaTrie<>(a -> a),
         Bytes.EMPTY);
@@ -768,7 +768,7 @@ public class SnapServerTest {
     updater.commit();
     return new SnapTestAccount(
         acctHash,
-        new StateTrieAccountValue(
+        new PmtStateTrieAccountValue(
             rand.nextInt(0, 1), Wei.of(rand.nextLong(0L, 1L)),
             Hash.wrap(trie.getRootHash()), Hash.hash(mockCode)),
         trie,
