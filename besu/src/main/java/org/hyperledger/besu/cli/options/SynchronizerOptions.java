@@ -83,7 +83,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
-  private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--Xsnapsync-bft-enabled";
+  private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--snapsync-bft-enabled";
 
   /**
    * Parse block propagation range.
