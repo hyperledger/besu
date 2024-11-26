@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
+import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -44,7 +45,8 @@ public class InMemoryStoragePlugin implements BesuPlugin {
   public InMemoryStoragePlugin() {}
 
   @Override
-  public void register(final ServiceManager context) {
+  @SuppressWarnings("removal")
+  public void register(final BesuContext context) {
     LOG.debug("Registering plugin");
     this.context = context;
 
