@@ -20,10 +20,10 @@ In the `vmTrace` `op.ex.mem` fields Besu only reports actual data returned
 from a `RETURN` opcode.  Other implementations return the contents of the 
 reserved output space for the call operations.  Note two major differences:
 
-1. Besu reports `null` when a call operation ends because of a `STOP`,  `HALT`, 
+1. Besu reports `null` when a call operation ends because of a `STOP`, `HALT`, 
    `REVERT`, running out of instructions, or any exceptional halts.
 2. When a `RETURN` operation returns data of a different length than the space
-   reserved by the call only the data passed to the `RETURN` operation is 
+   reserved by the call, only the data passed to the `RETURN` operation is 
    reported.  Other implementations will include pre-existing memory data or 
    trim the returned data.
 
