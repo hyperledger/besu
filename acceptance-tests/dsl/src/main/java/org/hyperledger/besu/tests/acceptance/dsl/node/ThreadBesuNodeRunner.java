@@ -459,7 +459,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final BesuControllerBuilder builder,
         final MetricsSystem metricsSystem,
         final KeyValueStorageProvider storageProvider,
-        final MiningConfiguration miningConfiguration) {
+        final MiningConfiguration miningConfiguration,
+        final ApiConfiguration apiConfiguration) {
 
       builder
           .synchronizerConfiguration(synchronizerConfiguration)
@@ -474,6 +475,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           .maxRemotelyInitiatedPeers(15)
           .miningParameters(miningConfiguration)
           .randomPeerPriority(false)
+          .apiConfiguration(apiConfiguration)
           .besuComponent(null);
       return builder.build();
     }

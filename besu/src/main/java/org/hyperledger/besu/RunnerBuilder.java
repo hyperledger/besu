@@ -698,12 +698,7 @@ public class RunnerBuilder {
 
     final Synchronizer synchronizer = besuController.getSynchronizer();
 
-    final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(
-            context.getBlockchain(),
-            context.getWorldStateArchive(),
-            protocolSchedule,
-            apiConfiguration.getGasCap());
+    final TransactionSimulator transactionSimulator = besuController.getTransactionSimulator();
 
     final Bytes localNodeId = nodeKey.getPublicKey().getEncodedBytes();
     final Optional<NodePermissioningController> nodePermissioningController =
@@ -867,7 +862,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              transactionSimulator);
 
       jsonRpcHttpService =
           Optional.of(
@@ -912,7 +908,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              transactionSimulator);
 
       final Optional<AuthenticationService> authToUse =
           engineJsonRpcConfiguration.get().isAuthenticationEnabled()
@@ -959,7 +956,7 @@ public class RunnerBuilder {
       graphQlContextMap.putIfAbsent(GraphQLContextType.SYNCHRONIZER, synchronizer);
       graphQlContextMap.putIfAbsent(
           GraphQLContextType.CHAIN_ID, protocolSchedule.getChainId().map(UInt256::valueOf));
-      graphQlContextMap.putIfAbsent(GraphQLContextType.GAS_CAP, apiConfiguration.getGasCap());
+      graphQlContextMap.putIfAbsent(GraphQLContextType.TRANSACTION_SIMULATOR, transactionSimulator);
       final GraphQL graphQL;
       try {
         graphQL = GraphQLProvider.buildGraphQL(fetchers);
@@ -1007,7 +1004,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              transactionSimulator);
 
       createLogsSubscriptionService(
           context.getBlockchain(), subscriptionManager, privacyParameters, blockchainQueries);
@@ -1087,7 +1085,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              transactionSimulator);
 
       jsonRpcIpcService =
           Optional.of(
@@ -1126,7 +1125,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              transactionSimulator);
     } else {
       inProcessRpcMethods = Map.of();
     }
@@ -1288,7 +1288,8 @@ public class RunnerBuilder {
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
-      final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
+      final RpcEndpointServiceImpl rpcEndpointServiceImpl,
+      final TransactionSimulator transactionSimulator) {
     // sync vertx for engine consensus API, to process requests in FIFO order;
     final Vertx consensusEngineServer = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
 
@@ -1325,7 +1326,8 @@ public class RunnerBuilder {
                 besuController.getProtocolManager().ethContext().getEthPeers(),
                 consensusEngineServer,
                 apiConfiguration,
-                enodeDnsConfiguration);
+                enodeDnsConfiguration,
+                transactionSimulator);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     final var pluginMethods =
