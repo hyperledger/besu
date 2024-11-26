@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -39,7 +38,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
@@ -98,19 +96,14 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
       BlockStateCallsParameter parameter =
           request.getRequiredParameter(0, BlockStateCallsParameter.class);
 
-      List<BlockResult> results = new ArrayList<>();
-      for (var blockStateCall : parameter.getBlockStateCalls()) {
-        var result = blockSimulator.process(header, blockStateCall);
+      var response =
+          blockSimulator.process(header, parameter.getBlockStateCalls()).stream()
+              .map(
+                  blockSimulationResult ->
+                      blockResultFactory.transactionHash(
+                          blockByHashWithTxHashes(blockSimulationResult.getBlock())));
 
-        results.add(
-            result
-                .map(
-                    blockSimulationResult ->
-                        blockResultFactory.transactionHash(
-                            blockByHashWithTxHashes(blockSimulationResult.getBlock())))
-                .orElse(null));
-      }
-      return new JsonRpcSuccessResponse(request.getRequest().getId(), results);
+      return new JsonRpcSuccessResponse(request.getRequest().getId(), response);
     } catch (JsonRpcParameterException e) {
       throw new RuntimeException(e);
     }
@@ -118,12 +111,7 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
 
   private JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final RpcErrorType rpcErrorType) {
-    return errorResponse(request, new JsonRpcError(rpcErrorType));
-  }
-
-  private JsonRpcErrorResponse errorResponse(
-      final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
-    return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
+    return new JsonRpcErrorResponse(request.getRequest().getId(), new JsonRpcError(rpcErrorType));
   }
 
   public BlockWithMetadata<Hash, Hash> blockByHashWithTxHashes(final Block block) {
