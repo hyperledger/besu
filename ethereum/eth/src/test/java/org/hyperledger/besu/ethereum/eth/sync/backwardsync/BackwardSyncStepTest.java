@@ -153,7 +153,7 @@ public class BackwardSyncStepTest {
     when(context.getEthContext()).thenReturn(ethContext);
 
     Answer<PeerTaskExecutorResult<List<BlockHeader>>> getHeadersAnswer =
-        new GetHeadersFromPeerTaskExecutorAnswer(remoteBlockchain);
+        new GetHeadersFromPeerTaskExecutorAnswer(remoteBlockchain, ethContext.getEthPeers());
     when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class))).thenAnswer(getHeadersAnswer);
     when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
         .thenAnswer(getHeadersAnswer);

@@ -161,7 +161,7 @@ public class CheckPointSyncChainDownloaderTest {
             });
 
     final Answer<PeerTaskExecutorResult<List<BlockHeader>>> getHeadersAnswer =
-        new GetHeadersFromPeerTaskExecutorAnswer(otherBlockchain);
+        new GetHeadersFromPeerTaskExecutorAnswer(otherBlockchain, ethContext.getEthPeers());
     when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class))).thenAnswer(getHeadersAnswer);
     when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
         .thenAnswer(getHeadersAnswer);

@@ -92,7 +92,8 @@ public class ChainHeadTrackerTest {
             .build();
     peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     GetHeadersFromPeerTaskExecutorAnswer getHeadersAnswer =
-        new GetHeadersFromPeerTaskExecutorAnswer(blockchain);
+        new GetHeadersFromPeerTaskExecutorAnswer(
+            blockchain, ethProtocolManager.ethContext().getEthPeers());
     Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
         .thenAnswer(getHeadersAnswer);
     Mockito.when(

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 
@@ -29,9 +30,12 @@ import org.mockito.stubbing.Answer;
 public class GetHeadersFromPeerTaskExecutorAnswer
     implements Answer<PeerTaskExecutorResult<List<BlockHeader>>> {
   private final Blockchain otherBlockchain;
+  private final EthPeers ethPeers;
 
-  public GetHeadersFromPeerTaskExecutorAnswer(final Blockchain otherBlockchain) {
+  public GetHeadersFromPeerTaskExecutorAnswer(
+      final Blockchain otherBlockchain, final EthPeers ethPeers) {
     this.otherBlockchain = otherBlockchain;
+    this.ethPeers = ethPeers;
   }
 
   @Override
@@ -79,6 +83,6 @@ public class GetHeadersFromPeerTaskExecutorAnswer
     return new PeerTaskExecutorResult<>(
         Optional.of(getHeadersFromPeerTaskResult),
         PeerTaskExecutorResponseCode.SUCCESS,
-        Optional.empty());
+        ethPeers.bestPeer());
   }
 }
