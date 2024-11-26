@@ -6,7 +6,7 @@ BesuFuzz is where all the besu guided fuzzing tools live.
 
 Performs differential fuzzing between Ethereum clients based on
 the [txparse eofparse](https://github.com/holiman/txparse/blob/main/README.md#eof-parser-eofparse)
-format. Note that only the inital `OK` and `err` values are used to determine if
+format. Note that only the initial `OK` and `err` values are used to determine if
 there is a difference.
 
 ### Prototypical CLI Usage:
