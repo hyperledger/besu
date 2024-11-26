@@ -43,9 +43,8 @@ public class TransactionProcessingResult {
       @JsonProperty("error") final ErrorDetails error,
       @JsonProperty("logs") final List<LogResult> logs) {
     this.status = Quantity.create(status);
-    ;
     this.returnData = returnData.toString();
-    ;
+
     this.gasUsed = Quantity.create(gasUsed);
     this.error = error;
     this.logs = logs;

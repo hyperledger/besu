@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockStateCallsParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonBlockStateCall;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -91,16 +92,22 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
   protected Object resultByBlockHeader(
       final JsonRpcRequestContext request, final BlockHeader header) {
     try {
-      BlockStateCallsParameter parameter =
-          request.getRequiredParameter(0, BlockStateCallsParameter.class);
-      List<BlockResult> response =
-          blockSimulator.process(header, parameter.getBlockStateCalls()).stream()
-              .map(this::convertResponse)
-              .collect(Collectors.toList());
-      return new JsonRpcSuccessResponse(request.getRequest().getId(), response);
+
+      var blockStateCalls = getBlockStateCalls(request);
+      var simulationResults = blockSimulator.process(header, blockStateCalls);
+
+      var jsonResponse = createResponse(simulationResults, request);
+      return new JsonRpcSuccessResponse(request.getRequest().getId(), jsonResponse);
     } catch (JsonRpcParameterException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private List<JsonBlockStateCall> getBlockStateCalls(final JsonRpcRequestContext request)
+      throws JsonRpcParameterException {
+    BlockStateCallsParameter parameter =
+        request.getRequiredParameter(0, BlockStateCallsParameter.class);
+    return parameter.getBlockStateCalls();
   }
 
   private JsonRpcErrorResponse errorResponse(
@@ -108,34 +115,45 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
     return new JsonRpcErrorResponse(request.getRequest().getId(), new JsonRpcError(rpcErrorType));
   }
 
-  private BlockResult convertResponse(final BlockSimulationResult result) {
-    Block block = result.getBlock();
-    var txs = block.getBody().getTransactions().stream().map(Transaction::getHash).toList();
-    var transactionResults =
-        result.getTransactionSimulations().stream()
+  private JsonRpcSuccessResponse createResponse(
+      final List<BlockSimulationResult> simulationResult, final JsonRpcRequestContext request) {
+    var response =
+        simulationResult.stream()
             .map(
-                r ->
-                    new TransactionProcessingResult(
-                        r.result().isSuccessful() ? 1 : 0,
-                        r.result().getOutput(),
-                        r.result().getGasRemaining(),
-                        null,
-                        null))
+                result -> {
+                  Block block = result.getBlock();
+                  var txs =
+                      block.getBody().getTransactions().stream().map(Transaction::getHash).toList();
+                  var transactionResults =
+                      result.getTransactionSimulations().stream()
+                          .map(this::createTransactionProcessingResult)
+                          .toList();
+                  List<TransactionResult> transactionHashes =
+                      txs.stream()
+                          .map(Hash::toString)
+                          .map(TransactionHashResult::new)
+                          .collect(Collectors.toList());
+                  return new BlockResult(
+                      block.getHeader(),
+                      transactionHashes,
+                      List.of(),
+                      transactionResults,
+                      Difficulty.ZERO,
+                      block.calculateSize(),
+                      false,
+                      block.getBody().getWithdrawals());
+                })
             .toList();
+    return new JsonRpcSuccessResponse(request.getRequest().getId(), response);
+  }
 
-    List<TransactionResult> transactionHashes =
-        txs.stream()
-            .map(Hash::toString)
-            .map(TransactionHashResult::new)
-            .collect(Collectors.toList());
-    return new BlockResult(
-        block.getHeader(),
-        transactionHashes,
-        List.of(),
-        transactionResults,
-        Difficulty.ZERO,
-        block.calculateSize(),
-        false,
-        block.getBody().getWithdrawals());
+  private TransactionProcessingResult createTransactionProcessingResult(
+      final org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult simulatorResult) {
+    return new TransactionProcessingResult(
+        simulatorResult.result().isSuccessful() ? 1 : 0,
+        simulatorResult.result().getOutput(),
+        simulatorResult.result().getGasRemaining(),
+        null, // TODO ADD ERROR
+        null);// TODO ADD LOG
   }
 }

@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
@@ -46,7 +45,6 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -179,9 +177,11 @@ public class BlockSimulator {
     }
 
     TransactionSimulatorResult result = transactionSimulatorResult.get();
-    if (result.result().isSuccessful()) {
-      localUpdater.commit();
+    if (result.result().isInvalid()) {
+      throw new RuntimeException(
+          "Transaction simulator result is invalid: " + result.result().getValidationResult());
     }
+    localUpdater.commit();
     return result;
   }
 
@@ -271,21 +271,20 @@ public class BlockSimulator {
 
     return BlockHeaderBuilder.createDefault()
         .parentHash(header.getHash())
+        .timestamp(timestamp)
+        .number(blockNumber)
         .coinbase(
             blockOverrides
                 .getFeeRecipient()
                 .orElse(miningConfiguration.getCoinbase().orElseThrow()))
         .difficulty(
-            Difficulty.of(
-                blockOverrides
-                    .getDifficulty()
-                    .orElse(getNextDifficulty(newProtocolSpec, header, timestamp))))
-        .number(blockNumber)
+            blockOverrides.getDifficulty().isPresent()
+                ? Difficulty.of(blockOverrides.getDifficulty().get())
+                : header.getDifficulty())
         .gasLimit(
             blockOverrides
                 .getGasLimit()
                 .orElse(getNextGasLimit(newProtocolSpec, header, blockNumber)))
-        .timestamp(timestamp)
         .baseFee(
             blockOverrides
                 .getBaseFeePerGas()
@@ -350,12 +349,6 @@ public class BlockSimulator {
             parentHeader.getGasLimit(),
             miningConfiguration.getTargetGasLimit().orElse(parentHeader.getGasLimit()),
             blockNumber);
-  }
-
-  private BigInteger getNextDifficulty(
-      final ProtocolSpec protocolSpec, final BlockHeader parentHeader, final long timestamp) {
-    final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
-    return difficultyCalculator.nextDifficulty(timestamp, parentHeader);
   }
 
   private MiningBeneficiaryCalculator getMiningBeneficiaryCalculator(

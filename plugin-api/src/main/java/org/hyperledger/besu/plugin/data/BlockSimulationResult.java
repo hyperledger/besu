@@ -39,11 +39,11 @@ public class BlockSimulationResult {
   }
 
   public BlockBody getBlockBody() {
-      return blockBody;
+    return blockBody;
   }
 
   public List<? extends TransactionReceipt> getReceipts() {
-      return receipts;
+    return receipts;
   }
 
   public List<TransactionSimulationResult> getTransactionSimulationResults() {
