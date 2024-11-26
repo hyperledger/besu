@@ -113,7 +113,7 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
       if (archive.isWorldStateAvailable(target.getStateRoot(), target.getBlockHash())) {
         // WARNING, this can be dangerous for a DiffBasedWorldstate if a concurrent
         //          process attempts to move or modify the head worldstate.
-        //          Ensure no block processing is occuring when using this feature.
+        //          Ensure no block processing is occurring when using this feature.
         //          No engine-api, block import, sync, mining or other rpc calls should be running.
 
         Optional<BlockHeader> currentHead =

@@ -60,7 +60,7 @@ public class CodeV1Validation implements EOFValidator {
   protected final int maxContainerSize;
 
   /**
-   * Create a new container, with a configurable maximim container size.
+   * Create a new container, with a configurable maximum container size.
    *
    * @param maxContainerSize the maximum size of any container.
    */
@@ -214,7 +214,7 @@ public class CodeV1Validation implements EOFValidator {
           }
           pcPostInstruction += 2;
           final int dataLoadOffset = readBigEndianU16(pos, rawCode);
-          // only verfy the last byte of the load is within the minimum data
+          // only verify the last byte of the load is within the minimum data
           if (dataLoadOffset > eofLayout.dataLength() - 32) {
             return "invalid_dataloadn_index %d + 32 > %d"
                 .formatted(dataLoadOffset, eofLayout.dataLength());

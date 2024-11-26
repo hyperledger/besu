@@ -60,7 +60,7 @@ public record EOFLayout(
     AtomicReference<EOFContainerMode> containerMode) {
 
   /**
-   * Enum tracking the useage mode of an EOF container. Detected either by opcode usage or
+   * Enum tracking the usage mode of an EOF container. Detected either by opcode usage or
    * determined by the source.
    */
   public enum EOFContainerMode {
