@@ -62,7 +62,7 @@
 
 ## Becoming a Maintainer
 
-Besu welcomes community contribution.
+Besu welcomes the community contribution.
 Each community member may progress to become a maintainer.
 
 How to become a maintainer:
@@ -73,7 +73,7 @@ How to become a maintainer:
 
 The requirement to be able to be proposed as a maintainer is:
 
-- 5 significant changes on code have been authored in this repos by the proposed maintainer and accepted (merged PRs).
+- 5 significant changes on code have been authored in this repository by the proposed maintainer and accepted (merged PRs).
   
 ### Maintainers approval process
 
