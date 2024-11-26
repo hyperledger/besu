@@ -16,7 +16,6 @@ package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -40,7 +39,6 @@ import java.util.stream.Collectors;
 @Unstable
 public class BlockchainServiceImpl implements BlockchainService {
 
-  private ProtocolContext protocolContext;
   private ProtocolSchedule protocolSchedule;
   private MutableBlockchain blockchain;
 
@@ -50,13 +48,12 @@ public class BlockchainServiceImpl implements BlockchainService {
   /**
    * Initialize the Blockchain service.
    *
-   * @param protocolContext the protocol context
+   * @param blockchain the blockchain
    * @param protocolSchedule the protocol schedule
    */
-  public void init(final ProtocolContext protocolContext, final ProtocolSchedule protocolSchedule) {
-    this.protocolContext = protocolContext;
+  public void init(final MutableBlockchain blockchain, final ProtocolSchedule protocolSchedule) {
     this.protocolSchedule = protocolSchedule;
-    this.blockchain = protocolContext.getBlockchain();
+    this.blockchain = blockchain;
   }
 
   /**
@@ -67,25 +64,24 @@ public class BlockchainServiceImpl implements BlockchainService {
    */
   @Override
   public Optional<BlockContext> getBlockByNumber(final long number) {
-    return protocolContext
-        .getBlockchain()
+    return blockchain
         .getBlockByNumber(number)
         .map(block -> blockContext(block::getHeader, block::getBody));
   }
 
   @Override
   public Hash getChainHeadHash() {
-    return protocolContext.getBlockchain().getChainHeadHash();
+    return blockchain.getChainHeadHash();
   }
 
   @Override
   public BlockHeader getChainHeadHeader() {
-    return protocolContext.getBlockchain().getChainHeadHeader();
+    return blockchain.getChainHeadHeader();
   }
 
   @Override
   public Optional<Wei> getNextBlockBaseFee() {
-    final var chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
+    final var chainHeadHeader = blockchain.getChainHeadHeader();
     final var protocolSpec =
         protocolSchedule.getForNextBlockHeader(chainHeadHeader, System.currentTimeMillis());
     return Optional.of(protocolSpec.getFeeMarket())

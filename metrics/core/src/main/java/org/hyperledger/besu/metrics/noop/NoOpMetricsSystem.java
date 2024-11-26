@@ -17,8 +17,10 @@ package org.hyperledger.besu.metrics.noop;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
@@ -27,9 +29,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.base.Preconditions;
+import com.google.common.cache.Cache;
 
 /** The NoOp metrics system. */
 public class NoOpMetricsSystem implements ObservableMetricsSystem {
@@ -38,7 +42,7 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   public static final Counter NO_OP_COUNTER = new NoOpCounter();
 
   /** The constant NO_OP_GAUGE. */
-  public static final LabelledGauge NO_OP_GAUGE = new NoOpValueCollector();
+  public static final LabelledSuppliedMetric NO_OP_GAUGE = new NoOpValueCollector();
 
   private static final OperationTimer.TimingContext NO_OP_TIMING_CONTEXT = () -> 0;
 
@@ -62,16 +66,16 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
       new LabelCountingNoOpMetric<>(1, NO_OP_OPERATION_TIMER);
 
   /** The constant NO_OP_LABELLED_1_GAUGE. */
-  public static final LabelledGauge NO_OP_LABELLED_1_GAUGE =
-      new LabelledGaugeNoOpMetric(1, NO_OP_GAUGE);
+  public static final LabelledSuppliedMetric NO_OP_LABELLED_1_GAUGE =
+      new LabelledSuppliedNoOpMetric(1, NO_OP_GAUGE);
 
   /** The constant NO_OP_LABELLED_2_GAUGE. */
-  public static final LabelledGauge NO_OP_LABELLED_2_GAUGE =
-      new LabelledGaugeNoOpMetric(2, NO_OP_GAUGE);
+  public static final LabelledSuppliedMetric NO_OP_LABELLED_2_GAUGE =
+      new LabelledSuppliedNoOpMetric(2, NO_OP_GAUGE);
 
   /** The constant NO_OP_LABELLED_3_GAUGE. */
-  public static final LabelledGauge NO_OP_LABELLED_3_GAUGE =
-      new LabelledGaugeNoOpMetric(3, NO_OP_GAUGE);
+  public static final LabelledSuppliedMetric NO_OP_LABELLED_3_GAUGE =
+      new LabelledSuppliedNoOpMetric(3, NO_OP_GAUGE);
 
   /** Default constructor */
   public NoOpMetricsSystem() {}
@@ -114,6 +118,13 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
+  public void trackExternalSummary(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final Supplier<ExternalSummary> summarySupplier) {}
+
+  @Override
   public LabelledMetric<OperationTimer> createLabelledTimer(
       final MetricCategory category,
       final String name,
@@ -145,12 +156,25 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
       final DoubleSupplier valueSupplier) {}
 
   @Override
-  public LabelledGauge createLabelledGauge(
+  public void createGuavaCacheCollector(
+      final MetricCategory category, final String name, final Cache<?, ?> cache) {}
+
+  @Override
+  public LabelledSuppliedMetric createLabelledSuppliedCounter(
       final MetricCategory category,
       final String name,
       final String help,
       final String... labelNames) {
-    return getLabelledGauge(labelNames.length);
+    return getLabelledSuppliedMetric(labelNames.length);
+  }
+
+  @Override
+  public LabelledSuppliedMetric createLabelledSuppliedGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    return getLabelledSuppliedMetric(labelNames.length);
   }
 
   /**
@@ -159,7 +183,7 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
    * @param labelCount the label count
    * @return the labelled gauge
    */
-  public static LabelledGauge getLabelledGauge(final int labelCount) {
+  public static LabelledSuppliedMetric getLabelledSuppliedMetric(final int labelCount) {
     switch (labelCount) {
       case 1:
         return NO_OP_LABELLED_1_GAUGE;
@@ -168,7 +192,7 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
       case 3:
         return NO_OP_LABELLED_3_GAUGE;
       default:
-        return new LabelledGaugeNoOpMetric(labelCount, NO_OP_GAUGE);
+        return new LabelledSuppliedNoOpMetric(labelCount, NO_OP_GAUGE);
     }
   }
 
@@ -186,6 +210,9 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   public Set<MetricCategory> getEnabledCategories() {
     return Collections.emptySet();
   }
+
+  @Override
+  public void shutdown() {}
 
   /**
    * The Label counting NoOp metric.
@@ -220,8 +247,9 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
     }
   }
 
-  /** The Labelled gauge NoOp metric. */
-  public static class LabelledGaugeNoOpMetric implements LabelledGauge {
+  /** The Labelled supplied NoOp metric. */
+  @SuppressWarnings("removal") // remove when deprecated LabelledGauge is removed
+  public static class LabelledSuppliedNoOpMetric implements LabelledSuppliedMetric, LabelledGauge {
     /** The Label count. */
     final int labelCount;
 
@@ -234,13 +262,14 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
      * @param labelCount the label count
      * @param fakeMetric the fake metric
      */
-    public LabelledGaugeNoOpMetric(final int labelCount, final LabelledGauge fakeMetric) {
+    public LabelledSuppliedNoOpMetric(
+        final int labelCount, final LabelledSuppliedMetric fakeMetric) {
       this.labelCount = labelCount;
       this.fakeMetric = fakeMetric;
     }
 
     /** The Fake metric. */
-    final LabelledGauge fakeMetric;
+    final LabelledSuppliedMetric fakeMetric;
 
     @Override
     public void labels(final DoubleSupplier valueSupplier, final String... labelValues) {
@@ -252,15 +281,6 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
           labelValues.length == labelCount,
           "The count of labels used must match the count of labels expected.");
       Preconditions.checkNotNull(valueSupplier, "No valueSupplier specified");
-    }
-
-    @Override
-    public boolean isLabelsObserved(final String... labelValues) {
-      Preconditions.checkArgument(
-          labelValues.length == labelCount,
-          "The count of labels used must match the count of labels expected.");
-      final String labelValuesString = String.join(",", labelValues);
-      return labelValuesCache.contains(labelValuesString);
     }
   }
 }

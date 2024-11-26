@@ -22,9 +22,9 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.trie.common.VerkleStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
@@ -162,8 +162,8 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
         input.skipNext();
       } else {
         input.enterList();
-        final StateTrieAccountValue oldValue = nullOrValue(input, StateTrieAccountValue::readFrom);
-        final StateTrieAccountValue newValue = nullOrValue(input, StateTrieAccountValue::readFrom);
+        final VerkleStateTrieAccountValue oldValue = nullOrValue(input, VerkleStateTrieAccountValue::readFrom);
+        final VerkleStateTrieAccountValue newValue = nullOrValue(input, VerkleStateTrieAccountValue::readFrom);
         final boolean isCleared = getOptionalIsCleared(input);
         input.leaveList();
         newLayer

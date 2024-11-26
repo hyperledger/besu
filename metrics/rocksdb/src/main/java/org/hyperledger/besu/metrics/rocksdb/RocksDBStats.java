@@ -16,15 +16,14 @@ package org.hyperledger.besu.metrics.rocksdb;
 
 import static org.hyperledger.besu.metrics.BesuMetricCategory.KVSTORE_ROCKSDB_STATS;
 
-import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
+import org.hyperledger.besu.plugin.services.metrics.ExternalSummary.Quantile;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import io.prometheus.client.Collector;
 import org.rocksdb.HistogramData;
 import org.rocksdb.HistogramType;
 import org.rocksdb.Statistics;
@@ -32,22 +31,9 @@ import org.rocksdb.TickerType;
 
 /** The Rocks db stats. */
 public class RocksDBStats {
-
-  /** The Labels. */
-  static final List<String> LABELS = Collections.singletonList("quantile");
-
-  /** The Label 50. */
-  static final List<String> LABEL_50 = Collections.singletonList("0.5");
-
-  /** The Label 95. */
-  static final List<String> LABEL_95 = Collections.singletonList("0.95");
-
-  /** The Label 99. */
-  static final List<String> LABEL_99 = Collections.singletonList("0.99");
-
-  /** The constant TICKERS. */
+  /** The constant TICKER_TYPES. */
   // Tickers - RocksDB equivalent of counters
-  static final TickerType[] TICKERS = {
+  static final TickerType[] TICKER_TYPES = {
     TickerType.BLOCK_CACHE_ADD,
     TickerType.BLOCK_CACHE_HIT,
     TickerType.BLOCK_CACHE_ADD_FAILURES,
@@ -121,7 +107,6 @@ public class RocksDBStats {
     TickerType.NUMBER_SUPERVERSION_CLEANUPS,
     TickerType.NUMBER_BLOCK_COMPRESSED,
     TickerType.NUMBER_BLOCK_DECOMPRESSED,
-    TickerType.NUMBER_BLOCK_NOT_COMPRESSED,
     TickerType.MERGE_OPERATION_TOTAL_TIME,
     TickerType.FILTER_OPERATION_TOTAL_TIME,
     TickerType.ROW_CACHE_HIT,
@@ -133,9 +118,9 @@ public class RocksDBStats {
     TickerType.NUMBER_MULTIGET_KEYS_FOUND,
   };
 
-  /** The constant HISTOGRAMS. */
+  /** The constant HISTOGRAM_TYPES. */
   // Histograms - treated as prometheus summaries
-  static final HistogramType[] HISTOGRAMS = {
+  static final HistogramType[] HISTOGRAM_TYPES = {
     HistogramType.DB_GET,
     HistogramType.DB_WRITE,
     HistogramType.COMPACTION_TIME,
@@ -157,8 +142,6 @@ public class RocksDBStats {
     HistogramType.BYTES_PER_READ,
     HistogramType.BYTES_PER_WRITE,
     HistogramType.BYTES_PER_MULTIGET,
-    HistogramType.BYTES_COMPRESSED,
-    HistogramType.BYTES_DECOMPRESSED,
     HistogramType.COMPRESSION_TIMES_NANOS,
     HistogramType.DECOMPRESSION_TIMES_NANOS,
     HistogramType.READ_NUM_MERGE_OPERANDS,
@@ -175,47 +158,40 @@ public class RocksDBStats {
    * @param category the category
    */
   public static void registerRocksDBMetrics(
-      final Statistics stats,
-      final PrometheusMetricsSystem metricsSystem,
-      final MetricCategory category) {
-    if (!metricsSystem.isCategoryEnabled(category)) {
-      return;
-    }
-    for (final TickerType ticker : TICKERS) {
-      final String promCounterName = ticker.name().toLowerCase(Locale.ROOT);
+      final Statistics stats, final MetricsSystem metricsSystem, final MetricCategory category) {
+
+    for (final var tickerType : TICKER_TYPES) {
+      final String promCounterName = tickerType.name().toLowerCase(Locale.ROOT);
       metricsSystem.createLongGauge(
           category,
           promCounterName,
-          "RocksDB reported statistics for " + ticker.name(),
-          () -> stats.getTickerCount(ticker));
+          "RocksDB reported statistics for " + tickerType.name(),
+          () -> stats.getTickerCount(tickerType));
     }
 
-    for (final HistogramType histogram : HISTOGRAMS) {
-      metricsSystem.addCollector(category, () -> histogramToCollector(stats, histogram));
+    for (final var histogramType : HISTOGRAM_TYPES) {
+
+      metricsSystem.trackExternalSummary(
+          KVSTORE_ROCKSDB_STATS,
+          KVSTORE_ROCKSDB_STATS.getName() + "_" + histogramType.name().toLowerCase(Locale.ROOT),
+          "RocksDB histogram for " + histogramType.name(),
+          () -> provideExternalSummary(stats, histogramType));
     }
   }
 
-  private static Collector histogramToCollector(
-      final Statistics stats, final HistogramType histogram) {
-    return new Collector() {
-      final String metricName =
-          KVSTORE_ROCKSDB_STATS.getName() + "_" + histogram.name().toLowerCase(Locale.ROOT);
+  private static ExternalSummary provideExternalSummary(
+      final Statistics stats, final HistogramType histogramType) {
 
-      @Override
-      public List<MetricFamilySamples> collect() {
-        final HistogramData data = stats.getHistogramData(histogram);
-        return Collections.singletonList(
-            new MetricFamilySamples(
-                metricName,
-                Type.SUMMARY,
-                "RocksDB histogram for " + metricName,
-                Arrays.asList(
-                    new MetricFamilySamples.Sample(metricName, LABELS, LABEL_50, data.getMedian()),
-                    new MetricFamilySamples.Sample(
-                        metricName, LABELS, LABEL_95, data.getPercentile95()),
-                    new MetricFamilySamples.Sample(
-                        metricName, LABELS, LABEL_99, data.getPercentile99()))));
-      }
-    };
+    final HistogramData data = stats.getHistogramData(histogramType);
+
+    return new ExternalSummary(
+        data.getCount(),
+        data.getSum(),
+        List.of(
+            new Quantile(0.0, data.getMin()),
+            new Quantile(0.5, data.getMedian()),
+            new Quantile(0.95, data.getPercentile95()),
+            new Quantile(0.99, data.getPercentile99()),
+            new Quantile(1.0, data.getMax())));
   }
 }

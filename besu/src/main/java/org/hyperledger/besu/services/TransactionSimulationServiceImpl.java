@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -62,6 +63,17 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
       final Hash blockHash,
       final OperationTracer operationTracer,
       final boolean isAllowExceedingBalance) {
+    return simulate(
+        transaction, Optional.empty(), blockHash, operationTracer, isAllowExceedingBalance);
+  }
+
+  @Override
+  public Optional<TransactionSimulationResult> simulate(
+      final Transaction transaction,
+      final Optional<AccountOverrideMap> maybeAccountOverrides,
+      final Hash blockHash,
+      final OperationTracer operationTracer,
+      final boolean isAllowExceedingBalance) {
 
     final CallParameter callParameter = CallParameter.fromTransaction(transaction);
 
@@ -79,6 +91,7 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
     return transactionSimulator
         .process(
             callParameter,
+            maybeAccountOverrides,
             isAllowExceedingBalance
                 ? SIMULATOR_ALLOWING_EXCEEDING_BALANCE
                 : TransactionValidationParams.transactionSimulator(),

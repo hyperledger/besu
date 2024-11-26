@@ -36,8 +36,8 @@ import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -57,6 +57,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -73,17 +74,21 @@ import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.mining.MiningService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
+import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
+import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.TransactionPoolServiceImpl;
 import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
@@ -214,6 +219,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             besuController.getTransactionPool(),
             besuController.getSyncState(),
             besuController.getProtocolContext().getBadBlockManager()));
+    besuPluginContext.addService(
+        TransactionPoolService.class,
+        new TransactionPoolServiceImpl(besuController.getTransactionPool()));
+    besuPluginContext.addService(
+        MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
 
     component.rpcEndpointService().init(runner.getInProcessRpcMethods());
 
@@ -326,7 +336,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     @Singleton
     BlockchainServiceImpl provideBlockchainService(final BesuController besuController) {
       BlockchainServiceImpl retval = new BlockchainServiceImpl();
-      retval.init(besuController.getProtocolContext(), besuController.getProtocolSchedule());
+      retval.init(
+          besuController.getProtocolContext().getBlockchain(),
+          besuController.getProtocolSchedule());
       return retval;
     }
 
@@ -407,8 +419,17 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   }
 
   @Module
+  public static class ThreadBesuNodeRunnerModule {
+    @Provides
+    @Singleton
+    public ThreadBesuNodeRunner provideThreadBesuNodeRunner() {
+      return new ThreadBesuNodeRunner();
+    }
+  }
+
+  @Module
   @SuppressWarnings("CloseableProvides")
-  static class BesuControllerModule {
+  public static class BesuControllerModule {
     @Provides
     @Singleton
     public SynchronizerConfiguration provideSynchronizationConfiguration() {
@@ -438,7 +459,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final BesuControllerBuilder builder,
         final MetricsSystem metricsSystem,
         final KeyValueStorageProvider storageProvider,
-        final MiningParameters miningParameters) {
+        final MiningConfiguration miningConfiguration) {
 
       builder
           .synchronizerConfiguration(synchronizerConfiguration)
@@ -451,7 +472,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           .evmConfiguration(EvmConfiguration.DEFAULT)
           .maxPeers(25)
           .maxRemotelyInitiatedPeers(15)
-          .miningParameters(miningParameters)
+          .miningParameters(miningConfiguration)
           .randomPeerPriority(false)
           .besuComponent(null);
       return builder.build();
@@ -484,6 +505,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final RpcEndpointServiceImpl rpcEndpointServiceImpl,
         final BesuConfiguration commonPluginConfiguration,
         final PermissioningServiceImpl permissioningService,
+        final MetricsConfiguration metricsConfiguration,
         final MetricCategoryRegistryImpl metricCategoryRegistry,
         final MetricsSystem metricsSystem,
         final @Named("ExtraCLIOptions") List<String> extraCLIOptions,
@@ -502,6 +524,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           TransactionSimulationService.class, transactionSimulationServiceImpl);
       besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
       besuPluginContext.addService(BesuConfiguration.class, commonPluginConfiguration);
+      metricCategoryRegistry.setMetricsConfiguration(metricsConfiguration);
       besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
       besuPluginContext.addService(MetricsSystem.class, metricsSystem);
 
@@ -554,11 +577,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
-    public MiningParameters provideMiningParameters(
+    public MiningConfiguration provideMiningParameters(
         final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
         final BesuNode node) {
       final var miningParameters =
-          ImmutableMiningParameters.builder()
+          ImmutableMiningConfiguration.builder()
               .from(node.getMiningParameters())
               .transactionSelectionService(transactionSelectionServiceImpl)
               .build();
@@ -569,17 +592,26 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     @Provides
     @Inject
     BesuConfiguration provideBesuConfiguration(
-        final Path dataDir, final MiningParameters miningParameters, final BesuNode node) {
+        final Path dataDir, final MiningConfiguration miningConfiguration, final BesuNode node) {
       final BesuConfigurationImpl commonPluginConfiguration = new BesuConfigurationImpl();
       commonPluginConfiguration.init(
           dataDir, dataDir.resolve(DATABASE_PATH), node.getDataStorageConfiguration());
-      commonPluginConfiguration.withMiningParameters(miningParameters);
+      commonPluginConfiguration.withMiningParameters(miningConfiguration);
       return commonPluginConfiguration;
     }
   }
 
   @Module
-  static class MockBesuCommandModule {
+  public static class ObservableMetricsSystemModule {
+    @Provides
+    @Singleton
+    public ObservableMetricsSystem provideObservableMetricsSystem() {
+      return new NoOpMetricsSystem();
+    }
+  }
+
+  @Module
+  public static class MockBesuCommandModule {
 
     @Provides
     BesuCommand provideBesuCommand(final BesuPluginContextImpl pluginContext) {
@@ -610,6 +642,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       modules = {
         ThreadBesuNodeRunner.BesuControllerModule.class,
         ThreadBesuNodeRunner.MockBesuCommandModule.class,
+        ThreadBesuNodeRunner.ObservableMetricsSystemModule.class,
+        ThreadBesuNodeRunnerModule.class,
         BonsaiCachedMerkleTrieLoaderModule.class,
         MetricsSystemModule.class,
         ThreadBesuNodeRunner.BesuNodeProviderModule.class,
@@ -625,5 +659,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     RpcEndpointServiceImpl rpcEndpointService();
 
     BlockchainServiceImpl blockchainService();
+
+    ObservableMetricsSystem getObservableMetricsSystem();
+
+    ThreadBesuNodeRunner getThreadBesuNodeRunner();
   }
 }

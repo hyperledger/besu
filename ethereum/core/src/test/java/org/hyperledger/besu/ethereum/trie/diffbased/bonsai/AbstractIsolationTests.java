@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.WorldStateHealerHelper.throwingWorldStateHealerSupplier;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
@@ -29,6 +30,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -39,9 +41,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -104,7 +106,7 @@ public abstract class AbstractIsolationTests {
   protected final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
           GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
-          MiningParameters.MINING_DISABLED,
+          MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
           new NoOpMetricsSystem());
@@ -138,7 +140,7 @@ public abstract class AbstractIsolationTests {
               txPoolMetrics,
               transactionReplacementTester,
               new BlobCache(),
-              MiningParameters.newDefault()),
+              MiningConfiguration.newDefault()),
           ethScheduler);
 
   protected final List<GenesisAccount> accounts =
@@ -167,10 +169,13 @@ public abstract class AbstractIsolationTests {
             Optional.of(16L),
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            throwingWorldStateHealerSupplier());
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
-    protocolContext = new ProtocolContext(blockchain, archive, null, new BadBlockManager());
+    protocolContext =
+        new ProtocolContext(
+            blockchain, archive, mock(ConsensusContext.class), new BadBlockManager());
     ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
     transactionPool =
@@ -229,7 +234,7 @@ public abstract class AbstractIsolationTests {
 
               @Override
               public Wei getMinGasPrice() {
-                return MiningParameters.newDefault().getMinTransactionGasPrice();
+                return MiningConfiguration.newDefault().getMinTransactionGasPrice();
               }
 
               @Override
@@ -254,7 +259,7 @@ public abstract class AbstractIsolationTests {
 
   static class TestBlockCreator extends AbstractBlockCreator {
     private TestBlockCreator(
-        final MiningParameters miningParameters,
+        final MiningConfiguration miningConfiguration,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final ExtraDataCalculator extraDataCalculator,
         final TransactionPool transactionPool,
@@ -262,7 +267,7 @@ public abstract class AbstractIsolationTests {
         final ProtocolSchedule protocolSchedule,
         final EthScheduler ethScheduler) {
       super(
-          miningParameters,
+          miningConfiguration,
           miningBeneficiaryCalculator,
           extraDataCalculator,
           transactionPool,
@@ -277,8 +282,8 @@ public abstract class AbstractIsolationTests {
         final TransactionPool transactionPool,
         final EthScheduler ethScheduler) {
 
-      final MiningParameters miningParameters =
-          ImmutableMiningParameters.builder()
+      final MiningConfiguration miningConfiguration =
+          ImmutableMiningConfiguration.builder()
               .mutableInitValues(
                   MutableInitValues.builder()
                       .extraData(Bytes.fromHexString("deadbeef"))
@@ -290,7 +295,7 @@ public abstract class AbstractIsolationTests {
               .build();
 
       return new TestBlockCreator(
-          miningParameters,
+          miningConfiguration,
           __ -> Address.ZERO,
           __ -> Bytes.fromHexString("deadbeef"),
           transactionPool,

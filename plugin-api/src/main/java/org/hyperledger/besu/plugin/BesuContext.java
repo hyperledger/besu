@@ -14,42 +14,6 @@
  */
 package org.hyperledger.besu.plugin;
 
-import org.hyperledger.besu.plugin.services.BesuService;
-
-import java.util.Optional;
-
-/** Allows plugins to access Besu services. */
-public interface BesuContext {
-
-  /**
-   * Add service.
-   *
-   * @param <T> the type parameter
-   * @param serviceType the service type
-   * @param service the service
-   */
-  <T extends BesuService> void addService(final Class<T> serviceType, final T service);
-
-  /**
-   * Get the requested service, if it is available. There are a number of reasons that a service may
-   * not be available:
-   *
-   * <ul>
-   *   <li>The service may not have started yet. Most services are not available before the {@link
-   *       BesuPlugin#start()} method is called
-   *   <li>The service is not supported by this version of Besu
-   *   <li>The service may not be applicable to the current configuration. For example some services
-   *       may only be available when a proof of authority network is in use
-   * </ul>
-   *
-   * <p>Since plugins are automatically loaded, unless the user has specifically requested
-   * functionality provided by the plugin, no error should be raised if required services are
-   * unavailable.
-   *
-   * @param serviceType the class defining the requested service.
-   * @param <T> the service type
-   * @return an optional containing the instance of the requested service, or empty if the service
-   *     is unavailable
-   */
-  <T extends BesuService> Optional<T> getService(Class<T> serviceType);
-}
+/** Deprecated in favor of the more precisely named ServiceManager interface. */
+@Deprecated(since = "24.11.0", forRemoval = true)
+public interface BesuContext extends ServiceManager {}
