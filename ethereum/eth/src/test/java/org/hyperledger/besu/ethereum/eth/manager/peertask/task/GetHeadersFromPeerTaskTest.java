@@ -87,11 +87,11 @@ public class GetHeadersFromPeerTaskTest {
         BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
     blockchainSetupUtil.importAllBlocks();
     Blockchain blockchain = blockchainSetupUtil.getBlockchain();
-    BlockHeadersMessage responseMessage =
-        BlockHeadersMessage.create(blockchain.getChainHeadHeader());
+    BlockHeader blockHeader = blockchain.getChainHeadHeader();
+    BlockHeadersMessage responseMessage = BlockHeadersMessage.create(blockHeader);
 
     GetHeadersFromPeerTask task =
-        new GetHeadersFromPeerTask(
+        new GetHeadersFromPeerTask(blockHeader.getBlockHash(),
             0, 1, 0, Direction.FORWARD, blockchainSetupUtil.getProtocolSchedule());
 
     Assertions.assertEquals(
