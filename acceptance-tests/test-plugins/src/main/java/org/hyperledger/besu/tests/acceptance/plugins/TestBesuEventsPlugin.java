@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
+import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -42,7 +43,8 @@ public class TestBesuEventsPlugin implements BesuPlugin {
   private File callbackDir;
 
   @Override
-  public void register(final ServiceManager context) {
+  @SuppressWarnings("removal")
+  public void register(final BesuContext context) {
     this.context = context;
     LOG.info("Registered");
     callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
