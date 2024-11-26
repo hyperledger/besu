@@ -26,12 +26,15 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents an Ethereum node that we are interacting with through the discovery and wire
  * protocols.
  */
 public class DiscoveryPeer extends DefaultPeer {
+  private static final Logger log = LoggerFactory.getLogger(DiscoveryPeer.class);
   private PeerDiscoveryStatus status = PeerDiscoveryStatus.KNOWN;
   // Endpoint is a datastructure used in discovery messages
   private final Endpoint endpoint;
@@ -49,8 +52,14 @@ public class DiscoveryPeer extends DefaultPeer {
   }
 
   public static DiscoveryPeer fromEnode(final EnodeURL enode) {
-    return new DiscoveryPeer(enode, Endpoint.fromEnode(enode));
-  }
+    try {
+      return new DiscoveryPeer(enode, Endpoint.fromEnode(enode));
+    }
+    catch (IllegalArgumentException e) {
+      log.warn("Attempted to create a discovery endpoint for a node with discovery disabled: {}", enode);
+      return new DiscoveryPeer(enode, new Endpoint("defaultHost", 0, Optional.empty()));
+    }
+    }
 
   public static Optional<DiscoveryPeer> from(final Peer peer) {
     if (peer instanceof DiscoveryPeer) {
