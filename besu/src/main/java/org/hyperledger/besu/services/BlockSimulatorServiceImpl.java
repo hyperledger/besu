@@ -67,7 +67,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
     BlockStateCall blockStateCall =
         new BlockStateCall(callParameters, blockOverrides, new AccountOverrideMap(), true);
 
-    var result = blockSimulator.simulate(parentHeaderCore, blockStateCall);
+    var result = blockSimulator.process(parentHeaderCore, blockStateCall);
 
     if (result.isEmpty()) {
       throw new RuntimeException("Block simulation failed");

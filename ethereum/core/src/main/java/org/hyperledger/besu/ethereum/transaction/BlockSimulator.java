@@ -77,7 +77,7 @@ public class BlockSimulator {
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, rpcGasCap);
   }
 
-  public Optional<BlockSimulationResult> simulate(
+  public Optional<BlockSimulationResult> process(
       final BlockHeader header, final BlockStateCall blockStateCall) {
 
     try (final MutableWorldState ws = getWorldState(header)) {
