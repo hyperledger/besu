@@ -97,13 +97,37 @@ public class TestContext {
   }
 
   public Block createBlockForProposalFromChainHead(final long timestamp) {
-    return createBlockForProposalFromChainHead(timestamp, finalState.getLocalAddress());
+    return createBlockForProposalFromChainHead(timestamp, finalState.getLocalAddress(), 0);
+  }
+
+  public Block createBlockForProposalFromChainHead(final long timestamp, final int roundNumber) {
+    return createBlockForProposalFromChainHead(
+        timestamp, finalState.getLocalAddress(), roundNumber);
+  }
+
+  public Block createBlockForProposalFromChainHead(final long timestamp, final Address proposer) {
+    // this implies that EVERY block will have this node as the proposer :/
+    return createBlockForProposal(blockchain.getChainHeadHeader(), timestamp, proposer, 0);
+  }
+
+  public Block createBlockForProposalFromChainHead(
+      final long timestamp, final Address proposer, final int roundNumber) {
+    // this implies that EVERY block will have this node as the proposer :/
+    return createBlockForProposal(
+        blockchain.getChainHeadHeader(), timestamp, proposer, roundNumber);
   }
 
   public Block createBlockForProposal(
-      final BlockHeader parent, final long timestamp, final Address proposer) {
+      final BlockHeader parent,
+      final long timestamp,
+      final Address proposer,
+      final int roundNumber) {
     final Block block =
-        finalState.getBlockCreatorFactory().create(0).createBlock(timestamp, parent).getBlock();
+        finalState
+            .getBlockCreatorFactory()
+            .create(roundNumber)
+            .createBlock(timestamp, parent)
+            .getBlock();
 
     final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
     headerBuilder
@@ -114,9 +138,9 @@ public class TestContext {
     return new Block(newHeader, block.getBody());
   }
 
-  public Block createBlockForProposalFromChainHead(final long timestamp, final Address proposer) {
-    // this implies that EVERY block will have this node as the proposer :/
-    return createBlockForProposal(blockchain.getChainHeadHeader(), timestamp, proposer);
+  public Block createBlockForProposal(
+      final BlockHeader parent, final long timestamp, final Address proposer) {
+    return createBlockForProposal(parent, timestamp, proposer, 0);
   }
 
   public RoundSpecificPeers roundSpecificPeers(final ConsensusRoundIdentifier roundId) {
