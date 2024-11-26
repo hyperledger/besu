@@ -86,10 +86,10 @@ public class BlockSimulator {
     }
   }
 
-  public Optional<BlockSimulationResult> process(
+  public BlockSimulationResult process(
       final BlockHeader header, final BlockStateCall blockStateCall) {
     try (final MutableWorldState ws = getWorldState(header)) {
-      return Optional.of(processWithMutableWorldState(header, blockStateCall, ws));
+      return processWithMutableWorldState(header, blockStateCall, ws);
     } catch (final Exception e) {
       throw new RuntimeException("Error simulating block", e);
     }

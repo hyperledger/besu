@@ -48,28 +48,22 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
 
   @Override
   public BlockSimulationResult simulate(
-      final BlockHeader parentHeader,
+      final BlockHeader header,
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides,
       final boolean shouldPersist) {
 
-    org.hyperledger.besu.ethereum.core.BlockHeader parentHeaderCore =
-        (org.hyperledger.besu.ethereum.core.BlockHeader) parentHeader;
-
-    List<CallParameter> callParameters =
-        transactions.stream().map(CallParameter::fromTransaction).toList();
+    var headerCore = (org.hyperledger.besu.ethereum.core.BlockHeader) header;
+    var callParameters = transactions.stream().map(CallParameter::fromTransaction).toList();
 
     BlockStateCall blockStateCall =
         new BlockStateCall(callParameters, blockOverrides, new AccountOverrideMap(), true);
 
-    var result = blockSimulator.process(parentHeaderCore, blockStateCall);
+    var result = blockSimulator.process(headerCore, blockStateCall);
 
-    if (result.isEmpty()) {
-      throw new RuntimeException("Block simulation failed");
-    }
     return new BlockSimulationResult(
-        result.get().getBlockHeader(),
-        result.get().getTransactionSimulations().stream()
+        result.getBlockHeader(),
+        result.getTransactionSimulations().stream()
             .map(
                 simulation ->
                     new TransactionSimulationResult(simulation.transaction(), simulation.result()))
