@@ -30,7 +30,7 @@ dependencies {
   api platform('io.grpc:grpc-bom:1.68.0')
   api platform('io.netty:netty-bom:4.1.115.Final')
   api platform('io.opentelemetry:opentelemetry-bom:1.43.0')
-  api platform('io.prometheus:prometheus-metrics-bom:1.3.3')
+  api platform('io.prometheus:prometheus-metrics-bom:1.3.4')
   api platform('io.vertx:vertx-stack-depchain:4.5.10')
   api platform('org.apache.logging.log4j:log4j-bom:2.24.1')
   api platform('org.assertj:assertj-bom:3.26.3')
@@ -103,8 +103,6 @@ dependencies {
     api 'io.opentracing:opentracing-api:0.33.0'
     api 'io.opentracing:opentracing-util:0.33.0'
     api 'io.opentracing.contrib:opentracing-okhttp3:3.0.0'
-
-    api 'io.prometheus:prometheus-metrics-instrumentation-guava:1.3.3'
 
     api 'io.pkts:pkts-core:3.0.10'
 
