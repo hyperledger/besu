@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -49,8 +50,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -63,21 +62,17 @@ public class BlockSimulator {
   private final TransactionSimulator transactionSimulator;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
-
-  private final Supplier<Optional<Address>> coinbaseSupplier;
-  private final Supplier<OptionalLong> nextGasSupplier;
+  private final MiningConfiguration miningConfiguration;
 
   public BlockSimulator(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final long rpcGasCap,
-      final Supplier<Optional<Address>> coinbaseSupplier,
-      final Supplier<OptionalLong> nextGasSupplier) {
+      final MiningConfiguration miningConfiguration) {
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
-    this.coinbaseSupplier = coinbaseSupplier;
-    this.nextGasSupplier = nextGasSupplier;
+    this.miningConfiguration = miningConfiguration;
     this.transactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, rpcGasCap);
   }
@@ -276,7 +271,10 @@ public class BlockSimulator {
 
     return BlockHeaderBuilder.createDefault()
         .parentHash(header.getHash())
-        .coinbase(blockOverrides.getFeeRecipient().orElse(coinbaseSupplier.get().orElseThrow()))
+        .coinbase(
+            blockOverrides
+                .getFeeRecipient()
+                .orElse(miningConfiguration.getCoinbase().orElseThrow()))
         .difficulty(
             Difficulty.of(
                 blockOverrides
@@ -350,7 +348,7 @@ public class BlockSimulator {
         .getGasLimitCalculator()
         .nextGasLimit(
             parentHeader.getGasLimit(),
-            nextGasSupplier.get().orElse(parentHeader.getGasLimit()),
+            miningConfiguration.getTargetGasLimit().orElse(parentHeader.getGasLimit()),
             blockNumber);
   }
 

@@ -53,15 +53,13 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
       final long rpcGasCap,
       final MiningConfiguration miningConfiguration) {
     super(blockchainQueries);
-
     this.blockSimulator =
         new BlockSimulator(
             blockchainQueries.getBlockchain(),
             blockchainQueries.getWorldStateArchive(),
             protocolSchedule,
             rpcGasCap,
-            miningConfiguration::getCoinbase,
-            miningConfiguration::getTargetGasLimit);
+            miningConfiguration);
   }
 
   @Override
@@ -82,12 +80,11 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
 
   @Override
   protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
-    final BlockHeader header = blockchainQueries.get().getBlockHeaderByHash(blockHash).orElse(null);
-
-    if (header == null) {
-      return errorResponse(request, BLOCK_NOT_FOUND);
-    }
-    return resultByBlockHeader(request, header);
+    return blockchainQueries
+        .get()
+        .getBlockHeaderByHash(blockHash)
+        .map(header -> resultByBlockHeader(request, header))
+        .orElseGet(() -> errorResponse(request, BLOCK_NOT_FOUND));
   }
 
   @Override
@@ -96,11 +93,10 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
     try {
       BlockStateCallsParameter parameter =
           request.getRequiredParameter(0, BlockStateCallsParameter.class);
-
-      var response =
+      List<BlockResult> response =
           blockSimulator.process(header, parameter.getBlockStateCalls()).stream()
-              .map(this::mapResponse);
-
+              .map(this::convertResponse)
+              .collect(Collectors.toList());
       return new JsonRpcSuccessResponse(request.getRequest().getId(), response);
     } catch (JsonRpcParameterException e) {
       throw new RuntimeException(e);
@@ -112,13 +108,9 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
     return new JsonRpcErrorResponse(request.getRequest().getId(), new JsonRpcError(rpcErrorType));
   }
 
-  public BlockResult mapResponse(final BlockSimulationResult result) {
+  private BlockResult convertResponse(final BlockSimulationResult result) {
     Block block = result.getBlock();
-    final int size = block.calculateSize();
-
-    final List<Hash> txs =
-        block.getBody().getTransactions().stream().map(Transaction::getHash).toList();
-
+    var txs = block.getBody().getTransactions().stream().map(Transaction::getHash).toList();
     var transactionResults =
         result.getTransactionSimulations().stream()
             .map(
@@ -131,7 +123,7 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
                         null))
             .toList();
 
-    final List<TransactionResult> transactionHashes =
+    List<TransactionResult> transactionHashes =
         txs.stream()
             .map(Hash::toString)
             .map(TransactionHashResult::new)
@@ -142,7 +134,7 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
         List.of(),
         transactionResults,
         Difficulty.ZERO,
-        size,
+        block.calculateSize(),
         false,
         block.getBody().getWithdrawals());
   }

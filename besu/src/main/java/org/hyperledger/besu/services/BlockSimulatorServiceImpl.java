@@ -43,12 +43,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
 
     blockSimulator =
         new BlockSimulator(
-            blockchain,
-            worldStateArchive,
-            protocolSchedule,
-            rpcGasCap,
-            miningConfiguration::getCoinbase,
-            miningConfiguration::getTargetGasLimit);
+            blockchain, worldStateArchive, protocolSchedule, rpcGasCap, miningConfiguration);
   }
 
   @Override
