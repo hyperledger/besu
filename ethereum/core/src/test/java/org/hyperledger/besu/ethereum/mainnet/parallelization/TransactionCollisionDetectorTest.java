@@ -276,7 +276,6 @@ class TransactionCollisionDetectorTest {
     final Address miningBeneficiary = Address.ZERO;
     final Address address = Address.fromHexString("0x1");
     final BonsaiAccount miningBeneficiaryValue = createAccount(address);
-    bonsaiUpdater.commit();
 
     final Transaction transaction = createTransaction(address, address);
 
