@@ -123,9 +123,8 @@ public class GetReceiptsFromPeerTask
   @Override
   public Predicate<EthPeer> getPeerRequirementFilter() {
     return (ethPeer) ->
-        ethPeer.getProtocolName().equals(getSubProtocol().getName())
-            && (protocolSchedule.anyMatch((ps) -> ps.spec().isPoS())
-                || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight);
+        (protocolSchedule.anyMatch((ps) -> ps.spec().isPoS())
+            || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight);
   }
 
   @Override
