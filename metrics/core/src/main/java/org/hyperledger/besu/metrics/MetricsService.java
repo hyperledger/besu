@@ -18,12 +18,12 @@ import org.hyperledger.besu.metrics.opentelemetry.MetricsOtelPushService;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsHttpService;
 import org.hyperledger.besu.metrics.prometheus.MetricsPushGatewayService;
+import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import io.vertx.core.Vertx;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -35,20 +35,18 @@ public interface MetricsService {
   /**
    * Create Metrics Service.
    *
-   * @param vertx the vertx
    * @param configuration the configuration
    * @param metricsSystem the metrics system
    * @return the optional Metrics Service
    */
   static Optional<MetricsService> create(
-      final Vertx vertx,
-      final MetricsConfiguration configuration,
-      final MetricsSystem metricsSystem) {
+      final MetricsConfiguration configuration, final MetricsSystem metricsSystem) {
     LoggerFactory.getLogger(MetricsService.class)
         .trace("Creating metrics service {}", configuration.getProtocol());
     if (configuration.getProtocol() == MetricsProtocol.PROMETHEUS) {
       if (configuration.isEnabled()) {
-        return Optional.of(new MetricsHttpService(vertx, configuration, metricsSystem));
+        return Optional.of(
+            new MetricsHttpService(configuration, (PrometheusMetricsSystem) metricsSystem));
       } else if (configuration.isPushEnabled()) {
         return Optional.of(new MetricsPushGatewayService(configuration, metricsSystem));
       } else {
