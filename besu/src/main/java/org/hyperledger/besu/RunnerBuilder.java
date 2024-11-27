@@ -1040,8 +1040,7 @@ public class RunnerBuilder {
           subscriptionManager, privacyParameters, context.getBlockchain().getGenesisBlockHeader());
     }
 
-    final Optional<MetricsService> metricsService =
-        createMetricsService(vertx, metricsConfiguration);
+    final Optional<MetricsService> metricsService = createMetricsService(metricsConfiguration);
 
     final Optional<EthStatsService> ethStatsService;
     if (isEthStatsEnabled()) {
@@ -1479,9 +1478,8 @@ public class RunnerBuilder {
         vertx, configuration, websocketMessageHandler, authenticationService, metricsSystem);
   }
 
-  private Optional<MetricsService> createMetricsService(
-      final Vertx vertx, final MetricsConfiguration configuration) {
-    return MetricsService.create(vertx, configuration, metricsSystem);
+  private Optional<MetricsService> createMetricsService(final MetricsConfiguration configuration) {
+    return MetricsService.create(configuration, metricsSystem);
   }
 
   /**

@@ -14,22 +14,86 @@
  */
 package org.hyperledger.besu.metrics.prometheus;
 
+import static org.hyperledger.besu.metrics.prometheus.PrometheusCollector.addLabelValues;
+import static org.hyperledger.besu.metrics.prometheus.PrometheusCollector.getLabelValues;
+
+import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-import io.prometheus.client.Histogram;
+import java.util.stream.Stream;
 
-class PrometheusSimpleTimer implements LabelledMetric<OperationTimer> {
+import io.prometheus.metrics.core.metrics.Histogram;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
+
+/**
+ * An implementation of Besu simple timer backed by a Prometheus histogram. The histogram samples
+ * durations and counts them in configurable buckets. It also provides a sum of all observed values.
+ */
+class PrometheusSimpleTimer extends CategorizedPrometheusCollector
+    implements LabelledMetric<OperationTimer> {
 
   private final Histogram histogram;
 
-  public PrometheusSimpleTimer(final Histogram histogram) {
-    this.histogram = histogram;
+  public PrometheusSimpleTimer(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final double[] buckets,
+      final String... labelNames) {
+    super(category, name);
+    this.histogram =
+        Histogram.builder()
+            .name(this.prefixedName)
+            .help(help)
+            .labelNames(labelNames)
+            .classicOnly()
+            .classicUpperBounds(buckets)
+            .build();
   }
 
   @Override
   public OperationTimer labels(final String... labels) {
-    final Histogram.Child metric = histogram.labels(labels);
-    return () -> metric.startTimer()::observeDuration;
+    final var ddp = histogram.labelValues(labels);
+    return () -> ddp.startTimer()::observeDuration;
+  }
+
+  @Override
+  public String getIdentifier() {
+    return histogram.getPrometheusName();
+  }
+
+  @Override
+  public void register(final PrometheusRegistry registry) {
+    registry.register(histogram);
+  }
+
+  @Override
+  public void unregister(final PrometheusRegistry registry) {
+    registry.unregister(histogram);
+  }
+
+  @Override
+  public Stream<Observation> streamObservations() {
+    final var snapshot = histogram.collect();
+    return snapshot.getDataPoints().stream()
+        .flatMap(
+            dataPoint -> {
+              final var labelValues = getLabelValues(dataPoint.getLabels());
+              if (!dataPoint.hasClassicHistogramData()) {
+                throw new IllegalStateException("Only classic histogram are supported");
+              }
+
+              return dataPoint.getClassicBuckets().stream()
+                  .map(
+                      bucket ->
+                          new Observation(
+                              category,
+                              name,
+                              bucket.getCount(),
+                              addLabelValues(
+                                  labelValues, Double.toString(bucket.getUpperBound()))));
+            });
   }
 }
