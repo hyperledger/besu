@@ -110,7 +110,7 @@ public class ReferenceTestProtocolSchedules {
                     "Prague",
                     createSchedule(
                         genesisStub.clone().pragueTime(0)
-                        // .osakaTime(0) // TODO remove this once osaka_devnet_0 ships
+                         .osakaTime(0) // TODO remove this once osaka_devnet_0 ships
                         )),
                 Map.entry("Osaka", createSchedule(genesisStub.clone().osakaTime(0))),
                 Map.entry("Amsterdam", createSchedule(genesisStub.clone().futureEipsTime(0))),

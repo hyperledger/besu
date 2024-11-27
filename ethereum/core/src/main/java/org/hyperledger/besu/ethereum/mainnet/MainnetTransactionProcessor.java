@@ -346,15 +346,6 @@ public class MainnetTransactionProcessor {
           throw new RuntimeException("Code delegation processor is required for 7702 transactions");
         }
 
-        //        if (evmWorldUpdater.parentUpdater().isEmpty()) {
-        //          throw new RuntimeException("Code delegation needs the underlying world state");
-        //        }
-
-        // get the underlying world state to commit code delegations without the transaction having
-        // to succeed
-        //        final EVMWorldUpdater parentUpdater =
-        //            (EVMWorldUpdater) evmWorldUpdater.parentUpdater().get();
-
         final CodeDelegationResult codeDelegationResult =
             maybeCodeDelegationProcessor.get().process(evmWorldUpdater, transaction);
         warmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
@@ -363,9 +354,6 @@ public class MainnetTransactionProcessor {
                 (codeDelegationResult.alreadyExistingDelegators()));
 
         evmWorldUpdater.commit();
-
-        // authorizations will always be commited independently if the transaction succeeds or not
-        //        parentUpdater.commit();
       }
 
       final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
