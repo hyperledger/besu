@@ -44,7 +44,7 @@ public class RevertOperation extends AbstractOperation {
 
     final long cost = gasCalculator().memoryExpansionGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
 
     final Bytes reason = frame.readMemory(from, length);

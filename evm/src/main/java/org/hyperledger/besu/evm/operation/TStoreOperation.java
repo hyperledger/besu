@@ -43,7 +43,7 @@ public class TStoreOperation extends AbstractOperation {
     if (frame.isStatic()) {
       return OperationResult.illegalStateChange();
     } else if (remainingGas < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     } else {
       frame.setTransientStorageValue(frame.getRecipientAddress(), key, value);
       return new OperationResult(cost);

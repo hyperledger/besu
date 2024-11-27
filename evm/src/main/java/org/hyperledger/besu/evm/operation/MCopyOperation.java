@@ -40,7 +40,7 @@ public class MCopyOperation extends AbstractOperation {
 
     final long cost = gasCalculator().dataCopyOperationGasCost(frame, Math.max(src, dst), length);
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
 
     frame.copyMemory(dst, src, length, true);

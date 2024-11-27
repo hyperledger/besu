@@ -179,7 +179,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     final boolean accountIsWarm = frame.warmUpAddress(to) || gasCalculator().isPrecompile(to);
     final long cost = cost(frame, accountIsWarm);
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
     frame.decrementRemainingGas(cost);
 
@@ -191,7 +191,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       final DelegatedCodeGasCostHelper.Result result =
           deductDelegatedCodeGasCost(frame, gasCalculator(), contract);
       if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-        return OperationResult.insufficientGas();
+        return OperationResult.insufficientGas(result.gasCost());
       }
     }
 

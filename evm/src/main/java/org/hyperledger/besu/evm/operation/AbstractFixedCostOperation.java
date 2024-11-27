@@ -52,7 +52,7 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
   @Override
   public final OperationResult execute(final MessageFrame frame, final EVM evm) {
     if (frame.getRemainingGas() < gasCost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(gasCost);
     } else {
       return executeFixedCostOperation(frame, evm);
     }

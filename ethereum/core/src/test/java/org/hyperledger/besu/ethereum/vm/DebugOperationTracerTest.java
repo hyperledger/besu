@@ -193,7 +193,7 @@ class DebugOperationTracerTest {
 
     final DebugOperationTracer tracer =
         new DebugOperationTracer(new TraceOptions(true, true, true), false);
-    tracer.tracePostExecution(frame, OperationResult.insufficientGas());
+    tracer.tracePostExecution(frame, OperationResult.insufficientGas(50L));
 
     final TraceFrame traceFrame = getOnlyTraceFrame(tracer);
     assertThat(traceFrame.getExceptionalHaltReason())

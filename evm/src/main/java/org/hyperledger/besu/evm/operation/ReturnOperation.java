@@ -42,7 +42,7 @@ public class ReturnOperation extends AbstractOperation {
 
     final long cost = gasCalculator().memoryExpansionGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
 
     frame.setOutputData(frame.readMemory(from, length));

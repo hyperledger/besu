@@ -42,7 +42,7 @@ public class Keccak256Operation extends AbstractOperation {
 
     final long cost = gasCalculator().keccak256OperationGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
 
     final Bytes bytes = frame.readMutableMemory(from, length);

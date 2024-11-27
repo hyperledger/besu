@@ -233,7 +233,6 @@ public class EVM {
               case 0x0a -> ExpOperation.staticOperation(frame, gasCalculator);
               case 0x0b -> SignExtendOperation.staticOperation(frame);
               case 0x0c, 0x0d, 0x0e, 0x0f -> OperationResult.invalidOperation();
-
               case 0x10 -> LtOperation.staticOperation(frame);
               case 0x11 -> GtOperation.staticOperation(frame);
               case 0x12 -> SLtOperation.staticOperation(frame);

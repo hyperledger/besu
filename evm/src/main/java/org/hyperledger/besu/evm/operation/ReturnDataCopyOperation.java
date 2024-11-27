@@ -54,7 +54,7 @@ public class ReturnDataCopyOperation extends AbstractOperation {
 
     final long cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, returnData, true);

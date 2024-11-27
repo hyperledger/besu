@@ -59,7 +59,7 @@ public class DataCopyOperation extends AbstractOperation {
     final int length = clampedToInt(frame.popStackItem());
     final long cost = cost(frame, memOffset, length);
     if (cost > frame.getRemainingGas()) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
 
     final Bytes data = code.getData(sourceOffset, length);

@@ -52,7 +52,7 @@ public class LogOperation extends AbstractOperation {
     if (frame.isStatic()) {
       return OperationResult.illegalStateChange();
     } else if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
 
     final Address address = frame.getRecipientAddress();

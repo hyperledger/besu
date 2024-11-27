@@ -55,7 +55,7 @@ public class SLoadOperation extends AbstractOperation {
     final boolean slotIsWarm = frame.warmUpStorage(address, key);
     final long cost = slotIsWarm ? warmCost : coldCost;
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     } else {
       frame.pushStackItem(account.getStorageValue(UInt256.fromBytes(key)));
 

@@ -55,7 +55,7 @@ public class BalanceOperation extends AbstractOperation {
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
     final long cost = cost(accountIsWarm);
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     } else {
       final Account account = frame.getWorldUpdater().get(address);
       frame.pushStackItem(account == null ? Bytes.EMPTY : account.getBalance());

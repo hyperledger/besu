@@ -122,7 +122,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
       final DelegatedCodeGasCostHelper.Result result =
           deductDelegatedCodeGasCost(frame, gasCalculator, contract);
       if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-        return OperationResult.insufficientGas();
+        return OperationResult.insufficientGas(result.gasCost());
       }
     }
 
@@ -136,7 +136,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
             + (accountCreation ? gasCalculator.newAccountGasCost() : 0);
     long currentGas = frame.getRemainingGas() - cost;
     if (currentGas < 0) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
 
     final Code code =

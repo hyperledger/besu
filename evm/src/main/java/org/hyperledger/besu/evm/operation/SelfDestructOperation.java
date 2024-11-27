@@ -71,7 +71,7 @@ public class SelfDestructOperation extends AbstractOperation {
     if (frame.isStatic()) {
       return OperationResult.illegalStateChange();
     } else if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
 
     // We passed preliminary checks, get mutable accounts.

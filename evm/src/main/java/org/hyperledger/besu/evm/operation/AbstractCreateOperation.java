@@ -78,7 +78,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     if (frame.isStatic()) {
       return OperationResult.illegalStateChange();
     } else if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
     final Wei value = Wei.wrap(frame.getStackItem(0));
 

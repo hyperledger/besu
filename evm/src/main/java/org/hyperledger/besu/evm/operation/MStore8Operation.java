@@ -42,7 +42,7 @@ public class MStore8Operation extends AbstractOperation {
 
     final long cost = gasCalculator().mStore8OperationGasCost(frame, location);
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
 
     frame.writeMemory(location, theByte, true);

@@ -41,7 +41,7 @@ public class CodeCopyOperation extends AbstractOperation {
 
     final long cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
 
     final Code code = frame.getCode();

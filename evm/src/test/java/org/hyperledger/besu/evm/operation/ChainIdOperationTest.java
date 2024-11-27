@@ -64,9 +64,7 @@ class ChainIdOperationTest {
     Bytes32 chainId = Bytes32.fromHexString(chainIdString);
     ChainIdOperation operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
     final OperationResult result = operation.execute(messageFrame, null);
-    if (result.getHaltReason() == null) {
-      assertThat(result.getGasCost()).isEqualTo(expectedGas);
-    }
+    assertThat(result.getGasCost()).isEqualTo(expectedGas);
   }
 
   @Test

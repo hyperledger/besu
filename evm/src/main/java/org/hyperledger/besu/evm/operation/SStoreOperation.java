@@ -82,9 +82,9 @@ public class SStoreOperation extends AbstractOperation {
     if (frame.isStatic()) {
       return OperationResult.illegalStateChange();
     } else if (remainingGas < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     } else if (remainingGas <= minimumGasRemaining) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(minimumGasRemaining);
     }
 
     // Increment the refund counter.

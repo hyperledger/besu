@@ -153,7 +153,7 @@
                     "sub": null
                   },
                   {
-                    "cost": 0,
+                    "cost": 30000,
                     "ex": null,
                     "pc": 21,
                     "sub": null
@@ -320,7 +320,7 @@
                     "sub": null
                   },
                   {
-                    "cost": 0,
+                    "cost": 30000,
                     "ex": null,
                     "pc": 21,
                     "sub": null

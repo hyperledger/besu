@@ -38,7 +38,7 @@ public class TLoadOperation extends AbstractOperation {
     final long cost = gasCalculator().getTransientLoadOperationGasCost();
     final Bytes32 slot = UInt256.fromBytes(frame.popStackItem());
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     } else {
       frame.pushStackItem(frame.getTransientStorageValue(frame.getRecipientAddress(), slot));
 

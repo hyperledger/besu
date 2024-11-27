@@ -74,7 +74,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
     final long cost = cost(accountIsWarm);
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     } else {
       final Account account = frame.getWorldUpdater().get(address);
 
@@ -82,7 +82,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
         final DelegatedCodeGasCostHelper.Result result =
             deductDelegatedCodeGasCost(frame, gasCalculator(), account);
         if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-          return OperationResult.insufficientGas();
+          return OperationResult.insufficientGas(result.gasCost());
         }
       }
 

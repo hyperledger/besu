@@ -28,12 +28,24 @@ public class OperationResult {
   private final int pcIncrement;
 
   /**
-   * Instantiates a new Operation result.
+   * Instantiates a new Operation result when due to an ExceptionalHaltReason.
    *
    * @param haltReason the halt reason
    */
   private OperationResult(final ExceptionalHaltReason haltReason) {
-    this.gasCost = 0L;
+    this(0L, haltReason);
+  }
+
+  /**
+   * Instantiates a new Operation result when due to an ExceptionalHaltReason with an associated
+   * gasCost increment. Only InsufficientGas has a gas cost increment associated with the reason for
+   * halting, all other halt reasons should use this constructor.
+   *
+   * @param gasCost the gas cost increment that caused the execution to halt
+   * @param haltReason the halt reason
+   */
+  private OperationResult(final long gasCost, final ExceptionalHaltReason haltReason) {
+    this.gasCost = gasCost;
     this.pcIncrement = 0;
     this.haltReason = haltReason;
   }
@@ -107,10 +119,11 @@ public class OperationResult {
   /**
    * Returns a halted OperationResult due to ExceptionalHaltReason.INSUFFICIENT_GAS.
    *
+   * @param overshotGasCost gas cost that exceeded the remaining gas during execution
    * @return halted OperationResult
    */
-  public static OperationResult insufficientGas() {
-    return new OperationResult(ExceptionalHaltReason.INSUFFICIENT_GAS);
+  public static OperationResult insufficientGas(final long overshotGasCost) {
+    return new OperationResult(overshotGasCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
   }
 
   /**

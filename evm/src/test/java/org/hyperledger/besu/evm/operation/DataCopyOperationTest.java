@@ -151,9 +151,7 @@ class DataCopyOperationTest {
 
     assertThat(frame.memoryWordSize()).isEqualTo((expected.size() + 31) / 32);
     assertThat(frame.readMemory(0, expected.size())).isEqualTo(expected);
-    if (result.getHaltReason() == null) {
-      assertThat(result.getGasCost()).isEqualTo(gasCost);
-    }
+    assertThat(result.getGasCost()).isEqualTo(gasCost);
   }
 
   @Test

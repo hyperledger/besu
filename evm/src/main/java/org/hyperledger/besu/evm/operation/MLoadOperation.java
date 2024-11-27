@@ -40,7 +40,7 @@ public class MLoadOperation extends AbstractOperation {
 
     final long cost = gasCalculator().mLoadOperationGasCost(frame, location);
     if (frame.getRemainingGas() < cost) {
-      return OperationResult.insufficientGas();
+      return OperationResult.insufficientGas(cost);
     }
 
     final Bytes value = frame.readMutableMemory(location, 32, true).copy();

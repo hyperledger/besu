@@ -99,7 +99,7 @@ public class ExtDelegateCallOperationTest {
         Arguments.of(
             "Invalid code",
             384100,
-            100,
+            0,
             384100,
             ExceptionalHaltReason.INVALID_CODE,
             CONTRACT_ADDRESS,
@@ -143,9 +143,7 @@ public class ExtDelegateCallOperationTest {
 
     var result = operation.execute(messageFrame, EOF_EVM);
 
-    if (result.getHaltReason() == null) {
-      assertThat(result.getGasCost()).isEqualTo(chargedGas);
-    }
+    assertThat(result.getGasCost()).isEqualTo(chargedGas);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
 
     MessageFrame childFrame = messageFrame.getMessageFrameStack().getFirst();
