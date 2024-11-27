@@ -74,12 +74,14 @@ import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.mining.MiningService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
+import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
@@ -220,6 +222,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(
         TransactionPoolService.class,
         new TransactionPoolServiceImpl(besuController.getTransactionPool()));
+    besuPluginContext.addService(
+        MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
 
     component.rpcEndpointService().init(runner.getInProcessRpcMethods());
 

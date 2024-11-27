@@ -641,7 +641,6 @@ public abstract class AbstractBlockPropagationManagerTest {
     final EthContext ethContext =
         new EthContext(
             new EthPeers(
-                "eth",
                 () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
                 TestClock.fixed(),
                 metricsSystem,
@@ -783,7 +782,6 @@ public abstract class AbstractBlockPropagationManagerTest {
     final EthContext ethContext =
         new EthContext(
             new EthPeers(
-                "eth",
                 () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
                 TestClock.fixed(),
                 metricsSystem,

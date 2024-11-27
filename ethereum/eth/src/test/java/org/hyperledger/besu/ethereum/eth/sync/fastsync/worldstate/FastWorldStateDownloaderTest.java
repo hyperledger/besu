@@ -51,11 +51,11 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.TrieNodeDecoder;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -589,8 +589,8 @@ class FastWorldStateDownloaderTest {
                 Function.identity())
             .entriesFrom(Bytes32.ZERO, 5).values().stream()
                 .map(RLP::input)
-                .map(StateTrieAccountValue::readFrom)
-                .map(StateTrieAccountValue::getStorageRoot)
+                .map(PmtStateTrieAccountValue::readFrom)
+                .map(PmtStateTrieAccountValue::getStorageRoot)
                 .collect(Collectors.toList());
     final Map<Bytes32, Bytes> allTrieNodes = new HashMap<>();
     final Set<Bytes32> knownNodes = new HashSet<>();
