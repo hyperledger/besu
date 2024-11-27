@@ -63,6 +63,4 @@ public class VerkleWorldStateProvider extends DiffBasedWorldStateProvider {
         new VerkleWorldState(
             this, worldStateKeyValueStorage, evmConfiguration, defaultWorldStateConfig));
   }
-
-
 }

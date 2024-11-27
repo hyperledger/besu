@@ -25,7 +25,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-/** Represents the raw values associated with an account in the world state trie. */
+/** Represents the raw values associated with an account in the world state verkle trie. */
 public class VerkleStateTrieAccountValue extends AbstractStateTrieAccountValue
     implements AccountValue {
 

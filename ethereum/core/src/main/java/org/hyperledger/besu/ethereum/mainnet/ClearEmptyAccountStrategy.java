@@ -48,6 +48,7 @@ public interface ClearEmptyAccountStrategy {
               .filter(Account::isEmpty)
               .forEach(a -> worldUpdater.deleteAccount(a.getAddress()));
     }
+
     @Override
     public boolean clearEmptyAccountAllowed(final Address address) {
       return true;
