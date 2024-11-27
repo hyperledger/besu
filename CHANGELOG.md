@@ -3131,7 +3131,7 @@ For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
 - Remove 'parentHash', 'number' and 'gasUsed' fields from the genesis d… [\#175](https://github.com/hyperledger/besu/pull/175) (thanks to [SweeXordious](https://github.com/SweeXordious))
 - Enable pruning by default for fast sync and validate conflicts with privacy [\#172](https://github.com/hyperledger/besu/pull/172)
 - Update RocksDB [\#170](https://github.com/hyperledger/besu/pull/170)
-- Vpdate ver to 1.3.5-snapshot [\#169](https://github.com/hyperledger/besu/pull/169)
+- Update ver to 1.3.5-snapshot [\#169](https://github.com/hyperledger/besu/pull/169)
 - Added PoaQueryService method that returns local node signer… [\#163](https://github.com/hyperledger/besu/pull/163)
 - Add versioning to privacy storage [\#149](https://github.com/hyperledger/besu/pull/149)
 - Update reference tests [\#139](https://github.com/hyperledger/besu/pull/139)
