@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
@@ -223,6 +224,33 @@ public interface MetricsSystem extends BesuService {
       final String help,
       final LongSupplier valueSupplier) {
     createGauge(category, name, help, () -> (double) valueSupplier.getAsLong());
+  }
+
+  /**
+   * Creates a histogram with assigned labels
+   *
+   * @param category The {@link MetricCategory} this histogram is assigned to.
+   * @param name A name for this metric.
+   * @param help A human-readable description of the metric.
+   * @param buckets An array of buckets to assign to the histogram
+   * @param labelNames An array of labels to assign to the histogram.
+   * @return The labelled histogram.
+   */
+  LabelledMetric<Histogram> createLabelledHistogram(
+      MetricCategory category, String name, String help, double[] buckets, String... labelNames);
+
+  /**
+   * Creates a histogram
+   *
+   * @param category The {@link MetricCategory} this histogram is assigned to.
+   * @param name A name for this metric.
+   * @param help A human-readable description of the metric.
+   * @param buckets An array of buckets to assign to the histogram
+   * @return The labelled histogram.
+   */
+  default Histogram createHistogram(
+      final MetricCategory category, final String name, final String help, final double[] buckets) {
+    return createLabelledHistogram(category, name, help, buckets).labels();
   }
 
   /**
