@@ -303,7 +303,6 @@ public class RequestManagerTest {
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
     return new EthPeer(
         peerConnection,
-        EthProtocol.NAME,
         onPeerReady,
         Collections.emptyList(),
         EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
