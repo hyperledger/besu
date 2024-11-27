@@ -28,6 +28,7 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -475,6 +476,7 @@ public abstract class JsonBlockImporterTest {
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
         .besuComponent(DaggerJsonBlockImporterTest_JsonBlockImportComponent.builder().build())
+        .apiConfiguration(ImmutableApiConfiguration.builder().build())
         .build();
   }
 

@@ -332,7 +332,6 @@ public class BlockAdapterBase extends AdapterBase {
     final ProtocolSchedule protocolSchedule =
         environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
     final long bn = header.getNumber();
-    final long gasCap = environment.getGraphQlContext().get(GraphQLContextType.GAS_CAP);
     final TransactionSimulator transactionSimulator =
         environment.getGraphQlContext().get(GraphQLContextType.TRANSACTION_SIMULATOR);
 

@@ -697,15 +697,8 @@ public class RunnerBuilder {
     final List<EnodeURL> bootnodes = discoveryConfiguration.getBootnodes();
 
     final Synchronizer synchronizer = besuController.getSynchronizer();
-    final MiningConfiguration miningParameters = besuController.getMiningParameters();
 
-    final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(
-            context.getBlockchain(),
-            context.getWorldStateArchive(),
-            protocolSchedule,
-            miningParameters,
-            apiConfiguration.getGasCap());
+    final TransactionSimulator transactionSimulator = besuController.getTransactionSimulator();
 
     final Bytes localNodeId = nodeKey.getPublicKey().getEncodedBytes();
     final Optional<NodePermissioningController> nodePermissioningController =
@@ -963,7 +956,6 @@ public class RunnerBuilder {
       graphQlContextMap.putIfAbsent(GraphQLContextType.SYNCHRONIZER, synchronizer);
       graphQlContextMap.putIfAbsent(
           GraphQLContextType.CHAIN_ID, protocolSchedule.getChainId().map(UInt256::valueOf));
-      graphQlContextMap.putIfAbsent(GraphQLContextType.GAS_CAP, apiConfiguration.getGasCap());
       graphQlContextMap.putIfAbsent(GraphQLContextType.TRANSACTION_SIMULATOR, transactionSimulator);
       final GraphQL graphQL;
       try {

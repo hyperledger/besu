@@ -170,6 +170,14 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
     final NatService natService = new NatService(Optional.empty());
 
+    final var transactionSimulator =
+        new TransactionSimulator(
+            blockchainSetupUtil.getBlockchain(),
+            blockchainSetupUtil.getWorldArchive(),
+            blockchainSetupUtil.getProtocolSchedule(),
+            miningConfiguration,
+            0L);
+
     return new JsonRpcMethodsFactory()
         .methods(
             CLIENT_NODE_NAME,
@@ -203,7 +211,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             syncVertx,
             mock(ApiConfiguration.class),
             Optional.empty(),
-            mock(TransactionSimulator.class));
+            transactionSimulator);
   }
 
   protected void startService() throws Exception {

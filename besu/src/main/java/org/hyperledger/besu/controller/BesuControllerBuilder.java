@@ -28,6 +28,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -84,6 +85,7 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -211,6 +213,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** whether parallel transaction processing is enabled or not */
   protected boolean isParallelTxProcessingEnabled;
 
+  /** The API configuration */
+  protected ApiConfiguration apiConfiguration;
+
+  /** The transaction simulator */
+  protected TransactionSimulator transactionSimulator;
+
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
 
@@ -269,6 +277,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   public BesuControllerBuilder synchronizerConfiguration(
       final SynchronizerConfiguration synchronizerConfig) {
     this.syncConfig = synchronizerConfig;
+    return this;
+  }
+
+  /**
+   * API configuration besu controller builder.
+   *
+   * @param apiConfiguration the API config
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder apiConfiguration(final ApiConfiguration apiConfiguration) {
+    this.apiConfiguration = apiConfiguration;
     return this;
   }
 
@@ -556,6 +575,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
     checkNotNull(evmConfiguration, "Missing evm config");
     checkNotNull(networkingConfiguration, "Missing network configuration");
+    checkNotNull(apiConfiguration, "Missing API configuration");
     checkNotNull(dataStorageConfiguration, "Missing data storage configuration");
     checkNotNull(besuComponent, "Must supply a BesuComponent");
     prepForBuild();
@@ -603,6 +623,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (maybeStoredGenesisBlockHash.isEmpty()) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
     }
+
+    transactionSimulator =
+        new TransactionSimulator(
+            blockchain,
+            worldStateArchive,
+            protocolSchedule,
+            miningConfiguration,
+            apiConfiguration.getGasCap());
 
     final var consensusContext =
         createConsensusContext(blockchain, worldStateArchive, protocolSchedule);
@@ -795,7 +823,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         additionalPluginServices,
         ethPeers,
         storageProvider,
-        dataStorageConfiguration);
+        dataStorageConfiguration,
+        transactionSimulator);
   }
 
   private GenesisState getGenesisState(
