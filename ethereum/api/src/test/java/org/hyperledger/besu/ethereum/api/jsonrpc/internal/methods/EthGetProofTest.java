@@ -39,10 +39,10 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Collections;
@@ -89,7 +89,7 @@ class EthGetProofTest {
     blockchainQueries =
         spy(
             new BlockchainQueries(
-                protocolSchedule, blockchain, archive, MiningParameters.newDefault()));
+                protocolSchedule, blockchain, archive, MiningConfiguration.newDefault()));
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.headBlockNumber()).thenReturn(14L);
     when(blockchain.getChainHead()).thenReturn(chainHead);
@@ -202,7 +202,7 @@ class EthGetProofTest {
 
     when(blockchainQueries.getWorldStateArchive()).thenReturn(archive);
 
-    final StateTrieAccountValue stateTrieAccountValue = mock(StateTrieAccountValue.class);
+    final PmtStateTrieAccountValue stateTrieAccountValue = mock(PmtStateTrieAccountValue.class);
     when(stateTrieAccountValue.getBalance()).thenReturn(balance);
     when(stateTrieAccountValue.getCodeHash()).thenReturn(codeHash);
     when(stateTrieAccountValue.getNonce()).thenReturn(nonce);

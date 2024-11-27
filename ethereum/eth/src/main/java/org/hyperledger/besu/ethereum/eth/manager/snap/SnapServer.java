@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
@@ -99,7 +100,8 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
       final SnapSyncConfiguration snapConfig,
       final EthMessages snapMessages,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final Synchronizer synchronizer) {
     this.snapServerEnabled =
         Optional.ofNullable(snapConfig)
             .map(SnapSyncConfiguration::isSnapServerEnabled)
@@ -111,7 +113,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
     // subscribe to initial sync completed events to start/stop snap server,
     // not saving the listenerId since we never need to unsubscribe.
-    protocolContext.getSynchronizer().subscribeInitialSync(this);
+    synchronizer.subscribeInitialSync(this);
   }
 
   /**

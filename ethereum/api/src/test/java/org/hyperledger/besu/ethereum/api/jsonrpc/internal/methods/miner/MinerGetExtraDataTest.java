@@ -20,8 +20,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -30,8 +30,8 @@ public class MinerGetExtraDataTest {
 
   @Test
   public void shouldReturnDefaultExtraData() {
-    final MiningParameters miningParameters = ImmutableMiningParameters.newDefault();
-    final MinerGetExtraData method = new MinerGetExtraData(miningParameters);
+    final MiningConfiguration miningConfiguration = ImmutableMiningConfiguration.newDefault();
+    final MinerGetExtraData method = new MinerGetExtraData(miningConfiguration);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", method.getName(), new Object[] {}));
 
@@ -43,12 +43,12 @@ public class MinerGetExtraDataTest {
 
   @Test
   public void shouldReturnSetAtRuntimeExtraData() {
-    final MiningParameters miningParameters = ImmutableMiningParameters.newDefault();
-    final MinerGetExtraData method = new MinerGetExtraData(miningParameters);
+    final MiningConfiguration miningConfiguration = ImmutableMiningConfiguration.newDefault();
+    final MinerGetExtraData method = new MinerGetExtraData(miningConfiguration);
     final var extraData = "0x123456";
     final Bytes extraDataAtRuntime = Bytes.fromHexString(extraData);
 
-    miningParameters.setExtraData(extraDataAtRuntime);
+    miningConfiguration.setExtraData(extraDataAtRuntime);
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", method.getName(), new Object[] {}));

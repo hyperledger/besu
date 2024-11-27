@@ -22,10 +22,10 @@ import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager.InnerNode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.Proof;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.Comparator;
@@ -72,7 +72,7 @@ public class WorldStateProofProvider {
       return accountProof
           .getValue()
           .map(RLP::input)
-          .map(StateTrieAccountValue::readFrom)
+          .map(PmtStateTrieAccountValue::readFrom)
           .map(
               account -> {
                 final SortedMap<UInt256, Proof<Bytes>> storageProofs =
@@ -84,7 +84,7 @@ public class WorldStateProofProvider {
 
   private SortedMap<UInt256, Proof<Bytes>> getStorageProofs(
       final Hash accountHash,
-      final StateTrieAccountValue account,
+      final PmtStateTrieAccountValue account,
       final List<UInt256> accountStorageKeys) {
     final MerkleTrie<Bytes32, Bytes> storageTrie =
         newAccountStorageTrie(accountHash, account.getStorageRoot());

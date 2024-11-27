@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
@@ -81,7 +81,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   private static final long DEFAULT_TARGET_GAS_LIMIT = 30000000L;
 
   /** The Mining parameters. */
-  protected final MiningParameters miningParameters;
+  protected final MiningConfiguration miningConfiguration;
 
   /** The Merge block creator factory. */
   protected final MergeBlockCreatorFactory mergeBlockCreatorFactory;
@@ -120,7 +120,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final ProtocolSchedule protocolSchedule,
       final EthScheduler ethScheduler,
       final TransactionPool transactionPool,
-      final MiningParameters miningParams,
+      final MiningConfiguration miningParams,
       final BackwardSyncContext backwardSyncContext,
       final Optional<Address> depositContractAddress) {
     this.protocolContext = protocolContext;
@@ -137,14 +137,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     }
     miningParams.setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
 
-    this.miningParameters = miningParams;
+    this.miningConfiguration = miningParams;
 
     this.mergeBlockCreatorFactory =
         (parentHeader, address) -> {
           address.ifPresent(miningParams::setCoinbase);
           return new MergeBlockCreator(
-              miningParameters,
-              parent -> miningParameters.getExtraData(),
+              miningConfiguration,
+              parent -> miningConfiguration.getExtraData(),
               transactionPool,
               protocolContext,
               protocolSchedule,
@@ -169,7 +169,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final EthScheduler ethScheduler,
-      final MiningParameters miningParams,
+      final MiningConfiguration miningParams,
       final BackwardSyncContext backwardSyncContext,
       final MergeBlockCreatorFactory mergeBlockCreatorFactory) {
 
@@ -182,7 +182,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       miningParams.setTargetGasLimit(DEFAULT_TARGET_GAS_LIMIT);
     }
     miningParams.setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
-    this.miningParameters = miningParams;
+    this.miningConfiguration = miningParams;
 
     this.mergeBlockCreatorFactory = mergeBlockCreatorFactory;
 
@@ -215,17 +215,17 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public Wei getMinTransactionGasPrice() {
-    return miningParameters.getMinTransactionGasPrice();
+    return miningConfiguration.getMinTransactionGasPrice();
   }
 
   @Override
   public Wei getMinPriorityFeePerGas() {
-    return miningParameters.getMinPriorityFeePerGas();
+    return miningConfiguration.getMinPriorityFeePerGas();
   }
 
   @Override
   public Optional<Address> getCoinbase() {
-    return miningParameters.getCoinbase();
+    return miningConfiguration.getCoinbase();
   }
 
   @Override
@@ -244,7 +244,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public void changeTargetGasLimit(final Long newTargetGasLimit) {
     if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
-      this.miningParameters.setTargetGasLimit(newTargetGasLimit);
+      this.miningConfiguration.setTargetGasLimit(newTargetGasLimit);
     } else {
       throw new IllegalArgumentException("Specified target gas limit is invalid");
     }
@@ -383,13 +383,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     LOG.debug(
         "Block creation started for payload id {}, remaining time is {}ms",
         payloadIdentifier,
-        miningParameters.getUnstable().getPosBlockCreationMaxTime());
+        miningConfiguration.getUnstable().getPosBlockCreationMaxTime());
 
     ethScheduler
         .scheduleBlockCreationTask(
             () -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
         .orTimeout(
-            miningParameters.getUnstable().getPosBlockCreationMaxTime(), TimeUnit.MILLISECONDS)
+            miningConfiguration.getUnstable().getPosBlockCreationMaxTime(), TimeUnit.MILLISECONDS)
         .whenComplete(
             (unused, throwable) -> {
               if (throwable != null) {
@@ -416,7 +416,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         final long waitBeforeRepetition =
             Math.max(
                 100,
-                miningParameters.getUnstable().getPosBlockCreationRepetitionMinDuration()
+                miningConfiguration.getUnstable().getPosBlockCreationRepetitionMinDuration()
                     - lastDuration);
         LOG.debug("Waiting {}ms before repeating block creation", waitBeforeRepetition);
         Thread.sleep(waitBeforeRepetition);
@@ -726,7 +726,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public boolean isMiningBeforeMerge() {
-    return miningParameters.isMiningEnabled();
+    return miningConfiguration.isMiningEnabled();
   }
 
   private Optional<Hash> findValidAncestor(final Blockchain chain, final Hash parentHash) {

@@ -19,13 +19,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 
 public class MinerGetExtraData implements JsonRpcMethod {
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
 
-  public MinerGetExtraData(final MiningParameters miningParameters) {
-    this.miningParameters = miningParameters;
+  public MinerGetExtraData(final MiningConfiguration miningConfiguration) {
+    this.miningConfiguration = miningConfiguration;
   }
 
   @Override
@@ -36,6 +36,6 @@ public class MinerGetExtraData implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), miningParameters.getExtraData().toShortHexString());
+        requestContext.getRequest().getId(), miningConfiguration.getExtraData().toShortHexString());
   }
 }

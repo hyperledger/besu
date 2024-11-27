@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -25,15 +26,15 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -44,14 +45,16 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateProvider.class);
   private final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
+  private final Supplier<WorldStateHealer> worldStateHealerSupplier;
 
   public BonsaiWorldStateProvider(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
-      final BesuContext pluginContext,
-      final EvmConfiguration evmConfiguration) {
+      final ServiceManager pluginContext,
+      final EvmConfiguration evmConfiguration,
+      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
     super(
         DataStorageFormat.BONSAI,
         worldStateKeyValueStorage,
@@ -59,6 +62,7 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
         maxLayersToLoad,
         pluginContext);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
+    this.worldStateHealerSupplier = worldStateHealerSupplier;
     provideCachedWorldStorageManager(
         new BonsaiCachedWorldStorageManager(
             this, worldStateKeyValueStorage, this::cloneBonsaiWorldStateConfig));
@@ -74,9 +78,11 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
     super(worldStateKeyValueStorage, blockchain, trieLogManager);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
+    this.worldStateHealerSupplier = worldStateHealerSupplier;
     provideCachedWorldStorageManager(bonsaiCachedWorldStorageManager);
     loadPersistedState(
         new BonsaiWorldState(
@@ -119,7 +125,7 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
       accountTrie
           .get(accountHash)
           .map(RLP::input)
-          .map(StateTrieAccountValue::readFrom)
+          .map(PmtStateTrieAccountValue::readFrom)
           .ifPresent(
               account -> {
                 final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
@@ -151,5 +157,10 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     updater.commit();
 
     getBonsaiWorldStateKeyValueStorage().downgradeToPartialFlatDbMode();
+  }
+
+  @Override
+  public void heal(final Optional<Address> maybeAccountToRepair, final Bytes location) {
+    worldStateHealerSupplier.get().heal(maybeAccountToRepair, location);
   }
 }

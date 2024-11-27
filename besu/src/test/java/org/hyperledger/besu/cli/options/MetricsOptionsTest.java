@@ -14,15 +14,32 @@
  */
 package org.hyperledger.besu.cli.options;
 
-import org.hyperledger.besu.cli.options.stable.MetricsOptions;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
+import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
+import java.util.EnumSet;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class MetricsOptionsTest
     extends AbstractCLIOptionsTest<MetricsConfiguration.Builder, MetricsOptions> {
+  private MetricCategoryRegistryImpl categoryRegistry;
+
+  @BeforeEach
+  public void setUp() {
+    categoryRegistry = new MetricCategoryRegistryImpl();
+    categoryRegistry.addCategories(BesuMetricCategory.class);
+    categoryRegistry.addCategories(StandardMetricCategory.class);
+  }
 
   @Override
   protected MetricsConfiguration.Builder createDefaultDomainObject() {
@@ -39,11 +56,36 @@ public class MetricsOptionsTest
   @Override
   protected MetricsOptions optionsFromDomainObject(
       final MetricsConfiguration.Builder domainObject) {
-    return MetricsOptions.fromConfiguration(domainObject.build());
+    final var options = MetricsOptions.fromConfiguration(domainObject.build());
+    options.setMetricCategoryRegistry(categoryRegistry);
+    return options;
   }
 
   @Override
   protected MetricsOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getMetricsOptions();
+  }
+
+  @Override
+  protected String[] getNonOptionFields() {
+    return new String[] {"metricCategoryRegistry"};
+  }
+
+  @Test
+  public void enableRocksDbCategories() {
+    final var rocksDbMetricsCategories =
+        EnumSet.of(
+            BesuMetricCategory.KVSTORE_ROCKSDB,
+            BesuMetricCategory.KVSTORE_ROCKSDB_STATS,
+            BesuMetricCategory.KVSTORE_PRIVATE_ROCKSDB,
+            BesuMetricCategory.KVSTORE_PRIVATE_ROCKSDB_STATS);
+
+    internalTestSuccess(
+        metricsConfBuilder -> {
+          assertThat(metricsConfBuilder.build().getMetricCategories())
+              .containsExactlyInAnyOrderElementsOf(rocksDbMetricsCategories);
+        },
+        "--metrics-categories",
+        rocksDbMetricsCategories.stream().map(Enum::name).collect(Collectors.joining(",")));
   }
 }

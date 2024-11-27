@@ -26,10 +26,17 @@ public interface ClearEmptyAccountStrategy {
 
   void process(final WorldUpdater worldUpdater);
 
+  boolean clearEmptyAccountAllowed(final Address address);
+
   class NotClearEmptyAccount implements ClearEmptyAccountStrategy {
     @Override
     public void process(final WorldUpdater worldUpdater) {
       // nothing to do in this case
+    }
+
+    @Override
+    public boolean clearEmptyAccountAllowed(final Address address) {
+      return false;
     }
   }
 
@@ -40,6 +47,10 @@ public interface ClearEmptyAccountStrategy {
           .stream()
               .filter(Account::isEmpty)
               .forEach(a -> worldUpdater.deleteAccount(a.getAddress()));
+    }
+    @Override
+    public boolean clearEmptyAccountAllowed(final Address address) {
+      return true;
     }
   }
 
@@ -58,6 +69,11 @@ public interface ClearEmptyAccountStrategy {
               .filter(account -> !exceptionList.contains(account.getAddress()))
               .filter(Account::isEmpty)
               .forEach(a -> worldUpdater.deleteAccount(a.getAddress()));
+    }
+
+    @Override
+    public boolean clearEmptyAccountAllowed(final Address address) {
+      return !exceptionList.contains(address);
     }
   }
 }

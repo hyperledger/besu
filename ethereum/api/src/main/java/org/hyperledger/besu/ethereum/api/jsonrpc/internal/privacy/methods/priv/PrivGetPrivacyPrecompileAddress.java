@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 
+@Deprecated(since = "24.11.0")
 public class PrivGetPrivacyPrecompileAddress implements JsonRpcMethod {
 
   private final Address privacyAddress;

@@ -55,11 +55,10 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.Unstable;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -135,8 +134,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
 
-  private MiningParameters miningParameters =
-      ImmutableMiningParameters.builder()
+  private MiningConfiguration miningConfiguration =
+      ImmutableMiningConfiguration.builder()
           .mutableInitValues(MutableInitValues.builder().coinbase(coinbase).build())
           .unstable(
               Unstable.builder()
@@ -190,7 +189,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     protocolContext =
         new ProtocolContext(blockchain, worldStateArchive, mergeContext, badBlockManager);
-    protocolContext.setSynchronizer(mock(Synchronizer.class));
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
@@ -228,7 +226,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             protocolSchedule,
             ethScheduler,
             transactionPool,
-            miningParameters,
+            miningConfiguration,
             backwardSyncContext,
             Optional.empty());
   }
@@ -273,7 +271,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
           MergeBlockCreator beingSpiedOn =
               spy(
                   new MergeBlockCreator(
-                      miningParameters,
+                      miningConfiguration,
                       parent -> Bytes.EMPTY,
                       transactionPool,
                       protocolContext,
@@ -302,7 +300,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                 protocolContext,
                 protocolSchedule,
                 ethScheduler,
-                miningParameters,
+                miningConfiguration,
                 backwardSyncContext,
                 mergeBlockCreatorFactory));
 
@@ -543,9 +541,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Test
   public void shouldStopRetryBlockCreationIfTimeExpired() throws InterruptedException {
     final AtomicLong retries = new AtomicLong(0);
-    miningParameters =
-        ImmutableMiningParameters.builder()
-            .from(miningParameters)
+    miningConfiguration =
+        ImmutableMiningConfiguration.builder()
+            .from(miningConfiguration)
             .unstable(Unstable.builder().posBlockCreationMaxTime(100).build())
             .build();
     doAnswer(
@@ -737,8 +735,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void shouldUseExtraDataFromMiningParameters() {
     final Bytes extraData = Bytes.fromHexString("0x1234");
 
-    miningParameters =
-        ImmutableMiningParameters.builder()
+    miningConfiguration =
+        ImmutableMiningConfiguration.builder()
             .mutableInitValues(MutableInitValues.builder().extraData(extraData).build())
             .build();
 
@@ -748,7 +746,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             protocolSchedule,
             ethScheduler,
             transactionPool,
-            miningParameters,
+            miningConfiguration,
             backwardSyncContext,
             Optional.empty());
 

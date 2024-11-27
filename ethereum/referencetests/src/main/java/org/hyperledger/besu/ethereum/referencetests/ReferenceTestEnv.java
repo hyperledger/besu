@@ -225,8 +225,7 @@ public class ReferenceTestEnv extends BlockHeader {
                       BlockHeaderBuilder.createDefault()
                           .difficulty(Difficulty.fromHexOrDecimalString(parentDifficulty))
                           .number(number - 1)
-                          .buildBlockHeader(),
-                      null)));
+                          .buildBlockHeader())));
     }
     if (parentExcessBlobGas != null && parentBlobGasUsed != null) {
       builder.excessBlobGas(BlobGas.of(Long.decode(parentExcessBlobGas)));

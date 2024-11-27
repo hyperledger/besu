@@ -153,7 +153,8 @@ class BlockImportExceptionHandlingTest {
             eq(goodBlock),
             any(),
             any(),
-            eq(HeaderValidationMode.DETACHED_ONLY)))
+            eq(HeaderValidationMode.DETACHED_ONLY),
+            any()))
         .thenReturn(true);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
     mainnetBlockValidator.validateAndProcessBlock(
@@ -189,7 +190,8 @@ class BlockImportExceptionHandlingTest {
             eq(goodBlock),
             any(),
             any(),
-            eq(HeaderValidationMode.DETACHED_ONLY)))
+            eq(HeaderValidationMode.DETACHED_ONLY),
+            any()))
         .thenReturn(true);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
     mainnetBlockValidator.validateAndProcessBlock(
@@ -257,7 +259,8 @@ class BlockImportExceptionHandlingTest {
             eq(goodBlock),
             any(),
             any(),
-            eq(HeaderValidationMode.DETACHED_ONLY)))
+            eq(HeaderValidationMode.DETACHED_ONLY),
+            any()))
         .thenThrow(new StorageException("database problem"));
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
     mainnetBlockValidator.validateAndProcessBlock(

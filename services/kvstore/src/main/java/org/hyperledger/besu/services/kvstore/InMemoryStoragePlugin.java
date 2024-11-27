@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
-import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.StorageService;
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 public class InMemoryStoragePlugin implements BesuPlugin {
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryStoragePlugin.class);
-  private BesuContext context;
+  private ServiceManager context;
   private InMemoryKeyValueStorageFactory factory;
   private InMemoryKeyValueStorageFactory privacyFactory;
 
@@ -44,7 +44,7 @@ public class InMemoryStoragePlugin implements BesuPlugin {
   public InMemoryStoragePlugin() {}
 
   @Override
-  public void register(final BesuContext context) {
+  public void register(final ServiceManager context) {
     LOG.debug("Registering plugin");
     this.context = context;
 

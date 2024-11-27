@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Map;
 
@@ -38,19 +39,21 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
-
   private final ApiConfiguration apiConfiguration;
   private final ProtocolContext protocolContext;
+  private final MetricsSystem metricsSystem;
 
   TraceJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final ApiConfiguration apiConfiguration) {
+      final ApiConfiguration apiConfiguration,
+      final MetricsSystem metricsSystem) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.apiConfiguration = apiConfiguration;
+    this.metricsSystem = metricsSystem;
   }
 
   @Override
@@ -63,16 +66,16 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final BlockReplay blockReplay =
         new BlockReplay(protocolSchedule, protocolContext, blockchainQueries.getBlockchain());
     return mapOf(
-        new TraceReplayBlockTransactions(protocolSchedule, blockchainQueries),
+        new TraceReplayBlockTransactions(protocolSchedule, blockchainQueries, metricsSystem),
         new TraceFilter(
-            () -> new BlockTracer(blockReplay),
             protocolSchedule,
             blockchainQueries,
-            apiConfiguration.getMaxTraceFilterRange()),
+            apiConfiguration.getMaxTraceFilterRange(),
+            metricsSystem),
         new TraceGet(() -> new BlockTracer(blockReplay), blockchainQueries, protocolSchedule),
         new TraceTransaction(
             () -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
-        new TraceBlock(protocolSchedule, blockchainQueries),
+        new TraceBlock(protocolSchedule, blockchainQueries, metricsSystem),
         new TraceCall(
             blockchainQueries,
             protocolSchedule,

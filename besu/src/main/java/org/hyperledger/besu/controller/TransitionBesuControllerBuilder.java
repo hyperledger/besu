@@ -24,14 +24,13 @@ import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -40,6 +39,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
@@ -101,7 +101,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
 
@@ -111,8 +111,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
     // PoA consensus mines by default, get consensus-specific mining parameters for
     // TransitionCoordinator:
-    MiningParameters transitionMiningParameters =
-        preMergeBesuControllerBuilder.getMiningParameterOverrides(miningParameters);
+    MiningConfiguration transitionMiningConfiguration =
+        preMergeBesuControllerBuilder.getMiningParameterOverrides(miningConfiguration);
 
     // construct a transition backward sync context
     BackwardSyncContext transitionBackwardsSyncContext =
@@ -130,10 +130,10 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionProtocolSchedule.getPreMergeSchedule(),
                 protocolContext,
                 transactionPool,
-                ImmutableMiningParameters.builder()
-                    .from(miningParameters)
+                ImmutableMiningConfiguration.builder()
+                    .from(miningConfiguration)
                     .mutableInitValues(
-                        ImmutableMiningParameters.MutableInitValues.builder()
+                        ImmutableMiningConfiguration.MutableInitValues.builder()
                             .isMiningEnabled(false)
                             .build())
                     .build(),
@@ -143,7 +143,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionProtocolSchedule,
                 protocolContext,
                 transactionPool,
-                transitionMiningParameters,
+                transitionMiningConfiguration,
                 syncState,
                 transitionBackwardsSyncContext,
                 ethProtocolManager.ethContext().getScheduler()));
@@ -192,11 +192,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory) {
+      final ConsensusContext consensusContext) {
     final ProtocolContext protocolContext =
-        super.createProtocolContext(
-            blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
+        super.createProtocolContext(blockchain, worldStateArchive, consensusContext);
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     return protocolContext;
   }
@@ -225,6 +223,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager,
       final PivotBlockSelector pivotBlockSelector) {
@@ -235,6 +234,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             worldStateStorageCoordinator,
             protocolContext,
             ethContext,
+            peerTaskExecutor,
             syncState,
             ethProtocolManager,
             pivotBlockSelector);
@@ -326,9 +326,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  public BesuControllerBuilder miningParameters(final MiningParameters miningParameters) {
-    super.miningParameters(miningParameters);
-    return propagateConfig(z -> z.miningParameters(miningParameters));
+  public BesuControllerBuilder miningParameters(final MiningConfiguration miningConfiguration) {
+    super.miningParameters(miningConfiguration);
+    return propagateConfig(z -> z.miningParameters(miningConfiguration));
   }
 
   @Override

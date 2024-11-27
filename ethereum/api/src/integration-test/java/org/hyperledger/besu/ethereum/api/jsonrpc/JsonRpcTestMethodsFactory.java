@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -33,7 +34,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -82,7 +83,9 @@ public class JsonRpcTestMethodsFactory {
     this.blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
     this.stateArchive = createInMemoryWorldStateArchive();
     this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
-    this.context = new ProtocolContext(blockchain, stateArchive, null, new BadBlockManager());
+    this.context =
+        new ProtocolContext(
+            blockchain, stateArchive, mock(ConsensusContext.class), new BadBlockManager());
 
     this.protocolSchedule = importer.getProtocolSchedule();
     this.synchronizer = mock(Synchronizer.class);
@@ -94,7 +97,7 @@ public class JsonRpcTestMethodsFactory {
     }
     this.blockchainQueries =
         new BlockchainQueries(
-            protocolSchedule, blockchain, stateArchive, MiningParameters.newDefault());
+            protocolSchedule, blockchain, stateArchive, MiningConfiguration.newDefault());
   }
 
   public JsonRpcTestMethodsFactory(
@@ -112,7 +115,7 @@ public class JsonRpcTestMethodsFactory {
             importer.getProtocolSchedule(),
             blockchain,
             stateArchive,
-            MiningParameters.newDefault());
+            MiningConfiguration.newDefault());
     this.synchronizer = mock(Synchronizer.class);
   }
 
@@ -133,7 +136,7 @@ public class JsonRpcTestMethodsFactory {
             importer.getProtocolSchedule(),
             blockchain,
             stateArchive,
-            MiningParameters.newDefault());
+            MiningConfiguration.newDefault());
   }
 
   public BlockchainQueries getBlockchainQueries() {
@@ -152,7 +155,7 @@ public class JsonRpcTestMethodsFactory {
     final P2PNetwork peerDiscovery = mock(P2PNetwork.class);
     final EthPeers ethPeers = mock(EthPeers.class);
     final TransactionPool transactionPool = mock(TransactionPool.class);
-    final MiningParameters miningParameters = mock(MiningParameters.class);
+    final MiningConfiguration miningConfiguration = mock(MiningConfiguration.class);
     final PoWMiningCoordinator miningCoordinator = mock(PoWMiningCoordinator.class);
     final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
     final Optional<AccountLocalConfigPermissioningController> accountWhitelistController =
@@ -198,7 +201,7 @@ public class JsonRpcTestMethodsFactory {
             context,
             filterManager,
             transactionPool,
-            miningParameters,
+            miningConfiguration,
             miningCoordinator,
             metricsSystem,
             new HashSet<>(),

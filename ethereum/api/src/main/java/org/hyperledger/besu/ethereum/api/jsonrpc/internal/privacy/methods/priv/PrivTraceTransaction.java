@@ -43,6 +43,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Deprecated(since = "24.11.0")
 public class PrivTraceTransaction extends AbstractPrivateTraceByHash implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceTransaction.class);
 
