@@ -566,23 +566,25 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
   private void logImportedBlockInfo(final Block block, final int blobCount, final double timeInS) {
     final StringBuilder message = new StringBuilder();
-    message.append("Imported #%,d / %d tx");
+    message.append("Imported #%,d  (%s) | %d tx");
     final List<Object> messageArgs =
         new ArrayList<>(
             List.of(block.getHeader().getNumber(), block.getBody().getTransactions().size()));
+    messageArgs.add(block.getHash().toHexString());
     if (block.getBody().getWithdrawals().isPresent()) {
-      message.append(" / %d ws");
+      message.append(" | %d ws");
       messageArgs.add(block.getBody().getWithdrawals().get().size());
     }
-    message.append(" / %d blobs / base fee %s / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d");
+    double mgasPerSec = (block.getHeader().getGasUsed() / 1_000_000.0) * timeInS;
+    message.append(" | %d blobs | base fee %s | gas used %,d (%01.1f%%) | exec time %01.3fs | mgas/s %01.3f | peers: %d");
     messageArgs.addAll(
         List.of(
             blobCount,
             block.getHeader().getBaseFee().map(Wei::toHumanReadableString).orElse("N/A"),
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-            block.getHash().toHexString(),
             timeInS,
+            mgasPerSec,
             ethPeers.peerCount()));
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
   }
