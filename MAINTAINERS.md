@@ -73,7 +73,7 @@ How to become a maintainer:
 
 The requirement to be able to be proposed as a maintainer is:
 
-- 5 significant changes on code have been authored in this repos by the proposed maintainer and accepted (merged PRs).
+- 5 significant changes to code have been authored in this repos by the proposed maintainer and accepted (merged PRs).
   
 ### Maintainers approval process
 
