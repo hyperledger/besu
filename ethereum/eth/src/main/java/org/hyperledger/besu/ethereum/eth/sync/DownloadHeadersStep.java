@@ -116,7 +116,7 @@ public class DownloadHeadersStep
                   PeerTaskExecutorResult<List<BlockHeader>> taskResult =
                       ethContext
                           .getPeerTaskExecutor()
-                          .executeAgainstPeer(task, range.getSyncTarget());
+                          .execute(task);
                   if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                       || taskResult.result().isEmpty()) {
                     return CompletableFuture.failedFuture(
@@ -142,7 +142,6 @@ public class DownloadHeadersStep
                 range.getStart().getNumber(),
                 headerRequestSize,
                 metricsSystem)
-            .assignPeer(range.getSyncTarget())
             .run()
             .thenApply(PeerTaskResult::getResult);
       }

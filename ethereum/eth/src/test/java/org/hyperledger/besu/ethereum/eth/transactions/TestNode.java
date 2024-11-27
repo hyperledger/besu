@@ -154,7 +154,6 @@ public class TestNode implements Closeable {
         };
     final EthPeers ethPeers =
         new EthPeers(
-            EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             metricsSystem,

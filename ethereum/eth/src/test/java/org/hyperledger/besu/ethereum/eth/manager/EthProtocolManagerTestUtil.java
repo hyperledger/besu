@@ -105,7 +105,6 @@ public class EthProtocolManagerTestUtil {
 
     final EthPeers peers =
         new EthPeers(
-            EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             new NoOpMetricsSystem(),
@@ -238,7 +237,6 @@ public class EthProtocolManagerTestUtil {
 
     final EthPeers peers =
         new EthPeers(
-            EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             new NoOpMetricsSystem(),
@@ -290,7 +288,6 @@ public class EthProtocolManagerTestUtil {
 
     final EthPeers peers =
         new EthPeers(
-            EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             new NoOpMetricsSystem(),
@@ -323,7 +320,6 @@ public class EthProtocolManagerTestUtil {
       final PeerTaskExecutor peerTaskExecutor) {
     final EthPeers ethPeers =
         new EthPeers(
-            EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             new NoOpMetricsSystem(),
