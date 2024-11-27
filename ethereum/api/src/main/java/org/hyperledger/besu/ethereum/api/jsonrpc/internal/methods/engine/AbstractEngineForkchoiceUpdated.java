@@ -123,7 +123,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
               Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
     }
 
-    System.out.println(forkChoice.getHeadBlockHash());
     final Optional<BlockHeader> maybeNewHead =
         mergeCoordinator.getOrSyncHeadByHash(
             forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());

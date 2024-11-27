@@ -83,22 +83,22 @@ public class StemPreloader {
    * @param keys a list of keys to use for stem generation
    * @return the preloaded stems
    */
-  public Map<Bytes32, Bytes> preloadStemIds(final Address address, final Set<Bytes32> keys) {
+  public Map<Bytes32, Bytes> preloadStems(final Address address, final Set<Bytes32> keys) {
     return getHasherByAddress(address).manyStems(address, new ArrayList<>(keys));
   }
 
-  public Bytes preloadAccountStemId(final Address address) {
+  public Bytes preloadAccountStem(final Address address) {
     return getHasherByAddress(address).computeStem(address, UInt256.ZERO);
   }
 
-  public Bytes preloadSlotStemId(final Address address, final StorageSlotKey storageSlotKey) {
+  public Bytes preloadSlotStems(final Address address, final StorageSlotKey storageSlotKey) {
     return getHasherByAddress(address)
         .computeStem(
             address,
             trieKeyAdapter.getStorageKeyTrieIndex(storageSlotKey.getSlotKey().orElseThrow()));
   }
 
-  public Map<Bytes32, Bytes> preloadStemIds(final Address address, final Bytes codeUpdate) {
+  public Map<Bytes32, Bytes> preloadCodeChunckStems(final Address address, final Bytes codeUpdate) {
     return getHasherByAddress(address).manyStems(address, generateCodeChunkKeyIds(codeUpdate));
   }
 

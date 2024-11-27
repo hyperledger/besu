@@ -296,7 +296,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     return loadAccount(address, DiffBasedValue::getUpdated);
   }
 
-  public ACCOUNT loadAccount(
+  protected ACCOUNT loadAccount(
       final Address address, final Function<DiffBasedValue<ACCOUNT>, ACCOUNT> accountFunction) {
     try {
       final DiffBasedValue<ACCOUNT> diffBasedValue = accountsToUpdate.get(address);

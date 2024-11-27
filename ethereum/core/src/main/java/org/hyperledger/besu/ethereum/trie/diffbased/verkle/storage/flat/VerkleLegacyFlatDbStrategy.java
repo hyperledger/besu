@@ -38,6 +38,12 @@ import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/**
+ * Strategy for managing Verkle accounts in the flat database as before Verkle was introduced.
+ *
+ * <p>This strategy handles accounts, slots, and code similar to the legacy approach, ensuring
+ * consistency and compatibility with the pre-Verkle structure.
+ */
 public class VerkleLegacyFlatDbStrategy extends FlatDbStrategy {
 
   protected final Counter getAccountNotFoundInFlatDatabaseCounter;

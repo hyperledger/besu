@@ -248,10 +248,6 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
     immutable = true;
   }
 
-  public DiffBasedWorldView getContext() {
-    return context;
-  }
-
   @Override
   public String toString() {
     return "AccountState{"

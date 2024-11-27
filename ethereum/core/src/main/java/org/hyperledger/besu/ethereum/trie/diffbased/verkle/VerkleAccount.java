@@ -121,6 +121,9 @@ public class VerkleAccount extends DiffBasedAccount {
 
   @Override
   public Hash getStorageRoot() {
+    // Verkle accounts do not have a storage root.
+    // For now, a Verkle account will always return EMPTY for this value,
+    // but this will need to be addressed in a future refactor.
     return Hash.EMPTY_TRIE_HASH;
   }
 

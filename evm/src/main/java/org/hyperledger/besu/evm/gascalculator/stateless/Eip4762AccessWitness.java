@@ -283,7 +283,6 @@ public class Eip4762AccessWitness implements AccessWitness {
       final int accessMode) {
     final short accessEvents = touchAddress(address, treeIndex, subIndex, accessMode);
     long gas = 0;
-    LOG.atDebug().log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     if (AccessEvents.isBranchRead(accessEvents)) {
       gas = clampedAdd(gas, AccessEvents.getBranchReadCost());
     }

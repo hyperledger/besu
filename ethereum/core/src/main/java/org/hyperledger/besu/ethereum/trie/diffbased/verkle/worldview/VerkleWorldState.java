@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.StemPreloader;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.TrieNodePreLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.VerklePreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
@@ -91,10 +90,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
         cachedWorldStorageManager,
         trieLogManager,
         diffBasedWorldStateConfig);
-    this.verklePreloader =
-        new VerklePreloader(
-            worldStateKeyValueStorage.getStemPreloader(),
-            new TrieNodePreLoader(worldStateKeyValueStorage));
+    this.verklePreloader = new VerklePreloader(worldStateKeyValueStorage.getStemPreloader());
     this.setAccumulator(
         new VerkleWorldStateUpdateAccumulator(
             this,
@@ -133,16 +129,17 @@ public class VerkleWorldState extends DiffBasedWorldState {
     addressesToPersist.parallelStream()
         .forEach(
             accountKey -> {
-              final StemPreloader stemPreloader = verklePreloader.getStemPreloader();
+              final StemPreloader stemPreloader = verklePreloader.stemPreloader();
 
               final DiffBasedValue<VerkleAccount> accountUpdate =
                   worldStateUpdater.getAccountsToUpdate().get(accountKey);
+
               // generate account triekeys
-              final Set<Bytes32> keys = new HashSet<>();
+              final Set<Bytes32> leafKeys = new HashSet<>();
               if (accountUpdate != null && !accountUpdate.isUnchanged()) {
-                keys.add(stemPreloader.generateAccountKeyId());
+                leafKeys.add(stemPreloader.generateAccountKeyId());
                 if (accountUpdate.getPrior() == null) {
-                  keys.add(Parameters.CODE_HASH_LEAF_KEY);
+                  leafKeys.add(Parameters.CODE_HASH_LEAF_KEY);
                 }
               }
 
@@ -154,7 +151,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
                 final Set<StorageSlotKey> storageSlotKeys = storageAccountUpdate.keySet();
                 isStorageUpdateNeeded = !storageSlotKeys.isEmpty();
                 if (isStorageUpdateNeeded) {
-                  keys.addAll(stemPreloader.generateStorageKeyIds(storageSlotKeys));
+                  leafKeys.addAll(stemPreloader.generateStorageKeyIds(storageSlotKeys));
                 }
               }
 
@@ -169,13 +166,13 @@ public class VerkleWorldState extends DiffBasedWorldState {
                     !codeUpdate.isUnchanged()
                         && !(codeIsEmpty(previousCode) && codeIsEmpty(updatedCode));
                 if (isCodeUpdateNeeded) {
-                  keys.add(Parameters.CODE_HASH_LEAF_KEY);
-                  keys.addAll(
+                  leafKeys.add(Parameters.CODE_HASH_LEAF_KEY);
+                  leafKeys.addAll(
                       stemPreloader.generateCodeChunkKeyIds(
                           updatedCode == null ? previousCode : updatedCode));
                 }
               }
-              stemPreloader.preloadStemIds(accountKey, keys);
+              stemPreloader.preloadStems(accountKey, leafKeys);
 
               preloadedHashers.put(accountKey, stemPreloader.getHasherByAddress(accountKey));
             });

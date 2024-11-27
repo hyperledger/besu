@@ -21,17 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class VerklePreloader {
-
-  private final StemPreloader stemPreloader;
-
-  private final TrieNodePreLoader trieNodePreLoader;
-
-  public VerklePreloader(
-      final StemPreloader stemPreloader, final TrieNodePreLoader trieNodePreLoader) {
-    this.stemPreloader = stemPreloader;
-    this.trieNodePreLoader = trieNodePreLoader;
-  }
+public record VerklePreloader(StemPreloader stemPreloader) {
 
   /**
    * Asynchronously preloads stems and trie nodes for a given account address. This method is
@@ -41,12 +31,7 @@ public class VerklePreloader {
    * @param account the address of the account for which stems are to be preloaded
    */
   public void preLoadAccount(final Address account) {
-    CompletableFuture.runAsync(
-        () -> {
-          stemPreloader.preloadAccountStemId(account);
-          // trieNodePreLoader.cacheNodes(stem); //TODO disabled waiting for benchmark before adding
-          // this trie node preload
-        });
+    CompletableFuture.runAsync(() -> stemPreloader.preloadAccountStem(account));
   }
 
   /**
@@ -58,12 +43,7 @@ public class VerklePreloader {
    * @param slotKey the key of the storage slot for which stems are to be preloaded
    */
   public void preLoadStorageSlot(final Address account, final StorageSlotKey slotKey) {
-    CompletableFuture.runAsync(
-        () -> {
-          stemPreloader.preloadSlotStemId(account, slotKey);
-          // trieNodePreLoader.cacheNodes(stem); //TODO disabled waiting for benchmark before adding
-          // this trie node preload
-        });
+    CompletableFuture.runAsync(() -> stemPreloader.preloadSlotStems(account, slotKey));
   }
 
   /**
@@ -73,30 +53,11 @@ public class VerklePreloader {
    * @param code the smart contract code for which stems are to be preloaded
    */
   public void preLoadCode(final Address account, final Bytes code) {
-    CompletableFuture.runAsync(
-        () -> {
-          stemPreloader.preloadStemIds(account, code);
-          /*stemPreloader
-          .preloadStemIds(account, code)
-          .forEach(
-              (key, stem) -> {
-                trieNodePreLoader.cacheNodes(stem);
-              });*/
-          // TODO disabled waiting for benchmark before adding this trie node preload
-        });
+    CompletableFuture.runAsync(() -> stemPreloader.preloadCodeChunckStems(account, code));
   }
 
   /** Reset all the preloader caches */
   public void reset() {
     stemPreloader.reset();
-    trieNodePreLoader.reset();
-  }
-
-  public StemPreloader getStemPreloader() {
-    return stemPreloader;
-  }
-
-  public TrieNodePreLoader getTrieNodePreLoader() {
-    return trieNodePreLoader;
   }
 }

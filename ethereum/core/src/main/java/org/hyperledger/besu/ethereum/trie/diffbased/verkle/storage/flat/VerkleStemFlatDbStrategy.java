@@ -43,6 +43,13 @@ import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/**
+ * Strategy for managing Verkle accounts in the flat database using a stem-based structure.
+ *
+ * <p>Unlike the legacy approach of saving by account, slot, and code, this strategy saves by stem
+ * and code. This allows direct access to the leaves of the Verkle trie for stems, reducing
+ * duplication of data.
+ */
 public class VerkleStemFlatDbStrategy extends FlatDbStrategy {
 
   protected final Counter getAccountNotFoundInFlatDatabaseCounter;
@@ -73,7 +80,7 @@ public class VerkleStemFlatDbStrategy extends FlatDbStrategy {
       final SegmentedKeyValueStorage storage) {
     getAccountCounter.inc();
 
-    final Bytes preloadedStemId = stemPreloader.preloadAccountStemId(address);
+    final Bytes preloadedStemId = stemPreloader.preloadAccountStem(address);
     final Optional<List<Optional<Bytes32>>> stem =
         getStem(preloadedStemId, storage).map(this::decodeStemNode);
     Optional<VerkleAccount> accountFound =
@@ -106,7 +113,7 @@ public class VerkleStemFlatDbStrategy extends FlatDbStrategy {
       final StemPreloader stemPreloader,
       final SegmentedKeyValueStorage storage) {
     getStorageValueCounter.inc();
-    final Bytes preloadSlotStemId = stemPreloader.preloadSlotStemId(address, storageSlotKey);
+    final Bytes preloadSlotStemId = stemPreloader.preloadSlotStems(address, storageSlotKey);
     final Optional<List<Optional<Bytes32>>> stem =
         getStem(preloadSlotStemId, storage).map(this::decodeStemNode);
     final Optional<Bytes> storageFound =
