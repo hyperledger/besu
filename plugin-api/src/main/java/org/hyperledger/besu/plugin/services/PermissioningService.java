@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.ethereum.permissioning.account.TransactionPermissioningProvider;
 import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
@@ -37,6 +38,13 @@ public interface PermissioningService extends BesuService {
    * @param provider The provider to register
    */
   void registerNodePermissioningProvider(NodeConnectionPermissioningProvider provider);
+
+  /**
+   * Registers a callback for transaction permission.
+   *
+   * @param provider The provider to register
+   */
+  void registerTransactionPermissioningProvider(TransactionPermissioningProvider provider);
 
   /**
    * Registers a callback to allow the interception of a devp2p message sending request
