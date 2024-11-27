@@ -16,6 +16,12 @@ package org.hyperledger.besu.evm.gascalculator.stateless;
 
 public final class AccessEvents {
 
+  private static final long WITNESS_BRANCH_COST = 1900;
+  private static final long WITNESS_CHUNK_COST = 200;
+  private static final long SUBTREE_EDIT_COST = 3000;
+  private static final long CHUNK_EDIT_COST = 500;
+  private static final long CHUNK_FILL_COST = 6200;
+
   public static final short NONE = 0;
   public static final short BRANCH_READ = 1;
   public static final short BRANCH_WRITE = 2;
@@ -43,5 +49,25 @@ public final class AccessEvents {
 
   public static boolean isLeafSet(final short accessEvents) {
     return (accessEvents & LEAF_SET) != 0;
+  }
+
+  public static long getBranchReadCost() {
+    return WITNESS_BRANCH_COST;
+  }
+
+  public static long getLeafReadCost() {
+    return WITNESS_CHUNK_COST;
+  }
+
+  public static long getBranchWriteCost() {
+    return SUBTREE_EDIT_COST;
+  }
+
+  public static long getLeafResetCost() {
+    return CHUNK_EDIT_COST;
+  }
+
+  public static long getLeafSetCost() {
+    return CHUNK_FILL_COST;
   }
 }

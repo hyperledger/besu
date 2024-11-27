@@ -41,7 +41,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -95,7 +95,7 @@ public class MergeBesuControllerBuilderTest {
   @Mock CheckpointConfigOptions checkpointConfigOptions;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  MiningParameters miningParameters;
+  MiningConfiguration miningConfiguration;
 
   @Mock PrivacyParameters privacyParameters;
   @Mock Clock clock;
@@ -167,7 +167,7 @@ public class MergeBesuControllerBuilderTest {
     lenient()
         .when(worldStateKeyValueStorage.updater())
         .thenReturn(mock(ForestWorldStateKeyValueStorage.Updater.class));
-    lenient().when(miningParameters.getTargetGasLimit()).thenReturn(OptionalLong.empty());
+    lenient().when(miningConfiguration.getTargetGasLimit()).thenReturn(OptionalLong.empty());
 
     besuControllerBuilder = visitWithMockConfigs(new MergeBesuControllerBuilder());
   }
@@ -179,7 +179,7 @@ public class MergeBesuControllerBuilderTest {
             .genesisConfigFile(genesisConfigFile)
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
-            .miningParameters(miningParameters)
+            .miningParameters(miningConfiguration)
             .metricsSystem(observableMetricsSystem)
             .privacyParameters(privacyParameters)
             .dataDirectory(tempDir)

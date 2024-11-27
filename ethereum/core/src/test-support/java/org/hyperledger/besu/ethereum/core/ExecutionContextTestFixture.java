@@ -76,7 +76,8 @@ public class ExecutionContextTestFixture {
     else this.stateArchive = createInMemoryWorldStateArchive();
     this.protocolSchedule = protocolSchedule;
     this.protocolContext =
-        new ProtocolContext(blockchain, stateArchive, null, new BadBlockManager());
+        new ProtocolContext(
+            blockchain, stateArchive, new ConsensusContextFixture(), new BadBlockManager());
     genesisState.writeStateTo(stateArchive.getMutable());
   }
 
@@ -152,12 +153,12 @@ public class ExecutionContextTestFixture {
         protocolSchedule =
             new ProtocolScheduleBuilder(
                     genesisConfigFile.getConfigOptions(),
-                    BigInteger.valueOf(42),
+                    Optional.of(BigInteger.valueOf(42)),
                     ProtocolSpecAdapters.create(0, Function.identity()),
                     new PrivacyParameters(),
                     false,
                     EvmConfiguration.DEFAULT,
-                    MiningParameters.MINING_DISABLED,
+                    MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
                     new NoOpMetricsSystem())

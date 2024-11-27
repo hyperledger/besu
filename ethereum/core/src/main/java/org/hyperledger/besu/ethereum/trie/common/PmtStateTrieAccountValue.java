@@ -26,7 +26,7 @@ import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-/** Represents the raw values associated with an account in the world state trie. */
+/** Represents the raw values associated with an account in the world state patricia merkle trie. */
 public class PmtStateTrieAccountValue extends AbstractStateTrieAccountValue
     implements AccountValue {
 

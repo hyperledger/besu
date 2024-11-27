@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
+@Deprecated(since = "24.11.0")
 public class PrivUninstallFilter implements JsonRpcMethod {
 
   private final FilterManager filterManager;

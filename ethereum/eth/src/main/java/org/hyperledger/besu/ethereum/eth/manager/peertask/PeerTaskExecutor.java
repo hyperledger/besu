@@ -20,8 +20,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Collection;
@@ -43,7 +43,7 @@ public class PeerTaskExecutor {
   private final LabelledMetric<Counter> timeoutCounter;
   private final LabelledMetric<Counter> invalidResponseCounter;
   private final LabelledMetric<Counter> internalExceptionCounter;
-  private final LabelledGauge inflightRequestGauge;
+  private final LabelledSuppliedMetric inflightRequestGauge;
   private final Map<String, AtomicInteger> inflightRequestCountByClassName;
 
   public PeerTaskExecutor(
@@ -77,7 +77,7 @@ public class PeerTaskExecutor {
             "Counter of the number of internal exceptions occurred",
             "taskName");
     inflightRequestGauge =
-        metricsSystem.createLabelledGauge(
+        metricsSystem.createLabelledSuppliedGauge(
             BesuMetricCategory.PEERS,
             "inflight_request_gauge",
             "Gauge of the number of inflight requests",
@@ -133,7 +133,7 @@ public class PeerTaskExecutor {
           MessageData responseMessageData =
               requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
 
-          result = peerTask.parseResponse(responseMessageData);
+          result = peerTask.processResponse(responseMessageData);
         } finally {
           inflightRequestCountForThisTaskClass.decrementAndGet();
         }

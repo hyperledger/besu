@@ -23,6 +23,7 @@ import java.util.Optional;
 import io.vertx.ext.auth.User;
 
 @FunctionalInterface
+@Deprecated(since = "24.11.0")
 public interface PrivacyIdProvider {
 
   String getPrivacyUserId(Optional<User> user);

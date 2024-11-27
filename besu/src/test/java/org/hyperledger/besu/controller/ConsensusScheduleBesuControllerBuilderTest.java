@@ -24,7 +24,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.MigratingContext;
+import org.hyperledger.besu.consensus.common.MigratingConsensusContext;
 import org.hyperledger.besu.consensus.common.MigratingMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -135,7 +135,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
             protocolSchedule1,
             mockProtocolContext,
             mock(TransactionPool.class),
-            mock(MiningParameters.class),
+            mock(MiningConfiguration.class),
             mock(SyncState.class),
             mock(EthProtocolManager.class));
 
@@ -166,8 +166,8 @@ public class ConsensusScheduleBesuControllerBuilderTest {
 
   @Test
   public void createsMigratingContext() {
-    final ConsensusContext context1 = Mockito.mock(ConsensusContext.class);
-    final ConsensusContext context2 = Mockito.mock(ConsensusContext.class);
+    final ConsensusContext context1 = mock(ConsensusContext.class);
+    final ConsensusContext context2 = mock(ConsensusContext.class);
 
     final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new TreeMap<>();
     besuControllerBuilderSchedule.put(0L, besuControllerBuilder1);
@@ -180,15 +180,14 @@ public class ConsensusScheduleBesuControllerBuilderTest {
         new ConsensusScheduleBesuControllerBuilder(besuControllerBuilderSchedule);
     final ConsensusContext consensusContext =
         controllerBuilder.createConsensusContext(
-            Mockito.mock(Blockchain.class),
-            Mockito.mock(WorldStateArchive.class),
-            Mockito.mock(ProtocolSchedule.class));
+            mock(Blockchain.class), mock(WorldStateArchive.class), mock(ProtocolSchedule.class));
 
-    assertThat(consensusContext).isInstanceOf(MigratingContext.class);
-    final MigratingContext migratingContext = (MigratingContext) consensusContext;
+    assertThat(consensusContext).isInstanceOf(MigratingConsensusContext.class);
+    final MigratingConsensusContext migratingConsensusContext =
+        (MigratingConsensusContext) consensusContext;
 
     final ForksSchedule<ConsensusContext> contextSchedule =
-        migratingContext.getConsensusContextSchedule();
+        migratingConsensusContext.getConsensusContextSchedule();
 
     final NavigableSet<ForkSpec<ConsensusContext>> expectedConsensusContextSpecs =
         new TreeSet<>(ForkSpec.COMPARATOR);

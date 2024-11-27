@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -125,7 +125,7 @@ class PrivacyTest {
           .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
           .storageProvider(new InMemoryKeyValueStorageProvider())
           .networkId(BigInteger.ONE)
-          .miningParameters(MiningParameters.newDefault())
+          .miningParameters(MiningConfiguration.newDefault())
           .dataStorageConfiguration(dataStorageConfiguration)
           .nodeKey(NodeKeyUtils.generate())
           .metricsSystem(new NoOpMetricsSystem())
