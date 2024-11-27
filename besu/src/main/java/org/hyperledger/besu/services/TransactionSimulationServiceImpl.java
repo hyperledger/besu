@@ -60,16 +60,6 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
   @Override
   public Optional<TransactionSimulationResult> simulate(
       final Transaction transaction,
-      final Optional<Hash> maybeBlockHash,
-      final OperationTracer operationTracer,
-      final boolean isAllowExceedingBalance) {
-    return simulate(
-        transaction, Optional.empty(), maybeBlockHash, operationTracer, isAllowExceedingBalance);
-  }
-
-  @Override
-  public Optional<TransactionSimulationResult> simulate(
-      final Transaction transaction,
       final Optional<AccountOverrideMap> maybeAccountOverrides,
       final Optional<Hash> maybeBlockHash,
       final OperationTracer operationTracer,
