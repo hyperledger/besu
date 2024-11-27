@@ -566,26 +566,25 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
   private void logImportedBlockInfo(final Block block, final int blobCount, final double timeInS) {
     final StringBuilder message = new StringBuilder();
-    message.append("Imported #%,d  (%s) | %d tx");
+    message.append("Imported #%,d  (%s)|%5d tx");
     final List<Object> messageArgs =
-        new ArrayList<>(
-            List.of(block.getHeader().getNumber(), block.getBody().getTransactions().size()));
-    messageArgs.add(block.getHash().toHexString());
+            new ArrayList<>(
+                    List.of(block.getHeader().getNumber(), block.getHash().toHexString(), block.getBody().getTransactions().size()));
     if (block.getBody().getWithdrawals().isPresent()) {
-      message.append(" | %d ws");
+      message.append("|%2d ws");
       messageArgs.add(block.getBody().getWithdrawals().get().size());
     }
-    double mgasPerSec = (block.getHeader().getGasUsed() / 1_000_000.0) * timeInS;
-    message.append(" | %d blobs | base fee %s | gas used %,d (%01.1f%%) | exec time %01.3fs | mgas/s %01.3f | peers: %d");
+    double mgasPerSec = (timeInS != 0) ? block.getHeader().getGasUsed() / (timeInS*1_000_000) : 0;
+    message.append("|%2d blobs|base fee %s|gas used %,11d (%01.1f%%)|exec time %01.3fs|mgas/s %6.2f|peers: %2d");
     messageArgs.addAll(
-        List.of(
-            blobCount,
-            block.getHeader().getBaseFee().map(Wei::toHumanReadableString).orElse("N/A"),
-            block.getHeader().getGasUsed(),
-            (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-            timeInS,
-            mgasPerSec,
-            ethPeers.peerCount()));
+            List.of(
+                    blobCount,
+                    block.getHeader().getBaseFee().map(Wei::toHumanReadableString).orElse("N/A"),
+                    block.getHeader().getGasUsed(),
+                    (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+                    timeInS,
+                    mgasPerSec,
+                    ethPeers.peerCount()));
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
   }
 }
