@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import io.prometheus.client.exporter.PushGateway;
+import io.prometheus.metrics.exporter.pushgateway.PushGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +71,12 @@ public class MetricsPushGatewayService implements MetricsService {
         config.getPushHost(),
         config.getPushPort());
 
-    pushGateway = new PushGateway(config.getPushHost() + ":" + config.getPushPort());
+    pushGateway =
+        PushGateway.builder()
+            .registry(((PrometheusMetricsSystem) metricsSystem).getRegistry())
+            .address(config.getPushHost() + ":" + config.getPushPort())
+            .job(config.getPrometheusJob())
+            .build();
 
     // Create the executor
     scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -91,7 +96,7 @@ public class MetricsPushGatewayService implements MetricsService {
       scheduledExecutorService.shutdownNow();
       scheduledExecutorService.awaitTermination(30, TimeUnit.SECONDS);
       try {
-        pushGateway.delete(config.getPrometheusJob());
+        pushGateway.delete();
       } catch (final Exception e) {
         LOG.error("Could not clean up results on the Prometheus Push Gateway.", e);
         // Do not complete exceptionally, the gateway may be down and failures
@@ -112,8 +117,7 @@ public class MetricsPushGatewayService implements MetricsService {
 
   private void pushMetrics() {
     try {
-      pushGateway.pushAdd(
-          ((PrometheusMetricsSystem) metricsSystem).getRegistry(), config.getPrometheusJob());
+      pushGateway.pushAdd();
     } catch (final IOException e) {
       LOG.warn("Could not push metrics", e);
     }
