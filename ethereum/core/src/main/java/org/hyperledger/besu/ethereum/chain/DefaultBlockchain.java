@@ -183,7 +183,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     metricsSystem.createGauge(
         BLOCKCHAIN,
-        "difficulty_total",
+        "difficulty",
         "Total difficulty of the chainhead",
         () -> this.getChainHead().getTotalDifficulty().toBigInteger().doubleValue());
 

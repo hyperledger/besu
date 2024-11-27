@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,19 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.metrics;
-
-import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
-
-import java.util.List;
+package org.hyperledger.besu.plugin.services.metrics;
 
 /**
- * The Observation.
- *
- * @param category the category
- * @param metricName the metric name
- * @param value the value
- * @param labels the labels
+ * A histogram samples observations (usually things like request durations or response sizes) and
+ * counts them in configurable buckets. It also provides a sum of all observed values.
  */
-public record Observation(
-    MetricCategory category, String metricName, Object value, List<String> labels) {}
+public interface Histogram {
+
+  /**
+   * Observe the given amount.
+   *
+   * @param amount the amount
+   */
+  void observe(double amount);
+}
