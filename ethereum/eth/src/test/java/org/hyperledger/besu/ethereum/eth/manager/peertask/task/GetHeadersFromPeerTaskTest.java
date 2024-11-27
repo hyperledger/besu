@@ -91,8 +91,13 @@ public class GetHeadersFromPeerTaskTest {
     BlockHeadersMessage responseMessage = BlockHeadersMessage.create(blockHeader);
 
     GetHeadersFromPeerTask task =
-        new GetHeadersFromPeerTask(blockHeader.getBlockHash(),
-            0, 1, 0, Direction.FORWARD, blockchainSetupUtil.getProtocolSchedule());
+        new GetHeadersFromPeerTask(
+            blockHeader.getBlockHash(),
+            0,
+            1,
+            0,
+            Direction.FORWARD,
+            blockchainSetupUtil.getProtocolSchedule());
 
     Assertions.assertEquals(
         List.of(blockchain.getChainHeadHeader()), task.processResponse(responseMessage));
