@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,21 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
+package org.hyperledger.besu.plugin.services.metrics;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import java.util.function.Supplier;
 
-@Deprecated(since = "24.11.0")
-public class JsonRpcErrorResponseException extends RuntimeException {
-
-  private final RpcErrorType jsonRpcError;
-
-  public JsonRpcErrorResponseException(final RpcErrorType error) {
-    super();
-    this.jsonRpcError = error;
-  }
-
-  public RpcErrorType getJsonRpcError() {
-    return jsonRpcError;
-  }
+/** The interface Labelled supplied summary. */
+public interface LabelledSuppliedSummary {
+  /**
+   * Labels.
+   *
+   * @param summarySupplier the summary supplier
+   * @param labelValues the label values
+   */
+  void labels(final Supplier<ExternalSummary> summarySupplier, final String... labelValues);
 }

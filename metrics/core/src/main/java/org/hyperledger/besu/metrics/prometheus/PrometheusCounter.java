@@ -26,6 +26,11 @@ import java.util.stream.Stream;
 import io.prometheus.metrics.core.datapoints.CounterDataPoint;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 
+/**
+ * A Prometheus counter implementation for Besu metrics. This class provides a Prometheus counter
+ * where the actual value is kept internally by the collector and methods are provided to increase
+ * the value when needed.
+ */
 class PrometheusCounter extends CategorizedPrometheusCollector implements LabelledMetric<Counter> {
   private final io.prometheus.metrics.core.metrics.Counter counter;
 
@@ -63,6 +68,11 @@ class PrometheusCounter extends CategorizedPrometheusCollector implements Labell
     registry.unregister(counter);
   }
 
+  /**
+   * Streams the observations from the collected counter data points.
+   *
+   * @return A stream of observations
+   */
   @Override
   public Stream<Observation> streamObservations() {
     return counter.collect().getDataPoints().stream()
@@ -72,13 +82,20 @@ class PrometheusCounter extends CategorizedPrometheusCollector implements Labell
                     category, name, sample.getValue(), getLabelValues(sample.getLabels())));
   }
 
+  /** A private record class representing an unlabelled counter. */
   private record UnlabelledCounter(CounterDataPoint counter) implements Counter {
 
+    /** Increments the counter by one. */
     @Override
     public void inc() {
       counter.inc();
     }
 
+    /**
+     * Increments the counter by the specified amount.
+     *
+     * @param amount The amount to increment the counter by
+     */
     @Override
     public void inc(final long amount) {
       counter.inc((double) amount);

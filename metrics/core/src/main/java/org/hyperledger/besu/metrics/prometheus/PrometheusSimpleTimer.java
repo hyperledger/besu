@@ -27,6 +27,10 @@ import java.util.stream.Stream;
 import io.prometheus.metrics.core.metrics.Histogram;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 
+/**
+ * An implementation of Besu simple timer backed by a Prometheus histogram. The histogram samples
+ * durations and counts them in configurable buckets. It also provides a sum of all observed values.
+ */
 class PrometheusSimpleTimer extends CategorizedPrometheusCollector
     implements LabelledMetric<OperationTimer> {
 

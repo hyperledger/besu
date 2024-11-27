@@ -23,13 +23,21 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import java.util.ArrayList;
 import java.util.stream.Stream;
 
+import io.prometheus.metrics.model.registry.Collector;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.SummarySnapshot;
 
+/**
+ * Abstract base class for Prometheus summary collectors. A summary provides a total count of
+ * observations and a sum of all observed values, it calculates configurable quantiles over a
+ * sliding time window.
+ */
 abstract class AbstractPrometheusSummary extends CategorizedPrometheusCollector {
+  /** The Prometheus collector */
+  protected Collector collector;
 
   /**
-   * Create a new collector assigned to the given category and with the given name, and computed the
-   * prefixed name.
+   * Constructs a new AbstractPrometheusSummary.
    *
    * @param category The {@link MetricCategory} this collector is assigned to
    * @param name The name of this collector
@@ -38,8 +46,50 @@ abstract class AbstractPrometheusSummary extends CategorizedPrometheusCollector 
     super(category, name);
   }
 
-  protected abstract SummarySnapshot collect();
+  /**
+   * Gets the identifier for this collector.
+   *
+   * @return The Prometheus name of the collector
+   */
+  @Override
+  public String getIdentifier() {
+    return collector.getPrometheusName();
+  }
 
+  /**
+   * Registers this collector with the given Prometheus registry.
+   *
+   * @param registry The Prometheus registry to register this collector with
+   */
+  @Override
+  public void register(final PrometheusRegistry registry) {
+    registry.register(collector);
+  }
+
+  /**
+   * Unregisters this collector from the given Prometheus registry.
+   *
+   * @param registry The Prometheus registry to unregister this collector from
+   */
+  @Override
+  public void unregister(final PrometheusRegistry registry) {
+    registry.unregister(collector);
+  }
+
+  /**
+   * Collects the summary snapshot from the Prometheus collector.
+   *
+   * @return The collected summary snapshot
+   */
+  private SummarySnapshot collect() {
+    return (SummarySnapshot) collector.collect();
+  }
+
+  /**
+   * Streams the observations from the collected summary snapshot.
+   *
+   * @return A stream of observations
+   */
   @Override
   public Stream<Observation> streamObservations() {
     return collect().getDataPoints().stream()

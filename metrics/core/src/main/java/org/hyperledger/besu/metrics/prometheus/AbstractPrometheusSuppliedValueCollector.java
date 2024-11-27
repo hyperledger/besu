@@ -28,6 +28,12 @@ import io.prometheus.metrics.model.registry.Collector;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
 
+/**
+ * Abstract base class for Prometheus supplied value collectors. A supplied value collector is one
+ * which actual value is kept outside the metric system, for example in an external library or to
+ * calculate the value only on demand when a metric scrape occurs. This class provides common
+ * functionality for Prometheus supplied value collectors.
+ */
 abstract class AbstractPrometheusSuppliedValueCollector extends CategorizedPrometheusCollector
     implements LabelledSuppliedMetric {
   /** The collector */
@@ -45,24 +51,16 @@ abstract class AbstractPrometheusSuppliedValueCollector extends CategorizedProme
     this.collector = createCollector(help, labelNames);
   }
 
-  /**
-   * Create the actual collector
-   *
-   * @param help the help
-   * @param labelNames the label names
-   * @return the created collector
-   */
   protected abstract Collector createCollector(final String help, final String... labelNames);
 
   @Override
-  public synchronized void labels(final DoubleSupplier valueSupplier, final String... labelValues) {
+  public void labels(final DoubleSupplier valueSupplier, final String... labelValues) {
     final var valueList = List.of(labelValues);
-    if (labelledCallbackData.containsKey(valueList)) {
+    if (labelledCallbackData.putIfAbsent(valueList, new CallbackData(valueSupplier, labelValues))
+        != null) {
       throw new IllegalArgumentException(
           String.format("A collector has already been created for label values %s", valueList));
     }
-
-    labelledCallbackData.put(valueList, new CallbackData(valueSupplier, labelValues));
   }
 
   @Override

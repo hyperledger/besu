@@ -34,6 +34,14 @@ import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
 import io.prometheus.metrics.model.snapshots.MetricSnapshot;
 import io.vertx.core.impl.ConcurrentHashSet;
 
+/**
+ * A Prometheus Guava cache collector implementation for Besu metrics. This class provides a way to
+ * expose metrics from Guava caches, it behaves differently from other collectors, since instead of
+ * having one collector per cache, Prometheus provides only one collector for all caches, so we need
+ * a Context that wraps the Prometheus single collector and handles its registration, while here we
+ * keep the abstraction of one Prometheus collector for one Guava cache, and we also verify that
+ * there is no collector name clash.
+ */
 class PrometheusGuavaCache extends CategorizedPrometheusCollector {
   /** Use to reduce the possibility of a name clash with other collectors */
   private static final String NAME_PREFIX = "__guavaCacheMetricsCollector__";
@@ -74,6 +82,12 @@ class PrometheusGuavaCache extends CategorizedPrometheusCollector {
     return context.streamObservations(category, name);
   }
 
+  /**
+   * Since Prometheus provides only one collector for all Guava caches, we only need to register
+   * that collector once when the first Besu Guava cache collector is created, and unregister it
+   * when the last is unregistered, so we have this context to keep track of that and also manage
+   * the observations stream.
+   */
   static class Context {
     private static final Map<String, ToDoubleFunction<DataPointSnapshot>>
         COLLECTOR_VALUE_EXTRACTORS =

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@Deprecated(since = "24.11.0")
 public class CreatePrivacyGroupParameter {
 
   private final List<String> addresses;

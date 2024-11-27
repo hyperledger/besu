@@ -22,12 +22,13 @@ import java.util.Map;
 
 import io.prometheus.metrics.core.datapoints.DistributionDataPoint;
 import io.prometheus.metrics.core.metrics.Summary;
-import io.prometheus.metrics.model.registry.PrometheusRegistry;
-import io.prometheus.metrics.model.snapshots.SummarySnapshot;
 
+/**
+ * An implementation of Besu timer backed by a Prometheus summary. The summary provides a total
+ * count of durations and a sum of all observed durations, it calculates configurable quantiles over
+ * a sliding time window.
+ */
 class PrometheusTimer extends AbstractPrometheusSummary implements LabelledMetric<OperationTimer> {
-
-  private final io.prometheus.metrics.core.metrics.Summary summary;
 
   public PrometheusTimer(
       final MetricCategory category,
@@ -39,32 +40,12 @@ class PrometheusTimer extends AbstractPrometheusSummary implements LabelledMetri
     final var summaryBuilder =
         Summary.builder().name(this.prefixedName).help(help).labelNames(labelNames);
     quantiles.forEach(summaryBuilder::quantile);
-    this.summary = summaryBuilder.build();
+    this.collector = summaryBuilder.build();
   }
 
   @Override
   public OperationTimer labels(final String... labels) {
-    final DistributionDataPoint metric = summary.labelValues(labels);
+    final DistributionDataPoint metric = ((Summary) collector).labelValues(labels);
     return () -> metric.startTimer()::observeDuration;
-  }
-
-  @Override
-  public String getIdentifier() {
-    return summary.getPrometheusName();
-  }
-
-  @Override
-  public void register(final PrometheusRegistry registry) {
-    registry.register(summary);
-  }
-
-  @Override
-  public void unregister(final PrometheusRegistry registry) {
-    registry.unregister(summary);
-  }
-
-  @Override
-  protected SummarySnapshot collect() {
-    return summary.collect();
   }
 }

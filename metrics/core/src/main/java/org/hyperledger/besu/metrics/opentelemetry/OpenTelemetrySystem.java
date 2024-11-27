@@ -20,10 +20,10 @@ import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedSummary;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
@@ -42,7 +42,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.inject.Singleton;
 
@@ -247,11 +246,14 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public void trackExternalSummary(
+  public LabelledSuppliedSummary createLabelledSuppliedSummary(
       final MetricCategory category,
       final String name,
       final String help,
-      final Supplier<ExternalSummary> summarySupplier) {}
+      final String... labelNames) {
+    // not yet supported
+    return (LabelledSuppliedSummary) NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
+  }
 
   @Override
   public LabelledMetric<OperationTimer> createLabelledTimer(

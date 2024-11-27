@@ -36,12 +36,12 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -316,8 +316,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
 
-    final StateTrieAccountValue stateTrieAccountValue =
-        StateTrieAccountValue.readFrom(RLP.input(accounts.firstEntry().getValue()));
+    final PmtStateTrieAccountValue stateTrieAccountValue =
+        PmtStateTrieAccountValue.readFrom(RLP.input(accounts.firstEntry().getValue()));
 
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(

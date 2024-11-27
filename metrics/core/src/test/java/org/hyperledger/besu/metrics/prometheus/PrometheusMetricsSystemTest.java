@@ -244,7 +244,7 @@ public class PrometheusMetricsSystemTest {
     // do a category we are not watching
     final LabelledMetric<Counter> counterN =
         localMetricSystem.createLabelledCounter(NETWORK, "ABC", "Not that kind of network", "show");
-    assertThat(counterN).isSameAs(NoOpMetricsSystem.NO_OP_LABELLED_1_COUNTER);
+    assertThat(counterN).isInstanceOf(NoOpMetricsSystem.LabelCountingNoOpMetric.class);
 
     counterN.labels("show").inc();
     assertThat(localMetricSystem.streamObservations()).isEmpty();
@@ -252,7 +252,7 @@ public class PrometheusMetricsSystemTest {
     // do a category we are watching
     final LabelledMetric<Counter> counterR =
         localMetricSystem.createLabelledCounter(RPC, "name", "Not useful", "method");
-    assertThat(counterR).isNotSameAs(NoOpMetricsSystem.NO_OP_LABELLED_1_COUNTER);
+    assertThat(counterR).isNotInstanceOf(NoOpMetricsSystem.LabelCountingNoOpMetric.class);
 
     counterR.labels("op").inc();
     assertThat(localMetricSystem.streamObservations())

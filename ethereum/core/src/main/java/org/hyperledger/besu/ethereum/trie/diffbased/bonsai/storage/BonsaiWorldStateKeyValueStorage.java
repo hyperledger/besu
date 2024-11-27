@@ -24,13 +24,13 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -135,7 +135,7 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
             getAccount(accountHash)
                 .map(
                     b ->
-                        StateTrieAccountValue.readFrom(
+                        PmtStateTrieAccountValue.readFrom(
                                 org.hyperledger.besu.ethereum.rlp.RLP.input(b))
                             .getStorageRoot()),
         accountHash,

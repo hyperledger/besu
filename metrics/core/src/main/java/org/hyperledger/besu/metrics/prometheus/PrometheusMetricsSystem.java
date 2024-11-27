@@ -21,10 +21,10 @@ import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedSummary;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.cache.Cache;
@@ -177,17 +176,18 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public void trackExternalSummary(
+  public LabelledSuppliedSummary createLabelledSuppliedSummary(
       final MetricCategory category,
       final String name,
       final String help,
-      final Supplier<ExternalSummary> summarySupplier) {
+      final String... labelNames) {
     if (isCategoryEnabled(category)) {
-      final PrometheusExternalSummary externalSummary =
-          new PrometheusExternalSummary(category, name, help, summarySupplier);
-
-      registerCollector(category, externalSummary);
+      final PrometheusSuppliedSummary summary =
+          new PrometheusSuppliedSummary(category, name, help, labelNames);
+      registerCollector(category, summary);
+      return summary;
     }
+    return NoOpMetricsSystem.getLabelledSuppliedSummary(labelNames.length);
   }
 
   @Override
