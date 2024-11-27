@@ -114,7 +114,7 @@ public class BlockSimulator {
     return simulationResults;
   }
 
-  protected BlockSimulationResult processWithMutableWorldState(
+  public BlockSimulationResult processWithMutableWorldState(
       final BlockHeader header, final BlockStateCall blockStateCall, final MutableWorldState ws) {
     WorldUpdater updater = ws.updater();
     BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();

@@ -19,12 +19,13 @@ import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 import org.hyperledger.besu.ethereum.transaction.BlockStateCall;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.ethereum.transaction.PersistingBlockSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.BlockSimulationResult;
 import org.hyperledger.besu.plugin.data.TransactionSimulationResult;
@@ -48,6 +49,14 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
     this.worldStateArchive = worldStateArchive;
   }
 
+  /**
+   * Simulate the creation of a block given header, a list of transactions, and blockOverrides.
+   *
+   * @param header the header
+   * @param transactions the transactions to include in the block
+   * @param blockOverrides the blockSimulationOverride of the block
+   * @return the block context
+   */
   @Override
   public BlockSimulationResult simulate(
       final BlockHeader header,
@@ -60,18 +69,42 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
     return response(result);
   }
 
+  /**
+   * NOTE: This method is experimental and should be used with caution. It may result in database
+   * inconsistencies if not used properly. Use only in specific scenarios where its behavior is well
+   * understood.
+   *
+   * @param header the block header
+   * @param transactions the transactions to include in the block
+   * @param blockOverrides the blockSimulationOverride of the block
+   * @return the block context
+   */
+  @Unstable
   @Override
   public BlockSimulationResult simulateAndPersist(
       final BlockHeader header,
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides) {
+
     BlockStateCall blockStateCall = createBlockStateCall(transactions, blockOverrides);
     var headerCore = (org.hyperledger.besu.ethereum.core.BlockHeader) header;
+    try (final MutableWorldState ws = getWorldState(headerCore)) {
+      var result = blockSimulator.processWithMutableWorldState(headerCore, blockStateCall, ws);
+      ws.persist(result.getBlock().getHeader());
+      return response(result);
+    } catch (final Exception e) {
+      throw new RuntimeException("Error simulating block", e);
+    }
+  }
 
-    PersistingBlockSimulator persistingBlockSimulator =
-        new PersistingBlockSimulator(blockSimulator, worldStateArchive);
-    var result = persistingBlockSimulator.process(headerCore, blockStateCall);
-    return response(result);
+  private MutableWorldState getWorldState(
+      final org.hyperledger.besu.ethereum.core.BlockHeader header) {
+    return worldStateArchive
+        .getMutable(header, true)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "Public world state not available for block " + header.toLogString()));
   }
 
   private BlockStateCall createBlockStateCall(

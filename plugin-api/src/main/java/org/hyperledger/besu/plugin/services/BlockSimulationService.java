@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Transaction;
+import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.BlockSimulationResult;
 
@@ -23,19 +24,29 @@ import java.util.List;
 
 public interface BlockSimulationService extends BesuService {
   /**
-   * Simulate the creation of a block given a parent header, a list of transactions, and a
-   * timestamp.
+   * Simulate the creation of a block given header, a list of transactions, and blockOverrides.
    *
-   * @param parentHeader the parent header
+   * @param header the header
    * @param transactions the transactions to include in the block
    * @param blockOverrides the blockSimulationOverride of the block
    * @return the block context
    */
   BlockSimulationResult simulate(
-      final BlockHeader parentHeader,
+      final BlockHeader header,
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides);
 
+  /**
+   * NOTE: This method is experimental and should be used with caution. It may result in database
+   * inconsistencies if not used properly. Use only in specific scenarios where its behavior is well
+   * understood.
+   *
+   * @param header the block header
+   * @param transactions the transactions to include in the block
+   * @param blockOverrides the blockSimulationOverride of the block
+   * @return the block context
+   */
+  @Unstable
   BlockSimulationResult simulateAndPersist(
       BlockHeader header, List<? extends Transaction> transactions, BlockOverrides blockOverrides);
 }

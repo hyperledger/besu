@@ -154,6 +154,6 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
         simulatorResult.result().getOutput(),
         simulatorResult.result().getGasRemaining(),
         null, // TODO ADD ERROR
-        null);// TODO ADD LOG
+        null); // TODO ADD LOG
   }
 }
