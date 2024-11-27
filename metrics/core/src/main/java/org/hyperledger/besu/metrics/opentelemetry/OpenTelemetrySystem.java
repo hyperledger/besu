@@ -297,7 +297,8 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final String help,
       final double[] buckets,
       final String... labelNames) {
-    return null;
+    // not yet supported
+    return NoOpMetricsSystem.getHistogramLabelledMetric(labelNames.length);
   }
 
   @Override

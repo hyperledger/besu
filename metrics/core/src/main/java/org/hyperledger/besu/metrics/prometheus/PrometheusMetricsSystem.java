@@ -68,6 +68,9 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       new ConcurrentHashMap<>();
   private final Map<CachedMetricKey, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
+  private final Map<CachedMetricKey, LabelledMetric<Histogram>> cachedHistograms =
+      new ConcurrentHashMap<>();
+
   private final PrometheusGuavaCache.Context guavaCacheCollectorContext =
       new PrometheusGuavaCache.Context();
 
@@ -172,7 +175,17 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final String help,
       final double[] buckets,
       final String... labelNames) {
-    return null;
+    return cachedHistograms.computeIfAbsent(
+        CachedMetricKey.of(category, name),
+        k -> {
+          if (isCategoryEnabled(category)) {
+            final var histogram =
+                new PrometheusHistogram(category, name, help, buckets, labelNames);
+            registerCollector(category, histogram);
+            return histogram;
+          }
+          return NoOpMetricsSystem.getHistogramLabelledMetric(labelNames.length);
+        });
   }
 
   @Override
