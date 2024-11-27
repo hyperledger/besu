@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("MockNotUsedInProduction")
+@Deprecated(since = "24.11.0")
 public class PrivFindPrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivFindPrivacyGroup.class);

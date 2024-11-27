@@ -214,11 +214,9 @@ public class GetReceiptsFromPeerTaskTest {
         new GetReceiptsFromPeerTask(
             List.of(blockHeader1, blockHeader2, blockHeader3), protocolSchedule);
 
-    EthPeer failForIncorrectProtocol = mockPeer("incorrectProtocol", 5);
-    EthPeer failForShortChainHeight = mockPeer("incorrectProtocol", 1);
-    EthPeer successfulCandidate = mockPeer(EthProtocol.NAME, 5);
+    EthPeer failForShortChainHeight = mockPeer(1);
+    EthPeer successfulCandidate = mockPeer(5);
 
-    Assertions.assertFalse(task.getPeerRequirementFilter().test(failForIncorrectProtocol));
     Assertions.assertFalse(task.getPeerRequirementFilter().test(failForShortChainHeight));
     Assertions.assertTrue(task.getPeerRequirementFilter().test(successfulCandidate));
   }
@@ -251,11 +249,10 @@ public class GetReceiptsFromPeerTaskTest {
     return blockHeader;
   }
 
-  private EthPeer mockPeer(final String protocol, final long chainHeight) {
+  private EthPeer mockPeer(final long chainHeight) {
     EthPeer ethPeer = Mockito.mock(EthPeer.class);
     ChainState chainState = Mockito.mock(ChainState.class);
 
-    Mockito.when(ethPeer.getProtocolName()).thenReturn(protocol);
     Mockito.when(ethPeer.chainState()).thenReturn(chainState);
     Mockito.when(chainState.getEstimatedHeight()).thenReturn(chainHeight);
 
