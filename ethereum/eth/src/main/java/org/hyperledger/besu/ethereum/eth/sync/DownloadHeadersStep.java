@@ -114,9 +114,7 @@ public class DownloadHeadersStep
                           GetHeadersFromPeerTask.Direction.FORWARD,
                           protocolSchedule);
                   PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                      ethContext
-                          .getPeerTaskExecutor()
-                          .execute(task);
+                      ethContext.getPeerTaskExecutor().execute(task);
                   if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                       || taskResult.result().isEmpty()) {
                     return CompletableFuture.failedFuture(
