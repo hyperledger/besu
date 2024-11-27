@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -45,6 +46,7 @@ public class SynchronizationServiceImpl implements SynchronizationService {
 
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
+  private final Synchronizer synchronizer;
 
   private final SyncState syncState;
   private final Optional<DiffBasedWorldStateProvider> worldStateArchive;
@@ -52,16 +54,19 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   /**
    * Constructor for SynchronizationServiceImpl.
    *
+   * @param synchronizer synchronizer
    * @param protocolContext protocol context
    * @param protocolSchedule protocol schedule
    * @param syncState sync state
    * @param worldStateArchive world state archive
    */
   public SynchronizationServiceImpl(
+      final Synchronizer synchronizer,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final SyncState syncState,
       final WorldStateArchive worldStateArchive) {
+    this.synchronizer = synchronizer;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.syncState = syncState;
@@ -156,5 +161,15 @@ public class SynchronizationServiceImpl implements SynchronizationService {
             }
           }
         });
+  }
+
+  @Override
+  public void stop() {
+    synchronizer.stop();
+  }
+
+  @Override
+  public void start() {
+    synchronizer.start();
   }
 }
