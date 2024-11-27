@@ -99,7 +99,6 @@ public class DownloadHeadersStep
               range.getStart().getNumber(),
               headerRequestSize,
               metricsSystem)
-          .assignPeer(range.getSyncTarget())
           .run()
           .thenApply(PeerTaskResult::getResult);
     }
