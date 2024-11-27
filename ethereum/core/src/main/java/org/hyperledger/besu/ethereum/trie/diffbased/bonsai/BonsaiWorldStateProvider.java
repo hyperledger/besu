@@ -25,11 +25,10 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -56,7 +55,12 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
       final ServiceManager pluginContext,
       final EvmConfiguration evmConfiguration,
       final Supplier<WorldStateHealer> worldStateHealerSupplier) {
-    super( DataStorageFormat.BONSAI, worldStateKeyValueStorage, blockchain, maxLayersToLoad, pluginContext);
+    super(
+        DataStorageFormat.BONSAI,
+        worldStateKeyValueStorage,
+        blockchain,
+        maxLayersToLoad,
+        pluginContext);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     provideCachedWorldStorageManager(

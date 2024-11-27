@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;

@@ -135,7 +135,8 @@ public class TrieLogManager {
     trieLogObservers.unsubscribe(id);
   }
 
-  private TrieLogFactory setupTrieLogFactory(final DataStorageFormat dataStorageFormat,final ServiceManager pluginContext) {
+  private TrieLogFactory setupTrieLogFactory(
+      final DataStorageFormat dataStorageFormat, final ServiceManager pluginContext) {
     // if we have a TrieLogService from pluginContext, use it.
     var trieLogServicez =
         Optional.ofNullable(pluginContext)

@@ -23,48 +23,48 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Push operation. */
 public class PushOperation extends AbstractOperation {
 
-    /** The constant PUSH_BASE. */
-    public static final int PUSH_BASE = 0x5F;
+  /** The constant PUSH_BASE. */
+  public static final int PUSH_BASE = 0x5F;
 
-    private final int length;
+  private final int length;
 
-    /**
-     * Instantiates a new Push operation.
-     *
-     * @param length the length
-     * @param gasCalculator the gas calculator
-     */
-    public PushOperation(final int length, final GasCalculator gasCalculator) {
-        super(PUSH_BASE + length, "PUSH" + length, 0, 1, gasCalculator);
-        this.length = length;
+  /**
+   * Instantiates a new Push operation.
+   *
+   * @param length the length
+   * @param gasCalculator the gas calculator
+   */
+  public PushOperation(final int length, final GasCalculator gasCalculator) {
+    super(PUSH_BASE + length, "PUSH" + length, 0, 1, gasCalculator);
+    this.length = length;
+  }
+
+  @Override
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+
+    final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+    int pc = frame.getPC();
+    final int copyStart = pc + 1;
+
+    long gasCost = gasCalculator().pushOperationGasCost(frame, copyStart, length, code.length);
+
+    Bytes push;
+    if (code.length <= copyStart) {
+      push = Bytes.EMPTY;
+    } else {
+      final int copyLength = Math.min(length, code.length - copyStart);
+      final int rightPad = length - copyLength;
+      if (rightPad == 0) {
+        push = Bytes.wrap(code, copyStart, copyLength);
+      } else {
+        // Right Pad the push with 0s up to pushSize if greater than the copyLength
+        var bytecodeLocal = new byte[length];
+        System.arraycopy(code, copyStart, bytecodeLocal, 0, copyLength);
+        push = Bytes.wrap(bytecodeLocal);
+      }
     }
-
-    @Override
-    public OperationResult execute(final MessageFrame frame, final EVM evm) {
-
-        final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
-        int pc = frame.getPC();
-        final int copyStart = pc + 1;
-
-        long gasCost = gasCalculator().pushOperationGasCost(frame, copyStart, length, code.length);
-
-        Bytes push;
-        if (code.length <= copyStart) {
-            push = Bytes.EMPTY;
-        } else {
-            final int copyLength = Math.min(length, code.length - pc - 1);
-            final int rightPad = length - copyLength;
-            if (rightPad == 0) {
-                push = Bytes.wrap(code, copyStart, copyLength);
-            } else {
-                // Right Pad the push with 0s up to pushSize if greater than the copyLength
-                var bytecodeLocal = new byte[length];
-                System.arraycopy(code, copyStart, bytecodeLocal, 0, copyLength);
-                push = Bytes.wrap(bytecodeLocal);
-            }
-        }
-        frame.pushStackItem(push);
-        frame.setPC(pc + length);
-        return new OperationResult(gasCost, null);
-    }
+    frame.pushStackItem(push);
+    frame.setPC(pc + length);
+    return new OperationResult(gasCost, null);
+  }
 }

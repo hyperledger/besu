@@ -162,8 +162,10 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
         input.skipNext();
       } else {
         input.enterList();
-        final VerkleStateTrieAccountValue oldValue = nullOrValue(input, VerkleStateTrieAccountValue::readFrom);
-        final VerkleStateTrieAccountValue newValue = nullOrValue(input, VerkleStateTrieAccountValue::readFrom);
+        final VerkleStateTrieAccountValue oldValue =
+            nullOrValue(input, VerkleStateTrieAccountValue::readFrom);
+        final VerkleStateTrieAccountValue newValue =
+            nullOrValue(input, VerkleStateTrieAccountValue::readFrom);
         final boolean isCleared = getOptionalIsCleared(input);
         input.leaveList();
         newLayer

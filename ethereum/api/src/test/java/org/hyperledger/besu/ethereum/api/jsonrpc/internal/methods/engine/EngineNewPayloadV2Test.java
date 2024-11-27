@@ -162,14 +162,11 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnInvalidIfWithdrawalsIsNull_WhenWithdrawalsAllowed() {
-    final List<WithdrawalParameter> withdrawals = null;
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
 
     var resp =
-        resp(
-            mockEnginePayload(
-                createBlockHeader(Optional.empty()), Collections.emptyList()));
+        resp(mockEnginePayload(createBlockHeader(Optional.empty()), Collections.emptyList()));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
