@@ -17,7 +17,7 @@ java.util.concurrent.CompletionException: org.hyperledger.besu.plugin.services.e
 ....
 ```
 
-This behaviour has been seen on AWS and Digital Ocean. 
+This behavior has been seen on AWS and Digital Ocean. 
 
 Workaround -> On AWS, a full restart of the AWS VM is required to restart the fast sync. 
 
