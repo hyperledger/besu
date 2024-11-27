@@ -55,8 +55,9 @@ public class Endpoint {
     Optional<Integer> discoveryPort = enode.getDiscoveryPort();
 
     if (discoveryPort.isEmpty()) {
-      log.warn("Attempted to create a discovery endpoint for a node with discovery disabled: {}", enode);
-      return new Endpoint("defaultHost", 0, Optional.empty());
+      int defaultPort = 30303;
+      log.debug("Discovery disabled for enode {}. Using default port {}.", enode, defaultPort);
+      return new Endpoint(enode.getIp().getHostAddress(), defaultPort, Optional.empty());
     }
 
     final Optional<Integer> listeningPort = enode.getListeningPort();
