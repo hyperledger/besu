@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
@@ -68,10 +69,29 @@ public class EthProtocolManagerTestUtil {
     return create(
         protocolSchedule,
         blockchain,
+        timeoutPolicy,
+        worldStateArchive,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        null);
+  }
+
+  public static EthProtocolManager create(
+      final ProtocolSchedule protocolSchedule,
+      final Blockchain blockchain,
+      final TimeoutPolicy timeoutPolicy,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final PeerTaskExecutor peerTaskExecutor) {
+    return create(
+        protocolSchedule,
+        blockchain,
         new DeterministicEthScheduler(timeoutPolicy),
         worldStateArchive,
         transactionPool,
-        ethereumWireProtocolConfiguration);
+        ethereumWireProtocolConfiguration,
+        peerTaskExecutor);
   }
 
   public static EthProtocolManager create(
@@ -80,7 +100,8 @@ public class EthProtocolManagerTestUtil {
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-      final Optional<MergePeerFilter> mergePeerFilter) {
+      final Optional<MergePeerFilter> mergePeerFilter,
+      final PeerTaskExecutor peerTaskExecutor) {
 
     final EthPeers peers =
         new EthPeers(
@@ -102,7 +123,7 @@ public class EthProtocolManagerTestUtil {
 
     final EthMessages messages = new EthMessages();
     final EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
-    final EthContext ethContext = new EthContext(peers, messages, ethScheduler);
+    final EthContext ethContext = new EthContext(peers, messages, ethScheduler, peerTaskExecutor);
 
     return new EthProtocolManager(
         blockchain,
@@ -171,11 +192,13 @@ public class EthProtocolManagerTestUtil {
         forkIdManager);
   }
 
-  public static EthProtocolManager create(final Blockchain blockchain) {
+  public static EthProtocolManager create(
+      final Blockchain blockchain, final PeerTaskExecutor peerTaskExecutor) {
     return create(
         ProtocolScheduleFixture.MAINNET,
         blockchain,
-        new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT));
+        new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT),
+        peerTaskExecutor);
   }
 
   public static EthProtocolManager create(
@@ -183,22 +206,25 @@ public class EthProtocolManagerTestUtil {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethProtocolConfiguration) {
+      final EthProtocolConfiguration ethProtocolConfiguration,
+      final PeerTaskExecutor peerTaskExecutor) {
     return create(
         protocolSchedule,
         blockchain,
         new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT),
         worldStateArchive,
         transactionPool,
-        ethProtocolConfiguration);
+        ethProtocolConfiguration,
+        peerTaskExecutor);
   }
 
-  public static EthProtocolManager create(final EthScheduler ethScheduler) {
+  public static EthProtocolManager create(
+      final EthScheduler ethScheduler, final PeerTaskExecutor peerTaskExecutor) {
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     final GenesisConfigFile config = GenesisConfigFile.mainnet();
     final GenesisState genesisState = GenesisState.fromConfig(config, protocolSchedule);
     final Blockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    return create(protocolSchedule, blockchain, ethScheduler);
+    return create(protocolSchedule, blockchain, ethScheduler, peerTaskExecutor);
   }
 
   public static EthProtocolManager create(
@@ -207,7 +233,8 @@ public class EthProtocolManagerTestUtil {
       final EthScheduler ethScheduler,
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
-      final EthProtocolConfiguration configuration) {
+      final EthProtocolConfiguration configuration,
+      final PeerTaskExecutor peerTaskExecutor) {
 
     final EthPeers peers =
         new EthPeers(
@@ -237,7 +264,7 @@ public class EthProtocolManagerTestUtil {
         configuration,
         peers,
         messages,
-        new EthContext(peers, messages, ethScheduler));
+        new EthContext(peers, messages, ethScheduler, peerTaskExecutor));
   }
 
   public static ChainHeadTracker getChainHeadTrackerMock() {
@@ -258,7 +285,8 @@ public class EthProtocolManagerTestUtil {
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration configuration,
-      final ForkIdManager forkIdManager) {
+      final ForkIdManager forkIdManager,
+      final PeerTaskExecutor peerTaskExecutor) {
 
     final EthPeers peers =
         new EthPeers(
@@ -284,14 +312,15 @@ public class EthProtocolManagerTestUtil {
         configuration,
         peers,
         messages,
-        new EthContext(peers, messages, ethScheduler),
+        new EthContext(peers, messages, ethScheduler, peerTaskExecutor),
         forkIdManager);
   }
 
   public static EthProtocolManager create(
       final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
-      final EthScheduler ethScheduler) {
+      final EthScheduler ethScheduler,
+      final PeerTaskExecutor peerTaskExecutor) {
     final EthPeers ethPeers =
         new EthPeers(
             EthProtocol.NAME,
@@ -320,15 +349,16 @@ public class EthProtocolManagerTestUtil {
         EthProtocolConfiguration.defaultConfig(),
         ethPeers,
         messages,
-        new EthContext(ethPeers, messages, ethScheduler));
+        new EthContext(ethPeers, messages, ethScheduler, peerTaskExecutor));
   }
 
-  public static EthProtocolManager create() {
-    return create(TimeoutPolicy.NEVER_TIMEOUT);
+  public static EthProtocolManager create(final PeerTaskExecutor peerTaskExecutor) {
+    return create(TimeoutPolicy.NEVER_TIMEOUT, peerTaskExecutor);
   }
 
-  public static EthProtocolManager create(final TimeoutPolicy timeoutPolicy) {
-    return create(new DeterministicEthScheduler(timeoutPolicy));
+  public static EthProtocolManager create(
+      final TimeoutPolicy timeoutPolicy, final PeerTaskExecutor peerTaskExecutor) {
+    return create(new DeterministicEthScheduler(timeoutPolicy), peerTaskExecutor);
   }
 
   // Utility to prevent scheduler from automatically running submitted tasks

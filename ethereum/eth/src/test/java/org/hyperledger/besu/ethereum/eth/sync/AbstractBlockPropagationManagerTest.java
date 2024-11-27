@@ -49,7 +49,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
@@ -94,7 +93,6 @@ public abstract class AbstractBlockPropagationManagerTest {
               SynchronizerConfiguration.builder().blockPropagationRange(-10, 30).build()));
   protected final ProcessingBlocksManager processingBlocksManager =
       spy(new ProcessingBlocksManager());
-  protected PeerTaskExecutor peerTaskExecutor;
   protected SyncState syncState;
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final Hash finalizedHash = Hash.fromHexStringLenient("0x1337");
@@ -117,7 +115,8 @@ public abstract class AbstractBlockPropagationManagerTest {
             blockchain,
             blockchainUtil.getWorldArchive(),
             blockchainUtil.getTransactionPool(),
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.defaultConfig(),
+            null);
     syncConfig = SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();
     syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     blockBroadcaster = mock(BlockBroadcaster.class);
@@ -127,7 +126,6 @@ public abstract class AbstractBlockPropagationManagerTest {
             protocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
-            peerTaskExecutor,
             syncState,
             pendingBlocksManager,
             metricsSystem,
@@ -355,7 +353,6 @@ public abstract class AbstractBlockPropagationManagerTest {
             stubProtocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
-            peerTaskExecutor,
             syncState,
             pendingBlocksManager,
             metricsSystem,
@@ -410,7 +407,6 @@ public abstract class AbstractBlockPropagationManagerTest {
             stubProtocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
-            peerTaskExecutor,
             syncState,
             pendingBlocksManager,
             metricsSystem,
@@ -568,7 +564,6 @@ public abstract class AbstractBlockPropagationManagerTest {
             protocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
-            peerTaskExecutor,
             syncState,
             pendingBlocksManager,
             metricsSystem,
@@ -661,14 +656,14 @@ public abstract class AbstractBlockPropagationManagerTest {
                 new ForkIdManager(
                     blockchain, Collections.emptyList(), Collections.emptyList(), false)),
             new EthMessages(),
-            ethScheduler);
+            ethScheduler,
+            null);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,
             protocolSchedule,
             protocolContext,
             ethContext,
-            peerTaskExecutor,
             syncState,
             pendingBlocksManager,
             metricsSystem,
@@ -804,14 +799,14 @@ public abstract class AbstractBlockPropagationManagerTest {
                 new ForkIdManager(
                     blockchain, Collections.emptyList(), Collections.emptyList(), false)),
             new EthMessages(),
-            ethScheduler);
+            ethScheduler,
+            null);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,
             protocolSchedule,
             protocolContext,
             ethContext,
-            peerTaskExecutor,
             syncState,
             pendingBlocksManager,
             metricsSystem,

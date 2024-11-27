@@ -91,7 +91,7 @@ public class BackwardSyncStep {
                             Integer.MAX_VALUE,
                             context.getProtocolSchedule());
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                        context.getPeerTaskExecutor().execute(task);
+                        context.getEthContext().getPeerTaskExecutor().execute(task);
                     if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                         || taskResult.result().isEmpty()) {
                       throw new RuntimeException("Unable to retrieve headers");

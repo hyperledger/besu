@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -122,11 +121,9 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     final Map<Long, BesuControllerBuilder> consensusSchedule =
         Map.of(0L, besuControllerBuilder1, 5L, besuControllerBuilder2);
 
-    when(besuControllerBuilder1.createMiningCoordinator(
-            any(), any(), any(), any(), any(), any(), any()))
+    when(besuControllerBuilder1.createMiningCoordinator(any(), any(), any(), any(), any(), any()))
         .thenReturn(miningCoordinator1);
-    when(besuControllerBuilder2.createMiningCoordinator(
-            any(), any(), any(), any(), any(), any(), any()))
+    when(besuControllerBuilder2.createMiningCoordinator(any(), any(), any(), any(), any(), any()))
         .thenReturn(miningCoordinator2);
     final ProtocolContext mockProtocolContext = mock(ProtocolContext.class);
     when(mockProtocolContext.getBlockchain()).thenReturn(mock(MutableBlockchain.class));
@@ -139,7 +136,6 @@ public class ConsensusScheduleBesuControllerBuilderTest {
             mockProtocolContext,
             mock(TransactionPool.class),
             mock(MiningConfiguration.class),
-            mock(PeerTaskExecutor.class),
             mock(SyncState.class),
             mock(EthProtocolManager.class));
 

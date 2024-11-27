@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
@@ -49,7 +48,6 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
-  private final PeerTaskExecutor peerTaskExecutor;
   private final MetricsSystem metricsSystem;
   private final ValidationPolicy detachedValidationPolicy =
       () -> HeaderValidationMode.DETACHED_ONLY;
@@ -61,14 +59,12 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final MetricsSystem metricsSystem,
       final SyncTerminationCondition syncTerminationCondition) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.metricsSystem = metricsSystem;
     this.fullSyncTerminationCondition = syncTerminationCondition;
     betterSyncTargetEvaluator = new BetterSyncTargetEvaluator(syncConfig, ethContext.getEthPeers());
@@ -90,8 +86,7 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
-            new RangeHeadersFetcher(
-                syncConfig, protocolSchedule, ethContext, peerTaskExecutor, metricsSystem),
+            new RangeHeadersFetcher(syncConfig, protocolSchedule, ethContext, metricsSystem),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
@@ -104,7 +99,6 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolContext,
             ethContext,
             detachedValidationPolicy,
-            peerTaskExecutor,
             syncConfig,
             headerRequestSize,
             metricsSystem);

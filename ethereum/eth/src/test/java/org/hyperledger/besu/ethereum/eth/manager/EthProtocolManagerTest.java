@@ -225,7 +225,8 @@ public final class EthProtocolManagerTest {
             protocolContext.getWorldStateArchive(),
             transactionPool,
             EthProtocolConfiguration.defaultConfig(),
-            Optional.of(mergePeerFilter))) {
+            Optional.of(mergePeerFilter),
+            null)) {
 
       final MockPeerConnection workPeer = setupPeer(ethManager, (cap, msg, conn) -> {});
       final MockPeerConnection stakePeer = setupPeer(ethManager, (cap, msg, conn) -> {});
@@ -1111,7 +1112,8 @@ public final class EthProtocolManagerTest {
             ethScheduler,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.defaultConfig(),
+            null)) {
       // Create a transaction pool.  This has a side effect of registering a listener for the
       // transactions message.
       TransactionPoolFactory.createTransactionPool(
@@ -1148,8 +1150,8 @@ public final class EthProtocolManagerTest {
             protocolContext.getWorldStateArchive(),
             transactionPool,
             EthProtocolConfiguration.defaultConfig(),
-            new ForkIdManager(
-                blockchain, Collections.emptyList(), Collections.emptyList(), true))) {
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), true),
+            null)) {
 
       assertThat(ethManager.getForkIdAsBytesList()).isNotEmpty();
       final CRC32 genesisHashCRC = new CRC32();

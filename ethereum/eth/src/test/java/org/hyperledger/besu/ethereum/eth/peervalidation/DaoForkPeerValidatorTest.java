@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -33,17 +32,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
-  private PeerTaskExecutor peerTaskExecutor;
 
   @Override
   AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
-    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     return new DaoForkPeerValidator(
         ProtocolScheduleFixture.MAINNET,
-        peerTaskExecutor,
+        null,
         SynchronizerConfiguration.builder().build(),
         new NoOpMetricsSystem(),
         blockNumber,
@@ -52,7 +48,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
   @Test
   public void validatePeer_responsivePeerOnRightSideOfFork() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(null);
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final long daoBlockNumber = 500;
     final Block daoBlock =
@@ -64,7 +60,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
     final PeerValidator validator =
         new DaoForkPeerValidator(
             ProtocolScheduleFixture.MAINNET,
-            peerTaskExecutor,
+            null,
             SynchronizerConfiguration.builder().build(),
             new NoOpMetricsSystem(),
             daoBlockNumber,
@@ -88,7 +84,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
   @Test
   public void validatePeer_responsivePeerOnWrongSideOfFork() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(null);
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final long daoBlockNumber = 500;
     final Block daoBlock =
@@ -97,7 +93,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
     final PeerValidator validator =
         new DaoForkPeerValidator(
             ProtocolScheduleFixture.MAINNET,
-            peerTaskExecutor,
+            null,
             SynchronizerConfiguration.builder().build(),
             new NoOpMetricsSystem(),
             daoBlockNumber,
@@ -121,13 +117,13 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
   @Test
   public void validatePeer_responsivePeerDoesNotHaveBlockWhenPastForkHeight() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(null);
     final long daoBlockNumber = 500;
 
     final PeerValidator validator =
         new DaoForkPeerValidator(
             ProtocolScheduleFixture.MAINNET,
-            peerTaskExecutor,
+            null,
             SynchronizerConfiguration.builder().build(),
             new NoOpMetricsSystem(),
             daoBlockNumber,

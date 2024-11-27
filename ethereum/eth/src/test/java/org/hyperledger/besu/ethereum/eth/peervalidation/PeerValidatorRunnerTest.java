@@ -39,7 +39,7 @@ public class PeerValidatorRunnerTest {
   public void checkPeer_schedulesFutureCheckWhenPeerNotReady() {
     final PeerValidator validator = mock(PeerValidator.class);
 
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(null);
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     final EthPeer peer =
         EthProtocolManagerTestUtil.peerBuilder()
@@ -78,7 +78,7 @@ public class PeerValidatorRunnerTest {
   public void checkPeer_doesNotScheduleFutureCheckWhenPeerNotReadyAndDisconnected() {
     final PeerValidator validator = mock(PeerValidator.class);
 
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(null);
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     final EthPeer peer =
         EthProtocolManagerTestUtil.peerBuilder()
@@ -105,7 +105,7 @@ public class PeerValidatorRunnerTest {
   public void checkPeer_handlesInvalidPeer() {
     final PeerValidator validator = mock(PeerValidator.class);
 
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(null);
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     final EthPeer peer =
         EthProtocolManagerTestUtil.peerBuilder()
@@ -138,7 +138,7 @@ public class PeerValidatorRunnerTest {
   public void checkPeer_handlesValidPeer() {
     final PeerValidator validator = mock(PeerValidator.class);
 
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(null);
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     final EthPeer peer =
         EthProtocolManagerTestUtil.peerBuilder()

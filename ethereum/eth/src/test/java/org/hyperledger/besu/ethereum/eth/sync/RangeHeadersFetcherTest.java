@@ -100,6 +100,7 @@ public class RangeHeadersFetcherTest {
 
   @BeforeEach
   public void setUpTest() {
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             protocolSchedule,
@@ -107,8 +108,8 @@ public class RangeHeadersFetcherTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig());
-    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+            EthProtocolConfiguration.defaultConfig(),
+            peerTaskExecutor);
     responder =
         RespondingEthPeer.blockchainResponder(
             blockchain, protocolContext.getWorldStateArchive(), transactionPool);
@@ -312,7 +313,6 @@ public class RangeHeadersFetcherTest {
             .build(),
         protocolSchedule,
         ethContext,
-        peerTaskExecutor,
         metricsSystem);
   }
 
@@ -327,7 +327,6 @@ public class RangeHeadersFetcherTest {
             .build(),
         protocolSchedule,
         ethContext,
-        peerTaskExecutor,
         new FastSyncState(targetHeader),
         metricsSystem);
   }

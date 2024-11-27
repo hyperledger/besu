@@ -140,9 +140,9 @@ public class BackwardSyncStepTest {
     when(context.getProtocolContext().getBlockchain()).thenReturn(localBlockchain);
     when(context.getProtocolSchedule()).thenReturn(protocolSchedule);
     when(context.getBatchSize()).thenReturn(5);
-    when(context.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
 
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(ethScheduler);
+    EthProtocolManager ethProtocolManager =
+        EthProtocolManagerTestUtil.create(ethScheduler, peerTaskExecutor);
 
     peer =
         RespondingEthPeer.builder()

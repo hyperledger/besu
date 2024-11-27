@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -55,7 +54,6 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
-  private final PeerTaskExecutor peerTaskExecutor;
   private final MetricsSystem metricsSystem;
   private final FastSyncState fastSyncState;
   private final AtomicBoolean logDebug = new AtomicBoolean(true);
@@ -67,16 +65,14 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState) {
-    super(config, protocolSchedule, protocolContext, ethContext, peerTaskExecutor, metricsSystem);
+    super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
     this.config = config;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.metricsSystem = metricsSystem;
     this.fastSyncState = fastSyncState;
   }
@@ -142,7 +138,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                             PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER,
                             protocolSchedule);
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                        peerTaskExecutor.executeAgainstPeer(task, bestPeer);
+                        ethContext.getPeerTaskExecutor().executeAgainstPeer(task, bestPeer);
                     if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                         || taskResult.result().isEmpty()) {
                       return CompletableFuture.failedFuture(

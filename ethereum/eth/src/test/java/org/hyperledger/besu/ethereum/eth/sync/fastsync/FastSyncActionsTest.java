@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -60,7 +59,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.mockito.Mockito;
 
 public class FastSyncActionsTest {
   private final WorldStateStorageCoordinator worldStateStorageCoordinator =
@@ -74,7 +72,6 @@ public class FastSyncActionsTest {
   private MutableBlockchain blockchain;
   private BlockchainSetupUtil blockchainSetupUtil;
   private SyncState syncState;
-  private PeerTaskExecutor peerTaskExecutor;
   private MetricsSystem metricsSystem;
 
   static class FastSyncActionsTestArguments implements ArgumentsProvider {
@@ -503,7 +500,6 @@ public class FastSyncActionsTest {
                 ethContext,
                 metricsSystem,
                 genesisConfig,
-                peerTaskExecutor,
                 syncConfig,
                 () -> finalizedEvent,
                 () -> {}));
@@ -525,14 +521,12 @@ public class FastSyncActionsTest {
     final ProtocolSchedule protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     final ProtocolContext protocolContext = blockchainSetupUtil.getProtocolContext();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     return new FastSyncActions(
         syncConfig,
         worldStateStorageCoordinator,
         protocolSchedule,
         protocolContext,
         ethContext,
-        peerTaskExecutor,
         new SyncState(blockchain, ethContext.getEthPeers(), true, Optional.empty()),
         pivotBlockSelector,
         new NoOpMetricsSystem());

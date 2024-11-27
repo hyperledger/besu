@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -66,7 +65,6 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
   private final EthContext ethContext;
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
-  private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
 
   private final BlockHeader[] headers;
@@ -82,7 +80,6 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final BlockHeader referenceHeader,
       final int segmentLength,
@@ -93,7 +90,6 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.referenceHeader = referenceHeader;
     this.segmentLength = segmentLength;
@@ -110,7 +106,6 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final BlockHeader referenceHeader,
       final int segmentLength,
@@ -121,7 +116,6 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         protocolSchedule,
         protocolContext,
         ethContext,
-        peerTaskExecutor,
         synchronizerConfiguration,
         referenceHeader,
         segmentLength,
@@ -134,7 +128,6 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final BlockHeader referenceHeader,
       final int segmentLength,
@@ -144,7 +137,6 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         protocolSchedule,
         protocolContext,
         ethContext,
-        peerTaskExecutor,
         synchronizerConfiguration,
         referenceHeader,
         segmentLength,
@@ -227,9 +219,10 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
                       protocolSchedule);
               PeerTaskExecutorResult<List<BlockHeader>> taskResult;
               if (ethPeer.isPresent()) {
-                taskResult = peerTaskExecutor.executeAgainstPeer(task, ethPeer.get());
+                taskResult =
+                    ethContext.getPeerTaskExecutor().executeAgainstPeer(task, ethPeer.get());
               } else {
-                taskResult = peerTaskExecutor.execute(task);
+                taskResult = ethContext.getPeerTaskExecutor().execute(task);
               }
 
               if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS

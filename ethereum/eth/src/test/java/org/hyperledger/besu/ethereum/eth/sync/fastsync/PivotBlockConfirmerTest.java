@@ -86,6 +86,7 @@ public class PivotBlockConfirmerTest {
     transactionPool = blockchainSetupUtil.getTransactionPool();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             protocolSchedule,
@@ -93,8 +94,8 @@ public class PivotBlockConfirmerTest {
             timeout::get,
             blockchainSetupUtil.getWorldArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig());
-    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+            EthProtocolConfiguration.defaultConfig(),
+            peerTaskExecutor);
   }
 
   private PivotBlockConfirmer createPivotBlockConfirmer(
@@ -104,7 +105,6 @@ public class PivotBlockConfirmerTest {
             protocolSchedule,
             ethProtocolManager.ethContext(),
             metricsSystem,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder()
                 .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
                 .build(),

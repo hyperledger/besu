@@ -147,7 +147,7 @@ public class BackwardSyncContextTest {
       }
     }
     when(protocolContext.getBlockchain()).thenReturn(localBlockchain);
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(peerTaskExecutor);
 
     peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
     EthContext ethContext = ethProtocolManager.ethContext();
@@ -181,7 +181,6 @@ public class BackwardSyncContextTest {
             new BackwardSyncContext(
                 protocolContext,
                 protocolSchedule,
-                peerTaskExecutor,
                 SynchronizerConfiguration.builder().build(),
                 metricsSystem,
                 ethContext,

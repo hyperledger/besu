@@ -276,7 +276,6 @@ public class TransitionControllerBuilderTest {
             protocolContext,
             transactionPool,
             miningConfiguration,
-            peerTaskExecutor,
             syncState,
             ethProtocolManager);
 

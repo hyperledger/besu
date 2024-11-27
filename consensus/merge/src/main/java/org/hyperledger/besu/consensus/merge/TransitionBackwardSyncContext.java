@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardChain;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
@@ -45,7 +44,6 @@ public class TransitionBackwardSyncContext extends BackwardSyncContext {
   public TransitionBackwardSyncContext(
       final ProtocolContext protocolContext,
       final TransitionProtocolSchedule transitionProtocolSchedule,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
@@ -54,7 +52,6 @@ public class TransitionBackwardSyncContext extends BackwardSyncContext {
     super(
         protocolContext,
         transitionProtocolSchedule,
-        peerTaskExecutor,
         synchronizerConfiguration,
         metricsSystem,
         ethContext,

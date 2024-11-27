@@ -20,7 +20,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -49,7 +48,6 @@ public class DownloadHeadersStep
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final ValidationPolicy validationPolicy;
-  private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
   private final int headerRequestSize;
   private final MetricsSystem metricsSystem;
@@ -59,7 +57,6 @@ public class DownloadHeadersStep
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final ValidationPolicy validationPolicy,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final int headerRequestSize,
       final MetricsSystem metricsSystem) {
@@ -67,7 +64,6 @@ public class DownloadHeadersStep
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.validationPolicy = validationPolicy;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.headerRequestSize = headerRequestSize;
     this.metricsSystem = metricsSystem;
@@ -96,7 +92,6 @@ public class DownloadHeadersStep
               protocolSchedule,
               protocolContext,
               ethContext,
-              peerTaskExecutor,
               synchronizerConfiguration,
               range.getEnd(),
               range.getSegmentLengthExclusive(),
@@ -119,7 +114,9 @@ public class DownloadHeadersStep
                           GetHeadersFromPeerTask.Direction.FORWARD,
                           protocolSchedule);
                   PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                      peerTaskExecutor.executeAgainstPeer(task, range.getSyncTarget());
+                      ethContext
+                          .getPeerTaskExecutor()
+                          .executeAgainstPeer(task, range.getSyncTarget());
                   if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                       || taskResult.result().isEmpty()) {
                     return CompletableFuture.failedFuture(

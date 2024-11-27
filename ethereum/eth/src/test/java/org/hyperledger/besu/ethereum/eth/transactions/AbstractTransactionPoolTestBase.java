@@ -225,7 +225,7 @@ public abstract class AbstractTransactionPoolTestBase {
     protocolSchedule = spy(executionContext.getProtocolSchedule());
     doReturn(protocolSpec).when(protocolSchedule).getByBlockHeader(any());
     blockGasLimit = blockchain.getChainHeadBlock().getHeader().getGasLimit();
-    ethProtocolManager = EthProtocolManagerTestUtil.create();
+    ethProtocolManager = EthProtocolManagerTestUtil.create(null);
     ethContext = spy(ethProtocolManager.ethContext());
 
     final EthScheduler ethScheduler = spy(ethContext.getScheduler());

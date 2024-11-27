@@ -663,9 +663,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                   .build());
     }
 
-    final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
     final PeerTaskExecutor peerTaskExecutor =
         new PeerTaskExecutor(ethPeers, new PeerTaskRequestSender(), metricsSystem);
+    final EthContext ethContext =
+        new EthContext(ethPeers, ethMessages, snapMessages, scheduler, peerTaskExecutor);
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
@@ -710,13 +711,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final PivotBlockSelector pivotBlockSelector =
         createPivotSelector(
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            peerTaskExecutor,
-            syncState,
-            metricsSystem,
-            blockchain);
+            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem, blockchain);
 
     final DefaultSynchronizer synchronizer =
         createSynchronizer(
@@ -751,7 +746,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             protocolContext,
             transactionPool,
             miningConfiguration,
-            peerTaskExecutor,
             syncState,
             ethProtocolManager);
 
@@ -890,7 +884,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final Blockchain blockchain) {
@@ -928,7 +921,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           ethContext,
           metricsSystem,
           genesisConfigOptions,
-          peerTaskExecutor,
           syncConfig,
           unverifiedForkchoiceSupplier,
           unsubscribeForkchoiceListener);
@@ -994,7 +986,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param protocolContext the protocol context
    * @param transactionPool the transaction pool
    * @param miningConfiguration the mining parameters
-   * @param peerTaskExecutor the peer task executor
    * @param syncState the sync state
    * @param ethProtocolManager the eth protocol manager
    * @return the mining coordinator
@@ -1004,7 +995,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       ProtocolContext protocolContext,
       TransactionPool transactionPool,
       MiningConfiguration miningConfiguration,
-      PeerTaskExecutor peerTaskExecutor,
       SyncState syncState,
       EthProtocolManager ethProtocolManager);
 

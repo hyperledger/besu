@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -43,19 +42,16 @@ public class ChainHeadTracker {
 
   private final EthContext ethContext;
   private final ProtocolSchedule protocolSchedule;
-  private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
   private final MetricsSystem metricsSystem;
 
   public ChainHeadTracker(
       final EthContext ethContext,
       final ProtocolSchedule protocolSchedule,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.protocolSchedule = protocolSchedule;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.metricsSystem = metricsSystem;
   }
@@ -63,7 +59,6 @@ public class ChainHeadTracker {
   public static void trackChainHeadForPeers(
       final EthContext ethContext,
       final ProtocolSchedule protocolSchedule,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final Blockchain blockchain,
       final Supplier<TrailingPeerRequirements> trailingPeerRequirementsCalculator,
@@ -72,11 +67,7 @@ public class ChainHeadTracker {
         new TrailingPeerLimiter(ethContext.getEthPeers(), trailingPeerRequirementsCalculator);
     final ChainHeadTracker tracker =
         new ChainHeadTracker(
-            ethContext,
-            protocolSchedule,
-            peerTaskExecutor,
-            synchronizerConfiguration,
-            metricsSystem);
+            ethContext, protocolSchedule, synchronizerConfiguration, metricsSystem);
     ethContext.getEthPeers().setChainHeadTracker(tracker);
     blockchain.observeBlockAdded(trailingPeerLimiter);
   }
@@ -101,7 +92,7 @@ public class ChainHeadTracker {
                         Direction.FORWARD,
                         protocolSchedule);
                 PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                    peerTaskExecutor.executeAgainstPeer(task, peer);
+                    ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
                 if (taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
                     && taskResult.result().isPresent()) {
                   BlockHeader chainHeadHeader = taskResult.result().get().getFirst();

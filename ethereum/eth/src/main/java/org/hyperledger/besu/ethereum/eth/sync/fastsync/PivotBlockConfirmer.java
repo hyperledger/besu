@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -61,7 +60,6 @@ class PivotBlockConfirmer {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final ProtocolSchedule protocolSchedule;
-  private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
 
   // The number of peers we need to query to confirm our pivot block
@@ -85,7 +83,6 @@ class PivotBlockConfirmer {
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final long pivotBlockNumber,
       final int numberOfPeersToQuery,
@@ -93,7 +90,6 @@ class PivotBlockConfirmer {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.pivotBlockNumber = pivotBlockNumber;
     this.numberOfPeersToQuery = numberOfPeersToQuery;
@@ -232,7 +228,7 @@ class PivotBlockConfirmer {
         .scheduleServiceTask(
             () -> {
               PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                  peerTaskExecutor.executeAgainstPeer(task, ethPeer);
+                  ethContext.getPeerTaskExecutor().executeAgainstPeer(task, ethPeer);
               if (taskResult.responseCode() == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
                 // something is probably wrong with the request, so we won't retry as below
                 return CompletableFuture.failedFuture(

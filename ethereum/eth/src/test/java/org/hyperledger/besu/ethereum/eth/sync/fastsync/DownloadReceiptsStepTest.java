@@ -84,7 +84,8 @@ public class DownloadReceiptsStepTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.defaultConfig(),
+            peerTaskExecutor);
   }
 
   @Test
@@ -93,7 +94,6 @@ public class DownloadReceiptsStepTest {
         new DownloadReceiptsStep(
             protocolSchedule,
             ethProtocolManager.ethContext(),
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -119,7 +119,6 @@ public class DownloadReceiptsStepTest {
         new DownloadReceiptsStep(
             protocolSchedule,
             ethProtocolManager.ethContext(),
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             new NoOpMetricsSystem());
 

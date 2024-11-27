@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -42,7 +41,6 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private static final Logger LOG = LoggerFactory.getLogger(GetBlockFromPeerTask.class);
 
   private final ProtocolSchedule protocolSchedule;
-  private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
   private final Optional<Hash> hash;
   private final long blockNumber;
@@ -51,13 +49,11 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   protected GetBlockFromPeerTask(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
     super(ethContext, metricsSystem);
-    this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.blockNumber = blockNumber;
     this.metricsSystem = metricsSystem;
@@ -68,19 +64,12 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   public static GetBlockFromPeerTask create(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
     return new GetBlockFromPeerTask(
-        protocolSchedule,
-        ethContext,
-        peerTaskExecutor,
-        synchronizerConfiguration,
-        hash,
-        blockNumber,
-        metricsSystem);
+        protocolSchedule, ethContext, synchronizerConfiguration, hash, blockNumber, metricsSystem);
   }
 
   @Override
@@ -138,9 +127,9 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
                         blockNumber, 1, 0, Direction.FORWARD, protocolSchedule));
     PeerTaskExecutorResult<List<BlockHeader>> taskResult;
     if (assignedPeer.isPresent()) {
-      taskResult = peerTaskExecutor.executeAgainstPeer(task, assignedPeer.get());
+      taskResult = ethContext.getPeerTaskExecutor().executeAgainstPeer(task, assignedPeer.get());
     } else {
-      taskResult = peerTaskExecutor.execute(task);
+      taskResult = ethContext.getPeerTaskExecutor().execute(task);
     }
 
     CompletableFuture<List<BlockHeader>> returnValue = new CompletableFuture<List<BlockHeader>>();

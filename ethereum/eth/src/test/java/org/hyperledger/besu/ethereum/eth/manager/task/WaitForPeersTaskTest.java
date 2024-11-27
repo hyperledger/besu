@@ -36,7 +36,7 @@ public class WaitForPeersTaskTest {
 
   @BeforeEach
   public void setupTest() {
-    ethProtocolManager = EthProtocolManagerTestUtil.create();
+    ethProtocolManager = EthProtocolManagerTestUtil.create(null);
     ethContext = ethProtocolManager.ethContext();
   }
 

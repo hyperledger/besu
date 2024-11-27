@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -53,7 +52,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
   private final ProtocolContext protocolContext;
   private final EthPeer peer;
   private final int headerRequestSize;
-  private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
   private final MetricsSystem metricsSystem;
 
@@ -68,7 +66,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
       final EthContext ethContext,
       final EthPeer peer,
       final int headerRequestSize,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem) {
     super(metricsSystem);
@@ -77,7 +74,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     this.protocolContext = protocolContext;
     this.peer = peer;
     this.headerRequestSize = headerRequestSize;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.metricsSystem = metricsSystem;
 
@@ -96,7 +92,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
       final EthContext ethContext,
       final EthPeer peer,
       final int headerRequestSize,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem) {
     return new DetermineCommonAncestorTask(
@@ -105,7 +100,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
         ethContext,
         peer,
         headerRequestSize,
-        peerTaskExecutor,
         synchronizerConfiguration,
         metricsSystem);
   }
@@ -209,7 +203,7 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
             skipInterval,
             Direction.REVERSE,
             protocolSchedule);
-    return peerTaskExecutor.executeAgainstPeer(task, peer);
+    return ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
   }
 
   /**

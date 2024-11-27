@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -81,7 +80,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
         protocolSchedule,
         protocolContext,
         ethContext,
-        null,
         SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
         referenceHeader,
         requestedData.size(),
@@ -102,7 +100,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             protocolSchedule,
             protocolContext,
             ethContext,
-            null,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             referenceHeader,
             10,
@@ -129,7 +126,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
 
     // Execute task and wait for response
     final BlockHeader referenceHeader = blockchain.getChainHeadHeader();
-    final PeerTaskExecutor peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
         .thenReturn(
             new PeerTaskExecutorResult<>(
@@ -141,7 +137,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             protocolSchedule,
             protocolContext,
             ethContext,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             referenceHeader,
             10,
@@ -168,7 +163,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             protocolSchedule,
             protocolContext,
             ethContext,
-            null,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             referenceHeader,
             10,
@@ -209,7 +203,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
 
     // Execute task and wait for response
     final BlockHeader referenceHeader = blockchain.getChainHeadHeader();
-    final PeerTaskExecutor peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
         .thenReturn(
             new PeerTaskExecutorResult<>(
@@ -225,7 +218,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             protocolSchedule,
             protocolContext,
             ethContext,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             referenceHeader,
             10,
@@ -258,7 +250,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             protocolScheduleSpy,
             protocolContext,
             ethContext,
-            null,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             referenceHeader,
             blockCount - 1, // The reference header is not included in this count
@@ -290,7 +281,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
     final Block badBlock = chain.get(2);
     ProtocolSchedule protocolScheduleSpy = setupHeaderValidationToFail(badBlock.getHeader());
 
-    final PeerTaskExecutor peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
         .then(
             (invocationOnMock) -> {
@@ -320,7 +310,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             protocolScheduleSpy,
             protocolContext,
             ethContext,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             referenceHeader,
             blockCount - 1, // The reference header is not included in this count
@@ -360,7 +349,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             protocolScheduleSpy,
             protocolContext,
             ethContext,
-            null,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             referenceHeader,
             blockCount - 1, // The reference header is not included in this count
@@ -407,7 +395,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             protocolScheduleSpy,
             protocolContext,
             ethContext,
-            null,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             referenceHeader,
             blockCount - 1, // The reference header is not included in this count
@@ -453,7 +440,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             protocolSchedule,
             protocolContext,
             ethContext,
-            null,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             referenceHeader,
             segmentLength,
@@ -501,7 +487,6 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             protocolSchedule,
             protocolContext,
             ethContext,
-            null,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             referenceHeader,
             segmentLength,

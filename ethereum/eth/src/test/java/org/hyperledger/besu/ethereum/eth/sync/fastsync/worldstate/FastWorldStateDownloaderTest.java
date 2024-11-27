@@ -114,7 +114,8 @@ class FastWorldStateDownloaderTest {
               .build());
 
   final EthProtocolManager ethProtocolManager =
-      EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+      EthProtocolManagerTestUtil.create(
+          new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()), null);
 
   @AfterEach
   public void tearDown() throws Exception {
@@ -238,7 +239,8 @@ class FastWorldStateDownloaderTest {
   void canRecoverFromTimeouts() {
     final DeterministicEthScheduler.TimeoutPolicy timeoutPolicy =
         DeterministicEthScheduler.TimeoutPolicy.timeoutXTimes(2);
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(timeoutPolicy);
+    final EthProtocolManager ethProtocolManager =
+        EthProtocolManagerTestUtil.create(timeoutPolicy, null);
     final MockExecutorService serviceExecutor =
         ((DeterministicEthScheduler) ethProtocolManager.ethContext().getScheduler())
             .mockServiceExecutor();
@@ -382,7 +384,7 @@ class FastWorldStateDownloaderTest {
 
   @SuppressWarnings("unchecked")
   private void testCancellation(final boolean shouldCancelFuture) {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(null);
     // Prevent the persistence service from running
     final MockExecutorService serviceExecutor =
         ((DeterministicEthScheduler) ethProtocolManager.ethContext().getScheduler())
@@ -661,7 +663,8 @@ class FastWorldStateDownloaderTest {
   @Timeout(value = 60)
   void stalledDownloader() {
     final EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+        EthProtocolManagerTestUtil.create(
+            new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()), null);
 
     // Setup "remote" state
     final ForestWorldStateKeyValueStorage remoteStorage =

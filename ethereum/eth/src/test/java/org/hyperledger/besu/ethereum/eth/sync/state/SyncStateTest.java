@@ -90,7 +90,7 @@ public class SyncStateTest {
 
   @BeforeEach
   public void setUp() {
-    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
+    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain, null);
     ethPeers = spy(ethProtocolManager.ethContext().getEthPeers());
     syncTargetPeer = createPeer(TARGET_DIFFICULTY, TARGET_CHAIN_HEIGHT);
     otherPeer = createPeer(Difficulty.ZERO, 0);

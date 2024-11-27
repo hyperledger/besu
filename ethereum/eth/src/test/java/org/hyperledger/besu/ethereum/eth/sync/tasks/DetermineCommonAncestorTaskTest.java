@@ -92,13 +92,15 @@ public class DetermineCommonAncestorTaskTest {
     localGenesisBlock = blockDataGenerator.genesisBlock();
     localBlockchain = createInMemoryBlockchain(localGenesisBlock);
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             protocolSchedule,
             localBlockchain,
             worldStateArchive,
             mock(TransactionPool.class),
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.defaultConfig(),
+            peerTaskExecutor);
     ethContext = ethProtocolManager.ethContext();
     protocolContext =
         new ProtocolContext(
@@ -106,7 +108,6 @@ public class DetermineCommonAncestorTaskTest {
             worldStateArchive,
             mock(ConsensusContext.class),
             new BadBlockManager());
-    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
   }
 
   @Test
@@ -124,7 +125,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             defaultHeaderRequestSize,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             metricsSystem);
 
@@ -159,7 +159,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             defaultHeaderRequestSize,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             metricsSystem);
 
@@ -207,7 +206,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             defaultHeaderRequestSize,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             metricsSystem);
 
@@ -257,7 +255,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             defaultHeaderRequestSize,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             metricsSystem);
     final DetermineCommonAncestorTask spy = spy(task);
@@ -292,7 +289,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             defaultHeaderRequestSize,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             metricsSystem);
 
@@ -334,7 +330,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             10,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             metricsSystem);
     final DetermineCommonAncestorTask spy = spy(task);
@@ -372,7 +367,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             10,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             metricsSystem);
     final DetermineCommonAncestorTask spy = spy(task);
@@ -414,7 +408,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             peer,
             defaultHeaderRequestSize,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             metricsSystem);
 
@@ -440,7 +433,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             peer,
             defaultHeaderRequestSize,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             metricsSystem);
 

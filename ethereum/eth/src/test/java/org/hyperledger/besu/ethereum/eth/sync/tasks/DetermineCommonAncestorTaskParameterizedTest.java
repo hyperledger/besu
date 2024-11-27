@@ -154,7 +154,8 @@ public class DetermineCommonAncestorTaskParameterizedTest {
             localBlockchain,
             worldStateArchive,
             mock(TransactionPool.class),
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.defaultConfig(),
+            peerTaskExecutor);
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
     final RespondingEthPeer respondingEthPeer =
@@ -179,7 +180,6 @@ public class DetermineCommonAncestorTaskParameterizedTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             headerRequestSize,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder()
                 .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
                 .build(),

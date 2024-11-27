@@ -41,8 +41,6 @@ public class GetBlockFromPeerTaskTest
 
   private static final int BLOCK_NUMBER = 5;
 
-  private PeerTaskExecutor peerTaskExecutor;
-
   @Override
   protected Block generateDataToBeRequested() {
     final BlockHeader header = blockchain.getBlockHeader(BLOCK_NUMBER).get();
@@ -56,7 +54,6 @@ public class GetBlockFromPeerTaskTest
     return GetBlockFromPeerTask.create(
         protocolSchedule,
         ethContext,
-        peerTaskExecutor,
         SynchronizerConfiguration.builder().build(),
         Optional.of(requestedData.getHash()),
         BLOCK_NUMBER,

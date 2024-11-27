@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -88,7 +87,8 @@ public class FullSyncTargetManagerTest {
             new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()),
             localWorldState,
             localBlockchainSetup.getTransactionPool(),
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.defaultConfig(),
+            null);
     final EthContext ethContext = ethProtocolManager.ethContext();
     localBlockchainSetup.importFirstBlocks(5);
     otherBlockchainSetup.importFirstBlocks(20);
@@ -98,7 +98,6 @@ public class FullSyncTargetManagerTest {
             protocolSchedule,
             protocolContext,
             ethContext,
-            new PeerTaskExecutor(null, null, new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
             SyncTerminationCondition.never());
   }

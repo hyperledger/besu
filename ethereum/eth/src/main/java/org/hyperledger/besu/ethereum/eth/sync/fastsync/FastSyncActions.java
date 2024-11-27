@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -55,7 +54,6 @@ public class FastSyncActions {
   protected final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
   protected final EthContext ethContext;
-  protected final PeerTaskExecutor peerTaskExecutor;
   protected final SyncState syncState;
   protected final PivotBlockSelector pivotBlockSelector;
   protected final MetricsSystem metricsSystem;
@@ -68,7 +66,6 @@ public class FastSyncActions {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final PivotBlockSelector pivotBlockSelector,
       final MetricsSystem metricsSystem) {
@@ -77,7 +74,6 @@ public class FastSyncActions {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
     this.metricsSystem = metricsSystem;
@@ -151,7 +147,6 @@ public class FastSyncActions {
                                     protocolSchedule,
                                     ethContext,
                                     metricsSystem,
-                                    peerTaskExecutor,
                                     syncConfig,
                                     currentState.getPivotBlockNumber().getAsLong(),
                                     syncConfig.getSyncMinimumPeerCount(),
@@ -175,7 +170,6 @@ public class FastSyncActions {
         protocolSchedule,
         protocolContext,
         ethContext,
-        peerTaskExecutor,
         syncState,
         metricsSystem,
         currentState,
@@ -201,7 +195,7 @@ public class FastSyncActions {
                             Integer.MAX_VALUE,
                             protocolSchedule);
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                        peerTaskExecutor.execute(task);
+                        ethContext.getPeerTaskExecutor().execute(task);
                     if (taskResult.responseCode() == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE
                         || taskResult.responseCode()
                             == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {

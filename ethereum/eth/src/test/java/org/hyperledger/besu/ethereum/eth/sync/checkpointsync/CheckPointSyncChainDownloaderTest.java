@@ -117,11 +117,13 @@ public class CheckPointSyncChainDownloaderTest {
     otherBlockchainSetup.importFirstBlocks(30);
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
+    peerTaskExecutor = mock(PeerTaskExecutor.class);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             protocolSchedule,
             localBlockchain,
-            new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+            new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()),
+            peerTaskExecutor);
     ethContext = ethProtocolManager.ethContext();
 
     final int blockNumber = 10;
@@ -138,8 +140,6 @@ public class CheckPointSyncChainDownloaderTest {
             ethContext.getEthPeers(),
             true,
             Optional.of(checkpoint));
-
-    peerTaskExecutor = mock(PeerTaskExecutor.class);
 
     when(peerTaskExecutor.execute(any(GetReceiptsFromPeerTask.class)))
         .thenAnswer(
@@ -182,7 +182,6 @@ public class CheckPointSyncChainDownloaderTest {
         protocolSchedule,
         protocolContext,
         ethContext,
-        peerTaskExecutor,
         syncState,
         new NoOpMetricsSystem(),
         new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()),

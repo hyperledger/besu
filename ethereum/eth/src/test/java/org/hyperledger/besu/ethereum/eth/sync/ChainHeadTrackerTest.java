@@ -82,7 +82,8 @@ public class ChainHeadTrackerTest {
   public void setup(final DataStorageFormat storageFormat, final boolean isPeerTaskSystemEnabled) {
     blockchainSetupUtil = BlockchainSetupUtil.forTesting(storageFormat);
     blockchain = blockchainSetupUtil.getBlockchain();
-    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain, peerTaskExecutor);
     respondingPeer =
         RespondingEthPeer.builder()
             .ethProtocolManager(ethProtocolManager)
@@ -90,7 +91,6 @@ public class ChainHeadTrackerTest {
             .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
             .estimatedHeight(0)
             .build();
-    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     GetHeadersFromPeerTaskExecutorAnswer getHeadersAnswer =
         new GetHeadersFromPeerTaskExecutorAnswer(
             blockchain, ethProtocolManager.ethContext().getEthPeers());
@@ -108,7 +108,6 @@ public class ChainHeadTrackerTest {
         new ChainHeadTracker(
             ethProtocolManager.ethContext(),
             protocolSchedule,
-            peerTaskExecutor,
             synchronizerConfiguration,
             new NoOpMetricsSystem());
   }

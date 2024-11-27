@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -48,7 +47,6 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final GenesisConfigOptions genesisConfig;
-  private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
   private final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier;
   private final Runnable cleanupAction;
@@ -63,7 +61,6 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final GenesisConfigOptions genesisConfig,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier,
       final Runnable cleanupAction) {
@@ -72,7 +69,6 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
     this.genesisConfig = genesisConfig;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.forkchoiceStateSupplier = forkchoiceStateSupplier;
     this.cleanupAction = cleanupAction;
@@ -171,7 +167,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
                             Integer.MAX_VALUE,
                             protocolSchedule);
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                        peerTaskExecutor.execute(task);
+                        ethContext.getPeerTaskExecutor().execute(task);
                     if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                         || taskResult.result().isEmpty()) {
                       return CompletableFuture.failedFuture(

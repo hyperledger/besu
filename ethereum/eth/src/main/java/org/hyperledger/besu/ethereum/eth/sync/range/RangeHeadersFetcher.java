@@ -21,7 +21,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -46,7 +45,6 @@ public class RangeHeadersFetcher {
   private final SynchronizerConfiguration syncConfig;
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
-  private final PeerTaskExecutor peerTaskExecutor;
   // The range we're aiming to reach at the end of this sync.
   private final FastSyncState fastSyncState;
   private final MetricsSystem metricsSystem;
@@ -55,28 +53,19 @@ public class RangeHeadersFetcher {
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final MetricsSystem metricsSystem) {
-    this(
-        syncConfig,
-        protocolSchedule,
-        ethContext,
-        peerTaskExecutor,
-        new FastSyncState(),
-        metricsSystem);
+    this(syncConfig, protocolSchedule, ethContext, new FastSyncState(), metricsSystem);
   }
 
   public RangeHeadersFetcher(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final FastSyncState fastSyncState,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.fastSyncState = fastSyncState;
     this.metricsSystem = metricsSystem;
   }
@@ -148,7 +137,7 @@ public class RangeHeadersFetcher {
                             Direction.FORWARD,
                             protocolSchedule);
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                        peerTaskExecutor.executeAgainstPeer(task, peer);
+                        ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
                     if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                         || taskResult.result().isEmpty()) {
                       LOG.warn(

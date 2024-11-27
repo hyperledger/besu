@@ -69,7 +69,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
       final MiningConfiguration miningConfiguration,
-      final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
     return createTransitionMiningCoordinator(
@@ -81,7 +80,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         new BackwardSyncContext(
             protocolContext,
             protocolSchedule,
-            peerTaskExecutor,
             syncConfig,
             metricsSystem,
             ethProtocolManager.ethContext(),

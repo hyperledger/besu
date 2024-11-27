@@ -73,7 +73,7 @@ public class DownloadHeadersStepTest {
   @BeforeEach
   public void setUp() {
     peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
-    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
+    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain, peerTaskExecutor);
 
     checkpointRange =
         new SyncTargetRange(
@@ -88,7 +88,6 @@ public class DownloadHeadersStepTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             () -> HeaderValidationMode.DETACHED_ONLY,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
@@ -110,7 +109,6 @@ public class DownloadHeadersStepTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             () -> HeaderValidationMode.DETACHED_ONLY,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
@@ -135,7 +133,6 @@ public class DownloadHeadersStepTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             () -> HeaderValidationMode.DETACHED_ONLY,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
@@ -157,7 +154,6 @@ public class DownloadHeadersStepTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             () -> HeaderValidationMode.DETACHED_ONLY,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
@@ -181,7 +177,6 @@ public class DownloadHeadersStepTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             () -> HeaderValidationMode.DETACHED_ONLY,
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());

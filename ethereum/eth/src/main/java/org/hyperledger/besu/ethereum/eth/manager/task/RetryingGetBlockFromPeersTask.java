@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -38,7 +37,6 @@ public class RetryingGetBlockFromPeersTask
   private static final Logger LOG = LoggerFactory.getLogger(RetryingGetBlockFromPeersTask.class);
 
   private final ProtocolSchedule protocolSchedule;
-  private final PeerTaskExecutor peerTaskExecutor;
   private final SynchronizerConfiguration synchronizerConfiguration;
   private final Optional<Hash> maybeBlockHash;
   private final long blockNumber;
@@ -46,7 +44,6 @@ public class RetryingGetBlockFromPeersTask
   protected RetryingGetBlockFromPeersTask(
       final EthContext ethContext,
       final ProtocolSchedule protocolSchedule,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem,
       final int maxRetries,
@@ -54,7 +51,6 @@ public class RetryingGetBlockFromPeersTask
       final long blockNumber) {
     super(ethContext, metricsSystem, Objects::isNull, maxRetries);
     this.protocolSchedule = protocolSchedule;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.maybeBlockHash = maybeBlockHash;
     this.blockNumber = blockNumber;
@@ -63,7 +59,6 @@ public class RetryingGetBlockFromPeersTask
   public static RetryingGetBlockFromPeersTask create(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem,
       final int maxRetries,
@@ -72,7 +67,6 @@ public class RetryingGetBlockFromPeersTask
     return new RetryingGetBlockFromPeersTask(
         ethContext,
         protocolSchedule,
-        peerTaskExecutor,
         synchronizerConfiguration,
         metricsSystem,
         maxRetries,
@@ -87,7 +81,6 @@ public class RetryingGetBlockFromPeersTask
         GetBlockFromPeerTask.create(
             protocolSchedule,
             getEthContext(),
-            peerTaskExecutor,
             synchronizerConfiguration,
             maybeBlockHash,
             blockNumber,
