@@ -307,7 +307,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   // TODO --Xsnapsync-bft-enabled is deprecated,
   // remove in a future release
   @CommandLine.Option(
-      names = SNAP_SYNC_BFT_ENABLED_FLAG, //deprecated
+      names = SNAP_SYNC_BFT_ENABLED_FLAG, // deprecated
       hidden = true,
       paramLabel = "<Boolean>",
       arity = "0..1",
