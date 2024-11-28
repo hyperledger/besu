@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -61,15 +60,12 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PeerDiscoveryAgentTest {
 
   private static final int BROADCAST_TCP_PORT = 30303;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  private static final Logger log = LoggerFactory.getLogger(PeerDiscoveryAgentTest.class);
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
@@ -906,16 +902,13 @@ public class PeerDiscoveryAgentTest {
   }
 
   @Test
-  void testFromEnodeWithDiscoveryDisabled()  {
+  void testFromEnodeWithDiscoveryDisabled() throws UnknownHostException {
       EnodeURL enodeWithNoDiscovery = mock(EnodeURL.class);
       when(enodeWithNoDiscovery.getDiscoveryPort()).thenReturn(Optional.empty());
       when(enodeWithNoDiscovery.getListeningPort()).thenReturn(Optional.of(8545));
-      try {
-        when(enodeWithNoDiscovery.getIp()).thenReturn(InetAddress.getByName("127.0.0.1"));
-      }
-      catch (UnknownHostException e) {
-        log.debug("Failed to resolve the Host Address ");
-      }
+
+      when(enodeWithNoDiscovery.getIp()).thenReturn(InetAddress.getByName("127.0.0.1"));
+
       Endpoint result = Endpoint.fromEnode(enodeWithNoDiscovery);
 
       assertEquals("127.0.0.1", result.getHost());
