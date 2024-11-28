@@ -489,11 +489,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     updater.putBlockHeader(blockHash, block.getHeader());
     updater.putBlockHash(block.getHeader().getNumber(), blockHash);
     updater.putBlockBody(blockHash, block.getBody());
-    final int nbTrx = block.getBody().getTransactions().size();
-    for (int index = 0; index < nbTrx; index++) {
-      final Hash transactionHash = block.getBody().getTransactions().get(index).getHash();
-      updater.putTransactionLocation(transactionHash, new TransactionLocation(blockHash, index));
-    }
+    indexTransactionsForBlock(updater, blockHash, block.getBody().getTransactions());
     updater.putTransactionReceipts(blockHash, transactionReceipts);
     maybeTotalDifficulty.ifPresent(
         totalDifficulty -> updater.putTotalDifficulty(blockHash, totalDifficulty));
@@ -563,7 +559,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     updater.putBlockHash(blockWithReceipts.getNumber(), newBlockHash);
     updater.setChainHead(newBlockHash);
-    indexTransactionForBlock(
+    indexTransactionsForBlock(
         updater, newBlockHash, blockWithReceipts.getBlock().getBody().getTransactions());
     gasUsedCounter.inc(blockWithReceipts.getHeader().getGasUsed());
     numberOfTransactionsCounter.inc(
@@ -652,7 +648,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     // Update indexed transactions
     newTransactions.forEach(
         (blockHash, transactionsInBlock) -> {
-          indexTransactionForBlock(updater, blockHash, transactionsInBlock);
+          indexTransactionsForBlock(updater, blockHash, transactionsInBlock);
           // Don't remove transactions that are being re-indexed.
           removedTransactions.removeAll(transactionsInBlock);
         });
@@ -792,7 +788,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     chainHeadOmmerCount = block.getBody().getOmmers().size();
   }
 
-  private static void indexTransactionForBlock(
+  private static void indexTransactionsForBlock(
       final BlockchainStorage.Updater updater, final Hash blockHash, final List<Transaction> txs) {
     for (int index = 0; index < txs.size(); index++) {
       final Hash txHash = txs.get(index).getHash();
