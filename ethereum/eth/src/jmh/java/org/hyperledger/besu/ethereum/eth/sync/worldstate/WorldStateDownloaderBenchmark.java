@@ -99,7 +99,8 @@ public class WorldStateDownloaderBenchmark {
                 syncConfig.getDownloaderParallelism(),
                 syncConfig.getTransactionsParallelism(),
                 syncConfig.getComputationParallelism(),
-                metricsSystem));
+                metricsSystem),
+            null);
 
     peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockHeader.getNumber());
 
