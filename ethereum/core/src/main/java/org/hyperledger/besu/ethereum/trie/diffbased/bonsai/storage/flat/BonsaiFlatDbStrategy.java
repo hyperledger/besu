@@ -136,7 +136,8 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
   }
 
   @Override
-  protected Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+  // TODO: this should probably remain protected, public for now to enable trie rebuilding
+  public Stream<Pair<Bytes32, Bytes>> storageToPairStream(
       final SegmentedKeyValueStorage storage,
       final Hash accountHash,
       final Bytes startKeyHash,
@@ -164,7 +165,8 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
   }
 
   @Override
-  protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+  // TODO: this should probably remain protected, public for now to enable trie rebuilding
+  public Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
       final SegmentedKeyValueStorage storage, final Bytes startKeyHash) {
     return storage
         .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe())
