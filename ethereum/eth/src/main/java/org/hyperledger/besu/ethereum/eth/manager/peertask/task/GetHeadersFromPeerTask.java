@@ -172,9 +172,8 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   @Override
   public Predicate<EthPeer> getPeerRequirementFilter() {
     return (ethPeer) ->
-        ethPeer.getProtocolName().equals(getSubProtocol().getName())
-            && (protocolSchedule.anyMatch((ps) -> ps.spec().isPoS())
-                || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight);
+        (protocolSchedule.anyMatch((ps) -> ps.spec().isPoS())
+            || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight);
   }
 
   @Override
@@ -254,7 +253,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   private boolean isBlockHeadersMatchingRequest(final List<BlockHeader> blockHeaders) {
     BlockHeader prevBlockHeader = blockHeaders.getFirst();
     final int expectedDelta = direction == Direction.REVERSE ? -(skip + 1) : (skip + 1);
-    BlockHeader header = null;
+    BlockHeader header;
     for (int i = 1; i < blockHeaders.size(); i++) {
       header = blockHeaders.get(i);
       if (header.getNumber() != prevBlockHeader.getNumber() + expectedDelta) {
