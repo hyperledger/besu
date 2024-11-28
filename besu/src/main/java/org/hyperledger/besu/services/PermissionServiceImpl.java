@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PermissionServiceImpl implements PermissioningService {
-    private static final Logger log = LoggerFactory.getLogger(PermissionServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PermissionServiceImpl.class);
     private final List<TransactionPermissioningProvider> transactionPermissioningProviders = new ArrayList<>();
 
     @Override
@@ -23,7 +23,7 @@ public class PermissionServiceImpl implements PermissioningService {
     @Override
     public void registerTransactionPermissioningProvider(TransactionPermissioningProvider provider) {
         transactionPermissioningProviders.add(provider);
-        log.info("Registered new transaction permissioning provider.");
+        LOG.info("Registered new transaction permissioning provider.");
     }
 
     @Override
@@ -34,11 +34,11 @@ public class PermissionServiceImpl implements PermissioningService {
     public boolean isTransactionPermitted(Transaction transaction) {
         for (TransactionPermissioningProvider provider : transactionPermissioningProviders) {
             if (!provider.isPermitted(transaction)) {
-                log.info("Transaction {} not permitted by one of the providers.", transaction.getHash());
+                LOG.debug("Transaction {} not permitted by one of the providers.", transaction.getHash());
                 return false;
             }
         }
-        log.info("Transaction {} permitted.", transaction.getHash());
+        LOG.debug("Transaction {} permitted.", transaction.getHash());
         return true;
     }
 }
