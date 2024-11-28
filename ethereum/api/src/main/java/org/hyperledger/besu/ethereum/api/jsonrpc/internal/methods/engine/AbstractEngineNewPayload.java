@@ -570,7 +570,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     message.append("Imported #%,d  (%s)|%5d tx");
     final List<Object> messageArgs =
             new ArrayList<>(
-                    List.of(block.getHeader().getNumber(), block.getHash().toHexString(), nbTransactions));
+                    List.of(block.getHeader().getNumber(), shortenString(block.getHash().toHexString()), nbTransactions));
     if (block.getBody().getWithdrawals().isPresent()) {
       message.append("|%3d ws");
       messageArgs.add(block.getBody().getWithdrawals().get().size());
@@ -593,5 +593,14 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     message.append("|peers: %2d");
     messageArgs.add(ethPeers.peerCount());
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
+  }
+
+  public static String shortenString(String input) {
+    if (input == null || input.length() <= 10) {
+      throw new IllegalArgumentException("Input string must be longer than 10 characters");
+    }
+    String firstPart = input.substring(0, 6);
+    String lastPart = input.substring(input.length() - 5);
+    return firstPart + "....." + lastPart;
   }
 }
