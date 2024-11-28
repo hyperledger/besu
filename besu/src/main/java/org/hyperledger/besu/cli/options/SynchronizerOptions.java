@@ -304,7 +304,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean checkpointPostMergeSyncEnabled =
       SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
-  // TODO ----Xsnapsync-bft-enabled is deprecated,
+  // TODO --Xsnapsync-bft-enabled is deprecated,
   // remove in a future release
   @CommandLine.Option(
       names = SNAP_SYNC_BFT_ENABLED_FLAG, //deprecated

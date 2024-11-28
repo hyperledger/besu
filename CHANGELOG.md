@@ -15,7 +15,7 @@
   - Smart-contract-based permissioning
   - Proof of Work consensus
   - Fast Sync
-
+- Option `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release, enable snap sync with IBFT/QBFT permissioned Bonsai-DB chains by default
 ### Additions and Improvements
 - Fine tune already seen txs tracker when a tx is removed from the pool [#7755](https://github.com/hyperledger/besu/pull/7755)
 - Support for enabling and configuring TLS/mTLS in WebSocket service. [#7854](https://github.com/hyperledger/besu/pull/7854)
