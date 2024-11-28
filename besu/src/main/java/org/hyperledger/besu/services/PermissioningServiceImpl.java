@@ -14,20 +14,27 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.permissioning.account.TransactionPermissioningProvider;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The Permissioning service implementation. */
 public class PermissioningServiceImpl implements PermissioningService {
+  private static final Logger LOG = LoggerFactory.getLogger(PermissioningServiceImpl.class);
 
   private final List<NodeConnectionPermissioningProvider> connectionPermissioningProviders =
       Lists.newArrayList();
+  private final List<TransactionPermissioningProvider> transactionPermissioningProviders = new ArrayList<>();
 
   /** Default Constructor. */
   @Inject
@@ -37,6 +44,12 @@ public class PermissioningServiceImpl implements PermissioningService {
   public void registerNodePermissioningProvider(
       final NodeConnectionPermissioningProvider provider) {
     connectionPermissioningProviders.add(provider);
+  }
+
+  @Override
+  public void registerTransactionPermissioningProvider(TransactionPermissioningProvider provider) {
+    transactionPermissioningProviders.add(provider);
+    LOG.info("Registered new transaction permissioning provider.");
   }
 
   /**
@@ -64,5 +77,21 @@ public class PermissioningServiceImpl implements PermissioningService {
    */
   public List<NodeMessagePermissioningProvider> getMessagePermissioningProviders() {
     return messagePermissioningProviders;
+  }
+
+  /**
+   * Gets transaction rules.
+   *
+   * @return if the transaction is valid
+   */
+  public boolean isTransactionPermitted(Transaction transaction) {
+    for (TransactionPermissioningProvider provider : transactionPermissioningProviders) {
+      if (!provider.isPermitted(transaction)) {
+        LOG.debug("Transaction {} not permitted by one of the providers.", transaction.getHash());
+        return false;
+      }
+    }
+    LOG.debug("Transaction {} permitted.", transaction.getHash());
+    return true;
   }
 }
