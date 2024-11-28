@@ -586,8 +586,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                     timeInS,
                     mgasPerSec));
     if (nbParallelizedTransations.isPresent()) {
+      double parallelizedTxPercentage = (double) (nbParallelizedTransations.get() * 100) / nbTransactions;
       message.append("|%%Parallel txs %5.1f%%");
-      messageArgs.add((nbParallelizedTransations.get() * 100) / nbTransactions);
+      messageArgs.add(parallelizedTxPercentage);
     }
     message.append("|peers: %2d");
     messageArgs.add(ethPeers.peerCount());
