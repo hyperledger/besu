@@ -27,12 +27,16 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 public class PermissioningPluginTest extends AcceptanceTestBase {
   private BesuNode minerNode;
 
   private BesuNode aliceNode;
   private BesuNode bobNode;
   private BesuNode charlieNode;
+
+  private static final long GAS_LIMIT_THRESHOLD = 12000L;
 
   @BeforeEach
   public void setUp() throws Exception {
@@ -95,5 +99,21 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
     bobNode.verify(txPoolConditions.inTransactionPool(txHash));
     charlieNode.verify(txPoolConditions.notInTransactionPool(txHash));
     minerNode.verify(txPoolConditions.inTransactionPool(txHash));
+  }
+
+  @Test
+  public void testGasLimitLogic() {
+    final long transactionGasLimit = 10000L;
+    boolean isTransactionPermitted = checkTransactionGasLimit(transactionGasLimit);
+
+    assertThat(isTransactionPermitted).isTrue();
+  }
+
+  private boolean checkTransactionGasLimit(long gasLimit) {
+    if (gasLimit > GAS_LIMIT_THRESHOLD) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }

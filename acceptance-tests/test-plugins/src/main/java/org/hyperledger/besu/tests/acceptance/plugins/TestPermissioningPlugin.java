@@ -19,6 +19,7 @@ import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
+
 import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +77,25 @@ public class TestPermissioningPlugin implements BesuPlugin {
             }
             return true;
           });
+
+      service.registerTransactionPermissioningProvider(
+              (provider) -> {
+                long configuredGasLimitThreshold = 12000L;
+
+                long gasLimit = provider.getGasLimit();
+
+                LOG.info("Transaction gas limit: {} | Configured threshold: {}", gasLimit, configuredGasLimitThreshold);
+
+                if (gasLimit > configuredGasLimitThreshold) {
+                  LOG.debug("Transaction gas limit {} exceeds threshold. Allowing transaction.", gasLimit);
+                  return true;
+                }
+
+                LOG.debug("Transaction gas limit {} below threshold. Rejecting transaction.", gasLimit);
+                return false;
+              }
+      );
+
     }
   }
 
