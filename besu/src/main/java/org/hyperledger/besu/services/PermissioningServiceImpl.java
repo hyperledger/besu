@@ -82,7 +82,7 @@ public class PermissioningServiceImpl implements PermissioningService {
   /**
    * Gets transaction rules.
    *
-   * @return if the transaction is valid
+   * @return whether the transaction is permitted
    */
   public boolean isTransactionPermitted(Transaction transaction) {
     for (TransactionPermissioningProvider provider : transactionPermissioningProviders) {
