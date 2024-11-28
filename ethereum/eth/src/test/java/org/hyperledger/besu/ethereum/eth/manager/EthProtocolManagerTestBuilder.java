@@ -63,6 +63,10 @@ public class EthProtocolManagerTestBuilder {
   private Optional<MergePeerFilter> mergePeerFilter;
   private SynchronizerConfiguration synchronizerConfiguration;
 
+  public static EthProtocolManagerTestBuilder builder() {
+    return new EthProtocolManagerTestBuilder();
+  }
+
   public EthProtocolManagerTestBuilder setProtocolSchedule(ProtocolSchedule protocolSchedule) {
     this.protocolSchedule = protocolSchedule;
     return this;
