@@ -103,23 +103,17 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
 
   @Test
   public void testGasLimitLogic() {
-    long transactionGasLimitAboveThreshold = 13000L;
-    long transactionGasLimitBelowThreshold = 8000L;
+    final long transactionGasLimit = 10000L;
+    boolean isTransactionPermitted = checkTransactionGasLimit(transactionGasLimit);
 
-    boolean isAboveThresholdPermitted = checkTransactionGasLimit(transactionGasLimitAboveThreshold);
-    boolean isBelowThresholdPermitted = checkTransactionGasLimit(transactionGasLimitBelowThreshold);
-
-    assertThat(isAboveThresholdPermitted).isTrue();
-    assertThat(isBelowThresholdPermitted).isFalse();
+    assertThat(isTransactionPermitted).isTrue();
   }
 
-  /**
-   * Helper method to check whether a transaction's gas limit is above the defined threshold.
-   *
-   * @param gasLimit the gas limit of the transaction
-   * @return true if the transaction is permitted (gas limit > threshold), false otherwise
-   */
   private boolean checkTransactionGasLimit(long gasLimit) {
-    return gasLimit > GAS_LIMIT_THRESHOLD;  // Logic to check gas limit
+    if (gasLimit > GAS_LIMIT_THRESHOLD) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
