@@ -587,7 +587,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                     mgasPerSec));
     if (nbParallelizedTransations.isPresent()) {
       double parallelizedTxPercentage = (double) (nbParallelizedTransations.get() * 100) / nbTransactions;
-      message.append("|%%Parallel txs %5.1f%%");
+      message.append("|Parallel txs %5.1f%%");
       messageArgs.add(parallelizedTxPercentage);
     }
     message.append("|peers: %2d");
@@ -595,7 +595,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
   }
 
-  public static String shortenString(String input) {
+  public static String shortenString(final String input) {
     if (input == null || input.length() <= 10) {
       throw new IllegalArgumentException("Input string must be longer than 10 characters");
     }
