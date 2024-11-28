@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -61,7 +62,7 @@ public abstract class AbstractPeerBlockValidatorTest {
 
   @Test
   public void validatePeer_requestBlockFromPeerBeingTested() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final long blockNumber = 500;
     final Block block = gen.block(BlockOptions.create().setBlockNumber(blockNumber));

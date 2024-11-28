@@ -67,85 +67,88 @@ public class EthProtocolManagerTestBuilder {
     return new EthProtocolManagerTestBuilder();
   }
 
-  public EthProtocolManagerTestBuilder setProtocolSchedule(ProtocolSchedule protocolSchedule) {
+  public EthProtocolManagerTestBuilder setProtocolSchedule(
+      final ProtocolSchedule protocolSchedule) {
     this.protocolSchedule = protocolSchedule;
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setGenesisConfigFile(GenesisConfigFile genesisConfigFile) {
+  public EthProtocolManagerTestBuilder setGenesisConfigFile(
+      final GenesisConfigFile genesisConfigFile) {
     this.genesisConfigFile = genesisConfigFile;
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setGenesisState(GenesisState genesisState) {
+  public EthProtocolManagerTestBuilder setGenesisState(final GenesisState genesisState) {
     this.genesisState = genesisState;
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setBlockchain(Blockchain blockchain) {
+  public EthProtocolManagerTestBuilder setBlockchain(final Blockchain blockchain) {
     this.blockchain = blockchain;
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setNetworkId(BigInteger networkId) {
+  public EthProtocolManagerTestBuilder setNetworkId(final BigInteger networkId) {
     this.networkId = networkId;
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setWorldStateArchive(WorldStateArchive worldStateArchive) {
+  public EthProtocolManagerTestBuilder setWorldStateArchive(
+      final WorldStateArchive worldStateArchive) {
     this.worldStateArchive = worldStateArchive;
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setTransactionPool(TransactionPool transactionPool) {
+  public EthProtocolManagerTestBuilder setTransactionPool(final TransactionPool transactionPool) {
     this.transactionPool = transactionPool;
     return this;
   }
 
   public EthProtocolManagerTestBuilder setEthereumWireProtocolConfiguration(
-      EthProtocolConfiguration ethereumWireProtocolConfiguration) {
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
     this.ethereumWireProtocolConfiguration = ethereumWireProtocolConfiguration;
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setEthPeers(EthPeers ethPeers) {
+  public EthProtocolManagerTestBuilder setEthPeers(final EthPeers ethPeers) {
     this.ethPeers = ethPeers;
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setEthMessages(EthMessages ethMessages) {
+  public EthProtocolManagerTestBuilder setEthMessages(final EthMessages ethMessages) {
     this.ethMessages = ethMessages;
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setSnapMessages(EthMessages snapMessages) {
+  public EthProtocolManagerTestBuilder setSnapMessages(final EthMessages snapMessages) {
     this.snapMessages = snapMessages;
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setEthContext(EthContext ethContext) {
+  public EthProtocolManagerTestBuilder setEthContext(final EthContext ethContext) {
     this.ethContext = ethContext;
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setPeerValidators(List<PeerValidator> peerValidators) {
+  public EthProtocolManagerTestBuilder setPeerValidators(final List<PeerValidator> peerValidators) {
     this.peerValidators = peerValidators;
     return this;
   }
 
   public EthProtocolManagerTestBuilder setMergePeerFilter(
-      Optional<MergePeerFilter> mergePeerFilter) {
+      final Optional<MergePeerFilter> mergePeerFilter) {
     this.mergePeerFilter = mergePeerFilter;
     return this;
   }
 
   public EthProtocolManagerTestBuilder setSynchronizerConfiguration(
-      SynchronizerConfiguration synchronizerConfiguration) {
+      final SynchronizerConfiguration synchronizerConfiguration) {
     this.synchronizerConfiguration = synchronizerConfiguration;
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setEthScheduler(EthScheduler ethScheduler) {
+  public EthProtocolManagerTestBuilder setEthScheduler(final EthScheduler ethScheduler) {
     this.ethScheduler = ethScheduler;
     return this;
   }
@@ -174,7 +177,7 @@ public class EthProtocolManagerTestBuilder {
       transactionPool = mock(TransactionPool.class);
     }
     if (ethereumWireProtocolConfiguration == null) {
-      EthProtocolConfiguration.defaultConfig();
+      ethereumWireProtocolConfiguration = EthProtocolConfiguration.defaultConfig();
     }
     if (ethPeers == null) {
       ethPeers =
@@ -191,6 +194,7 @@ public class EthProtocolManagerTestBuilder {
               SyncMode.FAST,
               new ForkIdManager(
                   blockchain, Collections.emptyList(), Collections.emptyList(), false));
+      ethPeers.setChainHeadTracker(EthProtocolManagerTestUtil.getChainHeadTrackerMock());
     }
     if (ethMessages == null) {
       ethMessages = new EthMessages();

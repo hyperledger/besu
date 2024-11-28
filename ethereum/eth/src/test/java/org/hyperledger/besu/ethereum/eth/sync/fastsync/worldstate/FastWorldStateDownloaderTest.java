@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
@@ -382,7 +383,7 @@ class FastWorldStateDownloaderTest {
 
   @SuppressWarnings("unchecked")
   private void testCancellation(final boolean shouldCancelFuture) {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     // Prevent the persistence service from running
     final MockExecutorService serviceExecutor =
         ((DeterministicEthScheduler) ethProtocolManager.ethContext().getScheduler())
