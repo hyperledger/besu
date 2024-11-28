@@ -32,6 +32,7 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Add support for registeringTransactionPermissionProvider in Plugin API to define and validate transaction rules [#7952](https://github.com/hyperledger/besu/pull/7952)
 - Fine tune already seen txs tracker when a tx is removed from the pool [#7755](https://github.com/hyperledger/besu/pull/7755)
 - Support for enabling and configuring TLS/mTLS in WebSocket service. [#7854](https://github.com/hyperledger/besu/pull/7854)
 - Create and publish Besu BOM (Bill of Materials) [#7615](https://github.com/hyperledger/besu/pull/7615) 
