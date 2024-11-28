@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -902,19 +903,24 @@ public class PeerDiscoveryAgentTest {
   }
 
   @Test
-  void testFromEnodeWithDiscoveryDisabled() throws UnknownHostException {
-    EnodeURL enodeWithNoDiscovery = mock(EnodeURL.class);
-    when(enodeWithNoDiscovery.getDiscoveryPort()).thenReturn(Optional.empty());
-    when(enodeWithNoDiscovery.getListeningPort()).thenReturn(Optional.of(8545));
-    when(enodeWithNoDiscovery.getIp()).thenReturn(InetAddress.getByName("127.0.0.1"));
+  void testFromEnodeWithDiscoveryDisabled()  {
+    try {
+      EnodeURL enodeWithNoDiscovery = mock(EnodeURL.class);
+      when(enodeWithNoDiscovery.getDiscoveryPort()).thenReturn(Optional.empty());
+      when(enodeWithNoDiscovery.getListeningPort()).thenReturn(Optional.of(8545));
+      when(enodeWithNoDiscovery.getIp()).thenReturn(InetAddress.getByName("127.0.0.1"));
 
-    Endpoint result = Endpoint.fromEnode(enodeWithNoDiscovery);
+      Endpoint result = Endpoint.fromEnode(enodeWithNoDiscovery);
 
-    assertEquals("127.0.0.1", result.getHost());
+      assertEquals("127.0.0.1", result.getHost());
 
-    assertEquals(30303, result.getUdpPort());
+      assertEquals(30303, result.getUdpPort());
 
-    assertEquals(Optional.empty(), result.getTcpPort());
+      assertEquals(Optional.empty(), result.getTcpPort());
+    }
+    catch (UnknownHostException e) {
+      fail("Failed to resolve the Host Address ");
+    }
   }
 
 
