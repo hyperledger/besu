@@ -914,7 +914,7 @@ public class PeerDiscoveryAgentTest {
         when(enodeWithNoDiscovery.getIp()).thenReturn(InetAddress.getByName("127.0.0.1"));
       }
       catch (UnknownHostException e) {
-        log.debug("failed to resolve the Host Address ");
+        log.debug("Failed to resolve the Host Address ");
       }
       Endpoint result = Endpoint.fromEnode(enodeWithNoDiscovery);
 
