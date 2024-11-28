@@ -184,9 +184,7 @@ public class DownloadHeadersStepTest {
     final SyncTargetRange checkpointRange =
         new SyncTargetRange(peer.getEthPeer(), blockchain.getBlockHeader(3).get());
 
-    Mockito.when(
-            peerTaskExecutor.executeAgainstPeer(
-                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peer.getEthPeer())))
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
         .thenAnswer(
             (invocationOnMock) -> {
               GetHeadersFromPeerTask task =
