@@ -49,7 +49,7 @@ public class TransactionProcessingResult
 
   private final Bytes output;
 
-  private Optional<Boolean> isProcessedInParallel;
+  private Optional<Boolean> isProcessedInParallel = Optional.empty();
 
   private final ValidationResult<TransactionInvalidReason> validationResult;
   private final Optional<Bytes> revertReason;
