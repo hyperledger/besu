@@ -183,19 +183,48 @@ public class BlockHeader extends SealableBlockHeader
 
       if (withdrawalsRoot == null) break;
       out.writeBytes(withdrawalsRoot);
-      /*
-        if (excessBlobGas == null || blobGasUsed == null) break;
-        out.writeLongScalar(blobGasUsed);
-        out.writeUInt64Scalar(excessBlobGas);
+
+      if (excessBlobGas == null || blobGasUsed == null) break;
+      out.writeLongScalar(blobGasUsed);
+      out.writeUInt64Scalar(excessBlobGas);
 
       if (parentBeaconBlockRoot == null) break;
-        out.writeBytes(parentBeaconBlockRoot);
+      out.writeBytes(parentBeaconBlockRoot);
 
-        if (requestsHash == null) break;
-        out.writeBytes(requestsHash);
+      if (requestsHash == null) break;
+      out.writeBytes(requestsHash);
 
-        if (targetBlobCount == null) break;
-        out.writeUInt64Scalar(targetBlobCount);*/
+      if (targetBlobCount == null) break;
+      out.writeUInt64Scalar(targetBlobCount);
+    } while (false);
+    out.endList();
+  }
+
+  //TODO: Remove for mainnet, only needed for the current Verkle devnet.
+  public void writeToForVerkleDevnet(final RLPOutput out) {
+    out.startList();
+
+    out.writeBytes(parentHash);
+    out.writeBytes(ommersHash);
+    out.writeBytes(coinbase);
+    out.writeBytes(stateRoot);
+    out.writeBytes(transactionsRoot);
+    out.writeBytes(receiptsRoot);
+    out.writeBytes(logsBloom);
+    out.writeUInt256Scalar(difficulty);
+    out.writeLongScalar(number);
+    out.writeLongScalar(gasLimit);
+    out.writeLongScalar(gasUsed);
+    out.writeLongScalar(timestamp);
+    out.writeBytes(extraData);
+    out.writeBytes(mixHashOrPrevRandao);
+    out.writeLong(nonce);
+    do {
+      if (baseFee == null) break;
+      out.writeUInt256Scalar(baseFee);
+
+      if (withdrawalsRoot == null) break;
+      out.writeBytes(withdrawalsRoot);
     } while (false);
     out.endList();
   }
@@ -224,8 +253,6 @@ public class BlockHeader extends SealableBlockHeader
             ? Hash.wrap(input.readBytes32())
             : null;
 
-    // TODO REACTIVATE
-    /*
     final Long blobGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
     final BlobGas excessBlobGas =
         !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
@@ -233,10 +260,9 @@ public class BlockHeader extends SealableBlockHeader
 
      final Hash requestsHash = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     final UInt64 targetBlobCount = !input.isEndOfCurrentList() ? input.readUInt64Scalar() : null;
-        */
 
     final ExecutionWitness executionWitness =
-        !input.isEndOfCurrentList() ? ExecutionWitness.readFrom(input) : null;
+            !input.isEndOfCurrentList() ? ExecutionWitness.readFrom(input) : null;
 
     input.leaveList();
     return new BlockHeader(
@@ -257,11 +283,11 @@ public class BlockHeader extends SealableBlockHeader
         mixHashOrPrevRandao,
         nonce,
         withdrawalHashRoot,
-        null,
-        null,
-        null,
-        null,
-        null,
+        blobGasUsed,
+        excessBlobGas,
+        parentBeaconBlockRoot,
+        requestsHash,
+        targetBlobCount,
         executionWitness,
         blockHeaderFunctions);
   }
