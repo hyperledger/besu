@@ -485,18 +485,18 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> transactionReceipts,
       final Optional<Difficulty> maybeTotalDifficulty) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
-    final Hash hash = block.getHash();
-    updater.putBlockHeader(hash, block.getHeader());
-    updater.putBlockHash(block.getHeader().getNumber(), hash);
-    updater.putBlockBody(hash, block.getBody());
+    final Hash blockHash = block.getHash();
+    updater.putBlockHeader(blockHash, block.getHeader());
+    updater.putBlockHash(block.getHeader().getNumber(), blockHash);
+    updater.putBlockBody(blockHash, block.getBody());
     final int nbTrx = block.getBody().getTransactions().size();
-    for (int i = 0; i < nbTrx; i++) {
-      final Hash transactionHash = block.getBody().getTransactions().get(i).getHash();
-      updater.putTransactionLocation(transactionHash, new TransactionLocation(transactionHash, i));
+    for (int index = 0; index < nbTrx; index++) {
+      final Hash transactionHash = block.getBody().getTransactions().get(index).getHash();
+      updater.putTransactionLocation(transactionHash, new TransactionLocation(blockHash, index));
     }
-    updater.putTransactionReceipts(hash, transactionReceipts);
+    updater.putTransactionReceipts(blockHash, transactionReceipts);
     maybeTotalDifficulty.ifPresent(
-        totalDifficulty -> updater.putTotalDifficulty(hash, totalDifficulty));
+        totalDifficulty -> updater.putTotalDifficulty(blockHash, totalDifficulty));
     updater.commit();
   }
 
@@ -793,10 +793,10 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   private static void indexTransactionForBlock(
-      final BlockchainStorage.Updater updater, final Hash hash, final List<Transaction> txs) {
-    for (int i = 0; i < txs.size(); i++) {
-      final Hash txHash = txs.get(i).getHash();
-      final TransactionLocation loc = new TransactionLocation(hash, i);
+      final BlockchainStorage.Updater updater, final Hash blockHash, final List<Transaction> txs) {
+    for (int index = 0; index < txs.size(); index++) {
+      final Hash txHash = txs.get(index).getHash();
+      final TransactionLocation loc = new TransactionLocation(blockHash, index);
       updater.putTransactionLocation(txHash, loc);
     }
   }
