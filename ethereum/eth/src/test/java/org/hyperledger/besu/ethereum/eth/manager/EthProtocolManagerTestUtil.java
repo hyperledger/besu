@@ -319,14 +319,6 @@ public class EthProtocolManagerTestUtil {
         new EthContext(ethPeers, messages, ethScheduler));
   }
 
-  public static EthProtocolManager create() {
-    return create(TimeoutPolicy.NEVER_TIMEOUT);
-  }
-
-  public static EthProtocolManager create(final TimeoutPolicy timeoutPolicy) {
-    return create(new DeterministicEthScheduler(timeoutPolicy));
-  }
-
   // Utility to prevent scheduler from automatically running submitted tasks
   public static void disableEthSchedulerAutoRun(final EthProtocolManager ethProtocolManager) {
     final EthScheduler scheduler = ethProtocolManager.ethContext().getScheduler();

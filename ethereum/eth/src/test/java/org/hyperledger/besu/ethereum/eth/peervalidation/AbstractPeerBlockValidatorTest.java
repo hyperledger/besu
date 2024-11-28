@@ -44,7 +44,11 @@ public abstract class AbstractPeerBlockValidatorTest {
   @Test
   public void validatePeer_unresponsivePeer() {
     final EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(DeterministicEthScheduler.TimeoutPolicy.ALWAYS_TIMEOUT);
+        EthProtocolManagerTestBuilder.builder()
+            .setEthScheduler(
+                new DeterministicEthScheduler(
+                    DeterministicEthScheduler.TimeoutPolicy.ALWAYS_TIMEOUT))
+            .build();
     final long blockNumber = 500;
 
     final PeerValidator validator = createValidator(blockNumber, 0);
@@ -98,7 +102,11 @@ public abstract class AbstractPeerBlockValidatorTest {
   public void canBeValidated() {
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(DeterministicEthScheduler.TimeoutPolicy.ALWAYS_TIMEOUT);
+        EthProtocolManagerTestBuilder.builder()
+            .setEthScheduler(
+                new DeterministicEthScheduler(
+                    DeterministicEthScheduler.TimeoutPolicy.ALWAYS_TIMEOUT))
+            .build();
     final long blockNumber = 500;
     final long buffer = 10;
 

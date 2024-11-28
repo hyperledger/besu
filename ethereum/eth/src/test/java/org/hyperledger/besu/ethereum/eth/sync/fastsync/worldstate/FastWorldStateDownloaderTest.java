@@ -239,7 +239,10 @@ class FastWorldStateDownloaderTest {
   void canRecoverFromTimeouts() {
     final DeterministicEthScheduler.TimeoutPolicy timeoutPolicy =
         DeterministicEthScheduler.TimeoutPolicy.timeoutXTimes(2);
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(timeoutPolicy);
+    final EthProtocolManager ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder()
+            .setEthScheduler(new DeterministicEthScheduler(timeoutPolicy))
+            .build();
     final MockExecutorService serviceExecutor =
         ((DeterministicEthScheduler) ethProtocolManager.ethContext().getScheduler())
             .mockServiceExecutor();
