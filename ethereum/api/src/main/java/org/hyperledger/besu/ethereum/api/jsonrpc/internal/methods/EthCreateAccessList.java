@@ -52,7 +52,7 @@ public class EthCreateAccessList extends AbstractEstimateGas {
 
     final AccessListOperationTracer tracer = AccessListOperationTracer.create();
     final Optional<TransactionSimulatorResult> firstResult =
-        simulationFunction.simulate(callParams, tracer);
+        simulationFunction.simulate(overrideGasLimit(callParams, gasLimit), tracer);
 
     // if the call accessList is different from the simulation result, calculate gas and return
     if (shouldProcessWithAccessListOverride(callParams, tracer)) {

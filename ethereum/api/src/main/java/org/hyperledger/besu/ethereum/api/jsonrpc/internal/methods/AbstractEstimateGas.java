@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonCallParameterUtil.validateAndGetCallParams;
 
+import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -40,6 +42,8 @@ import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   protected static final TransactionValidationParams ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMETERS =
@@ -78,11 +82,12 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   protected Object pendingResult(final JsonRpcRequestContext requestContext) {
     final JsonCallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
     final var validationParams = getTransactionValidationParams(jsonCallParameter);
+    final var maybeStateOverrides = getAddressAccountOverrideMap(requestContext);
     final var pendingBlockHeader = transactionSimulator.simulatePendingBlockHeader();
     final TransactionSimulationFunction simulationFunction =
         (cp, op) ->
             transactionSimulator.processOnPending(
-                cp, Optional.empty(), validationParams, op, pendingBlockHeader);
+                cp, maybeStateOverrides, validationParams, op, pendingBlockHeader);
     return simulate(
         requestContext, jsonCallParameter, pendingBlockHeader.getGasLimit(), simulationFunction);
   }
@@ -104,10 +109,11 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
       final JsonCallParameter jsonCallParameter,
       final BlockHeader blockHeader) {
     final var validationParams = getTransactionValidationParams(jsonCallParameter);
+    final var maybeStateOverrides = getAddressAccountOverrideMap(requestContext);
     final TransactionSimulationFunction simulationFunction =
         (cp, op) ->
-            transactionSimulator.processOnPending(
-                cp, Optional.empty(), validationParams, op, blockHeader);
+            transactionSimulator.process(
+                cp, maybeStateOverrides, validationParams, op, blockHeader);
     return simulate(
         requestContext, jsonCallParameter, blockHeader.getGasLimit(), simulationFunction);
   }
@@ -214,8 +220,19 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     return TransactionValidationParams.transactionSimulator();
   }
 
+  @VisibleForTesting
+  protected Optional<AccountOverrideMap> getAddressAccountOverrideMap(
+      final JsonRpcRequestContext request) {
+    try {
+      return request.getOptionalParameter(2, AccountOverrideMap.class);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcRequestException(
+          "Invalid account overrides parameter (index 2)", RpcErrorType.INVALID_CALL_PARAMS, e);
+    }
+  }
+
   protected interface TransactionSimulationFunction {
     Optional<TransactionSimulatorResult> simulate(
-        final CallParameter callParams, final OperationTracer operationTracer);
+        CallParameter callParams, OperationTracer operationTracer);
   }
 }
