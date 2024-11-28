@@ -121,6 +121,7 @@ public class MetricsHttpService implements MetricsService {
 
   @Override
   public CompletableFuture<?> stop() {
+    metricsSystem.shutdown();
     if (httpServer == null) {
       return CompletableFuture.completedFuture(null);
     }
