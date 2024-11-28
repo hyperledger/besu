@@ -198,6 +198,7 @@ public class TransactionProcessingResult
 
   /**
    * Set isProcessedInParallel to the value in parameter
+   *
    * @param isProcessedInParallel new value of isProcessedInParallel
    */
   public void setIsProcessedInParallel(final Optional<Boolean> isProcessedInParallel) {
@@ -205,8 +206,10 @@ public class TransactionProcessingResult
   }
 
   /**
-   * Returns  a flag that indicates if the transaction was executed in parallel
-   * @return Optional of Boolean, the value of the boolean is true if the transaction was executed in parallel
+   * Returns a flag that indicates if the transaction was executed in parallel
+   *
+   * @return Optional of Boolean, the value of the boolean is true if the transaction was executed
+   *     in parallel
    */
   public Optional<Boolean> getIsProcessedInParallel() {
     return isProcessedInParallel;

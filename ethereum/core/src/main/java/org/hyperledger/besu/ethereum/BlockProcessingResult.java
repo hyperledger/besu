@@ -35,9 +35,12 @@ public class BlockProcessingResult extends BlockValidationResult {
    * A result indicating that processing was successful but incomplete.
    *
    * @param yield the outputs of processing a block
-   * @param nbParallelizedTransations potential number of parallelized transactions during block processing
+   * @param nbParallelizedTransations potential number of parallelized transactions during block
+   *     processing
    */
-  public BlockProcessingResult(final Optional<BlockProcessingOutputs> yield, final Optional<Integer> nbParallelizedTransations) {
+  public BlockProcessingResult(
+      final Optional<BlockProcessingOutputs> yield,
+      final Optional<Integer> nbParallelizedTransations) {
     this.yield = yield;
     this.isPartial = false;
     this.nbParallelizedTransations = nbParallelizedTransations;
@@ -151,7 +154,7 @@ public class BlockProcessingResult extends BlockValidationResult {
   /**
    * Returns an optional that contains the number of parallelized transactions (if there is any)
    *
-   *  @return Optional of parallelized transactions during the block execution
+   * @return Optional of parallelized transactions during the block execution
    */
   public Optional<Integer> getNbParallelizedTransations() {
     return nbParallelizedTransations;
