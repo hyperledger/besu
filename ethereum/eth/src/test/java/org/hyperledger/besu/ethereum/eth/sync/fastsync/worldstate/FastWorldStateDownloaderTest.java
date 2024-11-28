@@ -115,7 +115,9 @@ class FastWorldStateDownloaderTest {
               .build());
 
   final EthProtocolManager ethProtocolManager =
-      EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+      EthProtocolManagerTestBuilder.builder()
+          .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
+          .build();
 
   @AfterEach
   public void tearDown() throws Exception {
@@ -665,7 +667,9 @@ class FastWorldStateDownloaderTest {
   @Timeout(value = 60)
   void stalledDownloader() {
     final EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+        EthProtocolManagerTestBuilder.builder()
+            .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
+            .build();
 
     // Setup "remote" state
     final ForestWorldStateKeyValueStorage remoteStorage =

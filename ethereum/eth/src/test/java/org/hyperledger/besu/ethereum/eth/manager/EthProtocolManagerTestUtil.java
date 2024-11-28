@@ -15,19 +15,15 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
-import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
@@ -170,13 +166,6 @@ public class EthProtocolManagerTestUtil {
         forkIdManager);
   }
 
-  public static EthProtocolManager create(final Blockchain blockchain) {
-    return create(
-        ProtocolScheduleFixture.MAINNET,
-        blockchain,
-        new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT));
-  }
-
   public static EthProtocolManager create(
       final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
@@ -190,14 +179,6 @@ public class EthProtocolManagerTestUtil {
         worldStateArchive,
         transactionPool,
         ethProtocolConfiguration);
-  }
-
-  public static EthProtocolManager create(final EthScheduler ethScheduler) {
-    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
-    final GenesisConfigFile config = GenesisConfigFile.mainnet();
-    final GenesisState genesisState = GenesisState.fromConfig(config, protocolSchedule);
-    final Blockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    return create(protocolSchedule, blockchain, ethScheduler);
   }
 
   public static EthProtocolManager create(
