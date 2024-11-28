@@ -194,7 +194,7 @@ public class PrivateGroupRehydrationBlockProcessor {
 
     metadataUpdater.commit();
     BlockProcessingOutputs blockProcessingOutput = new BlockProcessingOutputs(worldState, receipts);
-    return new BlockProcessingResult(Optional.of(blockProcessingOutput));
+    return new BlockProcessingResult(Optional.of(blockProcessingOutput), Optional.empty());
   }
 
   void storePrivateMetadata(

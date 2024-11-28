@@ -136,6 +136,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             blockHashLookup,
             blobGasPrice);
 
+    boolean parallelizedTxFound = false;
+    int nbParallelTx = 0;
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
@@ -181,6 +183,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           transactionReceiptFactory.create(
               transaction.getType(), transactionProcessingResult, worldState, currentGasUsed);
       receipts.add(transactionReceipt);
+      if (!parallelizedTxFound && transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
+        parallelizedTxFound = true;
+        nbParallelTx = 1;
+      } else if (transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
+        nbParallelTx++;
+      }
     }
     if (blockHeader.getBlobGasUsed().isPresent()
         && currentBlobGasUsed != blockHeader.getBlobGasUsed().get()) {
@@ -243,7 +251,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
 
     return new BlockProcessingResult(
-        Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)));
+        Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)), parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
   }
 
   protected Optional<PreprocessingContext> runBlockPreProcessing(

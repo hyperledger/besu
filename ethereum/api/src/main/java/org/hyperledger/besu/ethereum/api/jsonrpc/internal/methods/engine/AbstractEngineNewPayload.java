@@ -370,7 +370,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .flatMap(Optional::stream)
               .mapToInt(List::size)
               .sum(),
-          (System.currentTimeMillis() - startTimeMs) / 1000.0);
+          (System.currentTimeMillis() - startTimeMs) / 1000.0, executionResult.getNbParallelizedTransations());
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
       if (executionResult.causedBy().isPresent()) {
@@ -564,18 +564,19 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 .collect(Collectors.toList()));
   }
 
-  private void logImportedBlockInfo(final Block block, final int blobCount, final double timeInS) {
+  private void logImportedBlockInfo(final Block block, final int blobCount, final double timeInS, final Optional<Integer> nbParallelizedTransations) {
     final StringBuilder message = new StringBuilder();
+    final int nbTransactions = block.getBody().getTransactions().size();
     message.append("Imported #%,d  (%s)|%5d tx");
     final List<Object> messageArgs =
             new ArrayList<>(
-                    List.of(block.getHeader().getNumber(), block.getHash().toHexString(), block.getBody().getTransactions().size()));
+                    List.of(block.getHeader().getNumber(), block.getHash().toHexString(), nbTransactions));
     if (block.getBody().getWithdrawals().isPresent()) {
-      message.append("|%2d ws");
+      message.append("|%3d ws");
       messageArgs.add(block.getBody().getWithdrawals().get().size());
     }
     double mgasPerSec = (timeInS != 0) ? block.getHeader().getGasUsed() / (timeInS*1_000_000) : 0;
-    message.append("|%2d blobs|base fee %s|gas used %,11d (%01.1f%%)|exec time %01.3fs|mgas/s %6.2f|peers: %2d");
+    message.append("|%2d blobs|base fee %s|gas used %,11d (%5.1f%%)|exec time %01.3fs|mgas/s %6.2f");
     messageArgs.addAll(
             List.of(
                     blobCount,
@@ -583,8 +584,13 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                     block.getHeader().getGasUsed(),
                     (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
                     timeInS,
-                    mgasPerSec,
-                    ethPeers.peerCount()));
+                    mgasPerSec));
+    if (nbParallelizedTransations.isPresent()) {
+      message.append("|%Parallel txs %5.1f%%");
+      messageArgs.add((nbParallelizedTransations.get() * 100) / nbTransactions);
+    }
+    message.append("|peers: %2d");
+    messageArgs.add(ethPeers.peerCount());
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
   }
 }

@@ -126,7 +126,7 @@ public class PrivateMigrationBlockProcessor {
       return BlockProcessingResult.FAILED;
     }
     BlockProcessingOutputs blockProcessingOutput = new BlockProcessingOutputs(worldState, receipts);
-    return new BlockProcessingResult(Optional.of(blockProcessingOutput));
+    return new BlockProcessingResult(Optional.of(blockProcessingOutput), Optional.empty());
   }
 
   private boolean rewardCoinbase(
