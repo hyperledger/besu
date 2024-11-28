@@ -83,7 +83,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
-  private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--snapsync-bft-enabled";
+  private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--Xsnapsync-bft-enabled";
 
   /**
    * Parse block propagation range.
@@ -304,8 +304,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean checkpointPostMergeSyncEnabled =
       SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
+  // TODO ----Xsnapsync-bft-enabled is deprecated,
+  // remove in a future release
   @CommandLine.Option(
-      names = SNAP_SYNC_BFT_ENABLED_FLAG,
+      names = SNAP_SYNC_BFT_ENABLED_FLAG, //deprecated
       hidden = true,
       paramLabel = "<Boolean>",
       arity = "0..1",
