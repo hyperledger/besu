@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>This protocol allows miners to submit EthHash solutions over a persistent TCP connection.
  */
+@Deprecated(since = "24.12.0")
 public class Stratum1Protocol implements StratumProtocol {
   private static final Logger LOG = LoggerFactory.getLogger(Stratum1Protocol.class);
   private static final JsonMapper mapper = new JsonMapper();

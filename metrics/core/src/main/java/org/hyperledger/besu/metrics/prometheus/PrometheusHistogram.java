@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,18 +14,17 @@
  */
 package org.hyperledger.besu.metrics.prometheus;
 
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 /**
- * An implementation of Besu simple timer backed by a Prometheus histogram. The histogram samples
- * durations and counts them in configurable buckets. It also provides a sum of all observed values.
+ * A Prometheus histogram. A histogram samples durations and counts them in configurable buckets. It
+ * also provides a sum of all observed values.
  */
-class PrometheusSimpleTimer extends AbstractPrometheusHistogram
-    implements LabelledMetric<OperationTimer> {
+class PrometheusHistogram extends AbstractPrometheusHistogram implements LabelledMetric<Histogram> {
 
-  public PrometheusSimpleTimer(
+  public PrometheusHistogram(
       final MetricCategory category,
       final String name,
       final String help,
@@ -35,8 +34,8 @@ class PrometheusSimpleTimer extends AbstractPrometheusHistogram
   }
 
   @Override
-  public OperationTimer labels(final String... labels) {
+  public Histogram labels(final String... labels) {
     final var ddp = histogram.labelValues(labels);
-    return () -> ddp.startTimer()::observeDuration;
+    return ddp::observe;
   }
 }
