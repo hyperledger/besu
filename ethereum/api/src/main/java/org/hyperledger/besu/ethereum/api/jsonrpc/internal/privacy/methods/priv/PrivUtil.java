@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Optional;
 
-@Deprecated(since = "24.11.0")
+@Deprecated(since = "24.12.0")
 public class PrivUtil {
 
   public static void checkMembershipForAuthenticatedUser(
