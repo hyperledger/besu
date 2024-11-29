@@ -34,6 +34,7 @@ import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -41,6 +42,7 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.IntStream;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -169,6 +171,22 @@ public class PrometheusMetricsSystemTest {
             new Observation(RPC, "request", expected, asList("quantile", "1.0")),
             new Observation(RPC, "request", expected, singletonList("sum")),
             new Observation(RPC, "request", 1L, singletonList("count")));
+  }
+
+  @Test
+  public void shouldCreateObservationsFromHistogram() {
+    final Histogram histogram =
+        metricsSystem.createHistogram(RPC, "request", "Some help", new double[] {5.0, 9.0});
+
+    IntStream.rangeClosed(1, 10).forEach(histogram::observe);
+
+    assertThat(metricsSystem.streamObservations())
+        .containsExactlyInAnyOrder(
+            new Observation(RPC, "request", 5L, asList("bucket", "5.0")),
+            new Observation(RPC, "request", 4L, asList("bucket", "9.0")),
+            new Observation(RPC, "request", 1L, asList("bucket", "Infinity")),
+            new Observation(RPC, "request", 55.0, singletonList("sum")),
+            new Observation(RPC, "request", 10L, singletonList("count")));
   }
 
   @Test

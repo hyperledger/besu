@@ -18,6 +18,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
@@ -62,6 +63,9 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   /** The constant NO_OP_LABELLED_1_OPERATION_TIMER. */
   public static final LabelledMetric<OperationTimer> NO_OP_LABELLED_1_OPERATION_TIMER =
       new LabelCountingNoOpMetric<>(1, NO_OP_OPERATION_TIMER);
+
+  /** The constant NO_OP_HISTOGRAM. */
+  public static final Histogram NO_OP_HISTOGRAM = d -> {};
 
   /** Default constructor */
   public NoOpMetricsSystem() {}
@@ -129,6 +133,26 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
       final String name,
       final String help,
       final DoubleSupplier valueSupplier) {}
+
+  @Override
+  public LabelledMetric<Histogram> createLabelledHistogram(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final double[] buckets,
+      final String... labelNames) {
+    return getHistogramLabelledMetric(labelNames.length);
+  }
+
+  /**
+   * Gets histogram labelled metric.
+   *
+   * @param labelCount the label count
+   * @return the histogram labelled metric
+   */
+  public static LabelledMetric<Histogram> getHistogramLabelledMetric(final int labelCount) {
+    return new LabelCountingNoOpMetric<>(labelCount, NO_OP_HISTOGRAM);
+  }
 
   @Override
   public void createGuavaCacheCollector(
