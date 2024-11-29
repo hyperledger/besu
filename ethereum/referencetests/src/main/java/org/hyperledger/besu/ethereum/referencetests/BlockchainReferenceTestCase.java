@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -31,15 +30,9 @@ public interface BlockchainReferenceTestCase {
 
   ProtocolContext getProtocolContext();
 
-  Iterable<Block> getBlocks();
+  CandidateBlock[] getCandidateBlocks();
 
   String getSealEngine();
 
   Object getLastBlockHash();
-
-  boolean isExecutable(Block candidateBlock);
-
-  boolean isValid(Block candidateBlock);
-
-  boolean areAllTransactionsValid(final Block block);
 }

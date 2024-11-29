@@ -119,7 +119,7 @@ def executionSpecTests = tasks.register("executionSpecTests") {
   generateTestFiles(
     fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
     file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
-    "fixtures",
+    "all/fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
     "ExecutionSpecBlockchainTest",
     "org.hyperledger.besu.ethereum.vm.executionspec",
@@ -129,7 +129,7 @@ def executionSpecTests = tasks.register("executionSpecTests") {
   generateTestFiles(
     fileTree(referenceTestsPath + "/fixtures/state_tests"),
     file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
-    "fixtures",
+    "all/fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
     "ExecutionSpecStateTest",
     "org.hyperledger.besu.ethereum.vm.executionspec",

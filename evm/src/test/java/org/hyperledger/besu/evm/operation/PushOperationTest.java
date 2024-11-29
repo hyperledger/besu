@@ -37,12 +37,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class PushOperationTest {
 
   private final GasCalculator gasCalculator = new PragueGasCalculator();
-  private final CodeFactory codeFactory = new CodeFactory(EvmSpecVersion.PRAGUE.getMaxEofVersion(), EvmSpecVersion.PRAGUE.getMaxInitcodeSize());
+  private final CodeFactory codeFactory =
+      new CodeFactory(
+          EvmSpecVersion.PRAGUE.getMaxEofVersion(), EvmSpecVersion.PRAGUE.getMaxInitcodeSize());
 
   private static final Bytes byteCode = Bytes.wrap(new byte[] {0x00, 0x01, 0x02, 0x03});
 
   private MessageFrame createMessageFrame(final int pc) {
-    MessageFrame frame = MessageFrame.builder()
+    MessageFrame frame =
+        MessageFrame.builder()
             .worldUpdater(new ToyWorld())
             .originator(Address.ZERO)
             .gasPrice(Wei.ONE)
@@ -59,8 +62,7 @@ public class PushOperationTest {
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
             .code(codeFactory.createCode(byteCode))
-            .completer(messageFrame -> {
-            })
+            .completer(messageFrame -> {})
             .build();
     frame.setPC(pc);
     return frame;

@@ -259,6 +259,31 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
+  public long callCodeOperationGasCost(
+      final MessageFrame frame,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Account recipient,
+      final Address contract,
+      final boolean accountIsWarm) {
+    return callOperationGasCost(
+        frame,
+        stipend,
+        inputDataOffset,
+        inputDataLength,
+        outputDataOffset,
+        outputDataLength,
+        transferValue,
+        recipient,
+        contract,
+        accountIsWarm);
+  }
+
+  @Override
   public long callOperationGasCost(
       final MessageFrame frame,
       final long stipend,

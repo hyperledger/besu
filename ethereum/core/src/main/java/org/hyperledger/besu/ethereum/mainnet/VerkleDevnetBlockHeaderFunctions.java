@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /** Implements the block hashing algorithm for MainNet as per the yellow paper. */
 public class VerkleDevnetBlockHeaderFunctions implements BlockHeaderFunctions {

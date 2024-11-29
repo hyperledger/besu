@@ -200,6 +200,33 @@ public interface GasCalculator {
   }
 
   /**
+   * Returns the gas cost that the CALLCODE operation will consume.
+   *
+   * @param frame The current frame
+   * @param stipend The gas stipend being provided by the CALL caller
+   * @param inputDataOffset The offset in memory to retrieve the CALL input data
+   * @param inputDataLength The CALL input data length
+   * @param outputDataOffset The offset in memory to place the CALL output data
+   * @param outputDataLength The CALL output data length
+   * @param transferValue The wei being transferred
+   * @param recipient The CALL recipient (may be null if self destructed or new)
+   * @param contract The address of the recipient (never null)
+   * @param accountIsWarm The address of the contract is "warm" as per EIP-2929
+   * @return The gas cost for the CALL operation
+   */
+  long callCodeOperationGasCost(
+      final MessageFrame frame,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Account recipient,
+      final Address contract,
+      final boolean accountIsWarm);
+
+  /**
    * Returns the gas cost for one of the various CALL operations.
    *
    * @param frame The current frame

@@ -200,7 +200,7 @@ public class BlockHeader extends SealableBlockHeader
     out.endList();
   }
 
-  //TODO: Remove for mainnet, only needed for the current Verkle devnet.
+  // TODO: Remove for mainnet, only needed for the current Verkle devnet.
   public void writeToForVerkleDevnet(final RLPOutput out) {
     out.startList();
 
@@ -258,11 +258,11 @@ public class BlockHeader extends SealableBlockHeader
         !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
 
-     final Hash requestsHash = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+    final Hash requestsHash = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     final UInt64 targetBlobCount = !input.isEndOfCurrentList() ? input.readUInt64Scalar() : null;
 
     final ExecutionWitness executionWitness =
-            !input.isEndOfCurrentList() ? ExecutionWitness.readFrom(input) : null;
+        !input.isEndOfCurrentList() ? ExecutionWitness.readFrom(input) : null;
 
     input.leaveList();
     return new BlockHeader(
