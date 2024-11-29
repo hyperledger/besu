@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Protocol using JSON-RPC HTTP methods to provide getWork/submitWork methods. */
+@Deprecated(since = "24.12.0")
 public class GetWorkProtocol implements StratumProtocol {
   private static final Logger LOG = LoggerFactory.getLogger(GetWorkProtocol.class);
   private static final ObjectMapper mapper = new ObjectMapper();
