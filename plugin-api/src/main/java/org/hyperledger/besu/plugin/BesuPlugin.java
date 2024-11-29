@@ -48,7 +48,8 @@ public interface BesuPlugin {
    *
    * @param context the context that provides access to Besu services.
    */
-  void register(ServiceManager context);
+  @SuppressWarnings("removal")
+  void register(BesuContext context);
 
   /**
    * Called once when besu has loaded configuration but before external services have been started

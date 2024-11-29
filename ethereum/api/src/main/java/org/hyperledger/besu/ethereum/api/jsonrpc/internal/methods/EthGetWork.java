@@ -35,7 +35,7 @@ import com.google.common.io.BaseEncoding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Deprecated(since = "24.11.0")
+@Deprecated(since = "24.12.0")
 public class EthGetWork implements JsonRpcMethod {
 
   private final MiningCoordinator miner;

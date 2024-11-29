@@ -42,7 +42,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Collections;
@@ -202,7 +202,7 @@ class EthGetProofTest {
 
     when(blockchainQueries.getWorldStateArchive()).thenReturn(archive);
 
-    final StateTrieAccountValue stateTrieAccountValue = mock(StateTrieAccountValue.class);
+    final PmtStateTrieAccountValue stateTrieAccountValue = mock(PmtStateTrieAccountValue.class);
     when(stateTrieAccountValue.getBalance()).thenReturn(balance);
     when(stateTrieAccountValue.getCodeHash()).thenReturn(codeHash);
     when(stateTrieAccountValue.getNonce()).thenReturn(nonce);

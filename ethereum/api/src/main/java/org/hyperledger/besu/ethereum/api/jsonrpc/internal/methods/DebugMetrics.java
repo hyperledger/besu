@@ -50,9 +50,9 @@ public class DebugMetrics implements JsonRpcMethod {
   private void addObservation(
       final Map<String, Object> observations, final Observation observation) {
     final Map<String, Object> categoryObservations =
-        getNextMapLevel(observations, observation.getCategory().getName());
-    if (observation.getLabels().isEmpty()) {
-      categoryObservations.put(observation.getMetricName(), observation.getValue());
+        getNextMapLevel(observations, observation.category().getName());
+    if (observation.labels().isEmpty()) {
+      categoryObservations.put(observation.metricName(), observation.value());
     } else {
       addLabelledObservation(categoryObservations, observation);
     }
@@ -60,12 +60,12 @@ public class DebugMetrics implements JsonRpcMethod {
 
   private void addLabelledObservation(
       final Map<String, Object> categoryObservations, final Observation observation) {
-    final List<String> labels = observation.getLabels();
-    Map<String, Object> values = getNextMapLevel(categoryObservations, observation.getMetricName());
+    final List<String> labels = observation.labels();
+    Map<String, Object> values = getNextMapLevel(categoryObservations, observation.metricName());
     for (int i = 0; i < labels.size() - 1; i++) {
       values = getNextMapLevel(values, labels.get(i));
     }
-    values.put(labels.get(labels.size() - 1), observation.getValue());
+    values.put(labels.get(labels.size() - 1), observation.value());
   }
 
   @SuppressWarnings("unchecked")

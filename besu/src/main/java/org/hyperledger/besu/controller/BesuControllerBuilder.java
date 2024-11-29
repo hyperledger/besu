@@ -625,7 +625,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled());
     final EthPeers ethPeers =
         new EthPeers(
-            EthProtocol.NAME,
             currentProtocolSpecSupplier,
             clock,
             metricsSystem,

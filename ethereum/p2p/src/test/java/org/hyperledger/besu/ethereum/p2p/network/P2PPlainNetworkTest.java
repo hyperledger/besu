@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.p2p.network;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Fail.fail;
-import static org.hyperledger.besu.pki.keystore.KeyStoreWrapper.KEYSTORE_TYPE_PKCS12;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -39,10 +37,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MockSubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
@@ -51,12 +46,8 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.net.InetAddress;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -89,8 +80,8 @@ public class P2PPlainNetworkTest {
   @Test
   public void handshaking() throws Exception {
     final NodeKey nodeKey = NodeKeyUtils.generate();
-    try (final P2PNetwork listener = builder("partner1client1").nodeKey(nodeKey).build();
-        final P2PNetwork connector = builder("partner2client1").build()) {
+    try (final P2PNetwork listener = builder().nodeKey(nodeKey).build();
+        final P2PNetwork connector = builder().build()) {
       listener.getRlpxAgent().subscribeConnectRequest(testCallback);
       connector.getRlpxAgent().subscribeConnectRequest(testCallback);
 
@@ -113,8 +104,8 @@ public class P2PPlainNetworkTest {
   @Test
   public void preventMultipleConnections() throws Exception {
     final NodeKey listenNodeKey = NodeKeyUtils.generate();
-    try (final P2PNetwork listener = builder("partner1client1").nodeKey(listenNodeKey).build();
-        final P2PNetwork connector = builder("partner2client1").build()) {
+    try (final P2PNetwork listener = builder().nodeKey(listenNodeKey).build();
+        final P2PNetwork connector = builder().build()) {
       listener.getRlpxAgent().subscribeConnectRequest(testCallback);
       connector.getRlpxAgent().subscribeConnectRequest(testCallback);
 
@@ -155,10 +146,9 @@ public class P2PPlainNetworkTest {
                 RlpxConfiguration.create()
                     .setBindPort(0)
                     .setSupportedProtocols(MockSubProtocol.create()));
-    try (final P2PNetwork listener =
-            builder("partner1client1").nodeKey(nodeKey).config(listenerConfig).build();
-        final P2PNetwork connector1 = builder("partner1client1").build();
-        final P2PNetwork connector2 = builder("partner2client1").build()) {
+    try (final P2PNetwork listener = builder().nodeKey(nodeKey).config(listenerConfig).build();
+        final P2PNetwork connector1 = builder().build();
+        final P2PNetwork connector2 = builder().build()) {
       listener.getRlpxAgent().subscribeConnectRequest(testCallback);
       connector1.getRlpxAgent().subscribeConnectRequest(testCallback);
       connector2.getRlpxAgent().subscribeConnectRequest((p, d) -> false);
@@ -202,15 +192,9 @@ public class P2PPlainNetworkTest {
     final SubProtocol subprotocol2 = MockSubProtocol.create("oth");
     final Capability cap2 = Capability.create(subprotocol2.getName(), 63);
     try (final P2PNetwork listener =
-            builder("partner1client1")
-                .nodeKey(listenerNodeKey)
-                .supportedCapabilities(cap1)
-                .build();
+            builder().nodeKey(listenerNodeKey).supportedCapabilities(cap1).build();
         final P2PNetwork connector =
-            builder("partner2client1")
-                .nodeKey(connectorNodeKey)
-                .supportedCapabilities(cap2)
-                .build()) {
+            builder().nodeKey(connectorNodeKey).supportedCapabilities(cap2).build()) {
       listener.getRlpxAgent().subscribeConnectRequest(testCallback);
       connector.getRlpxAgent().subscribeConnectRequest(testCallback);
 
@@ -230,9 +214,8 @@ public class P2PPlainNetworkTest {
   public void rejectIncomingConnectionFromDenylistedPeer() throws Exception {
     final PeerPermissionsDenylist localDenylist = PeerPermissionsDenylist.create();
 
-    try (final P2PNetwork localNetwork =
-            builder("partner1client1").peerPermissions(localDenylist).build();
-        final P2PNetwork remoteNetwork = builder("partner2client1").build()) {
+    try (final P2PNetwork localNetwork = builder().peerPermissions(localDenylist).build();
+        final P2PNetwork remoteNetwork = builder().build()) {
       localNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
       remoteNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
 
@@ -280,9 +263,8 @@ public class P2PPlainNetworkTest {
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     when(peerPermissions.isPermitted(any(), any(), any())).thenReturn(true);
 
-    try (final P2PNetwork localNetwork =
-            builder("partner1client1").peerPermissions(peerPermissions).build();
-        final P2PNetwork remoteNetwork = builder("partner2client1").build()) {
+    try (final P2PNetwork localNetwork = builder().peerPermissions(peerPermissions).build();
+        final P2PNetwork remoteNetwork = builder().build()) {
       localNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
       remoteNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
 
@@ -323,88 +305,7 @@ public class P2PPlainNetworkTest {
     }
   }
 
-  @Test
-  public void p2pOverTlsCanHandleRecordFragmentation() throws Exception {
-    // Given
-    final int tlsRecordSize = 16 * 1024;
-    final int threeTlsRecords = 2 * tlsRecordSize + 1;
-    final LargeMessageData largeMessageData =
-        new LargeMessageData(Bytes.of(buildPaddedMessage(threeTlsRecords)));
-
-    final NodeKey nodeKey = NodeKeyUtils.generate();
-    try (final P2PNetwork listener = builder("partner1client1").nodeKey(nodeKey).build();
-        final P2PNetwork connector = builder("partner2client1").build()) {
-      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
-      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
-
-      final CompletableFuture<DisconnectReason> disconnectReasonFuture = new CompletableFuture<>();
-      listener.subscribeDisconnect(
-          (peerConnection, reason, initiatedByPeer) -> {
-            if (!DisconnectReason.CLIENT_QUITTING.equals(
-                reason)) { // client quitting is the valid end state
-              disconnectReasonFuture.complete(reason);
-            }
-          });
-      final CompletableFuture<Message> successfulMessageFuture = new CompletableFuture<>();
-      listener.subscribe(
-          Capability.create("eth", 63),
-          (capability, message) -> {
-            if (message.getData().getCode() == LargeMessageData.VALID_ETH_MESSAGE_CODE) {
-              successfulMessageFuture.complete(message);
-            }
-          });
-
-      listener.start();
-      connector.start();
-
-      final EnodeURL listenerEnode = listener.getLocalEnode().get();
-      final Bytes listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort().get();
-      final PeerConnection peerConnection =
-          connector.connect(createPeer(listenId, listenPort)).get(30000L, TimeUnit.SECONDS);
-
-      // When
-      peerConnection.sendForProtocol("eth", largeMessageData);
-
-      // Then
-      CompletableFuture.anyOf(disconnectReasonFuture, successfulMessageFuture)
-          .thenAccept(
-              successOrFailure -> {
-                if (successOrFailure instanceof DisconnectReason) {
-                  fail(
-                      "listener disconnected due to "
-                          + ((DisconnectReason) successOrFailure).name());
-                } else {
-                  final Message receivedMessage = (Message) successOrFailure;
-                  assertThat(receivedMessage.getData().getData())
-                      .isEqualTo(largeMessageData.getData());
-                }
-              })
-          .get(30L, TimeUnit.SECONDS);
-    }
-  }
-
   private final ShouldConnectCallback testCallback = (p, d) -> true;
-
-  private static class LargeMessageData extends AbstractMessageData {
-
-    public static final int VALID_ETH_MESSAGE_CODE = 0x07;
-
-    private LargeMessageData(final Bytes data) {
-      super(data);
-    }
-
-    @Override
-    public int getCode() {
-      return VALID_ETH_MESSAGE_CODE;
-    }
-  }
-
-  private byte[] buildPaddedMessage(final int messageSize) {
-    final byte[] bytes = new byte[messageSize];
-    Arrays.fill(bytes, (byte) 9);
-    return bytes;
-  }
 
   private Peer createPeer(final Bytes nodeId, final int listenPort) {
     return DefaultPeer.fromEnodeURL(
@@ -415,35 +316,7 @@ public class P2PPlainNetworkTest {
             .build());
   }
 
-  private static Path toPath(final String path) {
-    try {
-      return Path.of(Objects.requireNonNull(P2PPlainNetworkTest.class.getResource(path)).toURI());
-    } catch (final URISyntaxException e) {
-      throw new RuntimeException("Error converting to URI.", e);
-    }
-  }
-
-  public Optional<TLSConfiguration> p2pTLSEnabled(final String clientDirName) {
-    final String parentPath = "/keys";
-    final String keystorePath = parentPath + "/%s/client1.p12";
-    final String truststorePath = parentPath + "/%s/truststore.p12";
-    final String crl = parentPath + "/crl/crl.pem";
-    final TLSConfiguration.Builder builder = TLSConfiguration.Builder.tlsConfiguration();
-    builder
-        .withKeyStoreType(KEYSTORE_TYPE_PKCS12)
-        .withKeyStorePath(toPath(String.format(keystorePath, clientDirName)))
-        .withKeyStorePasswordSupplier(() -> "test123")
-        // .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
-        .withTrustStoreType(KEYSTORE_TYPE_PKCS12)
-        .withTrustStorePath(toPath(String.format(truststorePath, clientDirName)))
-        .withTrustStorePasswordSupplier(() -> "test123")
-        .withCrlPath(toPath(crl))
-        .withClientHelloSniEnabled(false);
-
-    return Optional.of(builder.build());
-  }
-
-  private DefaultP2PNetwork.Builder builder(final String clientDirName) {
+  private DefaultP2PNetwork.Builder builder() {
     final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
     final Block blockMock = mock(Block.class);
     when(blockMock.getHash()).thenReturn(Hash.ZERO);
@@ -452,7 +325,6 @@ public class P2PPlainNetworkTest {
         .vertx(vertx)
         .config(config)
         .nodeKey(NodeKeyUtils.generate())
-        .p2pTLSConfiguration(p2pTLSEnabled(clientDirName))
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
         .storageProvider(new InMemoryKeyValueStorageProvider())

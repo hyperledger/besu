@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
@@ -73,7 +73,8 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
       final Bytes path,
       final Bytes value) {
     final Stream.Builder<NodeDataRequest> builder = Stream.builder();
-    final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
+    final PmtStateTrieAccountValue accountValue =
+        PmtStateTrieAccountValue.readFrom(RLP.input(value));
 
     final Optional<Hash> accountHash =
         Optional.of(
