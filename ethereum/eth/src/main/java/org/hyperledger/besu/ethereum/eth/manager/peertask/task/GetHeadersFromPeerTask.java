@@ -137,8 +137,8 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   @Override
   public Predicate<EthPeer> getPeerRequirementFilter() {
     return (ethPeer) ->
-        !protocolSchedule.anyMatch((ps) -> ps.spec().isPoS())
-            && ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight;
+        protocolSchedule.anyMatch((ps) -> ps.spec().isPoS())
+            || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight;
   }
 
   @Override
