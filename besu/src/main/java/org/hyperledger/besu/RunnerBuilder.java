@@ -92,7 +92,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionSubnet;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
@@ -165,7 +164,6 @@ public class RunnerBuilder {
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
   private boolean p2pEnabled = true;
-  private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
   private boolean discovery;
   private String p2pAdvertisedHost;
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
@@ -232,30 +230,6 @@ public class RunnerBuilder {
    */
   public RunnerBuilder p2pEnabled(final boolean p2pEnabled) {
     this.p2pEnabled = p2pEnabled;
-    return this;
-  }
-
-  /**
-   * TLSConfiguration p2pTLSConfiguration.
-   *
-   * @param p2pTLSConfiguration the TLSConfiguration p2pTLSConfiguration
-   * @return the runner builder
-   */
-  public RunnerBuilder p2pTLSConfiguration(final TLSConfiguration p2pTLSConfiguration) {
-    this.p2pTLSConfiguration = Optional.of(p2pTLSConfiguration);
-    return this;
-  }
-
-  /**
-   * Optional TLSConfiguration p2pTLSConfiguration.
-   *
-   * @param p2pTLSConfiguration the TLSConfiguration p2pTLSConfiguration
-   * @return the runner builder
-   */
-  public RunnerBuilder p2pTLSConfiguration(final Optional<TLSConfiguration> p2pTLSConfiguration) {
-    if (null != p2pTLSConfiguration) {
-      this.p2pTLSConfiguration = p2pTLSConfiguration;
-    }
     return this;
   }
 
@@ -735,7 +709,6 @@ public class RunnerBuilder {
               .supportedCapabilities(caps)
               .natService(natService)
               .storageProvider(storageProvider)
-              .p2pTLSConfiguration(p2pTLSConfiguration)
               .blockchain(context.getBlockchain())
               .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
               .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
