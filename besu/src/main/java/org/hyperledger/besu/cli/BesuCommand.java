@@ -1640,6 +1640,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
+    if (SyncMode.FAST == syncMode) {
+      logger.warn("FAST sync is deprecated. Recommend using SNAP sync instead.");
+    }
+
     if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
         && isOptionSet(commandLine, "--sync-min-peers")) {
       logger.warn("--sync-min-peers is ignored in FULL sync-mode");
