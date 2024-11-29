@@ -41,6 +41,7 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.units.bigints.BaseUInt256Value;
 
+@Deprecated(since = "24.12.0")
 public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
   private final Supplier<BlockchainQueries> blockchain;
   private final ProtocolSchedule protocolSchedule;

@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
-@Deprecated(since = "24.11.0")
+@Deprecated(since = "24.12.0")
 public class DisabledPrivacyRpcMethod implements JsonRpcMethod {
 
   private final String methodName;
