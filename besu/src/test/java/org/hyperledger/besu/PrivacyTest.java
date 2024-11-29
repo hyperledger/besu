@@ -28,6 +28,7 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
@@ -137,6 +138,7 @@ class PrivacyTest {
           .evmConfiguration(EvmConfiguration.DEFAULT)
           .networkConfiguration(NetworkingConfiguration.create())
           .besuComponent(context)
+          .apiConfiguration(ImmutableApiConfiguration.builder().build())
           .build();
     }
   }

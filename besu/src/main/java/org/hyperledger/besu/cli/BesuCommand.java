@@ -134,7 +134,6 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
@@ -339,6 +338,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       Suppliers.memoize(this::readGenesisConfigOptions);
   private final Supplier<MiningConfiguration> miningParametersSupplier =
       Suppliers.memoize(this::getMiningParameters);
+  private final Supplier<ApiConfiguration> apiConfigurationSupplier =
+      Suppliers.memoize(this::getApiConfiguration);
 
   private RocksDBPlugin rocksDBPlugin;
 
@@ -712,7 +713,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private WebSocketConfiguration webSocketConfiguration;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private InProcessRpcConfiguration inProcessRpcConfiguration;
-  private ApiConfiguration apiConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private DataStorageConfiguration dataStorageConfiguration;
@@ -1237,7 +1237,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         webSocketConfiguration,
         jsonRpcIpcConfiguration,
         inProcessRpcConfiguration,
-        apiConfiguration,
+        apiConfigurationSupplier.get(),
         metricsConfiguration,
         permissioningConfiguration,
         staticNodes,
@@ -1249,11 +1249,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         besuController.getProtocolContext().getBlockchain(), besuController.getProtocolSchedule());
     transactionSimulationServiceImpl.init(
         besuController.getProtocolContext().getBlockchain(),
-        new TransactionSimulator(
-            besuController.getProtocolContext().getBlockchain(),
-            besuController.getProtocolContext().getWorldStateArchive(),
-            besuController.getProtocolSchedule(),
-            apiConfiguration.getGasCap()));
+        besuController.getTransactionSimulator());
     rpcEndpointServiceImpl.init(runner.getInProcessRpcMethods());
 
     besuPluginContext.addService(
@@ -1447,7 +1443,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateTransactionPoolOptions();
     validateDataStorageOptions();
     validateGraphQlOptions();
-    validateApiOptions();
     validateConsensusSyncCompatibilityOptions();
     validatePluginOptions();
   }
@@ -1705,7 +1700,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             unstableIpcOptions.getIpcPath(),
             unstableIpcOptions.getRpcIpcApis());
     inProcessRpcConfiguration = inProcessRpcOptions.toDomainObject();
-    apiConfiguration = apiConfigurationOptions.apiConfiguration();
     dataStorageConfiguration = getDataStorageConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {
@@ -1823,6 +1817,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
             .cacheLastBlocks(numberOfblocksToCache)
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
+            .apiConfiguration(apiConfigurationSupplier.get())
             .besuComponent(besuComponent);
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
       final DiffBasedSubStorageConfiguration subStorageConfiguration =
@@ -2146,6 +2141,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .ifPresent(miningParameters::setBlockPeriodSeconds);
     initMiningParametersMetrics(miningParameters);
     return miningParameters;
+  }
+
+  private ApiConfiguration getApiConfiguration() {
+    validateApiOptions();
+    return apiConfigurationOptions.apiConfiguration();
   }
 
   /**
