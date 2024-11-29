@@ -86,15 +86,14 @@ public class CallCodeOperation extends AbstractCallOperation {
     final Address to = to(frame);
     GasCalculator gasCalculator = gasCalculator();
 
-    return gasCalculator.callOperationGasCost(
+    return gasCalculator.callCodeOperationGasCost(
         frame,
         stipend,
         inputDataOffset,
         inputDataLength,
         outputDataOffset,
         outputDataLength,
-        // As far as CALLCODE is concerned, there isn't a value transfer
-        Wei.ZERO,
+        value(frame),
         recipient,
         to,
         accountIsWarm);
