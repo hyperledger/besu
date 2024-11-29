@@ -35,6 +35,16 @@ public class BlockProcessingResult extends BlockValidationResult {
    * A result indicating that processing was successful but incomplete.
    *
    * @param yield the outputs of processing a block
+   */
+  public BlockProcessingResult(final Optional<BlockProcessingOutputs> yield) {
+    this.yield = yield;
+    this.isPartial = false;
+  }
+
+  /**
+   * A result indicating that processing was successful but incomplete.
+   *
+   * @param yield the outputs of processing a block
    * @param nbParallelizedTransations potential number of parallelized transactions during block
    *     processing
    */

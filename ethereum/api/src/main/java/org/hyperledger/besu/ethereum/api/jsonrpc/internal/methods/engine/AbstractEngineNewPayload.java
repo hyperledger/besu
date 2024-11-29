@@ -589,7 +589,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     messageArgs.addAll(
         List.of(
             blobCount,
-            block.getHeader().getBaseFee().map(Wei::toHumanReadableString).orElse("N/A"),
+            block.getHeader().getBaseFee().map(Wei::toHumanReadablePaddedString).orElse("N/A"),
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
             timeInS,
