@@ -102,7 +102,7 @@ public class PeerTaskExecutor {
         executorResult =
             new PeerTaskExecutorResult<>(
                 Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE, Optional.empty());
-        continue;
+        break;
       }
       usedEthPeers.add(peer.get());
       executorResult = executeAgainstPeer(peerTask, peer.get());
@@ -137,14 +137,12 @@ public class PeerTaskExecutor {
               requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
 
           result = peerTask.processResponse(responseMessageData);
-          peerTask
-              .shouldDisconnectPeer(result)
-              .ifPresent((disconnectReason) -> peer.disconnect(disconnectReason));
         } finally {
           inflightRequestCountForThisTaskClass.decrementAndGet();
         }
 
-        if (peerTask.isSuccess(result)) {
+        PeerTaskValidationResponse validationResponse = peerTask.validateResult(result);
+        if (validationResponse == PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD) {
           peer.recordUsefulResponse();
           executorResult =
               new PeerTaskExecutorResult<>(
@@ -152,11 +150,11 @@ public class PeerTaskExecutor {
                   PeerTaskExecutorResponseCode.SUCCESS,
                   Optional.of(peer));
         } else {
-          // At this point, the result is most likely empty. Technically, this is a valid result, so
-          // we don't penalise the peer, but it's also a useless result, so we return
-          // INVALID_RESPONSE code
           LOG.debug(
-              "Empty response found for {} from peer {}", taskClassName, peer.getLoggableId());
+              "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId());
+          validationResponse
+              .getDisconnectReason()
+              .ifPresent((disconnectReason) -> peer.disconnect(disconnectReason));
           executorResult =
               new PeerTaskExecutorResult<>(
                   Optional.ofNullable(result),

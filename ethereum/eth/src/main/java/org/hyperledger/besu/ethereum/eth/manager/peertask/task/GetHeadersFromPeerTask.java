@@ -20,16 +20,14 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.slf4j.Logger;
@@ -133,91 +131,75 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
     if (messageData == null) {
       throw new InvalidPeerTaskResponseException("Response MessageData is null");
     }
-    List<BlockHeader> blockHeaders =
-        BlockHeadersMessage.readFrom(messageData).getHeaders(protocolSchedule);
-    List<BlockHeader> result;
-
-    if (blockHeaders.isEmpty()) {
-      // Message contains no data - nothing to do
-      LOG.debug(
-          "No blockheaders returned for query starting at {}",
-          blockHash != null ? blockHash : blockNumber);
-      result = Collections.emptyList();
-    } else if (blockHeaders.size() > maxHeaders) {
-      // Too many headers - this isn't our response
-      LOG.debug(
-          "Too many blockheaders returned for query starting at {}",
-          blockHash != null ? blockHash : blockNumber);
-      result = Collections.emptyList();
-    } else if ((blockHash != null && !blockHeaders.getFirst().getHash().equals(blockHash))
-        || (blockHash == null && blockHeaders.getFirst().getNumber() != blockNumber)) {
-      // This isn't our message - nothing to do
-      LOG.debug(
-          "First header returned doesn't match query starting at {}",
-          blockHash != null ? blockHash : blockNumber);
-      result = Collections.emptyList();
-    } else if (!isBlockHeadersMatchingRequest(blockHeaders)) {
-      LOG.debug(
-          "Blockheaders do not match expected headers from request for query starting at {}",
-          blockHash != null ? blockHash : blockNumber);
-      result = Collections.emptyList();
-    } else {
-      LOG.debug("Blockheaders pass initial validation");
-      result = blockHeaders;
-    }
-
-    return result;
+    return BlockHeadersMessage.readFrom(messageData).getHeaders(protocolSchedule);
   }
 
   @Override
   public Predicate<EthPeer> getPeerRequirementFilter() {
     return (ethPeer) ->
-        (protocolSchedule.anyMatch((ps) -> ps.spec().isPoS())
-            || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight);
+        !protocolSchedule.anyMatch((ps) -> ps.spec().isPoS())
+            && ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight;
   }
 
   @Override
-  public boolean isSuccess(final List<BlockHeader> result) {
-    return !result.isEmpty();
-  }
-
-  @Override
-  public Optional<DisconnectMessage.DisconnectReason> shouldDisconnectPeer(
-      final List<BlockHeader> blockHeaders) {
-    if (blockHeaders.size() < 2) {
-      // 0 or 1 result returned, nothing we can do here
-      return Optional.empty();
-    }
-    if (skip > 0) {
-      // non-sequential results expected, nothing we can do here
-      return Optional.empty();
+  public PeerTaskValidationResponse validateResult(final List<BlockHeader> blockHeaders) {
+    if (blockHeaders.isEmpty()) {
+      // Message contains no data - nothing to do
+      LOG.debug(
+          "No blockheaders returned for query starting at {}",
+          blockHash != null ? blockHash : blockNumber);
+      return PeerTaskValidationResponse.NO_RESULTS_RETURNED;
     }
 
-    Optional<DisconnectMessage.DisconnectReason> result = Optional.empty();
-    // if headers are supposed to be sequential check if a chain is formed
-    for (int i = 0; i < blockHeaders.size() - 1; i++) {
-      BlockHeader parentHeader = null;
-      BlockHeader childHeader = null;
-      switch (direction) {
-        case FORWARD:
-          parentHeader = blockHeaders.get(i);
-          childHeader = blockHeaders.get(i + 1);
-          break;
-        case REVERSE:
-          childHeader = blockHeaders.get(i);
-          parentHeader = blockHeaders.get(i + 1);
-          break;
-      }
-      if (!parentHeader.getHash().equals(childHeader.getParentHash())) {
-        LOG.warn(
-            "Blockheaders were non-sequential for query starting at {}",
-            blockHash != null ? blockHash : blockNumber);
-        result =
-            Optional.of(
-                DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS);
+    if (blockHeaders.size() > maxHeaders) {
+      // Too many headers - this isn't our response
+      LOG.debug(
+          "Too many blockheaders returned for query starting at {}",
+          blockHash != null ? blockHash : blockNumber);
+      return PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED;
+    }
+
+    if ((blockHash != null && !blockHeaders.getFirst().getHash().equals(blockHash))
+        || (blockHash == null && blockHeaders.getFirst().getNumber() != blockNumber)) {
+      // This isn't our message - nothing to do
+      LOG.debug(
+          "First header returned doesn't match query starting at {}",
+          blockHash != null ? blockHash : blockNumber);
+      return PeerTaskValidationResponse.RESULTS_DO_NOT_MATCH_QUERY;
+    }
+
+    if (!isBlockHeadersMatchingRequest(blockHeaders)) {
+      LOG.debug(
+          "Blockheaders do not match expected headers from request for query starting at {}",
+          blockHash != null ? blockHash : blockNumber);
+      return PeerTaskValidationResponse.RESULTS_DO_NOT_MATCH_QUERY;
+    }
+
+    if (blockHeaders.size() >= 2 && skip == 0) {
+      // headers are supposed to be sequential and at least 2 have been returned, check if a chain
+      // is formed
+      for (int i = 0; i < blockHeaders.size() - 1; i++) {
+        BlockHeader parentHeader = null;
+        BlockHeader childHeader = null;
+        switch (direction) {
+          case FORWARD:
+            parentHeader = blockHeaders.get(i);
+            childHeader = blockHeaders.get(i + 1);
+            break;
+          case REVERSE:
+            childHeader = blockHeaders.get(i);
+            parentHeader = blockHeaders.get(i + 1);
+            break;
+        }
+        if (!parentHeader.getHash().equals(childHeader.getParentHash())) {
+          LOG.warn(
+              "Blockheaders were non-sequential for query starting at {}",
+              blockHash != null ? blockHash : blockNumber);
+          return PeerTaskValidationResponse.NON_SEQUENTIAL_HEADERS_RETURNED;
+        }
       }
     }
-    return result;
+    return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
   }
 
   @Override

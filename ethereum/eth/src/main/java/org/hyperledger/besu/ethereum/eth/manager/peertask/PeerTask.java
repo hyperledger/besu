@@ -17,9 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 
-import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
@@ -77,22 +75,11 @@ public interface PeerTask<T> {
   Predicate<EthPeer> getPeerRequirementFilter();
 
   /**
-   * Checks if the supplied result is considered a success
+   * Performs a high level check of the results, returning a PeerTaskValidationResponse to describe
+   * the result of the check
    *
    * @param result The results of the PeerTask, as returned by processResponse
-   * @return true if the supplied result is considered a success
+   * @return a PeerTaskValidationResponse to describe the result of the check
    */
-  boolean isSuccess(T result);
-
-  /**
-   * Performs a high level check of the results, if possible to determine if they violate protocol
-   * rules, returning a DisconnectReason describing the nature of the violation
-   *
-   * @param result The results of the PeerTask, as returned by processResponse
-   * @return a DisconnectReason describing the nature of the violation, or an empty Optional if no
-   *     violation occurred
-   */
-  default Optional<DisconnectMessage.DisconnectReason> shouldDisconnectPeer(final T result) {
-    return Optional.empty();
-  }
+  PeerTaskValidationResponse validateResult(T result);
 }
