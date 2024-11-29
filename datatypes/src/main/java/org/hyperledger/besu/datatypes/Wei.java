@@ -165,7 +165,7 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
     final int numOfDigits = amount.toString().length();
     final Unit preferredUnit = Unit.getPreferred(numOfDigits);
     final double res = amount.doubleValue() / preferredUnit.divisor;
-    return String.format("%1." + preferredUnit.decimals + "f %s", res, preferredUnit);
+    return String.format("%3." + preferredUnit.decimals + "f %s", res, preferredUnit);
   }
 
   /** The enum Unit. */
