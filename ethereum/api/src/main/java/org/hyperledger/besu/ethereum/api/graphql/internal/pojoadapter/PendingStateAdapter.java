@@ -145,10 +145,8 @@ public class PendingStateAdapter extends AdapterBase {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule protocolSchedule =
         environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
-    final long gasCap = environment.getGraphQlContext().get(GraphQLContextType.GAS_CAP);
     final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(
-            query.getBlockchain(), query.getWorldStateArchive(), protocolSchedule, gasCap);
+        environment.getGraphQlContext().get(GraphQLContextType.TRANSACTION_SIMULATOR);
 
     long gasParam = -1;
     Wei gasPriceParam = null;

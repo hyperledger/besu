@@ -33,6 +33,7 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -191,7 +192,8 @@ public class MergeBesuControllerBuilderTest {
             .evmConfiguration(EvmConfiguration.DEFAULT)
             .networkConfiguration(NetworkingConfiguration.create())
             .besuComponent(mock(BesuComponent.class))
-            .networkId(networkId);
+            .networkId(networkId)
+            .apiConfiguration(ImmutableApiConfiguration.builder().build());
   }
 
   @Test
