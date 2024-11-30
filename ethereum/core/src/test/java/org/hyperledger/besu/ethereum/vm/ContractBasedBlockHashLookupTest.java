@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
@@ -24,16 +25,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.stateless.NoopAccessWitness;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -53,13 +57,18 @@ public class ContractBasedBlockHashLookupTest {
   private List<BlockHeader> headers;
   private BlockHashLookup lookup;
   private MessageFrame frame;
+  private WorldUpdater worldUpdater;
 
   @BeforeEach
   void setUp() {
     headers = new ArrayList<>();
-    frame = mock(MessageFrame.class);
-    final WorldUpdater worldUpdater = createWorldUpdater(0, CURRENT_BLOCK_NUMBER);
-    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
+    worldUpdater = createWorldUpdater(0, CURRENT_BLOCK_NUMBER);
+    frame =
+        new MessageFrameTestFixture()
+            .worldUpdater(worldUpdater)
+            .initialGas(Long.MAX_VALUE)
+            .accessWitness(NoopAccessWitness.get())
+            .build();
     lookup =
         new ContractBasedBlockHashLookup(
             createHeader(CURRENT_BLOCK_NUMBER, headers.getLast()),
@@ -94,22 +103,58 @@ public class ContractBasedBlockHashLookupTest {
   }
 
   @Test
-  void shouldReturnEmptyHashWhenRequestedBlockHigherThanHead() {
+  void shouldReturnZeroHashWhenRequestedBlockHigherThanHead() {
     assertThat(lookup.apply(frame, CURRENT_BLOCK_NUMBER + 20L)).isEqualTo(Hash.ZERO);
   }
 
   @Test
-  void shouldReturnEmptyHashWhenSystemContractNotExists() {
-    final WorldUpdater worldUpdater = new SimpleWorld();
-    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
+  void shouldReturnZeroHashWhenSystemContractNotExists() {
+    worldUpdater = new SimpleWorld();
+    frame =
+        new MessageFrameTestFixture()
+            .worldUpdater(worldUpdater)
+            .accessWitness(NoopAccessWitness.get())
+            .build();
     assertThat(lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L)).isEqualTo(Hash.ZERO);
   }
 
   @Test
-  void shouldReturnEmptyHashWhenParentBlockNotInContract() {
-    final WorldUpdater worldUpdater =
-        createWorldUpdater(CURRENT_BLOCK_NUMBER - 10, CURRENT_BLOCK_NUMBER);
-    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
+  @SuppressWarnings("ReturnValueIgnored")
+  void shouldDecrementRemainingGasFromFrame() {
+    AccessWitness accessWitness = mock(AccessWitness.class);
+    when(accessWitness.touchAndChargeStorageLoad(any(), any())).thenReturn(100L);
+    frame =
+        new MessageFrameTestFixture()
+            .worldUpdater(worldUpdater)
+            .accessWitness(accessWitness)
+            .initialGas(200L)
+            .build();
+    lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L);
+    assertThat(frame.getRemainingGas()).isEqualTo(100L);
+  }
+
+  @Test
+  void insufficientGasReturnsEmptyHash() {
+    worldUpdater = new SimpleWorld();
+    AccessWitness accessWitness = mock(AccessWitness.class);
+    when(accessWitness.touchAndChargeStorageLoad(any(), any())).thenReturn(100L);
+    frame =
+        new MessageFrameTestFixture()
+            .worldUpdater(worldUpdater)
+            .accessWitness(accessWitness)
+            .initialGas(1)
+            .build();
+    assertThat(lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L)).isEqualTo(Hash.EMPTY);
+  }
+
+  @Test
+  void shouldReturnZeroHashWhenParentBlockNotInContract() {
+    worldUpdater = createWorldUpdater(CURRENT_BLOCK_NUMBER - 10, CURRENT_BLOCK_NUMBER);
+    frame =
+        new MessageFrameTestFixture()
+            .worldUpdater(worldUpdater)
+            .accessWitness(NoopAccessWitness.get())
+            .build();
     lookup =
         new ContractBasedBlockHashLookup(
             new BlockHeaderTestFixture().number(CURRENT_BLOCK_NUMBER).buildHeader(),
@@ -121,8 +166,12 @@ public class ContractBasedBlockHashLookupTest {
 
   @Test
   void shouldCacheBlockHashes() {
-    final WorldUpdater worldUpdater = createWorldUpdater(0, CURRENT_BLOCK_NUMBER);
-    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
+    worldUpdater = createWorldUpdater(0, CURRENT_BLOCK_NUMBER);
+    frame =
+        new MessageFrameTestFixture()
+            .worldUpdater(worldUpdater)
+            .accessWitness(NoopAccessWitness.get())
+            .build();
     final Account account = worldUpdater.get(STORAGE_ADDRESS);
     clearInvocations(account);
 
@@ -147,8 +196,12 @@ public class ContractBasedBlockHashLookupTest {
 
   @Test
   void shouldGetHashWhenParentIsGenesis() {
-    final WorldUpdater worldUpdater = createWorldUpdater(0, 1);
-    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
+    worldUpdater = createWorldUpdater(0, 1);
+    frame =
+        new MessageFrameTestFixture()
+            .worldUpdater(worldUpdater)
+            .accessWitness(NoopAccessWitness.get())
+            .build();
     lookup =
         new ContractBasedBlockHashLookup(
             createHeader(1, headers.getFirst()),

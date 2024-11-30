@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmpt
 import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.NotClearEmptyAccount;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.Eip7709BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PragueBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -905,7 +906,7 @@ public abstract class MainnetProtocolSpecs {
                     CoinbaseFeePriceCalculator.eip1559()))
         .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
         .executionWitnessValidator(new ExecutionWitnessValidator.AllowedExecutionWitness())
-        .blockHashProcessor(new PragueBlockHashProcessor())
+        .blockHashProcessor(new Eip7709BlockHashProcessor())
         .blockHeaderFunctions(new VerkleDevnetBlockHeaderFunctions())
         .name("Verkle");
   }

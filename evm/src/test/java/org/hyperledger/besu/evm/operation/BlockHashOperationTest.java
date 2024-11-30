@@ -46,7 +46,7 @@ class BlockHashOperationTest {
   }
 
   @Test
-  void shouldReturnBlockHashUsingLookupFromFrameWhenItIsWithinTheAllowedRange() {
+  void returnsBlockHashWhenWithinAllowedRange() {
     final Hash blockHash = Hash.hash(Bytes.fromHexString("0x1293487297"));
     assertBlockHash(
         100,
@@ -57,13 +57,45 @@ class BlockHashOperationTest {
   }
 
   @Test
+  void remainingGasDoesNotChange() {
+    final Hash blockHash = Hash.hash(Bytes.fromHexString("0x1293487297"));
+    assertBlockHash(
+        100,
+        blockHash,
+        200,
+        (frame, block) -> {
+          frame.decrementRemainingGas(100L);
+          if (block == 100) {
+            return blockHash;
+          }
+          return Hash.ZERO;
+        },
+        ENOUGH_GAS);
+  }
+
+  @Test
   void shouldFailWithInsufficientGas() {
     assertFailure(
         Bytes32.fromHexString("0x64"),
         ExceptionalHaltReason.INSUFFICIENT_GAS,
         200,
         (__, ___) -> Hash.hash(Bytes.fromHexString("0x1293487297")),
-        1);
+        1L,
+        20L);
+  }
+
+  @Test
+  void shouldFailWithInsufficientGasWithinLookup() {
+    assertFailure(
+        Bytes32.fromHexString("0x64"),
+        ExceptionalHaltReason.INSUFFICIENT_GAS,
+        200,
+        (frame, ___) -> {
+          frame.decrementRemainingGas(100);
+          return Hash.EMPTY;
+        },
+        100L,
+        120L);
   }
 
   private void assertBlockHash(
@@ -93,10 +125,12 @@ class BlockHashOperationTest {
             .pushStackItem(UInt256.fromBytes(input))
             .initialGas(initialGas)
             .build();
+    long remainingGasBefore = frame.getRemainingGas();
     blockHashOperation.execute(frame, null);
     final Bytes result = frame.popStackItem();
     assertThat(result).isEqualTo(expectedOutput);
     assertThat(frame.stackSize()).isZero();
+    assertThat(frame.getRemainingGas()).isEqualTo(remainingGasBefore);
   }
 
   private void assertFailure(
@@ -104,7 +138,8 @@ class BlockHashOperationTest {
       final ExceptionalHaltReason haltReason,
       final long currentBlockNumber,
       final BlockHashLookup blockHashLookup,
-      final long initialGas) {
+      final long initialGas,
+      final long gasCost) {
     final MessageFrame frame =
         new TestMessageFrameBuilder()
             .blockHashLookup(blockHashLookup)
@@ -114,6 +149,6 @@ class BlockHashOperationTest {
             .build();
     Operation.OperationResult operationResult = blockHashOperation.execute(frame, null);
     assertThat(operationResult.getHaltReason()).isEqualTo(haltReason);
-    assertThat(frame.stackSize()).isOne();
+    assertThat(operationResult.gasCost).isEqualTo(gasCost);
   }
 }
