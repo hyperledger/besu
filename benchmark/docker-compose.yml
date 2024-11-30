@@ -66,6 +66,7 @@ services:
     - --rpc-ws-enabled
     - --rpc-ws-apis=admin,eth,miner,web3,net,priv,eea
     - --rpc-ws-host=0.0.0.0
+    - --host-allowlist=*
     - --graphql-http-enabled
     - --discovery-enabled=false
     - --privacy-enabled=true
@@ -83,6 +84,7 @@ services:
     - --rpc-ws-enabled
     - --rpc-ws-apis=admin,eth,miner,web3,net,priv,eea
     - --rpc-ws-host=0.0.0.0
+    - --host-allowlist=*
     - --graphql-http-enabled
     - --discovery-enabled=false
     - --privacy-enabled=true
