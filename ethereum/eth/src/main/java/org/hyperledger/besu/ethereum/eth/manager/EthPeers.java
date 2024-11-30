@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerSelector;
@@ -92,7 +93,6 @@ public class EthPeers implements PeerSelector {
           .concurrencyLevel(1)
           .removalListener(this::onCacheRemoval)
           .build();
-  private final String protocolName;
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
   private final int maxMessageSize;
@@ -122,7 +122,6 @@ public class EthPeers implements PeerSelector {
       () -> TrailingPeerRequirements.UNRESTRICTED;
 
   public EthPeers(
-      final String protocolName,
       final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final Clock clock,
       final MetricsSystem metricsSystem,
@@ -134,7 +133,6 @@ public class EthPeers implements PeerSelector {
       final Boolean randomPeerPriority,
       final SyncMode syncMode,
       final ForkIdManager forkIdManager) {
-    this.protocolName = protocolName;
     this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
@@ -191,7 +189,6 @@ public class EthPeers implements PeerSelector {
             peerInList.orElse(
                 new EthPeer(
                     newConnection,
-                    protocolName,
                     this::ethPeerStatusExchanged,
                     peerValidators,
                     maxMessageSize,
@@ -294,7 +291,7 @@ public class EthPeers implements PeerSelector {
   }
 
   public void dispatchMessage(final EthPeer peer, final EthMessage ethMessage) {
-    dispatchMessage(peer, ethMessage, protocolName);
+    dispatchMessage(peer, ethMessage, EthProtocol.NAME);
   }
 
   @VisibleForTesting
