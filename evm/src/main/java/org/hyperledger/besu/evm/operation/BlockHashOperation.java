@@ -50,11 +50,18 @@ public class BlockHashOperation extends AbstractOperation {
       return new OperationResult(cost, null);
     }
 
+    final long remainingGas = frame.getRemainingGas();
     final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
     final Hash blockHash = blockHashLookup.apply(frame, blockArg.toLong());
+    final long lookupCost = remainingGas - frame.getRemainingGas();
+    if (Hash.EMPTY.equals(blockHash)) {
+      return new OperationResult(lookupCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+    // give lookupCost back as it will be taken after
+    frame.incrementRemainingGas(lookupCost);
     frame.pushStackItem(blockHash);
 
-    return new OperationResult(cost, null);
+    return new OperationResult(cost + lookupCost, null);
   }
 
   /**
