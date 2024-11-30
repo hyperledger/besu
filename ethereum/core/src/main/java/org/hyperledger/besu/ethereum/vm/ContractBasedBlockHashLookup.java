@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 public class ContractBasedBlockHashLookup implements BlockHashLookup {
   private static final Logger LOG = LoggerFactory.getLogger(ContractBasedBlockHashLookup.class);
   private static final long BLOCKHASH_SERVE_WINDOW = 256L;
+  private static final long WARM_STORAGE_READ_COST = 100L;
 
   private final ProcessableBlockHeader blockHeader;
   private final Address contractAddress;
@@ -90,6 +91,12 @@ public class ContractBasedBlockHashLookup implements BlockHashLookup {
       return ZERO;
     }
 
+    final long cost = cost(frame, blockNumber);
+    if (frame.getRemainingGas() < cost) {
+      return Hash.EMPTY;
+    }
+    frame.decrementRemainingGas(cost);
+
     final Hash cachedHash = hashByNumber.get(blockNumber);
     if (cachedHash != null) {
       return cachedHash;
@@ -113,5 +120,20 @@ public class ContractBasedBlockHashLookup implements BlockHashLookup {
     Hash blockHash = Hash.wrap(value);
     hashByNumber.put(blockNumber, blockHash);
     return blockHash;
+  }
+
+  private long cost(final MessageFrame frame, final long blockNumber) {
+    final UInt256 key = UInt256.valueOf(blockNumber % BLOCKHASH_SERVE_WINDOW);
+    long gas = frame.getAccessWitness().touchAndChargeStorageLoad(contractAddress, key);
+
+    if (gas == 0) {
+      return getWarmStorageReadCost();
+    }
+
+    return gas;
+  }
+
+  protected long getWarmStorageReadCost() {
+    return WARM_STORAGE_READ_COST;
   }
 }
