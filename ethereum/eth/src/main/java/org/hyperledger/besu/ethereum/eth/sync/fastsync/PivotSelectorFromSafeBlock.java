@@ -164,7 +164,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
                             1,
                             0,
                             GetHeadersFromPeerTask.Direction.FORWARD,
-                                ethContext.getEthPeers().peerCount(),
+                            ethContext.getEthPeers().peerCount(),
                             protocolSchedule);
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
                         ethContext.getPeerTaskExecutor().execute(task);
