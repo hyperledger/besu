@@ -34,7 +34,6 @@ dependencies {
   api 'org.slf4j:slf4j-api'
 
   implementation project(':config')
-  implementation project(':pki')
   implementation project(':consensus:clique')
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
