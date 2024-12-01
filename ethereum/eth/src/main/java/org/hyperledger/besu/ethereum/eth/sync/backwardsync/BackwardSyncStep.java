@@ -88,7 +88,7 @@ public class BackwardSyncStep {
                             batchSize,
                             0,
                             Direction.REVERSE,
-                            Integer.MAX_VALUE,
+                            context.getEthContext().getEthPeers().peerCount(),
                             context.getProtocolSchedule());
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
                         context.getEthContext().getPeerTaskExecutor().execute(task);

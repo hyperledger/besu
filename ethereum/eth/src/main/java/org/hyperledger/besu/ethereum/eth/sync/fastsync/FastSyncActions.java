@@ -192,7 +192,7 @@ public class FastSyncActions {
                             1,
                             0,
                             GetHeadersFromPeerTask.Direction.FORWARD,
-                            Integer.MAX_VALUE,
+                                ethContext.getEthPeers().peerCount(),
                             protocolSchedule);
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
                         ethContext.getPeerTaskExecutor().execute(task);
