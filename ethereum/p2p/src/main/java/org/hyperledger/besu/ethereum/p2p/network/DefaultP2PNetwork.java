@@ -44,7 +44,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.MessageCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -520,7 +519,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private NatService natService = new NatService(Optional.empty());
     private MetricsSystem metricsSystem;
     private StorageProvider storageProvider;
-    private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
     private Blockchain blockchain;
     private List<Long> blockNumberForks;
     private List<Long> timestampForks;
@@ -605,7 +603,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .peerPrivileges(peerPrivileges)
           .localNode(localNode)
           .metricsSystem(metricsSystem)
-          .p2pTLSConfiguration(p2pTLSConfiguration)
           .allConnectionsSupplier(allConnectionsSupplier)
           .allActiveConnectionsSupplier(allActiveConnectionsSupplier)
           .maxPeers(maxPeers)
@@ -681,12 +678,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder storageProvider(final StorageProvider storageProvider) {
       checkNotNull(storageProvider);
       this.storageProvider = storageProvider;
-      return this;
-    }
-
-    public Builder p2pTLSConfiguration(final Optional<TLSConfiguration> p2pTLSConfiguration) {
-      checkNotNull(p2pTLSConfiguration);
-      this.p2pTLSConfiguration = p2pTLSConfiguration;
       return this;
     }
 

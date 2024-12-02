@@ -60,7 +60,6 @@ import org.hyperledger.besu.cli.options.NativeLibraryOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
 import org.hyperledger.besu.cli.options.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
-import org.hyperledger.besu.cli.options.P2PTLSConfigOptions;
 import org.hyperledger.besu.cli.options.PermissionsOptions;
 import org.hyperledger.besu.cli.options.PluginsConfigurationOptions;
 import org.hyperledger.besu.cli.options.PrivacyPluginOptions;
@@ -127,7 +126,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
@@ -258,7 +256,6 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.IExecutionStrategy;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 
@@ -705,8 +702,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfblocksToCache = 0;
 
-  @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
-
   // Plugins Configuration Option Group
   @CommandLine.ArgGroup(validate = false)
   PluginsConfigurationOptions pluginsConfigurationOptions = new PluginsConfigurationOptions();
@@ -720,7 +715,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private InProcessRpcConfiguration inProcessRpcConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
-  private Optional<TLSConfiguration> p2pTLSConfiguration;
   private DataStorageConfiguration dataStorageConfiguration;
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
@@ -1232,7 +1226,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return synchronize(
         besuController,
         p2PDiscoveryConfig.p2pEnabled(),
-        p2pTLSConfiguration,
         p2PDiscoveryConfig.peerDiscoveryEnabled(),
         ethNetworkConfig,
         p2PDiscoveryConfig.p2pHost(),
@@ -1452,7 +1445,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateGraphQlOptions();
     validateConsensusSyncCompatibilityOptions();
     validatePluginOptions();
-    p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
   }
 
   private void validateConsensusSyncCompatibilityOptions() {
@@ -1643,6 +1635,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
+    if (SyncMode.FAST == syncMode) {
+      logger.warn("FAST sync is deprecated. Recommend using SNAP sync instead.");
+    }
+
     if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
         && isOptionSet(commandLine, "--sync-min-peers")) {
       logger.warn("--sync-min-peers is ignored in FULL sync-mode");
@@ -1691,7 +1687,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration = createEngineJsonRpcConfiguration();
     }
-    p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration =
         graphQlOptions.graphQLConfiguration(
             hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
@@ -2221,7 +2216,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Runner synchronize(
       final BesuController controller,
       final boolean p2pEnabled,
-      final Optional<TLSConfiguration> p2pTLSConfiguration,
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
       final String p2pAdvertisedHost,
@@ -2240,8 +2234,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Path pidPath) {
 
     checkNotNull(runnerBuilder);
-
-    p2pTLSConfiguration.ifPresent(runnerBuilder::p2pTLSConfiguration);
 
     final Runner runner =
         runnerBuilder

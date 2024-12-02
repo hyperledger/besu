@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.blockcreation.CoinbaseNotSetException;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
+@Deprecated(since = "24.12.0")
 public class MinerStart implements JsonRpcMethod {
 
   private final MiningCoordinator miningCoordinator;

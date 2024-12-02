@@ -52,27 +52,34 @@ import picocli.CommandLine.ParameterException;
 /** The Mining CLI options. */
 public class MiningOptions implements CLIOptions<MiningConfiguration> {
 
+  private static final String DEPRECATION_PREFIX =
+      "Deprecated. PoW consensus is deprecated. See CHANGELOG for alternative options. ";
+
   @Option(
       names = {"--miner-enabled"},
-      description = "Set if node will perform mining (default: ${DEFAULT-VALUE})")
+      description =
+          DEPRECATION_PREFIX + "Set if node will perform mining (default: ${DEFAULT-VALUE})")
   private Boolean isMiningEnabled = false;
 
   @Option(
       names = {"--miner-stratum-enabled"},
       description =
-          "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})."
+          DEPRECATION_PREFIX
+              + "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})."
               + " Compatible with Proof of Work (PoW) only."
               + " Requires the network option (--network) to be set to CLASSIC.")
   private Boolean iStratumMiningEnabled = false;
 
   @Option(
       names = {"--miner-stratum-host"},
-      description = "Host for Stratum network mining service (default: ${DEFAULT-VALUE})")
+      description =
+          DEPRECATION_PREFIX
+              + "Host for Stratum network mining service (default: ${DEFAULT-VALUE})")
   private String stratumNetworkInterface = "0.0.0.0";
 
   @Option(
       names = {"--miner-stratum-port"},
-      description = "Stratum port binding (default: ${DEFAULT-VALUE})")
+      description = DEPRECATION_PREFIX + "Stratum port binding (default: ${DEFAULT-VALUE})")
   private Integer stratumPort = 8008;
 
   @Option(
@@ -124,7 +131,8 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       names = {"--block-txs-selection-max-time"},
       converter = PositiveNumberConverter.class,
       description =
-          "Specifies the maximum time, in milliseconds, that could be spent selecting transactions to be included in the block."
+          DEPRECATION_PREFIX
+              + "Specifies the maximum time, in milliseconds, that could be spent selecting transactions to be included in the block."
               + " Not compatible with PoA networks, see poa-block-txs-selection-max-time. (default: ${DEFAULT-VALUE})")
   private PositiveNumber nonPoaBlockTxsSelectionMaxTime =
       DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
@@ -146,34 +154,40 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         hidden = true,
         names = {"--Xminer-remote-sealers-limit"},
         description =
-            "Limits the number of remote sealers that can submit their hashrates (default: ${DEFAULT-VALUE})")
+            DEPRECATION_PREFIX
+                + "Limits the number of remote sealers that can submit their hashrates (default: ${DEFAULT-VALUE})")
     private Integer remoteSealersLimit = DEFAULT_REMOTE_SEALERS_LIMIT;
 
     @CommandLine.Option(
         hidden = true,
         names = {"--Xminer-remote-sealers-hashrate-ttl"},
         description =
-            "Specifies the lifetime of each entry in the cache. An entry will be automatically deleted if no update has been received before the deadline (default: ${DEFAULT-VALUE} minutes)")
+            DEPRECATION_PREFIX
+                + "Specifies the lifetime of each entry in the cache. An entry will be automatically deleted if no update has been received before the deadline (default: ${DEFAULT-VALUE} minutes)")
     private Long remoteSealersTimeToLive = DEFAULT_REMOTE_SEALERS_TTL;
 
     @CommandLine.Option(
         hidden = true,
         names = {"--Xminer-pow-job-ttl"},
         description =
-            "Specifies the time PoW jobs are kept in cache and will accept a solution from miners (default: ${DEFAULT-VALUE} milliseconds)")
+            DEPRECATION_PREFIX
+                + "Specifies the time PoW jobs are kept in cache and will accept a solution from miners (default: ${DEFAULT-VALUE} milliseconds)")
     private Long powJobTimeToLive = DEFAULT_POW_JOB_TTL;
 
     @CommandLine.Option(
         hidden = true,
         names = {"--Xmax-ommers-depth"},
         description =
-            "Specifies the depth of ommer blocks to accept when receiving solutions (default: ${DEFAULT-VALUE})")
+            DEPRECATION_PREFIX
+                + "Specifies the depth of ommer blocks to accept when receiving solutions (default: ${DEFAULT-VALUE})")
     private Integer maxOmmersDepth = DEFAULT_MAX_OMMERS_DEPTH;
 
     @CommandLine.Option(
         hidden = true,
         names = {"--Xminer-stratum-extranonce"},
-        description = "Extranonce for Stratum network miners (default: ${DEFAULT-VALUE})")
+        description =
+            DEPRECATION_PREFIX
+                + "Extranonce for Stratum network miners (default: ${DEFAULT-VALUE})")
     private String stratumExtranonce = "080c";
 
     @CommandLine.Option(
@@ -230,6 +244,9 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       final GenesisConfigOptions genesisConfigOptions,
       final boolean isMergeEnabled,
       final Logger logger) {
+    if (Boolean.TRUE.equals(isMiningEnabled)) {
+      logger.warn("PoW consensus is deprecated. See CHANGELOG for alternative options.");
+    }
     if (Boolean.TRUE.equals(isMiningEnabled) && coinbase == null) {
       throw new ParameterException(
           commandLine,

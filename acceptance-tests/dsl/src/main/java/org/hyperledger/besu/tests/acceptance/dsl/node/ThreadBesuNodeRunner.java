@@ -197,7 +197,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .permissioningService(permissioningService)
         .metricsConfiguration(node.getMetricsConfiguration())
         .p2pEnabled(node.isP2pEnabled())
-        .p2pTLSConfiguration(node.getTLSConfiguration())
         .graphQLConfiguration(GraphQLConfiguration.createDefault())
         .staticNodes(node.getStaticNodes().stream().map(EnodeURLImpl::fromString).toList())
         .besuPluginContext(besuPluginContext)
