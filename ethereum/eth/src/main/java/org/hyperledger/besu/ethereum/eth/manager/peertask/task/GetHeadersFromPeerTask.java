@@ -205,7 +205,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   }
 
   @Override
-  public void postProcessResult(PeerTaskExecutorResult<List<BlockHeader>> result) {
+  public void postProcessResult(final PeerTaskExecutorResult<List<BlockHeader>> result) {
     final AtomicReference<BlockHeader> highestBlockHeader =
         new AtomicReference<>(result.result().get().getFirst());
     for (BlockHeader blockHeader : result.result().get()) {
