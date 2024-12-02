@@ -59,27 +59,6 @@ public class EthProtocolManagerTestUtil {
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
       final EthMessages ethMessages,
-      final EthContext ethContext) {
-    return create(
-        blockchain,
-        ethScheduler,
-        worldStateArchive,
-        transactionPool,
-        ethereumWireProtocolConfiguration,
-        ethPeers,
-        ethMessages,
-        ethContext,
-        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-  }
-
-  public static EthProtocolManager create(
-      final Blockchain blockchain,
-      final EthScheduler ethScheduler,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-      final EthPeers ethPeers,
-      final EthMessages ethMessages,
       final EthContext ethContext,
       final ForkIdManager forkIdManager) {
 

@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
@@ -145,16 +146,16 @@ public abstract class AbstractMessageTaskTest<T, R> {
             MiningConfiguration.newDefault());
     transactionPool.setEnabled();
 
-    ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            blockchain,
-            ethScheduler,
-            protocolContext.getWorldStateArchive(),
-            transactionPool,
-            EthProtocolConfiguration.defaultConfig(),
-            ethPeers,
-            ethMessages,
-            ethContext);
+    ethProtocolManager = EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(protocolSchedule)
+            .setBlockchain(blockchain)
+            .setEthScheduler(ethScheduler)
+            .setTransactionPool(transactionPool)
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthPeers(ethPeers)
+            .setEthMessages(ethMessages)
+            .setEthContext(ethContext)
+            .build();
   }
 
   protected abstract T generateDataToBeRequested();
