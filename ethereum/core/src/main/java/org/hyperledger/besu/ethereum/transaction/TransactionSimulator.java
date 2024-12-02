@@ -436,17 +436,17 @@ public class TransactionSimulator {
       maxFeePerBlobGas = callParams.getMaxFeePerBlobGas().orElse(blobGasPrice);
     }
 
-    if (callParams.getMaxPriorityFeePerGas().isEmpty()
-      && callParams.getMaxFeePerGas().isEmpty()) {
+    if (callParams.getMaxPriorityFeePerGas().isEmpty() && callParams.getMaxFeePerGas().isEmpty()) {
       // if maxPriorityFeePerGas and maxFeePerGas are not set, use gasPrice
       transactionBuilder.gasPrice(gasPrice);
     }
 
     if (protocolSchedule.getChainId().isPresent()) {
-      // only set maxFeePerGas and maxPriorityFeePerGas if they are present, otherwise transaction will be considered
+      // only set maxFeePerGas and maxPriorityFeePerGas if they are present, otherwise transaction
+      // will be considered
       // EIP-1559 transaction even if the simulation is for a legacy transaction
       if (callParams.getMaxPriorityFeePerGas().isPresent()
-        || callParams.getMaxFeePerGas().isPresent()) {
+          || callParams.getMaxFeePerGas().isPresent()) {
         transactionBuilder.maxFeePerGas(maxFeePerGas).maxPriorityFeePerGas(maxPriorityFeePerGas);
       }
     }
