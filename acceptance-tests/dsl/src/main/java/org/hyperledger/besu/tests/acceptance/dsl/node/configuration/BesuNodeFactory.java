@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
@@ -69,7 +68,6 @@ public class BesuNodeFactory {
         config.getGenesisConfigProvider(),
         config.isP2pEnabled(),
         config.getP2pPort(),
-        config.getTLSConfiguration(),
         config.getNetworkingConfiguration(),
         config.isDiscoveryEnabled(),
         config.isBootnodeEligible(),
@@ -583,7 +581,6 @@ public class BesuNodeFactory {
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
-            .p2pTLSEnabled(name, type)
             .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(false))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
@@ -594,21 +591,6 @@ public class BesuNodeFactory {
                         nodes,
                         GenesisConfigurationFactory::createIbft2GenesisConfig))
             .build());
-  }
-
-  public BesuNode createQbftTLSJKSNodeWithValidators(final String name, final String... validators)
-      throws IOException {
-    return createQbftTLSNodeWithValidators(name, KeyStoreWrapper.KEYSTORE_TYPE_JKS, validators);
-  }
-
-  public BesuNode createQbftTLSPKCS12NodeWithValidators(
-      final String name, final String... validators) throws IOException {
-    return createQbftTLSNodeWithValidators(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, validators);
-  }
-
-  public BesuNode createQbftTLSPKCS11NodeWithValidators(
-      final String name, final String... validators) throws IOException {
-    return createQbftTLSNodeWithValidators(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, validators);
   }
 
   public BesuNode createQbftNodeWithValidators(final String name, final String... validators)

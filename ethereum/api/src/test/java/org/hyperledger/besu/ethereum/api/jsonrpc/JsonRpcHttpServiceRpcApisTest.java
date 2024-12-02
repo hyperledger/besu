@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -235,7 +236,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                 mock(EthPeers.class),
                 vertx,
                 mock(ApiConfiguration.class),
-                Optional.empty());
+                Optional.empty(),
+                mock(TransactionSimulator.class));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -346,7 +348,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                 mock(EthPeers.class),
                 vertx,
                 mock(ApiConfiguration.class),
-                Optional.empty());
+                Optional.empty(),
+                mock(TransactionSimulator.class));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,

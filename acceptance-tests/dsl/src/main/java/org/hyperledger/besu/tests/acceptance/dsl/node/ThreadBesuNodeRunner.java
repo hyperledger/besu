@@ -197,7 +197,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .permissioningService(permissioningService)
         .metricsConfiguration(node.getMetricsConfiguration())
         .p2pEnabled(node.isP2pEnabled())
-        .p2pTLSConfiguration(node.getTLSConfiguration())
         .graphQLConfiguration(GraphQLConfiguration.createDefault())
         .staticNodes(node.getStaticNodes().stream().map(EnodeURLImpl::fromString).toList())
         .besuPluginContext(besuPluginContext)
@@ -459,7 +458,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final BesuControllerBuilder builder,
         final MetricsSystem metricsSystem,
         final KeyValueStorageProvider storageProvider,
-        final MiningConfiguration miningConfiguration) {
+        final MiningConfiguration miningConfiguration,
+        final ApiConfiguration apiConfiguration) {
 
       builder
           .synchronizerConfiguration(synchronizerConfiguration)
@@ -474,6 +474,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           .maxRemotelyInitiatedPeers(15)
           .miningParameters(miningConfiguration)
           .randomPeerPriority(false)
+          .apiConfiguration(apiConfiguration)
           .besuComponent(null);
       return builder.build();
     }
