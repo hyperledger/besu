@@ -102,44 +102,6 @@ public class EthProtocolManagerTestUtil {
         forkIdManager);
   }
 
-  public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final EthScheduler ethScheduler,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration configuration) {
-
-    final EthPeers peers =
-        new EthPeers(
-            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
-            TestClock.fixed(),
-            new NoOpMetricsSystem(),
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-            Collections.emptyList(),
-            Bytes.random(64),
-            25,
-            25,
-            false,
-            SyncMode.FAST,
-            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-    final EthMessages messages = new EthMessages();
-
-    final ChainHeadTracker chtMock = getChainHeadTrackerMock();
-
-    peers.setChainHeadTracker(chtMock);
-
-    return create(
-        blockchain,
-        ethScheduler,
-        worldStateArchive,
-        transactionPool,
-        configuration,
-        peers,
-        messages,
-        new EthContext(peers, messages, ethScheduler));
-  }
-
   public static ChainHeadTracker getChainHeadTrackerMock() {
     final ChainHeadTracker chtMock = mock(ChainHeadTracker.class);
     final BlockHeader blockHeaderMock = mock(BlockHeader.class);
