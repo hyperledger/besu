@@ -156,7 +156,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
             new ParallelTransactionPreprocessing());
     if (blockProcessingResult.isFailed()) {
       // Fallback to non-parallel processing if there is a block processing exception .
-      LOG.info(
+      LOG.warn(
           "Block processing failed. Falling back to non-parallel processing for block #{} ({})",
           blockHeader.getNumber(),
           blockHeader.getBlockHash());
