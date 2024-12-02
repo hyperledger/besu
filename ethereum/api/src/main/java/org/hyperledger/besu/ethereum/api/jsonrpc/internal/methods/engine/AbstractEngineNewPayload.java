@@ -585,7 +585,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
     double mgasPerSec = (timeInS != 0) ? block.getHeader().getGasUsed() / (timeInS * 1_000_000) : 0;
     message.append(
-        "|%2d blobs|base fee %s|gas used %,11d (%5.1f%%)|exec time %01.3fs|mgas/s %6.2f");
+        "|%2d blobs| base fee %s| gas used %,11d (%5.1f%%)| exec time %01.3fs| mgas/s %6.2f");
     messageArgs.addAll(
         List.of(
             blobCount,
@@ -597,10 +597,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (nbParallelizedTransations.isPresent()) {
       double parallelizedTxPercentage =
           (double) (nbParallelizedTransations.get() * 100) / nbTransactions;
-      message.append("|parallel txs %5.1f%%");
+      message.append("| parallel txs %5.1f%%");
       messageArgs.add(parallelizedTxPercentage);
     }
-    message.append("|peers: %2d");
+    message.append("| peers: %2d");
     messageArgs.add(ethPeers.peerCount());
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
   }
