@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -38,9 +37,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
-import org.hyperledger.besu.testutil.DeterministicEthScheduler.TimeoutPolicy;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
@@ -103,21 +100,6 @@ public class EthProtocolManagerTestUtil {
         mock(SynchronizerConfiguration.class),
         ethScheduler,
         forkIdManager);
-  }
-
-  public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethProtocolConfiguration) {
-    return create(
-        protocolSchedule,
-        blockchain,
-        new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT),
-        worldStateArchive,
-        transactionPool,
-        ethProtocolConfiguration);
   }
 
   public static EthProtocolManager create(
