@@ -146,9 +146,6 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
       returnValue.completeExceptionally(new RuntimeException(logMessage));
       LOG.debug(logMessage);
     } else {
-      taskResult
-          .ethPeer()
-          .ifPresent((peer) -> peer.chainState().update(taskResult.result().get().getFirst()));
       returnValue.complete(taskResult.result().get());
     }
     return returnValue;

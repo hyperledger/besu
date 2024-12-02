@@ -106,7 +106,6 @@ public class ChainHeadTracker {
                                   + ")")
                       .addArgument(peer::getLoggableId)
                       .log();
-                  peer.chainState().update(chainHeadHeader);
                   return CompletableFuture.completedFuture(chainHeadHeader);
                 } else {
                   LOG.atDebug()

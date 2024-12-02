@@ -82,4 +82,6 @@ public interface PeerTask<T> {
    * @return a PeerTaskValidationResponse to describe the result of the check
    */
   PeerTaskValidationResponse validateResult(T result);
+
+  default void postProcessResult(PeerTaskExecutorResult<T> result) {}
 }

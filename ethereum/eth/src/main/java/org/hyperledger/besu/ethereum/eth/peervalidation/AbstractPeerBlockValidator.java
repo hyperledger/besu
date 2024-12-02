@@ -87,12 +87,9 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
                     || taskResult.result().isEmpty()) {
                   resultFuture = CompletableFuture.completedFuture(false);
                 } else {
-                  final List<BlockHeader> headers = taskResult.result().get();
-                  taskResult
-                      .ethPeer()
-                      .ifPresent((peer) -> peer.chainState().update(headers.getFirst()));
                   resultFuture =
-                      CompletableFuture.completedFuture(validateBlockHeaders(ethPeer, headers));
+                      CompletableFuture.completedFuture(
+                          validateBlockHeaders(ethPeer, taskResult.result().get()));
                 }
                 return resultFuture;
               });

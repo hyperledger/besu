@@ -149,6 +149,7 @@ public class PeerTaskExecutor {
                   Optional.ofNullable(result),
                   PeerTaskExecutorResponseCode.SUCCESS,
                   Optional.of(peer));
+          peerTask.postProcessResult(executorResult);
         } else {
           LOG.debug(
               "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId());

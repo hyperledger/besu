@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import org.slf4j.Logger;
@@ -200,6 +202,18 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
       }
     }
     return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
+  }
+
+  @Override
+  public void postProcessResult(PeerTaskExecutorResult<List<BlockHeader>> result) {
+    final AtomicReference<BlockHeader> highestBlockHeader =
+        new AtomicReference<>(result.result().get().getFirst());
+    for (BlockHeader blockHeader : result.result().get()) {
+      if (highestBlockHeader.get().getNumber() < blockHeader.getNumber()) {
+        highestBlockHeader.set(blockHeader);
+      }
+    }
+    result.ethPeer().ifPresent((ethPeer) -> ethPeer.chainState().update(highestBlockHeader.get()));
   }
 
   @Override
