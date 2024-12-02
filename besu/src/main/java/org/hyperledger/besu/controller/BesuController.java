@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
 import java.io.Closeable;
@@ -66,7 +67,6 @@ public class BesuController implements java.io.Closeable {
   private final NodeKey nodeKey;
   private final Synchronizer synchronizer;
   private final JsonRpcMethods additionalJsonRpcMethodsFactory;
-
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
   private final PrivacyParameters privacyParameters;
@@ -77,6 +77,7 @@ public class BesuController implements java.io.Closeable {
   private final EthPeers ethPeers;
   private final StorageProvider storageProvider;
   private final DataStorageConfiguration dataStorageConfiguration;
+  private final TransactionSimulator transactionSimulator;
 
   /**
    * Instantiates a new Besu controller.
@@ -99,6 +100,7 @@ public class BesuController implements java.io.Closeable {
    * @param ethPeers the eth peers
    * @param storageProvider the storage provider
    * @param dataStorageConfiguration the data storage configuration
+   * @param transactionSimulator the transaction simulator
    */
   BesuController(
       final ProtocolSchedule protocolSchedule,
@@ -118,7 +120,8 @@ public class BesuController implements java.io.Closeable {
       final PluginServiceFactory additionalPluginServices,
       final EthPeers ethPeers,
       final StorageProvider storageProvider,
-      final DataStorageConfiguration dataStorageConfiguration) {
+      final DataStorageConfiguration dataStorageConfiguration,
+      final TransactionSimulator transactionSimulator) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -137,6 +140,7 @@ public class BesuController implements java.io.Closeable {
     this.ethPeers = ethPeers;
     this.storageProvider = storageProvider;
     this.dataStorageConfiguration = dataStorageConfiguration;
+    this.transactionSimulator = transactionSimulator;
   }
 
   /**
@@ -305,6 +309,15 @@ public class BesuController implements java.io.Closeable {
    */
   public DataStorageConfiguration getDataStorageConfiguration() {
     return dataStorageConfiguration;
+  }
+
+  /**
+   * Gets the transaction simulator
+   *
+   * @return the transaction simulator
+   */
+  public TransactionSimulator getTransactionSimulator() {
+    return transactionSimulator;
   }
 
   /** The type Builder. */
