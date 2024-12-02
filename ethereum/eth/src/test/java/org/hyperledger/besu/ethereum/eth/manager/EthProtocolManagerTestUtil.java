@@ -57,22 +57,6 @@ public class EthProtocolManagerTestUtil {
   public static EthProtocolManager create(
       final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
-      final TimeoutPolicy timeoutPolicy,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
-    return create(
-        protocolSchedule,
-        blockchain,
-        new DeterministicEthScheduler(timeoutPolicy),
-        worldStateArchive,
-        transactionPool,
-        ethereumWireProtocolConfiguration);
-  }
-
-  public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,

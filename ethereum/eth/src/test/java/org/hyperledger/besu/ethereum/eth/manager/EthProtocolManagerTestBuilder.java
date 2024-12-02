@@ -54,6 +54,7 @@ public class EthProtocolManagerTestBuilder {
   private WorldStateArchive worldStateArchive;
   private TransactionPool transactionPool;
   private EthProtocolConfiguration ethereumWireProtocolConfiguration;
+  private ForkIdManager forkIdManager;
   private EthPeers ethPeers;
   private EthMessages ethMessages;
   private EthMessages snapMessages;
@@ -108,6 +109,11 @@ public class EthProtocolManagerTestBuilder {
   public EthProtocolManagerTestBuilder setEthereumWireProtocolConfiguration(
       final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
     this.ethereumWireProtocolConfiguration = ethereumWireProtocolConfiguration;
+    return this;
+  }
+
+  public EthProtocolManagerTestBuilder setForkIdManager(final ForkIdManager forkIdManager) {
+    this.forkIdManager = forkIdManager;
     return this;
   }
 
@@ -179,6 +185,10 @@ public class EthProtocolManagerTestBuilder {
     if (ethereumWireProtocolConfiguration == null) {
       ethereumWireProtocolConfiguration = EthProtocolConfiguration.defaultConfig();
     }
+    if (forkIdManager == null) {
+      forkIdManager =
+          new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false);
+    }
     if (ethPeers == null) {
       ethPeers =
           new EthPeers(
@@ -192,8 +202,7 @@ public class EthProtocolManagerTestBuilder {
               25,
               false,
               SyncMode.FAST,
-              new ForkIdManager(
-                  blockchain, Collections.emptyList(), Collections.emptyList(), false));
+              forkIdManager);
       ethPeers.setChainHeadTracker(EthProtocolManagerTestUtil.getChainHeadTrackerMock());
     }
     if (ethMessages == null) {
@@ -230,6 +239,7 @@ public class EthProtocolManagerTestBuilder {
         peerValidators,
         mergePeerFilter,
         synchronizerConfiguration,
-        ethScheduler);
+        ethScheduler,
+        forkIdManager);
   }
 }
