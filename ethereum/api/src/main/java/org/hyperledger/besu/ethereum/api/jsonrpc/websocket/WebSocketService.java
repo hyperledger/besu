@@ -122,9 +122,16 @@ public class WebSocketService {
     // Check if SSL/TLS is enabled in the configuration
     if (configuration.isSslEnabled()) {
       serverOptions.setSsl(true);
+      String keystorePassword = null;
 
       String keystorePath = configuration.getKeyStorePath().orElse(null);
-      String keystorePassword = configuration.getKeyStorePassword().orElse(null);
+      try {
+        keystorePassword = configuration.getKeyStorePassword().orElse(null);
+      } catch (Exception e) {
+        LOG.error("Error reading keystore password", e);
+        resultFuture.completeExceptionally(e);
+        return resultFuture;
+      }
       String keyPath = configuration.getKeyPath().orElse(null);
       String certPath = configuration.getCertPath().orElse(null);
 
@@ -146,9 +153,16 @@ public class WebSocketService {
     //  Set up truststore for client authentication (mTLS)
     if (configuration.isClientAuthEnabled()) {
       serverOptions.setClientAuth(ClientAuth.REQUIRED);
+      String truststorePassword;
 
       String truststorePath = configuration.getTrustStorePath().orElse(null);
-      String truststorePassword = configuration.getTrustStorePassword().orElse("");
+      try {
+        truststorePassword = configuration.getTrustStorePassword().orElse(null);
+      } catch (Exception e) {
+        LOG.error("Error reading truststore password", e);
+        resultFuture.completeExceptionally(e);
+        return resultFuture;
+      }
       String truststoreType = configuration.getTrustStoreType().orElse("JKS");
       String trustCertPath = configuration.getTrustCertPath().orElse(null);
 
