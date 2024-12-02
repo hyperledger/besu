@@ -100,13 +100,13 @@ public class TransactionSimulatorTest {
 
   @BeforeEach
   public void setUp() {
-    final var miningParameters = MiningConfiguration.newDefault();
+    final var miningConfiguration = MiningConfiguration.newDefault();
     this.transactionSimulator =
         new TransactionSimulator(
-            blockchain, worldStateArchive, protocolSchedule, miningParameters, 0);
+            blockchain, worldStateArchive, protocolSchedule, miningConfiguration, 0);
     this.cappedTransactionSimulator =
         new TransactionSimulator(
-            blockchain, worldStateArchive, protocolSchedule, miningParameters, GAS_CAP);
+            blockchain, worldStateArchive, protocolSchedule, miningConfiguration, GAS_CAP);
   }
 
   @Test

@@ -86,7 +86,7 @@ public class TransactionSimulator {
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
-  private final MiningConfiguration miningParameters;
+  private final MiningConfiguration miningConfiguration;
   private final long rpcGasCap;
 
   public TransactionSimulator(
@@ -98,7 +98,7 @@ public class TransactionSimulator {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
-    this.miningParameters = miningConfiguration;
+    this.miningConfiguration = miningConfiguration;
     this.rpcGasCap = rpcGasCap;
   }
 
@@ -185,7 +185,7 @@ public class TransactionSimulator {
     return BlockHeaderBuilder.createPending(
             protocolSpec,
             chainHeadHeader,
-            miningParameters,
+            miningConfiguration,
             timestamp,
             Optional.empty(),
             Optional.empty())

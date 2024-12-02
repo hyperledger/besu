@@ -97,12 +97,13 @@ public class JsonRpcTestMethodsFactory {
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
-    final var miningParameters = MiningConfiguration.newDefault();
+    final var miningConfiguration = MiningConfiguration.newDefault();
     this.blockchainQueries =
-        new BlockchainQueries(protocolSchedule, blockchain, stateArchive, miningParameters);
+        new BlockchainQueries(protocolSchedule, blockchain, stateArchive, miningConfiguration);
 
     this.transactionSimulator =
-        new TransactionSimulator(blockchain, stateArchive, protocolSchedule, miningParameters, 0L);
+        new TransactionSimulator(
+            blockchain, stateArchive, protocolSchedule, miningConfiguration, 0L);
   }
 
   public JsonRpcTestMethodsFactory(
@@ -115,13 +116,14 @@ public class JsonRpcTestMethodsFactory {
     this.stateArchive = stateArchive;
     this.context = context;
     this.protocolSchedule = importer.getProtocolSchedule();
-    final var miningParameters = MiningConfiguration.newDefault();
+    final var miningConfiguration = MiningConfiguration.newDefault();
     this.blockchainQueries =
         new BlockchainQueries(
-            importer.getProtocolSchedule(), blockchain, stateArchive, miningParameters);
+            importer.getProtocolSchedule(), blockchain, stateArchive, miningConfiguration);
     this.synchronizer = mock(Synchronizer.class);
     this.transactionSimulator =
-        new TransactionSimulator(blockchain, stateArchive, protocolSchedule, miningParameters, 0L);
+        new TransactionSimulator(
+            blockchain, stateArchive, protocolSchedule, miningConfiguration, 0L);
   }
 
   public JsonRpcTestMethodsFactory(
@@ -136,12 +138,13 @@ public class JsonRpcTestMethodsFactory {
     this.context = context;
     this.synchronizer = synchronizer;
     this.protocolSchedule = importer.getProtocolSchedule();
-    final var miningParameters = MiningConfiguration.newDefault();
+    final var miningConfiguration = MiningConfiguration.newDefault();
     this.blockchainQueries =
         new BlockchainQueries(
-            importer.getProtocolSchedule(), blockchain, stateArchive, miningParameters);
+            importer.getProtocolSchedule(), blockchain, stateArchive, miningConfiguration);
     this.transactionSimulator =
-        new TransactionSimulator(blockchain, stateArchive, protocolSchedule, miningParameters, 0L);
+        new TransactionSimulator(
+            blockchain, stateArchive, protocolSchedule, miningConfiguration, 0L);
   }
 
   public BlockchainQueries getBlockchainQueries() {
