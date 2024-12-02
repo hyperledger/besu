@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSch
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
-import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
@@ -82,8 +82,11 @@ public class ChainHeadTrackerTest {
   public void setup(final DataStorageFormat storageFormat, final boolean isPeerTaskSystemEnabled) {
     blockchainSetupUtil = BlockchainSetupUtil.forTesting(storageFormat);
     blockchain = blockchainSetupUtil.getBlockchain();
-    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
-    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain, peerTaskExecutor);
+      peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+    ethProtocolManager = EthProtocolManagerTestBuilder.builder()
+            .setBlockchain(blockchain)
+            .setPeerTaskExecutor(peerTaskExecutor)
+            .build();
     respondingPeer =
         RespondingEthPeer.builder()
             .ethProtocolManager(ethProtocolManager)

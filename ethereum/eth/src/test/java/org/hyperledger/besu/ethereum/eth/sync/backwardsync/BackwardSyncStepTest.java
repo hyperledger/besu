@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
-import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
@@ -142,7 +142,10 @@ public class BackwardSyncStepTest {
     when(context.getBatchSize()).thenReturn(5);
 
     EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(ethScheduler, peerTaskExecutor);
+        EthProtocolManagerTestBuilder.builder()
+                .setEthScheduler(ethScheduler)
+                .setPeerTaskExecutor(peerTaskExecutor)
+                .build();
 
     peer =
         RespondingEthPeer.builder()
@@ -193,6 +196,7 @@ public class BackwardSyncStepTest {
 
   @Test
   public void shouldFindHashToSync() {
+
     final BackwardChain backwardChain = createBackwardChain(REMOTE_HEIGHT - 4, REMOTE_HEIGHT);
     BackwardSyncStep step = new BackwardSyncStep(context, backwardChain);
     final Hash hash =

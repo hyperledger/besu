@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
@@ -114,8 +115,9 @@ class FastWorldStateDownloaderTest {
               .build());
 
   final EthProtocolManager ethProtocolManager =
-      EthProtocolManagerTestUtil.create(
-          new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()), null);
+      EthProtocolManagerTestBuilder.builder()
+          .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
+          .build();
 
   @AfterEach
   public void tearDown() throws Exception {
@@ -240,7 +242,9 @@ class FastWorldStateDownloaderTest {
     final DeterministicEthScheduler.TimeoutPolicy timeoutPolicy =
         DeterministicEthScheduler.TimeoutPolicy.timeoutXTimes(2);
     final EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(timeoutPolicy, null);
+        EthProtocolManagerTestBuilder.builder()
+            .setEthScheduler(new DeterministicEthScheduler(timeoutPolicy))
+            .build();
     final MockExecutorService serviceExecutor =
         ((DeterministicEthScheduler) ethProtocolManager.ethContext().getScheduler())
             .mockServiceExecutor();
@@ -384,7 +388,7 @@ class FastWorldStateDownloaderTest {
 
   @SuppressWarnings("unchecked")
   private void testCancellation(final boolean shouldCancelFuture) {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(null);
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     // Prevent the persistence service from running
     final MockExecutorService serviceExecutor =
         ((DeterministicEthScheduler) ethProtocolManager.ethContext().getScheduler())
@@ -663,8 +667,9 @@ class FastWorldStateDownloaderTest {
   @Timeout(value = 60)
   void stalledDownloader() {
     final EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()), null);
+        EthProtocolManagerTestBuilder.builder()
+            .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
+            .build();
 
     // Setup "remote" state
     final ForestWorldStateKeyValueStorage remoteStorage =

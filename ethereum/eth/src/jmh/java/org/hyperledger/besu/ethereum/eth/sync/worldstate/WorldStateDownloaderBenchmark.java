@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
@@ -94,13 +95,14 @@ public class WorldStateDownloaderBenchmark {
 
     tempDir = Files.createTempDir().toPath();
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            new EthScheduler(
-                syncConfig.getDownloaderParallelism(),
-                syncConfig.getTransactionsParallelism(),
-                syncConfig.getComputationParallelism(),
-                metricsSystem),
-            null);
+        EthProtocolManagerTestBuilder.builder()
+            .setEthScheduler(
+                new EthScheduler(
+                    syncConfig.getDownloaderParallelism(),
+                    syncConfig.getTransactionsParallelism(),
+                    syncConfig.getComputationParallelism(),
+                    metricsSystem))
+            .build();
 
     peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockHeader.getNumber());
 

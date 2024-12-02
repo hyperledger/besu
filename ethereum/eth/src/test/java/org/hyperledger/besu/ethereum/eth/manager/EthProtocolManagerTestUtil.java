@@ -15,255 +15,28 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
-import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
-import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
-import org.hyperledger.besu.testutil.DeterministicEthScheduler.TimeoutPolicy;
-import org.hyperledger.besu.testutil.TestClock;
 
-import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.mockito.Mockito;
 
 public class EthProtocolManagerTestUtil {
-
-  public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final TimeoutPolicy timeoutPolicy,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
-    return create(
-        protocolSchedule,
-        blockchain,
-        timeoutPolicy,
-        worldStateArchive,
-        transactionPool,
-        ethereumWireProtocolConfiguration,
-        null);
-  }
-
-  public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final TimeoutPolicy timeoutPolicy,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-      final PeerTaskExecutor peerTaskExecutor) {
-    return create(
-        protocolSchedule,
-        blockchain,
-        new DeterministicEthScheduler(timeoutPolicy),
-        worldStateArchive,
-        transactionPool,
-        ethereumWireProtocolConfiguration,
-        peerTaskExecutor);
-  }
-
-  public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-      final Optional<MergePeerFilter> mergePeerFilter,
-      final PeerTaskExecutor peerTaskExecutor) {
-
-    final EthPeers peers =
-        new EthPeers(
-            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
-            TestClock.fixed(),
-            new NoOpMetricsSystem(),
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-            Collections.emptyList(),
-            Bytes.random(64),
-            25,
-            25,
-            false,
-            SyncMode.FAST,
-            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-
-    final ChainHeadTracker chainHeadTrackerMock = getChainHeadTrackerMock();
-    peers.setChainHeadTracker(chainHeadTrackerMock);
-
-    final EthMessages messages = new EthMessages();
-    final EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
-    final EthContext ethContext = new EthContext(peers, messages, ethScheduler, peerTaskExecutor);
-
-    return new EthProtocolManager(
-        blockchain,
-        BigInteger.ONE,
-        worldStateArchive,
-        transactionPool,
-        ethereumWireProtocolConfiguration,
-        peers,
-        messages,
-        ethContext,
-        Collections.emptyList(),
-        mergePeerFilter,
-        mock(SynchronizerConfiguration.class),
-        ethScheduler,
-        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-  }
-
-  public static EthProtocolManager create(
-      final Blockchain blockchain,
-      final EthScheduler ethScheduler,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-      final EthPeers ethPeers,
-      final EthMessages ethMessages,
-      final EthContext ethContext) {
-    return create(
-        blockchain,
-        ethScheduler,
-        worldStateArchive,
-        transactionPool,
-        ethereumWireProtocolConfiguration,
-        ethPeers,
-        ethMessages,
-        ethContext,
-        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-  }
-
-  public static EthProtocolManager create(
-      final Blockchain blockchain,
-      final EthScheduler ethScheduler,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-      final EthPeers ethPeers,
-      final EthMessages ethMessages,
-      final EthContext ethContext,
-      final ForkIdManager forkIdManager) {
-
-    ethPeers.setChainHeadTracker(getChainHeadTrackerMock());
-
-    final BigInteger networkId = BigInteger.ONE;
-    return new EthProtocolManager(
-        blockchain,
-        networkId,
-        worldStateArchive,
-        transactionPool,
-        ethereumWireProtocolConfiguration,
-        ethPeers,
-        ethMessages,
-        ethContext,
-        Collections.emptyList(),
-        Optional.empty(),
-        mock(SynchronizerConfiguration.class),
-        ethScheduler,
-        forkIdManager);
-  }
-
-  public static EthProtocolManager create(
-      final Blockchain blockchain, final PeerTaskExecutor peerTaskExecutor) {
-    return create(
-        ProtocolScheduleFixture.MAINNET,
-        blockchain,
-        new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT),
-        peerTaskExecutor);
-  }
-
-  public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethProtocolConfiguration,
-      final PeerTaskExecutor peerTaskExecutor) {
-    return create(
-        protocolSchedule,
-        blockchain,
-        new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT),
-        worldStateArchive,
-        transactionPool,
-        ethProtocolConfiguration,
-        peerTaskExecutor);
-  }
-
-  public static EthProtocolManager create(
-      final EthScheduler ethScheduler, final PeerTaskExecutor peerTaskExecutor) {
-    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
-    final GenesisConfigFile config = GenesisConfigFile.mainnet();
-    final GenesisState genesisState = GenesisState.fromConfig(config, protocolSchedule);
-    final Blockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    return create(protocolSchedule, blockchain, ethScheduler, peerTaskExecutor);
-  }
-
-  public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final EthScheduler ethScheduler,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration configuration,
-      final PeerTaskExecutor peerTaskExecutor) {
-
-    final EthPeers peers =
-        new EthPeers(
-            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
-            TestClock.fixed(),
-            new NoOpMetricsSystem(),
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-            Collections.emptyList(),
-            Bytes.random(64),
-            25,
-            25,
-            false,
-            SyncMode.FAST,
-            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-    final EthMessages messages = new EthMessages();
-
-    final ChainHeadTracker chtMock = getChainHeadTrackerMock();
-
-    peers.setChainHeadTracker(chtMock);
-
-    return create(
-        blockchain,
-        ethScheduler,
-        worldStateArchive,
-        transactionPool,
-        configuration,
-        peers,
-        messages,
-        new EthContext(peers, messages, ethScheduler, peerTaskExecutor));
-  }
 
   public static ChainHeadTracker getChainHeadTrackerMock() {
     final ChainHeadTracker chtMock = mock(ChainHeadTracker.class);
@@ -274,87 +47,6 @@ public class EthProtocolManagerTestUtil {
     Mockito.lenient().when(blockHeaderMock.getNumber()).thenReturn(0L);
     Mockito.lenient().when(blockHeaderMock.getStateRoot()).thenReturn(Hash.ZERO);
     return chtMock;
-  }
-
-  public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final EthScheduler ethScheduler,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration configuration,
-      final ForkIdManager forkIdManager,
-      final PeerTaskExecutor peerTaskExecutor) {
-
-    final EthPeers peers =
-        new EthPeers(
-            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
-            TestClock.fixed(),
-            new NoOpMetricsSystem(),
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-            Collections.emptyList(),
-            Bytes.random(64),
-            25,
-            25,
-            false,
-            SyncMode.FAST,
-            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-    final EthMessages messages = new EthMessages();
-
-    return create(
-        blockchain,
-        ethScheduler,
-        worldStateArchive,
-        transactionPool,
-        configuration,
-        peers,
-        messages,
-        new EthContext(peers, messages, ethScheduler, peerTaskExecutor),
-        forkIdManager);
-  }
-
-  public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final EthScheduler ethScheduler,
-      final PeerTaskExecutor peerTaskExecutor) {
-    final EthPeers ethPeers =
-        new EthPeers(
-            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
-            TestClock.fixed(),
-            new NoOpMetricsSystem(),
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-            Collections.emptyList(),
-            Bytes.random(64),
-            25,
-            25,
-            false,
-            SyncMode.FAST,
-            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-
-    final ChainHeadTracker chainHeadTrackerMock = getChainHeadTrackerMock();
-    ethPeers.setChainHeadTracker(chainHeadTrackerMock);
-
-    final EthMessages messages = new EthMessages();
-
-    return create(
-        blockchain,
-        ethScheduler,
-        BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST).getWorldArchive(),
-        mock(TransactionPool.class),
-        EthProtocolConfiguration.defaultConfig(),
-        ethPeers,
-        messages,
-        new EthContext(ethPeers, messages, ethScheduler, peerTaskExecutor));
-  }
-
-  public static EthProtocolManager create(final PeerTaskExecutor peerTaskExecutor) {
-    return create(TimeoutPolicy.NEVER_TIMEOUT, peerTaskExecutor);
-  }
-
-  public static EthProtocolManager create(
-      final TimeoutPolicy timeoutPolicy, final PeerTaskExecutor peerTaskExecutor) {
-    return create(new DeterministicEthScheduler(timeoutPolicy), peerTaskExecutor);
   }
 
   // Utility to prevent scheduler from automatically running submitted tasks
