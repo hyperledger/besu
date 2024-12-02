@@ -1181,7 +1181,6 @@ public class EVMExecutor {
   public EVMExecutor messageCallProcessor(
       final Function<EVM, MessageCallProcessor> processorFactory) {
     this.messageCallProcessor = processorFactory.apply(evm);
-    ;
     return this;
   }
 

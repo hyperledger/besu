@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -31,6 +32,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,6 +44,8 @@ public class PushOperationTest {
           EvmSpecVersion.PRAGUE.getMaxEofVersion(), EvmSpecVersion.PRAGUE.getMaxInitcodeSize());
 
   private static final Bytes byteCode = Bytes.wrap(new byte[] {0x00, 0x01, 0x02, 0x03});
+
+  @Mock private EVM evm;
 
   private MessageFrame createMessageFrame(final int pc) {
     MessageFrame frame =
@@ -72,7 +76,7 @@ public class PushOperationTest {
   void unpaddedPushDoesntReachEndCode() {
     MessageFrame frame = createMessageFrame(0);
     final Operation operation = new PushOperation(byteCode.size() - 2, gasCalculator);
-    operation.execute(frame, null);
+    operation.execute(frame, evm);
     assertThat(frame.getStackItem(0).equals(Bytes.fromHexString("0x0102"))).isTrue();
   }
 
@@ -80,7 +84,7 @@ public class PushOperationTest {
   void unpaddedPushUpReachesEndCode() {
     MessageFrame frame = createMessageFrame(0);
     final Operation operation = new PushOperation(byteCode.size() - 1, gasCalculator);
-    operation.execute(frame, null);
+    operation.execute(frame, evm);
     assertThat(frame.getStackItem(0).equals(Bytes.fromHexString("0x010203"))).isTrue();
   }
 
@@ -88,7 +92,7 @@ public class PushOperationTest {
   void paddedPush() {
     MessageFrame frame = createMessageFrame(1);
     final Operation operation = new PushOperation(byteCode.size() - 1, gasCalculator);
-    operation.execute(frame, null);
+    operation.execute(frame, evm);
     assertThat(frame.getStackItem(0).equals(Bytes.fromHexString("0x020300"))).isTrue();
   }
 
@@ -96,7 +100,7 @@ public class PushOperationTest {
   void oobPush() {
     MessageFrame frame = createMessageFrame(byteCode.size());
     final Operation operation = new PushOperation(byteCode.size() - 1, gasCalculator);
-    operation.execute(frame, null);
+    operation.execute(frame, evm);
     assertThat(frame.getStackItem(0).equals(Bytes.EMPTY)).isTrue();
   }
 }

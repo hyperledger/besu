@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -31,8 +32,37 @@ public class VerkleDevnetBlockHeaderFunctions implements BlockHeaderFunctions {
   }
 
   public static Hash createHash(final BlockHeader header) {
-    final Bytes rlp = RLP.encode(header::writeToForVerkleDevnet);
+    final Bytes rlp = RLP.encode(rlpOutput -> serializeBlockHeader(header, rlpOutput));
     return Hash.hash(rlp);
+  }
+
+  // TODO: Remove for mainnet, only needed for the current Verkle devnet.
+  protected static void serializeBlockHeader(final BlockHeader blockHeader, final RLPOutput out) {
+    out.startList();
+
+    out.writeBytes(blockHeader.getParentHash());
+    out.writeBytes(blockHeader.getOmmersHash());
+    out.writeBytes(blockHeader.getCoinbase());
+    out.writeBytes(blockHeader.getStateRoot());
+    out.writeBytes(blockHeader.getTransactionsRoot());
+    out.writeBytes(blockHeader.getReceiptsRoot());
+    out.writeBytes(blockHeader.getLogsBloom());
+    out.writeUInt256Scalar(blockHeader.getDifficulty());
+    out.writeLongScalar(blockHeader.getNumber());
+    out.writeLongScalar(blockHeader.getGasLimit());
+    out.writeLongScalar(blockHeader.getGasUsed());
+    out.writeLongScalar(blockHeader.getTimestamp());
+    out.writeBytes(blockHeader.getExtraData());
+    out.writeBytes(blockHeader.getMixHashOrPrevRandao());
+    out.writeLong(blockHeader.getNonce());
+    do {
+      if (blockHeader.getBaseFee().isEmpty()) break;
+      out.writeUInt256Scalar(blockHeader.getBaseFee().get());
+
+      if (blockHeader.getWithdrawalsRoot().isEmpty()) break;
+      out.writeBytes(blockHeader.getWithdrawalsRoot().get());
+    } while (false);
+    out.endList();
   }
 
   @Override

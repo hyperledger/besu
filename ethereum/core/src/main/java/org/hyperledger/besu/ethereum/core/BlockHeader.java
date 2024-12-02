@@ -200,35 +200,6 @@ public class BlockHeader extends SealableBlockHeader
     out.endList();
   }
 
-  // TODO: Remove for mainnet, only needed for the current Verkle devnet.
-  public void writeToForVerkleDevnet(final RLPOutput out) {
-    out.startList();
-
-    out.writeBytes(parentHash);
-    out.writeBytes(ommersHash);
-    out.writeBytes(coinbase);
-    out.writeBytes(stateRoot);
-    out.writeBytes(transactionsRoot);
-    out.writeBytes(receiptsRoot);
-    out.writeBytes(logsBloom);
-    out.writeUInt256Scalar(difficulty);
-    out.writeLongScalar(number);
-    out.writeLongScalar(gasLimit);
-    out.writeLongScalar(gasUsed);
-    out.writeLongScalar(timestamp);
-    out.writeBytes(extraData);
-    out.writeBytes(mixHashOrPrevRandao);
-    out.writeLong(nonce);
-    do {
-      if (baseFee == null) break;
-      out.writeUInt256Scalar(baseFee);
-
-      if (withdrawalsRoot == null) break;
-      out.writeBytes(withdrawalsRoot);
-    } while (false);
-    out.endList();
-  }
-
   public static BlockHeader readFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
     input.enterList();
