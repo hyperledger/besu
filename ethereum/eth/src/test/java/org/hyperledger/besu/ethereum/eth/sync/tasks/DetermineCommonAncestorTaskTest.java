@@ -101,7 +101,7 @@ public class DetermineCommonAncestorTaskTest {
             .setWorldStateArchive(worldStateArchive)
             .setTransactionPool(mock(TransactionPool.class))
             .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-                .setPeerTaskExecutor(peerTaskExecutor)
+            .setPeerTaskExecutor(peerTaskExecutor)
             .build();
     ethContext = ethProtocolManager.ethContext();
     protocolContext =

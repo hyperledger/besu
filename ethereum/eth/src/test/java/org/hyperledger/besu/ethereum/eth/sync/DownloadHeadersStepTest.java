@@ -73,19 +73,20 @@ public class DownloadHeadersStepTest {
 
   @BeforeEach
   public void setUp() {
-      peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
-    ethProtocolManager = EthProtocolManagerTestBuilder.builder()
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+    ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder()
             .setBlockchain(blockchain)
             .setPeerTaskExecutor(peerTaskExecutor)
             .build();
 
-      checkpointRange =
-              new SyncTargetRange(
-                      syncTarget, blockchain.getBlockHeader(1).get(), blockchain.getBlockHeader(10).get());
+    checkpointRange =
+        new SyncTargetRange(
+            syncTarget, blockchain.getBlockHeader(1).get(), blockchain.getBlockHeader(10).get());
   }
 
-    @Test
-    public void shouldRetrieveHeadersForCheckpointRange() {
+  @Test
+  public void shouldRetrieveHeadersForCheckpointRange() {
     downloader =
         new DownloadHeadersStep(
             protocolSchedule,

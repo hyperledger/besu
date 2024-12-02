@@ -143,9 +143,9 @@ public class BackwardSyncStepTest {
 
     EthProtocolManager ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
-                .setEthScheduler(ethScheduler)
-                .setPeerTaskExecutor(peerTaskExecutor)
-                .build();
+            .setEthScheduler(ethScheduler)
+            .setPeerTaskExecutor(peerTaskExecutor)
+            .build();
 
     peer =
         RespondingEthPeer.builder()

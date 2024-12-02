@@ -97,7 +97,7 @@ public class PivotBlockConfirmerTest {
             .setWorldStateArchive(blockchainSetupUtil.getWorldArchive())
             .setTransactionPool(transactionPool)
             .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-                .setPeerTaskExecutor(peerTaskExecutor)
+            .setPeerTaskExecutor(peerTaskExecutor)
             .build();
   }
 

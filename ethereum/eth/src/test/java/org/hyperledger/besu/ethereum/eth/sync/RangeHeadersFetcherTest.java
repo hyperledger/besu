@@ -111,7 +111,7 @@ public class RangeHeadersFetcherTest {
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
             .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-                .setPeerTaskExecutor(peerTaskExecutor)
+            .setPeerTaskExecutor(peerTaskExecutor)
             .build();
     responder =
         RespondingEthPeer.blockchainResponder(

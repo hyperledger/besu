@@ -82,8 +82,9 @@ public class ChainHeadTrackerTest {
   public void setup(final DataStorageFormat storageFormat, final boolean isPeerTaskSystemEnabled) {
     blockchainSetupUtil = BlockchainSetupUtil.forTesting(storageFormat);
     blockchain = blockchainSetupUtil.getBlockchain();
-      peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
-    ethProtocolManager = EthProtocolManagerTestBuilder.builder()
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+    ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder()
             .setBlockchain(blockchain)
             .setPeerTaskExecutor(peerTaskExecutor)
             .build();
