@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.tracing.OperationTracer.NO_TRACING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -32,6 +34,7 @@ import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -53,7 +56,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Stat
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
@@ -100,7 +103,7 @@ public class TransactionSimulatorTest {
 
   @BeforeEach
   public void setUp() {
-    final var miningConfiguration = MiningConfiguration.newDefault();
+    final var miningConfiguration = MiningConfiguration.newDefault().setCoinbase(Address.ZERO);
     this.transactionSimulator =
         new TransactionSimulator(
             blockchain, worldStateArchive, protocolSchedule, miningConfiguration, 0);
@@ -187,6 +190,43 @@ public class TransactionSimulatorTest {
   }
 
   @Test
+  public void simulateOnPendingBlockWorks() {
+    final CallParameter callParameter = eip1559TransactionCallParameter();
+
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.ONE)
+            .nonce(1L)
+            .gasLimit(blockHeader.getGasLimit())
+            .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+            .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .build();
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.processOnPending(
+            callParameter,
+            Optional.empty(),
+            TransactionValidationParams.transactionSimulator(),
+            NO_TRACING,
+            transactionSimulator.simulatePendingBlockHeader());
+
+    assertThat(result.get().isSuccessful()).isTrue();
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  @Test
   public void shouldSetGasPriceToZeroWhenExceedingBalanceAllowed() {
     final CallParameter callParameter = legacyTransactionCallParameter(Wei.ONE);
 
@@ -213,7 +253,7 @@ public class TransactionSimulatorTest {
     transactionSimulator.process(
         callParameter,
         ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(true).build(),
-        OperationTracer.NO_TRACING,
+        NO_TRACING,
         1L);
 
     verifyTransactionWasProcessed(expectedTransaction);
@@ -249,7 +289,7 @@ public class TransactionSimulatorTest {
     transactionSimulator.process(
         callParameter,
         ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(true).build(),
-        OperationTracer.NO_TRACING,
+        NO_TRACING,
         1L);
 
     verifyTransactionWasProcessed(expectedTransaction);
@@ -283,7 +323,7 @@ public class TransactionSimulatorTest {
     transactionSimulator.process(
         callParameter,
         ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(false).build(),
-        OperationTracer.NO_TRACING,
+        NO_TRACING,
         1L);
 
     verifyTransactionWasProcessed(expectedTransaction);
@@ -318,7 +358,7 @@ public class TransactionSimulatorTest {
     transactionSimulator.process(
         callParameter,
         ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(false).build(),
-        OperationTracer.NO_TRACING,
+        NO_TRACING,
         1L);
 
     verifyTransactionWasProcessed(expectedTransaction);
@@ -604,10 +644,7 @@ public class TransactionSimulatorTest {
 
     // call process with original transaction
     cappedTransactionSimulator.process(
-        callParameter,
-        TransactionValidationParams.transactionSimulator(),
-        OperationTracer.NO_TRACING,
-        1L);
+        callParameter, TransactionValidationParams.transactionSimulator(), NO_TRACING, 1L);
 
     // expect overwritten transaction to be processed
     verifyTransactionWasProcessed(expectedTransaction);
@@ -642,10 +679,7 @@ public class TransactionSimulatorTest {
 
     // call process with original transaction
     cappedTransactionSimulator.process(
-        callParameter,
-        TransactionValidationParams.transactionSimulator(),
-        OperationTracer.NO_TRACING,
-        1L);
+        callParameter, TransactionValidationParams.transactionSimulator(), NO_TRACING, 1L);
 
     // expect overwritten transaction to be processed
     verifyTransactionWasProcessed(expectedTransaction);
@@ -681,10 +715,7 @@ public class TransactionSimulatorTest {
 
     // call process with original transaction
     cappedTransactionSimulator.process(
-        callParameter,
-        TransactionValidationParams.transactionSimulator(),
-        OperationTracer.NO_TRACING,
-        1L);
+        callParameter, TransactionValidationParams.transactionSimulator(), NO_TRACING, 1L);
 
     // expect transaction with the original gas limit to be processed
     verifyTransactionWasProcessed(expectedTransaction);
@@ -803,6 +834,8 @@ public class TransactionSimulatorTest {
     when(blockchain.getBlockHeader(blockHeader.getNumber())).thenReturn(Optional.of(blockHeader));
     when(blockchain.getBlockHeader(blockHeader.getBlockHash()))
         .thenReturn(Optional.of(blockHeader));
+    when(blockchain.getChainHeadHash()).thenReturn(blockHeader.getHash());
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
   }
 
   private void mockProtocolSpecForProcessWithWorldUpdater() {
@@ -810,11 +843,15 @@ public class TransactionSimulatorTest {
     final BlockHashProcessor blockHashProcessor = mock(BlockHashProcessor.class);
     when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getBlockHeaderFunctions()).thenReturn(blockHeaderFunctions);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0));
     when(protocolSpec.getBlockHashProcessor()).thenReturn(blockHashProcessor);
+    when(protocolSpec.getGasCalculator()).thenReturn(new FrontierGasCalculator());
+    when(protocolSpec.getGasLimitCalculator()).thenReturn(GasLimitCalculator.constant());
+    when(protocolSpec.getDifficultyCalculator()).thenReturn((time, parent) -> BigInteger.TEN);
   }
 
   private void mockProcessorStatusForTransaction(

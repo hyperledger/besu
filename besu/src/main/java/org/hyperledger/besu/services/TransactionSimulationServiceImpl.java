@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -35,11 +34,6 @@ import java.util.Optional;
 /** TransactionSimulationServiceImpl */
 @Unstable
 public class TransactionSimulationServiceImpl implements TransactionSimulationService {
-  private static final TransactionValidationParams SIMULATOR_ALLOWING_EXCEEDING_BALANCE =
-      ImmutableTransactionValidationParams.builder()
-          .from(TransactionValidationParams.transactionSimulator())
-          .isAllowExceedingBalance(true)
-          .build();
   private Blockchain blockchain;
   private TransactionSimulator transactionSimulator;
 
@@ -85,7 +79,7 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
           .process(
               callParameter,
               isAllowExceedingBalance
-                  ? SIMULATOR_ALLOWING_EXCEEDING_BALANCE
+                  ? TransactionValidationParams.transactionSimulatorAllowExceedingBalance()
                   : TransactionValidationParams.transactionSimulator(),
               operationTracer,
               maybeBlockHeader.get())
@@ -97,7 +91,7 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
             callParameter,
             maybeAccountOverrides,
             isAllowExceedingBalance
-                ? SIMULATOR_ALLOWING_EXCEEDING_BALANCE
+                ? TransactionValidationParams.transactionSimulatorAllowExceedingBalance()
                 : TransactionValidationParams.transactionSimulator(),
             operationTracer,
             transactionSimulator.simulatePendingBlockHeader())

@@ -72,6 +72,7 @@ public class EthCreateAccessListTest {
   @Mock private BlockHeader latestBlockHeader;
   @Mock private BlockHeader finalizedBlockHeader;
   @Mock private BlockHeader genesisBlockHeader;
+  @Mock private BlockHeader pendingBlockHeader;
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
@@ -93,6 +94,9 @@ public class EthCreateAccessListTest {
     when(blockchain.getChainHeadHeader()).thenReturn(latestBlockHeader);
     when(latestBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
     when(latestBlockHeader.getNumber()).thenReturn(2L);
+    when(pendingBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
+    when(pendingBlockHeader.getNumber()).thenReturn(3L);
+    when(transactionSimulator.simulatePendingBlockHeader()).thenReturn(pendingBlockHeader);
     when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(true);
 
     method = new EthCreateAccessList(blockchainQueries, transactionSimulator);
@@ -132,6 +136,18 @@ public class EthCreateAccessListTest {
     final JsonRpcRequestContext request =
         ethCreateAccessListRequest(legacyTransactionCallParameter(gasPrice));
     mockTransactionSimulatorResult(true, false, 1L, latestBlockHeader);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, new CreateAccessListResult(new ArrayList<>(), 1L));
+
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void pendingBlockTagEstimateOnPendingBlock() {
+    final JsonRpcRequestContext request =
+        ethCreateAccessListRequest(legacyTransactionCallParameter(Wei.ZERO), "pending");
+    mockTransactionSimulatorResult(true, false, 1L, pendingBlockHeader);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, new CreateAccessListResult(new ArrayList<>(), 1L));
@@ -335,14 +351,21 @@ public class EthCreateAccessListTest {
     return tracer;
   }
 
+  @SuppressWarnings("ReferenceEquality")
   private void mockTransactionSimulatorResult(
       final boolean isSuccessful,
       final boolean isReverted,
       final long estimateGas,
       final BlockHeader blockHeader) {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
-    when(transactionSimulator.process(any(), eq(Optional.empty()), any(), any(), eq(blockHeader)))
-        .thenReturn(Optional.of(mockTxSimResult));
+    if (blockHeader == pendingBlockHeader) {
+      when(transactionSimulator.processOnPending(
+              any(), eq(Optional.empty()), any(), any(), eq(blockHeader)))
+          .thenReturn(Optional.of(mockTxSimResult));
+    } else {
+      when(transactionSimulator.process(any(), eq(Optional.empty()), any(), any(), eq(blockHeader)))
+          .thenReturn(Optional.of(mockTxSimResult));
+    }
     final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
     when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
     when(mockResult.getRevertReason())

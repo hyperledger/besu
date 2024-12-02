@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -46,11 +45,6 @@ import java.util.Optional;
 import com.google.common.annotations.VisibleForTesting;
 
 public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
-  protected static final TransactionValidationParams ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMETERS =
-      ImmutableTransactionValidationParams.builder()
-          .from(TransactionValidationParams.transactionSimulator())
-          .isAllowExceedingBalance(true)
-          .build();
 
   private static final double SUB_CALL_REMAINING_GAS_RATIO = 65D / 64D;
 
@@ -214,10 +208,9 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
       final JsonCallParameter callParams) {
     final boolean isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
 
-    if (isAllowExceedingBalance) {
-      return ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMETERS;
-    }
-    return TransactionValidationParams.transactionSimulator();
+    return isAllowExceedingBalance
+        ? TransactionValidationParams.transactionSimulatorAllowExceedingBalance()
+        : TransactionValidationParams.transactionSimulator();
   }
 
   @VisibleForTesting

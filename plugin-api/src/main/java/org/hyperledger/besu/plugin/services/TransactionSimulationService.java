@@ -74,7 +74,7 @@ public interface TransactionSimulationService extends BesuService {
    * @return the result of the simulation
    * @deprecated use {@link #simulate(Transaction, Optional, OperationTracer, boolean)}
    */
-  @Deprecated(since = "24.11", forRemoval = true)
+  @Deprecated(since = "24.12", forRemoval = true)
   default Optional<TransactionSimulationResult> simulate(
       final Transaction transaction,
       final Hash blockHash,
@@ -100,7 +100,7 @@ public interface TransactionSimulationService extends BesuService {
    * @return the result of the simulation
    * @deprecated use {@link #simulate(Transaction, Optional, Optional, OperationTracer, boolean)}
    */
-  @Deprecated(since = "24.11", forRemoval = true)
+  @Deprecated(since = "24.12", forRemoval = true)
   default Optional<TransactionSimulationResult> simulate(
       final Transaction transaction,
       final Optional<AccountOverrideMap> accountOverrides,
