@@ -96,7 +96,8 @@ public class FullSyncChainDownloaderTest {
 
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
-    ethProtocolManager = EthProtocolManagerTestBuilder.builder()
+    ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
             .setBlockchain(localBlockchain)
             .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))

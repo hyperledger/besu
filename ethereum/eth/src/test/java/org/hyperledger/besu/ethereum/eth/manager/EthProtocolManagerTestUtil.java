@@ -24,62 +24,19 @@ import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
-import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
-import org.hyperledger.besu.testutil.TestClock;
 
-import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.mockito.Mockito;
 
 public class EthProtocolManagerTestUtil {
-
-  public static EthProtocolManager create(
-      final Blockchain blockchain,
-      final EthScheduler ethScheduler,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-      final EthPeers ethPeers,
-      final EthMessages ethMessages,
-      final EthContext ethContext,
-      final ForkIdManager forkIdManager) {
-
-    ethPeers.setChainHeadTracker(getChainHeadTrackerMock());
-
-    final BigInteger networkId = BigInteger.ONE;
-    return new EthProtocolManager(
-        blockchain,
-        networkId,
-        worldStateArchive,
-        transactionPool,
-        ethereumWireProtocolConfiguration,
-        ethPeers,
-        ethMessages,
-        ethContext,
-        Collections.emptyList(),
-        Optional.empty(),
-        mock(SynchronizerConfiguration.class),
-        ethScheduler,
-        forkIdManager);
-  }
 
   public static ChainHeadTracker getChainHeadTrackerMock() {
     final ChainHeadTracker chtMock = mock(ChainHeadTracker.class);
@@ -90,42 +47,6 @@ public class EthProtocolManagerTestUtil {
     Mockito.lenient().when(blockHeaderMock.getNumber()).thenReturn(0L);
     Mockito.lenient().when(blockHeaderMock.getStateRoot()).thenReturn(Hash.ZERO);
     return chtMock;
-  }
-
-  public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final EthScheduler ethScheduler,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration configuration,
-      final ForkIdManager forkIdManager) {
-
-    final EthPeers peers =
-        new EthPeers(
-            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
-            TestClock.fixed(),
-            new NoOpMetricsSystem(),
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-            Collections.emptyList(),
-            Bytes.random(64),
-            25,
-            25,
-            false,
-            SyncMode.FAST,
-            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-    final EthMessages messages = new EthMessages();
-
-    return create(
-        blockchain,
-        ethScheduler,
-        worldStateArchive,
-        transactionPool,
-        configuration,
-        peers,
-        messages,
-        new EthContext(peers, messages, ethScheduler),
-        forkIdManager);
   }
 
   // Utility to prevent scheduler from automatically running submitted tasks

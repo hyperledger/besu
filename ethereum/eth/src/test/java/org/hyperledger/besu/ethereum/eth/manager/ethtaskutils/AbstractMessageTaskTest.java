@@ -146,7 +146,8 @@ public abstract class AbstractMessageTaskTest<T, R> {
             MiningConfiguration.newDefault());
     transactionPool.setEnabled();
 
-    ethProtocolManager = EthProtocolManagerTestBuilder.builder()
+    ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
             .setBlockchain(blockchain)
             .setEthScheduler(ethScheduler)

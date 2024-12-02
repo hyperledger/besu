@@ -81,7 +81,8 @@ public class FullSyncTargetManagerTest {
     final ProtocolContext protocolContext =
         new ProtocolContext(
             localBlockchain, localWorldState, mock(ConsensusContext.class), new BadBlockManager());
-    ethProtocolManager = EthProtocolManagerTestBuilder.builder()
+    ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
             .setBlockchain(localBlockchain)
             .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
