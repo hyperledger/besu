@@ -55,51 +55,6 @@ import org.mockito.Mockito;
 public class EthProtocolManagerTestUtil {
 
   public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-      final Optional<MergePeerFilter> mergePeerFilter) {
-
-    final EthPeers peers =
-        new EthPeers(
-            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
-            TestClock.fixed(),
-            new NoOpMetricsSystem(),
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-            Collections.emptyList(),
-            Bytes.random(64),
-            25,
-            25,
-            false,
-            SyncMode.FAST,
-            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-
-    final ChainHeadTracker chainHeadTrackerMock = getChainHeadTrackerMock();
-    peers.setChainHeadTracker(chainHeadTrackerMock);
-
-    final EthMessages messages = new EthMessages();
-    final EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
-    final EthContext ethContext = new EthContext(peers, messages, ethScheduler);
-
-    return new EthProtocolManager(
-        blockchain,
-        BigInteger.ONE,
-        worldStateArchive,
-        transactionPool,
-        ethereumWireProtocolConfiguration,
-        peers,
-        messages,
-        ethContext,
-        Collections.emptyList(),
-        mergePeerFilter,
-        mock(SynchronizerConfiguration.class),
-        ethScheduler,
-        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-  }
-
-  public static EthProtocolManager create(
       final Blockchain blockchain,
       final EthScheduler ethScheduler,
       final WorldStateArchive worldStateArchive,
