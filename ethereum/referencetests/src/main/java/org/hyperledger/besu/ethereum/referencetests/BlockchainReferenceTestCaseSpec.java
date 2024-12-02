@@ -32,20 +32,12 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -58,7 +50,7 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
 
   private final String network;
 
-  private final CandidateBlock[] candidateBlocks;
+  private final DefaultCandidateBlock[] candidateBlocks;
 
   private final ReferenceTestBlockHeader genesisBlockHeader;
 
@@ -97,7 +89,7 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
   @JsonCreator
   public BlockchainReferenceTestCaseSpec(
       @JsonProperty("network") final String network,
-      @JsonProperty("blocks") final CandidateBlock[] candidateBlocks,
+      @JsonProperty("blocks") final DefaultCandidateBlock[] candidateBlocks,
       @JsonProperty("genesisBlockHeader") final ReferenceTestBlockHeader genesisBlockHeader,
       @SuppressWarnings("unused") @JsonProperty("genesisRLP") final String genesisRLP,
       @JsonProperty("pre") final Map<String, ReferenceTestWorldState.AccountMock> accounts,
@@ -124,35 +116,8 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
   }
 
   @Override
-  public List<Block> getBlocks() {
-    return Arrays.stream(candidateBlocks).map(CandidateBlock::getBlock).toList();
-  }
-
-  @Override
-  public boolean isExecutable(final Block block) {
-    Optional<CandidateBlock> candidateBlock =
-        Arrays.stream(candidateBlocks)
-            .filter(cb -> Objects.equals(cb.getBlock(), block))
-            .findFirst();
-    return candidateBlock.isPresent() && candidateBlock.get().rlp != null;
-  }
-
-  @Override
-  public boolean isValid(final Block block) {
-    Optional<CandidateBlock> candidateBlock =
-        Arrays.stream(candidateBlocks)
-            .filter(cb -> Objects.equals(cb.getBlock(), block))
-            .findFirst();
-    return candidateBlock.isPresent() && candidateBlock.get().valid;
-  }
-
-  @Override
-  public boolean areAllTransactionsValid(final Block block) {
-    Optional<CandidateBlock> candidateBlock =
-        Arrays.stream(candidateBlocks)
-            .filter(cb -> Objects.equals(cb.getBlock(), block))
-            .findFirst();
-    return candidateBlock.isPresent() && candidateBlock.get().areAllTransactionsValid();
+  public CandidateBlock[] getCandidateBlocks() {
+    return candidateBlocks;
   }
 
   @Override
@@ -270,15 +235,12 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
     "hasBigInt",
     "rlp_decoded"
   })
-  public static class CandidateBlock {
+  public static class DefaultCandidateBlock extends CandidateBlock {
 
-    private final Bytes rlp;
-
-    private final Boolean valid;
     private final List<TransactionSequence> transactionSequence;
 
     @JsonCreator
-    public CandidateBlock(
+    public DefaultCandidateBlock(
         @JsonProperty("rlp") final String rlp,
         @JsonProperty("blockHeader") final Object blockHeader,
         @JsonProperty("transactions") final Object transactions,
@@ -288,53 +250,21 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
         @JsonProperty("withdrawalRequests") final Object withdrawalRequests,
         @JsonProperty("consolidationRequests") final Object consolidationRequests,
         @JsonProperty("transactionSequence") final List<TransactionSequence> transactionSequence) {
-      boolean blockValid = true;
-      // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
-      Bytes rlpAttempt = null;
-      try {
-        rlpAttempt = Bytes.fromHexString(rlp);
-      } catch (final IllegalArgumentException e) {
-        blockValid = false;
-      }
-      this.rlp = rlpAttempt;
+      super(rlp);
 
       if (blockHeader == null
           && transactions == null
           && uncleHeaders == null
           && withdrawals == null) {
-        blockValid = false;
+        this.valid = false;
       }
-
-      this.valid = blockValid;
       this.transactionSequence = transactionSequence;
     }
 
-    public boolean isValid() {
-      return valid;
-    }
-
+    @Override
     public boolean areAllTransactionsValid() {
       return transactionSequence == null
           || transactionSequence.stream().filter(t -> !t.valid()).count() == 0;
-    }
-
-    public boolean isExecutable() {
-      return rlp != null;
-    }
-
-    public Block getBlock() {
-      final RLPInput input = new BytesValueRLPInput(rlp, false);
-      input.enterList();
-      final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
-      final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
-      final BlockBody body =
-          new BlockBody(
-              input.readList(Transaction::readFrom),
-              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
-              input.isEndOfCurrentList()
-                  ? Optional.empty()
-                  : Optional.of(input.readList(Withdrawal::readFrom)));
-      return new Block(header, body);
     }
   }
 }
