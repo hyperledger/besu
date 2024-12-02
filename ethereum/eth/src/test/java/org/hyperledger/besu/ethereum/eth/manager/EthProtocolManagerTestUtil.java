@@ -205,40 +205,6 @@ public class EthProtocolManagerTestUtil {
         forkIdManager);
   }
 
-  public static EthProtocolManager create(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final EthScheduler ethScheduler) {
-    final EthPeers ethPeers =
-        new EthPeers(
-            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
-            TestClock.fixed(),
-            new NoOpMetricsSystem(),
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-            Collections.emptyList(),
-            Bytes.random(64),
-            25,
-            25,
-            false,
-            SyncMode.FAST,
-            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
-
-    final ChainHeadTracker chainHeadTrackerMock = getChainHeadTrackerMock();
-    ethPeers.setChainHeadTracker(chainHeadTrackerMock);
-
-    final EthMessages messages = new EthMessages();
-
-    return create(
-        blockchain,
-        ethScheduler,
-        BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST).getWorldArchive(),
-        mock(TransactionPool.class),
-        EthProtocolConfiguration.defaultConfig(),
-        ethPeers,
-        messages,
-        new EthContext(ethPeers, messages, ethScheduler));
-  }
-
   // Utility to prevent scheduler from automatically running submitted tasks
   public static void disableEthSchedulerAutoRun(final EthProtocolManager ethProtocolManager) {
     final EthScheduler scheduler = ethProtocolManager.ethContext().getScheduler();
