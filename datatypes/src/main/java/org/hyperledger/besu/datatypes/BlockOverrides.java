@@ -28,6 +28,7 @@ import org.checkerframework.checker.signedness.qual.Unsigned;
 public class BlockOverrides {
   private final Optional<Long> timestamp;
   private final Optional<Long> blockNumber;
+  private final Optional<Hash> blockHash;
   private final Optional<Bytes32> prevRandao;
   private final Optional<Long> gasLimit;
   private final Optional<Address> feeRecipient;
@@ -36,11 +37,13 @@ public class BlockOverrides {
   private final Optional<Hash> stateRoot;
   private final Optional<BigInteger> difficulty;
   private final Optional<Bytes> extraData;
+  private final Optional<Hash> mixHashOrPrevRandao;
 
   @JsonCreator
   public BlockOverrides(
       @JsonProperty("timestamp") final Optional<UnsignedLongParameter> timestamp,
       @JsonProperty("number") final Optional<UnsignedLongParameter> blockNumber,
+      @JsonProperty("hash") final Optional<Hash> blockHash,
       @JsonProperty("prevRandao") final Optional<Bytes32> prevRandao,
       @JsonProperty("gasLimit") final Optional<UnsignedLongParameter> gasLimit,
       @JsonProperty("feeRecipient") final Optional<Address> feeRecipient,
@@ -48,9 +51,11 @@ public class BlockOverrides {
       @JsonProperty("blobBaseFee") final Optional<UnsignedLongParameter> blobBaseFee,
       @JsonProperty("stateRoot") final Optional<Hash> stateRoot,
       @JsonProperty("difficult") final Optional<BigInteger> difficulty,
-      @JsonProperty("extraData") final Optional<Bytes> extraData) {
+      @JsonProperty("extraData") final Optional<Bytes> extraData,
+      @JsonProperty("mixHashOrPrevRandao") final Optional<Hash> mixHashOrPrevRandao) {
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
     this.blockNumber = blockNumber.map(UnsignedLongParameter::getValue);
+    this.blockHash = blockHash;
     this.prevRandao = prevRandao;
     this.gasLimit = gasLimit.map(UnsignedLongParameter::getValue);
     this.feeRecipient = feeRecipient;
@@ -59,10 +64,12 @@ public class BlockOverrides {
     this.stateRoot = stateRoot;
     this.difficulty = difficulty;
     this.extraData = extraData;
+    this.mixHashOrPrevRandao = mixHashOrPrevRandao;
   }
 
   private BlockOverrides(final Builder builder) {
     this.blockNumber = Optional.ofNullable(builder.blockNumber);
+    this.blockHash = Optional.ofNullable(builder.blockHash);
     this.prevRandao = Optional.ofNullable(builder.prevRandao);
     this.timestamp = Optional.ofNullable(builder.timestamp);
     this.gasLimit = Optional.ofNullable(builder.gasLimit);
@@ -72,10 +79,15 @@ public class BlockOverrides {
     this.stateRoot = Optional.ofNullable(builder.stateRoot);
     this.difficulty = Optional.ofNullable(builder.difficulty);
     this.extraData = Optional.ofNullable(builder.extraData);
+    this.mixHashOrPrevRandao = Optional.ofNullable(builder.mixHashOrPrevRandao);
   }
 
   public Optional<Long> getBlockNumber() {
     return blockNumber;
+  }
+
+  public Optional<Hash> getBlockHash() {
+    return blockHash;
   }
 
   public Optional<Bytes32> getPrevRandao() {
@@ -114,6 +126,10 @@ public class BlockOverrides {
     return extraData;
   }
 
+  public Optional<Hash> getMixHashOrPrevRandao() {
+    return mixHashOrPrevRandao;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -121,6 +137,7 @@ public class BlockOverrides {
   public static class Builder {
     private Long timestamp;
     private Long blockNumber;
+    private Hash blockHash;
     private Bytes32 prevRandao;
     private Long gasLimit;
     private Address feeRecipient;
@@ -129,6 +146,7 @@ public class BlockOverrides {
     private Hash stateRoot;
     private BigInteger difficulty;
     private Bytes extraData;
+    private Hash mixHashOrPrevRandao;
 
     public Builder timestamp(final Long timestamp) {
       this.timestamp = timestamp;
@@ -137,6 +155,11 @@ public class BlockOverrides {
 
     public Builder blockNumber(final Long blockNumber) {
       this.blockNumber = blockNumber;
+      return this;
+    }
+
+    public Builder blockHash(final Hash blockHash) {
+      this.blockHash = blockHash;
       return this;
     }
 
@@ -177,6 +200,11 @@ public class BlockOverrides {
 
     public Builder extraData(final Bytes extraData) {
       this.extraData = extraData;
+      return this;
+    }
+
+    public Builder mixHashOrPrevRandao(final Hash mixHashOrPrevRandao) {
+      this.mixHashOrPrevRandao = mixHashOrPrevRandao;
       return this;
     }
 
