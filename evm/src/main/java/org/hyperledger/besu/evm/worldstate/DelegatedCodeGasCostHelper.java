@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.worldstate;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -66,9 +67,9 @@ public class DelegatedCodeGasCostHelper {
       throw new RuntimeException("A delegated code account must have a delegated code address");
     }
 
-    final boolean delegatedCodeIsWarm = frame.warmUpAddress(account.delegatedCodeAddress().get());
     final long delegatedCodeResolutionGas =
-        gasCalculator.delegatedCodeResolutionGasCost(delegatedCodeIsWarm);
+        calculateDelegatedCodeResolutionGas(
+            frame, gasCalculator, account.delegatedCodeAddress().get());
 
     if (frame.getRemainingGas() < delegatedCodeResolutionGas) {
       return new Result(delegatedCodeResolutionGas, Status.INSUFFICIENT_GAS);
@@ -76,5 +77,14 @@ public class DelegatedCodeGasCostHelper {
 
     frame.decrementRemainingGas(delegatedCodeResolutionGas);
     return new Result(delegatedCodeResolutionGas, Status.SUCCESS);
+  }
+
+  private static long calculateDelegatedCodeResolutionGas(
+      final MessageFrame frame, final GasCalculator gasCalculator, final Address delegateeAddress) {
+    final boolean delegatedCodeIsWarm =
+        frame.warmUpAddress(delegateeAddress) || gasCalculator.isPrecompile(delegateeAddress);
+    return delegatedCodeIsWarm
+        ? gasCalculator.getWarmStorageReadCost()
+        : gasCalculator.getColdAccountAccessCost();
   }
 }

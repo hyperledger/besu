@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -135,6 +136,13 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final GraphQLDataFetchers dataFetchers = new GraphQLDataFetchers(supportedCapabilities);
     final GraphQL graphQL = GraphQLProvider.buildGraphQL(dataFetchers);
 
+    final var transactionSimulator =
+        new TransactionSimulator(
+            blockchain,
+            blockchainSetupUtil.getWorldArchive(),
+            blockchainSetupUtil.getProtocolSchedule(),
+            0L);
+
     service =
         new GraphQLHttpService(
             vertx,
@@ -152,8 +160,8 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                 miningCoordinatorMock,
                 GraphQLContextType.SYNCHRONIZER,
                 synchronizerMock,
-                GraphQLContextType.GAS_CAP,
-                0L),
+                GraphQLContextType.TRANSACTION_SIMULATOR,
+                transactionSimulator),
             mock(EthScheduler.class));
     service.start().join();
 

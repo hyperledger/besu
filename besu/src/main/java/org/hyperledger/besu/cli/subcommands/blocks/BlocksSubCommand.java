@@ -53,7 +53,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import io.vertx.core.Vertx;
 import jakarta.validation.constraints.NotBlank;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -458,8 +457,7 @@ public class BlocksSubCommand implements Runnable {
         parentCommand.parentCommand.metricsConfiguration();
 
     Optional<MetricsService> metricsService =
-        MetricsService.create(
-            Vertx.vertx(), metricsConfiguration, parentCommand.parentCommand.getMetricsSystem());
+        MetricsService.create(metricsConfiguration, parentCommand.parentCommand.getMetricsSystem());
     metricsService.ifPresent(MetricsService::start);
     return metricsService;
   }
