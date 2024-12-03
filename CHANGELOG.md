@@ -5,6 +5,7 @@
 ### Breaking Changes
 - Removed Retesteth rpc service and commands [#7833](https://github.com/hyperledger/besu/pull/7783)
 - TLS for P2P (early access feature) has been removed [#7942](https://github.com/hyperledger/besu/pull/7942)
+- In the plugin API, `BesuContext` has been renamed to `ServiceManager` to better reflect its function, plugins must be updated to work with this version
 - With the upgrade of the Prometheus Java Metrics library, there are the following changes:
   - Gauge names are not allowed to end with `total`, therefore the metric `besu_blockchain_difficulty_total` is losing the `_total` suffix
   - The `_created` timestamps are not returned by default, you can set the env var `BESU_OPTS="-Dio.prometheus.exporter.includeCreatedTimestamps=true"` to enable them
