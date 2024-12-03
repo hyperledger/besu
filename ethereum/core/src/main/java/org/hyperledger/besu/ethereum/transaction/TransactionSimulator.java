@@ -315,6 +315,7 @@ public class TransactionSimulator {
         buildTransaction(
             callParams,
             transactionValidationParams,
+            header,
             senderAddress,
             nonce,
             simulationGasCap,
@@ -394,6 +395,7 @@ public class TransactionSimulator {
   private Optional<Transaction> buildTransaction(
       final CallParameter callParams,
       final TransactionValidationParams transactionValidationParams,
+      final BlockHeader header,
       final Address senderAddress,
       final long nonce,
       final long gasLimit,
@@ -433,11 +435,11 @@ public class TransactionSimulator {
       maxFeePerBlobGas = callParams.getMaxFeePerBlobGas().orElse(blobGasPrice);
     }
 
-    if (shouldSeGasPrice(callParams)) {
+    if (shouldSetGasPrice(callParams, header)) {
       transactionBuilder.gasPrice(gasPrice);
     }
 
-    if (shouldSetMaxFeePerGas(callParams)) {
+    if (shouldSetMaxFeePerGas(callParams, header)) {
       transactionBuilder.maxFeePerGas(maxFeePerGas).maxPriorityFeePerGas(maxPriorityFeePerGas);
     }
 
@@ -488,13 +490,21 @@ public class TransactionSimulator {
     return Optional.of(worldState.get(address) != null);
   }
 
-  private boolean shouldSeGasPrice(final CallParameter callParams) {
+  private boolean shouldSetGasPrice(final CallParameter callParams, final BlockHeader header) {
+    if (header.getBaseFee().isEmpty()) {
+      return true;
+    }
+
     // if maxPriorityFeePerGas and maxFeePerGas are not set, use gasPrice
     return callParams.getMaxPriorityFeePerGas().isEmpty() && callParams.getMaxFeePerGas().isEmpty();
   }
 
-  private boolean shouldSetMaxFeePerGas(final CallParameter callParams) {
+  private boolean shouldSetMaxFeePerGas(final CallParameter callParams, final BlockHeader header) {
     if (protocolSchedule.getChainId().isEmpty()) {
+      return false;
+    }
+
+    if (header.getBaseFee().isEmpty()) {
       return false;
     }
 

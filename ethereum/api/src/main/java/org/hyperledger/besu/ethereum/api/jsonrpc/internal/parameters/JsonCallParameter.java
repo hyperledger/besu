@@ -123,7 +123,7 @@ public class JsonCallParameter extends CallParameter {
     private Optional<BigInteger> chainId = Optional.empty();
     private Address from;
     private Address to;
-    private long gas = -1;
+    private Optional<Long> gas = Optional.empty();
     private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
     private Optional<Wei> maxFeePerGas = Optional.empty();
     private Optional<Wei> maxFeePerBlobGas = Optional.empty();
@@ -198,7 +198,7 @@ public class JsonCallParameter extends CallParameter {
      */
     @JsonDeserialize(using = GasDeserializer.class)
     public JsonCallParameterBuilder withGas(final Long gas) {
-      this.gas = Optional.ofNullable(gas).orElse(-1L);
+      this.gas = Optional.ofNullable(gas);
       return this;
     }
 
@@ -361,13 +361,18 @@ public class JsonCallParameter extends CallParameter {
         throw new IllegalArgumentException("Only one of 'input' or 'data' should be provided");
       }
 
+      if (gas.isPresent() && (maxFeePerBlobGas.isPresent() || maxPriorityFeePerGas.isPresent())) {
+        throw new IllegalArgumentException(
+            "both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified");
+      }
+
       final Bytes payload = input != null ? input : data;
 
       return new JsonCallParameter(
           chainId,
           from,
           to,
-          gas,
+          gas.orElse(-1L),
           gasPrice,
           maxPriorityFeePerGas,
           maxFeePerGas,
