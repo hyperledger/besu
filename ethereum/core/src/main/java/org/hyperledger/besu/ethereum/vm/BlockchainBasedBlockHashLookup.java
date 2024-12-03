@@ -20,8 +20,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +51,7 @@ public class BlockchainBasedBlockHashLookup implements BlockHashLookup {
   }
 
   @Override
-  public Hash apply(final WorldUpdater worldUpdater, final Long blockNumber) {
+  public Hash apply(final MessageFrame frame, final Long blockNumber) {
     // If the current block is the genesis block or the sought block is
     // not within the last 256 completed blocks, zero is returned.
     if (currentBlockNumber == 0

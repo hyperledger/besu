@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.HashMap;
@@ -81,7 +82,7 @@ public class ContractBasedBlockHashLookup implements BlockHashLookup {
   }
 
   @Override
-  public Hash apply(final WorldUpdater worldUpdater, final Long blockNumber) {
+  public Hash apply(final MessageFrame frame, final Long blockNumber) {
     final long currentBlockNumber = blockHeader.getNumber();
     final long minBlockServe = Math.max(0, currentBlockNumber - blockHashServeWindow);
     if (blockNumber >= currentBlockNumber || blockNumber < minBlockServe) {
@@ -94,6 +95,7 @@ public class ContractBasedBlockHashLookup implements BlockHashLookup {
       return cachedHash;
     }
 
+    final WorldUpdater worldUpdater = frame.getWorldUpdater();
     Account account = worldUpdater.get(contractAddress);
     if (account == null) {
       LOG.error("cannot query system contract {}", contractAddress);

@@ -20,7 +20,6 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -51,10 +50,8 @@ public class BlockHashOperation extends AbstractOperation {
       return new OperationResult(cost, null);
     }
 
-    final WorldUpdater worldUpdater = frame.getWorldUpdater();
-
     final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
-    final Hash blockHash = blockHashLookup.apply(worldUpdater, blockArg.toLong());
+    final Hash blockHash = blockHashLookup.apply(frame, blockArg.toLong());
     frame.pushStackItem(blockHash);
 
     return new OperationResult(cost, null);
