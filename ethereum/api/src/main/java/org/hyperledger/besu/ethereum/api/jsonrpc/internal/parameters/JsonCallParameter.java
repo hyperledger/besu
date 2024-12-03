@@ -127,7 +127,7 @@ public class JsonCallParameter extends CallParameter {
     private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
     private Optional<Wei> maxFeePerGas = Optional.empty();
     private Optional<Wei> maxFeePerBlobGas = Optional.empty();
-    private Optional<Wei> gasPrice = Optional.empty();
+    private Wei gasPrice;
     private Wei value;
     private Bytes data;
     private Bytes input;
@@ -253,7 +253,7 @@ public class JsonCallParameter extends CallParameter {
      * @return the {@link JsonCallParameterBuilder} instance for chaining
      */
     public JsonCallParameterBuilder withGasPrice(final Wei gasPrice) {
-      this.gasPrice = Optional.ofNullable(gasPrice);
+      this.gasPrice = gasPrice;
       return this;
     }
 
@@ -361,12 +361,6 @@ public class JsonCallParameter extends CallParameter {
         throw new IllegalArgumentException("Only one of 'input' or 'data' should be provided");
       }
 
-      if (gasPrice.isPresent()
-          && (maxFeePerBlobGas.isPresent() || maxPriorityFeePerGas.isPresent())) {
-        throw new IllegalArgumentException(
-            "both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified");
-      }
-
       final Bytes payload = input != null ? input : data;
 
       return new JsonCallParameter(
@@ -374,7 +368,7 @@ public class JsonCallParameter extends CallParameter {
           from,
           to,
           gas,
-          gasPrice.orElse(null),
+          gasPrice,
           maxPriorityFeePerGas,
           maxFeePerGas,
           value,
