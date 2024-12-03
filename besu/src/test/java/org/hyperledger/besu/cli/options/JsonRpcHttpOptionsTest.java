@@ -332,7 +332,7 @@ public class JsonRpcHttpOptionsTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
+            "Known-clients file or Truststore file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
   }
 
   @Test
@@ -342,6 +342,8 @@ public class JsonRpcHttpOptionsTest extends CommandTestAbstract {
     final String keystoreFile = "/tmp/test.p12";
     final String keystorePasswordFile = "/tmp/test.txt";
     final String knownClientFile = "/tmp/knownClientFile";
+    final String truststorePasswordFile = "/tmp/test1.txt";
+    final String truststoreFile = "/tmp/test1.p12";
     parseCommand(
         "--rpc-http-enabled",
         "--rpc-http-host",
@@ -355,7 +357,11 @@ public class JsonRpcHttpOptionsTest extends CommandTestAbstract {
         keystorePasswordFile,
         "--rpc-http-tls-client-auth-enabled",
         "--rpc-http-tls-known-clients-file",
-        knownClientFile);
+        knownClientFile,
+        "--rpc-http-tls-truststore-file",
+        truststoreFile,
+        "--rpc-http-tls-truststore-password-file",
+        truststorePasswordFile);
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
@@ -417,6 +423,52 @@ public class JsonRpcHttpOptionsTest extends CommandTestAbstract {
         .isTrue();
     assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().isCaClientsEnabled())
         .isTrue();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsClientAuthWithTrustStore() throws IOException {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String keystoreFile = "/tmp/test.p12";
+    final String keystorePasswordFile = "/tmp/test.txt";
+    final String truststoreFile = "/tmp/truststore.p12";
+    final String truststorePasswordFile = "/tmp/truststore.txt";
+
+    Files.writeString(Path.of(truststorePasswordFile), "password");
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        keystoreFile,
+        "--rpc-http-tls-keystore-password-file",
+        keystorePasswordFile,
+        "--rpc-http-tls-client-auth-enabled",
+        "--rpc-http-tls-truststore-file",
+        truststoreFile,
+        "--rpc-http-tls-truststore-password-file",
+        truststorePasswordFile);
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+    final Optional<TlsConfiguration> tlsConfiguration =
+        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
+    assertThat(tlsConfiguration.isPresent()).isTrue();
+    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().isPresent()).isTrue();
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().getTruststorePath())
+        .isEqualTo(Optional.of(Path.of(truststoreFile)));
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().getTrustStorePassword())
+        .isEqualTo(Files.readString(Path.of(truststorePasswordFile)));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
