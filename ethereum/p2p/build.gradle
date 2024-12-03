@@ -35,7 +35,6 @@ dependencies {
   implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:rlp')
-  implementation project(':pki')
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':util')

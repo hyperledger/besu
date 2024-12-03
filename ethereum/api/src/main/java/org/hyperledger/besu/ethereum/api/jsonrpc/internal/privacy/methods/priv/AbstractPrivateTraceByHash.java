@@ -41,7 +41,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-@Deprecated(since = "24.11.0")
+@Deprecated(since = "24.12.0")
 public abstract class AbstractPrivateTraceByHash implements JsonRpcMethod {
 
   protected final Supplier<PrivateBlockTracer> blockTracerSupplier;

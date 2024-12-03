@@ -510,6 +510,7 @@ public final class RunnerTest {
         .besuComponent(mock(BesuComponent.class))
         .maxPeers(25)
         .maxRemotelyInitiatedPeers(15)
+        .apiConfiguration(ImmutableApiConfiguration.builder().build())
         .build();
   }
 }

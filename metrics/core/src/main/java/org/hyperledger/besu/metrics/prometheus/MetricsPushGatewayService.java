@@ -17,7 +17,6 @@ package org.hyperledger.besu.metrics.prometheus;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.metrics.MetricsService;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -37,7 +36,7 @@ public class MetricsPushGatewayService implements MetricsService {
   private PushGateway pushGateway;
   private ScheduledExecutorService scheduledExecutorService;
   private final MetricsConfiguration config;
-  private final MetricsSystem metricsSystem;
+  private final PrometheusMetricsSystem metricsSystem;
 
   /**
    * Instantiates a new Metrics push gateway service.
@@ -46,7 +45,7 @@ public class MetricsPushGatewayService implements MetricsService {
    * @param metricsSystem the metrics system
    */
   public MetricsPushGatewayService(
-      final MetricsConfiguration configuration, final MetricsSystem metricsSystem) {
+      final MetricsConfiguration configuration, final PrometheusMetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     validateConfig(configuration);
     config = configuration;
@@ -59,9 +58,6 @@ public class MetricsPushGatewayService implements MetricsService {
     checkArgument(
         !(config.isEnabled() && config.isPushEnabled()),
         "Metrics Push Gateway Service cannot run concurrent with the normal metrics.");
-    checkArgument(
-        metricsSystem instanceof PrometheusMetricsSystem,
-        "Push Gateway requires a Prometheus Metrics System.");
   }
 
   @Override
@@ -73,7 +69,7 @@ public class MetricsPushGatewayService implements MetricsService {
 
     pushGateway =
         PushGateway.builder()
-            .registry(((PrometheusMetricsSystem) metricsSystem).getRegistry())
+            .registry(metricsSystem.getRegistry())
             .address(config.getPushHost() + ":" + config.getPushPort())
             .job(config.getPrometheusJob())
             .build();
@@ -90,6 +86,7 @@ public class MetricsPushGatewayService implements MetricsService {
 
   @Override
   public CompletableFuture<?> stop() {
+    metricsSystem.shutdown();
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
       // Calling shutdown now cancels the pending push, which is desirable.

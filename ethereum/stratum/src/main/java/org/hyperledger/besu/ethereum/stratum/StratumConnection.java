@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
  * Persistent TCP connection using a variant of the Stratum protocol, connecting the client to
  * miners.
  */
+@Deprecated(since = "24.12.0")
 final class StratumConnection {
   private static final Logger LOG = LoggerFactory.getLogger(StratumConnection.class);
 
