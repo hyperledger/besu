@@ -20,7 +20,7 @@
     | jvm_memory_pool_bytes_init      | jvm_memory_pool_init_bytes      |
     | jvm_memory_pool_bytes_max       | jvm_memory_pool_max_bytes       |
     | jvm_memory_pool_bytes_used      | jvm_memory_pool_used_bytes      |
-- Transaction call object cannot have both `gas` and `maxPriorityFeePerGas/maxFeePerGas` fields set [#7965]( https://github.com/hyperledger/besu/pull/7965)
+- Transaction call object cannot have both `gasPrice` and `maxPriorityFeePerGas/maxFeePerGas` fields set [#7965]( https://github.com/hyperledger/besu/pull/7965)
 
 ### Upcoming Breaking Changes
 - Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.

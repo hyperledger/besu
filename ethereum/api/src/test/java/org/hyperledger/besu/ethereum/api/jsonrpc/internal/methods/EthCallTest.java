@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -479,6 +478,7 @@ public class EthCallTest {
     return new JsonCallParameter.JsonCallParameterBuilder()
         .withFrom(Address.fromHexString("0x0"))
         .withTo(Address.fromHexString("0x0"))
+        .withGas(0L)
         .withGasPrice(gasPrice)
         .withMaxFeePerGas(maxFeesPerGas)
         .withMaxPriorityFeePerGas(maxPriorityFeesPerGas)

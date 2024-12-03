@@ -123,11 +123,11 @@ public class JsonCallParameter extends CallParameter {
     private Optional<BigInteger> chainId = Optional.empty();
     private Address from;
     private Address to;
-    private Optional<Long> gas = Optional.empty();
+    private long gas = -1;
     private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
     private Optional<Wei> maxFeePerGas = Optional.empty();
     private Optional<Wei> maxFeePerBlobGas = Optional.empty();
-    private Wei gasPrice;
+    private Optional<Wei> gasPrice = Optional.empty();
     private Wei value;
     private Bytes data;
     private Bytes input;
@@ -198,7 +198,7 @@ public class JsonCallParameter extends CallParameter {
      */
     @JsonDeserialize(using = GasDeserializer.class)
     public JsonCallParameterBuilder withGas(final Long gas) {
-      this.gas = Optional.ofNullable(gas);
+      this.gas = Optional.ofNullable(gas).orElse(-1L);
       return this;
     }
 
@@ -253,7 +253,7 @@ public class JsonCallParameter extends CallParameter {
      * @return the {@link JsonCallParameterBuilder} instance for chaining
      */
     public JsonCallParameterBuilder withGasPrice(final Wei gasPrice) {
-      this.gasPrice = gasPrice;
+      this.gasPrice = Optional.ofNullable(gasPrice);
       return this;
     }
 
@@ -361,7 +361,8 @@ public class JsonCallParameter extends CallParameter {
         throw new IllegalArgumentException("Only one of 'input' or 'data' should be provided");
       }
 
-      if (gas.isPresent() && (maxFeePerBlobGas.isPresent() || maxPriorityFeePerGas.isPresent())) {
+      if (gasPrice.isPresent()
+          && (maxFeePerBlobGas.isPresent() || maxPriorityFeePerGas.isPresent())) {
         throw new IllegalArgumentException(
             "both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified");
       }
@@ -372,8 +373,8 @@ public class JsonCallParameter extends CallParameter {
           chainId,
           from,
           to,
-          gas.orElse(-1L),
-          gasPrice,
+          gas,
+          gasPrice.orElse(null),
           maxPriorityFeePerGas,
           maxFeePerGas,
           value,
