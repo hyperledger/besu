@@ -153,6 +153,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                   });
             });
     storageToClear.addAll(source.storageToClear);
+    storageKeyHashLookup.putAll(source.storageKeyHashLookup);
 
     this.isAccumulatorStateChanged = true;
   }
@@ -211,6 +212,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                             uInt256DiffBasedValue.getPrior(), uInt256DiffBasedValue.getPrior()));
                   });
             });
+    storageKeyHashLookup.putAll(source.storageKeyHashLookup);
     this.isAccumulatorStateChanged = true;
   }
 
@@ -504,8 +506,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                 tracked.setStorageWasCleared(false); // storage already cleared for this transaction
               }
             });
-    getUpdatedAccounts().clear();
-    getDeletedAccounts().clear();
   }
 
   @Override
