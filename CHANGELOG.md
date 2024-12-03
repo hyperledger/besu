@@ -26,6 +26,7 @@
 - Add a method to check if a metric category is enabled to the plugin API [#7832](https://github.com/hyperledger/besu/pull/7832)
 - Add a new metric collector for counters which get their value from suppliers [#7894](https://github.com/hyperledger/besu/pull/7894)
 - Add account and state overrides to `eth_call` [#7801](https://github.com/hyperledger/besu/pull/7801) and `eth_estimateGas` [#7890](https://github.com/hyperledger/besu/pull/7890)
+- Add RPC WS options to specify password file for keystore and truststore [#7970](https://github.com/hyperledger/besu/pull/7970)
 
 ### Bug fixes
 - Fix registering new metric categories from plugins [#7825](https://github.com/hyperledger/besu/pull/7825)
