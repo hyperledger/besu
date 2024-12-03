@@ -412,9 +412,9 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     LOG.info(
         logMessage,
         status.name(),
-        AbstractEngineNewPayload.shortenString(forkChoice.getHeadBlockHash().toHexString()),
-        AbstractEngineNewPayload.shortenString(forkChoice.getFinalizedBlockHash().toHexString()),
-        AbstractEngineNewPayload.shortenString(forkChoice.getSafeBlockHash().toHexString()));
+        Hash.shortenHexString(forkChoice.getHeadBlockHash().toHexString()),
+        Hash.shortenHexString(forkChoice.getFinalizedBlockHash().toHexString()),
+        Hash.shortenHexString(forkChoice.getSafeBlockHash().toHexString()));
   }
 
   private void logAtDebug(

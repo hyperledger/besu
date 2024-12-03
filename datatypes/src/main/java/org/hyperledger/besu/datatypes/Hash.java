@@ -118,4 +118,19 @@ public class Hash extends DelegatingBytes32 {
   public static Hash fromHexStringLenient(final String str) {
     return new Hash(Bytes32.fromHexStringLenient(str));
   }
+
+  /***
+   * For logging purposes, this method returns a shortened hex representation
+   *
+   * @param input the string hex representation
+   * @return shorten string with only the beginning and the end of the hex representation
+   */
+  public static String shortenHexString(final String hexRepresentation) {
+    if (hexRepresentation == null || hexRepresentation.length() <= 10) {
+      throw new IllegalArgumentException("Input string must be longer than 10 characters");
+    }
+    String firstPart = hexRepresentation.substring(0, 6);
+    String lastPart = hexRepresentation.substring(hexRepresentation.length() - 5);
+    return firstPart + "....." + lastPart;
+  }
 }
