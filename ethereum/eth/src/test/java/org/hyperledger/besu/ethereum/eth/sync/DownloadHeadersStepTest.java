@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeaders;
@@ -65,7 +66,7 @@ public class DownloadHeadersStepTest {
 
   @BeforeEach
   public void setUp() {
-    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
+    ethProtocolManager = EthProtocolManagerTestBuilder.builder().setBlockchain(blockchain).build();
     downloader =
         new DownloadHeadersStep(
             protocolSchedule,

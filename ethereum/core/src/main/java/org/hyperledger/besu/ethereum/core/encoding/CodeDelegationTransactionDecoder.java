@@ -81,7 +81,7 @@ public class CodeDelegationTransactionDecoder {
     final Address address = Address.wrap(input.readBytes());
     final long nonce = input.readLongScalar();
 
-    final BigInteger yParity = input.readUInt256Scalar().toUnsignedBigInteger();
+    final byte yParity = (byte) input.readUnsignedByteScalar();
     final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
     final BigInteger s = input.readUInt256Scalar().toUnsignedBigInteger();
 
