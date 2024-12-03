@@ -214,14 +214,14 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   @Override
   public void roundExpired(final RoundExpiry expire) {
     if (currentRound.isEmpty()) {
-      LOG.info(
+      LOG.error(
           "Received Round timer expiry before round is created timerRound={}", expire.getView());
       return;
     }
 
     QbftRound qbftRound = currentRound.get();
     if (!expire.getView().equals(qbftRound.getRoundIdentifier())) {
-      LOG.info(
+      LOG.trace(
           "Ignoring Round timer expired which does not match current round. round={}, timerRound={}",
           qbftRound.getRoundIdentifier(),
           expire.getView());
