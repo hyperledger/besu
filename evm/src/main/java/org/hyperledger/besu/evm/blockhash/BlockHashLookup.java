@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evm.blockhash;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.function.BiFunction;
 
@@ -25,4 +25,4 @@ import java.util.function.BiFunction;
  * <p>Arg is the current executing message frame. The Result is the Hash, which may be zero based on
  * lookup rules.
  */
-public interface BlockHashLookup extends BiFunction<WorldUpdater, Long, Hash> {}
+public interface BlockHashLookup extends BiFunction<MessageFrame, Long, Hash> {}
