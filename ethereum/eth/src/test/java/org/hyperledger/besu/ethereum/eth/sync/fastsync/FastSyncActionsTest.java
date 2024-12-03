@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
@@ -45,6 +46,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,13 +95,15 @@ public class FastSyncActionsTest {
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            ProtocolScheduleFixture.MAINNET,
-            blockchain,
-            () -> timeoutCount.getAndDecrement() > 0,
-            blockchainSetupUtil.getWorldArchive(),
-            blockchainSetupUtil.getTransactionPool(),
-            EthProtocolConfiguration.defaultConfig());
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(ProtocolScheduleFixture.MAINNET)
+            .setBlockchain(blockchain)
+            .setEthScheduler(
+                new DeterministicEthScheduler(() -> timeoutCount.getAndDecrement() > 0))
+            .setWorldStateArchive(blockchainSetupUtil.getWorldArchive())
+            .setTransactionPool(blockchainSetupUtil.getTransactionPool())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .build();
     ethContext = ethProtocolManager.ethContext();
     ethPeers = ethContext.getEthPeers();
     syncState = new SyncState(blockchain, ethPeers);
