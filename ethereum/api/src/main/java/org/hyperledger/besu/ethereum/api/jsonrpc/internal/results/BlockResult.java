@@ -89,6 +89,7 @@ public class BlockResult implements JsonRpcResult {
   private final String excessBlobGas;
   private final String parentBeaconBlockRoot;
   private final String targetBlobCount;
+  private final List<TransactionProcessingResult> transactionProcessingResults;
 
   public BlockResult(
       final BlockHeader header,
@@ -103,6 +104,18 @@ public class BlockResult implements JsonRpcResult {
       final BlockHeader header,
       final List<TransactionResult> transactions,
       final List<JsonNode> ommers,
+      final Difficulty totalDifficulty,
+      final int size,
+      final boolean includeCoinbase,
+      final Optional<List<Withdrawal>> withdrawals) {
+    this(header, transactions, ommers, null, totalDifficulty, size, includeCoinbase, withdrawals);
+  }
+
+  public BlockResult(
+      final BlockHeader header,
+      final List<TransactionResult> transactions,
+      final List<JsonNode> ommers,
+      final List<TransactionProcessingResult> transactionProcessingResults,
       final Difficulty totalDifficulty,
       final int size,
       final boolean includeCoinbase,
@@ -128,6 +141,7 @@ public class BlockResult implements JsonRpcResult {
     this.timestamp = Quantity.create(header.getTimestamp());
     this.ommers = ommers;
     this.transactions = transactions;
+    this.transactionProcessingResults = transactionProcessingResults;
     this.coinbase = includeCoinbase ? header.getCoinbase().toString() : null;
     this.withdrawalsRoot = header.getWithdrawalsRoot().map(Hash::toString).orElse(null);
     this.withdrawals =
@@ -281,5 +295,10 @@ public class BlockResult implements JsonRpcResult {
   @JsonGetter(value = "targetBlobCount")
   public String getTargetBlobCount() {
     return targetBlobCount;
+  }
+
+  @JsonGetter(value = "calls")
+  public List<TransactionProcessingResult> getTransactionProcessingResults() {
+    return transactionProcessingResults;
   }
 }

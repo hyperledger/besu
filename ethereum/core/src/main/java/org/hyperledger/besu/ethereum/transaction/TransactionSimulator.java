@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -269,6 +270,25 @@ public class TransactionSimulator {
       final OperationTracer operationTracer,
       final BlockHeader header,
       final WorldUpdater updater) {
+    return processWithWorldUpdater(
+        callParams,
+        maybeStateOverrides,
+        transactionValidationParams,
+        operationTracer,
+        header,
+        updater,
+        protocolSchedule.getByBlockHeader(header).getMiningBeneficiaryCalculator());
+  }
+
+  @Nonnull
+  public Optional<TransactionSimulatorResult> processWithWorldUpdater(
+      final CallParameter callParams,
+      final Optional<AccountOverrideMap> maybeStateOverrides,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
+      final BlockHeader header,
+      final WorldUpdater updater,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator) {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
 
     final Address senderAddress =
@@ -318,7 +338,6 @@ public class TransactionSimulator {
         buildTransaction(
             callParams,
             transactionValidationParams,
-            header,
             senderAddress,
             nonce,
             simulationGasCap,
@@ -335,9 +354,7 @@ public class TransactionSimulator {
             updater,
             blockHeaderToProcess,
             transaction,
-            protocolSpec
-                .getMiningBeneficiaryCalculator()
-                .calculateBeneficiary(blockHeaderToProcess),
+            miningBeneficiaryCalculator.calculateBeneficiary(blockHeaderToProcess),
             new CachingBlockHashLookup(blockHeaderToProcess, blockchain),
             false,
             transactionValidationParams,
@@ -400,7 +417,6 @@ public class TransactionSimulator {
   private Optional<Transaction> buildTransaction(
       final CallParameter callParams,
       final TransactionValidationParams transactionValidationParams,
-      final BlockHeader header,
       final Address senderAddress,
       final long nonce,
       final long gasLimit,
@@ -437,12 +453,19 @@ public class TransactionSimulator {
       maxPriorityFeePerGas = callParams.getMaxPriorityFeePerGas().orElse(gasPrice);
       maxFeePerBlobGas = callParams.getMaxFeePerBlobGas().orElse(blobGasPrice);
     }
-    if (header.getBaseFee().isEmpty()) {
-      transactionBuilder.gasPrice(gasPrice);
-    } else if (protocolSchedule.getChainId().isPresent()) {
-      transactionBuilder.maxFeePerGas(maxFeePerGas).maxPriorityFeePerGas(maxPriorityFeePerGas);
-    } else {
-      return Optional.empty();
+
+    if (protocolSchedule.getChainId().isPresent()) {
+      if (callParams.getMaxPriorityFeePerGas().isEmpty()
+          && callParams.getMaxFeePerGas().isEmpty()) {
+        transactionBuilder.gasPrice(gasPrice);
+      }
+    }
+
+    if (protocolSchedule.getChainId().isPresent()) {
+      if (callParams.getMaxPriorityFeePerGas().isPresent()
+          || callParams.getMaxFeePerGas().isPresent()) {
+        transactionBuilder.maxFeePerGas(maxFeePerGas).maxPriorityFeePerGas(maxPriorityFeePerGas);
+      }
     }
 
     transactionBuilder.guessType();
