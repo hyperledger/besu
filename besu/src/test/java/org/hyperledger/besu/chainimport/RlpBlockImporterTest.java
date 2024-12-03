@@ -25,6 +25,7 @@ import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -80,6 +81,7 @@ public final class RlpBlockImporterTest {
             .evmConfiguration(EvmConfiguration.DEFAULT)
             .networkConfiguration(NetworkingConfiguration.create())
             .besuComponent(mock(BesuComponent.class))
+            .apiConfiguration(ImmutableApiConfiguration.builder().build())
             .build();
     final RlpBlockImporter.ImportResult result =
         rlpBlockImporter.importBlockchain(source, targetController, false);
@@ -114,6 +116,7 @@ public final class RlpBlockImporterTest {
             .evmConfiguration(EvmConfiguration.DEFAULT)
             .networkConfiguration(NetworkingConfiguration.create())
             .besuComponent(mock(BesuComponent.class))
+            .apiConfiguration(ImmutableApiConfiguration.builder().build())
             .build();
 
     assertThatThrownBy(
@@ -145,6 +148,7 @@ public final class RlpBlockImporterTest {
             .evmConfiguration(EvmConfiguration.DEFAULT)
             .networkConfiguration(NetworkingConfiguration.create())
             .besuComponent(mock(BesuComponent.class))
+            .apiConfiguration(ImmutableApiConfiguration.builder().build())
             .build();
 
     final RlpBlockImporter.ImportResult result =

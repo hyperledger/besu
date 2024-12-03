@@ -4,6 +4,7 @@
 
 ### Breaking Changes
 - Removed Retesteth rpc service and commands [#7833](https://github.com/hyperledger/besu/pull/7783)
+- TLS for P2P (early access feature) has been removed [#7942](https://github.com/hyperledger/besu/pull/7942)
 - With the upgrade of the Prometheus Java Metrics library, there are the following changes:
   - Gauge names are not allowed to end with `total`, therefore the metric `besu_blockchain_difficulty_total` is losing the `_total` suffix
   - The `_created` timestamps are not returned by default, you can set the env var `BESU_OPTS="-Dio.prometheus.exporter.includeCreatedTimestamps=true"` to enable them
@@ -27,7 +28,7 @@
 - `--host-whitelist` has been deprecated in favor of `--host-allowlist` since 2020 and will be removed in a future release
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Tessera privacy
-  - Smart-contract-based permissioning
+  - Smart-contract-based (onchain) permissioning
   - Proof of Work consensus
   - Fast Sync
 
