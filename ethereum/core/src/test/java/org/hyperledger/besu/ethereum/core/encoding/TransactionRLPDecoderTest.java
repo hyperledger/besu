@@ -15,12 +15,15 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -28,6 +31,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -65,9 +69,7 @@ class TransactionRLPDecoderTest {
     final String txWithBigFees =
         "0x02f84e0101a1648a5f8b2dcad5ea5ba6b720ff069c1d87c21a4a6a5b3766b39e2c2792367bb066a1ffa5ffaf5b0560d3a9fb186c2ede2ae6751bc0b4fef9107cf36389630b6196a38805800180c0010203";
     assertThatThrownBy(
-            () ->
-                TransactionDecoder.decodeOpaqueBytes(
-                    Bytes.fromHexString(txWithBigFees), EncodingContext.BLOCK_BODY))
+            () -> RlpProvider.transaction().decodeOpaqueBytes(Bytes.fromHexString(txWithBigFees)))
         .isInstanceOf(RLPException.class);
   }
 
@@ -112,8 +114,7 @@ class TransactionRLPDecoderTest {
     final Bytes bytes = Bytes.fromHexString(rlp_tx);
     // Decode bytes into a transaction
     final Transaction transaction = decodeRLP(RLP.input(bytes));
-    Bytes transactionBytes =
-        TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.POOLED_TRANSACTION);
+    Bytes transactionBytes = RlpProvider.pooledTransaction().encodeOpaqueBytes(transaction);
     // Bytes size should be equal to transaction size
     assertThat(transaction.getSize()).isEqualTo(transactionBytes.size());
   }
@@ -140,7 +141,20 @@ class TransactionRLPDecoderTest {
     }
   }
 
+  @Test
+  void shouldHaveDecodersForAllTransactionTypes() {
+    Stream.of(TransactionType.values())
+        .filter(v -> v != TransactionType.FRONTIER)
+        .forEach(
+            v -> {
+              assertThatNoException()
+                  .isThrownBy(() -> new MainnetTransactionDecoder().getDecoder(v));
+              assertThatNoException()
+                  .isThrownBy(() -> new PooledMainnetTransactionDecoder().getDecoder(v));
+            });
+  }
+
   private Transaction decodeRLP(final RLPInput input) {
-    return TransactionDecoder.decodeRLP(input, EncodingContext.POOLED_TRANSACTION);
+    return RlpProvider.pooledTransaction().readFrom(input);
   }
 }

@@ -42,9 +42,7 @@ public final class LimitedTransactionsMessages {
     int messageSize = 0;
     message.startList();
     for (final Transaction transaction : transactions) {
-      final BytesValueRLPOutput encodedTransaction = new BytesValueRLPOutput();
-      transaction.writeTo(encodedTransaction);
-      final Bytes encodedBytes = encodedTransaction.encoded();
+      final Bytes encodedBytes = transaction.encoded();
       if (messageSize != 0 // always at least one message
           && messageSize + encodedBytes.size() > LIMIT) {
         break;

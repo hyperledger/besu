@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import static org.hyperledger.besu.ethereum.core.encoding.SignatureEncoder.writeSignatureAndRecoveryId;
+
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -45,7 +47,7 @@ public class BlobTransactionEncoder {
               out.writeBytes(vh.toBytes());
             });
     out.endList();
-    TransactionEncoder.writeSignatureAndRecoveryId(transaction, out);
+    writeSignatureAndRecoveryId(transaction, out);
     out.endList();
   }
 

@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionPen
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpProvider;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
@@ -108,8 +109,7 @@ class EthGetTransactionByHashTest {
   @Test
   void shouldReturnPendingTransactionWhenTransactionExistsAndIsPending() {
     final org.hyperledger.besu.ethereum.core.Transaction transaction =
-        org.hyperledger.besu.ethereum.core.Transaction.readFrom(
-            Bytes.fromHexString(VALID_TRANSACTION));
+        RlpProvider.transaction().readFrom(Bytes.fromHexString(VALID_TRANSACTION));
 
     when(transactionPool.getTransactionByHash(transaction.getHash()))
         .thenReturn(Optional.of(transaction));
@@ -131,8 +131,7 @@ class EthGetTransactionByHashTest {
   @Test
   void shouldReturnCompleteTransactionWhenTransactionExistsInBlockchain() {
     final org.hyperledger.besu.ethereum.core.Transaction transaction =
-        org.hyperledger.besu.ethereum.core.Transaction.readFrom(
-            Bytes.fromHexString(VALID_TRANSACTION));
+        RlpProvider.transaction().readFrom(Bytes.fromHexString(VALID_TRANSACTION));
     final TransactionWithMetadata transactionWithMetadata =
         new TransactionWithMetadata(transaction, 1, Optional.empty(), Hash.ZERO, 0);
 

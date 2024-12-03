@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import static org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.writeSignature;
+import static org.hyperledger.besu.ethereum.core.encoding.SignatureEncoder.writeSignature;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;

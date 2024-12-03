@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 public class DebugGetRawTransaction implements JsonRpcMethod {
 
@@ -61,8 +60,6 @@ public class DebugGetRawTransaction implements JsonRpcMethod {
   }
 
   private String toRawString(final Transaction transaction) {
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    transaction.writeTo(out);
-    return out.encoded().toHexString();
+    return transaction.encoded().toHexString();
   }
 }

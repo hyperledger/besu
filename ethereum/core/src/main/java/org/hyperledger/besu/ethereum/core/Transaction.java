@@ -39,12 +39,9 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.CodeDelegationEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.registry.RlpProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.math.BigInteger;
@@ -128,14 +125,6 @@ public class Transaction
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  public static Transaction readFrom(final Bytes rlpBytes) {
-    return readFrom(RLP.input(rlpBytes));
-  }
-
-  public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionDecoder.decodeRLP(rlpInput, EncodingContext.BLOCK_BODY);
   }
 
   /**
@@ -479,19 +468,10 @@ public class Transaction
     return hashNoSignature;
   }
 
-  /**
-   * Writes the transaction to RLP
-   *
-   * @param out the output to write the transaction to
-   */
-  public void writeTo(final RLPOutput out) {
-    TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY);
-  }
-
   @Override
   public Bytes encoded() {
     final BytesValueRLPOutput rplOutput = new BytesValueRLPOutput();
-    writeTo(rplOutput);
+    RlpProvider.transaction().writeTo(this, rplOutput);
     return rplOutput.encoded();
   }
 
@@ -556,11 +536,10 @@ public class Transaction
   }
 
   private void memoizeHashAndSize() {
-    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
+    final Bytes bytes = RlpProvider.transaction().encodeOpaqueBytes(this);
     hash = Hash.hash(bytes);
     if (transactionType.supportsBlob() && getBlobsWithCommitments().isPresent()) {
-      final Bytes pooledBytes =
-          TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.POOLED_TRANSACTION);
+      final Bytes pooledBytes = RlpProvider.pooledTransaction().encodeOpaqueBytes(this);
       size = pooledBytes.size();
       return;
     }
