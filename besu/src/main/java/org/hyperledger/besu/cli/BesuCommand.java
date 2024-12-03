@@ -60,7 +60,6 @@ import org.hyperledger.besu.cli.options.NativeLibraryOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
 import org.hyperledger.besu.cli.options.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
-import org.hyperledger.besu.cli.options.P2PTLSConfigOptions;
 import org.hyperledger.besu.cli.options.PermissionsOptions;
 import org.hyperledger.besu.cli.options.PluginsConfigurationOptions;
 import org.hyperledger.besu.cli.options.PrivacyPluginOptions;
@@ -127,7 +126,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
@@ -136,7 +134,6 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
@@ -261,7 +258,6 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.IExecutionStrategy;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 
@@ -344,6 +340,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       Suppliers.memoize(this::readGenesisConfigOptions);
   private final Supplier<MiningConfiguration> miningParametersSupplier =
       Suppliers.memoize(this::getMiningParameters);
+  private final Supplier<ApiConfiguration> apiConfigurationSupplier =
+      Suppliers.memoize(this::getApiConfiguration);
 
   private RocksDBPlugin rocksDBPlugin;
 
@@ -706,8 +704,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfblocksToCache = 0;
 
-  @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
-
   // Plugins Configuration Option Group
   @CommandLine.ArgGroup(validate = false)
   PluginsConfigurationOptions pluginsConfigurationOptions = new PluginsConfigurationOptions();
@@ -719,10 +715,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private WebSocketConfiguration webSocketConfiguration;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private InProcessRpcConfiguration inProcessRpcConfiguration;
-  private ApiConfiguration apiConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
-  private Optional<TLSConfiguration> p2pTLSConfiguration;
   private DataStorageConfiguration dataStorageConfiguration;
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
@@ -1234,7 +1228,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return synchronize(
         besuController,
         p2PDiscoveryConfig.p2pEnabled(),
-        p2pTLSConfiguration,
         p2PDiscoveryConfig.peerDiscoveryEnabled(),
         ethNetworkConfig,
         p2PDiscoveryConfig.p2pHost(),
@@ -1246,7 +1239,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         webSocketConfiguration,
         jsonRpcIpcConfiguration,
         inProcessRpcConfiguration,
-        apiConfiguration,
+        apiConfigurationSupplier.get(),
         metricsConfiguration,
         permissioningConfiguration,
         staticNodes,
@@ -1258,11 +1251,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         besuController.getProtocolContext().getBlockchain(), besuController.getProtocolSchedule());
     transactionSimulationServiceImpl.init(
         besuController.getProtocolContext().getBlockchain(),
-        new TransactionSimulator(
-            besuController.getProtocolContext().getBlockchain(),
-            besuController.getProtocolContext().getWorldStateArchive(),
-            besuController.getProtocolSchedule(),
-            apiConfiguration.getGasCap()));
+        besuController.getTransactionSimulator());
     rpcEndpointServiceImpl.init(runner.getInProcessRpcMethods());
 
     besuPluginContext.addService(
@@ -1316,7 +1305,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolContext().getBlockchain(),
             miningParametersSupplier.get(),
             besuController.getProtocolSchedule(),
-            apiConfiguration.getGasCap()));
+            apiConfigurationSupplier.get().getGasCap()));
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
@@ -1465,10 +1454,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateTransactionPoolOptions();
     validateDataStorageOptions();
     validateGraphQlOptions();
-    validateApiOptions();
     validateConsensusSyncCompatibilityOptions();
     validatePluginOptions();
-    p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
   }
 
   private void validateConsensusSyncCompatibilityOptions() {
@@ -1659,6 +1646,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
+    if (SyncMode.FAST == syncMode) {
+      logger.warn("FAST sync is deprecated. Recommend using SNAP sync instead.");
+    }
+
     if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
         && isOptionSet(commandLine, "--sync-min-peers")) {
       logger.warn("--sync-min-peers is ignored in FULL sync-mode");
@@ -1707,7 +1698,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration = createEngineJsonRpcConfiguration();
     }
-    p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration =
         graphQlOptions.graphQLConfiguration(
             hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
@@ -1721,7 +1711,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             unstableIpcOptions.getIpcPath(),
             unstableIpcOptions.getRpcIpcApis());
     inProcessRpcConfiguration = inProcessRpcOptions.toDomainObject();
-    apiConfiguration = apiConfigurationOptions.apiConfiguration();
     dataStorageConfiguration = getDataStorageConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {
@@ -1839,6 +1828,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
             .cacheLastBlocks(numberOfblocksToCache)
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
+            .apiConfiguration(apiConfigurationSupplier.get())
             .besuComponent(besuComponent);
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
       final DiffBasedSubStorageConfiguration subStorageConfiguration =
@@ -2164,6 +2154,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return miningParameters;
   }
 
+  private ApiConfiguration getApiConfiguration() {
+    validateApiOptions();
+    return apiConfigurationOptions.apiConfiguration();
+  }
+
   /**
    * Get the data storage configuration
    *
@@ -2232,7 +2227,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Runner synchronize(
       final BesuController controller,
       final boolean p2pEnabled,
-      final Optional<TLSConfiguration> p2pTLSConfiguration,
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
       final String p2pAdvertisedHost,
@@ -2251,8 +2245,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Path pidPath) {
 
     checkNotNull(runnerBuilder);
-
-    p2pTLSConfiguration.ifPresent(runnerBuilder::p2pTLSConfiguration);
 
     final Runner runner =
         runnerBuilder

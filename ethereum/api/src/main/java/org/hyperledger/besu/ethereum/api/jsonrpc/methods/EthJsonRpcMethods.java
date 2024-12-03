@@ -92,6 +92,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final MiningCoordinator miningCoordinator;
   private final Set<Capability> supportedCapabilities;
   private final ApiConfiguration apiConfiguration;
+  private final TransactionSimulator transactionSimulator;
 
   public EthJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -102,7 +103,8 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final MiningConfiguration miningConfiguration,
       final MiningCoordinator miningCoordinator,
       final Set<Capability> supportedCapabilities,
-      final ApiConfiguration apiConfiguration) {
+      final ApiConfiguration apiConfiguration,
+      final TransactionSimulator transactionSimulator) {
     this.blockchainQueries = blockchainQueries;
     this.synchronizer = synchronizer;
     this.protocolSchedule = protocolSchedule;
@@ -112,6 +114,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.miningCoordinator = miningCoordinator;
     this.supportedCapabilities = supportedCapabilities;
     this.apiConfiguration = apiConfiguration;
+    this.transactionSimulator = transactionSimulator;
   }
 
   @Override
@@ -130,13 +133,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthGetBlockReceipts(blockchainQueries, protocolSchedule),
         new EthGetBlockTransactionCountByNumber(blockchainQueries),
         new EthGetBlockTransactionCountByHash(blockchainQueries),
-        new EthCall(
-            blockchainQueries,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())),
+        new EthCall(blockchainQueries, transactionSimulator),
         new EthSimulateV1(
             blockchainQueries, protocolSchedule, apiConfiguration.getGasCap(), miningConfiguration),
         new EthFeeHistory(protocolSchedule, blockchainQueries, miningCoordinator, apiConfiguration),
@@ -162,20 +159,8 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthGetStorageAt(blockchainQueries),
         new EthSendRawTransaction(transactionPool),
         new EthSendTransaction(),
-        new EthEstimateGas(
-            blockchainQueries,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())),
-        new EthCreateAccessList(
-            blockchainQueries,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())),
+        new EthEstimateGas(blockchainQueries, transactionSimulator),
+        new EthCreateAccessList(blockchainQueries, transactionSimulator),
         new EthMining(miningCoordinator),
         new EthCoinbase(miningCoordinator),
         new EthProtocolVersion(supportedCapabilities),
