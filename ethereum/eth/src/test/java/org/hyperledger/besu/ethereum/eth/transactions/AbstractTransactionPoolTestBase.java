@@ -56,7 +56,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
-import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredTransactionPoolBaseFeeTest;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.LegacyTransactionPoolBaseFeeTest;
@@ -225,7 +225,11 @@ public abstract class AbstractTransactionPoolTestBase {
     protocolSchedule = spy(executionContext.getProtocolSchedule());
     doReturn(protocolSpec).when(protocolSchedule).getByBlockHeader(any());
     blockGasLimit = blockchain.getChainHeadBlock().getHeader().getGasLimit();
-    ethProtocolManager = EthProtocolManagerTestUtil.create();
+    ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(protocolSchedule)
+            .setBlockchain(blockchain)
+            .build();
     ethContext = spy(ethProtocolManager.ethContext());
 
     final EthScheduler ethScheduler = spy(ethContext.getScheduler());
