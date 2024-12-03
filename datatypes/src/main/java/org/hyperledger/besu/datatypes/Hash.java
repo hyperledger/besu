@@ -122,8 +122,8 @@ public class Hash extends DelegatingBytes32 {
   /***
    * For logging purposes, this method returns a shortened hex representation
    *
-   * @param input the string hex representation
-   * @return shorten string with only the beginning and the end of the hex representation
+   * @param hexRepresentation the string hex representation
+   * @return shortened string with only the beginning and the end of the hex representation
    */
   public static String shortenHexString(final String hexRepresentation) {
     if (hexRepresentation == null || hexRepresentation.length() <= 10) {
