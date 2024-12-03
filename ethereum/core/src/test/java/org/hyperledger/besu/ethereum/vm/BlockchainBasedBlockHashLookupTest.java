@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
 
@@ -46,7 +46,7 @@ class BlockchainBasedBlockHashLookupTest {
   private final Blockchain blockchain = mock(Blockchain.class);
   private BlockHeader[] headers;
   private BlockHashLookup lookup;
-  private final WorldUpdater worldUpdaterMock = mock(WorldUpdater.class);
+  private final MessageFrame messageFrameMock = mock(MessageFrame.class);
 
   @BeforeEach
   void setUp() {
@@ -86,7 +86,7 @@ class BlockchainBasedBlockHashLookupTest {
 
   @Test
   void shouldReturnEmptyHashWhenRequestedBlockNotOnchain() {
-    assertThat(lookup.apply(worldUpdaterMock, CURRENT_BLOCK_NUMBER + 20L)).isEqualTo(Hash.ZERO);
+    assertThat(lookup.apply(messageFrameMock, CURRENT_BLOCK_NUMBER + 20L)).isEqualTo(Hash.ZERO);
   }
 
   @Test
@@ -96,7 +96,7 @@ class BlockchainBasedBlockHashLookupTest {
             new BlockHeaderTestFixture().number(CURRENT_BLOCK_NUMBER + 20).buildHeader(),
             blockchain);
     Assertions.assertThat(
-            lookupWithUnavailableParent.apply(worldUpdaterMock, (long) CURRENT_BLOCK_NUMBER))
+            lookupWithUnavailableParent.apply(messageFrameMock, (long) CURRENT_BLOCK_NUMBER))
         .isEqualTo(Hash.ZERO);
   }
 
@@ -138,7 +138,7 @@ class BlockchainBasedBlockHashLookupTest {
   }
 
   private void assertHashForBlockNumber(final int blockNumber, final Hash hash) {
-    Assertions.assertThat(lookup.apply(worldUpdaterMock, (long) blockNumber)).isEqualTo(hash);
+    Assertions.assertThat(lookup.apply(messageFrameMock, (long) blockNumber)).isEqualTo(hash);
   }
 
   private BlockHeader createHeader(final int blockNumber, final BlockHeader parentHeader) {

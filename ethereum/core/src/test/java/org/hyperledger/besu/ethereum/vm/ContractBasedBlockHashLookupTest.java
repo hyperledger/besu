@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -51,12 +52,14 @@ public class ContractBasedBlockHashLookupTest {
       Math.toIntExact(HISTORY_SERVE_WINDOW + BLOCKHASH_SERVE_WINDOW / 2);
   private List<BlockHeader> headers;
   private BlockHashLookup lookup;
-  private WorldUpdater worldUpdater;
+  private MessageFrame frame;
 
   @BeforeEach
   void setUp() {
     headers = new ArrayList<>();
-    worldUpdater = createWorldUpdater(0, CURRENT_BLOCK_NUMBER);
+    frame = mock(MessageFrame.class);
+    final WorldUpdater worldUpdater = createWorldUpdater(0, CURRENT_BLOCK_NUMBER);
+    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
     lookup =
         new ContractBasedBlockHashLookup(
             createHeader(CURRENT_BLOCK_NUMBER, headers.getLast()),
@@ -92,18 +95,21 @@ public class ContractBasedBlockHashLookupTest {
 
   @Test
   void shouldReturnEmptyHashWhenRequestedBlockHigherThanHead() {
-    assertThat(lookup.apply(worldUpdater, CURRENT_BLOCK_NUMBER + 20L)).isEqualTo(Hash.ZERO);
+    assertThat(lookup.apply(frame, CURRENT_BLOCK_NUMBER + 20L)).isEqualTo(Hash.ZERO);
   }
 
   @Test
   void shouldReturnEmptyHashWhenSystemContractNotExists() {
-    worldUpdater = new SimpleWorld();
-    assertThat(lookup.apply(worldUpdater, CURRENT_BLOCK_NUMBER - 1L)).isEqualTo(Hash.ZERO);
+    final WorldUpdater worldUpdater = new SimpleWorld();
+    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
+    assertThat(lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L)).isEqualTo(Hash.ZERO);
   }
 
   @Test
   void shouldReturnEmptyHashWhenParentBlockNotInContract() {
-    worldUpdater = createWorldUpdater(CURRENT_BLOCK_NUMBER - 10, CURRENT_BLOCK_NUMBER);
+    final WorldUpdater worldUpdater =
+        createWorldUpdater(CURRENT_BLOCK_NUMBER - 10, CURRENT_BLOCK_NUMBER);
+    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
     lookup =
         new ContractBasedBlockHashLookup(
             new BlockHeaderTestFixture().number(CURRENT_BLOCK_NUMBER).buildHeader(),
@@ -115,7 +121,9 @@ public class ContractBasedBlockHashLookupTest {
 
   @Test
   void shouldCacheBlockHashes() {
-    Account account = worldUpdater.get(STORAGE_ADDRESS);
+    final WorldUpdater worldUpdater = createWorldUpdater(0, CURRENT_BLOCK_NUMBER);
+    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
+    final Account account = worldUpdater.get(STORAGE_ADDRESS);
     clearInvocations(account);
 
     int blockNumber1 = CURRENT_BLOCK_NUMBER - 1;
@@ -139,7 +147,8 @@ public class ContractBasedBlockHashLookupTest {
 
   @Test
   void shouldGetHashWhenParentIsGenesis() {
-    worldUpdater = createWorldUpdater(0, 1);
+    final WorldUpdater worldUpdater = createWorldUpdater(0, 1);
+    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
     lookup =
         new ContractBasedBlockHashLookup(
             createHeader(1, headers.getFirst()),
@@ -171,7 +180,7 @@ public class ContractBasedBlockHashLookupTest {
   }
 
   private void assertHashForBlockNumber(final int blockNumber, final Hash hash) {
-    Assertions.assertThat(lookup.apply(worldUpdater, (long) blockNumber)).isEqualTo(hash);
+    Assertions.assertThat(lookup.apply(frame, (long) blockNumber)).isEqualTo(hash);
   }
 
   private BlockHeader createHeader(final long blockNumber, final BlockHeader parentHeader) {
