@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services;
 
-import org.hyperledger.besu.ethereum.permissioning.account.TransactionPermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
