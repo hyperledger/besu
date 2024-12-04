@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * used in various Discovery messages.
  */
 public class Endpoint {
-  private static final Logger log = LoggerFactory.getLogger(Endpoint.class);
+  private static final Logger LOG = LoggerFactory.getLogger(Endpoint.class);
   private final Optional<String> host;
   private final int udpPort;
   private final Optional<Integer> tcpPort;
