@@ -30,20 +30,11 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -56,7 +47,7 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
 
   private final String network;
 
-  private final CandidateBlock[] candidateBlocks;
+  private final VerkleCandidateBlock[] candidateBlocks;
 
   private final ReferenceTestBlockHeader genesisBlockHeader;
 
@@ -97,7 +88,7 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
   @JsonCreator
   public VerkleReferenceTestCaseSpec(
       @JsonProperty("network") final String network,
-      @JsonProperty("blocks") final CandidateBlock[] candidateBlocks,
+      @JsonProperty("blocks") final VerkleCandidateBlock[] candidateBlocks,
       @JsonProperty("genesisBlockHeader") final ReferenceTestBlockHeader genesisBlockHeader,
       @SuppressWarnings("unused") @JsonProperty("genesisRLP") final String genesisRLP,
       @JsonProperty("pre") final Map<String, ReferenceTestWorldState.AccountMock> accounts,
@@ -120,8 +111,8 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
   }
 
   @Override
-  public List<Block> getBlocks() {
-    return Arrays.stream(candidateBlocks).map(CandidateBlock::getBlock).toList();
+  public CandidateBlock[] getCandidateBlocks() {
+    return candidateBlocks;
   }
 
   @Override
@@ -147,29 +138,6 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
   @Override
   public Hash getLastBlockHash() {
     return lastBlockHash;
-  }
-
-  @Override
-  public boolean isExecutable(final Block block) {
-    Optional<CandidateBlock> candidateBlock =
-        Arrays.stream(candidateBlocks)
-            .filter(cb -> Objects.equals(cb.getBlock(), block))
-            .findFirst();
-    return candidateBlock.isPresent() && candidateBlock.get().rlp != null;
-  }
-
-  @Override
-  public boolean isValid(final Block block) {
-    Optional<CandidateBlock> candidateBlock =
-        Arrays.stream(candidateBlocks)
-            .filter(cb -> Objects.equals(cb.getBlock(), block))
-            .findFirst();
-    return candidateBlock.isPresent() && candidateBlock.get().valid;
-  }
-
-  @Override
-  public boolean areAllTransactionsValid(final Block block) {
-    throw new NotImplementedException("areAllTransactionsValid not available for verkle test");
   }
 
   @Override
@@ -259,53 +227,27 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
     "rlp_decoded",
     "transactionSequence"
   })
-  public static class CandidateBlock {
+  public static class VerkleCandidateBlock extends CandidateBlock {
 
-    private final Bytes rlp;
-
-    private final Boolean valid;
-
-    @JsonCreator
-    public CandidateBlock(
+    public VerkleCandidateBlock(
         @JsonProperty("rlp") final String rlp,
         @JsonProperty("blockHeader") final ReferenceTestBlockHeader blockHeader,
         @JsonProperty("transactions") final Object transactions,
         @JsonProperty("uncleHeaders") final Object uncleHeaders,
         @JsonProperty("withdrawals") final Object withdrawals,
         @SuppressWarnings("unused") @JsonProperty("witness") final Object witness) {
-      boolean blockValid = true;
-      // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
-      Bytes rlpAttempt = null;
-      try {
-        rlpAttempt = Bytes.fromHexString(rlp);
-      } catch (final IllegalArgumentException e) {
-        blockValid = false;
-      }
-      this.rlp = rlpAttempt;
-
+      super(rlp);
       if (blockHeader == null
           && transactions == null
           && uncleHeaders == null
           && withdrawals == null) {
-        blockValid = false;
+        this.valid = false;
       }
-
-      this.valid = blockValid;
     }
 
-    public Block getBlock() {
-      final RLPInput input = new BytesValueRLPInput(rlp, false);
-      input.enterList();
-      final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
-      final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
-      final BlockBody body =
-          new BlockBody(
-              input.readList(Transaction::readFrom),
-              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
-              input.isEndOfCurrentList()
-                  ? Optional.empty()
-                  : Optional.of(input.readList(Withdrawal::readFrom)));
-      return new Block(header, body);
+    @Override
+    public boolean areAllTransactionsValid() {
+      throw new NotImplementedException("areAllTransactionsValid not available for verkle test");
     }
   }
 }

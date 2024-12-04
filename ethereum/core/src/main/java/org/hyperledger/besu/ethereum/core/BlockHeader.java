@@ -183,19 +183,19 @@ public class BlockHeader extends SealableBlockHeader
 
       if (withdrawalsRoot == null) break;
       out.writeBytes(withdrawalsRoot);
-      /*
-        if (excessBlobGas == null || blobGasUsed == null) break;
-        out.writeLongScalar(blobGasUsed);
-        out.writeUInt64Scalar(excessBlobGas);
+
+      if (excessBlobGas == null || blobGasUsed == null) break;
+      out.writeLongScalar(blobGasUsed);
+      out.writeUInt64Scalar(excessBlobGas);
 
       if (parentBeaconBlockRoot == null) break;
-        out.writeBytes(parentBeaconBlockRoot);
+      out.writeBytes(parentBeaconBlockRoot);
 
-        if (requestsHash == null) break;
-        out.writeBytes(requestsHash);
+      if (requestsHash == null) break;
+      out.writeBytes(requestsHash);
 
-        if (targetBlobCount == null) break;
-        out.writeUInt64Scalar(targetBlobCount);*/
+      if (targetBlobCount == null) break;
+      out.writeUInt64Scalar(targetBlobCount);
     } while (false);
     out.endList();
   }
@@ -224,16 +224,13 @@ public class BlockHeader extends SealableBlockHeader
             ? Hash.wrap(input.readBytes32())
             : null;
 
-    // TODO REACTIVATE
-    /*
     final Long blobGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
     final BlobGas excessBlobGas =
         !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
 
-     final Hash requestsHash = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+    final Hash requestsHash = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     final UInt64 targetBlobCount = !input.isEndOfCurrentList() ? input.readUInt64Scalar() : null;
-        */
 
     final ExecutionWitness executionWitness =
         !input.isEndOfCurrentList() ? ExecutionWitness.readFrom(input) : null;
@@ -257,11 +254,11 @@ public class BlockHeader extends SealableBlockHeader
         mixHashOrPrevRandao,
         nonce,
         withdrawalHashRoot,
-        null,
-        null,
-        null,
-        null,
-        null,
+        blobGasUsed,
+        excessBlobGas,
+        parentBeaconBlockRoot,
+        requestsHash,
+        targetBlobCount,
         executionWitness,
         blockHeaderFunctions);
   }

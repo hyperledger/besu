@@ -259,21 +259,21 @@ class BlockchainReferenceTestCaseSpecTest {
       throw new RuntimeException("Error parsing test case json.", e);
     }
 
-    BlockchainReferenceTestCaseSpec call1MB1024CalldepthD0g0v0London = blockchainReferenceTestCaseSpec
-            .testCaseSpecs
-            .get("Call1MB1024Calldepth_d0g0v0_London");
-
     Assertions.assertEquals(1, blockchainReferenceTestCaseSpec.testCaseSpecs.size());
     Assertions.assertEquals(
-        1,
-            call1MB1024CalldepthD0g0v0London
-                .getBlocks().size());
-
-    final Block block = call1MB1024CalldepthD0g0v0London
-            .getBlocks().getFirst();
-
-      Assertions.assertTrue(call1MB1024CalldepthD0g0v0London
-              .areAllTransactionsValid(block));
+            1,
+            blockchainReferenceTestCaseSpec
+                    .testCaseSpecs
+                    .get("Call1MB1024Calldepth_d0g0v0_London")
+                    .getCandidateBlocks()
+                    .length);
+    Assertions.assertEquals(
+            true,
+            blockchainReferenceTestCaseSpec
+                    .testCaseSpecs
+                    .get("Call1MB1024Calldepth_d0g0v0_London")
+                    .getCandidateBlocks()[0]
+                    .areAllTransactionsValid());
   }
 
   @Test
@@ -292,21 +292,21 @@ class BlockchainReferenceTestCaseSpecTest {
       throw new RuntimeException("Error parsing test case json.", e);
     }
 
-    BlockchainReferenceTestCaseSpec valueOverflow_d0g0v0_EIP150 = blockchainReferenceTestCaseSpec
-            .testCaseSpecs
-            .get("ValueOverflow_d0g0v0_EIP150");
-
     Assertions.assertEquals(1, blockchainReferenceTestCaseSpec.testCaseSpecs.size());
     Assertions.assertEquals(
             1,
-            valueOverflow_d0g0v0_EIP150
-                    .getBlocks().size());
-
-    final Block block = valueOverflow_d0g0v0_EIP150
-            .getBlocks().getFirst();
-
-      Assertions.assertFalse(valueOverflow_d0g0v0_EIP150
-              .areAllTransactionsValid(block));
+            blockchainReferenceTestCaseSpec
+                    .testCaseSpecs
+                    .get("ValueOverflow_d0g0v0_EIP150")
+                    .getCandidateBlocks()
+                    .length);
+    Assertions.assertEquals(
+            false,
+            blockchainReferenceTestCaseSpec
+                    .testCaseSpecs
+                    .get("ValueOverflow_d0g0v0_EIP150")
+                    .getCandidateBlocks()[0]
+                    .areAllTransactionsValid());
 
   }
 }

@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
+import org.hyperledger.besu.ethereum.referencetests.CandidateBlock;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.evm.EVM;
@@ -177,13 +178,13 @@ public class BlockchainTestSubCommand implements Runnable {
     final MutableBlockchain blockchain = spec.getBlockchain();
     final ProtocolContext context = spec.getProtocolContext();
 
-    for (final Block block : spec.getBlocks()) {
-      if (!spec.isExecutable(block)) {
+    for (final CandidateBlock candidateBlock : spec.getCandidateBlocks()) {
+      if (!candidateBlock.isExecutable()) {
         return;
       }
 
       try {
-
+        final Block block = candidateBlock.getBlock();
         final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
 
@@ -196,7 +197,7 @@ public class BlockchainTestSubCommand implements Runnable {
         final BlockImportResult importResult =
             blockImporter.importBlock(context, block, validationMode, validationMode);
 
-        if (importResult.isImported() != spec.isValid(block)) {
+        if (importResult.isImported() != candidateBlock.isValid()) {
           parentCommand.out.printf(
               "Block %d (%s) %s%n",
               block.getHeader().getNumber(),
@@ -210,10 +211,12 @@ public class BlockchainTestSubCommand implements Runnable {
               importResult.isImported() ? "Imported" : "Rejected (correctly)");
         }
       } catch (final RLPException e) {
-        if (spec.isValid(block)) {
+        if (candidateBlock.isValid()) {
           parentCommand.out.printf(
               "Block %d (%s) should have imported but had an RLP exception %s%n",
-              block.getHeader().getNumber(), block.getHash(), e.getMessage());
+              candidateBlock.getBlock().getHeader().getNumber(),
+              candidateBlock.getBlock().getHash(),
+              e.getMessage());
         }
       }
     }

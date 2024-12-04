@@ -906,6 +906,7 @@ public abstract class MainnetProtocolSpecs {
         .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
         .executionWitnessValidator(new ExecutionWitnessValidator.AllowedExecutionWitness())
         .blockHashProcessor(new PragueBlockHashProcessor())
+        .blockHeaderFunctions(new VerkleDevnetBlockHeaderFunctions())
         .name("Verkle");
   }
 

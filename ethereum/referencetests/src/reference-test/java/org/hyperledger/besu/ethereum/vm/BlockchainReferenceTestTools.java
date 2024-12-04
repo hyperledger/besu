@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCase;
+import org.hyperledger.besu.ethereum.referencetests.CandidateBlock;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.evm.EVM;
@@ -113,14 +114,16 @@ public class BlockchainReferenceTestTools {
     final MutableBlockchain blockchain = testCase.getBlockchain();
     final ProtocolContext context = testCase.getProtocolContext();
 
-    for (final Block candidateBlock :
-        testCase.getBlocks()) {
-      if (!testCase.isExecutable(candidateBlock)) {
+    for (final CandidateBlock candidateBlock :
+        testCase.getCandidateBlocks()) {
+      if (!candidateBlock.isExecutable()) {
         return;
       }
 
       try {
-        final ProtocolSpec protocolSpec = schedule.getByBlockHeader(candidateBlock.getHeader());
+
+        final Block block = candidateBlock.getBlock();
+        final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
 
         verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
@@ -130,11 +133,11 @@ public class BlockchainReferenceTestTools {
                 ? HeaderValidationMode.LIGHT
                 : HeaderValidationMode.FULL;
         final BlockImportResult importResult =
-            blockImporter.importBlock(context, candidateBlock, validationMode, validationMode);
+            blockImporter.importBlock(context, block, validationMode, validationMode);
 
-        assertThat(importResult.isImported()).isEqualTo(testCase.isValid(candidateBlock));
+        assertThat(importResult.isImported()).isEqualTo(candidateBlock.isValid());
       } catch (final RLPException e) {
-        assertThat(testCase.isValid(candidateBlock)).isFalse();
+        assertThat(candidateBlock.isValid()).isFalse();
       }
     }
 
