@@ -71,7 +71,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
-      final UInt64 targetBlobCount) {
+      final UInt64 targetBlobsPerBlock) {
     super(
         parentHash,
         coinbase,
@@ -82,7 +82,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
         baseFee,
         mixHashOrPrevRandao,
         parentBeaconBlockRoot,
-        targetBlobCount);
+        targetBlobsPerBlock);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;

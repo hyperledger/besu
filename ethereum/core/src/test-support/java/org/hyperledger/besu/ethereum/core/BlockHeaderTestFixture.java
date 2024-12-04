@@ -56,7 +56,7 @@ public class BlockHeaderTestFixture {
   private Optional<BlobGas> excessBlobGas = Optional.empty();
   private Optional<Long> blobGasUsed = Optional.empty();
   private Optional<Bytes32> parentBeaconBlockRoot = Optional.empty();
-  private Optional<UInt64> targetBlobCount = Optional.empty();
+  private Optional<UInt64> targetBlobsPerBlock = Optional.empty();
 
   public BlockHeader buildHeader() {
     final BlockHeaderBuilder builder = BlockHeaderBuilder.create();
@@ -82,7 +82,7 @@ public class BlockHeaderTestFixture {
     blobGasUsed.ifPresent(builder::blobGasUsed);
     requestsHash.ifPresent(builder::requestsHash);
     parentBeaconBlockRoot.ifPresent(builder::parentBeaconBlockRoot);
-    targetBlobCount.ifPresent(builder::targetBlobCount);
+    targetBlobsPerBlock.ifPresent(builder::targetBlobsPerBlock);
     builder.blockHeaderFunctions(blockHeaderFunctions);
 
     return builder.buildBlockHeader();
@@ -205,8 +205,8 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
-  public BlockHeaderTestFixture targetBlobCount(final UInt64 targetBlobCount) {
-    this.targetBlobCount = Optional.of(targetBlobCount);
+  public BlockHeaderTestFixture targetBlobsPerBlock(final UInt64 targetBlobsPerBlock) {
+    this.targetBlobsPerBlock = Optional.of(targetBlobsPerBlock);
     return this;
   }
 }
