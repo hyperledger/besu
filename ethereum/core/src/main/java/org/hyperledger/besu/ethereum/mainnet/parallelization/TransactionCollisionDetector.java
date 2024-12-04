@@ -36,10 +36,10 @@ public class TransactionCollisionDetector {
    *
    * <p>This method detects conflicts between the transaction and the block's state by checking if
    * the transaction modifies the same addresses and storage slots that are already modified by the
-   * block. A conflict occurs in two cases: - If the transaction touches an address that is also
+   * block. A conflict occurs in two cases: 1. If the transaction touches an address that is also
    * modified in the block, and the account details (excluding storage) are identical. In this case,
    * it checks if there is an overlap in the storage slots affected by both the transaction and the
-   * block. - If the account details differ between the transaction and the block (excluding
+   * block. 2. If the account details differ between the transaction and the block (excluding
    * storage), it immediately detects a conflict.
    *
    * <p>The method returns `true` if any such conflict is found, otherwise `false`.
