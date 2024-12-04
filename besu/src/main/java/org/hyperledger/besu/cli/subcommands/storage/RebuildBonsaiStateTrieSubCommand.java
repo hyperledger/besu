@@ -27,10 +27,14 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.function.Function;
@@ -44,15 +48,14 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
 /** The revert metadata to v1 subcommand. */
-@Command(
-    name = "rebuild-bonsai-state-trie",
-    description = "Rebuilds bonsai state trie from flat database",
-    mixinStandardHelpOptions = true,
+@Command(name = "rebuild-bonsai-state-trie",
+    description = "Rebuilds bonsai state trie from flat database", mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class RebuildBonsaiStateTrieSubCommand implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(RebuildBonsaiStateTrieSubCommand.class);
   private static final Hash HASH_LAST =
       Hash.wrap(Bytes32.leftPad(Bytes.fromHexString("FF"), (byte) 0xFF));
+  static final long FORCED_COMMIT_INTERVAL = 50_000L;
 
   @SuppressWarnings("unused")
   @ParentCommand
@@ -63,7 +66,8 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
   private CommandLine.Model.CommandSpec spec;
 
   /** Default Constructor. */
-  public RebuildBonsaiStateTrieSubCommand() {}
+  public RebuildBonsaiStateTrieSubCommand() {
+  }
 
   @Override
   public void run() {
@@ -77,11 +81,9 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
         System.exit(-1);
       }
 
-      var worldStateStorage =
-          (BonsaiWorldStateKeyValueStorage)
-              controller
-                  .getStorageProvider()
-                  .createWorldStateStorage(controller.getDataStorageConfiguration());
+      var worldStateStorage = (BonsaiWorldStateKeyValueStorage) controller
+          .getStorageProvider()
+          .createWorldStateStorage(controller.getDataStorageConfiguration());
 
       if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.FULL)) {
         LOG.error("Database is not fully flattened. Refusing to rebuild state trie.");
@@ -91,28 +93,21 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
       final BlockHeader header =
           controller.getProtocolContext().getBlockchain().getChainHeadHeader();
 
-      worldStateStorage
-          .getWorldStateRootHash()
+      worldStateStorage.getWorldStateRootHash()
           // we want state root hash to either be empty or same the same as chain head
-          .filter(root -> !root.equals(header.getStateRoot()))
-          .ifPresent(
-              foundRoot -> {
-                LOG.error(
-                    "Chain head {} does not match state root {}.  Refusing to rebuild state trie.",
-                    header.getStateRoot(),
-                    foundRoot);
-                System.exit(-1);
-              });
+          .filter(root -> !root.equals(header.getStateRoot())).ifPresent(foundRoot -> {
+            LOG.error("Chain head {} does not match state root {}.  Refusing to rebuild state trie.",
+                header.getStateRoot(), foundRoot);
+            System.exit(-1);
+          });
 
       // rebuild trie:
       var newHash = rebuildTrie(worldStateStorage);
 
       // write state root and block hash from the header:
       if (!header.getStateRoot().equals(newHash)) {
-        LOG.error(
-            "Catastrophic: calculated state root {} after state rebuild, was expecting {}.",
-            newHash,
-            header.getStateRoot());
+        LOG.error("Catastrophic: calculated state root {} after state rebuild, was expecting {}.",
+            newHash, header.getStateRoot());
         System.exit(-1);
       }
       writeStateRootAndBlockHash(header, worldStateStorage);
@@ -129,78 +124,106 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
     // TODO: optimize to incrementally commit tx after a certain threshold
 
     final var wss = worldStateStorage.getComposedWorldStateStorage();
-    final var accountTrie =
-        new StoredMerklePatriciaTrie<>(
-            new StoredNodeFactory<>(
-                // this may be inefficient, and we can read through an incrementally committing tx
-                // instead
-                worldStateStorage::getAccountStateTrieNode,
-                Function.identity(),
-                Function.identity()),
-            MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    final var accountTrie = new StoredMerklePatriciaTrie<>(new StoredNodeFactory<>(
+        // this may be inefficient, and we can read through an incrementally committing tx
+        // instead
+        worldStateStorage::getAccountStateTrieNode, Function.identity(), Function.identity()),
+        MerkleTrie.EMPTY_TRIE_NODE_HASH);
+
+    final var accountsTx = new WrappedTransaction(worldStateStorage.getComposedWorldStateStorage());
+    final Runnable accountTrieCommit = () -> accountTrie.commit(
+        (loc, hash, value) -> accountsTx.put(TRIE_BRANCH_STORAGE, loc.toArrayUnsafe(),
+            value.toArrayUnsafe()));
 
     final var flatdb = worldStateStorage.getFlatDbStrategy();
-    flatdb
-        .accountsToPairStream(wss, Bytes32.ZERO)
-        .forEach(
-            accountPair -> {
-              final SegmentedKeyValueStorageTransaction perAccountTx =
-                  worldStateStorage.getComposedWorldStateStorage().startTransaction();
+    final var accountsIterator = flatdb.accountsToPairStream(wss, Bytes32.ZERO).iterator();
 
-              // if the account has storage, write the account storage trie values
-              if (isNonEmptyStorage(accountPair.getSecond())) {
-                // create account storage trie
-                var accountStorageTrie =
-                    new StoredMerklePatriciaTrie<>(
-                        new StoredNodeFactory<>(
-                            (location, hash) ->
-                                worldStateStorage.getAccountStorageTrieNode(
-                                    Hash.wrap(accountPair.getFirst()), location, hash),
-                            Function.identity(),
-                            Function.identity()),
-                        MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    long accountsCount = 0L;
+    while (accountsIterator.hasNext()) {
+      var accountPair = accountsIterator.next();
 
-                // put into account trie
-                flatdb
-                    .storageToPairStream(
-                        wss,
-                        Hash.wrap(accountPair.getFirst()),
-                        Bytes32.ZERO,
-                        HASH_LAST,
-                        Function.identity())
-                    .forEach(
-                        storagePair -> {
-                          accountStorageTrie.put(storagePair.getFirst(), storagePair.getSecond());
-                        });
+      // if the account has non-empty storage, write the account storage trie values
+      Hash stateTrieHash = extractStateRootHash(accountPair.getSecond());
+      if (! Hash.EMPTY_TRIE_HASH.equals(stateTrieHash)) {
+        var newStateTrieHash = rebuildAccountTrie(
+            flatdb, worldStateStorage, Hash.wrap(accountPair.getFirst()));
+        if (!newStateTrieHash.equals(stateTrieHash)) {
+          throw new RuntimeException("calculated state trie hash does not match account state hash");
+        }
 
-                // commit the account storage trie
-                accountStorageTrie.commit(
-                    (location, hash, value) ->
-                        perAccountTx.put(
-                            TRIE_BRANCH_STORAGE,
-                            Bytes.concatenate(accountPair.getFirst(), location).toArrayUnsafe(),
-                            value.toArrayUnsafe()));
-              }
+      }
 
-              // write the account info
-              accountTrie.put(accountPair.getFirst(), accountPair.getSecond());
+      // write the account info
+      accountTrie.put(accountPair.getFirst(), accountPair.getSecond());
 
-              // commit the account trie
-              accountTrie.commit(
-                  (location, hash, value) ->
-                      perAccountTx.put(
-                          TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), value.toArrayUnsafe()));
+      if (accountsCount++ % FORCED_COMMIT_INTERVAL == 0) {
+        LOG.info("committing account trie at account {}", accountPair.getFirst());
 
-              LOG.info("committing accountHash {}", accountPair.getFirst());
-              perAccountTx.commit();
-            });
+        // commit the account trie if we have exceeded the forced commit interval
+        accountTrieCommit.run();
+        accountsTx.commitAndReopen();
 
-    // perhaps not the safest cast
+      }
+    }
+
+    // final commit
+    accountTrieCommit.run();
+    accountsTx.commit();
+
+    // return the new state trie root hash
     return Hash.wrap(accountTrie.getRootHash());
   }
 
-  void writeStateRootAndBlockHash(
-      final BlockHeader header, final BonsaiWorldStateKeyValueStorage worldStateStorage) {
+  /**
+   * Rebuild the account storage trie for a single account hash
+   * @param flatdb reference to the flat db
+   * @param worldStateStorage reference to the worldstate storage
+   * @param accountHash the hash of the account we need to rebuild contract storage for
+   */
+  Hash rebuildAccountTrie(
+      final BonsaiFlatDbStrategy flatdb,
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final Hash accountHash) {
+
+    var accountStorageTx =
+        new WrappedTransaction(worldStateStorage.getComposedWorldStateStorage());
+    var wss = worldStateStorage.getComposedWorldStateStorage();
+
+    // create account storage trie
+    var accountStorageTrie = new StoredMerklePatriciaTrie<>(new StoredNodeFactory<>(
+        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(
+            accountHash, location, hash), Function.identity(),
+        Function.identity()), MerkleTrie.EMPTY_TRIE_NODE_HASH);
+
+    Runnable accountStorageCommit = () -> accountStorageTrie.commit(
+        (location, hash, value) -> accountStorageTx.put(TRIE_BRANCH_STORAGE,
+            Bytes.concatenate(accountHash, location).toArrayUnsafe(),
+            value.toArrayUnsafe()));
+
+    // put into account trie
+    var accountStorageIterator = flatdb
+        .storageToPairStream(wss, Hash.wrap(accountHash), Bytes32.ZERO, HASH_LAST,
+            Function.identity())
+        .iterator();
+    long accountStorageCount = 0L;
+    while (accountStorageIterator.hasNext()) {
+      var storagePair = accountStorageIterator.next();
+      accountStorageTrie.put(storagePair.getFirst(), storagePair.getSecond());
+
+      // commit the account storage trie
+      if (accountStorageCount++ % FORCED_COMMIT_INTERVAL == 0) {
+        accountStorageCommit.run();
+        accountStorageTx.commitAndReopen();
+      }
+    }
+    accountStorageCommit.run();
+    accountStorageTx.commit();
+
+    return Hash.wrap(accountStorageTrie.getRootHash());
+  }
+
+  void writeStateRootAndBlockHash(final BlockHeader header,
+      final BonsaiWorldStateKeyValueStorage worldStateStorage) {
     var tx = worldStateStorage.getComposedWorldStateStorage().startTransaction();
     tx.put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, header.getStateRoot().toArrayUnsafe());
     tx.put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, header.getBlockHash().toArrayUnsafe());
@@ -208,7 +231,7 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
     tx.commit();
   }
 
-  private boolean isNonEmptyStorage(final Bytes accountRLP) {
+  private Hash extractStateRootHash(final Bytes accountRLP) {
     final RLPInput in = RLP.input(accountRLP);
     in.enterList();
 
@@ -221,19 +244,55 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
     // final Hash codeHash = Hash.wrap(in.readBytes32());
 
     //    in.leaveList();
-    return !storageRoot.equals(Hash.EMPTY_TRIE_HASH);
+    return storageRoot;
   }
 
   private BesuController createController() {
     try {
       // Set some defaults
-      return parentCommand
-          .besuCommand
+      return parentCommand.besuCommand
           .setupControllerBuilder()
           .miningParameters(MiningConfiguration.MINING_DISABLED)
           .build();
     } catch (final Exception e) {
       throw new CommandLine.ExecutionException(spec.commandLine(), e.getMessage(), e);
+    }
+  }
+
+  static class WrappedTransaction implements SegmentedKeyValueStorageTransaction {
+
+    private final SegmentedKeyValueStorage storage;
+    private SegmentedKeyValueStorageTransaction intervalTx;
+
+    WrappedTransaction(final SegmentedKeyValueStorage storage) {
+      this.storage = storage;
+      this.intervalTx = storage.startTransaction();
+    }
+
+    @Override
+    public void put(final SegmentIdentifier segmentIdentifier, final byte[] key,
+        final byte[] value) {
+      intervalTx.put(segmentIdentifier, key, value);
+    }
+
+    @Override
+    public void remove(final SegmentIdentifier segmentIdentifier, final byte[] key) {
+      intervalTx.remove(segmentIdentifier, key);
+    }
+
+    @Override
+    public void commit() throws StorageException {
+      intervalTx.commit();
+    }
+
+    public void commitAndReopen() throws StorageException {
+      commit();
+      intervalTx = storage.startTransaction();
+    }
+
+    @Override
+    public void rollback() {
+      throw new RuntimeException("WrappedTransaction can not completely rollback.");
     }
   }
 }
