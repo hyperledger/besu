@@ -48,7 +48,7 @@ public class ProcessableBlockHeader
   // parentBeaconBlockRoot is included for Cancun
   protected final Bytes32 parentBeaconBlockRoot;
   // TODO SLD Quantity or UInt64Value<UInt64> instead?
-  protected final UInt64 targetBlobCount;
+  protected final UInt64 targetBlobsPerBlock;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -60,7 +60,7 @@ public class ProcessableBlockHeader
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
       final Bytes32 parentBeaconBlockRoot,
-      final UInt64 targetBlobCount) {
+      final UInt64 targetBlobsPerBlock) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -70,7 +70,7 @@ public class ProcessableBlockHeader
     this.baseFee = baseFee;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
-    this.targetBlobCount = targetBlobCount;
+    this.targetBlobsPerBlock = targetBlobsPerBlock;
   }
 
   /**
@@ -184,13 +184,13 @@ public class ProcessableBlockHeader
   }
 
   /**
-   * Returns the target blob count if available.
+   * Returns the target blobs per block if available.
    *
-   * @return the target blob count if available.
+   * @return the target blobs per block if available.
    */
   @Override
-  public Optional<UInt64> getTargetBlobCount() {
-    return Optional.ofNullable(targetBlobCount);
+  public Optional<UInt64> getTargetBlobsPerBlock() {
+    return Optional.ofNullable(targetBlobsPerBlock);
   }
 
   public String toLogString() {
