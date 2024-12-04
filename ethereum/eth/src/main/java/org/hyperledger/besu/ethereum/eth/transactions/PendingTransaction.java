@@ -38,7 +38,9 @@ public abstract class PendingTransaction
   static final int PAYLOAD_BASE_MEMORY_SIZE = 32;
   static final int ACCESS_LIST_STORAGE_KEY_MEMORY_SIZE = 32;
   static final int ACCESS_LIST_ENTRY_BASE_MEMORY_SIZE = 248;
-  static final int OPTIONAL_ACCESS_LIST_MEMORY_SIZE = 24;
+  static final int OPTIONAL_ACCESS_LIST_MEMORY_SIZE = 40;
+  static final int OPTIONAL_CODE_DELEGATION_LIST_MEMORY_SIZE = 40;
+  static final int CODE_DELEGATION_ENTRY_MEMORY_SIZE = 432;
   static final int VERSIONED_HASH_SIZE = 96;
   static final int BASE_LIST_SIZE = 48;
   static final int BASE_OPTIONAL_SIZE = 16;
@@ -147,7 +149,7 @@ public abstract class PendingTransaction
           case ACCESS_LIST -> computeAccessListMemorySize();
           case EIP1559 -> computeEIP1559MemorySize();
           case BLOB -> computeBlobMemorySize();
-          case DELEGATE_CODE -> computeSetCodeMemorySize();
+          case DELEGATE_CODE -> computeDelegateCodeMemorySize();
         }
         + PENDING_TRANSACTION_MEMORY_SIZE;
   }
@@ -181,8 +183,8 @@ public abstract class PendingTransaction
         + computeBlobWithCommitmentsMemorySize();
   }
 
-  private int computeSetCodeMemorySize() {
-    return 0;
+  private int computeDelegateCodeMemorySize() {
+    return computeEIP1559MemorySize() + computeCodeDelegationListMemorySize();
   }
 
   private int computeBlobWithCommitmentsMemorySize() {
@@ -197,7 +199,7 @@ public abstract class PendingTransaction
   }
 
   private int computePayloadMemorySize() {
-    return transaction.getPayload().size() > 0
+    return !transaction.getPayload().isEmpty()
         ? PAYLOAD_BASE_MEMORY_SIZE + transaction.getPayload().size()
         : 0;
   }
@@ -231,6 +233,18 @@ public abstract class PendingTransaction
         .orElse(0);
   }
 
+  private int computeCodeDelegationListMemorySize() {
+    return transaction
+        .getCodeDelegationList()
+        .map(
+            cd -> {
+              int totalSize = OPTIONAL_CODE_DELEGATION_LIST_MEMORY_SIZE;
+              totalSize += cd.size() * CODE_DELEGATION_ENTRY_MEMORY_SIZE;
+              return totalSize;
+            })
+        .orElse(0);
+  }
+
   public static List<Transaction> toTransactionList(
       final Collection<PendingTransaction> transactionsInfo) {
     return transactionsInfo.stream().map(PendingTransaction::getTransaction).toList();
@@ -252,7 +266,7 @@ public abstract class PendingTransaction
 
   @Override
   public int hashCode() {
-    return 31 * (int) (sequence ^ (sequence >>> 32));
+    return 31 * Long.hashCode(sequence);
   }
 
   @Override
