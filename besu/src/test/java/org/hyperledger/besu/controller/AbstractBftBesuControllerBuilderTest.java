@@ -29,12 +29,13 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -90,7 +91,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
       TransactionPoolConfiguration.DEFAULT;
   private final ObservableMetricsSystem observableMetricsSystem = new NoOpMetricsSystem();
   protected final ObjectMapper objectMapper = new ObjectMapper();
-  private final MiningParameters miningParameters = MiningParameters.newDefault();
+  private final MiningConfiguration miningConfiguration = MiningConfiguration.newDefault();
   @TempDir Path tempDir;
 
   @BeforeEach
@@ -146,7 +147,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .networkId(networkId)
-            .miningParameters(miningParameters)
+            .miningParameters(miningConfiguration)
             .metricsSystem(observableMetricsSystem)
             .privacyParameters(privacyParameters)
             .dataDirectory(tempDir)
@@ -158,7 +159,8 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             .gasLimitCalculator(gasLimitCalculator)
             .evmConfiguration(EvmConfiguration.DEFAULT)
             .besuComponent(mock(BesuComponent.class))
-            .networkConfiguration(NetworkingConfiguration.create());
+            .networkConfiguration(NetworkingConfiguration.create())
+            .apiConfiguration(ImmutableApiConfiguration.builder().build());
   }
 
   protected abstract void setupBftGenesisConfigFile() throws JsonProcessingException;
@@ -193,13 +195,14 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             null,
             null,
             null,
+            null,
             getBlockHeaderFunctions());
     final Block block1 = new Block(header1, BlockBody.empty());
 
     protocolContext.getBlockchain().appendBlock(block1, List.of());
 
-    assertThat(miningParameters.getBlockPeriodSeconds()).isNotEmpty().hasValue(2);
-    assertThat(miningParameters.getBlockTxsSelectionMaxTime()).isEqualTo(2000 * 75 / 100);
+    assertThat(miningConfiguration.getBlockPeriodSeconds()).isNotEmpty().hasValue(2);
+    assertThat(miningConfiguration.getBlockTxsSelectionMaxTime()).isEqualTo(2000 * 75 / 100);
   }
 
   protected abstract BlockHeaderFunctions getBlockHeaderFunctions();

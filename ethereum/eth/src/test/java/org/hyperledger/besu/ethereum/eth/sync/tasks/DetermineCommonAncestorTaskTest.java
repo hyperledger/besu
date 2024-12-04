@@ -27,6 +27,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -40,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException;
@@ -80,15 +82,20 @@ public class DetermineCommonAncestorTaskTest {
     localBlockchain = createInMemoryBlockchain(localGenesisBlock);
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            protocolSchedule,
-            localBlockchain,
-            worldStateArchive,
-            mock(TransactionPool.class),
-            EthProtocolConfiguration.defaultConfig());
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(protocolSchedule)
+            .setBlockchain(localBlockchain)
+            .setWorldStateArchive(worldStateArchive)
+            .setTransactionPool(mock(TransactionPool.class))
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .build();
     ethContext = ethProtocolManager.ethContext();
     protocolContext =
-        new ProtocolContext(localBlockchain, worldStateArchive, null, new BadBlockManager());
+        new ProtocolContext(
+            localBlockchain,
+            worldStateArchive,
+            mock(ConsensusContext.class),
+            new BadBlockManager());
   }
 
   @Test

@@ -22,8 +22,8 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.MOVE;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.NEW;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.DROPPED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.REPLACED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.DROPPED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.REPLACED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOB_PRICE_BELOW_CURRENT_MIN;
@@ -42,7 +42,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -158,7 +158,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             transactionReplacementTester,
             FeeMarket.london(0L),
             new BlobCache(),
-            MiningParameters.newDefault().setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE));
+            MiningConfiguration.newDefault().setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE));
     return new CreatedLayers(
         prioritizedTransactions, readyTransactions, sparseTransactions, evictCollector);
   }
@@ -281,7 +281,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertThat(smallLayers.evictedCollector.getEvictedTransactions())
         .map(PendingTransaction::getTransaction)
         .contains(firstTxs.get(0));
-    verify(droppedListener).onTransactionDropped(firstTxs.get(0));
+    verify(droppedListener).onTransactionDropped(firstTxs.get(0), DROPPED);
   }
 
   @Test

@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.Unstable;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /**
  * The minimum set of data for a BlockHeader, as defined in the <a href=
@@ -105,4 +106,15 @@ public interface ProcessableBlockHeader {
    */
   @Unstable
   Optional<? extends Bytes32> getParentBeaconBlockRoot();
+
+  /**
+   * The target_blobs_per_block of this header.
+   *
+   * @return The target blobs per block of this header.
+   */
+  @Unstable
+  // TODO SLD should be Quantity or new subclass of Quantity?
+  default Optional<UInt64> getTargetBlobsPerBlock() {
+    return Optional.empty();
+  }
 }

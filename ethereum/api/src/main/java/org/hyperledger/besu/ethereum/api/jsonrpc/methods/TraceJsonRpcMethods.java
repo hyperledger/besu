@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Map;
 
@@ -38,19 +39,24 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
-
   private final ApiConfiguration apiConfiguration;
   private final ProtocolContext protocolContext;
+  private final TransactionSimulator transactionSimulator;
+  private final MetricsSystem metricsSystem;
 
   TraceJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final ApiConfiguration apiConfiguration) {
+      final ApiConfiguration apiConfiguration,
+      final TransactionSimulator transactionSimulator,
+      final MetricsSystem metricsSystem) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.apiConfiguration = apiConfiguration;
+    this.transactionSimulator = transactionSimulator;
+    this.metricsSystem = metricsSystem;
   }
 
   @Override
@@ -63,39 +69,18 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final BlockReplay blockReplay =
         new BlockReplay(protocolSchedule, protocolContext, blockchainQueries.getBlockchain());
     return mapOf(
-        new TraceReplayBlockTransactions(protocolSchedule, blockchainQueries),
+        new TraceReplayBlockTransactions(protocolSchedule, blockchainQueries, metricsSystem),
         new TraceFilter(
-            () -> new BlockTracer(blockReplay),
             protocolSchedule,
             blockchainQueries,
-            apiConfiguration.getMaxTraceFilterRange()),
+            apiConfiguration.getMaxTraceFilterRange(),
+            metricsSystem),
         new TraceGet(() -> new BlockTracer(blockReplay), blockchainQueries, protocolSchedule),
         new TraceTransaction(
             () -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
-        new TraceBlock(protocolSchedule, blockchainQueries),
-        new TraceCall(
-            blockchainQueries,
-            protocolSchedule,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())),
-        new TraceCallMany(
-            blockchainQueries,
-            protocolSchedule,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())),
-        new TraceRawTransaction(
-            protocolSchedule,
-            blockchainQueries,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())));
+        new TraceBlock(protocolSchedule, blockchainQueries, metricsSystem),
+        new TraceCall(blockchainQueries, protocolSchedule, transactionSimulator),
+        new TraceCallMany(blockchainQueries, protocolSchedule, transactionSimulator),
+        new TraceRawTransaction(protocolSchedule, blockchainQueries, transactionSimulator));
   }
 }

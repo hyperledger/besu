@@ -145,7 +145,8 @@ public class ReferenceTestEnv extends BlockHeader {
         currentBlobGasUsed == null ? null : Long.decode(currentBlobGasUsed),
         currentExcessBlobGas == null ? null : BlobGas.of(Long.decode(currentExcessBlobGas)),
         beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot),
-        null, // requestsRoot
+        null, // requestsHash
+        null, // TODO SLD EIP-7742 use targetBlobsPerBlock when reference tests are updated
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
     this.parentBaseFee = parentBaseFee;
@@ -223,8 +224,7 @@ public class ReferenceTestEnv extends BlockHeader {
                       BlockHeaderBuilder.createDefault()
                           .difficulty(Difficulty.fromHexOrDecimalString(parentDifficulty))
                           .number(number - 1)
-                          .buildBlockHeader(),
-                      null)));
+                          .buildBlockHeader())));
     }
     if (parentExcessBlobGas != null && parentBlobGasUsed != null) {
       builder.excessBlobGas(BlobGas.of(Long.decode(parentExcessBlobGas)));

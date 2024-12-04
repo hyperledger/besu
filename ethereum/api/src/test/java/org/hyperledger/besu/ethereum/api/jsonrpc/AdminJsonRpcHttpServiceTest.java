@@ -74,7 +74,6 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     peerList.add(
         new EthPeer(
             MockPeerConnection.create(info1, addr60301, addr30302),
-            "eth",
             c -> {},
             List.of(),
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
@@ -84,7 +83,6 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     peerList.add(
         new EthPeer(
             MockPeerConnection.create(info2, addr30301, addr60302),
-            "eth",
             c -> {},
             List.of(),
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
@@ -94,7 +92,6 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     peerList.add(
         new EthPeer(
             MockPeerConnection.create(info3, addr30301, addr60303),
-            "eth",
             c -> {},
             List.of(),
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,

@@ -40,8 +40,6 @@ dependencies {
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
   implementation project(':evm')
-  implementation project(':pki')
-  implementation project(':services:kvstore')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'

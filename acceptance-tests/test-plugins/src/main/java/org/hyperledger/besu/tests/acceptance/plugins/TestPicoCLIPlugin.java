@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
-import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
 import java.io.File;
@@ -57,7 +57,7 @@ public class TestPicoCLIPlugin implements BesuPlugin {
   private File callbackDir;
 
   @Override
-  public void register(final BesuContext context) {
+  public void register(final ServiceManager context) {
     LOG.info("Registering.  Test Option is '{}'", testOption);
     state = "registering";
 

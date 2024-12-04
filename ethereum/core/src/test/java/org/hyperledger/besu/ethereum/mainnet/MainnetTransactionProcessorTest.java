@@ -89,7 +89,7 @@ class MainnetTransactionProcessorTest {
         MAX_STACK_SIZE,
         FeeMarket.legacy(),
         CoinbaseFeePriceCalculator.frontier(),
-        new CodeDelegationProcessor(Optional.of(BigInteger.ONE)));
+        new CodeDelegationProcessor(Optional.of(BigInteger.ONE), BigInteger.TEN));
   }
 
   @Test
@@ -108,7 +108,6 @@ class MainnetTransactionProcessorTest {
         .thenReturn(ValidationResult.valid());
     when(transactionValidatorFactory.get().validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(worldState.getOrCreate(any())).thenReturn(senderAccount);
     when(worldState.getOrCreateSenderAccount(any())).thenReturn(senderAccount);
     when(worldState.updater()).thenReturn(worldState);
 

@@ -32,19 +32,21 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,13 +95,15 @@ public class FastSyncActionsTest {
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            ProtocolScheduleFixture.MAINNET,
-            blockchain,
-            () -> timeoutCount.getAndDecrement() > 0,
-            blockchainSetupUtil.getWorldArchive(),
-            blockchainSetupUtil.getTransactionPool(),
-            EthProtocolConfiguration.defaultConfig());
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(ProtocolScheduleFixture.MAINNET)
+            .setBlockchain(blockchain)
+            .setEthScheduler(
+                new DeterministicEthScheduler(() -> timeoutCount.getAndDecrement() > 0))
+            .setWorldStateArchive(blockchainSetupUtil.getWorldArchive())
+            .setTransactionPool(blockchainSetupUtil.getTransactionPool())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .build();
     ethContext = ethProtocolManager.ethContext();
     ethPeers = ethContext.getEthPeers();
     syncState = new SyncState(blockchain, ethPeers);
@@ -488,7 +492,7 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void downloadPivotBlockHeaderShouldRetrieveSafePivotBlockHash(
+  public void downloadPivotBlockHeaderShouldRetrievePivotBlockHash(
       final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     syncConfig = SynchronizerConfiguration.builder().syncMinimumPeerCount(1).build();
@@ -526,55 +530,6 @@ public class FastSyncActionsTest {
     assertThat(result).isCompletedWithValue(new FastSyncState(blockchain.getBlockHeader(3).get()));
   }
 
-  @ParameterizedTest
-  @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void downloadPivotBlockHeaderShouldRetrieveHeadPivotBlockHash(
-      final DataStorageFormat storageFormat) {
-    setUp(storageFormat);
-    syncConfig =
-        SynchronizerConfiguration.builder()
-            .syncMinimumPeerCount(1)
-            .snapSyncConfiguration(
-                ImmutableSnapSyncConfiguration.builder().isSnapSyncToHeadEnabled(true).build())
-            .build();
-
-    GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
-    when(genesisConfig.getTerminalBlockNumber()).thenReturn(OptionalLong.of(10L));
-
-    final Optional<ForkchoiceEvent> finalizedEvent =
-        Optional.of(
-            new ForkchoiceEvent(
-                blockchain.getChainHeadHash(),
-                blockchain.getBlockHashByNumber(3L).get(),
-                blockchain.getBlockHashByNumber(2L).get()));
-
-    fastSyncActions =
-        createFastSyncActions(
-            syncConfig,
-            new PivotSelectorFromHeadBlock(
-                blockchainSetupUtil.getProtocolContext(),
-                blockchainSetupUtil.getProtocolSchedule(),
-                ethContext,
-                metricsSystem,
-                genesisConfig,
-                () -> finalizedEvent,
-                () -> {}));
-
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
-    final CompletableFuture<FastSyncState> result =
-        fastSyncActions.downloadPivotBlockHeader(
-            new FastSyncState(finalizedEvent.get().getHeadBlockHash()));
-    assertThat(result).isNotCompleted();
-
-    final RespondingEthPeer.Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
-    peer.respond(responder);
-
-    assertThat(result)
-        .isCompletedWithValue(
-            new FastSyncState(
-                blockchain.getBlockHeader(blockchain.getChainHeadBlockNumber()).get()));
-  }
-
   private FastSyncActions createFastSyncActions(
       final SynchronizerConfiguration syncConfig, final PivotBlockSelector pivotBlockSelector) {
     final ProtocolSchedule protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
@@ -586,6 +541,7 @@ public class FastSyncActionsTest {
         protocolSchedule,
         protocolContext,
         ethContext,
+        new PeerTaskExecutor(null, null, new NoOpMetricsSystem()),
         new SyncState(blockchain, ethContext.getEthPeers(), true, Optional.empty()),
         pivotBlockSelector,
         new NoOpMetricsSystem());

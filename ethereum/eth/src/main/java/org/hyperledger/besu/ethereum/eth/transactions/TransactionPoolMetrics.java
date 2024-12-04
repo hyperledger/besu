@@ -22,8 +22,8 @@ import org.hyperledger.besu.metrics.ReplaceableDoubleSupplier;
 import org.hyperledger.besu.metrics.RunnableCounter;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,10 +47,10 @@ public class TransactionPoolMetrics {
   private final LabelledMetric<Counter> removedCounter;
   private final LabelledMetric<Counter> rejectedCounter;
   private final LabelledMetric<Counter> penalizedCounter;
-  private final LabelledGauge spaceUsed;
-  private final LabelledGauge transactionCount;
-  private final LabelledGauge transactionCountByType;
-  private final LabelledGauge uniqueSenderCount;
+  private final LabelledSuppliedMetric spaceUsed;
+  private final LabelledSuppliedMetric transactionCount;
+  private final LabelledSuppliedMetric transactionCountByType;
+  private final LabelledSuppliedMetric uniqueSenderCount;
   private final LabelledMetric<Counter> expiredMessagesCounter;
   private final Map<String, RunnableCounter> expiredMessagesRunnableCounters = new HashMap<>();
   private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
@@ -103,21 +103,21 @@ public class TransactionPoolMetrics {
             "layer");
 
     spaceUsed =
-        metricsSystem.createLabelledGauge(
+        metricsSystem.createLabelledSuppliedGauge(
             BesuMetricCategory.TRANSACTION_POOL,
             "space_used",
             "The amount of space used by the transactions in the layer",
             "layer");
 
     transactionCount =
-        metricsSystem.createLabelledGauge(
+        metricsSystem.createLabelledSuppliedGauge(
             BesuMetricCategory.TRANSACTION_POOL,
             "number_of_transactions",
             "The number of transactions currently present in the layer",
             "layer");
 
     transactionCountByType =
-        metricsSystem.createLabelledGauge(
+        metricsSystem.createLabelledSuppliedGauge(
             BesuMetricCategory.TRANSACTION_POOL,
             "number_of_transactions_by_type",
             "The number of transactions, of a specified type, currently present in the layer",
@@ -125,7 +125,7 @@ public class TransactionPoolMetrics {
             "type");
 
     uniqueSenderCount =
-        metricsSystem.createLabelledGauge(
+        metricsSystem.createLabelledSuppliedGauge(
             BesuMetricCategory.TRANSACTION_POOL,
             "unique_senders",
             "The number of senders with at least one transaction currently present in the layer",

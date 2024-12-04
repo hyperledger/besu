@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
@@ -26,7 +27,6 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.GetTrieNodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
-import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
@@ -49,7 +49,6 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -84,7 +83,6 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   static final Hash HASH_LAST = Hash.wrap(Bytes32.leftPad(Bytes.fromHexString("FF"), (byte) 0xFF));
 
   private final AtomicBoolean isStarted = new AtomicBoolean(false);
-  private final AtomicLong listenerId = new AtomicLong();
   private final EthMessages snapMessages;
 
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
@@ -101,7 +99,8 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
       final SnapSyncConfiguration snapConfig,
       final EthMessages snapMessages,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final Synchronizer synchronizer) {
     this.snapServerEnabled =
         Optional.ofNullable(snapConfig)
             .map(SnapSyncConfiguration::isSnapServerEnabled)
@@ -111,14 +110,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     this.protocolContext = Optional.of(protocolContext);
     registerResponseConstructors();
 
-    // subscribe to initial sync completed events to start/stop snap server:
-    this.protocolContext
-        .flatMap(ProtocolContext::getSynchronizer)
-        .filter(z -> z instanceof DefaultSynchronizer)
-        .map(DefaultSynchronizer.class::cast)
-        .ifPresentOrElse(
-            z -> this.listenerId.set(z.subscribeInitialSync(this)),
-            () -> LOGGER.warn("SnapServer created without reference to sync status"));
+    // subscribe to initial sync completed events to start/stop snap server,
+    // not saving the listenerId since we never need to unsubscribe.
+    synchronizer.subscribeInitialSync(this);
   }
 
   /**

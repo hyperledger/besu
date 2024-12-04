@@ -20,12 +20,12 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TRY_NEXT_LAYER;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.MOVE;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.EVICTED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.BELOW_MIN_SCORE;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.CONFIRMED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.CROSS_LAYER_REPLACED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.REPLACED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.RemovedFrom.POOL;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.LayerMoveReason.EVICTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.BELOW_MIN_SCORE;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.CONFIRMED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.CROSS_LAYER_REPLACED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.REPLACED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.RemovedFrom.POOL;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -295,7 +295,9 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
         if (remainingPromotionsPerType[txType.ordinal()] > 0) {
           senderTxs.pollFirstEntry();
           processRemove(
-              senderTxs, candidateTx.getTransaction(), RemovalReason.LayerMoveReason.PROMOTED);
+              senderTxs,
+              candidateTx.getTransaction(),
+              LayeredRemovalReason.LayerMoveReason.PROMOTED);
           metrics.incrementRemoved(candidateTx, "promoted", name());
 
           if (senderTxs.isEmpty()) {
@@ -386,7 +388,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     decreaseCounters(replacedTx);
     metrics.incrementRemoved(replacedTx, REPLACED.label(), name());
     internalReplaced(replacedTx);
-    notifyTransactionDropped(replacedTx);
+    notifyTransactionDropped(replacedTx, REPLACED);
   }
 
   protected abstract void internalReplaced(final PendingTransaction replacedTx);
@@ -415,7 +417,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   protected PendingTransaction processRemove(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final Transaction transaction,
-      final RemovalReason removalReason) {
+      final LayeredRemovalReason removalReason) {
     final PendingTransaction removedTx = pendingTransactions.remove(transaction.getHash());
 
     if (removedTx != null) {
@@ -423,7 +425,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       metrics.incrementRemoved(removedTx, removalReason.label(), name());
       internalRemove(senderTxs, removedTx, removalReason);
       if (removalReason.removedFrom().equals(POOL)) {
-        notifyTransactionDropped(removedTx);
+        notifyTransactionDropped(removedTx, removalReason);
       }
     }
     return removedTx;
@@ -432,7 +434,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   protected PendingTransaction processEvict(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final PendingTransaction evictedTx,
-      final RemovalReason reason) {
+      final LayeredRemovalReason reason) {
     final PendingTransaction removedTx = pendingTransactions.remove(evictedTx.getHash());
     if (removedTx != null) {
       decreaseCounters(evictedTx);
@@ -545,7 +547,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   protected abstract void internalRemove(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final PendingTransaction pendingTransaction,
-      final RemovalReason removalReason);
+      final LayeredRemovalReason removalReason);
 
   protected abstract PendingTransaction getEvictable();
 
@@ -606,9 +608,10 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
         listener -> listener.onTransactionAdded(pendingTransaction.getTransaction()));
   }
 
-  protected void notifyTransactionDropped(final PendingTransaction pendingTransaction) {
+  protected void notifyTransactionDropped(
+      final PendingTransaction pendingTransaction, final LayeredRemovalReason reason) {
     onDroppedListeners.forEach(
-        listener -> listener.onTransactionDropped(pendingTransaction.getTransaction()));
+        listener -> listener.onTransactionDropped(pendingTransaction.getTransaction(), reason));
   }
 
   @Override

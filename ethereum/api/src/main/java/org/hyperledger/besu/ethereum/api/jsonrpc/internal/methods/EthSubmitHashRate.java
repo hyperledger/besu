@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+@Deprecated(since = "24.12.0")
 public class EthSubmitHashRate implements JsonRpcMethod {
 
   private final MiningCoordinator miningCoordinator;

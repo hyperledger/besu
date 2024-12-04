@@ -7,17 +7,17 @@
     "--coinbase",
     "4444588443C3A91288C5002483449ABA1054192B",
     "--fork",
-    "PragueEOF"
+    "Osaka"
   ],
   "stdin": "",
   "stdout": [
     {"pc":0,"section":0,"op":227,"immediate":"0x0002","gas":"0x2540be400","gasCost":"0x5","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"CALLF"},
-    {"pc":0,"section":2,"op":229,"immediate":"0x0002","gas":"0x2540be3fb","gasCost":"0x5","memSize":0,"stack":[],"depth":1,"functionDepth":1,"refund":0,"opName":"JUMPF"},
-    {"pc":0,"section":1,"op":228,"gas":"0x2540be3f6","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"functionDepth":1,"refund":0,"opName":"RETF"},
+    {"pc":11,"section":2,"op":229,"immediate":"0x0001","gas":"0x2540be3fb","gasCost":"0x5","memSize":0,"stack":[],"depth":1,"functionDepth":1,"refund":0,"opName":"JUMPF"},
+    {"pc":10,"section":1,"op":228,"gas":"0x2540be3f6","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"functionDepth":1,"refund":0,"opName":"RETF"},
     {"pc":3,"section":0,"op":97,"immediate":"0x2015","gas":"0x2540be3f3","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH2"},
     {"pc":6,"section":0,"op":96,"immediate":"0x01","gas":"0x2540be3f0","gasCost":"0x3","memSize":0,"stack":["0x2015"],"depth":1,"refund":0,"opName":"PUSH1"},
     {"pc":8,"section":0,"op":85,"gas":"0x2540be3ed","gasCost":"0x5654","memSize":0,"stack":["0x2015","0x1"],"depth":1,"refund":0,"opName":"SSTORE"},
     {"pc":9,"section":0,"op":0,"gas":"0x2540b8d99","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"STOP"},
-    {"stateRoot":"0x761f723ceabb467d438fe74abf025c10bf65592b84ec389850038eb572f2b0fa","output":"0x","gasUsed":"0x5667","pass":true,"fork":"PragueEOF"}
+    {"stateRoot":"0x761f723ceabb467d438fe74abf025c10bf65592b84ec389850038eb572f2b0fa","output":"0x","gasUsed":"0x5667","pass":true,"fork":"Osaka"}
   ]
 }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.WorldStateHealerHelper.throwingWorldStateHealerSupplier;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
@@ -111,7 +112,8 @@ class BonsaiWorldStateProviderTest {
                 DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            throwingWorldStateHealerSupplier());
 
     assertThat(bonsaiWorldStateArchive.getMutable(chainHead, true))
         .containsInstanceOf(BonsaiWorldState.class);
@@ -129,7 +131,8 @@ class BonsaiWorldStateProviderTest {
             Optional.of(512L),
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            throwingWorldStateHealerSupplier());
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
@@ -150,7 +153,8 @@ class BonsaiWorldStateProviderTest {
                 DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            throwingWorldStateHealerSupplier());
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
     final BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class);
@@ -185,7 +189,8 @@ class BonsaiWorldStateProviderTest {
                 worldStateKeyValueStorage,
                 blockchain,
                 new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-                EvmConfiguration.DEFAULT));
+                EvmConfiguration.DEFAULT,
+                throwingWorldStateHealerSupplier()));
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
 
     when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.of(blockHeader));
@@ -214,7 +219,8 @@ class BonsaiWorldStateProviderTest {
                 worldStateKeyValueStorage,
                 blockchain,
                 new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-                EvmConfiguration.DEFAULT));
+                EvmConfiguration.DEFAULT,
+                throwingWorldStateHealerSupplier()));
 
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
 
@@ -254,7 +260,8 @@ class BonsaiWorldStateProviderTest {
                 worldStateKeyValueStorage,
                 blockchain,
                 new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-                EvmConfiguration.DEFAULT));
+                EvmConfiguration.DEFAULT,
+                throwingWorldStateHealerSupplier()));
 
     // initial persisted state hash key
     when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeaderChainA));
@@ -297,7 +304,8 @@ class BonsaiWorldStateProviderTest {
                     DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
                 blockchain,
                 new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-                EvmConfiguration.DEFAULT));
+                EvmConfiguration.DEFAULT,
+                throwingWorldStateHealerSupplier()));
 
     // initial persisted state hash key
     when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeaderChainA));

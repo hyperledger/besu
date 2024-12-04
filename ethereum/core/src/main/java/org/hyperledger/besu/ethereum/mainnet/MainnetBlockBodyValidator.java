@@ -19,14 +19,11 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -52,12 +49,40 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final Optional<List<Request>> requests,
       final Hash worldStateRootHash,
-      final HeaderValidationMode ommerValidationMode) {
+      final HeaderValidationMode ommerValidationMode,
+      final BodyValidationMode bodyValidationMode) {
+    if (bodyValidationMode == BodyValidationMode.NONE) {
+      return true;
+    }
 
-    if (!validateBodyLight(
-        context, block, receipts, requests, ommerValidationMode, BodyValidationMode.FULL)) {
+    if (bodyValidationMode == BodyValidationMode.LIGHT
+        || bodyValidationMode == BodyValidationMode.FULL) {
+      if (!validateBodyLight(context, block, receipts, ommerValidationMode)) {
+        return false;
+      }
+    }
+
+    if (bodyValidationMode == BodyValidationMode.ROOT_ONLY
+        || bodyValidationMode == BodyValidationMode.FULL) {
+      return validateBodyRoots(block, receipts, worldStateRootHash);
+    }
+    return true;
+  }
+
+  @VisibleForTesting
+  protected boolean validateBodyRoots(
+      final Block block, final List<TransactionReceipt> receipts, final Hash worldStateRootHash) {
+    final BlockHeader header = block.getHeader();
+    final BlockBody body = block.getBody();
+
+    final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
+    if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
+      return false;
+    }
+
+    final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
+    if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
       return false;
     }
 
@@ -69,7 +94,6 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
               LOG.warn("Transaction receipt found in the invalid block {}", receipt.toString()));
       return false;
     }
-
     return true;
   }
 
@@ -78,28 +102,9 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final Optional<List<Request>> requests,
-      final HeaderValidationMode ommerValidationMode,
-      final BodyValidationMode bodyValidationMode) {
-    if (bodyValidationMode == BodyValidationMode.NONE) {
-      return true;
-    }
+      final HeaderValidationMode ommerValidationMode) {
 
     final BlockHeader header = block.getHeader();
-    final BlockBody body = block.getBody();
-
-    // these checks are only needed for full validation and can be skipped for light validation
-    if (bodyValidationMode == BodyValidationMode.FULL) {
-      final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
-      if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
-        return false;
-      }
-
-      final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
-      if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
-        return false;
-      }
-    }
 
     final long gasUsed =
         receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
@@ -118,18 +123,13 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     if (!validateWithdrawals(block)) {
       return false;
     }
-
-    if (!validateRequests(block, requests, receipts)) {
-      return false;
-    }
     return true;
   }
 
-  @VisibleForTesting
-  protected boolean validateTransactionsRoot(
+  private boolean validateTransactionsRoot(
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
-      LOG.info(
+      LOG.warn(
           "Invalid block {}: transaction root mismatch (expected={}, actual={})",
           header.toLogString(),
           expected,
@@ -168,8 +168,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  @VisibleForTesting
-  protected boolean validateReceiptsRoot(
+  private boolean validateReceiptsRoot(
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
       LOG.warn(
@@ -183,7 +182,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  private static boolean validateStateRoot(
+  private boolean validateStateRoot(
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
       LOG.warn(
@@ -323,14 +322,5 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     }
 
     return true;
-  }
-
-  private boolean validateRequests(
-      final Block block,
-      final Optional<List<Request>> requests,
-      final List<TransactionReceipt> receipts) {
-    final RequestsValidatorCoordinator requestValidator =
-        protocolSchedule.getByBlockHeader(block.getHeader()).getRequestsValidatorCoordinator();
-    return requestValidator.validate(block, requests, receipts);
   }
 }

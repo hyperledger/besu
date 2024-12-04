@@ -15,11 +15,11 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.MOVE;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.DEMOTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.LayerMoveReason.DEMOTED;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -51,7 +51,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
           transactionReplacementTester,
       final FeeMarket feeMarket,
       final BlobCache blobCache,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     super(
         poolConfig,
         ethScheduler,
@@ -59,7 +59,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         metrics,
         transactionReplacementTester,
         blobCache,
-        miningParameters);
+        miningConfiguration);
     this.nextBlockBaseFee =
         Optional.of(calculateNextBlockBaseFee(feeMarket, chainHeadHeaderSupplier.get()));
   }
@@ -174,15 +174,15 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       if (pendingTransaction
           .getTransaction()
           .getEffectiveGasPrice(nextBlockBaseFee)
-          .lessThan(miningParameters.getMinTransactionGasPrice())) {
+          .lessThan(miningConfiguration.getMinTransactionGasPrice())) {
         return false;
       }
 
       // check if enough priority fee is paid
-      if (!miningParameters.getMinPriorityFeePerGas().equals(Wei.ZERO)) {
+      if (!miningConfiguration.getMinPriorityFeePerGas().equals(Wei.ZERO)) {
         final Wei priorityFeePerGas =
             pendingTransaction.getTransaction().getEffectivePriorityFeePerGas(nextBlockBaseFee);
-        if (priorityFeePerGas.lessThan(miningParameters.getMinPriorityFeePerGas())) {
+        if (priorityFeePerGas.lessThan(miningConfiguration.getMinPriorityFeePerGas())) {
           return false;
         }
       }

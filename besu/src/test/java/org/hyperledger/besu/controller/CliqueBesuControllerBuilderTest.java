@@ -33,11 +33,12 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -95,7 +96,7 @@ public class CliqueBesuControllerBuilderTest {
       TransactionPoolConfiguration.DEFAULT;
   private final ObservableMetricsSystem observableMetricsSystem = new NoOpMetricsSystem();
   private final ObjectMapper objectMapper = new ObjectMapper();
-  private final MiningParameters miningParameters = MiningParameters.newDefault();
+  private final MiningConfiguration miningConfiguration = MiningConfiguration.newDefault();
 
   @TempDir Path tempDir;
 
@@ -179,7 +180,7 @@ public class CliqueBesuControllerBuilderTest {
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .networkId(networkId)
-            .miningParameters(miningParameters)
+            .miningParameters(miningConfiguration)
             .metricsSystem(observableMetricsSystem)
             .privacyParameters(privacyParameters)
             .dataDirectory(tempDir)
@@ -191,7 +192,8 @@ public class CliqueBesuControllerBuilderTest {
             .gasLimitCalculator(gasLimitCalculator)
             .evmConfiguration(EvmConfiguration.DEFAULT)
             .besuComponent(mock(BesuComponent.class))
-            .networkConfiguration(NetworkingConfiguration.create());
+            .networkConfiguration(NetworkingConfiguration.create())
+            .apiConfiguration(ImmutableApiConfiguration.builder().build());
   }
 
   @Test
@@ -222,12 +224,13 @@ public class CliqueBesuControllerBuilderTest {
             null,
             null,
             null,
+            null,
             new CliqueBlockHeaderFunctions());
     final Block block1 = new Block(header1, BlockBody.empty());
 
     protocolContext.getBlockchain().appendBlock(block1, List.of());
 
-    assertThat(miningParameters.getBlockPeriodSeconds()).isNotEmpty().hasValue(2);
-    assertThat(miningParameters.getBlockTxsSelectionMaxTime()).isEqualTo(2000 * 75 / 100);
+    assertThat(miningConfiguration.getBlockPeriodSeconds()).isNotEmpty().hasValue(2);
+    assertThat(miningConfiguration.getBlockTxsSelectionMaxTime()).isEqualTo(2000 * 75 / 100);
   }
 }

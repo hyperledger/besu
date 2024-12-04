@@ -137,7 +137,9 @@ public class TransactionPool implements BlockAddedObserver {
     initializeBlobMetrics();
     initLogForReplay();
     subscribePendingTransactions(this::mapBlobsOnTransactionAdded);
-    subscribeDroppedTransactions(this::unmapBlobsOnTransactionDropped);
+    subscribeDroppedTransactions(
+        (transaction, reason) -> unmapBlobsOnTransactionDropped(transaction));
+    subscribeDroppedTransactions(transactionBroadcaster);
   }
 
   private void initLogForReplay() {
@@ -720,7 +722,9 @@ public class TransactionPool implements BlockAddedObserver {
 
     void subscribe() {
       onAddedListenerId = pendingTransactions.subscribePendingTransactions(this::onAdded);
-      onDroppedListenerId = pendingTransactions.subscribeDroppedTransactions(this::onDropped);
+      onDroppedListenerId =
+          pendingTransactions.subscribeDroppedTransactions(
+              (transaction, reason) -> onDropped(transaction, reason));
     }
 
     void unsubscribe() {
@@ -728,8 +732,8 @@ public class TransactionPool implements BlockAddedObserver {
       pendingTransactions.unsubscribeDroppedTransactions(onDroppedListenerId);
     }
 
-    private void onDropped(final Transaction transaction) {
-      onDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction));
+    private void onDropped(final Transaction transaction, final RemovalReason reason) {
+      onDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction, reason));
     }
 
     private void onAdded(final Transaction transaction) {
