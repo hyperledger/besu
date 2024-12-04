@@ -122,14 +122,11 @@ public class Hash extends DelegatingBytes32 {
   /***
    * For logging purposes, this method returns a shortened hex representation
    *
-   * @param hexRepresentation the string hex representation
    * @return shortened string with only the beginning and the end of the hex representation
    */
-  public static String shortenHexString(final String hexRepresentation) {
-    if (hexRepresentation == null || hexRepresentation.length() <= 10) {
-      throw new IllegalArgumentException("Input string must be longer than 10 characters");
-    }
-    String firstPart = hexRepresentation.substring(0, 6);
+  public String toShortLogString() {
+    final var hexRepresentation = toFastHex(false);
+    String firstPart = hexRepresentation.substring(0, 5);
     String lastPart = hexRepresentation.substring(hexRepresentation.length() - 5);
     return firstPart + "....." + lastPart;
   }

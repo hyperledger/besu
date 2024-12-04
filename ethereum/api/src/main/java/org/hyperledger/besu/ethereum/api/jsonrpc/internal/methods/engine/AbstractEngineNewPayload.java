@@ -576,9 +576,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final List<Object> messageArgs =
         new ArrayList<>(
             List.of(
-                block.getHeader().getNumber(),
-                Hash.shortenHexString(block.getHash().toHexString()),
-                nbTransactions));
+                block.getHeader().getNumber(), block.getHash().toShortLogString(), nbTransactions));
     if (block.getBody().getWithdrawals().isPresent()) {
       message.append("|%3d ws");
       messageArgs.add(block.getBody().getWithdrawals().get().size());
