@@ -177,7 +177,7 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
       // write the account info
       accountTrie.put(accountPair.getFirst(), accountPair.getSecond());
 
-      if (accountsCount++ % FORCED_COMMIT_INTERVAL == 0) {
+      if (++accountsCount % FORCED_COMMIT_INTERVAL == 0) {
         LOG.info("committing account trie at account {}", accountPair.getFirst());
 
         // commit the account trie if we have exceeded the forced commit interval
@@ -255,7 +255,7 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
       accountStorageTrie.put(storagePair.getFirst(), encodeTrieValue(storagePair.getSecond()));
 
       // commit the account storage trie
-      if (accountStorageCount++ % FORCED_COMMIT_INTERVAL == 0) {
+      if (++accountStorageCount % FORCED_COMMIT_INTERVAL == 0) {
         LOG.info("interim commit for account hash {}, at {}", accountHash, storagePair.getFirst());
         accountStorageCommit.accept(accountStorageTrie);
         accountStorageTx.commitAndReopen();
