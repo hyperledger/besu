@@ -55,8 +55,8 @@ public class RebuildBonsaiStateTrieSubCommandTest {
     blockchainSetupUtil =
         BlockchainSetupUtil.createForEthashChain(
             // Mainnet is a more robust test resource, but it takes upwards of 1 minute to generate
-            BlockTestUtil.getMainnetResources(),
-            // BlockTestUtil.getSnapTestChainResources(),  /* snap only has a
+            //BlockTestUtil.getMainnetResources(),
+            BlockTestUtil.getSnapTestChainResources(),
             DataStorageFormat.BONSAI);
     blockchainSetupUtil.importAllBlocks(HeaderValidationMode.NONE, HeaderValidationMode.NONE);
   }
