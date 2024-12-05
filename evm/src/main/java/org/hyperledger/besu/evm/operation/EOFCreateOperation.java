@@ -85,4 +85,13 @@ public class EOFCreateOperation extends AbstractCreateOperation {
   protected int getPcIncrement() {
     return 2;
   }
+
+  @Override
+  protected void fail(final MessageFrame frame) {
+    final long inputOffset = clampedToLong(frame.getStackItem(2));
+    final long inputSize = clampedToLong(frame.getStackItem(3));
+    frame.readMutableMemory(inputOffset, inputSize);
+    frame.popStackItems(getStackItemsConsumed());
+    frame.pushStackItem(Bytes.EMPTY);
+  }
 }
