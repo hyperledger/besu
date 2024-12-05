@@ -409,13 +409,27 @@ public class JsonRpcHttpOptions {
           "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint");
     }
 
-    if (isRpcHttpTlsClientAuthEnabled
-        && !isRpcHttpTlsCAClientsEnabled
-        && rpcHttpTlsKnownClientsFile == null
-        && rpcHttpTlsTruststoreFile == null) {
-      throw new CommandLine.ParameterException(
-          commandLine,
-          "Known-clients file or Truststore file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
+    if (isRpcHttpTlsClientAuthEnabled) {
+      if (!isRpcHttpTlsCAClientsEnabled
+          && rpcHttpTlsKnownClientsFile == null
+          && rpcHttpTlsTruststoreFile == null) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            "Known-clients file or Truststore file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
+      }
+
+      if (rpcHttpTlsTruststoreFile != null && rpcHttpTlsTruststorePasswordFile == null) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            "Truststore password file is required when truststore file is specified for JSON-RPC HTTP endpoint");
+      }
+
+      if ((isRpcHttpTlsCAClientsEnabled || rpcHttpTlsKnownClientsFile != null)
+          && rpcHttpTlsTruststoreFile != null) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            "Cannot use Truststore file when known-clients file or CA clients are enabled for JSON-RPC HTTP endpoint");
+      }
     }
 
     rpcHttpTlsProtocols.retainAll(getJDKEnabledProtocols());
