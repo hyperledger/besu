@@ -60,6 +60,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt256s;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class Transaction
@@ -126,6 +128,8 @@ public class Transaction
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
   private final Optional<List<CodeDelegation>> maybeCodeDelegationList;
 
+  private final Optional<Bytes> rawRlp;
+
   public static Builder builder() {
     return new Builder();
   }
@@ -135,7 +139,9 @@ public class Transaction
   }
 
   public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionDecoder.decodeRLP(rlpInput, EncodingContext.BLOCK_BODY);
+    RLPInput transactionRlp = rlpInput.readAsRlp();
+    Transaction transaction = TransactionDecoder.decodeRLP(transactionRlp, EncodingContext.BLOCK_BODY);
+    return Transaction.builder().copiedFrom(transaction).rawRlp(Optional.of(transactionRlp.raw())).build();
   }
 
   /**
@@ -181,7 +187,8 @@ public class Transaction
       final Optional<BigInteger> chainId,
       final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments,
-      final Optional<List<CodeDelegation>> maybeCodeDelegationList) {
+      final Optional<List<CodeDelegation>> maybeCodeDelegationList,
+      final Optional<Bytes> rawRlp) {
 
     if (!forCopy) {
       if (transactionType.requiresChainId()) {
@@ -242,6 +249,7 @@ public class Transaction
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
     this.maybeCodeDelegationList = maybeCodeDelegationList;
+    this.rawRlp = rawRlp;
   }
 
   /**
@@ -485,7 +493,7 @@ public class Transaction
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY);
+    rawRlp.ifPresentOrElse(out::writeRLPBytes, () -> TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY));
   }
 
   @Override
@@ -1111,7 +1119,8 @@ public class Transaction
             chainId,
             detachedVersionedHashes,
             detachedBlobsWithCommitments,
-            maybeCodeDelegationList);
+            maybeCodeDelegationList,
+                Optional.empty());
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
@@ -1180,6 +1189,7 @@ public class Transaction
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
+    protected Optional<Bytes> rawRlp = Optional.empty();
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;
@@ -1285,6 +1295,11 @@ public class Transaction
       return this;
     }
 
+    public Builder rawRlp(final Optional<Bytes> rawRlp) {
+      this.rawRlp = rawRlp;
+      return this;
+    }
+
     public Builder guessType() {
       if (versionedHashes != null && !versionedHashes.isEmpty()) {
         transactionType = TransactionType.BLOB;
@@ -1324,7 +1339,8 @@ public class Transaction
           chainId,
           Optional.ofNullable(versionedHashes),
           Optional.ofNullable(blobsWithCommitments),
-          codeDelegationAuthorizations);
+          codeDelegationAuthorizations,
+              rawRlp);
     }
 
     public Transaction signAndBuild(final KeyPair keys) {

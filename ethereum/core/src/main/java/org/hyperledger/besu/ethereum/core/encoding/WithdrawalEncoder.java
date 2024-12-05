@@ -23,12 +23,14 @@ import org.apache.tuweni.bytes.Bytes;
 public class WithdrawalEncoder {
 
   public static void encode(final Withdrawal withdrawal, final RLPOutput rlpOutput) {
-    rlpOutput.startList();
-    rlpOutput.writeBigIntegerScalar(withdrawal.getIndex().toBigInteger());
-    rlpOutput.writeBigIntegerScalar(withdrawal.getValidatorIndex().toBigInteger());
-    rlpOutput.writeBytes(withdrawal.getAddress());
-    rlpOutput.writeUInt64Scalar(withdrawal.getAmount());
-    rlpOutput.endList();
+    withdrawal.getRawRlp().ifPresentOrElse(rlpOutput::writeRLPBytes, () -> {
+      rlpOutput.startList();
+      rlpOutput.writeBigIntegerScalar(withdrawal.getIndex().toBigInteger());
+      rlpOutput.writeBigIntegerScalar(withdrawal.getValidatorIndex().toBigInteger());
+      rlpOutput.writeBytes(withdrawal.getAddress());
+      rlpOutput.writeUInt64Scalar(withdrawal.getAmount());
+      rlpOutput.endList();
+    });
   }
 
   public static Bytes encodeOpaqueBytes(final Withdrawal withdrawal) {

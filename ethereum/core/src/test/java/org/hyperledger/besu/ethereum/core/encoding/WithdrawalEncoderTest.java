@@ -24,6 +24,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
+
 class WithdrawalEncoderTest {
   public static final String WITHDRAWAL_ZERO_CASE =
       "0xd8808094000000000000000000000000000000000000000080";
@@ -57,5 +59,19 @@ class WithdrawalEncoderTest {
 
     assertThat(encoded)
         .isEqualTo(Bytes.fromHexString("0xd803019400000000000000000000000000000000deadbeef05"));
+  }
+
+  @Test
+  public void shouldEncodeFromRawRlp() {
+    final UInt64 index = UInt64.valueOf(1);
+    final UInt64 validatorIndex = UInt64.valueOf(2);
+    final Address address = Address.fromHexString("0xffffffff");
+    final GWei amount = GWei.of(3);
+    final Withdrawal withdrawal = new Withdrawal(index, validatorIndex, address, amount, Optional.of(Bytes.fromHexString("0xd803019400000000000000000000000000000000deadbeef05")));
+
+    final Bytes encoded = WithdrawalEncoder.encodeOpaqueBytes(withdrawal);
+
+    assertThat(encoded)
+            .isEqualTo(Bytes.fromHexString("0xd803019400000000000000000000000000000000deadbeef05"));
   }
 }

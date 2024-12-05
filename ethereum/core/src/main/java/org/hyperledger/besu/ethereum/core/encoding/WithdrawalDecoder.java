@@ -23,17 +23,20 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
+import java.util.Optional;
+
 public class WithdrawalDecoder {
 
   public static Withdrawal decode(final RLPInput rlpInput) {
-    rlpInput.enterList();
-    final UInt64 index = UInt64.valueOf(rlpInput.readBigIntegerScalar());
-    final UInt64 validatorIndex = UInt64.valueOf(rlpInput.readBigIntegerScalar());
-    final Address address = Address.readFrom(rlpInput);
-    final GWei amount = GWei.of(rlpInput.readUInt64Scalar());
-    rlpInput.leaveList();
+    final RLPInput withdrawalRlp = rlpInput.readAsRlp();
+    withdrawalRlp.enterList();
+    final UInt64 index = UInt64.valueOf(withdrawalRlp.readBigIntegerScalar());
+    final UInt64 validatorIndex = UInt64.valueOf(withdrawalRlp.readBigIntegerScalar());
+    final Address address = Address.readFrom(withdrawalRlp);
+    final GWei amount = GWei.of(withdrawalRlp.readUInt64Scalar());
+    withdrawalRlp.leaveList();
 
-    return new Withdrawal(index, validatorIndex, address, amount);
+    return new Withdrawal(index, validatorIndex, address, amount, Optional.of(withdrawalRlp.raw()));
   }
 
   public static Withdrawal decodeOpaqueBytes(final Bytes input) {
