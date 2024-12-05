@@ -75,9 +75,9 @@ public class EngineForkchoiceUpdatedV4 extends AbstractEngineForkchoiceUpdated {
         return ValidationResult.invalid(
             getInvalidPayloadAttributesError(), "Missing target blobs per block");
       }
-      if (maybePayloadAttributes.get().getMaximumBlobCount() == null) {
+      if (maybePayloadAttributes.get().getMaxBlobsPerBlock() == null) {
         return ValidationResult.invalid(
-            getInvalidPayloadAttributesError(), "Missing maximum blob count");
+            getInvalidPayloadAttributesError(), "Missing max blobs per block");
       }
     }
     return ValidationResult.valid();
@@ -100,8 +100,8 @@ public class EngineForkchoiceUpdatedV4 extends AbstractEngineForkchoiceUpdated {
       LOG.error("targetBlobsPerBlock not present in payload attributes after prague hardfork");
       return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
     }
-    if (payloadAttributes.getMaximumBlobCount() == null) {
-      LOG.error("maximumBlobCount not present in payload attributes after prague hardfork");
+    if (payloadAttributes.getMaxBlobsPerBlock() == null) {
+      LOG.error("maxBlobsPerBlock not present in payload attributes after prague hardfork");
       return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
     }
 
