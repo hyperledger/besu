@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.TransactionTestFixture.createSignedCodeDelegation;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -22,6 +23,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
@@ -39,6 +41,8 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
+import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.IntStream;
@@ -56,6 +60,8 @@ public class BaseTransactionPoolTest {
   protected static final KeyPair KEYS2 = SIGNATURE_ALGORITHM.get().generateKeyPair();
   protected static final Address SENDER1 = Util.publicKeyToAddress(KEYS1.getPublicKey());
   protected static final Address SENDER2 = Util.publicKeyToAddress(KEYS2.getPublicKey());
+  protected static final CodeDelegation CODE_DELEGATION_SENDER_1 =
+      createSignedCodeDelegation(BigInteger.ONE, Address.ZERO, 0, KEYS1);
   protected static final Wei DEFAULT_MIN_GAS_PRICE = Wei.of(50);
   protected static final Wei DEFAULT_MIN_PRIORITY_FEE = Wei.ZERO;
   private static final Random randomizeTxType = new Random();
@@ -92,7 +98,7 @@ public class BaseTransactionPoolTest {
   protected Transaction createEIP1559Transaction(
       final long nonce, final KeyPair keys, final int gasFeeMultiplier) {
     return createTransaction(
-        TransactionType.EIP1559, nonce, Wei.of(5000L).multiply(gasFeeMultiplier), 0, keys);
+        TransactionType.EIP1559, nonce, Wei.of(5000L).multiply(gasFeeMultiplier), 0, null, keys);
   }
 
   protected Transaction createEIP4844Transaction(
@@ -104,6 +110,21 @@ public class BaseTransactionPoolTest {
         Wei.of(5000L).multiply(gasFeeMultiplier).divide(10),
         0,
         blobCount,
+        null,
+        keys);
+  }
+
+  protected Transaction createEIP7702Transaction(
+      final long nonce,
+      final KeyPair keys,
+      final int gasFeeMultiplier,
+      final List<CodeDelegation> codeDelegations) {
+    return createTransaction(
+        TransactionType.DELEGATE_CODE,
+        nonce,
+        Wei.of(5000L).multiply(gasFeeMultiplier),
+        0,
+        codeDelegations,
         keys);
   }
 
@@ -115,11 +136,11 @@ public class BaseTransactionPoolTest {
             randomizeTxType.nextInt(txSize < blobTransaction0.getSize() ? 3 : 4)];
 
     final Transaction baseTx =
-        createTransaction(txType, nonce, maxGasPrice, maxGasPrice.divide(10), 0, 1, keys);
+        createTransaction(txType, nonce, maxGasPrice, maxGasPrice.divide(10), 0, 1, null, keys);
     final int payloadSize = txSize - baseTx.getSize();
 
     return createTransaction(
-        txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, keys);
+        txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, null, keys);
   }
 
   protected Transaction createTransaction(
@@ -128,11 +149,14 @@ public class BaseTransactionPoolTest {
     final TransactionType txType = TransactionType.values()[randomizeTxType.nextInt(4)];
 
     return switch (txType) {
-      case FRONTIER, ACCESS_LIST, EIP1559, DELEGATE_CODE ->
-          createTransaction(txType, nonce, maxGasPrice, payloadSize, keys);
+      case FRONTIER, ACCESS_LIST, EIP1559 ->
+          createTransaction(txType, nonce, maxGasPrice, payloadSize, null, keys);
       case BLOB ->
           createTransaction(
-              txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, keys);
+              txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, null, keys);
+      case DELEGATE_CODE ->
+          createTransaction(
+              txType, nonce, maxGasPrice, payloadSize, List.of(CODE_DELEGATION_SENDER_1), keys);
     };
   }
 
@@ -141,9 +165,10 @@ public class BaseTransactionPoolTest {
       final long nonce,
       final Wei maxGasPrice,
       final int payloadSize,
+      final List<CodeDelegation> codeDelegations,
       final KeyPair keys) {
     return createTransaction(
-        type, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 0, keys);
+        type, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 0, codeDelegations, keys);
   }
 
   protected Transaction createTransaction(
@@ -153,9 +178,10 @@ public class BaseTransactionPoolTest {
       final Wei maxPriorityFeePerGas,
       final int payloadSize,
       final int blobCount,
+      final List<CodeDelegation> codeDelegations,
       final KeyPair keys) {
     return prepareTransaction(
-            type, nonce, maxGasPrice, maxPriorityFeePerGas, payloadSize, blobCount)
+            type, nonce, maxGasPrice, maxPriorityFeePerGas, payloadSize, blobCount, codeDelegations)
         .createTransaction(keys);
   }
 
@@ -165,7 +191,8 @@ public class BaseTransactionPoolTest {
       final Wei maxGasPrice,
       final Wei maxPriorityFeePerGas,
       final int payloadSize,
-      final int blobCount) {
+      final int blobCount,
+      final List<CodeDelegation> codeDelegations) {
 
     var tx =
         new TransactionTestFixture()
@@ -198,6 +225,8 @@ public class BaseTransactionPoolTest {
         final var blobsWithCommitments =
             new BlobsWithCommitments(kgzCommitments, blobs, kzgProofs, versionHashes);
         tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
+      } else if (type.supportsDelegateCode()) {
+        tx.codeDelegations(codeDelegations);
       }
     } else {
       tx.gasPrice(maxGasPrice);
@@ -214,6 +243,7 @@ public class BaseTransactionPoolTest {
         originalTransaction.getMaxGasPrice().multiply(2).divide(10),
         0,
         1,
+        originalTransaction.getCodeDelegationList().orElse(null),
         keys);
   }
 
