@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper.deductDelegatedCodeGasCost;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
@@ -124,13 +122,24 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     Address to = Words.toAddress(toBytes);
     final Account contract = frame.getWorldUpdater().get(to);
 
-    if (contract != null) {
-      final DelegatedCodeGasCostHelper.Result result =
-          deductDelegatedCodeGasCost(frame, gasCalculator, contract);
-      if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-        return new Operation.OperationResult(
-            result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
+    if (contract != null && contract.hasDelegatedCode()) {
+      if (contract.getDelegatedCode().isEmpty()) {
+        throw new RuntimeException("A delegated code account must have delegated code");
       }
+
+      if (contract.getDelegatedCodeHash().isEmpty()) {
+        throw new RuntimeException("A delegated code account must have a delegated code hash");
+      }
+
+      final long delegatedCodeResolutionGas =
+          DelegatedCodeGasCostHelper.delegatedCodeGasCost(frame, gasCalculator(), contract);
+
+      if (frame.getRemainingGas() < delegatedCodeResolutionGas) {
+        return new Operation.OperationResult(
+            delegatedCodeResolutionGas, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      }
+
+      frame.decrementRemainingGas(delegatedCodeResolutionGas);
     }
 
     boolean accountCreation = contract == null && !zeroValue;
@@ -149,7 +158,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     final Code code =
         contract == null
             ? CodeV0.EMPTY_CODE
-            : evm.getCode(contract.getCodeHash(), contract.getCode());
+            : evm.getCode(contract.getDelegatedCodeHash().get(), contract.getDelegatedCode().get());
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
