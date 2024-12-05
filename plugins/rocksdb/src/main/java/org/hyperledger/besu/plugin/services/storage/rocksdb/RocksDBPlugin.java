@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
-import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
@@ -60,8 +59,7 @@ public class RocksDBPlugin implements BesuPlugin {
   }
 
   @Override
-  @SuppressWarnings("removal")
-  public void register(final BesuContext context) {
+  public void register(final ServiceManager context) {
     LOG.debug("Registering plugin");
     this.context = context;
 
