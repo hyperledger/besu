@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
+
 import java.security.Security;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.vertx.core.DeploymentOptions;
@@ -67,10 +70,24 @@ class DNSDaemonTest {
                 testContext.failNow(
                     "Expecting 115 records in first pass but got: " + records.size());
               }
+              records.forEach(
+                  enr -> {
+                    try {
+                      // make sure enode url can be built from record
+                      EnodeURLImpl.builder()
+                          .ipAddress(enr.ip())
+                          .nodeId(enr.publicKey())
+                          .discoveryPort(Optional.ofNullable(enr.udp()))
+                          .listeningPort(Optional.ofNullable(enr.tcp()))
+                          .build();
+                    } catch (final Exception e) {
+                      testContext.failNow(e);
+                    }
+                  });
               checkpoint.flag();
             },
             0,
-            0,
+            1L,
             0,
             "localhost:" + mockDnsServerVerticle.port());
 
