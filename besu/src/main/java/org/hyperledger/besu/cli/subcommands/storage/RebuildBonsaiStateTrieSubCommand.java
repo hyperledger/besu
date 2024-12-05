@@ -38,6 +38,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -133,10 +134,9 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
 
     // rebuild the trie by inserting everything into a StoredMerklePatriciaTrie
     // and incrementally (naively) commit after each account while streaming
-    // TODO: optimize to incrementally commit tx after a certain threshold
 
     final var wss = worldStateStorage.getComposedWorldStateStorage();
-    final var accountTrie =
+    var accountTrie =
         new StoredMerklePatriciaTrie<>(
             new StoredNodeFactory<>(
                 // this may be inefficient, and we can read through an incrementally committing tx
@@ -147,9 +147,9 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
             MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     final var accountsTx = new WrappedTransaction(worldStateStorage.getComposedWorldStateStorage());
-    final Runnable accountTrieCommit =
-        () ->
-            accountTrie.commit(
+    final Consumer<StoredMerklePatriciaTrie<Bytes, Bytes>> accountTrieCommit =
+        (trie) ->
+            trie.commit(
                 (loc, hash, value) ->
                     accountsTx.put(
                         TRIE_BRANCH_STORAGE, loc.toArrayUnsafe(), value.toArrayUnsafe()));
@@ -181,13 +181,25 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
         LOG.info("committing account trie at account {}", accountPair.getFirst());
 
         // commit the account trie if we have exceeded the forced commit interval
-        accountTrieCommit.run();
+        accountTrieCommit.accept(accountTrie);
         accountsTx.commitAndReopen();
+
+        // new trie with new root, GC trie nodes
+        accountTrie =
+            new StoredMerklePatriciaTrie<>(
+                new StoredNodeFactory<>(
+                    // this may be inefficient, and we can read through an incrementally committing
+                    // tx
+                    // instead
+                    worldStateStorage::getAccountStateTrieNode,
+                    Function.identity(),
+                    Function.identity()),
+                accountTrie.getRootHash());
       }
     }
 
     // final commit
-    accountTrieCommit.run();
+    accountTrieCommit.accept(accountTrie);
     accountsTx.commit();
 
     // return the new state trie root hash
@@ -209,19 +221,22 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
     var accountStorageTx = new WrappedTransaction(worldStateStorage.getComposedWorldStateStorage());
     var wss = worldStateStorage.getComposedWorldStateStorage();
 
-    // create account storage trie
-    var accountStorageTrie =
-        new StoredMerklePatriciaTrie<>(
-            new StoredNodeFactory<>(
-                (location, hash) ->
-                    worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
-                Function.identity(),
-                Function.identity()),
-            MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    Function<Bytes32, StoredMerklePatriciaTrie<Bytes, Bytes>> newAccountStorageTrie =
+        (rootHash) ->
+            new StoredMerklePatriciaTrie<>(
+                new StoredNodeFactory<>(
+                    (location, hash) ->
+                        worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+                    Function.identity(),
+                    Function.identity()),
+                rootHash);
 
-    Runnable accountStorageCommit =
-        () ->
-            accountStorageTrie.commit(
+    // create account storage trie
+    var accountStorageTrie = newAccountStorageTrie.apply(MerkleTrie.EMPTY_TRIE_NODE_HASH);
+
+    Consumer<StoredMerklePatriciaTrie<Bytes, Bytes>> accountStorageCommit =
+        (trie) ->
+            trie.commit(
                 (location, hash, value) ->
                     accountStorageTx.put(
                         TRIE_BRANCH_STORAGE,
@@ -241,11 +256,13 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
 
       // commit the account storage trie
       if (accountStorageCount++ % FORCED_COMMIT_INTERVAL == 0) {
-        accountStorageCommit.run();
+        accountStorageCommit.accept(accountStorageTrie);
         accountStorageTx.commitAndReopen();
+        // new trie with new root, GC trie nodes
+        accountStorageTrie = newAccountStorageTrie.apply(accountStorageTrie.getRootHash());
       }
     }
-    accountStorageCommit.run();
+    accountStorageCommit.accept(accountStorageTrie);
     accountStorageTx.commit();
 
     return Hash.wrap(accountStorageTrie.getRootHash());
