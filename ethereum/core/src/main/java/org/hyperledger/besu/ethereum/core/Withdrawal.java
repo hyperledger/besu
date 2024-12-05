@@ -36,11 +36,16 @@ public class Withdrawal implements org.hyperledger.besu.plugin.data.Withdrawal {
   private final Optional<Bytes> rawRlp;
 
   public Withdrawal(
-          final UInt64 index, final UInt64 validatorIndex, final Address address, final GWei amount) {
+      final UInt64 index, final UInt64 validatorIndex, final Address address, final GWei amount) {
     this(index, validatorIndex, address, amount, Optional.empty());
   }
+
   public Withdrawal(
-      final UInt64 index, final UInt64 validatorIndex, final Address address, final GWei amount, final Optional<Bytes> rawRlp) {
+      final UInt64 index,
+      final UInt64 validatorIndex,
+      final Address address,
+      final GWei amount,
+      final Optional<Bytes> rawRlp) {
     this.index = index;
     this.validatorIndex = validatorIndex;
     this.address = address;

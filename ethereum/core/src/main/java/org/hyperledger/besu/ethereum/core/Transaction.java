@@ -60,8 +60,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt256s;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class Transaction
@@ -140,8 +138,12 @@ public class Transaction
 
   public static Transaction readFrom(final RLPInput rlpInput) {
     RLPInput transactionRlp = rlpInput.readAsRlp();
-    Transaction transaction = TransactionDecoder.decodeRLP(transactionRlp, EncodingContext.BLOCK_BODY);
-    return Transaction.builder().copiedFrom(transaction).rawRlp(Optional.of(transactionRlp.raw())).build();
+    Transaction transaction =
+        TransactionDecoder.decodeRLP(transactionRlp, EncodingContext.BLOCK_BODY);
+    return Transaction.builder()
+        .copiedFrom(transaction)
+        .rawRlp(Optional.of(transactionRlp.raw()))
+        .build();
   }
 
   /**
@@ -493,7 +495,9 @@ public class Transaction
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    rawRlp.ifPresentOrElse(out::writeRLPBytes, () -> TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY));
+    rawRlp.ifPresentOrElse(
+        out::writeRLPBytes,
+        () -> TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY));
   }
 
   @Override
@@ -1121,7 +1125,7 @@ public class Transaction
             detachedVersionedHashes,
             detachedBlobsWithCommitments,
             maybeCodeDelegationList,
-                Optional.empty());
+            Optional.empty());
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
@@ -1341,7 +1345,7 @@ public class Transaction
           Optional.ofNullable(versionedHashes),
           Optional.ofNullable(blobsWithCommitments),
           codeDelegationAuthorizations,
-              rawRlp);
+          rawRlp);
     }
 
     public Transaction signAndBuild(final KeyPair keys) {

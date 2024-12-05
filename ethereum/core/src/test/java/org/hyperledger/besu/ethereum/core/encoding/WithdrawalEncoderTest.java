@@ -20,11 +20,11 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
 
 class WithdrawalEncoderTest {
   public static final String WITHDRAWAL_ZERO_CASE =
@@ -67,11 +67,18 @@ class WithdrawalEncoderTest {
     final UInt64 validatorIndex = UInt64.valueOf(2);
     final Address address = Address.fromHexString("0xffffffff");
     final GWei amount = GWei.of(3);
-    final Withdrawal withdrawal = new Withdrawal(index, validatorIndex, address, amount, Optional.of(Bytes.fromHexString("0xd803019400000000000000000000000000000000deadbeef05")));
+    final Withdrawal withdrawal =
+        new Withdrawal(
+            index,
+            validatorIndex,
+            address,
+            amount,
+            Optional.of(
+                Bytes.fromHexString("0xd803019400000000000000000000000000000000deadbeef05")));
 
     final Bytes encoded = WithdrawalEncoder.encodeOpaqueBytes(withdrawal);
 
     assertThat(encoded)
-            .isEqualTo(Bytes.fromHexString("0xd803019400000000000000000000000000000000deadbeef05"));
+        .isEqualTo(Bytes.fromHexString("0xd803019400000000000000000000000000000000deadbeef05"));
   }
 }
