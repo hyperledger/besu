@@ -16,43 +16,46 @@
 // Adapted from https://github.com/tmio/tuweni and licensed under Apache 2.0
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.rlp.RLP;
-import org.apache.tuweni.rlp.RLPReader;
-import org.bouncycastle.crypto.params.ECDomainParameters;
-import org.bouncycastle.math.ec.ECPoint;
 
-/** A modified implementation of Ethereum Node Record (ENR) that is used by DNSResolver.*/
+/**
+ * A modified implementation of Ethereum Node Record (ENR) that is used by DNSResolver. See <a
+ * href="https://eips.ethereum.org/EIPS/eip-778">EIP-778</a>
+ */
 public class EthereumNodeRecord {
   private final Map<String, Bytes> data;
   private final Bytes rlp;
+  private final Bytes publicKey;
 
   /**
    * Creates an ENR from its components
    *
-   * @param signature the record signature
-   * @param seq the sequence of the record, its revision number
    * @param data the arbitrary data of the record
-   * @param listData the arbitrary data of the record as list
    * @param rlp RLP encoding of the record
    */
-  public EthereumNodeRecord(
-      final Bytes signature,
-      final long seq,
-      final Map<String, Bytes> data,
-      final Map<String, List<Bytes>> listData,
-      final Bytes rlp) {
+  public EthereumNodeRecord(final Map<String, Bytes> data, final Bytes rlp) {
     this.data = data;
     this.rlp = rlp;
+    publicKey = initPublicKeyBytes(data);
+  }
+
+  private static Bytes initPublicKeyBytes(final Map<String, Bytes> data) {
+    var keyBytes = data.get("secp256k1");
+    if (keyBytes == null) {
+      throw new IllegalArgumentException("Missing secp256k1 entry in ENR");
+    }
+    // convert 33 bytes compressed public key to uncompressed using Bouncy Castle
+    var curve = SignatureAlgorithmFactory.getInstance().getCurve();
+    var ecPoint = curve.getCurve().decodePoint(keyBytes.toArrayUnsafe());
+    return Bytes.wrap(ecPoint.getEncoded(false)).slice(1);
   }
 
   /**
@@ -66,68 +69,37 @@ public class EthereumNodeRecord {
     if (rlp.size() > 300) {
       throw new IllegalArgumentException("Record too long");
     }
-    // TODO: Use Besu classes
-    return RLP.decodeList(rlp, reader -> fromRLP(reader, rlp));
-  }
-
-  /**
-   * Creates an ENR from its serialized form as a RLP list
-   *
-   * @param reader the RLP reader
-   * @param rlp the serialized form of the ENR
-   * @return the ENR
-   * @throws IllegalArgumentException if the rlp bytes length is longer than 300 bytes
-   */
-  public static EthereumNodeRecord fromRLP(final RLPReader reader, final Bytes rlp) {
-    var sig = reader.readValue();
-    var seq = reader.readLong();
-
     var data = new HashMap<String, Bytes>();
-    var listData = new HashMap<String, List<Bytes>>();
-    while (!reader.isComplete()) {
-      var key = reader.readString();
-      if (reader.nextIsList()) {
-        listData.put(
-            key,
-            reader
-                .readListContents(
-                    listReader -> {
-                      if (listReader.nextIsList()) {
-                        // TODO complex structures not supported
-                        listReader.skipNext();
-                        return null;
-                      } else {
-                        return listReader.readValue();
-                      }
-                    })
-                .stream()
-                .filter(Objects::nonNull)
-                .toList());
+
+    // rlp: sig, sequence, k1,v1, k2,v2, k3, [v3, vn]...
+    var input = new BytesValueRLPInput(rlp, false);
+    input.enterList();
+
+    input.skipNext(); // skip signature
+    input.skipNext(); // skip sequence
+
+    // go through rest of the list
+    while (!input.isEndOfCurrentList()) {
+      var key = new String(input.readBytes().toArrayUnsafe(), StandardCharsets.UTF_8);
+      if (input.nextIsList()) {
+        // skip list as we currently don't need and support complex structures
+        input.skipNext();
       } else {
-        var value = reader.readValue();
-        data.put(key, value);
+        data.put(key, input.readBytes());
       }
     }
 
-    return new EthereumNodeRecord(sig, seq, data, listData, rlp);
+    input.leaveList();
+    return new EthereumNodeRecord(data, rlp);
   }
 
   /**
-   * Encoded public key/nodeid of the ENR
+   * Decompressed 64 bytes public key of the ENR
    *
    * @return the public key of the ENR
    */
   public Bytes publicKey() {
-    var keyBytes = data.get("secp256k1");
-    if (keyBytes == null) {
-      throw new IllegalArgumentException("Missing secp256k1 entry in ENR");
-    }
-    // 33 bytes compressed format public key
-    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
-    final ECDomainParameters curve = signatureAlgorithm.getCurve();
-    final ECPoint ecPoint = curve.getCurve().decodePoint(keyBytes.toArrayUnsafe());
-    // convert to 64 byte uncompressed format public key (slicing the prefix)
-    return Bytes.wrap(ecPoint.getEncoded(false)).slice(1);
+    return publicKey;
   }
 
   /**
