@@ -60,7 +60,7 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(RebuildBonsaiStateTrieSubCommand.class);
   private static final Hash HASH_LAST =
       Hash.wrap(Bytes32.leftPad(Bytes.fromHexString("FF"), (byte) 0xFF));
-  static final long FORCED_COMMIT_INTERVAL = 50_000L;
+  static final long FORCED_COMMIT_INTERVAL = 5_000L;
 
   @SuppressWarnings("unused")
   @ParentCommand
@@ -256,6 +256,7 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
 
       // commit the account storage trie
       if (accountStorageCount++ % FORCED_COMMIT_INTERVAL == 0) {
+        LOG.info("interim commit for account hash {}, at {}", accountHash, storagePair.getFirst());
         accountStorageCommit.accept(accountStorageTrie);
         accountStorageTx.commitAndReopen();
         // new trie with new root, GC trie nodes
