@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
-import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -174,7 +173,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
       if (transaction.getVersionedHashes().isPresent()) {
         currentBlobGasUsed +=
-            (transaction.getVersionedHashes().get().size() * CancunGasCalculator.BLOB_GAS_PER_BLOB);
+            (transaction.getVersionedHashes().get().size()
+                * protocolSpec.getGasCalculator().getBlobGasPerBlob());
       }
 
       final TransactionReceipt transactionReceipt =
