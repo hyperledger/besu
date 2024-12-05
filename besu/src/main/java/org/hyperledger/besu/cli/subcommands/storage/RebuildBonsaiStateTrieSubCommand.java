@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.subcommands.storage;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView.encodeTrieValue;
 
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
@@ -236,7 +237,7 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
     long accountStorageCount = 0L;
     while (accountStorageIterator.hasNext()) {
       var storagePair = accountStorageIterator.next();
-      accountStorageTrie.put(storagePair.getFirst(), storagePair.getSecond());
+      accountStorageTrie.put(storagePair.getFirst(), encodeTrieValue(storagePair.getSecond()));
 
       // commit the account storage trie
       if (accountStorageCount++ % FORCED_COMMIT_INTERVAL == 0) {
