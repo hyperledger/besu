@@ -161,7 +161,7 @@ public class PragueAcceptanceTestHelper {
               + "      \"withdrawals\": [],"
               + "      \"parentBeaconBlockRoot\": \"0x0000000000000000000000000000000000000000000000000000000000000000\","
               + "      \"targetBlobsPerBlock\": \"0x3\","
-              + "      \"maximumBlobCount\": \"0x6\""
+              + "      \"maxBlobsPerBlock\": \"0x6\""
               + "    }";
     }
 

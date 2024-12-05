@@ -33,7 +33,7 @@ public class EnginePayloadAttributesParameter {
   final List<WithdrawalParameter> withdrawals;
   private final Bytes32 parentBeaconBlockRoot;
   private final UInt64 targetBlobsPerBlock;
-  private final UInt64 maximumBlobCount;
+  private final UInt64 maxBlobsPerBlock;
 
   @JsonCreator
   public EnginePayloadAttributesParameter(
@@ -43,7 +43,7 @@ public class EnginePayloadAttributesParameter {
       @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
       @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
       @JsonProperty("targetBlobsPerBlock") final String targetBlobsPerBlock,
-      @JsonProperty("maximumBlobCount") final String maximumBlobCount) {
+      @JsonProperty("maxBlobsPerBlock") final String maxBlobsPerBlock) {
     this.timestamp = Long.decode(timestamp);
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.suggestedFeeRecipient = Address.fromHexString(suggestedFeeRecipient);
@@ -52,8 +52,8 @@ public class EnginePayloadAttributesParameter {
         parentBeaconBlockRoot == null ? null : Bytes32.fromHexString(parentBeaconBlockRoot);
     this.targetBlobsPerBlock =
         targetBlobsPerBlock == null ? null : UInt64.fromHexString(targetBlobsPerBlock);
-    this.maximumBlobCount =
-        maximumBlobCount == null ? null : UInt64.fromHexString(maximumBlobCount);
+    this.maxBlobsPerBlock =
+        maxBlobsPerBlock == null ? null : UInt64.fromHexString(maxBlobsPerBlock);
   }
 
   public Long getTimestamp() {
@@ -76,8 +76,8 @@ public class EnginePayloadAttributesParameter {
     return targetBlobsPerBlock;
   }
 
-  public UInt64 getMaximumBlobCount() {
-    return maximumBlobCount;
+  public UInt64 getMaxBlobsPerBlock() {
+    return maxBlobsPerBlock;
   }
 
   public List<WithdrawalParameter> getWithdrawals() {
@@ -101,8 +101,8 @@ public class EnginePayloadAttributesParameter {
     if (targetBlobsPerBlock != null) {
       json.put("targetBlobsPerBlock", targetBlobsPerBlock.toHexString());
     }
-    if (maximumBlobCount != null) {
-      json.put("maximumBlobCount", maximumBlobCount.toHexString());
+    if (maxBlobsPerBlock != null) {
+      json.put("maxBlobsPerBlock", maxBlobsPerBlock.toHexString());
     }
     return json.encode();
   }
