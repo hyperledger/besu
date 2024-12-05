@@ -46,6 +46,7 @@
 - Add RPC WS options to specify password file for keystore and truststore [#7970](https://github.com/hyperledger/besu/pull/7970)
 - Prometheus Java Metrics library upgraded to version 1.3.3 [#7880](https://github.com/hyperledger/besu/pull/7880)
 - Add histogram to Prometheus metrics system [#7944](https://github.com/hyperledger/besu/pull/7944)
+- Add RPC HTTP options to specify custom truststore and its password [#7978](https://github.com/hyperledger/besu/pull/7978)
 
 
 ### Bug fixes

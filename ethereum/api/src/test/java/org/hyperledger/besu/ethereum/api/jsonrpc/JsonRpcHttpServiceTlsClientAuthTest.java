@@ -53,11 +53,13 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.KeyStore;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -187,6 +189,37 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
     return config;
   }
 
+  private Optional<TlsConfiguration> getRpcHttpTlsConfigurationOnlyWithTruststore() {
+    final Path truststorePath = createTempFile();
+
+    // Create a new truststore and add the okHttpClientCertificate to it
+    try (FileOutputStream truststoreOutputStream = new FileOutputStream(truststorePath.toFile())) {
+      KeyStore truststore = KeyStore.getInstance("PKCS12");
+      truststore.load(null, null);
+      truststore.setCertificateEntry(
+          "okHttpClientCertificate", okHttpClientCertificate.getCertificate());
+      truststore.store(truststoreOutputStream, okHttpClientCertificate.getPassword());
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to create truststore", e);
+    }
+
+    final FileBasedPasswordProvider trustStorePasswordProvider =
+        new FileBasedPasswordProvider(createPasswordFile(okHttpClientCertificate));
+
+    final TlsConfiguration tlsConfiguration =
+        aTlsConfiguration()
+            .withKeyStorePath(besuCertificate.getKeyStoreFile())
+            .withKeyStorePasswordSupplier(fileBasedPasswordProvider)
+            .withClientAuthConfiguration(
+                aTlsClientAuthConfiguration()
+                    .withTruststorePath(truststorePath)
+                    .withTruststorePasswordSupplier(trustStorePasswordProvider)
+                    .build())
+            .build();
+
+    return Optional.of(tlsConfiguration);
+  }
+
   private Optional<TlsConfiguration> getRpcHttpTlsConfiguration() {
     final Path knownClientsFile = createTempFile();
     writeToKnownClientsFile(
@@ -258,6 +291,23 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
   @Test
   public void netVersionSuccessfulOnTlsWithClientCertInKnownClientsFile() throws Exception {
     netVersionSuccessful(this::getTlsHttpClient, baseUrl);
+  }
+
+  @Test
+  public void netVersionSuccessfulOnTlsWithClientCertInTruststore() throws Exception {
+
+    JsonRpcHttpService jsonRpcHttpService = null;
+    try {
+      jsonRpcHttpService =
+          createJsonRpcHttpService(
+              createJsonRpcConfig(this::getRpcHttpTlsConfigurationOnlyWithTruststore));
+      jsonRpcHttpService.start().join();
+      netVersionSuccessful(this::getTlsHttpClient, jsonRpcHttpService.url());
+    } finally {
+      if (jsonRpcHttpService != null) {
+        jsonRpcHttpService.stop().join();
+      }
+    }
   }
 
   @Test
