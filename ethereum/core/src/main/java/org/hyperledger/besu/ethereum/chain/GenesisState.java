@@ -219,11 +219,11 @@ public final class GenesisState {
         .parentBeaconBlockRoot(
             (isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
         .requestsHash(isPragueAtGenesis(genesis) ? Hash.EMPTY_REQUESTS_HASH : null)
-        .targetBlobCount(
+        .targetBlobsPerBlock(
             isPragueAtGenesis(genesis)
                 // TODO SLD EIP-7742 Currently defaulting to null due to dependency on web3j
                 // BlockHeader in CodeDelegationTransactionAcceptanceTest
-                ? genesis.getTargetBlobCount().map(UInt64::fromHexString).orElse(null)
+                ? genesis.getTargetBlobsPerBlock().map(UInt64::fromHexString).orElse(null)
                 : null)
         .buildBlockHeader();
   }
