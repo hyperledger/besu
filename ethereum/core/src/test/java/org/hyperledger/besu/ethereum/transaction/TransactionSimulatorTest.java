@@ -953,4 +953,43 @@ public class TransactionSimulatorTest {
         Optional.of(maxFeePerBlobGas),
         Optional.of(bwc.getVersionedHashes()));
   }
+
+  @Test
+  public void shouldSimulateLegacyTransactionWhenBaseFeeNotZero() {
+    // tests that the transaction simulator will simulate a legacy transaction when the base fee is
+    // not zero
+    // and the transaction is a legacy transaction
+
+    final CallParameter callParameter = legacyTransactionCallParameter();
+
+    final BlockHeader blockHeader =
+        blockHeaderTestFixture
+            .number(1L)
+            .stateRoot(Hash.ZERO)
+            .baseFeePerGas(Wei.of(7))
+            .buildHeader();
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.FRONTIER)
+            .nonce(1L)
+            .gasPrice(callParameter.getGasPrice())
+            .gasLimit(blockHeader.getGasLimit())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .build();
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter, 1L);
+
+    verifyTransactionWasProcessed(expectedTransaction);
+    assertThat(result.get().isSuccessful()).isTrue();
+  }
 }

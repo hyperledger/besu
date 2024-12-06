@@ -81,7 +81,7 @@ public class BlockHeaderBuilder {
   private Long blobGasUsed = null;
   private BlobGas excessBlobGas = null;
   private Bytes32 parentBeaconBlockRoot = null;
-  private UInt64 targetBlobCount = null;
+  private UInt64 targetBlobsPerBlock = null;
 
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
@@ -131,7 +131,7 @@ public class BlockHeaderBuilder {
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
         .requestsHash(header.getRequestsHash().orElse(null))
-        .targetBlobCount(header.getTargetBlobCount().orElse(null));
+        .targetBlobsPerBlock(header.getTargetBlobsPerBlock().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -156,7 +156,7 @@ public class BlockHeaderBuilder {
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
             .requestsHash(fromBuilder.requestsHash)
-            .targetBlobCount(fromBuilder.targetBlobCount)
+            .targetBlobsPerBlock(fromBuilder.targetBlobsPerBlock)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -236,7 +236,7 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        targetBlobCount,
+        targetBlobsPerBlock,
         blockHeaderFunctions);
   }
 
@@ -253,7 +253,7 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         parentBeaconBlockRoot,
-        targetBlobCount);
+        targetBlobsPerBlock);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -280,7 +280,7 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        targetBlobCount);
+        targetBlobsPerBlock);
   }
 
   private void validateBlockHeader() {
@@ -320,7 +320,7 @@ public class BlockHeaderBuilder {
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
     processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     processableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
-    processableBlockHeader.getTargetBlobCount().ifPresent(this::targetBlobCount);
+    processableBlockHeader.getTargetBlobsPerBlock().ifPresent(this::targetBlobsPerBlock);
     return this;
   }
 
@@ -346,7 +346,7 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     requestsHash(sealableBlockHeader.getRequestsHash().orElse(null));
-    sealableBlockHeader.getTargetBlobCount().ifPresent(this::targetBlobCount);
+    sealableBlockHeader.getTargetBlobsPerBlock().ifPresent(this::targetBlobsPerBlock);
     return this;
   }
 
@@ -481,8 +481,8 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder targetBlobCount(final UInt64 targetBlobCount) {
-    this.targetBlobCount = targetBlobCount;
+  public BlockHeaderBuilder targetBlobsPerBlock(final UInt64 targetBlobsPerBlock) {
+    this.targetBlobsPerBlock = targetBlobsPerBlock;
     return this;
   }
 }

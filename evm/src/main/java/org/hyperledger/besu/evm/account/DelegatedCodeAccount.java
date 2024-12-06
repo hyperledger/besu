@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.account;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.NavigableMap;
@@ -37,12 +38,14 @@ public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Ac
    * @param worldUpdater the world updater.
    * @param wrappedAccount the account that has delegated code to be loaded into it.
    * @param codeDelegationAddress the address of the delegated code.
+   * @param gasCalculator the gas calculator to check for precompiles.
    */
   public DelegatedCodeAccount(
       final WorldUpdater worldUpdater,
       final Account wrappedAccount,
-      final Address codeDelegationAddress) {
-    super(worldUpdater, codeDelegationAddress);
+      final Address codeDelegationAddress,
+      final GasCalculator gasCalculator) {
+    super(worldUpdater, codeDelegationAddress, gasCalculator);
     this.wrappedAccount = wrappedAccount;
   }
 

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
@@ -66,13 +67,14 @@ public class FullSyncChainDownloaderForkTest {
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            protocolSchedule,
-            localBlockchain,
-            new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()),
-            localBlockchainSetup.getWorldArchive(),
-            localBlockchainSetup.getTransactionPool(),
-            EthProtocolConfiguration.defaultConfig());
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(protocolSchedule)
+            .setBlockchain(localBlockchain)
+            .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
+            .setWorldStateArchive(localBlockchainSetup.getWorldArchive())
+            .setTransactionPool(localBlockchainSetup.getTransactionPool())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .build();
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
   }

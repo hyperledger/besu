@@ -94,7 +94,7 @@ public interface TransactionSimulationService extends BesuService {
    *
    * @param transaction tx
    * @param accountOverrides state overrides to apply to this simulation
-   * @param blockHash then hash of the block
+   * @param blockHash the hash of the block
    * @param operationTracer the tracer
    * @param isAllowExceedingBalance should ignore the sender balance during the simulation?
    * @return the result of the simulation
