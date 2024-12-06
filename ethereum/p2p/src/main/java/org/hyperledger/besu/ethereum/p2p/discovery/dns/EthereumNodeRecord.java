@@ -82,7 +82,7 @@ public class EthereumNodeRecord {
     while (!input.isEndOfCurrentList()) {
       var key = new String(input.readBytes().toArrayUnsafe(), StandardCharsets.UTF_8);
       if (input.nextIsList()) {
-        // skip list as we currently don't need and support complex structures
+        // skip list as we currently don't need any of these complex structures
         input.skipNext();
       } else {
         data.put(key, input.readBytes());
