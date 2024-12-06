@@ -73,6 +73,7 @@ public abstract class AbstractSyncTargetManager {
                         ethContext,
                         bestPeer,
                         config.getDownloaderHeaderRequestSize(),
+                        config,
                         metricsSystem)
                     .run()
                     .handle(

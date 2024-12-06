@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -52,6 +53,7 @@ public class BackwardSyncContext {
   protected final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
+  private final SynchronizerConfiguration synchronizerConfiguration;
   private final MetricsSystem metricsSystem;
   private final SyncState syncState;
   private final AtomicReference<Status> currentBackwardSyncStatus = new AtomicReference<>();
@@ -65,6 +67,7 @@ public class BackwardSyncContext {
   public BackwardSyncContext(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
       final SyncState syncState,
@@ -72,6 +75,7 @@ public class BackwardSyncContext {
     this(
         protocolContext,
         protocolSchedule,
+        synchronizerConfiguration,
         metricsSystem,
         ethContext,
         syncState,
@@ -83,6 +87,7 @@ public class BackwardSyncContext {
   public BackwardSyncContext(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
       final SyncState syncState,
@@ -93,6 +98,7 @@ public class BackwardSyncContext {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
+    this.synchronizerConfiguration = synchronizerConfiguration;
     this.metricsSystem = metricsSystem;
     this.syncState = syncState;
     this.backwardChain = backwardChain;
@@ -429,6 +435,10 @@ public class BackwardSyncContext {
               "Backward sync phase 2 of 2 completed, imported a total of %d blocks. Peers: %d",
               imported, getEthContext().getEthPeers().peerCount()));
     }
+  }
+
+  public SynchronizerConfiguration getSynchronizerConfiguration() {
+    return synchronizerConfiguration;
   }
 
   class Status {

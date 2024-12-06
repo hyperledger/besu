@@ -20,6 +20,10 @@ public class InvalidPeerTaskResponseException extends Exception {
     super();
   }
 
+  public InvalidPeerTaskResponseException(final String message) {
+    super(message);
+  }
+
   public InvalidPeerTaskResponseException(final Throwable cause) {
     super(cause);
   }
