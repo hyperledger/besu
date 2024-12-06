@@ -38,7 +38,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -146,13 +146,15 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
                 Function.identity()),
             MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
-    final var accountsTx = new WrappedTransaction(worldStateStorage.getComposedWorldStateStorage());
-    final Consumer<StoredMerklePatriciaTrie<Bytes, Bytes>> accountTrieCommit =
-        (trie) ->
-            trie.commit(
-                (loc, hash, value) ->
-                    accountsTx.put(
-                        TRIE_BRANCH_STORAGE, loc.toArrayUnsafe(), value.toArrayUnsafe()));
+    // final var accountsTx = new
+    // WrappedTransaction(worldStateStorage.getComposedWorldStateStorage());
+    var accountsTx = wss.startTransaction();
+    final BiConsumer<StoredMerklePatriciaTrie<Bytes, Bytes>, SegmentedKeyValueStorageTransaction>
+        accountTrieCommit =
+            (trie, tx) ->
+                trie.commit(
+                    (loc, hash, value) ->
+                        tx.put(TRIE_BRANCH_STORAGE, loc.toArrayUnsafe(), value.toArrayUnsafe()));
 
     final var flatdb = worldStateStorage.getFlatDbStrategy();
     final var accountsIterator = flatdb.accountsToPairStream(wss, Bytes32.ZERO).iterator();
@@ -165,8 +167,7 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
       var acctState = extractStateRootHash(accountPair.getSecond());
       if (!Hash.EMPTY_TRIE_HASH.equals(acctState.storageRoot)) {
         var newStateTrieHash =
-            rebuildAccountTrie(
-                accountsTx, flatdb, worldStateStorage, Hash.wrap(accountPair.getFirst()));
+            rebuildAccountTrie(flatdb, worldStateStorage, Hash.wrap(accountPair.getFirst()));
         if (!newStateTrieHash.equals(acctState.storageRoot)) {
           throw new RuntimeException(
               String.format(
@@ -182,13 +183,14 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
         LOG.info("committing account trie at account {}", accountPair.getFirst());
 
         // commit the account trie if we have exceeded the forced commit interval
-        accountTrieCommit.accept(accountTrie);
-        accountsTx.commitAndReopen();
+        accountTrieCommit.accept(accountTrie, accountsTx);
+        accountsTx.commit();
+        accountsTx = wss.startTransaction();
       }
     }
 
     // final commit
-    accountTrieCommit.accept(accountTrie);
+    accountTrieCommit.accept(accountTrie, accountsTx);
     accountsTx.commit();
 
     // return the new state trie root hash
@@ -203,13 +205,12 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
    * @param accountHash the hash of the account we need to rebuild contract storage for
    */
   Hash rebuildAccountTrie(
-      final WrappedTransaction accountsTx,
       final BonsaiFlatDbStrategy flatdb,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Hash accountHash) {
 
     var wss = worldStateStorage.getComposedWorldStateStorage();
-
+    var accountsStorageTx = wss.startTransaction();
     // create account storage trie
     final var accountStorageTrie =
         new StoredMerklePatriciaTrie<>(
@@ -220,14 +221,15 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
                 Function.identity()),
             MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
-    Consumer<StoredMerklePatriciaTrie<Bytes, Bytes>> accountStorageCommit =
-        (trie) ->
-            trie.commit(
-                (location, hash, value) ->
-                    accountsTx.put(
-                        TRIE_BRANCH_STORAGE,
-                        Bytes.concatenate(accountHash, location).toArrayUnsafe(),
-                        value.toArrayUnsafe()));
+    BiConsumer<StoredMerklePatriciaTrie<Bytes, Bytes>, SegmentedKeyValueStorageTransaction>
+        accountStorageCommit =
+            (trie, tx) ->
+                trie.commit(
+                    (location, hash, value) ->
+                        tx.put(
+                            TRIE_BRANCH_STORAGE,
+                            Bytes.concatenate(accountHash, location).toArrayUnsafe(),
+                            value.toArrayUnsafe()));
 
     // put into account trie
     var accountStorageIterator =
@@ -243,12 +245,13 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
       // commit the account storage trie
       if (++accountStorageCount % FORCED_COMMIT_INTERVAL == 0) {
         LOG.info("interim commit for account hash {}, at {}", accountHash, storagePair.getFirst());
-        accountStorageCommit.accept(accountStorageTrie);
-        accountsTx.commitAndReopen();
+        accountStorageCommit.accept(accountStorageTrie, accountsStorageTx);
+        accountsStorageTx.commit();
+        accountsStorageTx = wss.startTransaction();
       }
     }
-    accountStorageCommit.accept(accountStorageTrie);
-    accountsTx.commitAndReopen();
+    accountStorageCommit.accept(accountStorageTrie, accountsStorageTx);
+    accountsStorageTx.commit();
 
     return Hash.wrap(accountStorageTrie.getRootHash());
   }
