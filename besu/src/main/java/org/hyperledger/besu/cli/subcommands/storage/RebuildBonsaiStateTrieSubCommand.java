@@ -60,7 +60,7 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(RebuildBonsaiStateTrieSubCommand.class);
   private static final Hash HASH_LAST =
       Hash.wrap(Bytes32.leftPad(Bytes.fromHexString("FF"), (byte) 0xFF));
-  static final long FORCED_COMMIT_INTERVAL = 5_000L;
+  static final long FORCED_COMMIT_INTERVAL = 50_000L;
 
   @SuppressWarnings("unused")
   @ParentCommand
@@ -136,7 +136,7 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
     // and incrementally (naively) commit after each account while streaming
 
     final var wss = worldStateStorage.getComposedWorldStateStorage();
-    var accountTrie =
+    final var accountTrie =
         new StoredMerklePatriciaTrie<>(
             new StoredNodeFactory<>(
                 // this may be inefficient, and we can read through an incrementally committing tx
@@ -165,7 +165,8 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
       var acctState = extractStateRootHash(accountPair.getSecond());
       if (!Hash.EMPTY_TRIE_HASH.equals(acctState.storageRoot)) {
         var newStateTrieHash =
-            rebuildAccountTrie(flatdb, worldStateStorage, Hash.wrap(accountPair.getFirst()));
+            rebuildAccountTrie(
+                accountsTx, flatdb, worldStateStorage, Hash.wrap(accountPair.getFirst()));
         if (!newStateTrieHash.equals(acctState.storageRoot)) {
           throw new RuntimeException(
               String.format(
@@ -183,18 +184,6 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
         // commit the account trie if we have exceeded the forced commit interval
         accountTrieCommit.accept(accountTrie);
         accountsTx.commitAndReopen();
-
-        // new trie with new root, GC trie nodes
-        accountTrie =
-            new StoredMerklePatriciaTrie<>(
-                new StoredNodeFactory<>(
-                    // this may be inefficient, and we can read through an incrementally committing
-                    // tx
-                    // instead
-                    worldStateStorage::getAccountStateTrieNode,
-                    Function.identity(),
-                    Function.identity()),
-                accountTrie.getRootHash());
       }
     }
 
@@ -214,31 +203,28 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
    * @param accountHash the hash of the account we need to rebuild contract storage for
    */
   Hash rebuildAccountTrie(
+      final WrappedTransaction accountsTx,
       final BonsaiFlatDbStrategy flatdb,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Hash accountHash) {
 
-    var accountStorageTx = new WrappedTransaction(worldStateStorage.getComposedWorldStateStorage());
     var wss = worldStateStorage.getComposedWorldStateStorage();
 
-    Function<Bytes32, StoredMerklePatriciaTrie<Bytes, Bytes>> newAccountStorageTrie =
-        (rootHash) ->
-            new StoredMerklePatriciaTrie<>(
-                new StoredNodeFactory<>(
-                    (location, hash) ->
-                        worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
-                    Function.identity(),
-                    Function.identity()),
-                rootHash);
-
     // create account storage trie
-    var accountStorageTrie = newAccountStorageTrie.apply(MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    final var accountStorageTrie =
+        new StoredMerklePatriciaTrie<>(
+            new StoredNodeFactory<>(
+                (location, hash) ->
+                    worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+                Function.identity(),
+                Function.identity()),
+            MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     Consumer<StoredMerklePatriciaTrie<Bytes, Bytes>> accountStorageCommit =
         (trie) ->
             trie.commit(
                 (location, hash, value) ->
-                    accountStorageTx.put(
+                    accountsTx.put(
                         TRIE_BRANCH_STORAGE,
                         Bytes.concatenate(accountHash, location).toArrayUnsafe(),
                         value.toArrayUnsafe()));
@@ -258,13 +244,11 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
       if (++accountStorageCount % FORCED_COMMIT_INTERVAL == 0) {
         LOG.info("interim commit for account hash {}, at {}", accountHash, storagePair.getFirst());
         accountStorageCommit.accept(accountStorageTrie);
-        accountStorageTx.commitAndReopen();
-        // new trie with new root, GC trie nodes
-        accountStorageTrie = newAccountStorageTrie.apply(accountStorageTrie.getRootHash());
+        accountsTx.commitAndReopen();
       }
     }
     accountStorageCommit.accept(accountStorageTrie);
-    accountStorageTx.commit();
+    accountsTx.commitAndReopen();
 
     return Hash.wrap(accountStorageTrie.getRootHash());
   }
