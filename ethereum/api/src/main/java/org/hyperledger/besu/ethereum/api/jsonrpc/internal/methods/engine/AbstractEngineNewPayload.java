@@ -370,7 +370,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .flatMap(Optional::stream)
               .mapToInt(List::size)
               .sum(),
-          (System.currentTimeMillis() - startTimeMs) / 1000.0);
+          (System.currentTimeMillis() - startTimeMs) / 1000.0,
+          executionResult.getNbParallelizedTransations());
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
       if (executionResult.causedBy().isPresent()) {
@@ -564,26 +565,41 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 .collect(Collectors.toList()));
   }
 
-  private void logImportedBlockInfo(final Block block, final int blobCount, final double timeInS) {
+  private void logImportedBlockInfo(
+      final Block block,
+      final int blobCount,
+      final double timeInS,
+      final Optional<Integer> nbParallelizedTransations) {
     final StringBuilder message = new StringBuilder();
-    message.append("Imported #%,d / %d tx");
+    final int nbTransactions = block.getBody().getTransactions().size();
+    message.append("Imported #%,d  (%s)|%5d tx");
     final List<Object> messageArgs =
         new ArrayList<>(
-            List.of(block.getHeader().getNumber(), block.getBody().getTransactions().size()));
+            List.of(
+                block.getHeader().getNumber(), block.getHash().toShortLogString(), nbTransactions));
     if (block.getBody().getWithdrawals().isPresent()) {
-      message.append(" / %d ws");
+      message.append("|%3d ws");
       messageArgs.add(block.getBody().getWithdrawals().get().size());
     }
-    message.append(" / %d blobs / base fee %s / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d");
+    double mgasPerSec = (timeInS != 0) ? block.getHeader().getGasUsed() / (timeInS * 1_000_000) : 0;
+    message.append(
+        "|%2d blobs| base fee %s| gas used %,11d (%5.1f%%)| exec time %01.3fs| mgas/s %6.2f");
     messageArgs.addAll(
         List.of(
             blobCount,
-            block.getHeader().getBaseFee().map(Wei::toHumanReadableString).orElse("N/A"),
+            block.getHeader().getBaseFee().map(Wei::toHumanReadablePaddedString).orElse("N/A"),
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-            block.getHash().toHexString(),
             timeInS,
-            ethPeers.peerCount()));
+            mgasPerSec));
+    if (nbParallelizedTransations.isPresent()) {
+      double parallelizedTxPercentage =
+          (double) (nbParallelizedTransations.get() * 100) / nbTransactions;
+      message.append("| parallel txs %5.1f%%");
+      messageArgs.add(parallelizedTxPercentage);
+    }
+    message.append("| peers: %2d");
+    messageArgs.add(ethPeers.peerCount());
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
   }
 }

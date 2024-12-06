@@ -49,6 +49,8 @@ public class TransactionProcessingResult
 
   private final Bytes output;
 
+  private Optional<Boolean> isProcessedInParallel = Optional.empty();
+
   private final ValidationResult<TransactionInvalidReason> validationResult;
   private final Optional<Bytes> revertReason;
 
@@ -192,6 +194,25 @@ public class TransactionProcessingResult
    */
   public ValidationResult<TransactionInvalidReason> getValidationResult() {
     return validationResult;
+  }
+
+  /**
+   * Set isProcessedInParallel to the value in parameter
+   *
+   * @param isProcessedInParallel new value of isProcessedInParallel
+   */
+  public void setIsProcessedInParallel(final Optional<Boolean> isProcessedInParallel) {
+    this.isProcessedInParallel = isProcessedInParallel;
+  }
+
+  /**
+   * Returns a flag that indicates if the transaction was executed in parallel
+   *
+   * @return Optional of Boolean, the value of the boolean is true if the transaction was executed
+   *     in parallel
+   */
+  public Optional<Boolean> getIsProcessedInParallel() {
+    return isProcessedInParallel;
   }
 
   /**
