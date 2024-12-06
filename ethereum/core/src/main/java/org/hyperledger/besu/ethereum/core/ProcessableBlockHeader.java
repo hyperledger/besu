@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /** A block header capable of being processed. */
 public class ProcessableBlockHeader
@@ -46,6 +47,8 @@ public class ProcessableBlockHeader
   protected final Bytes32 mixHashOrPrevRandao;
   // parentBeaconBlockRoot is included for Cancun
   protected final Bytes32 parentBeaconBlockRoot;
+  // TODO SLD Quantity or UInt64Value<UInt64> instead?
+  protected final UInt64 targetBlobCount;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -56,7 +59,8 @@ public class ProcessableBlockHeader
       final long timestamp,
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
-      final Bytes32 parentBeaconBlockRoot) {
+      final Bytes32 parentBeaconBlockRoot,
+      final UInt64 targetBlobCount) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -66,6 +70,7 @@ public class ProcessableBlockHeader
     this.baseFee = baseFee;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
+    this.targetBlobCount = targetBlobCount;
   }
 
   /**
@@ -176,6 +181,16 @@ public class ProcessableBlockHeader
   @Override
   public Optional<Bytes32> getParentBeaconBlockRoot() {
     return Optional.ofNullable(parentBeaconBlockRoot);
+  }
+
+  /**
+   * Returns the target blob count if available.
+   *
+   * @return the target blob count if available.
+   */
+  @Override
+  public Optional<UInt64> getTargetBlobCount() {
+    return Optional.ofNullable(targetBlobCount);
   }
 
   public String toLogString() {

@@ -41,13 +41,14 @@ import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -547,7 +548,7 @@ public class PrivacyReorgTest {
               .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .storageProvider(new InMemoryKeyValueStorageProvider())
               .networkId(BigInteger.ONE)
-              .miningParameters(MiningParameters.newDefault())
+              .miningParameters(MiningConfiguration.newDefault())
               .nodeKey(NodeKeyUtils.generate())
               .metricsSystem(new NoOpMetricsSystem())
               .dataDirectory(dataDir)
@@ -558,6 +559,7 @@ public class PrivacyReorgTest {
               .evmConfiguration(EvmConfiguration.DEFAULT)
               .networkConfiguration(NetworkingConfiguration.create())
               .besuComponent(context)
+              .apiConfiguration(ImmutableApiConfiguration.builder().build())
               .build();
       return retval;
     }

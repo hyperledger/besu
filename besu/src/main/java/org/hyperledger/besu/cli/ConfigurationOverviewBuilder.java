@@ -53,7 +53,7 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
-  private boolean isBonsaiLimitTrieLogsEnabled = false;
+  private boolean isLimitTrieLogsEnabled = false;
   private long trieLogRetentionLimit = 0;
   private Integer trieLogsPruningWindowSize = null;
   private boolean isSnapServerEnabled = false;
@@ -220,7 +220,7 @@ public class ConfigurationOverviewBuilder {
    * @return the builder
    */
   public ConfigurationOverviewBuilder setLimitTrieLogsEnabled() {
-    isBonsaiLimitTrieLogsEnabled = true;
+    isLimitTrieLogsEnabled = true;
     return this;
   }
 
@@ -349,7 +349,8 @@ public class ConfigurationOverviewBuilder {
     }
 
     if (syncMode != null) {
-      lines.add("Sync mode: " + syncMode);
+      lines.add(
+          "Sync mode: " + syncMode + (syncMode.equalsIgnoreCase("FAST") ? " (Deprecated)" : ""));
     }
 
     if (syncMinPeers != null) {
@@ -389,7 +390,7 @@ public class ConfigurationOverviewBuilder {
       lines.add("Experimental Snap Sync for BFT enabled");
     }
 
-    if (isBonsaiLimitTrieLogsEnabled) {
+    if (isLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();
       trieLogPruningString
           .append("Limit trie logs enabled: retention: ")
@@ -433,14 +434,18 @@ public class ConfigurationOverviewBuilder {
   private void detectJemalloc(final List<String> lines) {
     Optional.ofNullable(Objects.isNull(environment) ? null : environment.get("BESU_USING_JEMALLOC"))
         .ifPresentOrElse(
-            t -> {
+            jemallocEnabled -> {
               try {
-                final String version = PlatformDetector.getJemalloc();
-                lines.add("jemalloc: " + version);
+                if (Boolean.parseBoolean(jemallocEnabled)) {
+                  final String version = PlatformDetector.getJemalloc();
+                  lines.add("jemalloc: " + version);
+                } else {
+                  logger.warn(
+                      "besu_using_jemalloc is present but is not set to true, jemalloc library not loaded");
+                }
               } catch (final Throwable throwable) {
                 logger.warn(
-                    "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version",
-                    throwable);
+                    "besu_using_jemalloc is present but we failed to load jemalloc library to get the version");
               }
             },
             () -> {

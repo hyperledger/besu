@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
 import java.io.Closeable;
@@ -66,17 +67,17 @@ public class BesuController implements java.io.Closeable {
   private final NodeKey nodeKey;
   private final Synchronizer synchronizer;
   private final JsonRpcMethods additionalJsonRpcMethodsFactory;
-
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
   private final PrivacyParameters privacyParameters;
   private final List<Closeable> closeables;
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
   private final PluginServiceFactory additionalPluginServices;
   private final SyncState syncState;
   private final EthPeers ethPeers;
   private final StorageProvider storageProvider;
   private final DataStorageConfiguration dataStorageConfiguration;
+  private final TransactionSimulator transactionSimulator;
 
   /**
    * Instantiates a new Besu controller.
@@ -91,7 +92,7 @@ public class BesuController implements java.io.Closeable {
    * @param transactionPool the transaction pool
    * @param miningCoordinator the mining coordinator
    * @param privacyParameters the privacy parameters
-   * @param miningParameters the mining parameters
+   * @param miningConfiguration the mining parameters
    * @param additionalJsonRpcMethodsFactory the additional json rpc methods factory
    * @param nodeKey the node key
    * @param closeables the closeables
@@ -99,6 +100,7 @@ public class BesuController implements java.io.Closeable {
    * @param ethPeers the eth peers
    * @param storageProvider the storage provider
    * @param dataStorageConfiguration the data storage configuration
+   * @param transactionSimulator the transaction simulator
    */
   BesuController(
       final ProtocolSchedule protocolSchedule,
@@ -111,14 +113,15 @@ public class BesuController implements java.io.Closeable {
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final PrivacyParameters privacyParameters,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final JsonRpcMethods additionalJsonRpcMethodsFactory,
       final NodeKey nodeKey,
       final List<Closeable> closeables,
       final PluginServiceFactory additionalPluginServices,
       final EthPeers ethPeers,
       final StorageProvider storageProvider,
-      final DataStorageConfiguration dataStorageConfiguration) {
+      final DataStorageConfiguration dataStorageConfiguration,
+      final TransactionSimulator transactionSimulator) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -132,11 +135,12 @@ public class BesuController implements java.io.Closeable {
     this.miningCoordinator = miningCoordinator;
     this.privacyParameters = privacyParameters;
     this.closeables = closeables;
-    this.miningParameters = miningParameters;
+    this.miningConfiguration = miningConfiguration;
     this.additionalPluginServices = additionalPluginServices;
     this.ethPeers = ethPeers;
     this.storageProvider = storageProvider;
     this.dataStorageConfiguration = dataStorageConfiguration;
+    this.transactionSimulator = transactionSimulator;
   }
 
   /**
@@ -265,8 +269,8 @@ public class BesuController implements java.io.Closeable {
    *
    * @return the mining parameters
    */
-  public MiningParameters getMiningParameters() {
-    return miningParameters;
+  public MiningConfiguration getMiningParameters() {
+    return miningConfiguration;
   }
 
   /**
@@ -305,6 +309,15 @@ public class BesuController implements java.io.Closeable {
    */
   public DataStorageConfiguration getDataStorageConfiguration() {
     return dataStorageConfiguration;
+  }
+
+  /**
+   * Gets the transaction simulator
+   *
+   * @return the transaction simulator
+   */
+  public TransactionSimulator getTransactionSimulator() {
+    return transactionSimulator;
   }
 
   /** The type Builder. */

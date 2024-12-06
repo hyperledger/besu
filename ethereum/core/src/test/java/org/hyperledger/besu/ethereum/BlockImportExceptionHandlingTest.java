@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -117,8 +116,6 @@ class BlockImportExceptionHandlingTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getRequestsValidatorCoordinator())
-        .thenReturn(RequestsValidatorCoordinator.empty());
     when(protocolSpec.getBlockHashProcessor()).thenReturn(new FrontierBlockHashProcessor());
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
     when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
@@ -156,8 +153,8 @@ class BlockImportExceptionHandlingTest {
             eq(goodBlock),
             any(),
             any(),
-            any(),
-            eq(HeaderValidationMode.DETACHED_ONLY)))
+            eq(HeaderValidationMode.DETACHED_ONLY),
+            any()))
         .thenReturn(true);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
     mainnetBlockValidator.validateAndProcessBlock(
@@ -193,8 +190,8 @@ class BlockImportExceptionHandlingTest {
             eq(goodBlock),
             any(),
             any(),
-            any(),
-            eq(HeaderValidationMode.DETACHED_ONLY)))
+            eq(HeaderValidationMode.DETACHED_ONLY),
+            any()))
         .thenReturn(true);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
     mainnetBlockValidator.validateAndProcessBlock(
@@ -262,8 +259,8 @@ class BlockImportExceptionHandlingTest {
             eq(goodBlock),
             any(),
             any(),
-            any(),
-            eq(HeaderValidationMode.DETACHED_ONLY)))
+            eq(HeaderValidationMode.DETACHED_ONLY),
+            any()))
         .thenThrow(new StorageException("database problem"));
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
     mainnetBlockValidator.validateAndProcessBlock(

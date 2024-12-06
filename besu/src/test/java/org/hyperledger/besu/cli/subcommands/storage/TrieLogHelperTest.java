@@ -17,7 +17,7 @@ package org.hyperledger.besu.cli.subcommands.storage;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactor
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.FileNotFoundException;
@@ -134,8 +135,11 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(3L)
-            .bonsaiLimitTrieLogsEnabled(true)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(3L)
+                    .limitTrieLogsEnabled(true)
+                    .build())
             .build();
 
     mockBlockchainBase();
@@ -172,8 +176,11 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(2L)
-            .bonsaiLimitTrieLogsEnabled(true)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(2L)
+                    .limitTrieLogsEnabled(true)
+                    .build())
             .build();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
@@ -192,8 +199,11 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(10L)
-            .bonsaiLimitTrieLogsEnabled(true)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(10L)
+                    .limitTrieLogsEnabled(true)
+                    .build())
             .build();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
@@ -212,8 +222,11 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(2L)
-            .bonsaiLimitTrieLogsEnabled(true)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(2L)
+                    .limitTrieLogsEnabled(true)
+                    .build())
             .build();
 
     mockBlockchainBase();
@@ -233,8 +246,11 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(6L)
-            .bonsaiLimitTrieLogsEnabled(true)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(6L)
+                    .limitTrieLogsEnabled(true)
+                    .build())
             .build();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
@@ -255,8 +271,11 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(3L)
-            .bonsaiLimitTrieLogsEnabled(true)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(3L)
+                    .limitTrieLogsEnabled(true)
+                    .build())
             .build();
 
     mockBlockchainBase();
@@ -266,7 +285,7 @@ class TrieLogHelperTest {
 
     final BonsaiWorldStateKeyValueStorage inMemoryWorldStateSpy = spy(inMemoryWorldState);
     // force a different value the second time the trie log count is called
-    when(inMemoryWorldStateSpy.streamTrieLogKeys(3L + DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE))
+    when(inMemoryWorldStateSpy.streamTrieLogKeys(3L + DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE))
         .thenCallRealMethod()
         .thenReturn(Stream.empty());
     assertThatThrownBy(
@@ -284,8 +303,11 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(511L)
-            .bonsaiLimitTrieLogsEnabled(true)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(511L)
+                    .limitTrieLogsEnabled(true)
+                    .build())
             .build();
 
     TrieLogHelper helper = new TrieLogHelper();
@@ -302,9 +324,12 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(512L)
-            .bonsaiLimitTrieLogsEnabled(true)
-            .bonsaiTrieLogPruningWindowSize(0)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(512L)
+                    .limitTrieLogsEnabled(true)
+                    .trieLogPruningWindowSize(0)
+                    .build())
             .build();
 
     TrieLogHelper helper = new TrieLogHelper();
@@ -320,9 +345,12 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(512L)
-            .bonsaiLimitTrieLogsEnabled(true)
-            .bonsaiTrieLogPruningWindowSize(512)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(512L)
+                    .limitTrieLogsEnabled(true)
+                    .trieLogPruningWindowSize(512)
+                    .build())
             .build();
 
     TrieLogHelper helper = new TrieLogHelper();
@@ -340,8 +368,11 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(3L)
-            .bonsaiLimitTrieLogsEnabled(true)
+            .diffBasedSubStorageConfiguration(
+                ImmutableDiffBasedSubStorageConfiguration.builder()
+                    .maxLayersToLoad(3L)
+                    .limitTrieLogsEnabled(true)
+                    .build())
             .build();
 
     mockBlockchainBase();

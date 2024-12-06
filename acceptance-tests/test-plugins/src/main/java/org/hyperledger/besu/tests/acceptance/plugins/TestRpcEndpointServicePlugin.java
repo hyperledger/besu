@@ -51,6 +51,7 @@ public class TestRpcEndpointServicePlugin implements BesuPlugin {
   }
 
   @Override
+  @SuppressWarnings("removal")
   public void register(final BesuContext context) {
     context
         .getService(RpcEndpointService.class)

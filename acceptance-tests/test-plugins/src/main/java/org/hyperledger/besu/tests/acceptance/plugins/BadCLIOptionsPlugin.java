@@ -39,6 +39,7 @@ public class BadCLIOptionsPlugin implements BesuPlugin {
   private File callbackDir;
 
   @Override
+  @SuppressWarnings("removal")
   public void register(final BesuContext context) {
     LOG.info("Registering BadCliOptionsPlugin");
     callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));

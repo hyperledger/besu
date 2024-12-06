@@ -40,6 +40,7 @@ public class TestPermissioningPlugin implements BesuPlugin {
   PermissioningService service;
 
   @Override
+  @SuppressWarnings("removal")
   public void register(final BesuContext context) {
     context.getService(PicoCLIOptions.class).orElseThrow().addPicoCLIOptions("permissioning", this);
     service = context.getService(PermissioningService.class).orElseThrow();

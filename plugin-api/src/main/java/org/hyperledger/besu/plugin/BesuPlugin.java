@@ -48,6 +48,7 @@ public interface BesuPlugin {
    *
    * @param context the context that provides access to Besu services.
    */
+  @SuppressWarnings("removal")
   void register(BesuContext context);
 
   /**

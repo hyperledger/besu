@@ -57,6 +57,7 @@ public class TestPicoCLIPlugin implements BesuPlugin {
   private File callbackDir;
 
   @Override
+  @SuppressWarnings("removal")
   public void register(final BesuContext context) {
     LOG.info("Registering.  Test Option is '{}'", testOption);
     state = "registering";

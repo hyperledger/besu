@@ -37,45 +37,43 @@ import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
-import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
-import org.hyperledger.besu.cli.options.DataStorageOptions;
+import org.hyperledger.besu.cli.options.ApiConfigurationOptions;
+import org.hyperledger.besu.cli.options.ChainPruningOptions;
+import org.hyperledger.besu.cli.options.DnsOptions;
+import org.hyperledger.besu.cli.options.EngineRPCConfiguration;
+import org.hyperledger.besu.cli.options.EngineRPCOptions;
+import org.hyperledger.besu.cli.options.EthProtocolOptions;
+import org.hyperledger.besu.cli.options.EthstatsOptions;
+import org.hyperledger.besu.cli.options.EvmOptions;
+import org.hyperledger.besu.cli.options.GraphQlOptions;
+import org.hyperledger.besu.cli.options.InProcessRpcOptions;
+import org.hyperledger.besu.cli.options.IpcOptions;
+import org.hyperledger.besu.cli.options.JsonRpcHttpOptions;
+import org.hyperledger.besu.cli.options.LoggingLevelOption;
+import org.hyperledger.besu.cli.options.MetricsOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
-import org.hyperledger.besu.cli.options.TransactionPoolOptions;
-import org.hyperledger.besu.cli.options.stable.ApiConfigurationOptions;
-import org.hyperledger.besu.cli.options.stable.EngineRPCConfiguration;
-import org.hyperledger.besu.cli.options.stable.EngineRPCOptions;
-import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
-import org.hyperledger.besu.cli.options.stable.GraphQlOptions;
-import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
-import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
-import org.hyperledger.besu.cli.options.stable.MetricsOptions;
-import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
-import org.hyperledger.besu.cli.options.stable.P2PDiscoveryOptions;
-import org.hyperledger.besu.cli.options.stable.PermissionsOptions;
-import org.hyperledger.besu.cli.options.stable.PluginsConfigurationOptions;
-import org.hyperledger.besu.cli.options.stable.RpcWebsocketOptions;
-import org.hyperledger.besu.cli.options.unstable.ChainPruningOptions;
-import org.hyperledger.besu.cli.options.unstable.DnsOptions;
-import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
-import org.hyperledger.besu.cli.options.unstable.EvmOptions;
-import org.hyperledger.besu.cli.options.unstable.InProcessRpcOptions;
-import org.hyperledger.besu.cli.options.unstable.IpcOptions;
-import org.hyperledger.besu.cli.options.unstable.NatOptions;
-import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
-import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
-import org.hyperledger.besu.cli.options.unstable.P2PTLSConfigOptions;
-import org.hyperledger.besu.cli.options.unstable.PrivacyPluginOptions;
+import org.hyperledger.besu.cli.options.NatOptions;
+import org.hyperledger.besu.cli.options.NativeLibraryOptions;
+import org.hyperledger.besu.cli.options.NetworkingOptions;
+import org.hyperledger.besu.cli.options.NodePrivateKeyFileOption;
+import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
+import org.hyperledger.besu.cli.options.PermissionsOptions;
+import org.hyperledger.besu.cli.options.PluginsConfigurationOptions;
+import org.hyperledger.besu.cli.options.PrivacyPluginOptions;
 import org.hyperledger.besu.cli.options.unstable.QBFTOptions;
-import org.hyperledger.besu.cli.options.unstable.RPCOptions;
-import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
+import org.hyperledger.besu.cli.options.RPCOptions;
+import org.hyperledger.besu.cli.options.RpcWebsocketOptions;
+import org.hyperledger.besu.cli.options.SynchronizerOptions;
+import org.hyperledger.besu.cli.options.TransactionPoolOptions;
+import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
+import org.hyperledger.besu.cli.options.storage.DiffBasedSubStorageOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
-import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
 import org.hyperledger.besu.cli.subcommands.TxParseSubCommand;
 import org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
@@ -304,7 +302,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
-  private final QBFTOptions unstableQbftOptions = QBFTOptions.create();
 
   // stable CLI options
   final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -1164,7 +1161,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
-            .put("QBFT Options", unstableQbftOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1809,7 +1805,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .isRevertReasonEnabled(isRevertReasonEnabled)
         .isParallelTxProcessingEnabled(
             dataStorageConfiguration.getUnstable().isParallelTxProcessingEnabled())
-        .isEarlyRoundChangeEnabled(unstableQbftOptions.isEarlyRoundChangeEnabled())
         .storageProvider(storageProvider)
         .gasLimitCalculator(
             miningParametersSupplier.get().getTargetGasLimit().isPresent()

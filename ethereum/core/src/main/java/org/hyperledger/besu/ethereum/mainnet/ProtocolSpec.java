@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -78,7 +78,7 @@ public class ProtocolSpec {
 
   private final WithdrawalsValidator withdrawalsValidator;
   private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
-  private final RequestsValidatorCoordinator requestsValidatorCoordinator;
+  private final RequestsValidator requestsValidator;
   private final Optional<RequestProcessorCoordinator> requestProcessorCoordinator;
   private final BlockHashProcessor blockHashProcessor;
   private final boolean isPoS;
@@ -110,7 +110,7 @@ public class ProtocolSpec {
    * @param feeMarket an {@link Optional} wrapping {@link FeeMarket} class if appropriate.
    * @param powHasher the proof-of-work hasher
    * @param withdrawalsProcessor the Withdrawals processor to use
-   * @param requestsValidatorCoordinator the request validator to use
+   * @param requestsValidator the request validator to use
    * @param requestProcessorCoordinator the request processor to use
    * @param blockHashProcessor the blockHash processor to use
    * @param isPoS indicates whether the current spec is PoS
@@ -142,7 +142,7 @@ public class ProtocolSpec {
       final Optional<PoWHasher> powHasher,
       final WithdrawalsValidator withdrawalsValidator,
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
-      final RequestsValidatorCoordinator requestsValidatorCoordinator,
+      final RequestsValidator requestsValidator,
       final Optional<RequestProcessorCoordinator> requestProcessorCoordinator,
       final BlockHashProcessor blockHashProcessor,
       final boolean isPoS,
@@ -171,7 +171,7 @@ public class ProtocolSpec {
     this.powHasher = powHasher;
     this.withdrawalsValidator = withdrawalsValidator;
     this.withdrawalsProcessor = withdrawalsProcessor;
-    this.requestsValidatorCoordinator = requestsValidatorCoordinator;
+    this.requestsValidator = requestsValidator;
     this.requestProcessorCoordinator = requestProcessorCoordinator;
     this.blockHashProcessor = blockHashProcessor;
     this.isPoS = isPoS;
@@ -375,8 +375,8 @@ public class ProtocolSpec {
     return withdrawalsProcessor;
   }
 
-  public RequestsValidatorCoordinator getRequestsValidatorCoordinator() {
-    return requestsValidatorCoordinator;
+  public RequestsValidator getRequestsValidator() {
+    return requestsValidator;
   }
 
   public Optional<RequestProcessorCoordinator> getRequestProcessorCoordinator() {

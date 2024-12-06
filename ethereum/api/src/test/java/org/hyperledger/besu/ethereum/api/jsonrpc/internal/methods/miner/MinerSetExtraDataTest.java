@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 
 import java.nio.charset.StandardCharsets;
 
@@ -32,12 +32,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class MinerSetExtraDataTest {
-  MiningParameters miningParameters = MiningParameters.newDefault();
+  MiningConfiguration miningConfiguration = MiningConfiguration.newDefault();
   private MinerSetExtraData method;
 
   @BeforeEach
   public void setUp() {
-    method = new MinerSetExtraData(miningParameters);
+    method = new MinerSetExtraData(miningConfiguration);
   }
 
   @Test
@@ -49,7 +49,7 @@ public class MinerSetExtraDataTest {
 
     final JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
-    final var currExtraData = miningParameters.getExtraData();
+    final var currExtraData = miningConfiguration.getExtraData();
     assertThat(new String(currExtraData.toArray(), StandardCharsets.UTF_8)).isEqualTo(newExtraData);
   }
 
@@ -67,7 +67,7 @@ public class MinerSetExtraDataTest {
 
     final JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
-    final var currExtraData = miningParameters.getExtraData();
+    final var currExtraData = miningConfiguration.getExtraData();
     assertThat(new String(currExtraData.toArray(), StandardCharsets.UTF_8))
         .isEqualTo(
             new String(

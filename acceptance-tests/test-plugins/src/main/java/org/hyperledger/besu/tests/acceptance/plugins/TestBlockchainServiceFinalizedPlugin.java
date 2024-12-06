@@ -40,11 +40,12 @@ public class TestBlockchainServiceFinalizedPlugin implements BesuPlugin {
   private static final String RPC_METHOD_SAFE_BLOCK = "updateSafeBlockV1";
 
   @Override
-  public void register(final BesuContext besuContext) {
+  @SuppressWarnings("removal")
+  public void register(final BesuContext serviceManager) {
     LOG.trace("Registering plugin ...");
 
     final RpcEndpointService rpcEndpointService =
-        besuContext
+        serviceManager
             .getService(RpcEndpointService.class)
             .orElseThrow(
                 () ->
@@ -52,7 +53,7 @@ public class TestBlockchainServiceFinalizedPlugin implements BesuPlugin {
                         "Failed to obtain RpcEndpointService from the BesuContext."));
 
     final BlockchainService blockchainService =
-        besuContext
+        serviceManager
             .getService(BlockchainService.class)
             .orElseThrow(
                 () ->

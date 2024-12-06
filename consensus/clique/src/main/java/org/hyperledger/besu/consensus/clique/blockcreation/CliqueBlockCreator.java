@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -48,7 +48,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
   /**
    * Instantiates a new Clique block creator.
    *
-   * @param miningParameters the mining parameters
+   * @param miningConfiguration the mining parameters
    * @param extraDataCalculator the extra data calculator
    * @param transactionPool the pending transactions
    * @param protocolContext the protocol context
@@ -58,7 +58,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
    * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public CliqueBlockCreator(
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
@@ -67,7 +67,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       final EpochManager epochManager,
       final EthScheduler ethScheduler) {
     super(
-        miningParameters,
+        miningConfiguration,
         __ -> Util.publicKeyToAddress(nodeKey.getPublicKey()),
         extraDataCalculator,
         transactionPool,

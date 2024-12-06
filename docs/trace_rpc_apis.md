@@ -16,7 +16,7 @@ implementations of Besu might track gas refunds separately.
 
 ### Returned Memory from Calls
 
-In the `vmTrace` `ope.ex.mem` fields Besu only reports actual data returned
+In the `vmTrace` `op.ex.mem` fields Besu only reports actual data returned
 from a `RETURN` opcode.  Other implementations return the contents of the 
 reserved output space for the call operations.  Note two major differences:
 

@@ -36,6 +36,7 @@ public class TestInProcessRpcServicePlugin implements BesuPlugin {
   long minGasPrice = -1;
 
   @Override
+  @SuppressWarnings("removal")
   public void register(final BesuContext context) {
     final PicoCLIOptions cmdlineOptions =
         context

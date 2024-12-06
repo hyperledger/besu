@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.BesuService;
 import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
 
@@ -49,7 +50,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The Besu plugin context implementation. */
-public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvider {
+@SuppressWarnings("removal")
+public class BesuPluginContextImpl implements BesuContext, ServiceManager, PluginVersionsProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(BesuPluginContextImpl.class);
 

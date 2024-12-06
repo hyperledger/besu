@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.services.BesuEvents;
@@ -35,13 +36,14 @@ import org.slf4j.LoggerFactory;
 public class TestBesuEventsPlugin implements BesuPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(TestBesuEventsPlugin.class);
 
-  private BesuContext context;
+  private ServiceManager context;
 
   private Optional<Long> subscriptionId;
   private final AtomicInteger blockCounter = new AtomicInteger();
   private File callbackDir;
 
   @Override
+  @SuppressWarnings("removal")
   public void register(final BesuContext context) {
     this.context = context;
     LOG.info("Registered");
