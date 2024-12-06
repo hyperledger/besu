@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -41,7 +42,10 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
   @Test
   public void validatePeer_responsivePeerWithRequiredBlock() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(ProtocolScheduleFixture.MAINNET)
+            .build();
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final long requiredBlockNumber = 500;
     final Block requiredBlock =
@@ -73,7 +77,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
   @Test
   public void validatePeer_responsivePeerWithBadRequiredBlock() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final long requiredBlockNumber = 500;
     final Block requiredBlock =
@@ -105,7 +109,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
   @Test
   public void validatePeer_responsivePeerDoesNotHaveBlockWhenPastForkHeight() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
 
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(

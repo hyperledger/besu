@@ -36,7 +36,8 @@ public class ExcessBlobGasCalculator {
             .getGasCalculator()
             .computeExcessBlobGas(
                 parentHeader.getExcessBlobGas().map(BlobGas::toLong).orElse(0L),
-                parentHeader.getBlobGasUsed().orElse(0L));
+                parentHeader.getBlobGasUsed().orElse(0L),
+                parentHeader.getTargetBlobsPerBlock());
     return BlobGas.of(headerExcess);
   }
 }
