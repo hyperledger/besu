@@ -52,7 +52,7 @@ class RetFOperationTest {
     messageFrame.pushReturnStackItem(new ReturnStack.ReturnStackItem(2, 3));
 
     RetFOperation retF = new RetFOperation(gasCalculator);
-    Operation.OperationResult retFResult = retF.execute(messageFrame, null);
+    OperationResult retFResult = retF.execute(messageFrame, null);
 
     assertThat(retFResult.getHaltReason()).isNull();
     assertThat(retFResult.getPcIncrement()).isEqualTo(1);

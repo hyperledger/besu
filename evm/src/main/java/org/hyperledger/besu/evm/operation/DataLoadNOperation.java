@@ -40,7 +40,7 @@ public class DataLoadNOperation extends AbstractFixedCostOperation {
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     Code code = frame.getCode();
     if (code.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+      return OperationResult.invalidOperation();
     }
 
     int pc = frame.getPC();

@@ -49,7 +49,7 @@ class JumpFOperationTest {
             .build();
 
     JumpFOperation jumpF = new JumpFOperation(gasCalculator);
-    Operation.OperationResult jumpFResult = jumpF.execute(messageFrame, null);
+    OperationResult jumpFResult = jumpF.execute(messageFrame, null);
 
     assertThat(jumpFResult.getHaltReason()).isNull();
     assertThat(jumpFResult.getPcIncrement()).isEqualTo(1);

@@ -40,14 +40,14 @@ public class RelativeJumpIfOperation extends AbstractFixedCostOperation {
   protected OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     Code code = frame.getCode();
     if (code.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+      return OperationResult.invalidOperation();
     }
     final Bytes condition = frame.popStackItem();
     if (!condition.isZero()) {
       final int pcPostInstruction = frame.getPC() + 1;
-      return new OperationResult(gasCost, null, 2 + code.readBigEndianI16(pcPostInstruction) + 1);
+      return new OperationResult(gasCost, 2 + code.readBigEndianI16(pcPostInstruction) + 1);
     } else {
-      return new OperationResult(gasCost, null, 2 + 1);
+      return new OperationResult(gasCost, 2 + 1);
     }
   }
 }

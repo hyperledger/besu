@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -25,9 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Jump operation. */
 public class JumpOperation extends AbstractFixedCostOperation {
 
-  private static final Operation.OperationResult invalidJumpResponse =
-      new Operation.OperationResult(8L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-  private static final OperationResult jumpResponse = new OperationResult(8L, null, 0);
+  private static final OperationResult jumpResponse = new OperationResult(8L, 0);
 
   /**
    * Instantiates a new Jump operation.
@@ -39,8 +36,7 @@ public class JumpOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return staticOperation(frame);
   }
 
@@ -56,11 +52,11 @@ public class JumpOperation extends AbstractFixedCostOperation {
     try {
       jumpDestination = bytes.toInt();
     } catch (final RuntimeException iae) {
-      return invalidJumpResponse;
+      return OperationResult.invalidJumpDestination();
     }
     final Code code = frame.getCode();
     if (code.isJumpDestInvalid(jumpDestination)) {
-      return invalidJumpResponse;
+      return OperationResult.invalidJumpDestination();
     } else {
       frame.setPC(jumpDestination);
       return jumpResponse;

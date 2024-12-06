@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -26,10 +25,7 @@ public class DupOperation extends AbstractFixedCostOperation {
   public static final int DUP_BASE = 0x7F;
 
   /** The Dup success operation result. */
-  static final OperationResult dupSuccess = new OperationResult(3, null);
-
-  /** The Underflow response. */
-  protected final Operation.OperationResult underflowResponse;
+  static final OperationResult dupSuccess = new OperationResult(3);
 
   private final int index;
 
@@ -48,13 +44,10 @@ public class DupOperation extends AbstractFixedCostOperation {
         gasCalculator,
         gasCalculator.getVeryLowTierGasCost());
     this.index = index;
-    this.underflowResponse =
-        new Operation.OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return staticOperation(frame, index);
   }
 

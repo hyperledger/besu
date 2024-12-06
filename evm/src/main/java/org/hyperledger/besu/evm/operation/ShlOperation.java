@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class ShlOperation extends AbstractFixedCostOperation {
 
   /** The Shl operation success result. */
-  static final OperationResult shlSuccess = new OperationResult(3, null);
+  static final OperationResult shlSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new Shl operation.
@@ -38,8 +38,7 @@ public class ShlOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return staticOperation(frame);
   }
 

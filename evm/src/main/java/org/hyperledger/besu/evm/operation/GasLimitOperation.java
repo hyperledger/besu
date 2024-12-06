@@ -32,8 +32,7 @@ public class GasLimitOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     frame.pushStackItem(Words.longBytes(frame.getBlockValues().getGasLimit()));
 
     return successResponse;

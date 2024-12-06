@@ -29,7 +29,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.fluent.EVMExecutor;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.operation.OperationResult;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
@@ -169,7 +169,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
 
     @Override
     public void tracePostExecution(
-        final MessageFrame frame, final Operation.OperationResult operationResult) {
+        final MessageFrame frame, final OperationResult operationResult) {
       traceHistory.add(POST_EXECUTION);
     }
 

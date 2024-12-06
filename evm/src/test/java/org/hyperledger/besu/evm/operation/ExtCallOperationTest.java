@@ -96,7 +96,7 @@ public class ExtCallOperationTest {
         Arguments.of(
             "Invalid code",
             384100,
-            100,
+            0,
             384100,
             ExceptionalHaltReason.INVALID_CODE,
             CONTRACT_ADDRESS,
@@ -165,7 +165,7 @@ public class ExtCallOperationTest {
         Arguments.of(
             "static context",
             40000,
-            9000,
+            0,
             40000,
             ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
             CONTRACT_ADDRESS,

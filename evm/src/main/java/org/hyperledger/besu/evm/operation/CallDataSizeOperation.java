@@ -34,8 +34,7 @@ public class CallDataSizeOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Bytes callData = frame.getInputData();
     frame.pushStackItem(Words.intBytes(callData.size()));
 

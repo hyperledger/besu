@@ -32,8 +32,7 @@ public class MSizeOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     frame.pushStackItem(Words.longBytes(frame.memoryByteSize()));
 
     return successResponse;

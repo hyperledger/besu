@@ -127,7 +127,7 @@ class MCopyOperationTest {
             .memory(memory)
             .build();
 
-    Operation.OperationResult result = subject.execute(frame, evm);
+    OperationResult result = subject.execute(frame, evm);
 
     assertThat(frame.memoryWordSize()).isEqualTo((expected.size() + 31) / 32);
     assertThat(frame.readMemory(0, expected.size())).isEqualTo(expected);

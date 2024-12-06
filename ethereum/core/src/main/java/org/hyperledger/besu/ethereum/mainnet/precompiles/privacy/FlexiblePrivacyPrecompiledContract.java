@@ -205,8 +205,7 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
           pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
     }
 
-    return new PrecompileContractResult(
-        result.getOutput(), true, MessageFrame.State.CODE_EXECUTING, Optional.empty());
+    return PrecompileContractResult.executing(result.getOutput());
   }
 
   private void sendParticipantRemovedEvent(final PrivateTransaction privateTransaction) {

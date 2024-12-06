@@ -17,7 +17,7 @@ package org.hyperledger.besu.evm.tracing;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.operation.OperationResult;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -20,7 +20,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
 
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 
@@ -109,8 +108,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
     if (input.size() != 192) {
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
     }
     Bytes32 versionedHash = Bytes32.wrap(input.slice(0, 32));
     Bytes z = input.slice(32, 32);
@@ -118,14 +116,12 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     Bytes commitment = input.slice(96, 48);
     Bytes proof = input.slice(144, 48);
     if (versionedHash.get(0) != 0x01) { // unsupported hash version
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
     } else {
       byte[] hash = Hash.sha256(commitment).toArrayUnsafe();
       hash[0] = 0x01;
       if (!versionedHash.equals(Bytes32.wrap(hash))) {
-        return PrecompileContractResult.halt(
-            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+        return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
       }
     }
     try {
@@ -136,14 +132,12 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       if (proved) {
         return PrecompileContractResult.success(successResult);
       } else {
-        return PrecompileContractResult.halt(
-            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+        return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
       }
     } catch (RuntimeException kzgFailed) {
       LOG.debug("Native KZG failed", kzgFailed);
 
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
     }
   }
 }

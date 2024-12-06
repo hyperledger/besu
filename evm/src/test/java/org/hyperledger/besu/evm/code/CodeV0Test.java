@@ -29,7 +29,7 @@ import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.JumpOperation;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.operation.OperationResult;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import javax.annotation.Nonnull;

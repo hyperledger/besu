@@ -22,7 +22,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 public class JumpDestOperation extends AbstractFixedCostOperation {
 
   /** constant for a successful jumpdest * */
-  public static final OperationResult JUMPDEST_SUCCESS = new OperationResult(1L, null);
+  public static final OperationResult JUMPDEST_SUCCESS = new OperationResult(1L);
 
   /** The constant OPCODE. */
   public static final int OPCODE = 0x5B;
@@ -37,8 +37,7 @@ public class JumpDestOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return successResponse;
   }
 }

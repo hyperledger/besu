@@ -20,7 +20,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 
 import java.util.List;
 

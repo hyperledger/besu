@@ -26,7 +26,7 @@ public class DupNOperation extends AbstractFixedCostOperation {
   public static final int OPCODE = 0xe6;
 
   /** The Dup success operation result. */
-  static final OperationResult dupSuccess = new OperationResult(3, null);
+  static final OperationResult dupSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new Dup operation.
@@ -38,11 +38,10 @@ public class DupNOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     Code code = frame.getCode();
     if (code.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+      return OperationResult.invalidOperation();
     }
     int pc = frame.getPC();
 

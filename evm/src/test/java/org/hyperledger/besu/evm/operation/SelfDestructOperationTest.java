@@ -103,7 +103,7 @@ public class SelfDestructOperationTest {
     when(accountOriginator.getAddress()).thenReturn(originatorAddress);
     when(accountOriginator.getBalance()).thenReturn(Wei.fromHexString(balanceHex));
 
-    final Operation.OperationResult operationResult = operation.execute(messageFrame, evm);
+    final OperationResult operationResult = operation.execute(messageFrame, evm);
     assertThat(operationResult).isNotNull();
 
     // The interactions with the contracts varies based on the parameterized tests, but it will be

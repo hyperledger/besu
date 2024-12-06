@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.CallCodeOperation;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.operation.OperationResult;
 import org.hyperledger.besu.evm.operation.SStoreOperation;
 import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 
@@ -45,7 +45,7 @@ public class EstimateGasOperationTracerTest {
   @Test
   public void shouldDetectChangeInDepthDuringExecution() {
 
-    final OperationResult testResult = new OperationResult(6, null);
+    final OperationResult testResult = new OperationResult(6);
 
     assertThat(operationTracer.getMaxDepth()).isZero();
 
@@ -76,7 +76,7 @@ public class EstimateGasOperationTracerTest {
   @Test
   public void shouldDetectMinimumGasRemainingForSStoreOperation() {
 
-    final OperationResult testResult = new OperationResult(6, null);
+    final OperationResult testResult = new OperationResult(6);
     final long minimumGasRemaining = 2300L;
 
     assertThat(operationTracer.getStipendNeeded()).isZero();

@@ -35,8 +35,7 @@ public class SelfBalanceOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Address accountAddress = frame.getRecipientAddress();
     final Account account = frame.getWorldUpdater().get(accountAddress);
     frame.pushStackItem(account == null ? Bytes.EMPTY : account.getBalance());

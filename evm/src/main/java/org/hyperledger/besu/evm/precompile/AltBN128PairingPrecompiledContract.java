@@ -29,7 +29,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -96,8 +95,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       return PrecompileContractResult.success(TRUE);
     }
     if (input.size() % PARAMETER_LENGTH != 0) {
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
     }
     if (useNative) {
       return computeNative(input, messageFrame);
@@ -116,8 +114,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       final BigInteger p1_y = extractParameter(input, i * PARAMETER_LENGTH + 32, FIELD_LENGTH);
       final AltBn128Point p1 = new AltBn128Point(Fq.create(p1_x), Fq.create(p1_y));
       if (!p1.isOnCurve()) {
-        return PrecompileContractResult.halt(
-            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+        return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
       }
       a.add(p1);
 
@@ -129,8 +126,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       final Fq2 p2_y = Fq2.create(p2_yReal, p2_yImag);
       final AltBn128Fq2Point p2 = new AltBn128Fq2Point(p2_x, p2_y);
       if (!p2.isOnCurve() || !p2.isInGroup()) {
-        return PrecompileContractResult.halt(
-            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+        return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
       }
       b.add(p2);
     }

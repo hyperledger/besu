@@ -23,7 +23,6 @@ import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -90,8 +89,7 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
     final AltBn128Point p1 = new AltBn128Point(Fq.create(x1), Fq.create(y1));
     final AltBn128Point p2 = new AltBn128Point(Fq.create(x2), Fq.create(y2));
     if (!p1.isOnCurve() || !p2.isOnCurve()) {
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(ExceptionalHaltReason.PRECOMPILE_ERROR);
     }
     final AltBn128Point sum = p1.add(p2);
     final Bytes x = sum.getX().toBytes();

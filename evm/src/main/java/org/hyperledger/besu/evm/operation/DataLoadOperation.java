@@ -36,11 +36,10 @@ public class DataLoadOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     Code code = frame.getCode();
     if (code.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+      return OperationResult.invalidOperation();
     }
     final int sourceOffset = clampedToInt(frame.popStackItem());
 

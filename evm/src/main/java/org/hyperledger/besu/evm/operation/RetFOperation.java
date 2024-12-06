@@ -26,7 +26,7 @@ public class RetFOperation extends AbstractOperation {
   public static final int OPCODE = 0xe4;
 
   /** The Ret F success. */
-  static final OperationResult retfSuccess = new OperationResult(3, null);
+  static final OperationResult retfSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new Ret F operation.
@@ -41,7 +41,7 @@ public class RetFOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     Code code = frame.getCode();
     if (code.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+      return OperationResult.invalidOperation();
     }
     var rStack = frame.getReturnStack();
     var returnInfo = rStack.pop();

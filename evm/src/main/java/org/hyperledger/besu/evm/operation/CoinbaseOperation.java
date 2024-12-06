@@ -32,8 +32,7 @@ public class CoinbaseOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Address coinbase = frame.getMiningBeneficiary();
     frame.pushStackItem(coinbase);
 

@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 /** The SMod operation. */
 public class SModOperation extends AbstractFixedCostOperation {
 
-  private static final OperationResult smodSuccess = new OperationResult(5, null);
+  private static final OperationResult smodSuccess = new OperationResult(5);
 
   /**
    * Instantiates a new SMod operation.
@@ -38,8 +38,7 @@ public class SModOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return staticOperation(frame);
   }
 

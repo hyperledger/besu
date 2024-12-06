@@ -24,7 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class OrOperation extends AbstractFixedCostOperation {
 
   /** The Or operation success result. */
-  static final OperationResult orSuccess = new OperationResult(3, null);
+  static final OperationResult orSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new Or operation.
@@ -36,8 +36,7 @@ public class OrOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return staticOperation(frame);
   }
 

@@ -34,8 +34,7 @@ public class GasOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final long gasRemaining = frame.getRemainingGas() - gasCost;
     final Bytes value = Words.longBytes(gasRemaining);
     frame.pushStackItem(value);

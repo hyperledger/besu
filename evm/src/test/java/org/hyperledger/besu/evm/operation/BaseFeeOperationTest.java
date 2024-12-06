@@ -26,7 +26,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 
 import java.util.Optional;
 
