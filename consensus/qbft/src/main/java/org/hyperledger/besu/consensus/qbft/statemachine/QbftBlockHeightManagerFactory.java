@@ -86,27 +86,43 @@ public class QbftBlockHeightManagerFactory {
 
   private BaseQbftBlockHeightManager createFullBlockHeightManager(final BlockHeader parentHeader) {
 
-    RoundChangeManager roundChangeManager =
-        new RoundChangeManager(
-            BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
-            messageValidatorFactory.createRoundChangeMessageValidator(
-                parentHeader.getNumber() + 1L, parentHeader),
-            finalState.getLocalAddress());
-
-    QbftBlockHeightManager qbftBlockHeightManager =
-        new QbftBlockHeightManager(
-            parentHeader,
-            finalState,
-            roundChangeManager,
-            roundFactory,
-            finalState.getClock(),
-            messageValidatorFactory,
-            messageFactory);
+    QbftBlockHeightManager qbftBlockHeightManager;
+    RoundChangeManager roundChangeManager;
 
     if (isEarlyRoundChangeEnabled) {
-      roundChangeManager.setRCQuorum(
-          BftHelpers.calculateRequiredFutureRCQuorum(finalState.getValidators().size()));
-      qbftBlockHeightManager.isEarlyRoundChangeEnabled(true);
+      roundChangeManager =
+          new RoundChangeManager(
+              BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
+              BftHelpers.calculateRequiredFutureRCQuorum(finalState.getValidators().size()),
+              messageValidatorFactory.createRoundChangeMessageValidator(
+                  parentHeader.getNumber() + 1L, parentHeader),
+              finalState.getLocalAddress());
+      qbftBlockHeightManager =
+          new QbftBlockHeightManager(
+              parentHeader,
+              finalState,
+              roundChangeManager,
+              roundFactory,
+              finalState.getClock(),
+              messageValidatorFactory,
+              messageFactory,
+              true);
+    } else {
+      roundChangeManager =
+          new RoundChangeManager(
+              BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
+              messageValidatorFactory.createRoundChangeMessageValidator(
+                  parentHeader.getNumber() + 1L, parentHeader),
+              finalState.getLocalAddress());
+      qbftBlockHeightManager =
+          new QbftBlockHeightManager(
+              parentHeader,
+              finalState,
+              roundChangeManager,
+              roundFactory,
+              finalState.getClock(),
+              messageValidatorFactory,
+              messageFactory);
     }
 
     return qbftBlockHeightManager;

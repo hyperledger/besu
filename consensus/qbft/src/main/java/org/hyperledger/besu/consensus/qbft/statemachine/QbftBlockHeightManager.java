@@ -116,6 +116,31 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader);
   }
 
+  /**
+   * Secondary constructor with early round change option
+   *
+   * @param isEarlyRoundChangeEnabled enable round change when f+1 RC messages are received
+   */
+  public QbftBlockHeightManager(
+      final BlockHeader parentHeader,
+      final BftFinalState finalState,
+      final RoundChangeManager roundChangeManager,
+      final QbftRoundFactory qbftRoundFactory,
+      final Clock clock,
+      final MessageValidatorFactory messageValidatorFactory,
+      final MessageFactory messageFactory,
+      final boolean isEarlyRoundChangeEnabled) {
+    this(
+        parentHeader,
+        finalState,
+        roundChangeManager,
+        qbftRoundFactory,
+        clock,
+        messageValidatorFactory,
+        messageFactory);
+    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
+  }
+
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
     if (currentRound.isPresent()) {
@@ -434,10 +459,6 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       return MessageAge.CURRENT_ROUND;
     }
     return MessageAge.PRIOR_ROUND;
-  }
-
-  public void isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
-    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
   }
 
   /** The enum Message age. */

@@ -126,6 +126,23 @@ public class RoundChangeManager {
   }
 
   /**
+   * Instantiates a new Round change manager.
+   *
+   * @param quorum the quorum
+   * @param rcQuorum quorum for round change messages
+   * @param roundChangeMessageValidator the round change message validator
+   * @param localAddress this node's address
+   */
+  public RoundChangeManager(
+      final long quorum,
+      final long rcQuorum,
+      final RoundChangeMessageValidator roundChangeMessageValidator,
+      final Address localAddress) {
+    this(quorum, roundChangeMessageValidator, localAddress);
+    this.rcQuorum = rcQuorum;
+  }
+
+  /**
    * Store the latest round for a node, and if chain is stalled log a summary of which round each
    * address is on
    *
@@ -151,10 +168,6 @@ public class RoundChangeManager {
             nextEntry.getKey().equals(localAddress) ? "(Local node)" : "");
       }
     }
-  }
-
-  public void setRCQuorum(final long rcQuorum) {
-    this.rcQuorum = rcQuorum;
   }
 
   public Optional<Integer> futureRCQuorumReceived(

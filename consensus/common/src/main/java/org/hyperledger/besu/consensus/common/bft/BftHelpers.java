@@ -50,7 +50,7 @@ public class BftHelpers {
    * @return Required number of future round change messages to reach quorum for a round change.
    */
   public static int calculateRequiredFutureRCQuorum(final int validatorCount) {
-    return validatorCount - Util.fastDivCeiling(2 * validatorCount, 3) + 1;
+    return (validatorCount - 1) / 3 + 1;
   }
 
   /**
