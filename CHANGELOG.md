@@ -18,6 +18,7 @@
 ### Additions and Improvements
 
 ### Bug fixes
+-  Correct default parameters for frontier transactions in `eth_call` and `eth_estimateGas` [#7965](https://github.com/hyperledger/besu/pull/7965)
 
 ## 24.12.0
 
@@ -30,7 +31,8 @@
   - The `_created` timestamps are not returned by default, you can set the env var `BESU_OPTS="-Dio.prometheus.exporter.includeCreatedTimestamps=true"` to enable them
   - Some JVM metrics have changed name to adhere to the OTEL standard (see the table below), [Besu Full Grafana dashboard](https://grafana.com/grafana/dashboards/16455-besu-full/) is updated to support both names
 
-    | Old Name                        | New Name                        |
+    | Old Name                        | New Name                        |Allow frontier simulation when Base Fee is present #7965
+
     |---------------------------------|---------------------------------|
     | jvm_memory_bytes_committed      | jvm_memory_committed_bytes      |
     | jvm_memory_bytes_init           | jvm_memory_init_bytes           |
