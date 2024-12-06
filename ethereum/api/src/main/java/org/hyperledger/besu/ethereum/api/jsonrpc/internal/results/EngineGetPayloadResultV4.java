@@ -97,6 +97,8 @@ public class EngineGetPayloadResultV4 {
     private final String baseFeePerGas;
     private final String excessBlobGas;
     private final String blobGasUsed;
+    // TODO Don't think parentBeaconBlockRoot is needed as per the spec
+    // https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#ExecutionPayloadV3
     private final String parentBeaconBlockRoot;
 
     protected final List<String> transactions;
@@ -221,6 +223,8 @@ public class EngineGetPayloadResultV4 {
       return blobGasUsed;
     }
 
+    // TODO Don't think parentBeaconBlockRoot is needed as per the spec
+    // https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#ExecutionPayloadV3
     @JsonGetter(value = "parentBeaconBlockRoot")
     public String getParentBeaconBlockRoot() {
       return parentBeaconBlockRoot;
