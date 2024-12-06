@@ -47,6 +47,7 @@ public class VerkleStateTrieAccountValue extends AbstractStateTrieAccountValue
    *
    * @return the size of the account code (which may be {@link Optional#empty()}).
    */
+  @Override
   public Optional<Long> getCodeSize() {
     return codeSize;
   }

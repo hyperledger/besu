@@ -130,6 +130,11 @@ public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
   }
 
   @Override
+  public Optional<Long> getCodeSize() {
+    return wrappedAccount.getCodeSize();
+  }
+
+  @Override
   public void setCode(final Bytes code) {
     wrappedAccount.setCode(code);
   }

@@ -57,6 +57,9 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   private DiffBasedSubStorageOptions diffBasedSubStorageOptions =
       DiffBasedSubStorageOptions.create();
 
+  /** Options specific to verkle storage modes. */
+  @Mixin private VerkleSubStorageOptions verkleSubStorageOptions = VerkleSubStorageOptions.create();
+
   /** Default Constructor. */
   DataStorageOptions() {}
 
@@ -76,6 +79,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    */
   public void validate(final CommandLine commandLine) {
     diffBasedSubStorageOptions.validate(commandLine, dataStorageFormat);
+    verkleSubStorageOptions.validate(commandLine, dataStorageFormat);
   }
 
   /**
@@ -90,6 +94,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     dataStorageOptions.receiptCompactionEnabled = domainObject.getReceiptCompactionEnabled();
     dataStorageOptions.diffBasedSubStorageOptions =
         DiffBasedSubStorageOptions.fromConfig(domainObject.getDiffBasedSubStorageConfiguration());
+    dataStorageOptions.verkleSubStorageOptions =
+        VerkleSubStorageOptions.fromConfig(domainObject.getVerkleSubStorageConfiguration());
     return dataStorageOptions;
   }
 
@@ -99,7 +105,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(dataStorageFormat)
             .receiptCompactionEnabled(receiptCompactionEnabled)
-            .diffBasedSubStorageConfiguration(diffBasedSubStorageOptions.toDomainObject());
+            .diffBasedSubStorageConfiguration(diffBasedSubStorageOptions.toDomainObject())
+            .verkleSubStorageConfiguration(verkleSubStorageOptions.toDomainObject());
     return builder.build();
   }
 
@@ -107,6 +114,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public List<String> getCLIOptions() {
     final List<String> cliOptions = CommandLineUtils.getCLIOptions(this, new DataStorageOptions());
     cliOptions.addAll(diffBasedSubStorageOptions.getCLIOptions());
+    cliOptions.addAll(verkleSubStorageOptions.getCLIOptions());
     return cliOptions;
   }
 
