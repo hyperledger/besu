@@ -157,7 +157,8 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
                         tx.put(TRIE_BRANCH_STORAGE, loc.toArrayUnsafe(), value.toArrayUnsafe()));
 
     final var flatdb = worldStateStorage.getFlatDbStrategy();
-    final var accountsIterator = flatdb.accountsToPairStream(wss, Bytes32.ZERO).iterator();
+    var accountsStream = flatdb.accountsToPairStream(wss, Bytes32.ZERO);
+    var accountsIterator = accountsStream.iterator();
 
     long accountsCount = 0L;
     while (accountsIterator.hasNext()) {
@@ -186,12 +187,20 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
         accountTrieCommit.accept(accountTrie, accountsTx);
         accountsTx.commit();
         accountsTx = wss.startTransaction();
+
+        // close and reopen the iterator ?
+        // accountsStream.close();
+        // accountsStream = flatdb.accountsToPairStream(wss, accountPair.getFirst());
+        // accountsIterator = accountsStream.iterator();
       }
     }
 
     // final commit
     accountTrieCommit.accept(accountTrie, accountsTx);
     accountsTx.commit();
+
+    // explicit close of stream
+    accountsStream.close();
 
     // return the new state trie root hash
     return Hash.wrap(accountTrie.getRootHash());
@@ -232,11 +241,11 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
                             value.toArrayUnsafe()));
 
     // put into account trie
-    var accountStorageIterator =
-        flatdb
-            .storageToPairStream(
-                wss, Hash.wrap(accountHash), Bytes32.ZERO, HASH_LAST, Function.identity())
-            .iterator();
+    var accountStorageStream = flatdb
+        .storageToPairStream(
+            wss, Hash.wrap(accountHash), Bytes32.ZERO, HASH_LAST, Function.identity());
+    var accountStorageIterator = accountStorageStream.iterator();
+
     long accountStorageCount = 0L;
     while (accountStorageIterator.hasNext()) {
       var storagePair = accountStorageIterator.next();
@@ -253,6 +262,7 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
     accountStorageCommit.accept(accountStorageTrie, accountsStorageTx);
     accountsStorageTx.commit();
 
+    accountStorageStream.close();
     return Hash.wrap(accountStorageTrie.getRootHash());
   }
 
