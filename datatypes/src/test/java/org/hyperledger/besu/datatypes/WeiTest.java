@@ -44,4 +44,28 @@ public class WeiTest {
     assertThat(Wei.of(new BigInteger("1" + String.valueOf(manyZeros))).toHumanReadableString())
         .isEqualTo("100.00 tether");
   }
+
+  @Test
+  public void toHumanReadablePaddedString() {
+    assertThat(Wei.ZERO.toHumanReadablePaddedString()).isEqualTo("     0 wei");
+    assertThat(Wei.ONE.toHumanReadablePaddedString()).isEqualTo("     1 wei");
+
+    assertThat(Wei.of(999).toHumanReadablePaddedString()).isEqualTo("   999 wei");
+    assertThat(Wei.of(1000).toHumanReadablePaddedString()).isEqualTo("  1.00 kwei");
+
+    assertThat(Wei.of(1009).toHumanReadablePaddedString()).isEqualTo("  1.01 kwei");
+    assertThat(Wei.of(1011).toHumanReadablePaddedString()).isEqualTo("  1.01 kwei");
+
+    assertThat(Wei.of(new BigInteger("1000000000")).toHumanReadablePaddedString())
+        .isEqualTo("  1.00 gwei");
+
+    assertThat(Wei.of(new BigInteger("1000000000000000000")).toHumanReadablePaddedString())
+        .isEqualTo("  1.00 ether");
+
+    final char[] manyZeros = new char[32];
+    Arrays.fill(manyZeros, '0');
+    assertThat(
+            Wei.of(new BigInteger("1" + String.valueOf(manyZeros))).toHumanReadablePaddedString())
+        .isEqualTo("100.00 tether");
+  }
 }
