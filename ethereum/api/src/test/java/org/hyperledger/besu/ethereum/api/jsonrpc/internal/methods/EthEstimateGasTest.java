@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -70,6 +69,7 @@ public class EthEstimateGasTest {
   @Mock private BlockHeader latestBlockHeader;
   @Mock private BlockHeader finalizedBlockHeader;
   @Mock private BlockHeader genesisBlockHeader;
+  @Mock private BlockHeader pendingBlockHeader;
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
@@ -91,6 +91,9 @@ public class EthEstimateGasTest {
     when(blockchain.getChainHeadHeader()).thenReturn(latestBlockHeader);
     when(latestBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
     when(latestBlockHeader.getNumber()).thenReturn(2L);
+    when(pendingBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
+    when(pendingBlockHeader.getNumber()).thenReturn(3L);
+    when(transactionSimulator.simulatePendingBlockHeader()).thenReturn(pendingBlockHeader);
     when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(true);
 
     method = new EthEstimateGas(blockchainQueries, transactionSimulator);
@@ -376,11 +379,7 @@ public class EthEstimateGasTest {
         .process(
             eq(modifiedLegacyTransactionCallParameter(Wei.ZERO)),
             eq(Optional.empty()), // no account overrides
-            eq(
-                ImmutableTransactionValidationParams.builder()
-                    .from(TransactionValidationParams.transactionSimulator())
-                    .isAllowExceedingBalance(true)
-                    .build()),
+            eq(TransactionValidationParams.transactionSimulatorAllowExceedingBalance()),
             any(OperationTracer.class),
             eq(latestBlockHeader));
   }
@@ -397,11 +396,7 @@ public class EthEstimateGasTest {
         .process(
             eq(modifiedLegacyTransactionCallParameter(Wei.ZERO)),
             eq(Optional.empty()), // no account overrides
-            eq(
-                ImmutableTransactionValidationParams.builder()
-                    .from(TransactionValidationParams.transactionSimulator())
-                    .isAllowExceedingBalance(false)
-                    .build()),
+            eq(TransactionValidationParams.transactionSimulator()),
             any(OperationTracer.class),
             eq(latestBlockHeader));
   }
@@ -426,6 +421,17 @@ public class EthEstimateGasTest {
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(eip1559TransactionCallParameter(), "finalized");
     mockTransientProcessorResultGasEstimate(1L, true, false, finalizedBlockHeader);
+
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
+
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void pendingBlockTagEstimateOnPendingBlock() {
+    final JsonRpcRequestContext request =
+        ethEstimateGasRequest(eip1559TransactionCallParameter(), "pending");
+    mockTransientProcessorResultGasEstimate(1L, true, false, pendingBlockHeader);
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
 
@@ -488,6 +494,7 @@ public class EthEstimateGasTest {
         isSuccessful, estimateGas, gasPrice, revertReason, blockHeader);
   }
 
+  @SuppressWarnings("ReferenceEquality")
   private TransactionSimulatorResult getMockTransactionSimulatorResult(
       final boolean isSuccessful,
       final long estimateGas,
@@ -495,21 +502,37 @@ public class EthEstimateGasTest {
       final Optional<Bytes> revertReason,
       final BlockHeader blockHeader) {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
-    when(transactionSimulator.process(
-            eq(modifiedLegacyTransactionCallParameter(gasPrice)),
-            eq(Optional.empty()), // no account overrides
-            any(TransactionValidationParams.class),
-            any(OperationTracer.class),
-            eq(blockHeader)))
-        .thenReturn(Optional.of(mockTxSimResult));
-    when(transactionSimulator.process(
-            eq(modifiedEip1559TransactionCallParameter()),
-            eq(Optional.empty()), // no account overrides
-            any(TransactionValidationParams.class),
-            any(OperationTracer.class),
-            eq(blockHeader)))
-        .thenReturn(Optional.of(mockTxSimResult));
-
+    if (blockHeader == pendingBlockHeader) {
+      when(transactionSimulator.processOnPending(
+              eq(modifiedLegacyTransactionCallParameter(gasPrice)),
+              eq(Optional.empty()), // no account overrides
+              any(TransactionValidationParams.class),
+              any(OperationTracer.class),
+              eq(blockHeader)))
+          .thenReturn(Optional.of(mockTxSimResult));
+      when(transactionSimulator.processOnPending(
+              eq(modifiedEip1559TransactionCallParameter()),
+              eq(Optional.empty()), // no account overrides
+              any(TransactionValidationParams.class),
+              any(OperationTracer.class),
+              eq(blockHeader)))
+          .thenReturn(Optional.of(mockTxSimResult));
+    } else {
+      when(transactionSimulator.process(
+              eq(modifiedLegacyTransactionCallParameter(gasPrice)),
+              eq(Optional.empty()), // no account overrides
+              any(TransactionValidationParams.class),
+              any(OperationTracer.class),
+              eq(blockHeader)))
+          .thenReturn(Optional.of(mockTxSimResult));
+      when(transactionSimulator.process(
+              eq(modifiedEip1559TransactionCallParameter()),
+              eq(Optional.empty()), // no account overrides
+              any(TransactionValidationParams.class),
+              any(OperationTracer.class),
+              eq(blockHeader)))
+          .thenReturn(Optional.of(mockTxSimResult));
+    }
     final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
     when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
     when(mockResult.getRevertReason()).thenReturn(revertReason);
