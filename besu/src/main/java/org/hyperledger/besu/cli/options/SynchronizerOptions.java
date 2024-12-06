@@ -311,7 +311,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       hidden = true,
       paramLabel = "<Boolean>",
       arity = "0..1",
-      description = "Snap sync enabled for BFT chains (default: ${DEFAULT-VALUE})")
+      description =
+          "This option is now deprecated, will be removed in future release. Snap sync for BFT is supported by default.")
   private Boolean snapsyncBftEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED;
 
   @CommandLine.Option(
@@ -400,7 +401,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
     options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
-    options.snapsyncBftEnabled = config.getSnapSyncConfiguration().isSnapSyncBftEnabled();
     return options;
   }
 
@@ -433,7 +433,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
             .isSnapServerEnabled(snapsyncServerEnabled)
-            .isSnapSyncBftEnabled(snapsyncBftEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
     builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
@@ -491,9 +490,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
             OptionParser.format(snapsyncFlatStorageHealedCountPerRequest),
             SNAP_SERVER_ENABLED_FLAG,
-            OptionParser.format(snapsyncServerEnabled),
-            SNAP_SYNC_BFT_ENABLED_FLAG,
-            OptionParser.format(snapsyncBftEnabled));
+            OptionParser.format(snapsyncServerEnabled));
     return value;
   }
 }

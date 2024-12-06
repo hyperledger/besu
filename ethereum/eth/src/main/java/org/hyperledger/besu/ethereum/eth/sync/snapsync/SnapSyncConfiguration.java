@@ -83,9 +83,4 @@ public class SnapSyncConfiguration {
   public Boolean isSnapServerEnabled() {
     return DEFAULT_SNAP_SERVER_ENABLED;
   }
-
-  @Value.Default
-  public Boolean isSnapSyncBftEnabled() {
-    return DEFAULT_SNAP_SYNC_BFT_ENABLED;
-  }
 }
