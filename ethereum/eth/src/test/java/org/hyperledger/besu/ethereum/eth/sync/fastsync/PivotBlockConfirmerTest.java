@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
@@ -35,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -79,13 +81,14 @@ public class PivotBlockConfirmerTest {
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            protocolSchedule,
-            blockchain,
-            timeout::get,
-            blockchainSetupUtil.getWorldArchive(),
-            transactionPool,
-            EthProtocolConfiguration.defaultConfig());
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(protocolSchedule)
+            .setBlockchain(blockchain)
+            .setEthScheduler(new DeterministicEthScheduler(timeout::get))
+            .setWorldStateArchive(blockchainSetupUtil.getWorldArchive())
+            .setTransactionPool(transactionPool)
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .build();
     pivotBlockConfirmer = createPivotBlockConfirmer(3, 2);
   }
 

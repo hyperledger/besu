@@ -19,6 +19,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.DelegatedCodeAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.account.MutableDelegatedCodeAccount;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -27,16 +28,32 @@ public class DelegatedCodeService {
   private static final Bytes DELEGATED_CODE_PREFIX = Bytes.fromHexString("ef0100");
   private static final int DELEGATED_CODE_SIZE = DELEGATED_CODE_PREFIX.size() + Address.SIZE;
 
-  /** Creates a new DelegatedCodeService. */
-  public DelegatedCodeService() {}
+  private final GasCalculator gasCalculator;
 
   /**
-   * Add the delegated code to the given account.
+   * Creates a new DelegatedCodeService.
+   *
+   * @param gasCalculator the gas calculator to check for pre compiles.
+   */
+  public DelegatedCodeService(final GasCalculator gasCalculator) {
+    this.gasCalculator = gasCalculator;
+  }
+
+  /**
+   * Process the delegated code authorization. It will set the code to 0x ef0100 + delegated code
+   * address. If the address is 0, it will set the code to empty.
    *
    * @param account the account to which the delegated code is added.
-   * @param delegatedCodeAddress the address of the delegated code.
+   * @param delegatedCodeAddress the address of the target of the authorization.
    */
-  public void addDelegatedCode(final MutableAccount account, final Address delegatedCodeAddress) {
+  public void processDelegatedCodeAuthorization(
+      final MutableAccount account, final Address delegatedCodeAddress) {
+    // authorization to zero address removes any delegated code
+    if (delegatedCodeAddress.equals(Address.ZERO)) {
+      account.setCode(Bytes.EMPTY);
+      return;
+    }
+
     account.setCode(Bytes.concatenate(DELEGATED_CODE_PREFIX, delegatedCodeAddress));
   }
 
@@ -64,7 +81,7 @@ public class DelegatedCodeService {
     }
 
     return new DelegatedCodeAccount(
-        worldUpdater, account, resolveDelegatedAddress(account.getCode()));
+        worldUpdater, account, resolveDelegatedAddress(account.getCode()), gasCalculator);
   }
 
   /**
@@ -82,7 +99,7 @@ public class DelegatedCodeService {
     }
 
     return new MutableDelegatedCodeAccount(
-        worldUpdater, account, resolveDelegatedAddress(account.getCode()));
+        worldUpdater, account, resolveDelegatedAddress(account.getCode()), gasCalculator);
   }
 
   /**

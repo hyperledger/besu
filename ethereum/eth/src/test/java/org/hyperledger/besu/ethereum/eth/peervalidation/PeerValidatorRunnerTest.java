@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
@@ -39,7 +40,7 @@ public class PeerValidatorRunnerTest {
   public void checkPeer_schedulesFutureCheckWhenPeerNotReady() {
     final PeerValidator validator = mock(PeerValidator.class);
 
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     final EthPeer peer =
         EthProtocolManagerTestUtil.peerBuilder()
@@ -78,7 +79,7 @@ public class PeerValidatorRunnerTest {
   public void checkPeer_doesNotScheduleFutureCheckWhenPeerNotReadyAndDisconnected() {
     final PeerValidator validator = mock(PeerValidator.class);
 
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     final EthPeer peer =
         EthProtocolManagerTestUtil.peerBuilder()
@@ -105,7 +106,7 @@ public class PeerValidatorRunnerTest {
   public void checkPeer_handlesInvalidPeer() {
     final PeerValidator validator = mock(PeerValidator.class);
 
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     final EthPeer peer =
         EthProtocolManagerTestUtil.peerBuilder()
@@ -138,7 +139,7 @@ public class PeerValidatorRunnerTest {
   public void checkPeer_handlesValidPeer() {
     final PeerValidator validator = mock(PeerValidator.class);
 
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     final EthPeer peer =
         EthProtocolManagerTestUtil.peerBuilder()
