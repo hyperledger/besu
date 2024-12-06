@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePers
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -79,6 +80,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final ProtocolContext protocolContext,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final BlockBroadcaster blockBroadcaster,
@@ -136,6 +138,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                     syncState,
                     metricsSystem,
                     terminationCondition,
+                    peerTaskExecutor,
                     syncDurationMetrics));
 
     if (SyncMode.FAST.equals(syncConfig.getSyncMode())) {
@@ -146,6 +149,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   syncConfig,
                   dataDirectory,
                   protocolSchedule,
+                  currentProtocolSpecSupplier,
                   protocolContext,
                   metricsSystem,
                   ethContext,
@@ -163,6 +167,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   syncConfig,
                   dataDirectory,
                   protocolSchedule,
+                  currentProtocolSpecSupplier,
                   protocolContext,
                   metricsSystem,
                   ethContext,
@@ -180,6 +185,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   syncConfig,
                   dataDirectory,
                   protocolSchedule,
+                  currentProtocolSpecSupplier,
                   protocolContext,
                   metricsSystem,
                   ethContext,
