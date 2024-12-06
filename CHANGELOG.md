@@ -16,6 +16,7 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Proper support for `pending` block tag when calling `eth_estimateGas` and `eth_createAccessList` [#7951](https://github.com/hyperledger/besu/pull/7951)
 
 ### Bug fixes
 -  Correct default parameters for frontier transactions in `eth_call` and `eth_estimateGas` [#7965](https://github.com/hyperledger/besu/pull/7965)
@@ -67,7 +68,6 @@
 - Prometheus Java Metrics library upgraded to version 1.3.3 [#7880](https://github.com/hyperledger/besu/pull/7880)
 - Add histogram to Prometheus metrics system [#7944](https://github.com/hyperledger/besu/pull/7944)
 - Improve newPayload and FCU logs [#7961](https://github.com/hyperledger/besu/pull/7961)
-
 
 ### Bug fixes
 - Fix registering new metric categories from plugins [#7825](https://github.com/hyperledger/besu/pull/7825)

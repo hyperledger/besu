@@ -387,7 +387,7 @@ public class TestContextBuilder {
       final boolean useFixedBaseFee,
       final List<QbftFork> qbftForks) {
 
-    final MiningConfiguration miningParams =
+    final MiningConfiguration miningConfiguration =
         ImmutableMiningConfiguration.builder()
             .mutableInitValues(
                 MutableInitValues.builder()
@@ -445,7 +445,8 @@ public class TestContextBuilder {
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
     final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule, 0L);
+        new TransactionSimulator(
+            blockChain, worldStateArchive, protocolSchedule, miningConfiguration, 0L);
 
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
@@ -496,7 +497,7 @@ public class TestContextBuilder {
             protocolContext,
             protocolSchedule,
             forksSchedule,
-            miningParams,
+            miningConfiguration,
             localAddress,
             BFT_EXTRA_DATA_ENCODER,
             ethScheduler);

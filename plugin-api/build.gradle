@@ -71,7 +71,7 @@ Calculated : ${currentHash}
 tasks.register('checkAPIChanges', FileStateChecker) {
   description = "Checks that the API for the Plugin-API project does not change without deliberate thought"
   files = sourceSets.main.allJava.files
-  knownHash = 'dsbVupAvtmZlEeEeVDtk+VrzGFvyKxHgQntaMtOq5TY='
+  knownHash = 'TPCo4SZ61OrJxRAa2SIcAIOAOjVTdRw+UOeHMuiJP84='
 }
 check.dependsOn('checkAPIChanges')
 
