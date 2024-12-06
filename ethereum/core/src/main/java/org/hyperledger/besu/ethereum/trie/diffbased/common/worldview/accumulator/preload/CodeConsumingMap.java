@@ -23,7 +23,6 @@ import javax.annotation.Nonnull;
 
 import com.google.common.collect.ForwardingMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * A map that stores Ethereum addresses and their associated code values, with a consumer to process
@@ -56,7 +55,7 @@ public class CodeConsumingMap extends ForwardingMap<Address, DiffBasedValue<Byte
     return consumer;
   }
 
-  @NotNull
+  @Nonnull
   @Override
   protected Map<Address, DiffBasedValue<Bytes>> delegate() {
     return codes;

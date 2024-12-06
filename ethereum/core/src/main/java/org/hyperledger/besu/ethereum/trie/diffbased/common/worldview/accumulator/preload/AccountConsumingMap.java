@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.ForwardingMap;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * A map that stores Ethereum account addresses and their associated values, with a consumer to
@@ -53,7 +52,7 @@ public class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
     return consumer;
   }
 
-  @NotNull
+  @Nonnull
   @Override
   protected Map<Address, T> delegate() {
     return accounts;

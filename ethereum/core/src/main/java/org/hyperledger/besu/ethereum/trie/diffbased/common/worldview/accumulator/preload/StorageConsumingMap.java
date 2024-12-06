@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.ForwardingMap;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * A map that stores storage keys and their associated values, with a consumer to process updates.
@@ -55,7 +54,7 @@ public class StorageConsumingMap<K, T> extends ForwardingMap<K, T> {
     return consumer;
   }
 
-  @NotNull
+  @Nonnull
   @Override
   protected Map<K, T> delegate() {
     return storages;
