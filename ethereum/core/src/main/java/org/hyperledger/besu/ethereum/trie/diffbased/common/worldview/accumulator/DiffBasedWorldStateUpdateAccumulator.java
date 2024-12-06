@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorl
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.AccountConsumingMap;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.CodeConsumingMap;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.evm.account.Account;
@@ -62,9 +63,10 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       LoggerFactory.getLogger(DiffBasedWorldStateUpdateAccumulator.class);
   protected final Consumer<DiffBasedValue<ACCOUNT>> accountPreloader;
   protected final Consumer<StorageSlotKey> storagePreloader;
+  private final Consumer<Bytes> codePreloader;
 
   private final AccountConsumingMap<DiffBasedValue<ACCOUNT>> accountsToUpdate;
-  private final Map<Address, DiffBasedValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
+  private final CodeConsumingMap codeToUpdate;
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
   protected final EvmConfiguration evmConfiguration;
 
@@ -81,11 +83,14 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       final DiffBasedWorldView world,
       final Consumer<DiffBasedValue<ACCOUNT>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
+      final Consumer<Bytes> codePreloader,
       final EvmConfiguration evmConfiguration) {
     super(world, evmConfiguration);
     this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
+    this.codeToUpdate = new CodeConsumingMap(new ConcurrentHashMap<>(), codePreloader);
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
+    this.codePreloader = codePreloader;
     this.isAccumulatorStateChanged = false;
     this.evmConfiguration = evmConfiguration;
   }
@@ -222,6 +227,10 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     return storagePreloader;
   }
 
+  public Consumer<Bytes> getCodePreloader() {
+    return codePreloader;
+  }
+
   public EvmConfiguration getEvmConfiguration() {
     return evmConfiguration;
   }
@@ -257,15 +266,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     }
 
     final ACCOUNT newAccount =
-        createAccount(
-            this,
-            address,
-            hashAndSaveAccountPreImage(address),
-            nonce,
-            balance,
-            Hash.EMPTY_TRIE_HASH,
-            Hash.EMPTY,
-            true);
+        createAccount(this, address, hashAndSaveAccountPreImage(address), nonce, balance, true);
     diffBasedValue.setUpdated(newAccount);
     return track(new UpdateTrackingAccount<>(newAccount));
   }
@@ -911,8 +912,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       final Hash addressHash,
       final long nonce,
       final Wei balance,
-      final Hash storageRoot,
-      final Hash codeHash,
       final boolean mutable);
 
   protected abstract ACCOUNT createAccount(

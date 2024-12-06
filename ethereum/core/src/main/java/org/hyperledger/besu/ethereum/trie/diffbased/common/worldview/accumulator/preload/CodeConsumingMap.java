@@ -15,46 +15,49 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.ForwardingMap;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
- * A map that stores Ethereum account addresses and their associated values, with a consumer to
- * process updates.
+ * A map that stores Ethereum addresses and their associated code values, with a consumer to process
+ * updates.
  *
- * <p>Each time a new value is added or updated, the consumer processes the value for the associated
- * address.
+ * <p>Each time a new value is added or updated, the consumer processes the code value.
  *
  * <p>This class uses a thread-safe {@link ConcurrentMap} to store data, allowing concurrent
  * modifications.
  */
-public class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
+public class CodeConsumingMap extends ForwardingMap<Address, DiffBasedValue<Bytes>> {
 
-  private final ConcurrentMap<Address, T> accounts;
-  private final Consumer<T> consumer;
+  private final ConcurrentMap<Address, DiffBasedValue<Bytes>> codes;
+  private final Consumer<Bytes> consumer;
 
-  public AccountConsumingMap(final ConcurrentMap<Address, T> accounts, final Consumer<T> consumer) {
-    this.accounts = accounts;
+  public CodeConsumingMap(
+      final ConcurrentMap<Address, DiffBasedValue<Bytes>> codes, final Consumer<Bytes> consumer) {
+    this.codes = codes;
     this.consumer = consumer;
   }
 
   @Override
-  public T put(@Nonnull final Address address, @Nonnull final T value) {
-    consumer.process(address, value);
-    return accounts.put(address, value);
+  public DiffBasedValue<Bytes> put(
+      @Nonnull final Address address, @Nonnull final DiffBasedValue<Bytes> value) {
+    consumer.process(address, value.getUpdated() != null ? value.getUpdated() : value.getPrior());
+    return codes.put(address, value);
   }
 
-  public Consumer<T> getConsumer() {
+  public Consumer<Bytes> getConsumer() {
     return consumer;
   }
 
   @Nonnull
   @Override
-  protected Map<Address, T> delegate() {
-    return accounts;
+  protected Map<Address, DiffBasedValue<Bytes>> delegate() {
+    return codes;
   }
 }
