@@ -31,11 +31,11 @@ class EthereumNodeRecordTest {
     final EthereumNodeRecord enr = EthereumNodeRecord.fromRLP(rlp);
     final InetAddress expectedIPAddr =
         InetAddress.getByAddress(Bytes.fromHexString("0x41157e43").toArrayUnsafe());
-    final Bytes expectedPubicKey =
+    final Bytes expectedPublicKey =
         Bytes.fromHexString(
             "0xa48c4c032f4c2e1b4007dd15b0d7046b60774f6bc38e2f52a8e0361c65e423424520b07898c59a8c9e85c440594ca734f23b7f2b906d5da54676eee6a1d64874");
 
     assertThat(enr.ip()).isEqualTo(expectedIPAddr);
-    assertThat(enr.publicKey()).isEqualTo(expectedPubicKey);
+    assertThat(enr.publicKey()).isEqualTo(expectedPublicKey);
   }
 }
