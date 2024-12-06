@@ -18,6 +18,7 @@
 ### Additions and Improvements
 
 ### Bug fixes
+-  Correct default parameters for frontier transactions in `eth_call` and `eth_estimateGas` [#7965](https://github.com/hyperledger/besu/pull/7965)
 
 ## 24.12.0
 
