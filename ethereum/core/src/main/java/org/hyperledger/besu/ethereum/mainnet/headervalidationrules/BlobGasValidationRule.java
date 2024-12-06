@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
-import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.slf4j.Logger;
@@ -45,7 +44,8 @@ public class BlobGasValidationRule implements DetachedBlockHeaderValidationRule 
     long parentBlobGasUsed = parent.getBlobGasUsed().orElse(0L);
 
     long calculatedExcessBlobGas =
-        gasCalculator.computeExcessBlobGas(parentExcessBlobGas, parentBlobGasUsed);
+        gasCalculator.computeExcessBlobGas(
+            parentExcessBlobGas, parentBlobGasUsed, parent.getTargetBlobsPerBlock());
 
     if (headerExcessBlobGas != calculatedExcessBlobGas) {
       LOG.info(
@@ -55,10 +55,9 @@ public class BlobGasValidationRule implements DetachedBlockHeaderValidationRule 
       return false;
     }
     long headerBlobGasUsed = header.getBlobGasUsed().orElse(0L);
-    if (headerBlobGasUsed % CancunGasCalculator.BLOB_GAS_PER_BLOB != 0) {
+    if (headerBlobGasUsed % gasCalculator.getBlobGasPerBlob() != 0) {
       LOG.info(
-          "blob gas used must be multiple of GAS_PER_BLOB ({})",
-          CancunGasCalculator.BLOB_GAS_PER_BLOB);
+          "blob gas used must be multiple of GAS_PER_BLOB ({})", gasCalculator.getBlobGasPerBlob());
       return false;
     }
     return true;

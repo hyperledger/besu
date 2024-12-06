@@ -20,6 +20,10 @@ import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,11 +58,13 @@ public class WebSocketConfiguration {
   private Optional<String> keyStorePath = Optional.empty();
   private Optional<String> keyStorePassword = Optional.empty();
   private Optional<String> keyStoreType = Optional.of("JKS"); // Default to JKS
+  private Optional<String> keyStorePasswordFile = Optional.empty();
 
   private boolean clientAuthEnabled = false;
   private Optional<String> trustStorePath = Optional.empty();
   private Optional<String> trustStorePassword = Optional.empty();
   private Optional<String> trustStoreType = Optional.of("JKS"); // Default to JKS
+  private Optional<String> trustStorePasswordFile = Optional.empty();
 
   // For PEM format
   private Optional<String> keyPath = Optional.empty();
@@ -191,8 +197,11 @@ public class WebSocketConfiguration {
     this.keyStorePath = Optional.ofNullable(keyStorePath);
   }
 
-  public Optional<String> getKeyStorePassword() {
-    return keyStorePassword;
+  public Optional<String> getKeyStorePassword() throws IOException {
+    if (keyStorePassword.isPresent()) {
+      return keyStorePassword;
+    }
+    return Optional.ofNullable(getKeystorePasswordFromFile());
   }
 
   public void setKeyStorePassword(final String keyStorePassword) {
@@ -245,8 +254,11 @@ public class WebSocketConfiguration {
   }
 
   // Truststore Password
-  public Optional<String> getTrustStorePassword() {
-    return trustStorePassword;
+  public Optional<String> getTrustStorePassword() throws IOException {
+    if (trustStorePassword.isPresent()) {
+      return trustStorePassword;
+    }
+    return Optional.ofNullable(getTruststorePasswordFromFile());
   }
 
   public void setTrustStorePassword(final String trustStorePassword) {
@@ -256,6 +268,38 @@ public class WebSocketConfiguration {
   // Truststore Type
   public Optional<String> getTrustStoreType() {
     return trustStoreType;
+  }
+
+  public void setKeyStorePasswordFile(final String keyStorePasswordFile) {
+    this.keyStorePasswordFile = Optional.ofNullable(keyStorePasswordFile);
+  }
+
+  public void setTrustStorePasswordFile(final String trustStorePasswordFile) {
+    this.trustStorePasswordFile = Optional.ofNullable(trustStorePasswordFile);
+  }
+
+  private String loadPasswordFromFile(final String passwordFile) throws IOException {
+    if (passwordFile != null) {
+      Path path = Path.of(passwordFile);
+      if (Files.exists(path)) {
+        return Files.readString(path, StandardCharsets.UTF_8).trim();
+      }
+    }
+    return null;
+  }
+
+  public String getKeystorePasswordFromFile() throws IOException {
+    if (keyStorePasswordFile.isPresent()) {
+      return loadPasswordFromFile(keyStorePasswordFile.get());
+    }
+    return null;
+  }
+
+  public String getTruststorePasswordFromFile() throws IOException {
+    if (trustStorePasswordFile.isPresent()) {
+      return loadPasswordFromFile(trustStorePasswordFile.get());
+    }
+    return null;
   }
 
   public void setTrustStoreType(final String trustStoreType) {
