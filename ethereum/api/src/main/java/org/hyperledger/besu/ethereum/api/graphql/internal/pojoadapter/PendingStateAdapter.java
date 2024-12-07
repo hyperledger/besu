@@ -75,7 +75,7 @@ public class PendingStateAdapter extends AdapterBase {
     return transactionPool.getPendingTransactions().stream()
         .map(PendingTransaction::getTransaction)
         .map(TransactionWithMetadata::new)
-        .map(TransactionAdapter::new)
+        .map(tx -> new TransactionAdapter(tx, null))
         .toList();
   }
 
