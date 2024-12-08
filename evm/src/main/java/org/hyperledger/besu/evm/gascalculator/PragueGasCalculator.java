@@ -15,8 +15,11 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
 import org.hyperledger.besu.datatypes.CodeDelegation;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Gas Calculator for Prague
@@ -26,6 +29,8 @@ import org.hyperledger.besu.datatypes.CodeDelegation;
  * </UL>
  */
 public class PragueGasCalculator extends CancunGasCalculator {
+  private static final long TOTAL_COST_FLOOR_PER_TOKEN = 10L;
+
   final long existingAccountGasRefund;
 
   /** Instantiates a new Prague Gas Calculator. */
@@ -51,5 +56,21 @@ public class PragueGasCalculator extends CancunGasCalculator {
   @Override
   public long calculateDelegateCodeGasRefund(final long alreadyExistingAccounts) {
     return existingAccountGasRefund * alreadyExistingAccounts;
+  }
+
+  @Override
+  public long transactionIntrinsicGasCost(
+      final Bytes payload, final boolean isContractCreation, final long evmGasUsed) {
+    final long dynamicIntrinsicGasCost =
+        dynamicIntrinsicGasCost(payload, isContractCreation, evmGasUsed);
+    final long totalCostFloor =
+        tokensInCallData(payload.size(), zeroBytes(payload)) * TOTAL_COST_FLOOR_PER_TOKEN;
+
+    return clampedAdd(TX_BASE_COST, Math.max(dynamicIntrinsicGasCost, totalCostFloor));
+  }
+
+  private long tokensInCallData(final long payloadSize, final long zeroBytes) {
+    // as defined in https://eips.ethereum.org/EIPS/eip-7623#specification
+    return clampedAdd(zeroBytes, (payloadSize - zeroBytes) * 4);
   }
 }
