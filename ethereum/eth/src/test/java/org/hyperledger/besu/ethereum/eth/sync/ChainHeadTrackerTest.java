@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
-import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -76,7 +76,7 @@ public class ChainHeadTrackerTest {
   public void setup(final DataStorageFormat storageFormat) {
     blockchainSetupUtil = BlockchainSetupUtil.forTesting(storageFormat);
     blockchain = blockchainSetupUtil.getBlockchain();
-    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
+    ethProtocolManager = EthProtocolManagerTestBuilder.builder().setBlockchain(blockchain).build();
     respondingPeer =
         RespondingEthPeer.builder()
             .ethProtocolManager(ethProtocolManager)

@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -35,11 +34,6 @@ import java.util.Optional;
 /** TransactionSimulationServiceImpl */
 @Unstable
 public class TransactionSimulationServiceImpl implements TransactionSimulationService {
-  private static final TransactionValidationParams SIMULATOR_ALLOWING_EXCEEDING_BALANCE =
-      ImmutableTransactionValidationParams.builder()
-          .from(TransactionValidationParams.transactionSimulator())
-          .isAllowExceedingBalance(true)
-          .build();
   private Blockchain blockchain;
   private TransactionSimulator transactionSimulator;
 
@@ -60,43 +54,47 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
   @Override
   public Optional<TransactionSimulationResult> simulate(
       final Transaction transaction,
-      final Hash blockHash,
-      final OperationTracer operationTracer,
-      final boolean isAllowExceedingBalance) {
-    return simulate(
-        transaction, Optional.empty(), blockHash, operationTracer, isAllowExceedingBalance);
-  }
-
-  @Override
-  public Optional<TransactionSimulationResult> simulate(
-      final Transaction transaction,
       final Optional<AccountOverrideMap> maybeAccountOverrides,
-      final Hash blockHash,
+      final Optional<Hash> maybeBlockHash,
       final OperationTracer operationTracer,
       final boolean isAllowExceedingBalance) {
 
     final CallParameter callParameter = CallParameter.fromTransaction(transaction);
 
-    final var maybeBlockHeader =
-        blockchain.getBlockHeader(blockHash).or(() -> blockchain.getBlockHeaderSafe(blockHash));
+    if (maybeBlockHash.isPresent()) {
+      final Hash blockHash = maybeBlockHash.get();
 
-    if (maybeBlockHeader.isEmpty()) {
-      return Optional.of(
-          new TransactionSimulationResult(
-              transaction,
-              TransactionProcessingResult.invalid(
-                  ValidationResult.invalid(TransactionInvalidReason.BLOCK_NOT_FOUND))));
+      final var maybeBlockHeader =
+          blockchain.getBlockHeader(blockHash).or(() -> blockchain.getBlockHeaderSafe(blockHash));
+
+      if (maybeBlockHeader.isEmpty()) {
+        return Optional.of(
+            new TransactionSimulationResult(
+                transaction,
+                TransactionProcessingResult.invalid(
+                    ValidationResult.invalid(TransactionInvalidReason.BLOCK_NOT_FOUND))));
+      }
+
+      return transactionSimulator
+          .process(
+              callParameter,
+              isAllowExceedingBalance
+                  ? TransactionValidationParams.transactionSimulatorAllowExceedingBalance()
+                  : TransactionValidationParams.transactionSimulator(),
+              operationTracer,
+              maybeBlockHeader.get())
+          .map(res -> new TransactionSimulationResult(transaction, res.result()));
     }
 
     return transactionSimulator
-        .process(
+        .processOnPending(
             callParameter,
             maybeAccountOverrides,
             isAllowExceedingBalance
-                ? SIMULATOR_ALLOWING_EXCEEDING_BALANCE
+                ? TransactionValidationParams.transactionSimulatorAllowExceedingBalance()
                 : TransactionValidationParams.transactionSimulator(),
             operationTracer,
-            maybeBlockHeader.get())
+            transactionSimulator.simulatePendingBlockHeader())
         .map(res -> new TransactionSimulationResult(transaction, res.result()));
   }
 }

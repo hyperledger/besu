@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -36,7 +37,7 @@ public class WaitForPeerTaskTest {
 
   @BeforeEach
   public void setupTest() {
-    ethProtocolManager = EthProtocolManagerTestUtil.create();
+    ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     ethContext = ethProtocolManager.ethContext();
   }
 

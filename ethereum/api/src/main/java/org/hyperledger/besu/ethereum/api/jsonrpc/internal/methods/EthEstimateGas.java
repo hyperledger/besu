@@ -14,19 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -34,7 +27,6 @@ import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 
 import java.util.Optional;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,33 +44,17 @@ public class EthEstimateGas extends AbstractEstimateGas {
   }
 
   @Override
-  protected Object resultByBlockHeader(
+  protected Object simulate(
       final JsonRpcRequestContext requestContext,
-      final JsonCallParameter callParams,
-      final BlockHeader blockHeader) {
-
-    final CallParameter modifiedCallParams =
-        overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
-    Optional<AccountOverrideMap> maybeStateOverrides = getAddressAccountOverrideMap(requestContext);
-    // TODO implement for block overrides
-
-    final boolean isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
+      final CallParameter callParams,
+      final long gasLimit,
+      final TransactionSimulationFunction simulationFunction) {
 
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
-    final var transactionValidationParams =
-        ImmutableTransactionValidationParams.builder()
-            .from(TransactionValidationParams.transactionSimulator())
-            .isAllowExceedingBalance(isAllowExceedingBalance)
-            .build();
 
-    LOG.debug("Processing transaction with params: {}", modifiedCallParams);
+    LOG.debug("Processing transaction with params: {}", callParams);
     final var maybeResult =
-        transactionSimulator.process(
-            modifiedCallParams,
-            maybeStateOverrides,
-            transactionValidationParams,
-            operationTracer,
-            blockHeader);
+        simulationFunction.simulate(overrideGasLimit(callParams, gasLimit), operationTracer);
 
     final Optional<JsonRpcErrorResponse> maybeErrorResponse =
         validateSimulationResult(requestContext, maybeResult);
@@ -89,12 +65,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
     final var result = maybeResult.get();
     long low = result.result().getEstimateGasUsedByTransaction();
     final var lowResult =
-        transactionSimulator.process(
-            overrideGasLimitAndPrice(callParams, low),
-            maybeStateOverrides,
-            transactionValidationParams,
-            operationTracer,
-            blockHeader);
+        simulationFunction.simulate(overrideGasLimit(callParams, low), operationTracer);
 
     if (lowResult.isPresent() && lowResult.get().isSuccessful()) {
       return Quantity.create(low);
@@ -106,12 +77,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
     while (low + 1 < high) {
       mid = (low + high) / 2;
       var binarySearchResult =
-          transactionSimulator.process(
-              overrideGasLimitAndPrice(callParams, mid),
-              maybeStateOverrides,
-              transactionValidationParams,
-              operationTracer,
-              blockHeader);
+          simulationFunction.simulate(overrideGasLimit(callParams, mid), operationTracer);
 
       if (binarySearchResult.isEmpty() || !binarySearchResult.get().isSuccessful()) {
         low = mid;
@@ -138,16 +104,5 @@ public class EthEstimateGas extends AbstractEstimateGas {
       return Optional.of(errorResponse(requestContext, maybeResult.get()));
     }
     return Optional.empty();
-  }
-
-  @VisibleForTesting
-  protected Optional<AccountOverrideMap> getAddressAccountOverrideMap(
-      final JsonRpcRequestContext request) {
-    try {
-      return request.getOptionalParameter(2, AccountOverrideMap.class);
-    } catch (JsonRpcParameter.JsonRpcParameterException e) {
-      throw new InvalidJsonRpcRequestException(
-          "Invalid account overrides parameter (index 2)", RpcErrorType.INVALID_CALL_PARAMS, e);
-    }
   }
 }
