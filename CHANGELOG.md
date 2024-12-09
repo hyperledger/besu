@@ -16,6 +16,7 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Add RPC HTTP options to specify custom truststore and its password [#7978](https://github.com/hyperledger/besu/pull/7978)
 
 ### Bug fixes
 
