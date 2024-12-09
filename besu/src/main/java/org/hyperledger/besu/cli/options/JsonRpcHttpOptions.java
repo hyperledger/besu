@@ -17,7 +17,6 @@ package org.hyperledger.besu.cli.options;
 import static java.util.Arrays.asList;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_HOST;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_PRETTY_JSON_ENABLED;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.VALID_APIS;
 
@@ -296,10 +295,14 @@ public class JsonRpcHttpOptions {
    * @param hostsAllowlist List of hosts allowed
    * @param defaultHostAddress Default host address
    * @param timoutSec timeout in seconds
+   * @param prettyJsonEnabled JSON spacing in output
    * @return A JsonRpcConfiguration instance
    */
   public JsonRpcConfiguration jsonRpcConfiguration(
-      final List<String> hostsAllowlist, final String defaultHostAddress, final Long timoutSec) {
+      final List<String> hostsAllowlist,
+      final String defaultHostAddress,
+      final Long timoutSec,
+      final Boolean prettyJsonEnabled) {
 
     final JsonRpcConfiguration jsonRpcConfiguration = this.jsonRpcConfiguration();
 

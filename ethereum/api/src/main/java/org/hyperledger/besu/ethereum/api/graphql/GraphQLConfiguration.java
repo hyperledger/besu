@@ -36,13 +36,18 @@ public class GraphQLConfiguration {
 
   /** The default port number for the GraphQL HTTP server. */
   public static final int DEFAULT_GRAPHQL_HTTP_PORT = 8547;
+  public static final boolean DEFAULT_PRETTY_JSON_ENABLED = false;
+  public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
 
   private boolean enabled;
   private int port;
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
+
   private List<String> hostsAllowlist = Arrays.asList("localhost", DEFAULT_GRAPHQL_HTTP_HOST);
-  private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+  private long httpTimeoutSec;
+  private int maxActiveConnections;
+  private boolean prettyJsonEnabled;
 
   /**
    * Creates a default configuration for GraphQL.
@@ -59,6 +64,8 @@ public class GraphQLConfiguration {
     config.setPort(DEFAULT_GRAPHQL_HTTP_PORT);
     config.setHost(DEFAULT_GRAPHQL_HTTP_HOST);
     config.setHttpTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds());
+    config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
+    config.setPrettyJsonEnabled(DEFAULT_PRETTY_JSON_ENABLED);
     return config;
   }
 
@@ -174,6 +181,22 @@ public class GraphQLConfiguration {
     this.httpTimeoutSec = httpTimeoutSec;
   }
 
+  public boolean getPrettyJsonEnabled() {
+    return prettyJsonEnabled;
+  }
+
+  public void setPrettyJsonEnabled(final boolean prettyJsonEnabled) {
+    this.prettyJsonEnabled = prettyJsonEnabled;
+  }
+
+  public int getMaxActiveConnections() {
+    return maxActiveConnections;
+  }
+
+  public void setMaxActiveConnections(final int maxActiveConnections) {
+    this.maxActiveConnections = maxActiveConnections;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -183,6 +206,8 @@ public class GraphQLConfiguration {
         .add("corsAllowedDomains", corsAllowedDomains)
         .add("hostsAllowlist", hostsAllowlist)
         .add("httpTimeoutSec", httpTimeoutSec)
+        .add("prettyJsonEnabled", prettyJsonEnabled)
+        .add("maxActiveConnections", maxActiveConnections)
         .toString();
   }
 
@@ -199,11 +224,22 @@ public class GraphQLConfiguration {
         && port == that.port
         && Objects.equals(host, that.host)
         && Objects.equals(corsAllowedDomains, that.corsAllowedDomains)
-        && Objects.equals(hostsAllowlist, that.hostsAllowlist);
+        && Objects.equals(hostsAllowlist, that.hostsAllowlist)
+        && httpTimeoutSec == that.httpTimeoutSec
+        && prettyJsonEnabled == that.prettyJsonEnabled
+        && maxActiveConnections == that.maxActiveConnections;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, port, host, corsAllowedDomains, hostsAllowlist);
+    return Objects.hash(
+        enabled,
+        port,
+        host,
+        corsAllowedDomains,
+        hostsAllowlist,
+        httpTimeoutSec,
+        prettyJsonEnabled,
+        maxActiveConnections);
   }
 }

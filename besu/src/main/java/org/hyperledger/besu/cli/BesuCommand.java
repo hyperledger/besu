@@ -618,6 +618,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
   private final JsonRPCAllowlistHostsProperty hostsWhitelist = new JsonRPCAllowlistHostsProperty();
 
+  @Option(
+      names = {"--json-pretty-print-enabled"},
+      description = "Enable JSON pretty print format (default: ${DEFAULT-VALUE})")
+  private final Boolean prettyJsonEnabled = DEFAULT_PRETTY_JSON_ENABLED;
+
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
       names = {"--color-enabled"},
