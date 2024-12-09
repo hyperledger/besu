@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
+package org.hyperledger.besu.datatypes.parameters;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

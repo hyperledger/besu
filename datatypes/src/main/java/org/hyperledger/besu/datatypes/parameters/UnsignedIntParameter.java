@@ -12,21 +12,29 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
+package org.hyperledger.besu.datatypes.parameters;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import org.apache.tuweni.units.bigints.UInt256;
 
-public class UInt256Parameter {
+public class UnsignedIntParameter {
 
-  private final UInt256 value;
+  private final int value;
 
   @JsonCreator
-  public UInt256Parameter(final String value) {
-    this.value = UInt256.fromHexString(value);
+  public UnsignedIntParameter(final String value) {
+    this.value = Integer.decode(value);
+    checkArgument(this.value >= 0);
   }
 
-  public UInt256 getValue() {
+  @JsonCreator
+  public UnsignedIntParameter(final int value) {
+    this.value = value;
+    checkArgument(this.value >= 0);
+  }
+
+  public int getValue() {
     return value;
   }
 }
