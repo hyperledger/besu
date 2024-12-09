@@ -491,15 +491,15 @@ public class EthPeers implements PeerSelector {
           subscribeConnect(
               (peer) -> {
                 if (!future.isDone() && filter.test(peer)) {
-                  LOG.debug("Found new peer matching filter! {}", peer);
+                  LOG.debug("Found new peer matching filter!");
                   future.complete(peer);
                 } else {
-                  LOG.debug("New peer {} does not match filter", peer);
+                  LOG.debug("New peer does not match filter");
                 }
               });
       future.handle(
           (peer, throwable) -> {
-            LOG.debug("Unsubscribing from new peer connections");
+            LOG.debug("Unsubscribing from new peer connections with ID {}", subscriptionId);
             unsubscribeConnect(subscriptionId);
             return null;
           });

@@ -19,15 +19,14 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.DetermineCommonAncestorTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -116,13 +115,11 @@ public abstract class AbstractSyncTargetManager {
   protected abstract CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget();
 
   private CompletableFuture<SyncTarget> waitForPeerAndThenSetSyncTarget() {
-    return waitForNewPeer().handle((r, t) -> r).thenCompose((r) -> findSyncTarget());
-  }
-
-  private CompletableFuture<?> waitForNewPeer() {
     return ethContext
-        .getScheduler()
-        .timeout(WaitForPeerTask.create(ethContext, metricsSystem), Duration.ofSeconds(5));
+        .getEthPeers()
+        .waitForPeer((peer) -> true)
+        .orTimeout(5, TimeUnit.SECONDS)
+        .thenCompose((r) -> findSyncTarget());
   }
 
   private boolean isCancelled() {
