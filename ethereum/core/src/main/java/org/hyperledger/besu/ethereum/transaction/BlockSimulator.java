@@ -76,17 +76,14 @@ public class BlockSimulator {
 
   public List<BlockSimulationResult> process(
       final BlockHeader header, final List<? extends BlockStateCall> blockStateCalls) {
-    try (final MutableWorldState ws = getWorldState(header)) {
+    try (final MutableWorldState ws =
+        worldStateArchive
+            .getMutable(header, false)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "Public world state not available for block " + header.toLogString()))) {
       return processWithMutableWorldState(header, blockStateCalls, ws);
-    } catch (final Exception e) {
-      throw new RuntimeException("Error simulating block", e);
-    }
-  }
-
-  public BlockSimulationResult process(
-      final BlockHeader header, final BlockStateCall blockStateCall) {
-    try (final MutableWorldState ws = getWorldState(header)) {
-      return processWithMutableWorldState(header, blockStateCall, ws);
     } catch (final Exception e) {
       throw new RuntimeException("Error simulating block", e);
     }
@@ -100,7 +97,7 @@ public class BlockSimulator {
    * @param worldState The initial MutableWorldState to start with.
    * @return A list of BlockSimulationResult objects from processing each BlockStateCall.
    */
-  private List<BlockSimulationResult> processWithMutableWorldState(
+  public List<BlockSimulationResult> processWithMutableWorldState(
       final BlockHeader header,
       final List<? extends BlockStateCall> blockStateCalls,
       final MutableWorldState worldState) {
@@ -113,7 +110,7 @@ public class BlockSimulator {
     return simulationResults;
   }
 
-  public BlockSimulationResult processWithMutableWorldState(
+  private BlockSimulationResult processWithMutableWorldState(
       final BlockHeader header, final BlockStateCall blockStateCall, final MutableWorldState ws) {
     BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
     long timestamp = blockOverrides.getTimestamp().orElse(header.getTimestamp() + 1);
@@ -270,15 +267,6 @@ public class BlockSimulator {
         .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
         .blockHeaderFunctions(new SimulatorBlockHeaderFunctions(blockOverrides))
         .buildBlockHeader();
-  }
-
-  private MutableWorldState getWorldState(final BlockHeader header) {
-    return worldStateArchive
-        .getMutable(header, false)
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    "Public world state not available for block " + header.toLogString()));
   }
 
   private ImmutableTransactionValidationParams buildTransactionValidationParams(

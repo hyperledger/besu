@@ -64,14 +64,12 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
     BlockStateCall blockStateCall = createBlockStateCall(transactions, blockOverrides);
     var headerCore = (org.hyperledger.besu.ethereum.core.BlockHeader) header;
 
-    var result = blockSimulator.process(headerCore, blockStateCall);
-    return response(result);
+    var result = blockSimulator.process(headerCore, List.of(blockStateCall));
+    return response(result.getFirst());
   }
 
   /**
-   * NOTE: This method is experimental and should be used with caution. It may result in database
-   * inconsistencies if not used properly. Use only in specific scenarios where its behavior is well
-   * understood.
+   * This method is experimental and should be used with caution
    *
    * @param header the block header
    * @param transactions the transactions to include in the block
@@ -80,30 +78,29 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
    */
   @Unstable
   @Override
-  public BlockSimulationResult simulateAndPersist(
+  public BlockSimulationResult importBlockUnsafe(
       final BlockHeader header,
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides) {
 
     BlockStateCall blockStateCall = createBlockStateCall(transactions, blockOverrides);
     var headerCore = (org.hyperledger.besu.ethereum.core.BlockHeader) header;
-    try (final MutableWorldState ws = getWorldState(headerCore)) {
-      var result = blockSimulator.processWithMutableWorldState(headerCore, blockStateCall, ws);
+    try (final MutableWorldState ws =
+        worldStateArchive
+            .getMutable(headerCore, true)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "Public world state not available for block "
+                            + headerCore.toLogString()))) {
+      var results =
+          blockSimulator.processWithMutableWorldState(headerCore, List.of(blockStateCall), ws);
+      var result = results.getFirst();
       ws.persist(result.getBlock().getHeader());
       return response(result);
     } catch (final Exception e) {
       throw new RuntimeException("Error simulating block", e);
     }
-  }
-
-  private MutableWorldState getWorldState(
-      final org.hyperledger.besu.ethereum.core.BlockHeader header) {
-    return worldStateArchive
-        .getMutable(header, true)
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    "Public world state not available for block " + header.toLogString()));
   }
 
   private BlockStateCall createBlockStateCall(

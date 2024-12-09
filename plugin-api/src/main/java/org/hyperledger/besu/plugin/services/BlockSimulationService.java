@@ -37,9 +37,7 @@ public interface BlockSimulationService extends BesuService {
       final BlockOverrides blockOverrides);
 
   /**
-   * NOTE: This method is experimental and should be used with caution. It may result in database
-   * inconsistencies if not used properly. Use only in specific scenarios where its behavior is well
-   * understood.
+   * This method is experimental and should be used with caution
    *
    * @param header the block header
    * @param transactions the transactions to include in the block
@@ -47,6 +45,6 @@ public interface BlockSimulationService extends BesuService {
    * @return the block context
    */
   @Unstable
-  BlockSimulationResult simulateAndPersist(
+  BlockSimulationResult importBlockUnsafe(
       BlockHeader header, List<? extends Transaction> transactions, BlockOverrides blockOverrides);
 }

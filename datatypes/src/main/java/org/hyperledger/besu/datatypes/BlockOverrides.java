@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.datatypes;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.checkerframework.checker.signedness.qual.Unsigned;
 
 public class BlockOverrides {
   private final Optional<Long> timestamp;
@@ -210,30 +209,6 @@ public class BlockOverrides {
 
     public BlockOverrides build() {
       return new BlockOverrides(this);
-    }
-  }
-
-  private static class UnsignedLongParameter {
-
-    @Unsigned private final long value;
-
-    @JsonCreator
-    public UnsignedLongParameter(final String value) {
-      checkArgument(value != null);
-      if (value.startsWith("0x")) {
-        this.value = Long.parseUnsignedLong(value.substring(2), 16);
-      } else {
-        this.value = Long.parseUnsignedLong(value, 16);
-      }
-    }
-
-    @JsonCreator
-    public UnsignedLongParameter(final @Unsigned long value) {
-      this.value = value;
-    }
-
-    public @Unsigned long getValue() {
-      return value;
     }
   }
 }
