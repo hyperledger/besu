@@ -438,7 +438,7 @@ public class JsonRpcHttpOptions {
           && rpcHttpTlsTruststoreFile != null) {
         throw new CommandLine.ParameterException(
             commandLine,
-            "Configuration error: Truststore file (--rpc-http-tls-truststore-file ) cannot be used together with CA clients (--rpc-http-tls-ca-clients-enabled)   or a known-clients (--rpc-http-tls-known-clients-file) option "
+            "Configuration error: Truststore file (--rpc-http-tls-truststore-file) cannot be used together with CA clients (--rpc-http-tls-ca-clients-enabled) or a known-clients (--rpc-http-tls-known-clients-file) option "
                 + "These options are mutually exclusive. Choose either truststore-based authentication or known-clients/CA clients configuration.");
       }
     }
