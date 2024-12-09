@@ -33,22 +33,42 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBLS12PrecompiledContract.class);
 
+  static {
+    // set parallel 1 for testing.  Remove this for prod code (or set a rational limit)
+    // LibGnarkEIP2537.setDegreeOfMSMParallelism(1);
+  }
+
   /** The Discount table. */
-  static final int[] DISCOUNT_TABLE =
+  static final int[] G1_DISCOUNT_TABLE =
       new int[] {
-        -1, 1_200, 888, 764, 641, 594, 547, 500, 453, 438, 423, 408, 394, 379, 364, 349,
-        334, 330, 326, 322, 318, 314, 310, 306, 302, 298, 294, 289, 285, 281, 277, 273,
-        269, 268, 266, 265, 263, 262, 260, 259, 257, 256, 254, 253, 251, 250, 248, 247,
-        245, 244, 242, 241, 239, 238, 236, 235, 233, 232, 231, 229, 228, 226, 225, 223,
-        222, 221, 220, 219, 219, 218, 217, 216, 216, 215, 214, 213, 213, 212, 211, 211,
-        210, 209, 208, 208, 207, 206, 205, 205, 204, 203, 202, 202, 201, 200, 199, 199,
-        198, 197, 196, 196, 195, 194, 193, 193, 192, 191, 191, 190, 189, 188, 188, 187,
-        186, 185, 185, 184, 183, 182, 182, 181, 180, 179, 179, 178, 177, 176, 176, 175,
-        174
+        1800, 888, 955, 802, 743, 821, 750, 680, 657, 635, 612, 591, 664, 637,
+        611, 585, 578, 571, 564, 557, 628, 620, 612, 604, 596, 588, 578, 570,
+        562, 693, 683, 673, 670, 665, 663, 658, 655, 650, 648, 643, 640, 635,
+        633, 628, 625, 620, 618, 613, 610, 605, 603, 598, 595, 590, 588, 583,
+        580, 578, 573, 570, 565, 563, 558, 555, 553, 550, 548, 548, 545, 543,
+        540, 540, 538, 535, 533, 533, 530, 528, 528, 525, 523, 520, 520, 518,
+        515, 513, 513, 510, 508, 505, 505, 503, 500, 498, 498, 495, 493, 490,
+        490, 488, 485, 483, 483, 480, 478, 478, 475, 473, 470, 470, 468, 465,
+        463, 463, 460, 458, 455, 455, 453, 450, 448, 448, 445, 443, 440, 440,
+        438, 435
+      };
+
+  static final int[] G2_DISCOUNT_TABLE =
+      new int[] {
+        1800, 1776, 1528, 1282, 1188, 1368, 1250, 1133, 1095, 1269, 1224, 1182, 1137, 1274, 1222,
+        1169, 1155, 1141, 1127, 1113, 1256, 1240, 1224, 1208, 1192, 1176, 1156, 1140, 1124, 1108,
+        1092, 1076, 1072, 1064, 1060, 1052, 1048, 1040, 1036, 1028, 1024, 1016, 1012, 1004, 1000,
+        992, 988, 980, 976, 968, 964, 956, 952, 944, 940, 932, 928, 924, 916, 912, 904, 900, 892,
+        888, 884, 880, 876, 876, 872, 868, 864, 864, 860, 856, 852, 852, 848, 844, 844, 840, 836,
+        832, 832, 828, 824, 820, 820, 816, 812, 808, 808, 804, 800, 796, 796, 792, 788, 784, 784,
+        780, 776, 772, 772, 768, 764, 764, 760, 756, 752, 752, 748, 744, 740, 740, 736, 732, 728,
+        728, 724, 720, 716, 716, 712, 708, 704, 704, 700, 696
       };
 
   /** The Max discount. */
-  static final int MAX_DISCOUNT = 174;
+  static final int G1_MAX_DISCOUNT = 435;
+
+  static final int G2_MAX_DISCOUNT = 696;
 
   private final String name;
   private final byte operationId;
@@ -121,21 +141,40 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
   }
 
   /**
-   * Gets discount.
+   * Gets G1 MSM discount.
    *
    * @param k the k
    * @return the discount
    */
-  protected int getDiscount(final int k) {
+  protected int getG1Discount(final int k) {
     // `k * multiplication_cost * discount / multiplier` where `multiplier = 1000`
     // multiplication_cost and multiplier are folded into one constant as a long and placed first to
     // prevent int32 overflow
     // there was a table prepared for discount in case of k <= 128 points in the multiexponentiation
     // with a discount cup max_discount for k > 128.
 
-    if (k >= DISCOUNT_TABLE.length) {
-      return MAX_DISCOUNT;
+    if (k >= G1_DISCOUNT_TABLE.length) {
+      return G1_MAX_DISCOUNT;
     }
-    return DISCOUNT_TABLE[k];
+    return G1_DISCOUNT_TABLE[k];
+  }
+
+  /**
+   * Gets G2 MSM discount.
+   *
+   * @param k the k
+   * @return the discount
+   */
+  protected int getG2Discount(final int k) {
+    // `k * multiplication_cost * discount / multiplier` where `multiplier = 1000`
+    // multiplication_cost and multiplier are folded into one constant as a long and placed first to
+    // prevent int32 overflow
+    // there was a table prepared for discount in case of k <= 128 points in the multiexponentiation
+    // with a discount cup max_discount for k > 128.
+
+    if (k >= G2_DISCOUNT_TABLE.length) {
+      return G2_MAX_DISCOUNT;
+    }
+    return G2_DISCOUNT_TABLE[k];
   }
 }
