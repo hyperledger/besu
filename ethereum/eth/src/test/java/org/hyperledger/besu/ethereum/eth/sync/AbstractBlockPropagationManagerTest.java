@@ -656,7 +656,8 @@ public abstract class AbstractBlockPropagationManagerTest {
                 new ForkIdManager(
                     blockchain, Collections.emptyList(), Collections.emptyList(), false)),
             new EthMessages(),
-            ethScheduler);
+            ethScheduler,
+            null);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,
@@ -797,7 +798,8 @@ public abstract class AbstractBlockPropagationManagerTest {
                 new ForkIdManager(
                     blockchain, Collections.emptyList(), Collections.emptyList(), false)),
             new EthMessages(),
-            ethScheduler);
+            ethScheduler,
+            null);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,

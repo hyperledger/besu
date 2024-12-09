@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -104,6 +105,7 @@ public class PivotBlockRetrieverTest {
                 protocolSchedule,
                 ethProtocolManager.ethContext(),
                 metricsSystem,
+                SynchronizerConfiguration.builder().build(),
                 PIVOT_BLOCK_NUMBER,
                 peersToQuery,
                 pivotBlockDelta,
