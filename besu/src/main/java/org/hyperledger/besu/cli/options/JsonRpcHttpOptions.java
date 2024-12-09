@@ -431,7 +431,7 @@ public class JsonRpcHttpOptions {
       if (rpcHttpTlsTruststoreFile != null && rpcHttpTlsTruststorePasswordFile == null) {
         throw new CommandLine.ParameterException(
             commandLine,
-            "Configuration error: A truststore file is specified for JSON RPC HTTP endpoint, but the corresponding truststore password file (--rpc-http-tls-truststore-password-file) is missing  ");
+            "Configuration error: A truststore file is specified for JSON RPC HTTP endpoint, but the corresponding truststore password file (--rpc-http-tls-truststore-password-file) is missing");
       }
 
       if ((isRpcHttpTlsCAClientsEnabled || rpcHttpTlsKnownClientsFile != null)
