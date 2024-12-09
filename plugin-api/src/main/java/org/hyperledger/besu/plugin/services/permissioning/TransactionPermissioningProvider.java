@@ -1,6 +1,6 @@
 package org.hyperledger.besu.plugin.services.permissioning;
 
-import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.datatypes.Transaction;
 
 @FunctionalInterface
 public interface TransactionPermissioningProvider {
