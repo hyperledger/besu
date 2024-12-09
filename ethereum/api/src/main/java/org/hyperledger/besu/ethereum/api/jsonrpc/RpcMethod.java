@@ -140,7 +140,6 @@ public enum RpcMethod {
   ETH_SUBMIT_WORK("eth_submitWork"),
   ETH_SUBSCRIBE("eth_subscribe"),
   ETH_SYNCING("eth_syncing"),
-  ETH_SIMULATE_V1("eth_simulateV1"),
   ETH_UNINSTALL_FILTER("eth_uninstallFilter"),
   ETH_UNSUBSCRIBE("eth_unsubscribe"),
   IBFT_DISCARD_VALIDATOR_VOTE("ibft_discardValidatorVote"),
