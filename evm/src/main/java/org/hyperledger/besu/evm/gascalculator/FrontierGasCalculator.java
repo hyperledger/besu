@@ -38,7 +38,7 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long TX_DATA_NON_ZERO_COST = 68L;
 
-  private static final long TX_BASE_COST = 21_000L;
+  protected static final long TX_BASE_COST = 21_000L;
 
   private static final long TX_CREATE_EXTRA_COST = 0L;
 
@@ -128,18 +128,55 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreate) {
+  public long transactionIntrinsicGasCost(
+      final Bytes payload, final boolean isContractCreation, final long evmGasUsed) {
+    final long dynamicIntrinsicGasCost =
+        dynamicIntrinsicGasCost(payload, isContractCreation, evmGasUsed);
+
+    if (dynamicIntrinsicGasCost == Long.MIN_VALUE || dynamicIntrinsicGasCost == Long.MAX_VALUE) {
+      return dynamicIntrinsicGasCost;
+    }
+    return clampedAdd(TX_BASE_COST, dynamicIntrinsicGasCost);
+  }
+
+  protected long dynamicIntrinsicGasCost(
+      final Bytes payload, final boolean isContractCreation, final long evmGasUsed) {
+    final int payloadSize = payload.size();
+    final long zeroBytes = zeroBytes(payload);
+    long cost = clampedAdd(callDataCost(payloadSize, zeroBytes), evmGasUsed);
+
+    if (cost == Long.MIN_VALUE || cost == Long.MAX_VALUE) {
+      return cost;
+    }
+
+    if (isContractCreation) {
+      cost = clampedAdd(cost, contractCreationCost(payloadSize));
+
+      if (cost == Long.MIN_VALUE || cost == Long.MAX_VALUE) {
+        return cost;
+      }
+    }
+
+    return cost;
+  }
+
+  protected long callDataCost(final long payloadSize, final long zeroBytes) {
+    return clampedAdd(
+        TX_DATA_NON_ZERO_COST * (payloadSize - zeroBytes), TX_DATA_ZERO_COST * zeroBytes);
+  }
+
+  protected static long zeroBytes(final Bytes payload) {
     int zeros = 0;
     for (int i = 0; i < payload.size(); i++) {
       if (payload.get(i) == 0) {
         ++zeros;
       }
     }
-    final int nonZeros = payload.size() - zeros;
+    return zeros;
+  }
 
-    final long cost = TX_BASE_COST + TX_DATA_ZERO_COST * zeros + TX_DATA_NON_ZERO_COST * nonZeros;
-
-    return isContractCreate ? (cost + txCreateExtraGasCost()) : cost;
+  protected long contractCreationCost(final int ignored) {
+    return txCreateExtraGasCost();
   }
 
   /**
@@ -555,11 +592,6 @@ public class FrontierGasCalculator implements GasCalculator {
             : lengthSquare / 512;
 
     return clampedAdd(clampedMultiply(MEMORY_WORD_GAS_COST, length), base);
-  }
-
-  @Override
-  public long getMaximumTransactionCost(final int size) {
-    return TX_BASE_COST + TX_DATA_NON_ZERO_COST * size;
   }
 
   @Override
