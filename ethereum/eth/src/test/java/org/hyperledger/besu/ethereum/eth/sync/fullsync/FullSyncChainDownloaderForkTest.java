@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -93,7 +95,8 @@ public class FullSyncChainDownloaderForkTest {
         syncState,
         metricsSystem,
         SyncTerminationCondition.never(),
-        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
+        mock(PeerTaskExecutor.class));
   }
 
   private ChainDownloader downloader() {
