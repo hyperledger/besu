@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonCallParameterUtil.validateAndGetCallParams;
 
+import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -28,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -35,8 +38,11 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
 
@@ -60,27 +66,24 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     }
   }
 
-  protected Optional<BlockHeader> blockHeader(final long blockNumber) {
-    if (getBlockchainQueries().headBlockNumber() == blockNumber) {
-      // chain head header if cached, and we can return it form memory
-      return Optional.of(getBlockchainQueries().getBlockchain().getChainHeadHeader());
-    }
-    return getBlockchainQueries().getBlockHeaderByNumber(blockNumber);
-  }
+  protected abstract Object simulate(
+      final JsonRpcRequestContext requestContext,
+      final CallParameter callParams,
+      final long gasLimit,
+      final TransactionSimulationFunction simulationFunction);
 
-  protected Optional<RpcErrorType> validateBlockHeader(
-      final Optional<BlockHeader> maybeBlockHeader) {
-    if (maybeBlockHeader.isEmpty()) {
-      return Optional.of(RpcErrorType.BLOCK_NOT_FOUND);
-    }
-
-    final var blockHeader = maybeBlockHeader.get();
-    if (!getBlockchainQueries()
-        .getWorldStateArchive()
-        .isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getHash())) {
-      return Optional.of(RpcErrorType.WORLD_STATE_UNAVAILABLE);
-    }
-    return Optional.empty();
+  @Override
+  protected Object pendingResult(final JsonRpcRequestContext requestContext) {
+    final JsonCallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
+    final var validationParams = getTransactionValidationParams(jsonCallParameter);
+    final var maybeStateOverrides = getAddressAccountOverrideMap(requestContext);
+    final var pendingBlockHeader = transactionSimulator.simulatePendingBlockHeader();
+    final TransactionSimulationFunction simulationFunction =
+        (cp, op) ->
+            transactionSimulator.processOnPending(
+                cp, maybeStateOverrides, validationParams, op, pendingBlockHeader);
+    return simulate(
+        requestContext, jsonCallParameter, pendingBlockHeader.getGasLimit(), simulationFunction);
   }
 
   @Override
@@ -95,13 +98,43 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     return resultByBlockHeader(requestContext, jsonCallParameter, maybeBlockHeader.get());
   }
 
-  protected abstract Object resultByBlockHeader(
+  private Object resultByBlockHeader(
       final JsonRpcRequestContext requestContext,
       final JsonCallParameter jsonCallParameter,
-      final BlockHeader blockHeader);
+      final BlockHeader blockHeader) {
+    final var validationParams = getTransactionValidationParams(jsonCallParameter);
+    final var maybeStateOverrides = getAddressAccountOverrideMap(requestContext);
+    final TransactionSimulationFunction simulationFunction =
+        (cp, op) ->
+            transactionSimulator.process(
+                cp, maybeStateOverrides, validationParams, op, blockHeader);
+    return simulate(
+        requestContext, jsonCallParameter, blockHeader.getGasLimit(), simulationFunction);
+  }
 
-  protected CallParameter overrideGasLimitAndPrice(
-      final JsonCallParameter callParams, final long gasLimit) {
+  private Optional<BlockHeader> blockHeader(final long blockNumber) {
+    if (getBlockchainQueries().headBlockNumber() == blockNumber) {
+      // chain head header if cached, and we can return it form memory
+      return Optional.of(getBlockchainQueries().getBlockchain().getChainHeadHeader());
+    }
+    return getBlockchainQueries().getBlockHeaderByNumber(blockNumber);
+  }
+
+  private Optional<RpcErrorType> validateBlockHeader(final Optional<BlockHeader> maybeBlockHeader) {
+    if (maybeBlockHeader.isEmpty()) {
+      return Optional.of(RpcErrorType.BLOCK_NOT_FOUND);
+    }
+
+    final var blockHeader = maybeBlockHeader.get();
+    if (!getBlockchainQueries()
+        .getWorldStateArchive()
+        .isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getHash())) {
+      return Optional.of(RpcErrorType.WORLD_STATE_UNAVAILABLE);
+    }
+    return Optional.empty();
+  }
+
+  protected CallParameter overrideGasLimit(final CallParameter callParams, final long gasLimit) {
     return new CallParameter(
         callParams.getChainId(),
         callParams.getFrom(),
@@ -142,7 +175,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     final ValidationResult<TransactionInvalidReason> validationResult =
         result.getValidationResult();
     if (validationResult != null && !validationResult.isValid()) {
-      if (validationResult.getErrorMessage().length() > 0) {
+      if (!validationResult.getErrorMessage().isEmpty()) {
         return errorResponse(request, JsonRpcError.from(validationResult));
       }
       return errorResponse(
@@ -169,5 +202,30 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   protected JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
     return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
+  }
+
+  protected static TransactionValidationParams getTransactionValidationParams(
+      final JsonCallParameter callParams) {
+    final boolean isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
+
+    return isAllowExceedingBalance
+        ? TransactionValidationParams.transactionSimulatorAllowExceedingBalance()
+        : TransactionValidationParams.transactionSimulator();
+  }
+
+  @VisibleForTesting
+  protected Optional<AccountOverrideMap> getAddressAccountOverrideMap(
+      final JsonRpcRequestContext request) {
+    try {
+      return request.getOptionalParameter(2, AccountOverrideMap.class);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcRequestException(
+          "Invalid account overrides parameter (index 2)", RpcErrorType.INVALID_CALL_PARAMS, e);
+    }
+  }
+
+  protected interface TransactionSimulationFunction {
+    Optional<TransactionSimulatorResult> simulate(
+        CallParameter callParams, OperationTracer operationTracer);
   }
 }
