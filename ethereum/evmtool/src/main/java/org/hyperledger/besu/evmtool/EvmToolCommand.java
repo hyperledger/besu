@@ -200,6 +200,13 @@ public class EvmToolCommand implements Runnable {
   final Boolean showJsonAlloc = false;
 
   @Option(
+      names = {"--eip-3155", "--trace.eip-3155"},
+      description = "Produce a trace with types strictly compatible with EIP-3155.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean eip3155strict = false;
+
+  @Option(
       names = {"--memory", "--trace.memory"},
       description =
           "Show the full memory output in tracing for each op. Default is not to show memory.",
@@ -444,7 +451,8 @@ public class EvmToolCommand implements Runnable {
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
-                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData, showStorage)
+                ? new StandardJsonTracer(
+                    out, showMemory, !hideStack, showReturnData, showStorage, eip3155strict)
                 : OperationTracer.NO_TRACING;
 
         WorldUpdater updater = component.getWorldUpdater();
