@@ -11,9 +11,9 @@
   ],
   "stdin": "",
   "stdout": [
-    {"pc":0,"op":65,"gas":"0x2540be400","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"COINBASE"},
-    {"pc":1,"op":49,"gas":"0x2540be3fe","gasCost":"0x64","memSize":0,"stack":["0x4444588443c3a91288c5002483449aba1054192b"],"depth":1,"refund":0,"opName":"BALANCE"},
-    {"pc":2,"op":255,"gas":"0x2540be39a","gasCost":"0x1db0","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"SELFDESTRUCT"},
+    {"pc":0,"op":"0x41","gas":10000000000,"gasCost":2,"memSize":0,"stack":[],"depth":1,"refund":0,"opName":"COINBASE"},
+    {"pc":1,"op":"0x31","gas":9999999998,"gasCost":100,"memSize":0,"stack":["0x4444588443c3a91288c5002483449aba1054192b"],"depth":1,"refund":0,"opName":"BALANCE"},
+    {"pc":2,"op":"0xff","gas":9999999898,"gasCost":7600,"memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"SELFDESTRUCT"},
     {"stateRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","output":"0x","gasUsed":"0x1e16","pass":true,"fork":"Shanghai"}
   ]
 }
