@@ -66,6 +66,12 @@ public class TransactionAdapter extends AdapterBase {
     this.transactionWithMetadata = transactionWithMetadata;
   }
 
+  /**
+   * Constructs a new TransactionAdapter object with receipt.
+   *
+   * @param transactionWithMetadata the TransactionWithMetadata object to adapt.
+   * @param transactionReceiptWithMetadata the TransactionReceiptWithMetadata object to adapt.
+   */
   public TransactionAdapter(
       final @Nonnull TransactionWithMetadata transactionWithMetadata,
       final @Nullable TransactionReceiptWithMetadata transactionReceiptWithMetadata) {
@@ -73,6 +79,12 @@ public class TransactionAdapter extends AdapterBase {
     this.transactionReceiptWithMetadata = Optional.ofNullable(transactionReceiptWithMetadata);
   }
 
+  /**
+   * Reurns the receipt of the transaction.
+   *
+   * @param environment the data fetching environment.
+   * @return the receipt of the transaction.
+   */
   private Optional<TransactionReceiptWithMetadata> getReceipt(
       final DataFetchingEnvironment environment) {
     if (transactionReceiptWithMetadata == null) {
