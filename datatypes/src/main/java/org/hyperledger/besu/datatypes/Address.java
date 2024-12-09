@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -290,5 +291,17 @@ public class Address extends DelegatingBytes {
     } catch (ExecutionException e) {
       return Hash.hash(this);
     }
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (!(obj instanceof Address)) {
+      return false;
+    }
+    Address other = (Address) obj;
+    return Arrays.equals(this.toArray(), other.toArray());
   }
 }
