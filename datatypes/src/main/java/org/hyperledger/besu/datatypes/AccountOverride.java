@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.datatypes;
 
+import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,7 +23,6 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,8 +111,8 @@ public class AccountOverride {
      * @param nonce the nonce override in hex
      * @return the builder
      */
-    public Builder withNonce(final String nonce) {
-      this.nonce = Optional.of(Bytes.fromHexStringLenient(nonce).toLong());
+    public Builder withNonce(final UnsignedLongParameter nonce) {
+      this.nonce = Optional.of(nonce.getValue());
       return this;
     }
 
