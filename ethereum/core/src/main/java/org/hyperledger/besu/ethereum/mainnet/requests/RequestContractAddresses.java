@@ -23,7 +23,7 @@ public class RequestContractAddresses {
   private final Address consolidationRequestContractAddress;
 
   public static final Address DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS =
-      Address.fromHexString("0x09FC772D0857550724B07B850A4323F39112AAAA");
+      Address.fromHexString("0x0c15F14308530b7CDB8460094BbB9cC28b9AaaAA");
   public static final Address DEFAULT_CONSOLIDATION_REQUEST_CONTRACT_ADDRESS =
       Address.fromHexString("0x01ABEA29659E5E97C95107F20BB753CD3E09BBBB");
   public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
