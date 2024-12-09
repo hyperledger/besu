@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -65,16 +64,14 @@ public class BlockSimulator {
   private final MiningConfiguration miningConfiguration;
 
   public BlockSimulator(
-      final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final long rpcGasCap,
+      final TransactionSimulator transactionSimulator,
       final MiningConfiguration miningConfiguration) {
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
     this.miningConfiguration = miningConfiguration;
-    this.transactionSimulator =
-        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, rpcGasCap);
+    this.transactionSimulator = transactionSimulator;
   }
 
   public List<BlockSimulationResult> process(

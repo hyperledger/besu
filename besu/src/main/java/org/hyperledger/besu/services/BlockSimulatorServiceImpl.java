@@ -17,13 +17,13 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Transaction;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 import org.hyperledger.besu.ethereum.transaction.BlockStateCall;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -39,13 +39,12 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
 
   public BlockSimulatorServiceImpl(
       final WorldStateArchive worldStateArchive,
-      final MutableBlockchain blockchain,
       final MiningConfiguration miningConfiguration,
-      final ProtocolSchedule protocolSchedule,
-      final long rpcGasCap) {
+      final TransactionSimulator transactionSimulator,
+      final ProtocolSchedule protocolSchedule) {
     blockSimulator =
         new BlockSimulator(
-            blockchain, worldStateArchive, protocolSchedule, rpcGasCap, miningConfiguration);
+            worldStateArchive, protocolSchedule, transactionSimulator, miningConfiguration);
     this.worldStateArchive = worldStateArchive;
   }
 

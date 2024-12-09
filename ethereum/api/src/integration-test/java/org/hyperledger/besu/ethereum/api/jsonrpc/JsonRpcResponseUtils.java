@@ -107,9 +107,9 @@ public class JsonRpcResponseUtils {
         values.containsKey(WITHDRAWALS_ROOT) ? hash(values.get(WITHDRAWALS_ROOT)) : null;
     final Hash requestsHash =
         values.containsKey(REQUESTS_HASH) ? hash(values.get(REQUESTS_HASH)) : null;
-    final UInt64 targetBlobCount =
-        values.containsKey(JsonRpcResponseKey.TARGET_BLOB_COUNT)
-            ? UInt64.fromHexString(values.get(JsonRpcResponseKey.TARGET_BLOB_COUNT))
+    final UInt64 targetBlobsPerBlock =
+        values.containsKey(JsonRpcResponseKey.TARGET_BLOBS_PER_BLOCK)
+            ? UInt64.fromHexString(values.get(JsonRpcResponseKey.TARGET_BLOBS_PER_BLOCK))
             : null;
     final List<JsonNode> ommers = new ArrayList<>();
 
@@ -136,7 +136,7 @@ public class JsonRpcResponseUtils {
             null, // ToDo 4844: set with the value of excess_blob_gas field
             null, // TODO 4788: set with the value of the parent beacon block root field
             requestsHash,
-            targetBlobCount,
+            targetBlobsPerBlock,
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(

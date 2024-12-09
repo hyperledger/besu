@@ -214,7 +214,7 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
 
   @Override
   public CodeDelegationSignature createCodeDelegationSignature(
-      final BigInteger r, final BigInteger s, final BigInteger yParity) {
+      final BigInteger r, final BigInteger s, final byte yParity) {
     return CodeDelegationSignature.create(r, s, yParity);
   }
 

@@ -20,7 +20,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.encoding.CodeDelegationEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.CodeDelegationTransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
@@ -140,7 +140,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
 
   private Optional<Address> computeAuthority() {
     BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    CodeDelegationEncoder.encodeSingleCodeDelegationWithoutSignature(this, rlpOutput);
+    CodeDelegationTransactionEncoder.encodeSingleCodeDelegationWithoutSignature(this, rlpOutput);
 
     final Hash hash = Hash.hash(Bytes.concatenate(MAGIC, rlpOutput.encoded()));
 

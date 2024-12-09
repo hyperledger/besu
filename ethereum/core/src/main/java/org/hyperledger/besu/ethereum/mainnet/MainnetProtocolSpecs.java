@@ -18,6 +18,8 @@ import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsProc
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
@@ -80,6 +82,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonArray;
 
@@ -88,6 +92,9 @@ public abstract class MainnetProtocolSpecs {
 
   private static final Address RIPEMD160_PRECOMPILE =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   // A consensus bug at Ethereum mainnet transaction 0xcf416c53
   // deleted an empty account even when the message execution scope
@@ -714,7 +721,8 @@ public abstract class MainnetProtocolSpecs {
                     evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559(),
-                    new CodeDelegationProcessor(chainId)))
+                    new CodeDelegationProcessor(
+                        chainId, SIGNATURE_ALGORITHM.get().getHalfCurveOrder())))
         // change to check for max blob gas per block for EIP-4844
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->

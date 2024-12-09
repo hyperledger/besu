@@ -1302,10 +1302,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         BlockSimulationService.class,
         new BlockSimulatorServiceImpl(
             besuController.getProtocolContext().getWorldStateArchive(),
-            besuController.getProtocolContext().getBlockchain(),
             miningParametersSupplier.get(),
-            besuController.getProtocolSchedule(),
-            apiConfigurationSupplier.get().getGasCap()));
+            besuController.getTransactionSimulator(),
+            besuController.getProtocolSchedule()));
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
