@@ -21,6 +21,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,11 +107,11 @@ public class AccountOverride {
     /**
      * Sets the nonce override
      *
-     * @param nonce the nonce override
+     * @param nonce the nonce override in hex
      * @return the builder
      */
-    public Builder withNonce(final Long nonce) {
-      this.nonce = Optional.ofNullable(nonce);
+    public Builder withNonce(final String nonce) {
+      this.nonce = Optional.of(Bytes.fromHexStringLenient(nonce).toLong());
       return this;
     }
 
