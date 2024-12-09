@@ -106,10 +106,12 @@ public class LimitConnectionsGraphQLHttpServiceTest {
 
     OkHttpClient newClient = new OkHttpClient();
     int i;
+    Response resp;
     for (i = 0; i < maxConnections; i++) {
       // create a new client for each request because we want to test the limit
-      try (final Response resp = newClient.newCall(buildRequest()).execute()) {
-        assertThat(resp.code()).isEqualTo(200);
+      try (final Response thisResp = newClient.newCall(buildRequest()).execute()) {
+        assertThat(thisResp.code()).isEqualTo(200);
+        resp = thisResp;
       }
       // new client for each request so that connection does NOT get reused
       newClient = new OkHttpClient();
@@ -123,6 +125,11 @@ public class LimitConnectionsGraphQLHttpServiceTest {
     assertThatThrownBy(() -> newClient2.newCall(buildRequest()).execute())
         .isInstanceOf(IOException.class)
         .hasStackTraceContaining("unexpected end of stream");
+    
+    resp.body().close();
+    try (final Response thisResp = newClient.newCall(buildRequest()).execute()) {
+      assertThat(thisResp.code()).isEqualTo(200);
+    }
   }
 
   private Request buildRequest() {
