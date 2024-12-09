@@ -18,6 +18,7 @@
 ### Additions and Improvements
 
 ### Bug fixes
+- Fix possible incomplete txpool restore from dump file [#7991](https://github.com/hyperledger/besu/pull/7991)
 
 ## 24.12.0
 
