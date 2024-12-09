@@ -34,6 +34,6 @@ public class BLS12G1MultiExpPrecompiledContract extends AbstractBLS12Precompiled
   @Override
   public long gasRequirement(final Bytes input) {
     final int k = input.size() / PARAMETER_LENGTH;
-    return 12L * k * getDiscount(k);
+    return 12L * k * getG1Discount(k);
   }
 }
