@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum;
 /** The GasLimitCalculator interface defines methods for calculating the gas limit. */
 public interface GasLimitCalculator {
 
+  // TODO SLD - MAX_BLOB_GAS_PER_BLOCK - remove any related logic for EIP-7742?
   /** The constant BLOB_GAS_LIMIT represents the gas limit for blob data. */
   long BLOB_GAS_LIMIT = 786432;
 
@@ -45,6 +46,7 @@ public interface GasLimitCalculator {
    *
    * @return the current blob gas limit
    */
+  // TODO SLD skip MAX_BLOB_GAS_PER_BLOCK logic?
   default long currentBlobGasLimit() {
     return BLOB_GAS_LIMIT;
   }

@@ -25,7 +25,9 @@ import org.slf4j.LoggerFactory;
 
 public class CancunFeeMarket extends LondonFeeMarket {
   private static final Logger LOG = LoggerFactory.getLogger(CancunFeeMarket.class);
+  // TODO SLD MIN_BLOB_GASPRICE?
   private static final BigInteger BLOB_GAS_PRICE = BigInteger.ONE;
+  // TODO SLD EIP-7742?
   private static final BigInteger BLOB_GAS_PRICE_UPDATE_FRACTION = BigInteger.valueOf(3338477);
 
   public CancunFeeMarket(
@@ -38,6 +40,7 @@ public class CancunFeeMarket extends LondonFeeMarket {
     return true;
   }
 
+  // TODO SLD calculate_blob_gas_price (aka get_base_fee_per_blob_gas)
   @Override
   public Wei blobGasPricePerGas(final BlobGas excessBlobGas) {
     final var blobGasPrice =

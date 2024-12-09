@@ -158,6 +158,7 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
             1L,
             false,
             miningOn.parentHeader);
@@ -172,6 +173,7 @@ abstract class AbstractBlockCreatorTest {
     final AbstractBlockCreator blockCreator = miningOn.blockCreator;
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
+            Optional.empty(),
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
@@ -200,6 +202,7 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
             1L,
             false,
             miningOn.parentHeader);
@@ -222,6 +225,7 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             Optional.of(withdrawals),
+            Optional.empty(),
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
@@ -255,6 +259,7 @@ abstract class AbstractBlockCreatorTest {
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
             Optional.of(List.of(fullOfBlobs)),
+            Optional.empty(),
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),

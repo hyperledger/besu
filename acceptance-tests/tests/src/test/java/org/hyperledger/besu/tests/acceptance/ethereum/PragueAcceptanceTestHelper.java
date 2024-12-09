@@ -136,7 +136,7 @@ public class PragueAcceptanceTestHelper {
     String forkChoiceRequest =
         "{"
             + "  \"jsonrpc\": \"2.0\","
-            + "  \"method\": \"engine_forkchoiceUpdatedV3\","
+            + "  \"method\": \"engine_forkchoiceUpdatedV4\","
             + "  \"params\": ["
             + "    {"
             + "      \"headBlockHash\": \""
@@ -161,7 +161,7 @@ public class PragueAcceptanceTestHelper {
               + "      \"withdrawals\": [],"
               + "      \"parentBeaconBlockRoot\": \"0x0000000000000000000000000000000000000000000000000000000000000000\","
               + "      \"targetBlobsPerBlock\": \"0x3\","
-              + "      \"maxBlobsPerBlock\": \"0x6\""
+              + "      \"maxBlobsPerBlock\": \"0x9\""
               + "    }";
     }
 

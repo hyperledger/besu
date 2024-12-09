@@ -293,6 +293,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                   eq(Optional.empty()),
                   eq(Optional.empty()),
                   eq(Optional.empty()),
+                  eq(Optional.empty()),
                   any());
           return beingSpiedOn;
         };

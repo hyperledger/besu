@@ -777,6 +777,8 @@ public abstract class MainnetProtocolSpecs {
     RequestContractAddresses requestContractAddresses =
         RequestContractAddresses.fromGenesis(genesisConfigOptions);
 
+    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+
     return cancunDefinition(
             chainId,
             enableRevertReason,
@@ -785,8 +787,13 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        // EIP-3074 AUTH and AUTCALL gas
+        // EIP-3074 AUTH and AUTCALL gas / EIP-7742 Dynamic blob target
         .gasCalculator(PragueGasCalculator::new)
+        // gas limit calculator supporting EIP-7742 dynamic max blob per block
+        .gasLimitCalculatorBuilder(
+            feeMarket ->
+                new PragueTargetingGasLimitCalculator(
+                    londonForkBlockNumber, (BaseFeeMarket) feeMarket))
         // EIP-3074 AUTH and AUTHCALL
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->

@@ -229,6 +229,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
     if (transaction.getType().supportsBlob()) {
       final long txTotalBlobGas = gasCalculator.blobGasCost(transaction.getBlobCount());
+      // TODO SLD skip MAX_BLOB_GAS_PER_BLOCK logic?
       if (txTotalBlobGas > gasLimitCalculator.currentBlobGasLimit()) {
         return ValidationResult.invalid(
             TransactionInvalidReason.TOTAL_BLOB_GAS_TOO_HIGH,
