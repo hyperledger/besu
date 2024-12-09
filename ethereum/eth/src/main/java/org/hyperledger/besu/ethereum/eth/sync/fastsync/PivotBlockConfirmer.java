@@ -169,9 +169,11 @@ class PivotBlockConfirmer {
       pivotHeaderFuture =
           ethContext
               .getEthPeers()
-              .waitForPeer((peer) -> peer.chainState().getEstimatedHeight() >= blockNumber
-                      && peer.isFullyValidated()
-                      && !pivotBlockQueriesByPeerId.keySet().contains(peer.nodeId()))
+              .waitForPeer(
+                  (peer) ->
+                      peer.chainState().getEstimatedHeight() >= blockNumber
+                          && peer.isFullyValidated()
+                          && !pivotBlockQueriesByPeerId.keySet().contains(peer.nodeId()))
               .orTimeout(5, TimeUnit.SECONDS)
               .thenCompose(res -> executePivotQuery(blockNumber));
     }
