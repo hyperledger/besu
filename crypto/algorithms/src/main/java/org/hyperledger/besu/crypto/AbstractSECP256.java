@@ -233,6 +233,11 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
     return PROVIDER;
   }
 
+  @Override
+  public ECDomainParameters getCurve() {
+    return curve;
+  }
+
   /**
    * Gets K calculator.
    *
