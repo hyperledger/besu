@@ -169,9 +169,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
               }
 
               preloadedHashers.put(
-                  accountKey,
-                  trieKeyPreloader.createPreloadedHasher(
-                      accountKey, accountKeyIds, storageKeyIds, codeKeyIds));
+                  accountKey, trieKeyPreloader.createPreloadedHasher(storageKeyIds, codeKeyIds));
             });
 
     for (final Address accountKey : addressesToPersist) {
