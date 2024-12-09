@@ -19,10 +19,16 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.checkerframework.checker.signedness.qual.Unsigned;
 
+/** A parameter that represents an unsigned long value. */
 public class UnsignedLongParameter {
 
   @Unsigned private final long value;
 
+  /**
+   * Create a new UnsignedLongParameter
+   *
+   * @param value the value
+   */
   @JsonCreator
   public UnsignedLongParameter(final String value) {
     checkArgument(value != null);
@@ -33,11 +39,21 @@ public class UnsignedLongParameter {
     }
   }
 
+  /**
+   * Create a new UnsignedLongParameter
+   *
+   * @param value the value
+   */
   @JsonCreator
   public UnsignedLongParameter(final @Unsigned long value) {
     this.value = value;
   }
 
+  /**
+   * Get the value of the parameter
+   *
+   * @return the value
+   */
   public @Unsigned long getValue() {
     return value;
   }

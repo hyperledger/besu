@@ -17,15 +17,26 @@ package org.hyperledger.besu.datatypes.parameters;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** A parameter that represents a UInt256 value. */
 public class UInt256Parameter {
 
   private final UInt256 value;
 
+  /**
+   * Create a new UInt256Parameter
+   *
+   * @param value the value
+   */
   @JsonCreator
   public UInt256Parameter(final String value) {
     this.value = UInt256.fromHexString(value);
   }
 
+  /**
+   * Get the value
+   *
+   * @return the value
+   */
   public UInt256 getValue() {
     return value;
   }
