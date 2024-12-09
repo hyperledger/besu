@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -359,14 +358,9 @@ public class BlockAdapterBase extends AdapterBase {
             data,
             Optional.empty());
 
-    ImmutableTransactionValidationParams.Builder transactionValidationParams =
-        ImmutableTransactionValidationParams.builder()
-            .from(TransactionValidationParams.transactionSimulator());
-    transactionValidationParams.isAllowExceedingBalance(true);
-
     return transactionSimulator.process(
         param,
-        transactionValidationParams.build(),
+        TransactionValidationParams.transactionSimulatorAllowExceedingBalance(),
         OperationTracer.NO_TRACING,
         (mutableWorldState, transactionSimulatorResult) ->
             transactionSimulatorResult.map(
