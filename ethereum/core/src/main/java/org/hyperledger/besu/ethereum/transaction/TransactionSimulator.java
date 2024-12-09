@@ -348,31 +348,6 @@ public class TransactionSimulator {
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
       final BlockHeader header,
-      final WorldUpdater updater) {
-
-    Address miningBeneficiary =
-        protocolSchedule
-            .getByBlockHeader(header)
-            .getMiningBeneficiaryCalculator()
-            .calculateBeneficiary(header);
-
-    return processWithWorldUpdater(
-        callParams,
-        maybeStateOverrides,
-        transactionValidationParams,
-        operationTracer,
-        header,
-        updater,
-        miningBeneficiary);
-  }
-
-  @Nonnull
-  public Optional<TransactionSimulatorResult> processWithWorldUpdater(
-      final CallParameter callParams,
-      final Optional<AccountOverrideMap> maybeStateOverrides,
-      final TransactionValidationParams transactionValidationParams,
-      final OperationTracer operationTracer,
-      final BlockHeader header,
       final WorldUpdater updater,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator) {
 

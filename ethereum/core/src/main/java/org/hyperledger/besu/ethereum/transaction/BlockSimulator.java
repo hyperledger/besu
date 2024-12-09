@@ -74,6 +74,13 @@ public class BlockSimulator {
     this.transactionSimulator = transactionSimulator;
   }
 
+  /**
+   * Processes a list of BlockStateCalls sequentially, collecting the results.
+   *
+   * @param header The block header for all simulations.
+   * @param blockStateCalls The list of BlockStateCalls to process.
+   * @return A list of BlockSimulationResult objects from processing each BlockStateCall.
+   */
   public List<BlockSimulationResult> process(
       final BlockHeader header, final List<? extends BlockStateCall> blockStateCalls) {
     try (final MutableWorldState ws =
@@ -110,6 +117,14 @@ public class BlockSimulator {
     return simulationResults;
   }
 
+  /**
+   * Processes a single BlockStateCall, simulating the block execution.
+   *
+   * @param header The block header for the simulation.
+   * @param blockStateCall The BlockStateCall to process.
+   * @param ws The MutableWorldState to use for the simulation.
+   * @return A BlockSimulationResult from processing the BlockStateCall.
+   */
   private BlockSimulationResult processWithMutableWorldState(
       final BlockHeader header, final BlockStateCall blockStateCall, final MutableWorldState ws) {
     BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
@@ -121,14 +136,7 @@ public class BlockSimulator {
     BlockHeader blockHeader = applyBlockHeaderOverrides(header, newProtocolSpec, blockOverrides);
 
     // Apply state overrides
-    blockStateCall
-        .getAccountOverrides()
-        .ifPresent(
-            overrides -> {
-              var updater = ws.updater();
-              applyStateOverrides(overrides, updater);
-              updater.commit();
-            });
+    blockStateCall.getAccountOverrides().ifPresent(overrides -> applyStateOverrides(overrides, ws));
 
     long currentGasUsed = 0;
     final var transactionReceiptFactory = newProtocolSpec.getTransactionReceiptFactory();
@@ -145,7 +153,7 @@ public class BlockSimulator {
       final Optional<TransactionSimulatorResult> transactionSimulatorResult =
           transactionSimulator.processWithWorldUpdater(
               callParameter,
-              Optional.empty(),
+              Optional.empty(), // We have already applied state overrides on block level
               buildTransactionValidationParams(blockStateCall.isValidate()),
               OperationTracer.NO_TRACING,
               blockHeader,
@@ -191,9 +199,17 @@ public class BlockSimulator {
     return new BlockSimulationResult(block, receipts, transactionSimulations);
   }
 
+  /**
+   * Applies state overrides to the world state.
+   *
+   * @param accountOverrideMap The AccountOverrideMap containing the state overrides.
+   * @param ws The MutableWorldState to apply the overrides to.
+   */
   private void applyStateOverrides(
-      final AccountOverrideMap accountOverrideMap, final WorldUpdater updater) {
+      final AccountOverrideMap accountOverrideMap, final MutableWorldState ws) {
+    var updater = ws.updater();
     for (Address accountToOverride : accountOverrideMap.keySet()) {
+
       final AccountOverride override = accountOverrideMap.get(accountToOverride);
       MutableAccount account = updater.getOrCreate(accountToOverride);
       override.getNonce().ifPresent(account::setNonce);
@@ -210,8 +226,17 @@ public class BlockSimulator {
                           account.setStorageValue(
                               UInt256.fromHexString(key), UInt256.fromHexString(value))));
     }
+    updater.commit();
   }
 
+  /**
+   * Applies block header overrides to the block header.
+   *
+   * @param header The original block header.
+   * @param newProtocolSpec The ProtocolSpec for the block.
+   * @param blockOverrides The BlockOverrides to apply.
+   * @return The modified block header.
+   */
   private BlockHeader applyBlockHeaderOverrides(
       final BlockHeader header,
       final ProtocolSpec newProtocolSpec,
@@ -245,6 +270,17 @@ public class BlockSimulator {
         .buildBlockHeader();
   }
 
+  /**
+   * Creates the final block header after applying state changes and transaction processing.
+   *
+   * @param blockHeader The original block header.
+   * @param ws The MutableWorldState after applying state overrides.
+   * @param transactions The list of transactions in the block.
+   * @param blockOverrides The BlockOverrides to apply.
+   * @param receipts The list of transaction receipts.
+   * @param currentGasUsed The total gas used in the block.
+   * @return The final block header.
+   */
   private BlockHeader createFinalBlockHeader(
       final BlockHeader blockHeader,
       final MutableWorldState ws,
@@ -269,6 +305,12 @@ public class BlockSimulator {
         .buildBlockHeader();
   }
 
+  /**
+   * Builds the TransactionValidationParams for the block simulation.
+   *
+   * @param shouldValidate Whether to validate transactions.
+   * @return The TransactionValidationParams for the block simulation.
+   */
   private ImmutableTransactionValidationParams buildTransactionValidationParams(
       final boolean shouldValidate) {
 
