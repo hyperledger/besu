@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-- [ ] Confirm anything outstanding for release with other maintainers on #besu-release in Discord
+- [ ] Confirm at least 24 hours prior anything outstanding for release with other maintainers on #besu-release in Discord
 - [ ] Update changelog if necessary, and merge a PR for it to main
   - [ ] Notify maintainers about updating changelog for in-flight PRs 
 - [ ] Optional: for hotfixes, create a release branch and cherry-pick, e.g. `release-<version>-hotfix`
