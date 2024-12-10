@@ -16,6 +16,7 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Retrieve all transaction receipts for a block in one request [#6646](https://github.com/hyperledger/besu/pull/6646)
 
 ### Bug fixes
 
