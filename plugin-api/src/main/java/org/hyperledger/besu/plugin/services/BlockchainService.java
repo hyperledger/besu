@@ -59,7 +59,8 @@ public interface BlockchainService extends BesuService {
    * @param blockBody the block body
    * @param receipts the transaction receipts
    */
-  void storeBlock(BlockHeader blockHeader, BlockBody blockBody, List<TransactionReceipt> receipts);
+  void storeBlock(
+      BlockHeader blockHeader, BlockBody blockBody, List<? extends TransactionReceipt> receipts);
 
   /**
    * Get the block header of the chain head
