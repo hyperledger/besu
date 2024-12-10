@@ -14,32 +14,15 @@
  */
 package org.hyperledger.besu.cli;
 
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 public class HostAllowlistOptionsTest extends CommandTestAbstract {
 
-  /** test deprecated CLI option * */
-  @Deprecated
-  @Test
-  public void rpcHttpHostWhitelistAcceptsSingleArgument() {
-    parseCommand("--host-whitelist", "a");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(1);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a");
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
-        .doesNotContain("localhost");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
 
   @Test
   public void rpcHttpHostAllowlistAcceptsSingleArgument() {
@@ -89,22 +72,7 @@ public class HostAllowlistOptionsTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Deprecated
-  @Test
-  public void rpcHttpHostWhitelistAllowlistAcceptsMultipleFlags() {
-    parseCommand("--host-whitelist=a", "--host-allowlist=b");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(2);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a", "b");
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
-        .doesNotContain("*", "localhost");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
+ 
 
   @Test
   public void rpcHttpHostAllowlistAcceptsMultipleFlags() {
