@@ -34,7 +34,8 @@ public class PermissioningServiceImpl implements PermissioningService {
 
   private final List<NodeConnectionPermissioningProvider> connectionPermissioningProviders =
       Lists.newArrayList();
-  private final List<TransactionPermissioningProvider> transactionPermissioningProviders = new ArrayList<>();
+  private final List<TransactionPermissioningProvider> transactionPermissioningProviders =
+      new ArrayList<>();
 
   /** Default Constructor. */
   @Inject

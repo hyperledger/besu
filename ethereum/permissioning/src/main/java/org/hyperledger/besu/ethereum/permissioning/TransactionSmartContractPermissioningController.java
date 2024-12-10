@@ -21,13 +21,13 @@ import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.datatypes.Transaction;
-import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -197,13 +197,14 @@ public class TransactionSmartContractPermissioningController
   private static Bytes encodeTransaction(final Transaction transaction) {
     return Bytes.concatenate(
         encodeAddress(transaction.getSender()),
-            encodeAddress(transaction.getTo().map(Address.class::cast)),
+        encodeAddress(transaction.getTo().map(Address.class::cast)),
         convertQuantityToBytes(transaction.getValue()),
-            transaction.getGasPrice()
-                    .map(price -> (BaseUInt256Value) price)
-                    .map(BaseUInt256Value::toBytes)
-                    .orElse(Bytes32.ZERO),
-    encodeLong(transaction.getGasLimit()),
+        transaction
+            .getGasPrice()
+            .map(price -> (BaseUInt256Value) price)
+            .map(BaseUInt256Value::toBytes)
+            .orElse(Bytes32.ZERO),
+        encodeLong(transaction.getGasLimit()),
         encodeBytes(transaction.getPayload()));
   }
 

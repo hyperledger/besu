@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.plugin.services;
 
-import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 
 /**
  * This service allows plugins to decide who you should connect to and what you should send them.

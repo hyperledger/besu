@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
@@ -26,8 +28,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class PermissioningPluginTest extends AcceptanceTestBase {
   private BesuNode minerNode;
