@@ -18,17 +18,13 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.assertj.core.internal.Diff;
 import org.hyperledger.besu.datatypes.AccountOverride;
 import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Address;
@@ -41,22 +37,17 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -84,7 +75,7 @@ public class BlockSimulatorTest {
   @Mock private TransactionSimulator transactionSimulator;
   @Mock private MiningConfiguration miningConfiguration;
   @Mock private MutableWorldState mutableWorldState;
-  @Mock private BlockHeader blockHeader;
+  private BlockHeader blockHeader;
 
   private BlockSimulator blockSimulator;
 
@@ -95,17 +86,19 @@ public class BlockSimulatorTest {
             worldStateArchive, protocolSchedule, transactionSimulator, miningConfiguration);
     blockHeader = BlockHeaderBuilder.createDefault().buildBlockHeader();
     ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-    when(miningConfiguration.getCoinbase()).thenReturn(Optional.ofNullable(Address.fromHexString("0x1")));
+    when(miningConfiguration.getCoinbase())
+        .thenReturn(Optional.ofNullable(Address.fromHexString("0x1")));
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
-    when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(mock(MiningBeneficiaryCalculator.class));
+    when(protocolSpec.getMiningBeneficiaryCalculator())
+        .thenReturn(mock(MiningBeneficiaryCalculator.class));
     GasLimitCalculator gasLimitCalculator = mock(GasLimitCalculator.class);
     when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
-    when(gasLimitCalculator.nextGasLimit( anyLong(),  anyLong(), anyLong())).thenReturn(1L);
+    when(gasLimitCalculator.nextGasLimit(anyLong(), anyLong(), anyLong())).thenReturn(1L);
     when(protocolSpec.getFeeMarket()).thenReturn(mock(FeeMarket.class));
   }
 
   @Test
-  public void testProcessWithValidWorldState() {
+  public void shouldProcessWithValidWorldState() {
     when(worldStateArchive.getMutable(any(BlockHeader.class), eq(false)))
         .thenReturn(Optional.of(mutableWorldState));
 
@@ -117,68 +110,63 @@ public class BlockSimulatorTest {
   }
 
   @Test
-  public void testProcessWithInvalidWorldState() {
+  public void shouldNotProcessWithInvalidWorldState() {
     when(worldStateArchive.getMutable(any(BlockHeader.class), eq(false)))
         .thenReturn(Optional.empty());
-    when(blockHeader.toLogString()).thenReturn("1");
 
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
             () -> blockSimulator.process(blockHeader, Collections.emptyList()));
 
-    assertEquals("Public world state not available for block 1", exception.getMessage());
+    assertEquals(
+      String.format("Public world state not available for block %s", blockHeader.toLogString()), exception.getMessage());
   }
 
-
   @Test
-  public void shouldStopBlockSimulationWhenTransactionSimulationIsInvalid() {
+  public void shouldStopWhenTransactionSimulationIsInvalid() {
 
     CallParameter callParameter = mock(CallParameter.class);
     BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null, true);
 
     TransactionSimulatorResult transactionSimulatorResult = mock(TransactionSimulatorResult.class);
-
-    TransactionProcessingResult transactionProcessingResult = mock(TransactionProcessingResult.class);
-    when(transactionSimulatorResult.result()).thenReturn(transactionProcessingResult);
-    when(transactionProcessingResult.isInvalid()).thenReturn(true);
-    when(transactionSimulatorResult.getValidationResult()).thenReturn(ValidationResult.invalid());
-
-    when(worldStateArchive.getMutable(any(BlockHeader.class), eq(false)))
-        .thenReturn(Optional.of(mutableWorldState));
-    when(transactionSimulator.processWithWorldUpdater(
-      any(),
-      any(),
-      any(),
-      any(),
-      any(),
-      any(),
-      any(MiningBeneficiaryCalculator.class)))
-      .thenReturn(Optional.of(transactionSimulatorResult));
+    when(transactionSimulatorResult.isInvalid()).thenReturn(true);
+    when(transactionSimulatorResult.getInvalidReason())
+        .thenReturn(Optional.of("Invalid Transaction"));
 
     when(transactionSimulator.processWithWorldUpdater(
-      any(),
-      any(),
-      any(),
-      any(),
-      any(),
-      any(),
-      any(MiningBeneficiaryCalculator.class)))
-      .thenReturn(Optional.of(transactionSimulatorResult));
+            any(), any(), any(), any(), any(), any(), any(MiningBeneficiaryCalculator.class)))
+        .thenReturn(Optional.of(transactionSimulatorResult));
 
     BlockSimulationException exception =
-      assertThrows(
-        BlockSimulationException.class,
-        () ->
-          blockSimulator.process(blockHeader, List.of(blockStateCall), mutableWorldState)
-        );
+        assertThrows(
+            BlockSimulationException.class,
+            () -> blockSimulator.process(blockHeader, List.of(blockStateCall), mutableWorldState));
 
-    assertEquals("Public world state not available for block 1", exception.getMessage());
+    assertEquals(
+        "Transaction simulator result is invalid: Invalid Transaction", exception.getMessage());
   }
 
+  @Test
+  public void shouldStopWhenTransactionSimulationIsEmpty() {
+
+    CallParameter callParameter = mock(CallParameter.class);
+    BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null, true);
+
+    when(transactionSimulator.processWithWorldUpdater(
+            any(), any(), any(), any(), any(), any(), any(MiningBeneficiaryCalculator.class)))
+        .thenReturn(Optional.empty());
+
+    BlockSimulationException exception =
+        assertThrows(
+            BlockSimulationException.class,
+            () -> blockSimulator.process(blockHeader, List.of(blockStateCall), mutableWorldState));
+
+    assertEquals("Transaction simulator result is empty", exception.getMessage());
+  }
 
   @Test
-  public void testApplyStateOverrides() {
+  public void shouldApplyStateOverridesCorrectly() {
     AccountOverrideMap accountOverrideMap = mock(AccountOverrideMap.class);
     Address address = mock(Address.class);
     AccountOverride accountOverride = mock(AccountOverride.class);
@@ -207,7 +195,7 @@ public class BlockSimulatorTest {
   }
 
   @Test
-  public void testApplyBlockHeaderOverrides() {
+  public void shouldApplyBlockHeaderOverridesCorrectly() {
     BlockOverrides blockOverrides = mock(BlockOverrides.class);
     ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
 
@@ -217,7 +205,7 @@ public class BlockSimulatorTest {
     var expectedBaseFeePerGas = Optional.of(Wei.of(7L));
     var expectedGasLimit = Optional.of(5L);
     var expectedDifficulty = Optional.of(BigInteger.ONE);
-    var expectedMixHashOrPrevRandao = Optional.of(Hash.hash( Bytes.fromHexString("0x01")));
+    var expectedMixHashOrPrevRandao = Optional.of(Hash.hash(Bytes.fromHexString("0x01")));
     var expectedExtraData = Optional.of(Bytes.fromHexString("0x02"));
 
     when(blockOverrides.getTimestamp()).thenReturn(expectedTimestamp);
@@ -242,39 +230,6 @@ public class BlockSimulatorTest {
     assertEquals(expectedMixHashOrPrevRandao.get(), result.getMixHash());
     assertEquals(expectedExtraData.get(), result.getExtraData());
   }
-
-  /* @Test
-  public void testProcessTransactions() {
-
-    BlockStateCall blockStateCall = mock(BlockStateCall.class);
-    CallParameter callParameter = mock(CallParameter.class);
-    TransactionSimulatorResult transactionSimulatorResult = mock(TransactionSimulatorResult.class);
-    TransactionProcessingResult transactionProcessingResult = mock(TransactionProcessingResult.class);
-    MiningBeneficiaryCalculator miningBeneficiaryCalculator = mock(MiningBeneficiaryCalculator.class);
-    WorldUpdater worldUpdater = mock(WorldUpdater.class);
-
-    when(blockStateCall.getCalls()).thenReturn(List.of(callParameter));
-    when(transactionSimulator.processWithWorldUpdater(
-      eq(callParameter),
-      eq(Optional.empty()),
-      any(TransactionValidationParams.class),
-      eq(OperationTracer.NO_TRACING),
-      eq(blockHeader),
-      any(WorldUpdater.class),
-      eq(miningBeneficiaryCalculator)))
-      .thenReturn(Optional.of(transactionSimulatorResult));
-    when(transactionSimulatorResult.result()).thenReturn(transactionProcessingResult);
-    when(transactionProcessingResult.isInvalid()).thenReturn(false);
-    when(mutableWorldState.updater()).thenReturn(worldUpdater);
-
-    List<TransactionSimulatorResult> results = blockSimulator.processTransactions(
-      blockHeader, blockStateCall, mutableWorldState, miningBeneficiaryCalculator);
-
-    assertNotNull(results);
-    assertEquals(1, results.size());
-    verify(worldUpdater).commit();
-  }*/
-
 
   @Test
   public void testBuildTransactionValidationParams() {

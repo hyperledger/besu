@@ -184,7 +184,7 @@ public class BlockSimulator {
       TransactionSimulatorResult result = transactionSimulatorResult.get();
       if (result.isInvalid()) {
         throw new BlockSimulationException(
-            "Transaction simulator result is invalid: " + result.result().getInvalidReason());
+            "Transaction simulator result is invalid: " + result.getInvalidReason().orElse(null));
       }
       transactionSimulations.add(transactionSimulatorResult.get());
       transactionUpdater.commit();
@@ -294,11 +294,11 @@ public class BlockSimulator {
         .gasLimit(
             blockOverrides
                 .getGasLimit()
-                .orElseGet(()-> getNextGasLimit(newProtocolSpec, header, blockNumber)))
+                .orElseGet(() -> getNextGasLimit(newProtocolSpec, header, blockNumber)))
         .baseFee(
             blockOverrides
                 .getBaseFeePerGas()
-                .orElseGet(()-> getNextBaseFee(newProtocolSpec, header, blockNumber)))
+                .orElseGet(() -> getNextBaseFee(newProtocolSpec, header, blockNumber)))
         .mixHash(blockOverrides.getMixHashOrPrevRandao().orElse(Hash.EMPTY))
         .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
         .blockHeaderFunctions(new SimulatorBlockHeaderFunctions(blockOverrides))
