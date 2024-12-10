@@ -56,7 +56,7 @@ public class Endpoint {
 
     if (discoveryPort.isEmpty()) {
       int defaultPort = EnodeURLImpl.DEFAULT_LISTENING_PORT;
-      log.debug("Discovery disabled for enode {}. Using default port {}.", enode, defaultPort);
+      LOG.debug("Discovery disabled for enode {}. Using default port {}.", enode, defaultPort);
       return new Endpoint(enode.getIp().getHostAddress(), defaultPort, Optional.empty());
     }
 
