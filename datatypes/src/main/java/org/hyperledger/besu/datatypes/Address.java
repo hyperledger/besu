@@ -302,6 +302,6 @@ public class Address extends DelegatingBytes {
       return false;
     }
     Address other = (Address) obj;
-    return Arrays.equals(this.toArray(), other.toArray());
+    return Arrays.equals(this.toArrayUnsafe(), other.toArrayUnsafe());
   }
 }
