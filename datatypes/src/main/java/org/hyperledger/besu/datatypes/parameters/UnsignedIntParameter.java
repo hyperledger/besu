@@ -12,33 +12,45 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
+package org.hyperledger.besu.datatypes.parameters;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import org.checkerframework.checker.signedness.qual.Unsigned;
 
-public class UnsignedLongParameter {
+/** A parameter that represents an unsigned int value. */
+public class UnsignedIntParameter {
 
-  @Unsigned private final long value;
+  private final int value;
 
+  /**
+   * Create a new UnsignedIntParameter
+   *
+   * @param value the value
+   */
   @JsonCreator
-  public UnsignedLongParameter(final String value) {
-    checkArgument(value != null);
-    if (value.startsWith("0x")) {
-      this.value = Long.parseUnsignedLong(value.substring(2), 16);
-    } else {
-      this.value = Long.parseUnsignedLong(value, 16);
-    }
+  public UnsignedIntParameter(final String value) {
+    this.value = Integer.decode(value);
+    checkArgument(this.value >= 0);
   }
 
+  /**
+   * Create a new UnsignedIntParameter
+   *
+   * @param value the value
+   */
   @JsonCreator
-  public UnsignedLongParameter(final @Unsigned long value) {
+  public UnsignedIntParameter(final int value) {
     this.value = value;
+    checkArgument(this.value >= 0);
   }
 
-  public @Unsigned long getValue() {
+  /**
+   * Get the value of the parameter
+   *
+   * @return the value
+   */
+  public int getValue() {
     return value;
   }
 }
