@@ -172,9 +172,10 @@ class PivotBlockConfirmer {
               .waitForPeer(
                   (peer) ->
                       peer.chainState().getEstimatedHeight() >= blockNumber
-                          && peer.isFullyValidated()
-                          && !pivotBlockQueriesByPeerId.keySet().contains(peer.nodeId()))
+                          && !pivotBlockQueriesByPeerId.containsKey(peer.nodeId()))
               .orTimeout(5, TimeUnit.SECONDS)
+              .handle((r, e) -> null) // Ignore result, ensure even a timeout will result in calling
+              // executePivotQuery
               .thenCompose(res -> executePivotQuery(blockNumber));
     }
 
