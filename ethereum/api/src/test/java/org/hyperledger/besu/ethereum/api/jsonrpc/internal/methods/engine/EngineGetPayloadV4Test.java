@@ -112,6 +112,7 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
             Address.fromHexString("0x42"),
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     BlobTestFixture blobTestFixture = new BlobTestFixture();

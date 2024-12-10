@@ -149,7 +149,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
       final Address feeRecipient,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<Bytes32> parentBeaconBlockRoot,
-      final Optional<UInt64> targetBlobsPerBlock) {
+      final Optional<UInt64> targetBlobsPerBlock,
+      final Optional<UInt64> maxBlobsPerBlock) {
     return mergeCoordinator.preparePayload(
         parentHeader,
         timestamp,
@@ -157,7 +158,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
         feeRecipient,
         withdrawals,
         parentBeaconBlockRoot,
-        targetBlobsPerBlock);
+        targetBlobsPerBlock,
+        maxBlobsPerBlock);
   }
 
   @Override

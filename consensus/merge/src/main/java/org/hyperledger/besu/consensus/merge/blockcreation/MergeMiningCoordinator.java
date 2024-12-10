@@ -44,7 +44,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @param feeRecipient the fee recipient
    * @param withdrawals the optional list of withdrawals
    * @param parentBeaconBlockRoot optional root hash of the parent beacon block
-   * @param targetBlobsPerBlock optional target blobs per block
+   * @param targetBlobsPerBlock optional target blobs per block EIP-7742
+   * @param maxBlobsPerBlock optional max blobs per block EIP-7742
    * @return the payload identifier
    */
   PayloadIdentifier preparePayload(
@@ -54,7 +55,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Address feeRecipient,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<Bytes32> parentBeaconBlockRoot,
-      final Optional<UInt64> targetBlobsPerBlock);
+      final Optional<UInt64> targetBlobsPerBlock,
+      final Optional<UInt64> maxBlobsPerBlock);
 
   @Override
   default boolean isCompatibleWithEngineApi() {

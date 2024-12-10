@@ -117,6 +117,7 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
                     param.getParentBeaconBlockRoot(),
                     // TODO SLD EIP-7742 add targetBlobsPerBlock or refactor to inherit from
                     // EnginePayloadAttributesParameter?
+                    Optional.empty(),
                     Optional.empty()));
   }
 }

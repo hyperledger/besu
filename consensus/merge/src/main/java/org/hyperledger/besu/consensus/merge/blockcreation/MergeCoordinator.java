@@ -259,7 +259,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Address feeRecipient,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<Bytes32> parentBeaconBlockRoot,
-      final Optional<UInt64> targetBlobsPerBlock) {
+      final Optional<UInt64> targetBlobsPerBlock,
+      final Optional<UInt64> maxBlobsPerBlock) {
 
     // we assume that preparePayload is always called sequentially, since the RPC Engine calls
     // are sequential, if this assumption changes then more synchronization should be added to
@@ -273,7 +274,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             feeRecipient,
             withdrawals,
             parentBeaconBlockRoot,
-            targetBlobsPerBlock);
+            targetBlobsPerBlock,
+            maxBlobsPerBlock);
 
     if (blockCreationTasks.containsKey(payloadIdentifier)) {
       LOG.debug(

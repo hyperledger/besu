@@ -250,6 +250,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             suggestedFeeRecipient,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     ArgumentCaptor<PayloadWrapper> payloadWrapper = ArgumentCaptor.forClass(PayloadWrapper.class);
@@ -331,6 +332,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             suggestedFeeRecipient,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     blockCreationTask.get();
@@ -370,6 +372,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         suggestedFeeRecipient,
         Optional.empty(),
         Optional.empty(),
+        Optional.empty(),
         Optional.empty());
 
     verify(badBlockManager, never()).addBadBlock(any(), any());
@@ -402,6 +405,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty(),
             Optional.empty());
@@ -463,6 +467,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             suggestedFeeRecipient,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     blockCreationTask.get();
@@ -513,6 +518,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty(),
             Optional.empty());
@@ -569,6 +575,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             suggestedFeeRecipient,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     try {
@@ -614,6 +621,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty(),
             Optional.empty());
@@ -671,6 +679,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             suggestedFeeRecipient,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     final CompletableFuture<Void> task1 = blockCreationTask;
@@ -681,6 +690,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty(),
             Optional.empty());
@@ -725,6 +735,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             suggestedFeeRecipient,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     assertThat(coordinator.isBlockCreationCancelled(payloadId1)).isFalse();
@@ -735,6 +746,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp + 1,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty(),
             Optional.empty());
@@ -769,6 +781,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             1L,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty(),
             Optional.empty());
