@@ -15,6 +15,22 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.ACCESS_LIST_ENTRY_SHALLOW_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.ACCESS_LIST_STORAGE_KEY_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.BLOBS_WITH_COMMITMENTS_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.BLOB_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.CODE_DELEGATION_ENTRY_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.EIP1559_AND_EIP4844_SHALLOW_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.FRONTIER_AND_ACCESS_LIST_SHALLOW_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.KZG_COMMITMENT_OR_PROOF_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.LIST_SHALLOW_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.OPTIONAL_ACCESS_LIST_SHALLOW_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.OPTIONAL_CHAIN_ID_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.OPTIONAL_CODE_DELEGATION_LIST_SHALLOW_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.OPTIONAL_TO_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.PAYLOAD_SHALLOW_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.PENDING_TRANSACTION_SHALLOW_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.VERSIONED_HASH_SIZE;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.datatypes.AccessListEntry;
@@ -58,16 +74,59 @@ import org.openjdk.jol.info.GraphPathRecord;
 import org.openjdk.jol.info.GraphVisitor;
 import org.openjdk.jol.info.GraphWalker;
 
-@EnabledOnOs(OS.LINUX)
+/**
+ * This test class has a double utility, first it is used to verify that the current memory size of
+ * a pending transaction object correspond to the calculated values, so if any of the tests in this
+ * file fails, it probably means that one of the related classes has changed its format, and a new
+ * calculation needs to be done.
+ *
+ * <p>The second utility is to help with the calculation of the memory size of a class, using the <a
+ * href="https://github.com/openjdk/jol">JOL Tool</a>, to navigate the class layout and collect the
+ * reported memory sizes.
+ *
+ * <p>For a correct calculation there are some things to consider, first exclude from the
+ * calculation any reference to a <i>constant</i> object, for example if a field is always a
+ * reference to {@code Optional.empty()} then just count the reference size, but not the size of the
+ * Optional since it is always the same instance for every pending transaction.
+ *
+ * <p>To study the layout of a class it is usually useful to create a test method with one or more
+ * instance of it, then programmatically save a heap dump using the {@link #dumpHeap(String,
+ * boolean)} method, then analyze the heap dump with a tool to identify which are the dynamic and
+ * constant fields, then use the JOL Tool to print the class layout and walk in the object tree,
+ * then complete the writing of the test that will verify the current amount of memory used by that
+ * class.
+ */
+@EnabledOnOs({OS.LINUX, OS.MAC})
 public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPoolTest {
+  /**
+   * Classes that represent constant instances, across all pending transaction types, and are
+   * ignored during the calculation
+   */
   private static final Set<Class<?>> SHARED_CLASSES =
       Set.of(SignatureAlgorithm.class, TransactionType.class);
+
+  /**
+   * Field that points to constant values, across all pending transaction types, and are ignored
+   * during the calculation
+   */
   private static final Set<String> COMMON_CONSTANT_FIELD_PATHS =
       Set.of(".value.ctor", ".hashNoSignature", ".signature.encoded.delegate");
+
+  /**
+   * Field that points to constant values, for EIP-1559 and EIP-4844 pending transactions, and are
+   * ignored during the calculation
+   */
   private static final Set<String> EIP1559_EIP4844_CONSTANT_FIELD_PATHS =
       Sets.union(COMMON_CONSTANT_FIELD_PATHS, Set.of(".gasPrice"));
+
+  /**
+   * Field that points to constant values, for Frontier and Access List pending transactions, and
+   * are ignored during the calculation
+   */
   private static final Set<String> FRONTIER_ACCESS_LIST_CONSTANT_FIELD_PATHS =
       Sets.union(COMMON_CONSTANT_FIELD_PATHS, Set.of(".maxFeePerGas", ".maxPriorityFeePerGas"));
+
+  /** Field which value is dynamic and can only be calculated at runtime */
   private static final Set<String> VARIABLE_SIZE_PATHS =
       Set.of(
           ".chainId",
@@ -121,7 +180,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     System.out.println("Optional To size: " + size);
 
-    assertThat(size.sum()).isEqualTo(PendingTransaction.OPTIONAL_TO_MEMORY_SIZE);
+    assertThat(size.sum()).isEqualTo(OPTIONAL_TO_SIZE);
   }
 
   @Test
@@ -146,7 +205,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     size.add(cl.instanceSize());
     System.out.println("Base payload size: " + size);
 
-    assertThat(size.sum()).isEqualTo(PendingTransaction.PAYLOAD_BASE_MEMORY_SIZE);
+    assertThat(size.sum()).isEqualTo(PAYLOAD_SHALLOW_SIZE);
   }
 
   @Test
@@ -180,39 +239,37 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     gw.walk(maybeChainId);
 
-    assertThat(size.sum()).isEqualTo(PendingTransaction.OPTIONAL_CHAIN_ID_MEMORY_SIZE);
+    assertThat(size.sum()).isEqualTo(OPTIONAL_CHAIN_ID_SIZE);
   }
 
   @Test
   public void kgzCommitmentsSize() {
     blobsWithCommitmentsFieldSize(
         t -> t.getBlobsWithCommitments().get().getKzgCommitments(),
-        PendingTransaction.BASE_LIST_SIZE,
-        PendingTransaction.KZG_COMMITMENT_OR_PROOF_SIZE);
+        LIST_SHALLOW_SIZE,
+        KZG_COMMITMENT_OR_PROOF_SIZE);
   }
 
   @Test
   public void kgzProofsSize() {
     blobsWithCommitmentsFieldSize(
         t -> t.getBlobsWithCommitments().get().getKzgProofs(),
-        PendingTransaction.BASE_LIST_SIZE,
-        PendingTransaction.KZG_COMMITMENT_OR_PROOF_SIZE);
+        LIST_SHALLOW_SIZE,
+        KZG_COMMITMENT_OR_PROOF_SIZE);
   }
 
   @Test
   public void blobsSize() {
     blobsWithCommitmentsFieldSize(
-        t -> t.getBlobsWithCommitments().get().getBlobs(),
-        PendingTransaction.BASE_LIST_SIZE,
-        PendingTransaction.BLOB_SIZE);
+        t -> t.getBlobsWithCommitments().get().getBlobs(), LIST_SHALLOW_SIZE, BLOB_SIZE);
   }
 
   @Test
   public void versionedHashesSize() {
     blobsWithCommitmentsFieldSize(
         t -> t.getBlobsWithCommitments().get().getVersionedHashes(),
-        PendingTransaction.BASE_LIST_SIZE,
-        PendingTransaction.VERSIONED_HASH_SIZE);
+        LIST_SHALLOW_SIZE,
+        VERSIONED_HASH_SIZE);
   }
 
   private void blobsWithCommitmentsFieldSize(
@@ -273,8 +330,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     System.out.println(rl.toPrintable());
     System.out.println("BlobQuad size:" + rl.instanceSize());
 
-    assertThat(cl.instanceSize() + rl.instanceSize())
-        .isEqualTo(PendingTransaction.BLOBS_WITH_COMMITMENTS_SIZE);
+    assertThat(cl.instanceSize() + rl.instanceSize()).isEqualTo(BLOBS_WITH_COMMITMENTS_SIZE);
   }
 
   @Test
@@ -300,7 +356,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     size.add(cl.instanceSize());
     System.out.println("PendingTransaction size: " + size);
 
-    assertThat(size.sum()).isEqualTo(PendingTransaction.PENDING_TRANSACTION_MEMORY_SIZE);
+    assertThat(size.sum()).isEqualTo(PENDING_TRANSACTION_SHALLOW_SIZE);
   }
 
   @Test
@@ -326,16 +382,18 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     final var optAL = txAccessList.getAccessList();
 
-    final ClassLayout cl1 = ClassLayout.parseInstance(optAL);
-    System.out.println(cl1.toPrintable());
-    System.out.println("Optional size: " + cl1.instanceSize());
+    final ClassLayout optionalClassLayout = ClassLayout.parseInstance(optAL);
+    System.out.println(optionalClassLayout.toPrintable());
+    System.out.println("Optional size: " + optionalClassLayout.instanceSize());
 
-    final ClassLayout cl2 = ClassLayout.parseInstance(optAL.get());
-    System.out.println(cl2.toPrintable());
-    System.out.println("Optional + list size: " + (cl1.instanceSize() + cl2.instanceSize()));
+    final ClassLayout listClassLayout = ClassLayout.parseInstance(optAL.get());
+    System.out.println(listClassLayout.toPrintable());
+    System.out.println(
+        "Optional + list size: "
+            + (optionalClassLayout.instanceSize() + listClassLayout.instanceSize()));
 
-    assertThat(cl1.instanceSize() + cl2.instanceSize())
-        .isEqualTo(PendingTransaction.OPTIONAL_ACCESS_LIST_MEMORY_SIZE);
+    assertThat(optionalClassLayout.instanceSize() + listClassLayout.instanceSize())
+        .isEqualTo(OPTIONAL_ACCESS_LIST_SHALLOW_SIZE);
 
     final AccessListEntry ale = optAL.get().get(0);
 
@@ -343,15 +401,14 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     System.out.println("AccessListEntry container size: " + aleSize);
 
-    assertThat(aleSize).isEqualTo(PendingTransaction.ACCESS_LIST_ENTRY_BASE_MEMORY_SIZE);
+    assertThat(aleSize).isEqualTo(ACCESS_LIST_ENTRY_SHALLOW_SIZE);
 
     final Bytes32 storageKey = ale.storageKeys().get(0);
     final ClassLayout cl4 = ClassLayout.parseInstance(storageKey);
     System.out.println(cl4.toPrintable());
     System.out.println("Single storage key size: " + cl4.instanceSize());
 
-    assertThat(cl4.instanceSize())
-        .isEqualTo(PendingTransaction.ACCESS_LIST_STORAGE_KEY_MEMORY_SIZE);
+    assertThat(cl4.instanceSize()).isEqualTo(ACCESS_LIST_STORAGE_KEY_SIZE);
   }
 
   @Test
@@ -372,16 +429,18 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     final var optCD = txDelegateCode.getCodeDelegationList();
 
-    final ClassLayout cl1 = ClassLayout.parseInstance(optCD);
-    System.out.println(cl1.toPrintable());
-    System.out.println("Optional size: " + cl1.instanceSize());
+    final ClassLayout optionalClassLayout = ClassLayout.parseInstance(optCD);
+    System.out.println(optionalClassLayout.toPrintable());
+    System.out.println("Optional size: " + optionalClassLayout.instanceSize());
 
-    final ClassLayout cl2 = ClassLayout.parseInstance(optCD.get());
-    System.out.println(cl2.toPrintable());
-    System.out.println("Optional + list size: " + (cl1.instanceSize() + cl2.instanceSize()));
+    final ClassLayout listClassLayout = ClassLayout.parseInstance(optCD.get());
+    System.out.println(listClassLayout.toPrintable());
+    System.out.println(
+        "Optional + list size: "
+            + (optionalClassLayout.instanceSize() + listClassLayout.instanceSize()));
 
-    assertThat(cl1.instanceSize() + cl2.instanceSize())
-        .isEqualTo(PendingTransaction.OPTIONAL_CODE_DELEGATION_LIST_MEMORY_SIZE);
+    assertThat(optionalClassLayout.instanceSize() + listClassLayout.instanceSize())
+        .isEqualTo(OPTIONAL_CODE_DELEGATION_LIST_SHALLOW_SIZE);
 
     final CodeDelegation codeDelegation = optCD.get().get(0);
 
@@ -389,14 +448,14 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     System.out.println("CodeDelegation container size: " + cdSize);
 
-    assertThat(cdSize).isEqualTo(PendingTransaction.CODE_DELEGATION_ENTRY_MEMORY_SIZE);
+    assertThat(cdSize).isEqualTo(CODE_DELEGATION_ENTRY_SIZE);
   }
 
   @Test
   public void baseEIP1559AndEIP4844TransactionMemorySize() {
     Transaction txEip1559 = createEIP1559Transaction(1, KEYS1, 10);
     assertThat(baseTransactionMemorySize(txEip1559, EIP1559_EIP4844_CONSTANT_FIELD_PATHS))
-        .isEqualTo(PendingTransaction.EIP1559_AND_EIP4844_SHALLOW_MEMORY_SIZE);
+        .isEqualTo(EIP1559_AND_EIP4844_SHALLOW_SIZE);
   }
 
   @Test
@@ -404,7 +463,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     final Transaction txFrontier =
         createTransaction(TransactionType.FRONTIER, 1, Wei.of(500), 0, KEYS1);
     assertThat(baseTransactionMemorySize(txFrontier, FRONTIER_ACCESS_LIST_CONSTANT_FIELD_PATHS))
-        .isEqualTo(PendingTransaction.FRONTIER_AND_ACCESS_LIST_SHALLOW_MEMORY_SIZE);
+        .isEqualTo(FRONTIER_AND_ACCESS_LIST_SHALLOW_SIZE);
   }
 
   private long baseTransactionMemorySize(final Transaction tx, final Set<String> constantFields) {
@@ -509,6 +568,15 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     return size.sum();
   }
 
+  /**
+   * Utility method useful for producing a heap dump when calculating the memory size of a new
+   * object. Note that the file is not overwritten, so you need to remove it to create a new heap
+   * dump.
+   *
+   * @param filePath where to save the heap dump
+   * @param live true to only include live objects
+   * @throws IOException if any errors happen during the saving
+   */
   @SuppressWarnings("unused")
   private static void dumpHeap(final String filePath, final boolean live) throws IOException {
     MBeanServer server = ManagementFactory.getPlatformMBeanServer();
