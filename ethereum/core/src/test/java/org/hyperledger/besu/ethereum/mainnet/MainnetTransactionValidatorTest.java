@@ -128,7 +128,7 @@ public class MainnetTransactionValidatorTest {
             .gasLimit(10)
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(50L);
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean(), anyLong())).thenReturn(50L);
 
     assertThat(
             validator.validate(
@@ -398,7 +398,7 @@ public class MainnetTransactionValidatorTest {
                 transaction, Optional.empty(), Optional.empty(), transactionValidationParams))
         .isEqualTo(ValidationResult.invalid(INVALID_TRANSACTION_FORMAT));
 
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(0L);
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean(), anyLong())).thenReturn(0L);
 
     assertThat(
             eip1559Validator.validate(
@@ -475,7 +475,7 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
     final Optional<Wei> basefee = Optional.of(Wei.of(150000L));
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(50L);
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean(), anyLong())).thenReturn(50L);
 
     assertThat(
             validator.validate(transaction, basefee, Optional.empty(), transactionValidationParams))
@@ -500,7 +500,7 @@ public class MainnetTransactionValidatorTest {
             .type(TransactionType.EIP1559)
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(50L);
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean(), anyLong())).thenReturn(50L);
 
     assertThat(
             validator.validate(

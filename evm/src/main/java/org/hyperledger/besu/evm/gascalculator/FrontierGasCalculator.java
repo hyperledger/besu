@@ -38,6 +38,7 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long TX_DATA_NON_ZERO_COST = 68L;
 
+  /** Minimum base cost that every transaction needs to pay */
   protected static final long TX_BASE_COST = 21_000L;
 
   private static final long TX_CREATE_EXTRA_COST = 0L;
@@ -139,6 +140,14 @@ public class FrontierGasCalculator implements GasCalculator {
     return clampedAdd(TX_BASE_COST, dynamicIntrinsicGasCost);
   }
 
+  /**
+   * Calculates the dynamic part of the intrinsic gas cost
+   *
+   * @param payload the call data payload
+   * @param isContractCreation whether the transaction is a contract creation
+   * @param evmGasUsed how much gas is used by access lists and code delegations
+   * @return the dynamic part of the intrinsic gas cost
+   */
   protected long dynamicIntrinsicGasCost(
       final Bytes payload, final boolean isContractCreation, final long evmGasUsed) {
     final int payloadSize = payload.size();
@@ -160,21 +169,40 @@ public class FrontierGasCalculator implements GasCalculator {
     return cost;
   }
 
+  /**
+   * Calculates the cost of the call data
+   *
+   * @param payloadSize the total size of the payload
+   * @param zeroBytes the number of zero bytes in the payload
+   * @return the cost of the call data
+   */
   protected long callDataCost(final long payloadSize, final long zeroBytes) {
     return clampedAdd(
         TX_DATA_NON_ZERO_COST * (payloadSize - zeroBytes), TX_DATA_ZERO_COST * zeroBytes);
   }
 
+  /**
+   * Counts the zero bytes in the payload
+   *
+   * @param payload the payload
+   * @return the number of zero bytes in the payload
+   */
   protected static long zeroBytes(final Bytes payload) {
     int zeros = 0;
     for (int i = 0; i < payload.size(); i++) {
       if (payload.get(i) == 0) {
-        ++zeros;
+        zeros += 1;
       }
     }
     return zeros;
   }
 
+  /**
+   * Returns the gas cost for contract creation transactions
+   *
+   * @param ignored the size of the contract creation code (ignored in Frontier)
+   * @return the gas cost for contract creation transactions
+   */
   protected long contractCreationCost(final int ignored) {
     return txCreateExtraGasCost();
   }
