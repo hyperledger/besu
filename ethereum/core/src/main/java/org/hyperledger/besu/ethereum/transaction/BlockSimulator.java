@@ -50,12 +50,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
- * BlockSimulator is responsible for simulating the execution of a block. It processes transactions
- * and applies state overrides to simulate the block execution.
+ * Simulates the execution of a block, processing transactions and applying state overrides. This
+ * class is responsible for simulating the execution of a block, which involves processing
+ * transactions and applying state overrides. It provides a way to test and validate the behavior of
+ * a block without actually executing it on the blockchain. The simulator takes into account various
+ * factors, such as the block header, transaction calls, and state overrides, to simulate the
+ * execution of the block. It returns a list of simulation results, which include the final block
+ * header, transaction receipts, and other relevant information.
  */
 public class BlockSimulator {
   private final TransactionSimulator transactionSimulator;
@@ -90,7 +96,9 @@ public class BlockSimulator {
                 () ->
                     new IllegalArgumentException(
                         "Public world state not available for block " + header.toLogString()))) {
-      return processWithMutableWorldState(header, blockStateCalls, ws);
+      return process(header, blockStateCalls, ws);
+    } catch (IllegalArgumentException e) {
+      throw e;
     } catch (final Exception e) {
       throw new RuntimeException("Error simulating block", e);
     }
@@ -104,14 +112,14 @@ public class BlockSimulator {
    * @param worldState The initial MutableWorldState to start with.
    * @return A list of BlockSimulationResult objects from processing each BlockStateCall.
    */
-  public List<BlockSimulationResult> processWithMutableWorldState(
+  public List<BlockSimulationResult> process(
       final BlockHeader header,
       final List<? extends BlockStateCall> blockStateCalls,
       final MutableWorldState worldState) {
     List<BlockSimulationResult> simulationResults = new ArrayList<>();
     for (BlockStateCall blockStateCall : blockStateCalls) {
       BlockSimulationResult simulationResult =
-          processWithMutableWorldState(header, blockStateCall, worldState);
+          processSingleBlockStateCall(header, blockStateCall, worldState);
       simulationResults.add(simulationResult);
     }
     return simulationResults;
@@ -125,27 +133,36 @@ public class BlockSimulator {
    * @param ws The MutableWorldState to use for the simulation.
    * @return A BlockSimulationResult from processing the BlockStateCall.
    */
-  private BlockSimulationResult processWithMutableWorldState(
+  private BlockSimulationResult processSingleBlockStateCall(
       final BlockHeader header, final BlockStateCall blockStateCall, final MutableWorldState ws) {
     BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
     long timestamp = blockOverrides.getTimestamp().orElse(header.getTimestamp() + 1);
-
     ProtocolSpec newProtocolSpec = protocolSchedule.getForNextBlockHeader(header, timestamp);
 
-    // Apply block header overrides
+    // Apply block header overrides and state overrides
     BlockHeader blockHeader = applyBlockHeaderOverrides(header, newProtocolSpec, blockOverrides);
-
-    // Apply state overrides
     blockStateCall.getAccountOverrides().ifPresent(overrides -> applyStateOverrides(overrides, ws));
 
-    long currentGasUsed = 0;
-    final var transactionReceiptFactory = newProtocolSpec.getTransactionReceiptFactory();
-    final List<TransactionReceipt> receipts = new ArrayList<>();
-    final List<Transaction> transactions = new ArrayList<>();
-    List<TransactionSimulatorResult> transactionSimulations = new ArrayList<>();
-
+    // Override the mining beneficiary calculator if a fee recipient is specified, otherwise use the
+    // default
     MiningBeneficiaryCalculator miningBeneficiaryCalculator =
         getMiningBeneficiaryCalculator(blockOverrides, newProtocolSpec);
+
+    List<TransactionSimulatorResult> transactionSimulatorResults =
+        processTransactions(blockHeader, blockStateCall, ws, miningBeneficiaryCalculator);
+
+    return finalizeBlock(
+        blockHeader, blockStateCall, ws, newProtocolSpec, transactionSimulatorResults);
+  }
+
+  @VisibleForTesting
+  protected List<TransactionSimulatorResult> processTransactions(
+      final BlockHeader blockHeader,
+      final BlockStateCall blockStateCall,
+      final MutableWorldState ws,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator) {
+
+    List<TransactionSimulatorResult> transactionSimulations = new ArrayList<>();
 
     for (CallParameter callParameter : blockStateCall.getCalls()) {
       final WorldUpdater transactionUpdater = ws.updater();
@@ -161,21 +178,38 @@ public class BlockSimulator {
               miningBeneficiaryCalculator);
 
       if (transactionSimulatorResult.isEmpty()) {
-        throw new RuntimeException("Transaction simulator result is empty");
+        throw new BlockSimulationException("Transaction simulator result is empty");
       }
 
       TransactionSimulatorResult result = transactionSimulatorResult.get();
-      if (result.result().isInvalid()) {
-        throw new RuntimeException(
-            "Transaction simulator result is invalid: " + result.result().getValidationResult());
+      if (result.isInvalid()) {
+        throw new BlockSimulationException(
+            "Transaction simulator result is invalid: " + result.result().getInvalidReason());
       }
       transactionSimulations.add(transactionSimulatorResult.get());
-
       transactionUpdater.commit();
+    }
+    return transactionSimulations;
+  }
 
-      TransactionProcessingResult transactionProcessingResult =
-          transactionSimulatorResult.get().result();
-      final Transaction transaction = transactionSimulatorResult.get().transaction();
+  @VisibleForTesting
+  protected BlockSimulationResult finalizeBlock(
+      final BlockHeader blockHeader,
+      final BlockStateCall blockStateCall,
+      final MutableWorldState ws,
+      final ProtocolSpec protocolSpec,
+      final List<TransactionSimulatorResult> transactionSimulations) {
+
+    long currentGasUsed = 0;
+    final var transactionReceiptFactory = protocolSpec.getTransactionReceiptFactory();
+
+    final List<TransactionReceipt> receipts = new ArrayList<>();
+    final List<Transaction> transactions = new ArrayList<>();
+
+    for (TransactionSimulatorResult transactionSimulatorResult : transactionSimulations) {
+
+      TransactionProcessingResult transactionProcessingResult = transactionSimulatorResult.result();
+      final Transaction transaction = transactionSimulatorResult.transaction();
 
       currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
 
@@ -205,11 +239,11 @@ public class BlockSimulator {
    * @param accountOverrideMap The AccountOverrideMap containing the state overrides.
    * @param ws The MutableWorldState to apply the overrides to.
    */
-  private void applyStateOverrides(
+  @VisibleForTesting
+  protected void applyStateOverrides(
       final AccountOverrideMap accountOverrideMap, final MutableWorldState ws) {
     var updater = ws.updater();
     for (Address accountToOverride : accountOverrideMap.keySet()) {
-
       final AccountOverride override = accountOverrideMap.get(accountToOverride);
       MutableAccount account = updater.getOrCreate(accountToOverride);
       override.getNonce().ifPresent(account::setNonce);
@@ -237,7 +271,8 @@ public class BlockSimulator {
    * @param blockOverrides The BlockOverrides to apply.
    * @return The modified block header.
    */
-  private BlockHeader applyBlockHeaderOverrides(
+  @VisibleForTesting
+  protected BlockHeader applyBlockHeaderOverrides(
       final BlockHeader header,
       final ProtocolSpec newProtocolSpec,
       final BlockOverrides blockOverrides) {
@@ -251,7 +286,7 @@ public class BlockSimulator {
         .coinbase(
             blockOverrides
                 .getFeeRecipient()
-                .orElse(miningConfiguration.getCoinbase().orElseThrow()))
+                .orElseGet(() -> miningConfiguration.getCoinbase().orElseThrow()))
         .difficulty(
             blockOverrides.getDifficulty().isPresent()
                 ? Difficulty.of(blockOverrides.getDifficulty().get())
@@ -259,11 +294,11 @@ public class BlockSimulator {
         .gasLimit(
             blockOverrides
                 .getGasLimit()
-                .orElse(getNextGasLimit(newProtocolSpec, header, blockNumber)))
+                .orElseGet(()-> getNextGasLimit(newProtocolSpec, header, blockNumber)))
         .baseFee(
             blockOverrides
                 .getBaseFeePerGas()
-                .orElse(getNextBaseFee(newProtocolSpec, header, blockNumber)))
+                .orElseGet(()-> getNextBaseFee(newProtocolSpec, header, blockNumber)))
         .mixHash(blockOverrides.getMixHashOrPrevRandao().orElse(Hash.EMPTY))
         .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
         .blockHeaderFunctions(new SimulatorBlockHeaderFunctions(blockOverrides))
@@ -311,7 +346,8 @@ public class BlockSimulator {
    * @param shouldValidate Whether to validate transactions.
    * @return The TransactionValidationParams for the block simulation.
    */
-  private ImmutableTransactionValidationParams buildTransactionValidationParams(
+  @VisibleForTesting
+  ImmutableTransactionValidationParams buildTransactionValidationParams(
       final boolean shouldValidate) {
 
     if (shouldValidate) {
@@ -336,6 +372,10 @@ public class BlockSimulator {
             blockNumber);
   }
 
+  /**
+   * Override the mining beneficiary calculator if a fee recipient is specified, otherwise use the
+   * default
+   */
   private MiningBeneficiaryCalculator getMiningBeneficiaryCalculator(
       final BlockOverrides blockOverrides, final ProtocolSpec newProtocolSpec) {
     if (blockOverrides.getFeeRecipient().isPresent()) {
@@ -347,19 +387,17 @@ public class BlockSimulator {
 
   private Wei getNextBaseFee(
       final ProtocolSpec protocolSpec, final BlockHeader parentHeader, final long blockNumber) {
-    final Wei baseFee =
-        Optional.of(protocolSpec.getFeeMarket())
-            .filter(FeeMarket::implementsBaseFee)
-            .map(BaseFeeMarket.class::cast)
-            .map(
-                feeMarket ->
-                    feeMarket.computeBaseFee(
-                        blockNumber,
-                        parentHeader.getBaseFee().orElse(Wei.ZERO),
-                        parentHeader.getGasUsed(),
-                        feeMarket.targetGasUsed(parentHeader)))
-            .orElse(null);
-    return baseFee;
+    return Optional.of(protocolSpec.getFeeMarket())
+        .filter(FeeMarket::implementsBaseFee)
+        .map(BaseFeeMarket.class::cast)
+        .map(
+            feeMarket ->
+                feeMarket.computeBaseFee(
+                    blockNumber,
+                    parentHeader.getBaseFee().orElse(Wei.ZERO),
+                    parentHeader.getGasUsed(),
+                    feeMarket.targetGasUsed(parentHeader)))
+        .orElse(null);
   }
 
   private static class SimulatorBlockHeaderFunctions implements BlockHeaderFunctions {

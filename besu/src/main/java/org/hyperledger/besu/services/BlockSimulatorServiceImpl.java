@@ -93,8 +93,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
                     new IllegalArgumentException(
                         "Public world state not available for block "
                             + headerCore.toLogString()))) {
-      var results =
-          blockSimulator.processWithMutableWorldState(headerCore, List.of(blockStateCall), ws);
+      var results = blockSimulator.process(headerCore, List.of(blockStateCall), ws);
       var result = results.getFirst();
       ws.persist(result.getBlock().getHeader());
       return response(result);
