@@ -476,6 +476,40 @@ public class EthPeers implements PeerSelector {
 
   // Part of the PeerSelector interface, to be split apart later
   @Override
+  public CompletableFuture<EthPeer> waitForPeer(final Predicate<EthPeer> filter) {
+    final CompletableFuture<EthPeer> future = new CompletableFuture<>();
+    LOG.debug("Waiting for peer matching filter. {} peers currently connected.", peerCount());
+    // check for an existing peer matching the filter and use that if one is found
+    Optional<EthPeer> maybePeer = getPeer(filter);
+    if (maybePeer.isPresent()) {
+      LOG.debug("Found peer matching filter already connected!");
+      future.complete(maybePeer.get());
+    } else {
+      // no existing peer matches our filter. Subscribe to new connections until we find one
+      LOG.debug("Subscribing to new peer connections to wait until one matches filter");
+      final long subscriptionId =
+          subscribeConnect(
+              (peer) -> {
+                if (!future.isDone() && filter.test(peer)) {
+                  LOG.debug("Found new peer matching filter!");
+                  future.complete(peer);
+                } else {
+                  LOG.debug("New peer does not match filter");
+                }
+              });
+      future.handle(
+          (peer, throwable) -> {
+            LOG.debug("Unsubscribing from new peer connections with ID {}", subscriptionId);
+            unsubscribeConnect(subscriptionId);
+            return null;
+          });
+    }
+
+    return future;
+  }
+
+  // Part of the PeerSelector interface, to be split apart later
+  @Override
   public Optional<EthPeer> getPeerByPeerId(final PeerId peerId) {
     return Optional.ofNullable(activeConnections.get(peerId.getId()));
   }

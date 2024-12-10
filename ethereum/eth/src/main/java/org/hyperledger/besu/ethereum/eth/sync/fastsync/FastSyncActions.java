@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
-import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -134,7 +133,13 @@ public class FastSyncActions {
       return completedFuture(currentState);
     }
 
-    return waitForPeers(1)
+    return ethContext
+        .getEthPeers()
+        .waitForPeer(
+            (peer) ->
+                currentState.getPivotBlockNumber().isEmpty()
+                    || peer.chainState().getEstimatedHeight()
+                        >= currentState.getPivotBlockNumber().getAsLong())
         .thenCompose(
             unused ->
                 currentState
@@ -200,12 +205,5 @@ public class FastSyncActions {
 
   public boolean isBlockchainBehind(final long blockNumber) {
     return protocolContext.getBlockchain().getChainHeadHeader().getNumber() < blockNumber;
-  }
-
-  private CompletableFuture<Void> waitForPeers(final int count) {
-
-    final WaitForPeersTask waitForPeersTask =
-        WaitForPeersTask.create(ethContext, count, metricsSystem);
-    return waitForPeersTask.run();
   }
 }
