@@ -24,7 +24,7 @@ import java.util.List;
 
 public interface BlockSimulationService extends BesuService {
   /**
-   * Simulate the creation of a block given header, a list of transactions, and blockOverrides.
+   * Simulate the processing of a block given header, a list of transactions, and blockOverrides.
    *
    * @param header the header
    * @param transactions the transactions to include in the block

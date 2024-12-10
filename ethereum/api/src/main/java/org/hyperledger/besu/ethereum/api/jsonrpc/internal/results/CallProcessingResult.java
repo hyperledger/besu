@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
-public class TransactionProcessingResult {
+public class CallProcessingResult {
   @JsonProperty("status")
   private final String status;
 
@@ -36,7 +36,7 @@ public class TransactionProcessingResult {
   @JsonProperty("logs")
   private final List<LogResult> logs;
 
-  public TransactionProcessingResult(
+  public CallProcessingResult(
       @JsonProperty("status") final int status,
       @JsonProperty("returnData") final Bytes returnData,
       @JsonProperty("gasUsed") final long gasUsed,

@@ -120,7 +120,8 @@ public class BlockSimulatorTest {
             () -> blockSimulator.process(blockHeader, Collections.emptyList()));
 
     assertEquals(
-      String.format("Public world state not available for block %s", blockHeader.toLogString()), exception.getMessage());
+        String.format("Public world state not available for block %s", blockHeader.toLogString()),
+        exception.getMessage());
   }
 
   @Test

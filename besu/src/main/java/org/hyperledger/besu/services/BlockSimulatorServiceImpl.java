@@ -49,7 +49,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
   }
 
   /**
-   * Simulate the creation of a block given header, a list of transactions, and blockOverrides.
+   * Simulate the processing of a block given a header, a list of transactions, and blockOverrides.
    *
    * @param header the header
    * @param transactions the transactions to include in the block
