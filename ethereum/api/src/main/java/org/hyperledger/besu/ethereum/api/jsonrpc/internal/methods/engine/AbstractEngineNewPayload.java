@@ -76,6 +76,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,12 +148,23 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           e);
     }
 
+    final Optional<String> maybeTargetBlobsPerBlockParam;
+    try {
+      maybeTargetBlobsPerBlockParam = requestContext.getOptionalParameter(4, String.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcRequestException(
+          "Invalid target blobs per block parameter (index 4)",
+          RpcErrorType.INVALID_TARGET_BLOB_COUNT_PARAM,
+          e);
+    }
+
     final ValidationResult<RpcErrorType> parameterValidationResult =
         validateParameters(
             blockParam,
             maybeVersionedHashParam,
             maybeParentBeaconBlockRootParam,
-            maybeRequestsParam);
+            maybeRequestsParam,
+            maybeTargetBlobsPerBlockParam);
     if (!parameterValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, parameterValidationResult);
     }
@@ -209,6 +221,18 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validate(maybeRequests)) {
       return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
+    }
+
+    final Optional<UInt64> maybeTargetBlobsPerBlock;
+    try {
+      maybeTargetBlobsPerBlock = maybeTargetBlobsPerBlockParam.map(UInt64::fromHexString);
+    } catch (RuntimeException ex) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
+          "Invalid targetBlobsPerBlock");
     }
 
     if (mergeContext.get().isSyncing()) {
@@ -279,7 +303,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsHash).orElse(null),
-            null, // TODO SLD EIP-7742 wiring in future PR
+            maybeTargetBlobsPerBlock.orElse(null),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -457,7 +481,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final EnginePayloadParameter parameter,
       final Optional<List<String>> maybeVersionedHashParam,
       final Optional<String> maybeBeaconBlockRootParam,
-      final Optional<List<String>> maybeRequestsParam) {
+      final Optional<List<String>> maybeRequestsParam,
+      final Optional<String> maybeTargetBlobsPerBlockParam) {
     return ValidationResult.valid();
   }
 
