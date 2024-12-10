@@ -33,10 +33,19 @@ import org.hyperledger.besu.plugin.services.BlockSimulationService;
 
 import java.util.List;
 
+/** This class is a service that simulates the processing of a block */
 public class BlockSimulatorServiceImpl implements BlockSimulationService {
   private final BlockSimulator blockSimulator;
   private final WorldStateArchive worldStateArchive;
 
+  /**
+   * This constructor creates a BlockSimulatorServiceImpl object
+   *
+   * @param worldStateArchive the world state archive
+   * @param miningConfiguration the mining configuration
+   * @param transactionSimulator the transaction simulator
+   * @param protocolSchedule the protocol schedule
+   */
   public BlockSimulatorServiceImpl(
       final WorldStateArchive worldStateArchive,
       final MiningConfiguration miningConfiguration,

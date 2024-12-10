@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.data.BlockSimulationResult;
 
 import java.util.List;
 
+/** This class is a service that simulates the processing of a block */
 public interface BlockSimulationService extends BesuService {
   /**
    * Simulate the processing of a block given header, a list of transactions, and blockOverrides.

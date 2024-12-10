@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.data;
 
 import java.util.List;
 
+/** This class represents the result of simulating the processing of a block. */
 public class BlockSimulationResult {
 
   final BlockHeader blockHeader;
@@ -23,6 +24,14 @@ public class BlockSimulationResult {
   final List<? extends TransactionReceipt> receipts;
   final List<TransactionSimulationResult> transactionSimulationResults;
 
+  /**
+   * Constructs a new BlockSimulationResult instance.
+   *
+   * @param blockHeader the block header
+   * @param blockBody the block body
+   * @param receipts the list of transaction receipts
+   * @param transactionSimulationResults the list of transaction simulation results
+   */
   public BlockSimulationResult(
       final BlockHeader blockHeader,
       final BlockBody blockBody,
@@ -34,18 +43,38 @@ public class BlockSimulationResult {
     this.transactionSimulationResults = transactionSimulationResults;
   }
 
+  /**
+   * Gets the block header.
+   *
+   * @return the block header
+   */
   public BlockHeader getBlockHeader() {
     return blockHeader;
   }
 
+  /**
+   * Gets the block body.
+   *
+   * @return the block body
+   */
   public BlockBody getBlockBody() {
     return blockBody;
   }
 
+  /**
+   * Gets the list of transaction receipts.
+   *
+   * @return the list of transaction receipts
+   */
   public List<? extends TransactionReceipt> getReceipts() {
     return receipts;
   }
 
+  /**
+   * Gets the list of transaction simulation results.
+   *
+   * @return the list of transaction simulation results
+   */
   public List<TransactionSimulationResult> getTransactionSimulationResults() {
     return transactionSimulationResults;
   }
