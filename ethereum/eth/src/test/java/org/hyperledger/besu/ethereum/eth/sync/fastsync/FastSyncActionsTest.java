@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
@@ -64,7 +63,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.mockito.Mockito;
 
 public class FastSyncActionsTest {
 
@@ -237,16 +235,20 @@ public class FastSyncActionsTest {
       final DataStorageFormat storageFormat) {
     setUp(storageFormat);
 
-    SynchronizerConfiguration syncConfig = SynchronizerConfiguration.builder().syncMinimumPeerCount(3).build();
+    SynchronizerConfiguration syncConfig =
+        SynchronizerConfiguration.builder().syncMinimumPeerCount(3).build();
     PivotBlockSelector pivotBlockSelector = mock(PivotBlockSelector.class);
     fastSyncActions = createFastSyncActions(syncConfig, pivotBlockSelector);
 
     FastSyncState expectedResult = new FastSyncState(123);
 
-    when(pivotBlockSelector.selectNewPivotBlock()).thenReturn(Optional.empty()).thenReturn(Optional.of(expectedResult));
-    when(pivotBlockSelector.prepareRetry()).thenReturn(CompletableFuture.runAsync(()->{}));
+    when(pivotBlockSelector.selectNewPivotBlock())
+        .thenReturn(Optional.empty())
+        .thenReturn(Optional.of(expectedResult));
+    when(pivotBlockSelector.prepareRetry()).thenReturn(CompletableFuture.runAsync(() -> {}));
 
-    CompletableFuture<FastSyncState> resultFuture = fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE);
+    CompletableFuture<FastSyncState> resultFuture =
+        fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE);
 
     verify(pivotBlockSelector, times(2)).selectNewPivotBlock();
     verify(pivotBlockSelector).prepareRetry();
