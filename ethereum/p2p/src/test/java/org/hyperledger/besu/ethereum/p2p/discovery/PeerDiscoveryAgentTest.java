@@ -903,21 +903,20 @@ public class PeerDiscoveryAgentTest {
 
   @Test
   void testFromEnodeWithDiscoveryDisabled() throws UnknownHostException {
-      EnodeURL enodeWithNoDiscovery = mock(EnodeURL.class);
-      when(enodeWithNoDiscovery.getDiscoveryPort()).thenReturn(Optional.empty());
-      when(enodeWithNoDiscovery.getListeningPort()).thenReturn(Optional.of(8545));
+    EnodeURL enodeWithNoDiscovery = mock(EnodeURL.class);
+    when(enodeWithNoDiscovery.getDiscoveryPort()).thenReturn(Optional.empty());
+    when(enodeWithNoDiscovery.getListeningPort()).thenReturn(Optional.of(8545));
 
-      when(enodeWithNoDiscovery.getIp()).thenReturn(InetAddress.getByName("127.0.0.1"));
+    when(enodeWithNoDiscovery.getIp()).thenReturn(InetAddress.getByName("127.0.0.1"));
 
-      Endpoint result = Endpoint.fromEnode(enodeWithNoDiscovery);
+    Endpoint result = Endpoint.fromEnode(enodeWithNoDiscovery);
 
-      assertEquals("127.0.0.1", result.getHost());
+    assertEquals("127.0.0.1", result.getHost());
 
-      assertEquals(30303, result.getUdpPort());
+    assertEquals(30303, result.getUdpPort());
 
-      assertEquals(Optional.empty(), result.getTcpPort());
+    assertEquals(Optional.empty(), result.getTcpPort());
   }
-
 
   protected void bondViaIncomingPing(
       final MockPeerDiscoveryAgent agent, final MockPeerDiscoveryAgent otherNode) {
