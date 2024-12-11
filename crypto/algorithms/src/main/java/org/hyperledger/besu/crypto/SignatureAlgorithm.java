@@ -20,6 +20,7 @@ import java.util.function.UnaryOperator;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.math.ec.ECPoint;
 
 /** The interface Signature algorithm. */
@@ -123,6 +124,13 @@ public interface SignatureAlgorithm {
    * @return the curve name
    */
   String getCurveName();
+
+  /**
+   * Bouncy castle ECDomainParameters representing the curve.
+   *
+   * @return instance of ECDomainParameters
+   */
+  ECDomainParameters getCurve();
 
   /**
    * Create secp private key.
