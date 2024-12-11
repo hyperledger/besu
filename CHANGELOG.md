@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- `--host-whitelist` has been deprecated since 2020 and its related option will be removed in a future release.
 
 ### Upcoming Breaking Changes
 - Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
@@ -15,7 +16,10 @@
   - Proof of Work consensus
   - Fast Sync
 
+
+
 ### Additions and Improvements
+- Retrieve all transaction receipts for a block in one request [#6646](https://github.com/hyperledger/besu/pull/6646)
 
 ### Bug fixes
 

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -38,7 +39,12 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
   @Override
   AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
     return new DaoForkPeerValidator(
-        ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), blockNumber, buffer);
+        ProtocolScheduleFixture.MAINNET,
+        null,
+        SynchronizerConfiguration.builder().build(),
+        new NoOpMetricsSystem(),
+        blockNumber,
+        buffer);
   }
 
   @Test
@@ -54,7 +60,12 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
     final PeerValidator validator =
         new DaoForkPeerValidator(
-            ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), daoBlockNumber, 0);
+            ProtocolScheduleFixture.MAINNET,
+            null,
+            SynchronizerConfiguration.builder().build(),
+            new NoOpMetricsSystem(),
+            daoBlockNumber,
+            0);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
@@ -82,7 +93,12 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
     final PeerValidator validator =
         new DaoForkPeerValidator(
-            ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), daoBlockNumber, 0);
+            ProtocolScheduleFixture.MAINNET,
+            null,
+            SynchronizerConfiguration.builder().build(),
+            new NoOpMetricsSystem(),
+            daoBlockNumber,
+            0);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
@@ -107,7 +123,12 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
     final PeerValidator validator =
         new DaoForkPeerValidator(
-            ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), daoBlockNumber, 0);
+            ProtocolScheduleFixture.MAINNET,
+            null,
+            SynchronizerConfiguration.builder().build(),
+            new NoOpMetricsSystem(),
+            daoBlockNumber,
+            0);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
