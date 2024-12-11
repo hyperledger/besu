@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /** The Transition coordinator. */
 public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
@@ -147,9 +148,18 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
       final Bytes32 prevRandao,
       final Address feeRecipient,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot) {
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<UInt64> targetBlobsPerBlock,
+      final Optional<UInt64> maxBlobsPerBlock) {
     return mergeCoordinator.preparePayload(
-        parentHeader, timestamp, prevRandao, feeRecipient, withdrawals, parentBeaconBlockRoot);
+        parentHeader,
+        timestamp,
+        prevRandao,
+        feeRecipient,
+        withdrawals,
+        parentBeaconBlockRoot,
+        targetBlobsPerBlock,
+        maxBlobsPerBlock);
   }
 
   @Override

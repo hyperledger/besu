@@ -63,6 +63,8 @@ public class PayloadIdentifier implements Quantity {
    * @param feeRecipient the fee recipient
    * @param withdrawals the withdrawals
    * @param parentBeaconBlockRoot the parent beacon block root
+   * @param targetBlobsPerBlock the target blobs per block EIP-7742
+   * @param maxBlobsPerBlock the max blobs per block EIP-7742
    * @return the payload identifier
    */
   public static PayloadIdentifier forPayloadParams(
@@ -71,23 +73,33 @@ public class PayloadIdentifier implements Quantity {
       final Bytes32 prevRandao,
       final Address feeRecipient,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot) {
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<UInt64> targetBlobsPerBlock,
+      final Optional<UInt64> maxBlobsPerBlock) {
 
-    return new PayloadIdentifier(
+    long payloadId =
         timestamp
             ^ ((long) parentHash.toHexString().hashCode()) << 8
             ^ ((long) prevRandao.toHexString().hashCode()) << 16
             ^ ((long) feeRecipient.toHexString().hashCode()) << 24
             ^ (long)
-                withdrawals
-                    .map(
-                        ws ->
-                            ws.stream()
-                                .sorted(Comparator.comparing(Withdrawal::getIndex))
-                                .map(Withdrawal::hashCode)
-                                .reduce(1, (a, b) -> a ^ (b * 31)))
-                    .orElse(0)
-            ^ ((long) parentBeaconBlockRoot.hashCode()) << 40);
+                    withdrawals
+                        .map(
+                            ws ->
+                                ws.stream()
+                                    .sorted(Comparator.comparing(Withdrawal::getIndex))
+                                    .map(Withdrawal::hashCode)
+                                    .reduce(1, (a, b) -> a ^ (b * 31)))
+                        .orElse(0)
+                << 32
+            ^ ((long) parentBeaconBlockRoot.hashCode()) << 40;
+    if (targetBlobsPerBlock.isPresent()) {
+      payloadId ^= ((long) targetBlobsPerBlock.get().hashCode() + 13) << 48;
+    }
+    if (maxBlobsPerBlock.isPresent()) {
+      payloadId ^= ((long) maxBlobsPerBlock.get().hashCode() + 13) << 56;
+    }
+    return new PayloadIdentifier(payloadId);
   }
 
   @Override

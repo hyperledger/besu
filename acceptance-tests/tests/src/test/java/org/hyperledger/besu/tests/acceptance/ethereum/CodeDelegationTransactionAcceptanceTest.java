@@ -58,7 +58,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
   public static final Bytes TRANSACTION_SPONSOR_PRIVATE_KEY =
       Bytes.fromHexString("3a4ff6d22d7502ef2452368165422861c01a0f72f851793b372b87888dc3c453");
 
-  private final Account otherAccount = accounts.createAccount("otherAccount");
+  private final Account otherAccount = accounts.getPrimaryBenefactor();
 
   private BesuNode besuNode;
   private PragueAcceptanceTestHelper testHelper;
@@ -85,7 +85,6 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
    */
   @Test
   public void shouldTransferAllEthOfAuthorizerToSponsor() throws IOException {
-
     // 7702 transaction
     final CodeDelegation authorization =
         org.hyperledger.besu.ethereum.core.CodeDelegation.builder()

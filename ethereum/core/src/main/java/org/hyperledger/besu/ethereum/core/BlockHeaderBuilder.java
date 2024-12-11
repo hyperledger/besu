@@ -168,7 +168,8 @@ public class BlockHeaderBuilder {
       final MiningConfiguration miningConfiguration,
       final long timestamp,
       final Optional<Bytes32> maybePrevRandao,
-      final Optional<Bytes32> maybeParentBeaconBlockRoot) {
+      final Optional<Bytes32> maybeParentBeaconBlockRoot,
+      final Optional<UInt64> maybeTargetBlobsPerBlock) {
 
     final long newBlockNumber = parentHeader.getNumber() + 1;
     final long gasLimit =
@@ -208,7 +209,8 @@ public class BlockHeaderBuilder {
         .timestamp(timestamp)
         .baseFee(baseFee)
         .prevRandao(prevRandao)
-        .parentBeaconBlockRoot(parentBeaconBlockRoot);
+        .parentBeaconBlockRoot(parentBeaconBlockRoot)
+        .targetBlobsPerBlock(maybeTargetBlobsPerBlock.orElse(null));
   }
 
   public BlockHeader buildBlockHeader() {
