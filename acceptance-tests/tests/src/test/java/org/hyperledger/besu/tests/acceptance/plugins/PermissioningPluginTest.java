@@ -109,7 +109,7 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
     assertThat(isTransactionPermitted).isTrue();
   }
 
-  private boolean checkTransactionGasLimit(long gasLimit) {
+  private boolean checkTransactionGasLimit(final long gasLimit) {
     if (gasLimit > GAS_LIMIT_THRESHOLD) {
       return true;
     } else {
