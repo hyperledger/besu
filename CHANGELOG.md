@@ -18,6 +18,7 @@
 - `--host-whitelist` has been deprecated since 2020 and its related option will be removed in a future release.
 
 ### Additions and Improvements
+- Retrieve all transaction receipts for a block in one request [#6646](https://github.com/hyperledger/besu/pull/6646)
 
 ### Bug fixes
 
