@@ -29,6 +29,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -69,7 +70,8 @@ public class TransactionSmartContractPermissioningControllerTest {
     genesisState.writeStateTo(worldArchive.getMutable());
 
     final TransactionSimulator ts =
-        new TransactionSimulator(blockchain, worldArchive, protocolSchedule, 0L);
+        new TransactionSimulator(
+            blockchain, worldArchive, protocolSchedule, MiningConfiguration.newDefault(), 0L);
     final Address contractAddress = Address.fromHexString(contractAddressString);
 
     when(metricsSystem.createCounter(

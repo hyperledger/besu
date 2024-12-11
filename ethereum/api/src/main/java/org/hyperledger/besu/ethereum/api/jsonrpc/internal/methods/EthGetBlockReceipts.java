@@ -27,13 +27,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionRec
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptStatusResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
-import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Suppliers;
@@ -70,35 +68,21 @@ public class EthGetBlockReceipts extends AbstractBlockParameterOrBlockHashMethod
   }
 
   /*
-   * For a given transaction, get its receipt and if it exists, wrap in a transaction receipt of the correct type
+   * For a given block, get receipts of transactions in the block and if they exist, wrap in transaction receipts of the correct type
    */
-  private Optional<TransactionReceiptResult> txReceipt(final TransactionWithMetadata tx) {
-    Optional<TransactionReceiptWithMetadata> receipt =
-        blockchainQueries
-            .get()
-            .transactionReceiptByTransactionHash(tx.getTransaction().getHash(), protocolSchedule);
-    if (receipt.isPresent()) {
-      if (receipt.get().getReceipt().getTransactionReceiptType() == TransactionReceiptType.ROOT) {
-        return Optional.of(new TransactionReceiptRootResult(receipt.get()));
-      } else {
-        return Optional.of(new TransactionReceiptStatusResult(receipt.get()));
-      }
-    }
-    return Optional.empty();
-  }
-
   private BlockReceiptsResult getBlockReceiptsResult(final Hash blockHash) {
     final List<TransactionReceiptResult> receiptList =
         blockchainQueries
             .get()
-            .blockByHash(blockHash)
+            .transactionReceiptsByBlockHash(blockHash, protocolSchedule)
+            .orElse(new ArrayList<TransactionReceiptWithMetadata>())
+            .stream()
             .map(
-                block ->
-                    block.getTransactions().stream()
-                        .map(this::txReceipt)
-                        .flatMap(Optional::stream)
-                        .collect(Collectors.toList()))
-            .orElse(new ArrayList<>());
+                receipt ->
+                    receipt.getReceipt().getTransactionReceiptType() == TransactionReceiptType.ROOT
+                        ? new TransactionReceiptRootResult(receipt)
+                        : new TransactionReceiptStatusResult(receipt))
+            .collect(Collectors.toList());
 
     return new BlockReceiptsResult(receiptList);
   }

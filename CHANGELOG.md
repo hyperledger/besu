@@ -1,9 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## Unreleased
 
 ### Breaking Changes
-- Removed Retesteth rpc service and commands [#7833](https://github.com/hyperledger/besu/pull/7783)
 
 ### Upcoming Breaking Changes
 - Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
@@ -12,7 +11,45 @@
 - `--host-whitelist` has been deprecated in favor of `--host-allowlist` since 2020 and will be removed in a future release
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Tessera privacy
-  - Smart-contract-based permissioning
+  - Smart-contract-based (onchain) permissioning
+  - Proof of Work consensus
+  - Fast Sync
+
+### Additions and Improvements
+- Retrieve all transaction receipts for a block in one request [#6646](https://github.com/hyperledger/besu/pull/6646)
+
+### Bug fixes
+
+## 24.12.0
+
+### Breaking Changes
+- Removed Retesteth rpc service and commands [#7833](https://github.com/hyperledger/besu/pull/7783)
+- TLS for P2P (early access feature) has been removed [#7942](https://github.com/hyperledger/besu/pull/7942)
+- In the plugin API, `BesuContext` has been renamed to `ServiceManager` to better reflect its function, plugins must be updated to work with this version
+- With the upgrade of the Prometheus Java Metrics library, there are the following changes:
+  - Gauge names are not allowed to end with `total`, therefore the metric `besu_blockchain_difficulty_total` is losing the `_total` suffix
+  - The `_created` timestamps are not returned by default, you can set the env var `BESU_OPTS="-Dio.prometheus.exporter.includeCreatedTimestamps=true"` to enable them
+  - Some JVM metrics have changed name to adhere to the OTEL standard (see the table below), [Besu Full Grafana dashboard](https://grafana.com/grafana/dashboards/16455-besu-full/) is updated to support both names
+
+    | Old Name                        | New Name                        |
+    |---------------------------------|---------------------------------|
+    | jvm_memory_bytes_committed      | jvm_memory_committed_bytes      |
+    | jvm_memory_bytes_init           | jvm_memory_init_bytes           |
+    | jvm_memory_bytes_max            | jvm_memory_max_bytes            |
+    | jvm_memory_bytes_used           | jvm_memory_used_bytes           |
+    | jvm_memory_pool_bytes_committed | jvm_memory_pool_committed_bytes |
+    | jvm_memory_pool_bytes_init      | jvm_memory_pool_init_bytes      |
+    | jvm_memory_pool_bytes_max       | jvm_memory_pool_max_bytes       |
+    | jvm_memory_pool_bytes_used      | jvm_memory_pool_used_bytes      |
+
+### Upcoming Breaking Changes
+- Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
+- `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
+- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
+- `--host-whitelist` has been deprecated in favor of `--host-allowlist` since 2020 and will be removed in a future release
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Tessera privacy
+  - Smart-contract-based (onchain) permissioning
   - Proof of Work consensus
   - Fast Sync
 
@@ -26,11 +63,18 @@
 - Add a method to check if a metric category is enabled to the plugin API [#7832](https://github.com/hyperledger/besu/pull/7832)
 - Add a new metric collector for counters which get their value from suppliers [#7894](https://github.com/hyperledger/besu/pull/7894)
 - Add account and state overrides to `eth_call` [#7801](https://github.com/hyperledger/besu/pull/7801) and `eth_estimateGas` [#7890](https://github.com/hyperledger/besu/pull/7890)
+- Add RPC WS options to specify password file for keystore and truststore [#7970](https://github.com/hyperledger/besu/pull/7970)
+- Prometheus Java Metrics library upgraded to version 1.3.3 [#7880](https://github.com/hyperledger/besu/pull/7880)
+- Add histogram to Prometheus metrics system [#7944](https://github.com/hyperledger/besu/pull/7944)
+- Improve newPayload and FCU logs [#7961](https://github.com/hyperledger/besu/pull/7961)
+- Proper support for `pending` block tag when calling `eth_estimateGas` and `eth_createAccessList` [#7951](https://github.com/hyperledger/besu/pull/7951)
 
 ### Bug fixes
 - Fix registering new metric categories from plugins [#7825](https://github.com/hyperledger/besu/pull/7825)
 - Fix CVE-2024-47535 [7878](https://github.com/hyperledger/besu/pull/7878)
 - Fix QBFT prepared block based proposal validation [#7875](https://github.com/hyperledger/besu/pull/7875)
+- Correct default parameters for frontier transactions in `eth_call` and `eth_estimateGas` [#7965](https://github.com/hyperledger/besu/pull/7965)
+- Correctly parse nonce as hex in `eth_call` account overrides [#7999](https://github.com/hyperledger/besu/pull/7999)
 
 ## 24.10.0
 

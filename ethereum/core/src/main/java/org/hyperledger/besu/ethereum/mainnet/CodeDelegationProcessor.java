@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.CodeDelegation;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -30,9 +32,12 @@ public class CodeDelegationProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(CodeDelegationProcessor.class);
 
   private final Optional<BigInteger> maybeChainId;
+  private final BigInteger halfCurveOrder;
 
-  public CodeDelegationProcessor(final Optional<BigInteger> maybeChainId) {
+  public CodeDelegationProcessor(
+      final Optional<BigInteger> maybeChainId, final BigInteger halfCurveOrder) {
     this.maybeChainId = maybeChainId;
+    this.halfCurveOrder = halfCurveOrder;
   }
 
   /**
@@ -89,6 +94,22 @@ public class CodeDelegationProcessor {
       return;
     }
 
+    if (codeDelegation.nonce() == MAX_NONCE) {
+      LOG.trace("Nonce of code delegation must be less than 2^64-1");
+      return;
+    }
+
+    if (codeDelegation.signature().getS().compareTo(halfCurveOrder) > 0) {
+      LOG.trace(
+          "Invalid signature for code delegation. S value must be less or equal than the half curve order.");
+      return;
+    }
+
+    if (codeDelegation.signature().getRecId() != 0 && codeDelegation.signature().getRecId() != 1) {
+      LOG.trace("Invalid signature for code delegation. RecId must be 0 or 1.");
+      return;
+    }
+
     final Optional<Address> authorizer = codeDelegation.authorizer();
     if (authorizer.isEmpty()) {
       LOG.trace("Invalid signature for code delegation");
@@ -128,7 +149,9 @@ public class CodeDelegationProcessor {
       result.incremenentAlreadyExistingDelegators();
     }
 
-    evmWorldUpdater.authorizedCodeService().addDelegatedCode(authority, codeDelegation.address());
+    evmWorldUpdater
+        .authorizedCodeService()
+        .processDelegatedCodeAuthorization(authority, codeDelegation.address());
     authority.incrementNonce();
   }
 }
