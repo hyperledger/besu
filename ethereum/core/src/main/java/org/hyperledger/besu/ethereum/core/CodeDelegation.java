@@ -42,8 +42,8 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
   private final Address address;
   private final long nonce;
   private final SECPSignature signature;
-  private Optional<Address> authorizer = Optional.empty();
-  private boolean isAuthorityComputed = false;
+  private final Supplier<Optional<Address>> authorizerSupplier =
+      Suppliers.memoize(this::computeAuthority);
 
   /**
    * An access list entry as defined in EIP-7702
@@ -107,12 +107,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
 
   @Override
   public Optional<Address> authorizer() {
-    if (!isAuthorityComputed) {
-      authorizer = computeAuthority();
-      isAuthorityComputed = true;
-    }
-
-    return authorizer;
+    return authorizerSupplier.get();
   }
 
   @Override
