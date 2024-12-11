@@ -137,6 +137,7 @@ public class EthEstimateGasIntegrationTest {
             .withChainId(BLOCKCHAIN.getChainId().add(BigInteger.ONE))
             .withFrom(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
             .withTo(Address.fromHexString("0x8888f1f195afa192cfee860698584c030f4c9db1"))
+            .withMaxFeePerGas(Wei.ONE)
             .withValue(Wei.ONE)
             .build();
 

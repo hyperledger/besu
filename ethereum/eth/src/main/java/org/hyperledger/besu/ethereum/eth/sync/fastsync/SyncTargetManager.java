@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER;
 import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -23,6 +22,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.AbstractSyncTargetManager;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
@@ -120,18 +122,51 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
 
   private CompletableFuture<Optional<EthPeer>> confirmPivotBlockHeader(final EthPeer bestPeer) {
     final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
-    final RetryingGetHeaderFromPeerByNumberTask task =
-        RetryingGetHeaderFromPeerByNumberTask.forSingleNumber(
-            protocolSchedule,
-            ethContext,
-            metricsSystem,
-            pivotBlockHeader.getNumber(),
-            MAX_QUERY_RETRIES_PER_PEER);
-    task.assignPeer(bestPeer);
-    return ethContext
-        .getScheduler()
-        // Task is a retrying task. Make sure that the timeout is long enough to allow for retries.
-        .timeout(task, Duration.ofSeconds(MAX_QUERY_RETRIES_PER_PEER * SECONDS_PER_REQUEST + 2))
+    CompletableFuture<List<BlockHeader>> headersFuture;
+    if (config.isPeerTaskSystemEnabled()) {
+      headersFuture =
+          ethContext
+              .getScheduler()
+              .scheduleServiceTask(
+                  () -> {
+                    GetHeadersFromPeerTask task =
+                        new GetHeadersFromPeerTask(
+                            pivotBlockHeader.getNumber(),
+                            1,
+                            0,
+                            GetHeadersFromPeerTask.Direction.FORWARD,
+                            PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER,
+                            protocolSchedule);
+                    PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                        ethContext.getPeerTaskExecutor().executeAgainstPeer(task, bestPeer);
+                    if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                        || taskResult.result().isEmpty()) {
+                      return CompletableFuture.failedFuture(
+                          new RuntimeException("Unable to retrieve requested header from peer"));
+                    }
+                    return CompletableFuture.completedFuture(taskResult.result().get());
+                  });
+
+    } else {
+      final RetryingGetHeaderFromPeerByNumberTask task =
+          RetryingGetHeaderFromPeerByNumberTask.forSingleNumber(
+              protocolSchedule,
+              ethContext,
+              metricsSystem,
+              pivotBlockHeader.getNumber(),
+              PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER);
+      task.assignPeer(bestPeer);
+      headersFuture =
+          ethContext
+              .getScheduler()
+              // Task is a retrying task. Make sure that the timeout is long enough to allow for
+              // retries.
+              .timeout(
+                  task,
+                  Duration.ofSeconds(
+                      PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER * SECONDS_PER_REQUEST + 2));
+    }
+    return headersFuture
         .thenCompose(
             result -> {
               if (peerHasDifferentPivotBlock(result)) {

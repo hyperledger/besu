@@ -175,6 +175,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             blockchainSetupUtil.getBlockchain(),
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getProtocolSchedule(),
+            miningConfiguration,
             0L);
 
     return new JsonRpcMethodsFactory()

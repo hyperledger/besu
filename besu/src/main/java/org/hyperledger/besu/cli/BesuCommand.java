@@ -612,14 +612,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       defaultValue = "localhost,127.0.0.1")
   private final JsonRPCAllowlistHostsProperty hostsAllowlist = new JsonRPCAllowlistHostsProperty();
 
-  @Option(
-      names = {"--host-whitelist"},
-      hidden = true,
-      paramLabel = "<hostname>[,<hostname>...]... or * or all",
-      description =
-          "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
-  private final JsonRPCAllowlistHostsProperty hostsWhitelist = new JsonRPCAllowlistHostsProperty();
-
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
       names = {"--color-enabled"},
@@ -1704,15 +1696,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             unstableIpcOptions.getRpcIpcApis());
     inProcessRpcConfiguration = inProcessRpcOptions.toDomainObject();
     dataStorageConfiguration = getDataStorageConfiguration();
-    // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
-    if (!hostsWhitelist.isEmpty()) {
-      // if allowlist == default values, remove the default values
-      if (hostsAllowlist.size() == 2
-          && hostsAllowlist.containsAll(List.of("localhost", "127.0.0.1"))) {
-        hostsAllowlist.removeAll(List.of("localhost", "127.0.0.1"));
-      }
-      hostsAllowlist.addAll(hostsWhitelist);
-    }
 
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
