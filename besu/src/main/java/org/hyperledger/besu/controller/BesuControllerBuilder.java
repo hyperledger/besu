@@ -219,6 +219,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** The transaction simulator */
   protected TransactionSimulator transactionSimulator;
 
+  protected boolean isEarlyRoundChangeEnabled = false;
+
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
 
@@ -550,6 +552,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   public BesuControllerBuilder isParallelTxProcessingEnabled(
       final boolean isParallelTxProcessingEnabled) {
     this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
+    return this;
+  }
+
+  public BesuControllerBuilder isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
+    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
     return this;
   }
 
