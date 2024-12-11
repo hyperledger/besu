@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
@@ -52,6 +53,7 @@ public class FastSyncActions {
   protected final SynchronizerConfiguration syncConfig;
   protected final WorldStateStorageCoordinator worldStateStorageCoordinator;
   protected final ProtocolSchedule protocolSchedule;
+  protected final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
   protected final ProtocolContext protocolContext;
   protected final EthContext ethContext;
   protected final SyncState syncState;
@@ -64,6 +66,7 @@ public class FastSyncActions {
       final SynchronizerConfiguration syncConfig,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolSchedule protocolSchedule,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
@@ -72,6 +75,7 @@ public class FastSyncActions {
     this.syncConfig = syncConfig;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolSchedule = protocolSchedule;
+    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;

@@ -743,6 +743,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final DefaultSynchronizer synchronizer =
         createSynchronizer(
             protocolSchedule,
+            currentProtocolSpecSupplier,
             worldStateStorageCoordinator,
             protocolContext,
             ethContext,
@@ -872,6 +873,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * Create synchronizer synchronizer.
    *
    * @param protocolSchedule the protocol schedule
+   * @param currentProtocolSpecSupplier the protocol spec supplier
    * @param worldStateStorageCoordinator the world state storage
    * @param protocolContext the protocol context
    * @param ethContext the eth context
@@ -883,6 +885,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    */
   protected DefaultSynchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
@@ -894,6 +897,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return new DefaultSynchronizer(
         syncConfig,
         protocolSchedule,
+        currentProtocolSpecSupplier,
         protocolContext,
         worldStateStorageCoordinator,
         ethProtocolManager.getBlockBroadcaster(),

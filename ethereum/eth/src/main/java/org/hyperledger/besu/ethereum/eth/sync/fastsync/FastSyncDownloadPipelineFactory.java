@@ -140,7 +140,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final DownloadBodiesStep downloadBodiesStep =
-        new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
+        new DownloadBodiesStep(
+            protocolSchedule, ethContext, peerTaskExecutor, syncConfig, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =
         new DownloadReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
     final ImportBlocksStep importBlockStep =
