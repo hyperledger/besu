@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -63,6 +64,7 @@ public class EthProtocolManagerTestBuilder {
   private List<PeerValidator> peerValidators;
   private Optional<MergePeerFilter> mergePeerFilter;
   private SynchronizerConfiguration synchronizerConfiguration;
+  private PeerTaskExecutor peerTaskExecutor;
 
   public static EthProtocolManagerTestBuilder builder() {
     return new EthProtocolManagerTestBuilder();
@@ -159,6 +161,12 @@ public class EthProtocolManagerTestBuilder {
     return this;
   }
 
+  public EthProtocolManagerTestBuilder setPeerTaskExecutor(
+      final PeerTaskExecutor peerTaskExecutor) {
+    this.peerTaskExecutor = peerTaskExecutor;
+    return this;
+  }
+
   public EthProtocolManager build() {
     if (protocolSchedule == null) {
       protocolSchedule = DEFAULT_PROTOCOL_SCHEDULE;
@@ -215,8 +223,12 @@ public class EthProtocolManagerTestBuilder {
       ethScheduler =
           new DeterministicEthScheduler(DeterministicEthScheduler.TimeoutPolicy.NEVER_TIMEOUT);
     }
+    if (peerTaskExecutor == null) {
+      peerTaskExecutor = mock(PeerTaskExecutor.class);
+    }
     if (ethContext == null) {
-      ethContext = new EthContext(ethPeers, ethMessages, snapMessages, ethScheduler);
+      ethContext =
+          new EthContext(ethPeers, ethMessages, snapMessages, ethScheduler, peerTaskExecutor);
     }
     if (peerValidators == null) {
       peerValidators = Collections.emptyList();
