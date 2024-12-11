@@ -690,9 +690,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                   .build());
     }
 
-    final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
     final PeerTaskExecutor peerTaskExecutor =
         new PeerTaskExecutor(ethPeers, new PeerTaskRequestSender(), metricsSystem);
+    final EthContext ethContext =
+        new EthContext(ethPeers, ethMessages, snapMessages, scheduler, peerTaskExecutor);
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
@@ -718,7 +719,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
             miningConfiguration);
 
-    final List<PeerValidator> peerValidators = createPeerValidators(protocolSchedule);
+    final List<PeerValidator> peerValidators =
+        createPeerValidators(protocolSchedule, peerTaskExecutor);
 
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
@@ -947,6 +949,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           ethContext,
           metricsSystem,
           genesisConfigOptions,
+          syncConfig,
           unverifiedForkchoiceSupplier,
           unsubscribeForkchoiceListener);
     } else {
@@ -1179,29 +1182,42 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * Create peer validators list.
    *
    * @param protocolSchedule the protocol schedule
+   * @param peerTaskExecutor the peer task executor
    * @return the list
    */
-  protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
+  protected List<PeerValidator> createPeerValidators(
+      final ProtocolSchedule protocolSchedule, final PeerTaskExecutor peerTaskExecutor) {
     final List<PeerValidator> validators = new ArrayList<>();
 
     final OptionalLong daoBlock = genesisConfigOptions.getDaoForkBlock();
     if (daoBlock.isPresent()) {
       // Setup dao validator
       validators.add(
-          new DaoForkPeerValidator(protocolSchedule, metricsSystem, daoBlock.getAsLong()));
+          new DaoForkPeerValidator(
+              protocolSchedule, peerTaskExecutor, syncConfig, metricsSystem, daoBlock.getAsLong()));
     }
 
     final OptionalLong classicBlock = genesisConfigOptions.getClassicForkBlock();
     // setup classic validator
     if (classicBlock.isPresent()) {
       validators.add(
-          new ClassicForkPeerValidator(protocolSchedule, metricsSystem, classicBlock.getAsLong()));
+          new ClassicForkPeerValidator(
+              protocolSchedule,
+              peerTaskExecutor,
+              syncConfig,
+              metricsSystem,
+              classicBlock.getAsLong()));
     }
 
     for (final Map.Entry<Long, Hash> requiredBlock : requiredBlocks.entrySet()) {
       validators.add(
           new RequiredBlocksPeerValidator(
-              protocolSchedule, metricsSystem, requiredBlock.getKey(), requiredBlock.getValue()));
+              protocolSchedule,
+              peerTaskExecutor,
+              syncConfig,
+              metricsSystem,
+              requiredBlock.getKey(),
+              requiredBlock.getValue()));
     }
 
     final CheckpointConfigOptions checkpointConfigOptions =
@@ -1210,6 +1226,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       validators.add(
           new CheckpointBlocksPeerValidator(
               protocolSchedule,
+              peerTaskExecutor,
+              syncConfig,
               metricsSystem,
               checkpointConfigOptions.getNumber().orElseThrow(),
               checkpointConfigOptions.getHash().map(Hash::fromHexString).orElseThrow()));
