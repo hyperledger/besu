@@ -32,6 +32,7 @@ import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
@@ -104,7 +105,8 @@ public class EthCallTest {
   @Test
   public void someAccountOverrides() {
     AccountOverrideMap expectedOverrides = new AccountOverrideMap();
-    AccountOverride override = new AccountOverride.Builder().withNonce("0x9e").build();
+    AccountOverride override =
+        new AccountOverride.Builder().withNonce(new UnsignedLongParameter("0x9e")).build();
     final Address address = Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3");
     expectedOverrides.put(address, override);
 
