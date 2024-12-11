@@ -15,6 +15,8 @@
   - Proof of Work consensus
   - Fast Sync
 
+- `--host-whitelist` has been deprecated since 2020 and its related option will be removed in a future release.
+
 ### Additions and Improvements
 
 ### Bug fixes
