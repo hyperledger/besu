@@ -44,7 +44,7 @@ public interface PermissioningService extends BesuService {
    *
    * @param provider The provider to register
    */
-  void registerTransactionPermissioningProvider(TransactionPermissioningProvider provider);
+  void registerTransactionPermissioningProvider(final TransactionPermissioningProvider provider);
 
   /**
    * Registers a callback to allow the interception of a devp2p message sending request

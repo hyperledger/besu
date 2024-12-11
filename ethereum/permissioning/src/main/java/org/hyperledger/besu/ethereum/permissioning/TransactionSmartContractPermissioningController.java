@@ -201,7 +201,7 @@ public class TransactionSmartContractPermissioningController
         convertQuantityToBytes(transaction.getValue()),
         transaction
             .getGasPrice()
-            .map(price -> (BaseUInt256Value) price)
+            .map(price -> (BaseUInt256Value<?>) price)
             .map(BaseUInt256Value::toBytes)
             .orElse(Bytes32.ZERO),
         encodeLong(transaction.getGasLimit()),
@@ -239,7 +239,7 @@ public class TransactionSmartContractPermissioningController
   }
 
   // Convert the Quantity value to Bytes
-  private static Bytes convertQuantityToBytes(Quantity quantity) {
+  private static Bytes convertQuantityToBytes(final Quantity quantity) {
     if (quantity == null) {
       return Bytes32.ZERO;
     }

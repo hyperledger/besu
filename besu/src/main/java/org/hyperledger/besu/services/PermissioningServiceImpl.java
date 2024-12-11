@@ -48,7 +48,8 @@ public class PermissioningServiceImpl implements PermissioningService {
   }
 
   @Override
-  public void registerTransactionPermissioningProvider(TransactionPermissioningProvider provider) {
+  public void registerTransactionPermissioningProvider(
+      final TransactionPermissioningProvider provider) {
     transactionPermissioningProviders.add(provider);
     LOG.info("Registered new transaction permissioning provider.");
   }
@@ -85,7 +86,7 @@ public class PermissioningServiceImpl implements PermissioningService {
    *
    * @return whether the transaction is permitted
    */
-  public boolean isTransactionPermitted(Transaction transaction) {
+  public boolean isTransactionPermitted(final Transaction transaction) {
     for (TransactionPermissioningProvider provider : transactionPermissioningProviders) {
       if (!provider.isPermitted(transaction)) {
         LOG.debug("Transaction {} not permitted by one of the providers.", transaction.getHash());
