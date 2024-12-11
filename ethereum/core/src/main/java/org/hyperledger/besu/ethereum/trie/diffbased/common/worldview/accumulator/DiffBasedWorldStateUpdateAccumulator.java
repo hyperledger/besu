@@ -504,6 +504,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                 tracked.setStorageWasCleared(false); // storage already cleared for this transaction
               }
             });
+    getUpdatedAccounts().clear();
+    getDeletedAccounts().clear();
   }
 
   @Override

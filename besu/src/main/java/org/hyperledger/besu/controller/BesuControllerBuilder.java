@@ -626,7 +626,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     transactionSimulator =
         new TransactionSimulator(
-            blockchain, worldStateArchive, protocolSchedule, apiConfiguration.getGasCap());
+            blockchain,
+            worldStateArchive,
+            protocolSchedule,
+            miningConfiguration,
+            apiConfiguration.getGasCap());
 
     final var consensusContext =
         createConsensusContext(blockchain, worldStateArchive, protocolSchedule);
