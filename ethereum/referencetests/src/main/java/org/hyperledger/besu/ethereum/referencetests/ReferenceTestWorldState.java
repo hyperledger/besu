@@ -35,6 +35,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface ReferenceTestWorldState extends MutableWorldState {
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   class AccountMock {
     private final long nonce;
     private final Wei balance;
