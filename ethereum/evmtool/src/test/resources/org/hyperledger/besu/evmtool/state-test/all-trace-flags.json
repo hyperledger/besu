@@ -6,6 +6,7 @@
     "--trace.memory",
     "--trace.stack",
     "--trace.returndata",
+    "--trace.eip-3155",
     "--notime"
   ],
   "stdin": {
