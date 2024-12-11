@@ -22,6 +22,7 @@
 - Retrieve all transaction receipts for a block in one request [#6646](https://github.com/hyperledger/besu/pull/6646)
 
 ### Bug fixes
+- Fix possible incomplete txpool restore from dump file [#7991](https://github.com/hyperledger/besu/pull/7991)
 
 ## 24.12.0
 
