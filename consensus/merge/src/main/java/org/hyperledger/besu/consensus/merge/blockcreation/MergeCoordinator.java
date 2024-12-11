@@ -62,6 +62,7 @@ import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -257,7 +258,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Bytes32 prevRandao,
       final Address feeRecipient,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot) {
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<UInt64> targetBlobsPerBlock,
+      final Optional<UInt64> maxBlobsPerBlock) {
 
     // we assume that preparePayload is always called sequentially, since the RPC Engine calls
     // are sequential, if this assumption changes then more synchronization should be added to
@@ -270,7 +273,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             prevRandao,
             feeRecipient,
             withdrawals,
-            parentBeaconBlockRoot);
+            parentBeaconBlockRoot,
+            targetBlobsPerBlock,
+            maxBlobsPerBlock);
 
     if (blockCreationTasks.containsKey(payloadIdentifier)) {
       LOG.debug(
@@ -295,6 +300,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 timestamp,
                 withdrawals,
                 parentBeaconBlockRoot,
+                targetBlobsPerBlock,
+                maxBlobsPerBlock,
                 parentHeader)
             .getBlock();
 
@@ -326,6 +333,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         mergeBlockCreator,
         withdrawals,
         parentBeaconBlockRoot,
+        targetBlobsPerBlock,
+        maxBlobsPerBlock,
         parentHeader);
 
     return payloadIdentifier;
@@ -368,6 +377,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final MergeBlockCreator mergeBlockCreator,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<UInt64> targetBlobsPerBlock,
+      final Optional<UInt64> maxBlobsPerBlock,
       final BlockHeader parentHeader) {
 
     final Supplier<BlockCreationResult> blockCreator =
@@ -378,6 +389,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 timestamp,
                 withdrawals,
                 parentBeaconBlockRoot,
+                targetBlobsPerBlock,
+                maxBlobsPerBlock,
                 parentHeader);
 
     LOG.debug(

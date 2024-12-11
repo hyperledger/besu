@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
@@ -42,6 +43,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.PragueTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -65,6 +67,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,6 +151,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         Optional.empty(),
         Optional.empty(),
         Optional.empty(),
+        Optional.empty(),
+        Optional.empty(),
         timestamp,
         true,
         parentHeader);
@@ -171,6 +176,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         maybeWithdrawals,
         Optional.empty(),
         Optional.empty(),
+        Optional.empty(),
+        Optional.empty(),
         timestamp,
         true,
         parentHeader);
@@ -182,6 +189,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<Bytes32> maybePrevRandao,
       final Optional<Bytes32> maybeParentBeaconBlockRoot,
+      final Optional<UInt64> maybeTargetBlobsPerBlock,
+      final Optional<UInt64> maxBlobsPerBlock,
       final long timestamp,
       boolean rewardCoinbase,
       final BlockHeader parentHeader) {
@@ -200,7 +209,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   miningConfiguration,
                   timestamp,
                   maybePrevRandao,
-                  maybeParentBeaconBlockRoot)
+                  maybeParentBeaconBlockRoot,
+                  maybeTargetBlobsPerBlock)
               .buildProcessableBlockHeader();
 
       final Address miningBeneficiary =
@@ -233,7 +243,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               miningBeneficiary,
               newProtocolSpec,
               pluginTransactionSelector,
-              parentHeader);
+              parentHeader,
+              maxBlobsPerBlock);
       transactionResults.logSelectionStats();
       timings.register("txsSelection");
       throwIfStopped();
@@ -362,7 +373,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Address miningBeneficiary,
       final ProtocolSpec protocolSpec,
       final PluginTransactionSelector pluginTransactionSelector,
-      final BlockHeader parentHeader)
+      final BlockHeader parentHeader,
+      final Optional<UInt64> maxBlobsPerBlock)
       throws RuntimeException {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
 
@@ -388,7 +400,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             blobGasPrice,
             protocolSpec.getFeeMarket(),
             protocolSpec.getGasCalculator(),
-            protocolSpec.getGasLimitCalculator(),
+            // TODO SLD EIP-7742 wire in max blobs here?
+            getGasLimitCalculator(protocolSpec, maxBlobsPerBlock),
             protocolSpec.getBlockHashProcessor(),
             pluginTransactionSelector,
             ethScheduler);
@@ -397,6 +410,20 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       return selector.evaluateTransactions(transactions.get());
     } else {
       return selector.buildTransactionListForBlock();
+    }
+  }
+
+  private GasLimitCalculator getGasLimitCalculator(
+      final ProtocolSpec protocolSpec, final Optional<UInt64> maxBlobsPerBlock) {
+    final GasLimitCalculator gasLimitCalculator = protocolSpec.getGasLimitCalculator();
+    // TODO SLD EIP-7742 assumes future gasLimitCalculators are subclasses of
+    // PragueTargetingGasLimitCalculator
+    if (maxBlobsPerBlock.isPresent()
+        && gasLimitCalculator instanceof PragueTargetingGasLimitCalculator) {
+      return new PragueTargetingGasLimitCalculator(
+          (PragueTargetingGasLimitCalculator) gasLimitCalculator, maxBlobsPerBlock.get());
+    } else {
+      return gasLimitCalculator;
     }
   }
 

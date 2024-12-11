@@ -50,6 +50,9 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   private static final long BLOB_GAS_PER_BLOB = 1 << 17;
 
   /** The target blob gas per block. */
+  // TODO SLD = 393216
+  // TODO SLD derive from target_blob_count instead (target_blob_count * GAS_PER_BLOB)
+  // - see
   static final long TARGET_BLOB_GAS_PER_BLOCK = 0x60000;
 
   // EIP-1153

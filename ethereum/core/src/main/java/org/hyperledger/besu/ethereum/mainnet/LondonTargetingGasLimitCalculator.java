@@ -40,6 +40,15 @@ public class LondonTargetingGasLimitCalculator extends FrontierTargetingGasLimit
     this.feeMarket = feeMarket;
   }
 
+  public LondonTargetingGasLimitCalculator(
+      final LondonTargetingGasLimitCalculator gasLimitCalculator) {
+    this(
+        gasLimitCalculator.minGasLimit,
+        gasLimitCalculator.maxGasLimit,
+        gasLimitCalculator.londonForkBlock,
+        gasLimitCalculator.feeMarket);
+  }
+
   @Override
   public long nextGasLimit(
       final long currentGasLimit, final long targetGasLimit, final long newBlockNumber) {

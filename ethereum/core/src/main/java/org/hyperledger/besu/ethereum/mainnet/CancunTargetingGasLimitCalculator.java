@@ -17,11 +17,19 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
 public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCalculator {
+  // TODO SLD - MAX_BLOB_GAS_PER_BLOCK - remove any related logic for EIP-7742?
+  // TODO SLD Duplicate of GasLimitCalculator.BLOB_GAS_LIMIT?
+  public static final long MAX_BLOBS_PER_BLOCK = 6L;
   private static final long MAX_BLOB_GAS_PER_BLOCK = 786432L;
 
   public CancunTargetingGasLimitCalculator(
       final long londonForkBlock, final BaseFeeMarket feeMarket) {
     super(londonForkBlock, feeMarket);
+  }
+
+  public CancunTargetingGasLimitCalculator(
+      final CancunTargetingGasLimitCalculator gasLimitCalculator) {
+    super(gasLimitCalculator);
   }
 
   @Override

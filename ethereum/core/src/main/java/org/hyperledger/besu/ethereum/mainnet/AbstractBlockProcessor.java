@@ -174,6 +174,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
       if (transaction.getVersionedHashes().isPresent()) {
+        // TODO SLD calculate_total_blob_gas
         currentBlobGasUsed +=
             (transaction.getVersionedHashes().get().size()
                 * protocolSpec.getGasCalculator().getBlobGasPerBlob());
