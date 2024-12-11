@@ -332,7 +332,10 @@ public class JsonRpcHttpOptionsTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
+            "Configuration error: TLS client authentication is enabled, but none of the following options are provided: "
+                + "1. Specify a known-clients file (--rpc-http-tls-known-clients-file) and/or  Enable CA clients (--rpc-http-tls-ca-clients-enabled). "
+                + "2. Specify a truststore file and its password file (--rpc-http-tls-truststore-file and --rpc-http-tls-truststore-password-file). "
+                + "Only one of these options must be configured");
   }
 
   @Test
@@ -342,6 +345,7 @@ public class JsonRpcHttpOptionsTest extends CommandTestAbstract {
     final String keystoreFile = "/tmp/test.p12";
     final String keystorePasswordFile = "/tmp/test.txt";
     final String knownClientFile = "/tmp/knownClientFile";
+
     parseCommand(
         "--rpc-http-enabled",
         "--rpc-http-host",
@@ -420,6 +424,90 @@ public class JsonRpcHttpOptionsTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsClientAuthWithTrustStore() throws IOException {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String keystoreFile = "/tmp/test.p12";
+    final String keystorePasswordFile = "/tmp/test.txt";
+    final String truststoreFile = "/tmp/truststore.p12";
+    final String truststorePasswordFile = "/tmp/truststore.txt";
+
+    Files.writeString(Path.of(truststorePasswordFile), "password");
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        keystoreFile,
+        "--rpc-http-tls-keystore-password-file",
+        keystorePasswordFile,
+        "--rpc-http-tls-client-auth-enabled",
+        "--rpc-http-tls-truststore-file",
+        truststoreFile,
+        "--rpc-http-tls-truststore-password-file",
+        truststorePasswordFile);
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+    final Optional<TlsConfiguration> tlsConfiguration =
+        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
+    assertThat(tlsConfiguration.isPresent()).isTrue();
+    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().isPresent()).isTrue();
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().getTruststorePath())
+        .isEqualTo(Optional.of(Path.of(truststoreFile)));
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().getTrustStorePassword())
+        .isEqualTo(Files.readString(Path.of(truststorePasswordFile)));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsClientAuthWithTrustStoreAndKnownClientsFileReportsError()
+      throws IOException {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String keystoreFile = "/tmp/test.p12";
+    final String keystorePasswordFile = "/tmp/test.txt";
+    final String truststoreFile = "/tmp/truststore.p12";
+    final String truststorePasswordFile = "/tmp/truststore.txt";
+    final String knownClientFile = "/tmp/knownClientFile";
+
+    Files.writeString(Path.of(truststorePasswordFile), "password");
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        keystoreFile,
+        "--rpc-http-tls-keystore-password-file",
+        keystorePasswordFile,
+        "--rpc-http-tls-client-auth-enabled",
+        "--rpc-http-tls-truststore-file",
+        truststoreFile,
+        "--rpc-http-tls-truststore-password-file",
+        truststorePasswordFile,
+        "--rpc-http-tls-known-clients-file",
+        knownClientFile);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Configuration error: Truststore file (--rpc-http-tls-truststore-file) cannot be used together with CA clients (--rpc-http-tls-ca-clients-enabled) or a known-clients (--rpc-http-tls-known-clients-file) option. "
+                + "These options are mutually exclusive. Choose either truststore-based authentication or known-clients/CA clients configuration.");
   }
 
   @Test

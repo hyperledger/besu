@@ -177,6 +177,20 @@ public class JsonRpcHttpOptions {
   private final Boolean isRpcHttpTlsCAClientsEnabled = false;
 
   @CommandLine.Option(
+      names = {"--rpc-http-tls-truststore-file"},
+      paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to the truststore file for the JSON-RPC HTTP service.",
+      arity = "1")
+  private final Path rpcHttpTlsTruststoreFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-http-tls-truststore-password-file"},
+      paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to the file containing the password for the truststore.",
+      arity = "1")
+  private final Path rpcHttpTlsTruststorePasswordFile = null;
+
+  @CommandLine.Option(
       names = {"--rpc-http-tls-protocol", "--rpc-http-tls-protocols"},
       description = "Comma separated list of TLS protocols to support (default: ${DEFAULT-VALUE})",
       split = ",",
@@ -306,7 +320,6 @@ public class JsonRpcHttpOptions {
     jsonRpcConfiguration.setHost(
         Strings.isNullOrEmpty(rpcHttpHost) ? defaultHostAddress : rpcHttpHost);
     jsonRpcConfiguration.setHostsAllowlist(hostsAllowlist);
-    ;
     jsonRpcConfiguration.setHttpTimeoutSec(timoutSec);
     return jsonRpcConfiguration;
   }
@@ -330,7 +343,18 @@ public class JsonRpcHttpOptions {
         commandLine,
         "--rpc-http-tls-client-auth-enabled",
         !isRpcHttpTlsClientAuthEnabled,
-        asList("--rpc-http-tls-known-clients-file", "--rpc-http-tls-ca-clients-enabled"));
+        asList(
+            "--rpc-http-tls-known-clients-file",
+            "--rpc-http-tls-ca-clients-enabled",
+            "--rpc-http-tls-truststore-file",
+            "--rpc-http-tls-truststore-password-file"));
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--rpc-http-tls-truststore-file",
+        rpcHttpTlsTruststoreFile == null,
+        asList("--rpc-http-tls-truststore-password-file"));
   }
 
   private void checkRpcTlsOptionsDependencies(final Logger logger, final CommandLine commandLine) {
@@ -392,12 +416,31 @@ public class JsonRpcHttpOptions {
           "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint");
     }
 
-    if (isRpcHttpTlsClientAuthEnabled
-        && !isRpcHttpTlsCAClientsEnabled
-        && rpcHttpTlsKnownClientsFile == null) {
-      throw new CommandLine.ParameterException(
-          commandLine,
-          "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
+    if (isRpcHttpTlsClientAuthEnabled) {
+      if (!isRpcHttpTlsCAClientsEnabled
+          && rpcHttpTlsKnownClientsFile == null
+          && rpcHttpTlsTruststoreFile == null) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            "Configuration error: TLS client authentication is enabled, but none of the following options are provided: "
+                + "1. Specify a known-clients file (--rpc-http-tls-known-clients-file) and/or  Enable CA clients (--rpc-http-tls-ca-clients-enabled). "
+                + "2. Specify a truststore file and its password file (--rpc-http-tls-truststore-file and --rpc-http-tls-truststore-password-file). "
+                + "Only one of these options must be configured");
+      }
+
+      if (rpcHttpTlsTruststoreFile != null && rpcHttpTlsTruststorePasswordFile == null) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            "Configuration error: A truststore file is specified for JSON RPC HTTP endpoint, but the corresponding truststore password file (--rpc-http-tls-truststore-password-file) is missing");
+      }
+
+      if ((isRpcHttpTlsCAClientsEnabled || rpcHttpTlsKnownClientsFile != null)
+          && rpcHttpTlsTruststoreFile != null) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            "Configuration error: Truststore file (--rpc-http-tls-truststore-file) cannot be used together with CA clients (--rpc-http-tls-ca-clients-enabled) or a known-clients (--rpc-http-tls-known-clients-file) option. "
+                + "These options are mutually exclusive. Choose either truststore-based authentication or known-clients/CA clients configuration.");
+      }
     }
 
     rpcHttpTlsProtocols.retainAll(getJDKEnabledProtocols());
@@ -441,10 +484,17 @@ public class JsonRpcHttpOptions {
 
   private TlsClientAuthConfiguration rpcHttpTlsClientAuthConfiguration() {
     if (isRpcHttpTlsClientAuthEnabled) {
-      return TlsClientAuthConfiguration.Builder.aTlsClientAuthConfiguration()
-          .withKnownClientsFile(rpcHttpTlsKnownClientsFile)
-          .withCaClientsEnabled(isRpcHttpTlsCAClientsEnabled)
-          .build();
+      TlsClientAuthConfiguration.Builder tlsClientAuthConfigurationBuilder =
+          TlsClientAuthConfiguration.Builder.aTlsClientAuthConfiguration()
+              .withKnownClientsFile(rpcHttpTlsKnownClientsFile)
+              .withCaClientsEnabled(isRpcHttpTlsCAClientsEnabled)
+              .withTruststorePath(rpcHttpTlsTruststoreFile);
+
+      if (rpcHttpTlsTruststorePasswordFile != null) {
+        tlsClientAuthConfigurationBuilder.withTruststorePasswordSupplier(
+            new FileBasedPasswordProvider(rpcHttpTlsTruststorePasswordFile));
+      }
+      return tlsClientAuthConfigurationBuilder.build();
     }
 
     return null;
