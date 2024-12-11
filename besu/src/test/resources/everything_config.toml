@@ -44,7 +44,6 @@ max-peers=42
 remote-connections-limit-enabled=true
 remote-connections-max-percentage=60
 random-peer-priority-enabled=false
-host-whitelist=["all"]
 host-allowlist=["all"]
 engine-host-allowlist=["all"]
 engine-rpc-enabled=true
