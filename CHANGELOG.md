@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- `--host-whitelist` has been deprecated since 2020 and its related option will be removed in a future release.
 
 ### Upcoming Breaking Changes
 - Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
@@ -14,6 +15,8 @@
   - Smart-contract-based (onchain) permissioning
   - Proof of Work consensus
   - Fast Sync
+
+
 
 ### Additions and Improvements
 - Add RPC HTTP options to specify custom truststore and its password [#7978](https://github.com/hyperledger/besu/pull/7978)

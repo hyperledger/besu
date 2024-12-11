@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+
 import java.util.Optional;
 
 public class EthContext {
@@ -22,24 +24,31 @@ public class EthContext {
   private final EthMessages ethMessages;
   private final Optional<EthMessages> snapMessages;
   private final EthScheduler scheduler;
+  private final PeerTaskExecutor peerTaskExecutor;
 
   public EthContext(
       final EthPeers ethPeers,
       final EthMessages ethMessages,
       final EthMessages snapMessages,
-      final EthScheduler scheduler) {
+      final EthScheduler scheduler,
+      final PeerTaskExecutor peerTaskExecutor) {
     this.ethPeers = ethPeers;
     this.ethMessages = ethMessages;
     this.snapMessages = Optional.of(snapMessages);
     this.scheduler = scheduler;
+    this.peerTaskExecutor = peerTaskExecutor;
   }
 
   public EthContext(
-      final EthPeers ethPeers, final EthMessages ethMessages, final EthScheduler scheduler) {
+      final EthPeers ethPeers,
+      final EthMessages ethMessages,
+      final EthScheduler scheduler,
+      final PeerTaskExecutor peerTaskExecutor) {
     this.ethPeers = ethPeers;
     this.ethMessages = ethMessages;
     this.snapMessages = Optional.empty();
     this.scheduler = scheduler;
+    this.peerTaskExecutor = peerTaskExecutor;
   }
 
   public EthPeers getEthPeers() {
@@ -56,5 +65,9 @@ public class EthContext {
 
   public EthScheduler getScheduler() {
     return scheduler;
+  }
+
+  public PeerTaskExecutor getPeerTaskExecutor() {
+    return peerTaskExecutor;
   }
 }
