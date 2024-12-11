@@ -43,6 +43,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -113,6 +115,7 @@ public class BackwardSyncContextTest {
 
   @Mock private BlockValidator blockValidator;
   @Mock private SyncState syncState;
+  @Mock private PeerTaskExecutor peerTaskExecutor;
   private BackwardChain backwardChain;
   private Block uncle;
   private Block genesisBlock;
@@ -149,6 +152,7 @@ public class BackwardSyncContextTest {
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
             .setBlockchain(localBlockchain)
+            .setPeerTaskExecutor(peerTaskExecutor)
             .build();
 
     peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
@@ -183,6 +187,7 @@ public class BackwardSyncContextTest {
             new BackwardSyncContext(
                 protocolContext,
                 protocolSchedule,
+                SynchronizerConfiguration.builder().build(),
                 metricsSystem,
                 ethContext,
                 syncState,

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -35,7 +34,6 @@ public class CheckpointSyncActions extends FastSyncActions {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final PivotBlockSelector pivotBlockSelector,
       final MetricsSystem metricsSystem) {
@@ -45,7 +43,6 @@ public class CheckpointSyncActions extends FastSyncActions {
         protocolSchedule,
         protocolContext,
         ethContext,
-        peerTaskExecutor,
         syncState,
         pivotBlockSelector,
         metricsSystem);
@@ -60,7 +57,6 @@ public class CheckpointSyncActions extends FastSyncActions {
         protocolSchedule,
         protocolContext,
         ethContext,
-        peerTaskExecutor,
         syncState,
         metricsSystem,
         currentState,

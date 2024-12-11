@@ -170,7 +170,7 @@ public class TestNode implements Closeable {
     ethPeers.setChainHeadTracker(mockCHT);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
-    final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
+    final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler, null);
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(

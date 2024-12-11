@@ -75,9 +75,13 @@ public interface PeerTask<T> {
   Predicate<EthPeer> getPeerRequirementFilter();
 
   /**
-   * Checks if the supplied result is considered a success
+   * Performs a high level check of the results, returning a PeerTaskValidationResponse to describe
+   * the result of the check
    *
-   * @return true if the supplied result is considered a success
+   * @param result The results of the PeerTask, as returned by processResponse
+   * @return a PeerTaskValidationResponse to describe the result of the check
    */
-  boolean isSuccess(T result);
+  PeerTaskValidationResponse validateResult(T result);
+
+  default void postProcessResult(final PeerTaskExecutorResult<T> result) {}
 }
