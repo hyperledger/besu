@@ -27,13 +27,17 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -50,15 +54,11 @@ import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
-import java.lang.reflect.Field;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -68,8 +68,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.junit.platform.commons.util.ReflectionUtils;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class CheckPointSyncChainDownloaderTest {
@@ -120,11 +118,14 @@ public class CheckPointSyncChainDownloaderTest {
     otherBlockchainSetup.importFirstBlocks(30);
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
+    peerTaskExecutor = mock(PeerTaskExecutor.class);
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            protocolSchedule,
-            localBlockchain,
-            new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(protocolSchedule)
+            .setBlockchain(localBlockchain)
+            .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
+            .setPeerTaskExecutor(peerTaskExecutor)
+            .build();
     ethContext = ethProtocolManager.ethContext();
 
     final int blockNumber = 10;
@@ -142,40 +143,30 @@ public class CheckPointSyncChainDownloaderTest {
             true,
             Optional.of(checkpoint));
 
-    peerTaskExecutor = mock(PeerTaskExecutor.class);
-
     when(peerTaskExecutor.execute(any(GetReceiptsFromPeerTask.class)))
         .thenAnswer(
-            new Answer<PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>>>() {
-              @Override
-              public PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> answer(
-                  final InvocationOnMock invocationOnMock) throws Throwable {
-                GetReceiptsFromPeerTask task =
-                    invocationOnMock.getArgument(0, GetReceiptsFromPeerTask.class);
+            (invocationOnMock) -> {
+              GetReceiptsFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetReceiptsFromPeerTask.class);
+              Map<BlockHeader, List<TransactionReceipt>> getReceiptsFromPeerTaskResult =
+                  new HashMap<>();
+              task.getBlockHeaders()
+                  .forEach(
+                      (bh) ->
+                          getReceiptsFromPeerTaskResult.put(
+                              bh, otherBlockchain.getTxReceipts(bh.getHash()).get()));
 
-                return processTask(task);
-              }
+              return new PeerTaskExecutorResult<>(
+                  Optional.of(getReceiptsFromPeerTaskResult),
+                  PeerTaskExecutorResponseCode.SUCCESS,
+                  Optional.empty());
             });
-  }
 
-  @SuppressWarnings("unchecked")
-  private PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> processTask(
-      final GetReceiptsFromPeerTask task) throws IllegalAccessException {
-    Map<BlockHeader, List<TransactionReceipt>> getReceiptsFromPeerTaskResult = new HashMap<>();
-    List<Field> fields =
-        ReflectionUtils.findFields(
-            task.getClass(),
-            (field) -> field.getName().equals("blockHeaders"),
-            ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
-    fields.forEach((f) -> f.setAccessible(true));
-    Collection<BlockHeader> blockHeaders = (Collection<BlockHeader>) fields.getFirst().get(task);
-    blockHeaders.forEach(
-        (bh) ->
-            getReceiptsFromPeerTaskResult.put(
-                bh, otherBlockchain.getTxReceipts(bh.getHash()).get()));
-
-    return new PeerTaskExecutorResult<>(
-        Optional.of(getReceiptsFromPeerTaskResult), PeerTaskExecutorResponseCode.SUCCESS);
+    final Answer<PeerTaskExecutorResult<List<BlockHeader>>> getHeadersAnswer =
+        new GetHeadersFromPeerTaskExecutorAnswer(otherBlockchain, ethContext.getEthPeers());
+    when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class))).thenAnswer(getHeadersAnswer);
+    when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
+        .thenAnswer(getHeadersAnswer);
   }
 
   @AfterEach
@@ -193,7 +184,6 @@ public class CheckPointSyncChainDownloaderTest {
         protocolSchedule,
         protocolContext,
         ethContext,
-        peerTaskExecutor,
         syncState,
         new NoOpMetricsSystem(),
         new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()),
@@ -202,8 +192,7 @@ public class CheckPointSyncChainDownloaderTest {
 
   @ParameterizedTest
   @ArgumentsSource(CheckPointSyncChainDownloaderTestArguments.class)
-  public void shouldSyncToPivotBlockInMultipleSegments(final DataStorageFormat storageFormat)
-      throws IllegalAccessException {
+  public void shouldSyncToPivotBlockInMultipleSegments(final DataStorageFormat storageFormat) {
     setup(storageFormat);
 
     final RespondingEthPeer peer =
@@ -239,8 +228,7 @@ public class CheckPointSyncChainDownloaderTest {
 
   @ParameterizedTest
   @ArgumentsSource(CheckPointSyncChainDownloaderTestArguments.class)
-  public void shouldSyncToPivotBlockInSingleSegment(final DataStorageFormat storageFormat)
-      throws IllegalAccessException {
+  public void shouldSyncToPivotBlockInSingleSegment(final DataStorageFormat storageFormat) {
     setup(storageFormat);
 
     final RespondingEthPeer peer =
@@ -273,8 +261,7 @@ public class CheckPointSyncChainDownloaderTest {
   @ParameterizedTest
   @ArgumentsSource(CheckPointSyncChainDownloaderTestArguments.class)
   public void shouldSyncToPivotBlockInMultipleSegmentsWithPeerTaskSystem(
-      final DataStorageFormat storageFormat)
-      throws IllegalAccessException, ExecutionException, InterruptedException, TimeoutException {
+      final DataStorageFormat storageFormat) {
     setup(storageFormat);
 
     final RespondingEthPeer peer =
@@ -311,7 +298,7 @@ public class CheckPointSyncChainDownloaderTest {
   @ParameterizedTest
   @ArgumentsSource(CheckPointSyncChainDownloaderTestArguments.class)
   public void shouldSyncToPivotBlockInSingleSegmentWithPeerTaskSystem(
-      final DataStorageFormat storageFormat) throws IllegalAccessException {
+      final DataStorageFormat storageFormat) {
     setup(storageFormat);
 
     final RespondingEthPeer peer =

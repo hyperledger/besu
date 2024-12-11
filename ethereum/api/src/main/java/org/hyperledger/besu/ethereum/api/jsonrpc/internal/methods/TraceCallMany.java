@@ -116,8 +116,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
         .getAndMapWorldState(
             blockHeader.getBlockHash(),
             ws -> {
-              final WorldUpdater updater =
-                  transactionSimulator.getEffectiveWorldStateUpdater(blockHeader, ws);
+              final WorldUpdater updater = transactionSimulator.getEffectiveWorldStateUpdater(ws);
               try {
                 Arrays.stream(transactionsAndTraceTypeParameters)
                     .forEachOrdered(
@@ -158,6 +157,11 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final DebugOperationTracer tracer =
         new DebugOperationTracer(buildTraceOptions(traceTypes), false);
+    final var miningBeneficiary =
+        protocolSchedule
+            .getByBlockHeader(header)
+            .getMiningBeneficiaryCalculator()
+            .calculateBeneficiary(header);
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
         transactionSimulator.processWithWorldUpdater(
             callParameter,
@@ -165,7 +169,8 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
             buildTransactionValidationParams(),
             tracer,
             header,
-            worldUpdater);
+            worldUpdater,
+            miningBeneficiary);
 
     LOG.trace("Executing {} call for transaction {}", traceTypeParameter, callParameter);
     if (maybeSimulatorResult.isEmpty()) {
