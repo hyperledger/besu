@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- `--host-whitelist` has been deprecated since 2020 and its related option will be removed in a future release.
 
 ### Upcoming Breaking Changes
 - Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
@@ -15,7 +16,7 @@
   - Proof of Work consensus
   - Fast Sync
 
-- `--host-whitelist` has been deprecated since 2020 and its related option will be removed in a future release.
+
 
 ### Additions and Improvements
 
