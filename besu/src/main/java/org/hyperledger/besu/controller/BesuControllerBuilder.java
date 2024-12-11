@@ -951,7 +951,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           unsubscribeForkchoiceListener);
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
-      return new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem);
+      return new PivotSelectorFromPeers(ethContext, syncConfig, syncState);
     }
   }
 
