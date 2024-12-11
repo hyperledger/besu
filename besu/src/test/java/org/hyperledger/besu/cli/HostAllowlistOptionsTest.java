@@ -14,15 +14,14 @@
  */
 package org.hyperledger.besu.cli;
 
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
-public class HostAllowlistOptionsTest extends CommandTestAbstract {
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
+public class HostAllowlistOptionsTest extends CommandTestAbstract {
 
   @Test
   public void rpcHttpHostAllowlistAcceptsSingleArgument() {
@@ -71,8 +70,6 @@ public class HostAllowlistOptionsTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
-
- 
 
   @Test
   public void rpcHttpHostAllowlistAcceptsMultipleFlags() {
