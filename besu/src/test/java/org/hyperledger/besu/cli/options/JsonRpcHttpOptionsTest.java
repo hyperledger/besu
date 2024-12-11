@@ -333,8 +333,8 @@ public class JsonRpcHttpOptionsTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Configuration error: TLS client authentication is enabled, but none of the following options are provided: "
-                + "1. Specify a known-clients file (--rpc-http-tls-known-clients-file) and/or  Enable CA clients (--rpc-http-tls-ca-clients-enabled)"
-                + "2. Specify a truststore file and its password file (--rpc-http-tls-truststore-file and --rpc-http-tls-truststore-password-file) "
+                + "1. Specify a known-clients file (--rpc-http-tls-known-clients-file) and/or  Enable CA clients (--rpc-http-tls-ca-clients-enabled). "
+                + "2. Specify a truststore file and its password file (--rpc-http-tls-truststore-file and --rpc-http-tls-truststore-password-file). "
                 + "Only one of these options must be configured");
   }
 
@@ -506,7 +506,7 @@ public class JsonRpcHttpOptionsTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Configuration error: Truststore file (--rpc-http-tls-truststore-file ) cannot be used together with CA clients (--rpc-http-tls-ca-clients-enabled)   or a known-clients (--rpc-http-tls-known-clients-file) option "
+            "Configuration error: Truststore file (--rpc-http-tls-truststore-file) cannot be used together with CA clients (--rpc-http-tls-ca-clients-enabled) or a known-clients (--rpc-http-tls-known-clients-file) option. "
                 + "These options are mutually exclusive. Choose either truststore-based authentication or known-clients/CA clients configuration.");
   }
 
