@@ -75,6 +75,7 @@
 - Fix QBFT prepared block based proposal validation [#7875](https://github.com/hyperledger/besu/pull/7875)
 - Correct default parameters for frontier transactions in `eth_call` and `eth_estimateGas` [#7965](https://github.com/hyperledger/besu/pull/7965)
 - Correctly parse nonce as hex in `eth_call` account overrides [#7999](https://github.com/hyperledger/besu/pull/7999)
+- Add `--graphql-http-max-active-connections` for limiting GraphQL connection count [#6218](https://github.com/hyperledger/besu/pull/6218)
 
 ## 24.10.0
 

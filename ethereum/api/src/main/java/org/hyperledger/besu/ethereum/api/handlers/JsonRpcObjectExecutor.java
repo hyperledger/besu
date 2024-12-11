@@ -92,7 +92,7 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
 
   private ObjectWriter createObjectWriter() {
     ObjectWriter writer =
-        jsonRpcConfiguration.isPrettyJsonEnabled()
+        jsonRpcConfiguration.getPrettyJsonEnabled()
             ? getJsonObjectMapper().writerWithDefaultPrettyPrinter()
             : getJsonObjectMapper().writer();
     return writer
