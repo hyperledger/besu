@@ -421,8 +421,8 @@ public abstract class PendingTransaction
    * class changes its structure.
    */
   public interface MemorySize {
-    int FRONTIER_AND_ACCESS_LIST_SHALLOW_SIZE = 904;
-    int EIP1559_AND_EIP4844_SHALLOW_SIZE = 1016;
+    int FRONTIER_AND_ACCESS_LIST_SHALLOW_SIZE = 912;
+    int EIP1559_AND_EIP4844_SHALLOW_SIZE = 1024;
     int OPTIONAL_TO_SIZE = 112;
     int OPTIONAL_CHAIN_ID_SIZE = 80;
     int PAYLOAD_SHALLOW_SIZE = 32;
