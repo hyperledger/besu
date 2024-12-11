@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.datatypes;
 
+import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -106,11 +108,11 @@ public class AccountOverride {
     /**
      * Sets the nonce override
      *
-     * @param nonce the nonce override
+     * @param nonce the nonce override in hex
      * @return the builder
      */
-    public Builder withNonce(final Long nonce) {
-      this.nonce = Optional.ofNullable(nonce);
+    public Builder withNonce(final UnsignedLongParameter nonce) {
+      this.nonce = Optional.of(nonce.getValue());
       return this;
     }
 
