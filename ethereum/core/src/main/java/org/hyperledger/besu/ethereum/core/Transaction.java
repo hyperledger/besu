@@ -1104,6 +1104,10 @@ public class Transaction
         blobsWithCommitments.map(
             withCommitments ->
                 blobsWithCommitmentsDetachedCopy(withCommitments, detachedVersionedHashes.get()));
+    final Optional<List<CodeDelegation>> detachedCodeDelegationList =
+        maybeCodeDelegationList.map(
+            codeDelegations ->
+                codeDelegations.stream().map(this::codeDelegationDetachedCopy).toList());
 
     final var copiedTx =
         new Transaction(
@@ -1124,7 +1128,7 @@ public class Transaction
             chainId,
             detachedVersionedHashes,
             detachedBlobsWithCommitments,
-            maybeCodeDelegationList,
+            detachedCodeDelegationList,
             Optional.empty());
 
     // copy also the computed fields, to avoid to recompute them
@@ -1140,6 +1144,15 @@ public class Transaction
     final Address detachedAddress = Address.wrap(accessListEntry.address().copy());
     final var detachedStorage = accessListEntry.storageKeys().stream().map(Bytes32::copy).toList();
     return new AccessListEntry(detachedAddress, detachedStorage);
+  }
+
+  private CodeDelegation codeDelegationDetachedCopy(final CodeDelegation codeDelegation) {
+    final Address detachedAddress = Address.wrap(codeDelegation.address().copy());
+    return new org.hyperledger.besu.ethereum.core.CodeDelegation(
+        codeDelegation.chainId(),
+        detachedAddress,
+        codeDelegation.nonce(),
+        codeDelegation.signature());
   }
 
   private BlobsWithCommitments blobsWithCommitmentsDetachedCopy(
