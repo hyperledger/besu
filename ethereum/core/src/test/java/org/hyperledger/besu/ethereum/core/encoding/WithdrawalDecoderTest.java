@@ -58,7 +58,5 @@ class WithdrawalDecoderTest {
             Bytes.fromHexString("0xd803019400000000000000000000000000000000deadbeef05"));
 
     assertThat(withdrawal).isEqualTo(expectedWithdrawal);
-    assertThat(withdrawal.getRawRlp().get())
-        .isEqualTo(Bytes.fromHexString("0xd803019400000000000000000000000000000000deadbeef05"));
   }
 }
