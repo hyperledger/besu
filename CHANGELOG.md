@@ -19,6 +19,13 @@
 
 ### Bug fixes
 
+## 24.12.1 Hotfix
+
+This is a hotfix to address publishing besu maven artifacts.  There are no issues with 24.12.0 other than incomplete artifact publishing, and there is no functional difference between 24.12.0 and 24.12.1 release binaries.
+
+### Bug fixes
+- Fix BOM pom publication to Artifactory [#8201](https://github.com/hyperledger/besu/pull/8021)
+
 ## 24.12.0
 
 ### Breaking Changes
