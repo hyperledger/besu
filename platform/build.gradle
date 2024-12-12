@@ -195,7 +195,7 @@ spotless {
 
 publishing {
   publications {
-    mavenPlatform(MavenPublication) {
+    mavenJavaPlatform(MavenPublication) {
       from components.javaPlatform
       groupId "org.hyperledger.besu"
       artifactId 'bom'
