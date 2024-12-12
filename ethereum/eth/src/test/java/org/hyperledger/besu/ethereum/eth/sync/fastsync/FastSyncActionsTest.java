@@ -234,10 +234,8 @@ public class FastSyncActionsTest {
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
   public void selectPivotBlockShouldRetryIfPivotBlockSelectorReturnsEmptyOptional(
       final DataStorageFormat storageFormat) {
-    setUp(storageFormat);
+    setUp(storageFormat, false, Optional.of(3));
 
-    SynchronizerConfiguration syncConfig =
-        SynchronizerConfiguration.builder().syncMinimumPeerCount(3).build();
     PivotBlockSelector pivotBlockSelector = mock(PivotBlockSelector.class);
     fastSyncActions = createFastSyncActions(syncConfig, pivotBlockSelector);
 
