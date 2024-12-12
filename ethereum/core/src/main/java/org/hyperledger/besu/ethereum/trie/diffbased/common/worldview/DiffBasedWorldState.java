@@ -160,6 +160,32 @@ public abstract class DiffBasedWorldState
     final DiffBasedWorldStateKeyValueStorage.Updater stateUpdater =
         worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
+    Runnable savePreimages =
+        () -> {
+          var preImageUpdater = worldStateKeyValueStorage.getPreimageStorage().updater();
+          localCopy
+              .getAccountsToUpdate()
+              // log.getAccountChanges()
+              .keySet()
+              .forEach(acct -> preImageUpdater.putAccountTrieKeyPreimage(acct.addressHash(), acct));
+          localCopy.getStorageToUpdate().values().stream()
+              .flatMap(z -> z.keySet().stream())
+              .filter(
+                  z -> {
+                    // TODO: we should add logic here to prevent writing
+                    //     common slot keys
+                    return z.getSlotKey().isPresent();
+                  })
+              .distinct()
+              .forEach(
+                  slot -> {
+                    preImageUpdater.putStorageTrieKeyPreimage(
+                        slot.getSlotHash(), slot.getSlotKey().get());
+                  });
+          // prob need to override this in a bonsai implementation that simply defers to the trielog
+          // tx/commit
+          preImageUpdater.commit();
+        };
 
     try {
       final Hash calculatedRootHash;
@@ -210,6 +236,9 @@ public abstract class DiffBasedWorldState
         stateUpdater.commit();
         accumulator.reset();
         saveTrieLog.run();
+        // TODO: maybe move this, make conditional so we don't affect performance
+        //  if we are not tracking preimages.
+        savePreimages.run();
       } else {
         stateUpdater.rollback();
         accumulator.reset();
@@ -296,7 +325,7 @@ public abstract class DiffBasedWorldState
 
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("storage format do not provide account streaming.");
+    return worldStateKeyValueStorage.streamAccounts(this, startKeyHash, limit);
   }
 
   @Override

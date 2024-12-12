@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
@@ -99,7 +100,8 @@ public class SnapServerTest {
             }
           },
           storage,
-          new InMemoryKeyValueStorage());
+          new InMemoryKeyValueStorage(),
+          new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
 
   final WorldStateStorageCoordinator storageCoordinator =
       new WorldStateStorageCoordinator(inMemoryStorage);
