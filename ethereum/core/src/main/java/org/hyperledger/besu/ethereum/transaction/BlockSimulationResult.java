@@ -49,7 +49,7 @@ public class BlockSimulationResult {
   }
 
   public List<TransactionSimulatorResult> getTransactionSimulations() {
-    return transactionSimulations;
+    return transactionSimulationResults;
   }
 
   public Block getBlock() {
