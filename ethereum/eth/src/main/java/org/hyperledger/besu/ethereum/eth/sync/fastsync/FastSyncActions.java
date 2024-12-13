@@ -136,8 +136,7 @@ public class FastSyncActions {
 
     return ethContext
         .getEthPeers()
-        .waitForPeer(
-            (peer) -> true)
+        .waitForPeer((peer) -> true)
         .thenCompose(
             unused ->
                 currentState
