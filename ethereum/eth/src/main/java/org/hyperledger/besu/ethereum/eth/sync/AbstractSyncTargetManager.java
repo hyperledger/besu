@@ -24,9 +24,9 @@ import org.hyperledger.besu.ethereum.eth.sync.tasks.DetermineCommonAncestorTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -117,10 +117,15 @@ public abstract class AbstractSyncTargetManager {
 
   private CompletableFuture<SyncTarget> waitForPeerAndThenSetSyncTarget() {
     return ethContext
-        .getEthPeers()
-        .waitForPeer((peer) -> true)
-        .orTimeout(5, TimeUnit.SECONDS)
-        .thenCompose((r) -> findSyncTarget());
+        .getScheduler()
+        .scheduleFutureTask(
+            () ->
+                ethContext
+                    .getEthPeers()
+                    .waitForPeer((peer) -> true)
+                    .handle((ignored, ignored2) -> null)
+                    .thenCompose((r) -> findSyncTarget()),
+            Duration.ofSeconds(5));
   }
 
   private boolean isCancelled() {
