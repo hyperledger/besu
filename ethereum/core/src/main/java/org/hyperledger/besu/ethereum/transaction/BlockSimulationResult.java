@@ -25,7 +25,7 @@ import java.util.List;
 public class BlockSimulationResult {
   final Block block;
   final List<TransactionReceipt> receipts;
-  List<TransactionSimulatorResult> transactionSimulations;
+  List<TransactionSimulatorResult> transactionSimulationResults;
 
   public BlockSimulationResult(
       final Block block,
