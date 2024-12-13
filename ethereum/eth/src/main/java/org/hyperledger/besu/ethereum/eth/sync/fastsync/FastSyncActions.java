@@ -137,10 +137,7 @@ public class FastSyncActions {
     return ethContext
         .getEthPeers()
         .waitForPeer(
-            (peer) ->
-                currentState.getPivotBlockNumber().isEmpty()
-                    || peer.chainState().getEstimatedHeight()
-                        >= currentState.getPivotBlockNumber().getAsLong())
+            (peer) -> true)
         .thenCompose(
             unused ->
                 currentState
