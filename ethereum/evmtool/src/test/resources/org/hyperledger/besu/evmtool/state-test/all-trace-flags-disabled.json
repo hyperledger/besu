@@ -101,6 +101,6 @@
     {"pc":49,"op":"0x60","gas":42949649295,"gasCost":3,"memSize":32,"depth":1,"refund":0,"opName":"PUSH1"},
     {"pc":51,"op":"0x55","gas":42949649292,"gasCost":5000,"memSize":32,"depth":1,"refund":0,"opName":"SSTORE"},
     {"pc":52,"op":"0x00","gas":42949644292,"gasCost":0,"memSize":32,"depth":1,"refund":0,"opName":"STOP"},
-    {"output":"","gasUsed":28668,"test":"returndatacopy_following_call","fork":"London","d":0,"g":0,"v":0,"postHash":"0x1c6dda42e80135b6d5ff1a664e6f85e8552d5c56888bb35e2e694f3829a500c7","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
+    {"output":"","gasUsed":28668,"test":"returndatacopy_following_call","fork":"London","d":0,"g":0,"v":0,"stateRoot":"0x1c6dda42e80135b6d5ff1a664e6f85e8552d5c56888bb35e2e694f3829a500c7","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
   ]
 }
