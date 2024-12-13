@@ -57,7 +57,7 @@ public class BlockOverrides {
    */
   @JsonCreator
   public BlockOverrides(
-      @JsonProperty("timestamp") final Optional<UnsignedLongParameter> timestamp,
+      @JsonProperty("time") final Optional<UnsignedLongParameter> timestamp,
       @JsonProperty("number") final Optional<UnsignedLongParameter> blockNumber,
       @JsonProperty("hash") final Optional<Hash> blockHash,
       @JsonProperty("prevRandao") final Optional<Bytes32> prevRandao,
@@ -66,7 +66,7 @@ public class BlockOverrides {
       @JsonProperty("baseFeePerGas") final Optional<Wei> baseFeePerGas,
       @JsonProperty("blobBaseFee") final Optional<UnsignedLongParameter> blobBaseFee,
       @JsonProperty("stateRoot") final Optional<Hash> stateRoot,
-      @JsonProperty("difficult") final Optional<BigInteger> difficulty,
+      @JsonProperty("difficulty") final Optional<BigInteger> difficulty,
       @JsonProperty("extraData") final Optional<Bytes> extraData,
       @JsonProperty("mixHashOrPrevRandao") final Optional<Hash> mixHashOrPrevRandao) {
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
