@@ -100,7 +100,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
-                        "Public world state not available for block "
+                        "World state not available for block number (block hash): "
                             + headerCore.toLogString()))) {
       var results = blockSimulator.process(headerCore, List.of(blockStateCall), ws);
       var result = results.getFirst();
