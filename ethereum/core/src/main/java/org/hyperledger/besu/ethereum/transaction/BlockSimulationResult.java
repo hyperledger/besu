@@ -30,7 +30,7 @@ public class BlockSimulationResult {
   public BlockSimulationResult(
       final Block block,
       final List<? extends TransactionReceipt> receipts,
-      final List<TransactionSimulatorResult> transactionSimulations) {
+      final List<TransactionSimulatorResult> transactionSimulationResults) {
     this.block = block;
     this.receipts = new ArrayList<>(receipts);
     this.transactionSimulationResults = transactionSimulationResults;
