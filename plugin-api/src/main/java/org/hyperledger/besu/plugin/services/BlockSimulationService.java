@@ -15,9 +15,9 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.datatypes.AccountOverrideMap;
-import org.hyperledger.besu.datatypes.BlockOverrides;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.BlockOverrides;
 import org.hyperledger.besu.plugin.data.PluginBlockSimulationResult;
 
 import java.util.List;

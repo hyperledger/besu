@@ -12,15 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.datatypes;
+package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -55,20 +56,19 @@ public class BlockOverrides {
    * @param extraData the optional extra data
    * @param mixHashOrPrevRandao the optional mix hash or previous Randao
    */
-  @JsonCreator
   public BlockOverrides(
-      @JsonProperty("time") final Optional<UnsignedLongParameter> timestamp,
-      @JsonProperty("number") final Optional<UnsignedLongParameter> blockNumber,
-      @JsonProperty("hash") final Optional<Hash> blockHash,
-      @JsonProperty("prevRandao") final Optional<Bytes32> prevRandao,
-      @JsonProperty("gasLimit") final Optional<UnsignedLongParameter> gasLimit,
-      @JsonProperty("feeRecipient") final Optional<Address> feeRecipient,
-      @JsonProperty("baseFeePerGas") final Optional<Wei> baseFeePerGas,
-      @JsonProperty("blobBaseFee") final Optional<UnsignedLongParameter> blobBaseFee,
-      @JsonProperty("stateRoot") final Optional<Hash> stateRoot,
-      @JsonProperty("difficulty") final Optional<BigInteger> difficulty,
-      @JsonProperty("extraData") final Optional<Bytes> extraData,
-      @JsonProperty("mixHashOrPrevRandao") final Optional<Hash> mixHashOrPrevRandao) {
+      final Optional<UnsignedLongParameter> timestamp,
+      final Optional<UnsignedLongParameter> blockNumber,
+      final Optional<Hash> blockHash,
+      final Optional<Bytes32> prevRandao,
+      final Optional<UnsignedLongParameter> gasLimit,
+      final Optional<Address> feeRecipient,
+      final Optional<Wei> baseFeePerGas,
+      final Optional<UnsignedLongParameter> blobBaseFee,
+      final Optional<Hash> stateRoot,
+      final Optional<BigInteger> difficulty,
+      final Optional<Bytes> extraData,
+      final Optional<Hash> mixHashOrPrevRandao) {
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
     this.blockNumber = blockNumber.map(UnsignedLongParameter::getValue);
     this.blockHash = blockHash;

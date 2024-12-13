@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.datatypes.AccountOverrideMap;
-import org.hyperledger.besu.datatypes.BlockOverrides;
+import org.hyperledger.besu.plugin.data.BlockOverrides;
 
 import java.util.ArrayList;
 import java.util.List;
