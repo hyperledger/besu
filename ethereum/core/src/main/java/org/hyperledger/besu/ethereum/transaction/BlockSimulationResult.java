@@ -33,7 +33,7 @@ public class BlockSimulationResult {
       final List<TransactionSimulatorResult> transactionSimulations) {
     this.block = block;
     this.receipts = new ArrayList<>(receipts);
-    this.transactionSimulations = transactionSimulations;
+    this.transactionSimulationResults = transactionSimulationResults;
   }
 
   public BlockHeader getBlockHeader() {
