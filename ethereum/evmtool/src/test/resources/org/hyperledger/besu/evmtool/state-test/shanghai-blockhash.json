@@ -77,6 +77,6 @@
     {"pc":14,"op":"0x60","gas":7934726,"gasCost":3,"memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH1"},
     {"pc":16,"op":"0x55","gas":7934723,"gasCost":2200,"memSize":0,"stack":["0x0","0x2"],"depth":1,"refund":0,"opName":"SSTORE"},
     {"pc":17,"op":"0x00","gas":7932523,"gasCost":0,"memSize":0,"stack":[],"depth":1,"refund":0,"opName":"STOP"},
-    {"output":"","gasUsed":67477,"test":"shanghai-blockhash","fork":"Shanghai","d":0,"g":0,"v":0,"postHash":"0xb3967c897314312cf275055d754c6742d351a2a4bcf0121ed2f896971bf56563","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
+    {"output":"","gasUsed":67477,"test":"shanghai-blockhash","fork":"Shanghai","d":0,"g":0,"v":0,"stateRoot":"0xb3967c897314312cf275055d754c6742d351a2a4bcf0121ed2f896971bf56563","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
   ]
 }
