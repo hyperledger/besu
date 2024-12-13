@@ -85,6 +85,7 @@ public class AccountOverride {
   }
 
   /** Builder class for Account overrides */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Builder {
     private Optional<Wei> balance = Optional.empty();
     private Optional<Long> nonce = Optional.empty();
