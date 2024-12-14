@@ -25,7 +25,7 @@ public class RequestContractAddresses {
   public static final Address DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS =
       Address.fromHexString("0x0c15F14308530b7CDB8460094BbB9cC28b9AaaAA");
   public static final Address DEFAULT_CONSOLIDATION_REQUEST_CONTRACT_ADDRESS =
-      Address.fromHexString("0x0046BB33B9eA028AE30BAd20702e36Ea8099BBbb");
+      Address.fromHexString("0x00431F263cE400f4455c2dCf564e53007Ca4bbBb");
   public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
