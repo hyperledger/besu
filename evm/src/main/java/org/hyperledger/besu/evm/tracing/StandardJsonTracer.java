@@ -183,7 +183,8 @@ public class StandardJsonTracer implements OperationTracer {
       memory = null;
     }
     depth = messageFrame.getMessageStackSize();
-    functionDepth = messageFrame.getCode().getEofVersion() > 0 ? messageFrame.returnStackSize() + 1 : 0;
+    functionDepth =
+        messageFrame.getCode().getEofVersion() > 0 ? messageFrame.returnStackSize() + 1 : 0;
 
     StringBuilder sb = new StringBuilder();
     if (showStorage) {
