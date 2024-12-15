@@ -39,7 +39,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -175,7 +174,6 @@ class PivotBlockConfirmer {
       // Stop loop if this task is done
       return CompletableFuture.failedFuture(new CancellationException());
     }
-
     final Optional<RetryingGetHeaderFromPeerByNumberTask> query = createPivotQuery(blockNumber);
     final CompletableFuture<BlockHeader> pivotHeaderFuture;
     if (query.isPresent()) {
@@ -187,12 +185,18 @@ class PivotBlockConfirmer {
       LOG.debug("No peer currently available to query for block {}.", blockNumber);
       pivotHeaderFuture =
           ethContext
-              .getEthPeers()
-              .waitForPeer((peer) -> !pivotBlockQueriesByPeerId.containsKey(peer.nodeId()))
-              .orTimeout(5, TimeUnit.SECONDS)
-              // Ignore result, ensure even a timeout will result in calling executePivotQuery
-              .handle((r, e) -> null)
-              .thenCompose(res -> executePivotQuery(blockNumber));
+              .getScheduler()
+              .scheduleFutureTask(
+                  () ->
+                      ethContext
+                          .getEthPeers()
+                          .waitForPeer(
+                              (peer) -> !pivotBlockQueriesByPeerId.containsKey(peer.nodeId()))
+                          // Ignore result, ensure even a timeout will result in calling
+                          // executePivotQuery
+                          .handle((r, e) -> null)
+                          .thenCompose(res -> executePivotQuery(blockNumber)),
+                  Duration.ofSeconds(5));
     }
 
     return pivotHeaderFuture;

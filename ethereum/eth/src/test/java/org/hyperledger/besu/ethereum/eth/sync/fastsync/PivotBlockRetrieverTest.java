@@ -164,6 +164,7 @@ public class PivotBlockRetrieverTest {
     // Add new peer that we can query
     final RespondingEthPeer respondingPeerB =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     respondingPeerB.respond(responder);
 
     // We need one more responsive peer before we're done
@@ -174,6 +175,7 @@ public class PivotBlockRetrieverTest {
     // Add new peer that we can query
     final RespondingEthPeer respondingPeerC =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     respondingPeerC.respond(responder);
     assertThat(badPeerA.hasOutstandingRequests()).isFalse();
     assertThat(badPeerB.hasOutstandingRequests()).isFalse();
