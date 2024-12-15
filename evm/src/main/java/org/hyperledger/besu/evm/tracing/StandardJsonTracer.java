@@ -183,7 +183,7 @@ public class StandardJsonTracer implements OperationTracer {
       memory = null;
     }
     depth = messageFrame.getMessageStackSize();
-    functionDepth = messageFrame.returnStackSize() + 1;
+    functionDepth = messageFrame.getCode().getEofVersion() > 0 ? messageFrame.returnStackSize() + 1 : 0;
 
     StringBuilder sb = new StringBuilder();
     if (showStorage) {
@@ -262,7 +262,7 @@ public class StandardJsonTracer implements OperationTracer {
       sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
     }
     sb.append("\"depth\":").append(depth).append(",");
-    if (functionDepth > 1) {
+    if (functionDepth > 0) {
       sb.append("\"functionDepth\":").append(functionDepth).append(",");
     }
     sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
