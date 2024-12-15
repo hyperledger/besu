@@ -924,7 +924,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           ethContext,
           syncConfig,
           syncState,
-          metricsSystem,
           protocolContext,
           nodeKey,
           blockchain.getChainHeadHeader());

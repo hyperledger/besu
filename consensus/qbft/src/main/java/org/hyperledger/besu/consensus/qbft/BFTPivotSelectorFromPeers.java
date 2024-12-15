@@ -56,7 +56,6 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
    * @param ethContext the eth context
    * @param syncConfig the sync config
    * @param syncState the sync state
-   * @param metricsSystem the metrics
    * @param protocolContext the protocol context
    * @param nodeKey the node key
    * @param blockHeader the block header
@@ -65,11 +64,10 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
       final EthContext ethContext,
       final SynchronizerConfiguration syncConfig,
       final SyncState syncState,
-      final MetricsSystem metricsSystem,
       final ProtocolContext protocolContext,
       final NodeKey nodeKey,
       final BlockHeader blockHeader) {
-    super(ethContext, syncConfig, syncState, metricsSystem);
+    super(ethContext, syncConfig, syncState);
     this.protocolContext = protocolContext;
     this.blockHeader = blockHeader;
     this.nodeKey = nodeKey;

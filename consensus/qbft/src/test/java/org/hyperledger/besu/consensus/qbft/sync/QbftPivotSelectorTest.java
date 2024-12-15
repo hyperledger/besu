@@ -55,7 +55,6 @@ public class QbftPivotSelectorTest {
   @Mock private ProtocolContext protocolContext;
   @Mock private BftContext bftContext;
   @Mock private SyncState syncState;
-  @Mock private MetricsSystem metricsSystem;
   @Mock private EthContext ethContext;
   @Mock private EthPeers ethPeers;
   @Mock private ValidatorProvider validatorProvider;
@@ -83,7 +82,6 @@ public class QbftPivotSelectorTest {
             ethContext,
             syncConfig,
             syncState,
-            metricsSystem,
             protocolContext,
             nodeKey,
             blockHeader);
@@ -107,7 +105,6 @@ public class QbftPivotSelectorTest {
             ethContext,
             syncConfig,
             syncState,
-            metricsSystem,
             protocolContext,
             nodeKey,
             blockHeader);
@@ -129,7 +126,6 @@ public class QbftPivotSelectorTest {
             ethContext,
             syncConfig,
             syncState,
-            metricsSystem,
             protocolContext,
             nodeKey,
             blockHeader);
@@ -148,7 +144,6 @@ public class QbftPivotSelectorTest {
             ethContext,
             syncConfig,
             syncState,
-            metricsSystem,
             protocolContext,
             nodeKey,
             blockHeader);
