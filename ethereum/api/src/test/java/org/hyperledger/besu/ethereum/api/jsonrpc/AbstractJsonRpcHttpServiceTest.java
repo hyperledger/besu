@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -169,6 +170,14 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
     final NatService natService = new NatService(Optional.empty());
 
+    final var transactionSimulator =
+        new TransactionSimulator(
+            blockchainSetupUtil.getBlockchain(),
+            blockchainSetupUtil.getWorldArchive(),
+            blockchainSetupUtil.getProtocolSchedule(),
+            miningConfiguration,
+            0L);
+
     return new JsonRpcMethodsFactory()
         .methods(
             CLIENT_NODE_NAME,
@@ -201,7 +210,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             mock(EthPeers.class),
             syncVertx,
             mock(ApiConfiguration.class),
-            Optional.empty());
+            Optional.empty(),
+            transactionSimulator);
   }
 
   protected void startService() throws Exception {

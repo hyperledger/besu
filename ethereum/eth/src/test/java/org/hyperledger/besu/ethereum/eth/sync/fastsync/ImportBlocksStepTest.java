@@ -73,8 +73,7 @@ public class ImportBlocksStepTest {
             validationPolicy,
             ommerValidationPolicy,
             null,
-            pivotHeader,
-            BodyValidationMode.FULL);
+            pivotHeader);
   }
 
   @Test
@@ -92,7 +91,7 @@ public class ImportBlocksStepTest {
               blockWithReceipts.getReceipts(),
               FULL,
               LIGHT,
-              BodyValidationMode.FULL))
+              BodyValidationMode.LIGHT))
           .thenReturn(new BlockImportResult(true));
     }
     importBlocksStep.accept(blocksWithReceipts);
@@ -114,7 +113,7 @@ public class ImportBlocksStepTest {
             blockWithReceipts.getReceipts(),
             FULL,
             LIGHT,
-            BodyValidationMode.FULL))
+            BodyValidationMode.LIGHT))
         .thenReturn(new BlockImportResult(false));
     assertThatThrownBy(() -> importBlocksStep.accept(singletonList(blockWithReceipts)))
         .isInstanceOf(InvalidBlockException.class);

@@ -65,8 +65,6 @@ dependencies {
   implementation 'org.immutables:value-annotations'
   implementation 'tech.pegasys:jc-kzg-4844'
 
-  implementation 'io.prometheus:simpleclient_guava'
-
   implementation 'org.xerial.snappy:snappy-java'
 
   annotationProcessor 'org.immutables:value'
