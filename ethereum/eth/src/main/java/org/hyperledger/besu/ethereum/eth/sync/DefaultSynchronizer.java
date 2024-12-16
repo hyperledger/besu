@@ -99,6 +99,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     ChainHeadTracker.trackChainHeadForPeers(
         ethContext,
         protocolSchedule,
+        syncConfig,
         protocolContext.getBlockchain(),
         this::calculateTrailingPeerRequirements,
         metricsSystem);
@@ -150,7 +151,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   protocolContext,
                   metricsSystem,
                   ethContext,
-                  peerTaskExecutor,
                   worldStateStorageCoordinator,
                   syncState,
                   clock,
@@ -167,7 +167,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   protocolContext,
                   metricsSystem,
                   ethContext,
-                  peerTaskExecutor,
                   worldStateStorageCoordinator,
                   syncState,
                   clock,
@@ -184,7 +183,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   protocolContext,
                   metricsSystem,
                   ethContext,
-                  peerTaskExecutor,
                   worldStateStorageCoordinator,
                   syncState,
                   clock,

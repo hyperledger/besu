@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
@@ -29,7 +30,8 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionTestFixture {
-
+  private final SECPSignature signature =
+      new SECPSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
   private TransactionType transactionType = TransactionType.FRONTIER;
 
   private long nonce = 0;
@@ -56,6 +58,8 @@ public class TransactionTestFixture {
 
   private Optional<BlobsWithCommitments> blobs = Optional.empty();
   private Optional<BigInteger> v = Optional.empty();
+  private Optional<List<org.hyperledger.besu.datatypes.CodeDelegation>> codeDelegations =
+      Optional.empty();
 
   public Transaction createTransaction(final KeyPair keys) {
     final Transaction.Builder builder = Transaction.builder();
@@ -93,6 +97,12 @@ public class TransactionTestFixture {
         }
         break;
       case DELEGATE_CODE:
+        builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
+        builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
+        builder.accessList(accessListEntries.orElse(List.of()));
+        builder.codeDelegations(
+            codeDelegations.orElse(
+                List.of(new CodeDelegation(chainId.get(), sender, 0, signature))));
         break;
     }
 
@@ -181,6 +191,12 @@ public class TransactionTestFixture {
 
   public TransactionTestFixture blobsWithCommitments(final Optional<BlobsWithCommitments> blobs) {
     this.blobs = blobs;
+    return this;
+  }
+
+  public TransactionTestFixture codeDelegations(
+      final List<org.hyperledger.besu.datatypes.CodeDelegation> codeDelegations) {
+    this.codeDelegations = Optional.of(codeDelegations);
     return this;
   }
 }

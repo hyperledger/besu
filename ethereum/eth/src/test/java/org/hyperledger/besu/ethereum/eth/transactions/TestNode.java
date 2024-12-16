@@ -154,7 +154,6 @@ public class TestNode implements Closeable {
         };
     final EthPeers ethPeers =
         new EthPeers(
-            EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             metricsSystem,
@@ -171,7 +170,7 @@ public class TestNode implements Closeable {
     ethPeers.setChainHeadTracker(mockCHT);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
-    final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
+    final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler, null);
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(

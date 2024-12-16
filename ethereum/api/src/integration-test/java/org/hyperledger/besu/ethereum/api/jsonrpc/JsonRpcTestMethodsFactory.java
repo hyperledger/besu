@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -77,6 +78,7 @@ public class JsonRpcTestMethodsFactory {
   private final BlockchainQueries blockchainQueries;
   private final Synchronizer synchronizer;
   private final ProtocolSchedule protocolSchedule;
+  private final TransactionSimulator transactionSimulator;
 
   public JsonRpcTestMethodsFactory(final BlockchainImporter importer) {
     this.importer = importer;
@@ -95,9 +97,13 @@ public class JsonRpcTestMethodsFactory {
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
+    final var miningConfiguration = MiningConfiguration.newDefault();
     this.blockchainQueries =
-        new BlockchainQueries(
-            protocolSchedule, blockchain, stateArchive, MiningConfiguration.newDefault());
+        new BlockchainQueries(protocolSchedule, blockchain, stateArchive, miningConfiguration);
+
+    this.transactionSimulator =
+        new TransactionSimulator(
+            blockchain, stateArchive, protocolSchedule, miningConfiguration, 0L);
   }
 
   public JsonRpcTestMethodsFactory(
@@ -110,13 +116,14 @@ public class JsonRpcTestMethodsFactory {
     this.stateArchive = stateArchive;
     this.context = context;
     this.protocolSchedule = importer.getProtocolSchedule();
+    final var miningConfiguration = MiningConfiguration.newDefault();
     this.blockchainQueries =
         new BlockchainQueries(
-            importer.getProtocolSchedule(),
-            blockchain,
-            stateArchive,
-            MiningConfiguration.newDefault());
+            importer.getProtocolSchedule(), blockchain, stateArchive, miningConfiguration);
     this.synchronizer = mock(Synchronizer.class);
+    this.transactionSimulator =
+        new TransactionSimulator(
+            blockchain, stateArchive, protocolSchedule, miningConfiguration, 0L);
   }
 
   public JsonRpcTestMethodsFactory(
@@ -131,12 +138,13 @@ public class JsonRpcTestMethodsFactory {
     this.context = context;
     this.synchronizer = synchronizer;
     this.protocolSchedule = importer.getProtocolSchedule();
+    final var miningConfiguration = MiningConfiguration.newDefault();
     this.blockchainQueries =
         new BlockchainQueries(
-            importer.getProtocolSchedule(),
-            blockchain,
-            stateArchive,
-            MiningConfiguration.newDefault());
+            importer.getProtocolSchedule(), blockchain, stateArchive, miningConfiguration);
+    this.transactionSimulator =
+        new TransactionSimulator(
+            blockchain, stateArchive, protocolSchedule, miningConfiguration, 0L);
   }
 
   public BlockchainQueries getBlockchainQueries() {
@@ -219,6 +227,7 @@ public class JsonRpcTestMethodsFactory {
             ethPeers,
             Vertx.vertx(new VertxOptions().setWorkerPoolSize(1)),
             ImmutableApiConfiguration.builder().build(),
-            Optional.empty());
+            Optional.empty(),
+            transactionSimulator);
   }
 }

@@ -44,7 +44,6 @@ max-peers=42
 remote-connections-limit-enabled=true
 remote-connections-max-percentage=60
 random-peer-priority-enabled=false
-host-whitelist=["all"]
 host-allowlist=["all"]
 engine-host-allowlist=["all"]
 engine-rpc-enabled=true
@@ -123,10 +122,12 @@ rpc-ws-authentication-jwt-public-key-file="none"
 rpc-ws-ssl-enabled=false
 rpc-ws-ssl-keystore-file="none.pfx"
 rpc-ws-ssl-keystore-password="none.passwd"
+rpc-ws-ssl-keystore-password-file="none.txt"
 rpc-ws-ssl-keystore-type="none"
 rpc-ws-ssl-client-auth-enabled=false
 rpc-ws-ssl-truststore-file="none.pfx"
 rpc-ws-ssl-truststore-password="none.passwd"
+rpc-ws-ssl-truststore-password-file="none.txt"
 rpc-ws-ssl-truststore-type="none"
 rpc-ws-ssl-key-file="none.pfx"
 rpc-ws-ssl-cert-file="none.pfx"
@@ -243,17 +244,6 @@ Xpeertask-system-enabled=false
 
 # compatibility flags
 compatibility-eth64-forkid-enabled=false
-
-#p2p over ssl
-Xp2p-tls-enabled=false
-Xp2p-tls-keystore-type="none"
-Xp2p-tls-keystore-file="none.file"
-Xp2p-tls-truststore-password-file="none"
-Xp2p-tls-truststore-type="none"
-Xp2p-tls-truststore-file="none.file"
-Xp2p-tls-keystore-password-file="none"
-Xp2p-tls-crl-file="none.file"
-Xp2p-tls-clienthello-sni=false
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000

@@ -119,6 +119,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         new TransitionBackwardSyncContext(
             protocolContext,
             transitionProtocolSchedule,
+            syncConfig,
             metricsSystem,
             ethProtocolManager.ethContext(),
             syncState,

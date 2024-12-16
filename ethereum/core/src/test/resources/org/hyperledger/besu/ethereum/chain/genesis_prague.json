@@ -4074,5 +4074,5 @@
   "gasUsed": "0x0",
   "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "baseFeePerGas": "0x3b9aca00",
-  "targetBlobCount": "0x1"
+  "targetBlobsPerBlock": "0x1"
 }

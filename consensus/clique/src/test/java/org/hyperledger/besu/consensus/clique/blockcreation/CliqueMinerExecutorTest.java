@@ -154,7 +154,7 @@ public class CliqueMinerExecutorTest {
   }
 
   @Test
-  public void extraDataForNonEpochBlocksDoesNotContainValidaors() {
+  public void extraDataForNonEpochBlocksDoesNotContainValidators() {
     final Bytes vanityData = generateRandomVanityData();
 
     final MiningConfiguration miningConfiguration = createMiningConfiguration(vanityData);

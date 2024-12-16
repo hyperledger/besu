@@ -40,10 +40,12 @@ import org.hyperledger.besu.evm.precompile.SHA256PrecompiledContract;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /**
  * Provides various gas cost lookups and calculations used during block processing.
@@ -614,36 +616,50 @@ public interface GasCalculator {
   }
 
   /**
+   * Returns the blob gas cost per blob. This is the gas cost for each blob of data that is added to
+   * the block.
+   *
+   * @return the blob gas cost per blob
+   */
+  default long getBlobGasPerBlob() {
+    return 0L;
+  }
+
+  /**
    * Return the gas cost given the number of blobs
    *
    * @param blobCount the number of blobs
    * @return the total gas cost
    */
-  default long blobGasCost(final int blobCount) {
+  default long blobGasCost(final long blobCount) {
     return 0L;
   }
 
   /**
-   * Compute the new value for the excess blob gas, given the parent value and the count of new
-   * blobs
+   * Compute the new value for the excess blob gas, given the parent value, the parent blob gas used
+   * and the parent target blobs per block, if present. Used from Cancun onwards. Presence of
+   * parentTargetBlobsPerBlock implies EIP-7442/Prague enabled. Default to Cancun constant target
+   * gas value if parentTargetBlobsPerBlock is not present.
    *
    * @param parentExcessBlobGas excess blob gas from the parent
-   * @param newBlobs count of new blobs
+   * @param parentBlobGasUsed blob gas used from the parent
+   * @param parentTargetBlobsPerBlock the optional target blobs per block from the parent
    * @return the new excess blob gas value
    */
-  default long computeExcessBlobGas(final long parentExcessBlobGas, final int newBlobs) {
-    return 0L;
-  }
+  default long computeExcessBlobGas(
+      final long parentExcessBlobGas,
+      final long parentBlobGasUsed,
+      final Optional<UInt64> parentTargetBlobsPerBlock) {
+    final long parentTargetBlobGas =
+        parentTargetBlobsPerBlock
+            .map(blobCount -> blobGasCost(blobCount.toLong()))
+            .orElse(CancunGasCalculator.TARGET_BLOB_GAS_PER_BLOCK);
+    final long currentExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed;
 
-  /**
-   * Compute the new value for the excess blob gas, given the parent value and the blob gas used
-   *
-   * @param parentExcessBlobGas excess blob gas from the parent
-   * @param blobGasUsed blob gas used
-   * @return the new excess blob gas value
-   */
-  default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
-    return 0L;
+    if (currentExcessBlobGas < parentTargetBlobGas) {
+      return 0L;
+    }
+    return currentExcessBlobGas - parentTargetBlobGas;
   }
 
   /**
@@ -664,16 +680,6 @@ public interface GasCalculator {
    * @return the gas refund
    */
   default long calculateDelegateCodeGasRefund(final long alreadyExistingAccountSize) {
-    return 0L;
-  }
-
-  /**
-   * Returns the gas cost for resolving the code of a delegate account.
-   *
-   * @param isWarm whether the account is warm
-   * @return the gas cost
-   */
-  default long delegatedCodeResolutionGasCost(final boolean isWarm) {
     return 0L;
   }
 }

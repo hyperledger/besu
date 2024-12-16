@@ -41,6 +41,7 @@ import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -558,6 +559,7 @@ public class PrivacyReorgTest {
               .evmConfiguration(EvmConfiguration.DEFAULT)
               .networkConfiguration(NetworkingConfiguration.create())
               .besuComponent(context)
+              .apiConfiguration(ImmutableApiConfiguration.builder().build())
               .build();
       return retval;
     }

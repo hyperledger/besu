@@ -160,8 +160,17 @@ public class QbftRound {
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
-      blockToPublish = bestPreparedCertificate.get().getBlock();
+      Block preparedBlock = bestPreparedCertificate.get().getBlock();
+      final BftBlockInterface bftBlockInterface =
+          protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
+      blockToPublish =
+          bftBlockInterface.replaceRoundInBlock(
+              preparedBlock,
+              roundState.getRoundIdentifier().getRoundNumber(),
+              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     }
+
+    LOG.debug(" proposal - new/prepared block hash : {}", blockToPublish.getHash());
 
     updateStateWithProposalAndTransmit(
         blockToPublish,
@@ -202,8 +211,9 @@ public class QbftRound {
         proposal.getSignedPayload().getPayload().getProposedBlock(),
         roundChanges,
         prepares);
-    updateStateWithProposedBlock(proposal);
-    sendPrepare(block);
+    if (updateStateWithProposedBlock(proposal)) {
+      sendPrepare(block);
+    }
   }
 
   /**
