@@ -31,6 +31,10 @@ import org.slf4j.LoggerFactory;
 
 public class RocksDBOpener {
   public static final int DEFAULT_DELAY = 60;
+  public static final String WARN_MESSAGE =
+      "Opening RocksDB database is taking longer than 60 seconds... "
+          + "This may be due to prolonged RocksDB compaction. Please wait until the end of the compaction. "
+          + "No action is needed from the user.";
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBOpener.class);
 
   public static OptimisticTransactionDB openOptimisticTransactionDBWithWarning(
@@ -39,28 +43,8 @@ public class RocksDBOpener {
       final List<ColumnFamilyDescriptor> columnDescriptors,
       final List<ColumnFamilyHandle> columnHandles)
       throws Exception {
-
-    AtomicBoolean operationCompleted = new AtomicBoolean(false);
-    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    scheduler.schedule(
-        () -> {
-          if (!operationCompleted.get()) {
-            LOG.warn(
-                "Opening RocksDB database is taking longer than 60 seconds... "
-                    + "This may be due to prolonged RocksDB compaction.");
-          }
-        },
-        DEFAULT_DELAY,
-        TimeUnit.SECONDS);
-
-    try {
-      OptimisticTransactionDB db =
-          OptimisticTransactionDB.open(options, dbPath, columnDescriptors, columnHandles);
-      operationCompleted.set(true);
-      return db;
-    } finally {
-      scheduler.shutdown();
-    }
+    return openDBWithWarning(
+        () -> OptimisticTransactionDB.open(options, dbPath, columnDescriptors, columnHandles));
   }
 
   public static TransactionDB openTransactionDBWithWarning(
@@ -70,30 +54,35 @@ public class RocksDBOpener {
       final List<ColumnFamilyDescriptor> columnDescriptors,
       final List<ColumnFamilyHandle> columnHandles)
       throws Exception {
+    return openDBWithWarning(
+        () ->
+            TransactionDB.open(
+                options, transactionDBOptions, dbPath, columnDescriptors, columnHandles));
+  }
 
+  private static <T> T openDBWithWarning(final DBOperation<T> dbOperation) throws Exception {
     AtomicBoolean operationCompleted = new AtomicBoolean(false);
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     scheduler.schedule(
         () -> {
           if (!operationCompleted.get()) {
-            LOG.warn(
-                "Opening RocksDB database is taking longer than 60 seconds... "
-                    + "This may be due to prolonged RocksDB compaction.");
+            LOG.warn(WARN_MESSAGE);
           }
         },
         DEFAULT_DELAY,
         TimeUnit.SECONDS);
 
     try {
-      TransactionDB db =
-          TransactionDB.open(
-              options, transactionDBOptions, dbPath, columnDescriptors, columnHandles);
+      T db = dbOperation.open();
       operationCompleted.set(true);
-
       return db;
     } finally {
-      // Ensure the scheduler shuts down after use
       scheduler.shutdown();
     }
+  }
+
+  @FunctionalInterface
+  private interface DBOperation<T> {
+    T open() throws Exception;
   }
 }
