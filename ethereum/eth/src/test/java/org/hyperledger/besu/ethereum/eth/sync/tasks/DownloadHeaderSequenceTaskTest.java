@@ -305,15 +305,25 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
                   Optional.of(respondingPeer.getEthPeer()));
             });
 
-    Mockito.when(peerTaskExecutor.executeAgainstPeer(Mockito.any(GetBodiesFromPeerTask.class), Mockito.any(EthPeer.class))).thenAnswer((invocationOnMock) -> {
-      GetBodiesFromPeerTask task = invocationOnMock.getArgument(0, GetBodiesFromPeerTask.class);
-      EthPeer peer = invocationOnMock.getArgument(1, EthPeer.class);
-      List<Block> blocks = task.getBlockHeaders().stream().map((blockHeader) -> new Block(blockHeader, blockchain.getBlockBody(blockHeader.getBlockHash()).get())).toList();
-      return new PeerTaskExecutorResult<List<Block>>(
-              Optional.of(blocks),
-              PeerTaskExecutorResponseCode.SUCCESS,
-              Optional.of(peer));
-    });
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetBodiesFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetBodiesFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetBodiesFromPeerTask.class);
+              EthPeer peer = invocationOnMock.getArgument(1, EthPeer.class);
+              List<Block> blocks =
+                  task.getBlockHeaders().stream()
+                      .map(
+                          (blockHeader) ->
+                              new Block(
+                                  blockHeader,
+                                  blockchain.getBlockBody(blockHeader.getBlockHash()).get()))
+                      .toList();
+              return new PeerTaskExecutorResult<List<Block>>(
+                  Optional.of(blocks), PeerTaskExecutorResponseCode.SUCCESS, Optional.of(peer));
+            });
 
     // Execute the task
     final BlockHeader referenceHeader = chain.get(blockCount - 1).getHeader();

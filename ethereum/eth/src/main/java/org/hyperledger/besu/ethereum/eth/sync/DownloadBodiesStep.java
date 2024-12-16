@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.CompleteBlocksTask;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.CompleteBlocksWithPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;

@@ -324,36 +324,43 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
     // RPC
     final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
     CompletableFuture<Block> blockFuture;
-    if(synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-        blockFuture = ethContext.getScheduler().scheduleServiceTask(() -> {
-            GetBodiesFromPeerTask task = new GetBodiesFromPeerTask(List.of(badHeader), protocolSchedule);
-            PeerTaskExecutorResult<List<Block>> taskResult = ethContext.getPeerTaskExecutor().executeAgainstPeer(task, badPeer);
-            if(taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
-                return CompletableFuture.completedFuture(taskResult.result().map(List::getFirst).orElse(null));
-            } else {
-                return CompletableFuture.failedFuture(new RuntimeException());
-            }
-        });
+    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+      blockFuture =
+          ethContext
+              .getScheduler()
+              .scheduleServiceTask(
+                  () -> {
+                    GetBodiesFromPeerTask task =
+                        new GetBodiesFromPeerTask(List.of(badHeader), protocolSchedule);
+                    PeerTaskExecutorResult<List<Block>> taskResult =
+                        ethContext.getPeerTaskExecutor().executeAgainstPeer(task, badPeer);
+                    if (taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
+                      return CompletableFuture.completedFuture(
+                          taskResult.result().map(List::getFirst).orElse(null));
+                    } else {
+                      return CompletableFuture.failedFuture(new RuntimeException());
+                    }
+                  });
     } else {
-        blockFuture = org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask.forHeaders(
-                        protocolSchedule, ethContext, List.of(badHeader), metricsSystem)
-                .assignPeer(badPeer)
-                .run()
-                .thenApply((blockPeerTaskResult) -> blockPeerTaskResult.getResult().getFirst());
+      blockFuture =
+          org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask.forHeaders(
+                  protocolSchedule, ethContext, List.of(badHeader), metricsSystem)
+              .assignPeer(badPeer)
+              .run()
+              .thenApply((blockPeerTaskResult) -> blockPeerTaskResult.getResult().getFirst());
     }
     return blockFuture.whenComplete(
-            (blockResult, error) -> {
-              final HeaderValidationMode validationMode =
-                  validationPolicy.getValidationModeForNextBlock();
-              final String description =
-                  String.format("Failed header validation (%s)", validationMode);
-              final BadBlockCause cause = BadBlockCause.fromValidationFailure(description);
-              if (blockResult != null) {
-                badBlockManager.addBadBlock(blockResult, cause);
-              } else {
-                badBlockManager.addBadHeader(badHeader, cause);
-              }
-            });
+        (blockResult, error) -> {
+          final HeaderValidationMode validationMode =
+              validationPolicy.getValidationModeForNextBlock();
+          final String description = String.format("Failed header validation (%s)", validationMode);
+          final BadBlockCause cause = BadBlockCause.fromValidationFailure(description);
+          if (blockResult != null) {
+            badBlockManager.addBadBlock(blockResult, cause);
+          } else {
+            badBlockManager.addBadHeader(badHeader, cause);
+          }
+        });
   }
 
   private boolean checkHeaderInRange(final BlockHeader header) {

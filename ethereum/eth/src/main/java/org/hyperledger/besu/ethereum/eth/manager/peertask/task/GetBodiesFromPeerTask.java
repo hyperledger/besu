@@ -135,7 +135,7 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
 
   @Override
   public PeerTaskValidationResponse validateResult(final List<Block> result) {
-    if(result.isEmpty()) {
+    if (result.isEmpty()) {
       return PeerTaskValidationResponse.NO_RESULTS_RETURNED;
     }
     return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
