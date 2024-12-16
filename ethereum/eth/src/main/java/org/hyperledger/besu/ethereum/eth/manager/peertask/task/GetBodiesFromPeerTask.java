@@ -140,4 +140,8 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
     }
     return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
   }
+
+  public List<BlockHeader> getBlockHeaders() {
+    return blockHeaders;
+  }
 }
