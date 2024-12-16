@@ -76,9 +76,6 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
   /** RocksDb blockcache size when using the high spec option */
   protected static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
 
-  /** RocksDb memtable size when using the high spec option */
-  protected static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 536_870_912L;
-
   /** Max total size of all WAL file, after which a flush is triggered */
   protected static final long WAL_MAX_TOTAL_SIZE = 1_073_741_824L;
 
