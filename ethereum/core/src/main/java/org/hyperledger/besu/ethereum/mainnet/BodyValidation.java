@@ -92,7 +92,7 @@ public final class BodyValidation {
   /**
    * Generates the requests hash for a list of requests
    *
-   * @param requests list of request
+   * @param requests list of request (must be sorted by request type ascending)
    * @return the requests hash
    */
   public static Hash requestsHash(final List<Request> requests) {
@@ -101,10 +101,14 @@ public final class BodyValidation {
         .forEach(
             i -> {
               final Request request = requests.get(i);
-              final Bytes requestBytes =
-                  Bytes.concatenate(
-                      Bytes.of(request.getType().getSerializedType()), request.getData());
-              requestHashes.add(sha256(requestBytes));
+
+              // empty requests are excluded from the hash
+              if (!request.getData().isEmpty()) {
+                final Bytes requestBytes =
+                    Bytes.concatenate(
+                        Bytes.of(request.getType().getSerializedType()), request.getData());
+                requestHashes.add(sha256(requestBytes));
+              }
             });
 
     return Hash.wrap(sha256(Bytes.wrap(requestHashes)));
