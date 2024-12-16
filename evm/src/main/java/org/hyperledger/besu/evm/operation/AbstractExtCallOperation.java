@@ -136,7 +136,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
       }
     }
 
-    boolean accountCreation = contract == null && !zeroValue;
+    boolean accountCreation = (contract == null || contract.isEmpty()) && !zeroValue;
     long cost =
         clampedAdd(
             clampedAdd(
