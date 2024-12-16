@@ -95,7 +95,7 @@ public class CompleteBlocksWithPeerTaskTest {
     when(peerTaskExecutor.execute(any()))
         .thenReturn(
             new PeerTaskExecutorResult<>(
-                Optional.of(expectedBlocks), PeerTaskExecutorResponseCode.SUCCESS));
+                Optional.of(expectedBlocks), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty()));
 
     final CompleteBlocksWithPeerTask task =
         new CompleteBlocksWithPeerTask(
@@ -114,7 +114,7 @@ public class CompleteBlocksWithPeerTaskTest {
     when(peerTaskExecutor.execute(any()))
         .thenReturn(
             new PeerTaskExecutorResult<>(
-                Optional.of(List.of(block)), PeerTaskExecutorResponseCode.SUCCESS));
+                Optional.of(List.of(block)), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty()));
 
     CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
         new CompleteBlocksWithPeerTask(
@@ -139,7 +139,7 @@ public class CompleteBlocksWithPeerTaskTest {
     when(peerTaskExecutor.execute(any()))
         .thenReturn(
             new PeerTaskExecutorResult<>(
-                Optional.of(List.of(block1, block3)), PeerTaskExecutorResponseCode.SUCCESS));
+                Optional.of(List.of(block1, block3)), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty()));
 
     CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
         new CompleteBlocksWithPeerTask(
@@ -173,10 +173,10 @@ public class CompleteBlocksWithPeerTaskTest {
     when(peerTaskExecutor.execute(any()))
         .thenReturn(
             new PeerTaskExecutorResult<>(
-                Optional.of(List.of(block1)), PeerTaskExecutorResponseCode.SUCCESS))
+                Optional.of(List.of(block1)), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty()))
         .thenReturn(
             new PeerTaskExecutorResult<>(
-                Optional.of(List.of(block3)), PeerTaskExecutorResponseCode.SUCCESS));
+                Optional.of(List.of(block3)), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty()));
 
     CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
         new CompleteBlocksWithPeerTask(

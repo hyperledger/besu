@@ -54,21 +54,18 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
       () -> HeaderValidationMode.DETACHED_ONLY;
   private final BetterSyncTargetEvaluator betterSyncTargetEvaluator;
   private final SyncTerminationCondition fullSyncTerminationCondition;
-  private final PeerTaskExecutor peerTaskExecutor;
 
   public FullSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final MetricsSystem metricsSystem,
       final SyncTerminationCondition syncTerminationCondition) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.metricsSystem = metricsSystem;
     this.fullSyncTerminationCondition = syncTerminationCondition;
     this.betterSyncTargetEvaluator =
@@ -111,7 +108,7 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(
-            protocolSchedule, ethContext, peerTaskExecutor, syncConfig, metricsSystem);
+            protocolSchedule, ethContext, syncConfig, metricsSystem);
     final ExtractTxSignaturesStep extractTxSignaturesStep = new ExtractTxSignaturesStep();
     final FullImportBlockStep importBlockStep =
         new FullImportBlockStep(

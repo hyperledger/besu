@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -133,7 +134,10 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
   }
 
   @Override
-  public boolean isSuccess(final List<Block> result) {
-    return !result.isEmpty();
+  public PeerTaskValidationResponse validateResult(final List<Block> result) {
+    if(result.isEmpty()) {
+      return PeerTaskValidationResponse.NO_RESULTS_RETURNED;
+    }
+    return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
   }
 }

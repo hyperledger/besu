@@ -34,17 +34,14 @@ public class DownloadBodiesStep
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final SynchronizerConfiguration synchronizerConfiguration;
-  private final PeerTaskExecutor peerTaskExecutor;
 
   public DownloadBodiesStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.metricsSystem = metricsSystem;
   }
@@ -66,7 +63,7 @@ public class DownloadBodiesStep
       final List<BlockHeader> headers) {
 
     final CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
-        new CompleteBlocksWithPeerTask(protocolSchedule, headers, peerTaskExecutor);
+        new CompleteBlocksWithPeerTask(protocolSchedule, headers, ethContext.getPeerTaskExecutor());
     final List<Block> blocks = completeBlocksWithPeerTask.getBlocks();
     return CompletableFuture.completedFuture(blocks);
   }

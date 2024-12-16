@@ -148,27 +148,9 @@ public class GetBodiesFromPeerTaskTest {
         new GetBodiesFromPeerTask(
             List.of(blockHeader1, blockHeader2, blockHeader3), protocolSchedule);
 
-    EthPeer successfulCandidate = mockPeer(EthProtocol.NAME, 5);
+    EthPeer successfulCandidate = mockPeer(5);
 
     Assertions.assertTrue(task.getPeerRequirementFilter().test(successfulCandidate));
-  }
-
-  @Test
-  public void testIsSuccessForPartialSuccess() {
-    GetBodiesFromPeerTask task =
-        new GetBodiesFromPeerTask(List.of(mockBlockHeader(1)), protocolSchedule);
-
-    Assertions.assertFalse(task.isSuccess(Collections.emptyList()));
-  }
-
-  @Test
-  public void testIsSuccessForFullSuccess() {
-    GetBodiesFromPeerTask task =
-        new GetBodiesFromPeerTask(List.of(mockBlockHeader(1)), protocolSchedule);
-
-    final List<Block> blockHeaders = List.of(mock(Block.class));
-
-    Assertions.assertTrue(task.isSuccess(blockHeaders));
   }
 
   private BlockHeader mockBlockHeader(final long blockNumber) {
@@ -195,11 +177,10 @@ public class GetBodiesFromPeerTaskTest {
     return blockHeader;
   }
 
-  private EthPeer mockPeer(final String protocol, final long chainHeight) {
+  private EthPeer mockPeer(final long chainHeight) {
     EthPeer ethPeer = Mockito.mock(EthPeer.class);
     ChainState chainState = Mockito.mock(ChainState.class);
 
-    Mockito.when(ethPeer.getProtocolName()).thenReturn(protocol);
     Mockito.when(ethPeer.chainState()).thenReturn(chainState);
     Mockito.when(chainState.getEstimatedHeight()).thenReturn(chainHeight);
 

@@ -56,7 +56,6 @@ public class FullSyncChainDownloader {
             protocolSchedule,
             protocolContext,
             ethContext,
-            peerTaskExecutor,
             metricsSystem,
             terminationCondition),
         ethContext.getScheduler(),
