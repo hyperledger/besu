@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -77,20 +77,20 @@ public class BlockchainQueries {
   private final Optional<TransactionLogBloomCacher> transactionLogBloomCacher;
   private final Optional<EthScheduler> ethScheduler;
   private final ApiConfiguration apiConfig;
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
 
   public BlockchainQueries(
       final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     this(
         protocolSchedule,
         blockchain,
         worldStateArchive,
         Optional.empty(),
         Optional.empty(),
-        miningParameters);
+        miningConfiguration);
   }
 
   public BlockchainQueries(
@@ -98,14 +98,14 @@ public class BlockchainQueries {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final EthScheduler scheduler,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     this(
         protocolSchedule,
         blockchain,
         worldStateArchive,
         Optional.empty(),
         Optional.ofNullable(scheduler),
-        miningParameters);
+        miningConfiguration);
   }
 
   public BlockchainQueries(
@@ -114,7 +114,7 @@ public class BlockchainQueries {
       final WorldStateArchive worldStateArchive,
       final Optional<Path> cachePath,
       final Optional<EthScheduler> scheduler,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     this(
         protocolSchedule,
         blockchain,
@@ -122,7 +122,7 @@ public class BlockchainQueries {
         cachePath,
         scheduler,
         ImmutableApiConfiguration.builder().build(),
-        miningParameters);
+        miningConfiguration);
   }
 
   public BlockchainQueries(
@@ -132,7 +132,7 @@ public class BlockchainQueries {
       final Optional<Path> cachePath,
       final Optional<EthScheduler> scheduler,
       final ApiConfiguration apiConfig,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     this.protocolSchedule = protocolSchedule;
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
@@ -144,7 +144,7 @@ public class BlockchainQueries {
                 new TransactionLogBloomCacher(blockchain, cachePath.get(), scheduler.get()))
             : Optional.empty();
     this.apiConfig = apiConfig;
-    this.miningParameters = miningParameters;
+    this.miningConfiguration = miningConfiguration;
   }
 
   public Blockchain getBlockchain() {
@@ -1034,7 +1034,7 @@ public class BlockchainQueries {
 
   private Wei gasPriceLowerBound(
       final BlockHeader chainHeadHeader, final FeeMarket nextBlockFeeMarket) {
-    final var minGasPrice = miningParameters.getMinTransactionGasPrice();
+    final var minGasPrice = miningConfiguration.getMinTransactionGasPrice();
 
     if (nextBlockFeeMarket.implementsBaseFee()) {
       return UInt256s.max(
@@ -1070,9 +1070,9 @@ public class BlockchainQueries {
             .toArray(Wei[]::new);
 
     return gasCollection.length == 0
-        ? miningParameters.getMinPriorityFeePerGas()
+        ? miningConfiguration.getMinPriorityFeePerGas()
         : UInt256s.max(
-            miningParameters.getMinPriorityFeePerGas(),
+            miningConfiguration.getMinPriorityFeePerGas(),
             gasCollection[
                 Math.min(
                     gasCollection.length - 1,

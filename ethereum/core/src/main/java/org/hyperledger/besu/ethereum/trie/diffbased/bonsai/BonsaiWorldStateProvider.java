@@ -28,12 +28,13 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWo
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.ServiceManager;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -44,16 +45,19 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateProvider.class);
   private final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
+  private final Supplier<WorldStateHealer> worldStateHealerSupplier;
 
   public BonsaiWorldStateProvider(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
-      final BesuContext pluginContext,
-      final EvmConfiguration evmConfiguration) {
+      final ServiceManager pluginContext,
+      final EvmConfiguration evmConfiguration,
+      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
     super(worldStateKeyValueStorage, blockchain, maxLayersToLoad, pluginContext);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
+    this.worldStateHealerSupplier = worldStateHealerSupplier;
     provideCachedWorldStorageManager(
         new BonsaiCachedWorldStorageManager(
             this, worldStateKeyValueStorage, this::cloneBonsaiWorldStateConfig));
@@ -69,9 +73,11 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
     super(worldStateKeyValueStorage, blockchain, trieLogManager);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
+    this.worldStateHealerSupplier = worldStateHealerSupplier;
     provideCachedWorldStorageManager(bonsaiCachedWorldStorageManager);
     loadPersistedState(
         new BonsaiWorldState(
@@ -150,5 +156,10 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
 
   private DiffBasedWorldStateConfig cloneBonsaiWorldStateConfig() {
     return new DiffBasedWorldStateConfig(defaultWorldStateConfig);
+  }
+
+  @Override
+  public void heal(final Optional<Address> maybeAccountToRepair, final Bytes location) {
+    worldStateHealerSupplier.get().heal(maybeAccountToRepair, location);
   }
 }

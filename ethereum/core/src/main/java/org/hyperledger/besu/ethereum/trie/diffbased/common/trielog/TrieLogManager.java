@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactor
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.TrieLogService;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
@@ -53,7 +53,7 @@ public class TrieLogManager {
       final Blockchain blockchain,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final long maxLayersToLoad,
-      final BesuContext pluginContext) {
+      final ServiceManager pluginContext) {
     this.blockchain = blockchain;
     this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.maxLayersToLoad = maxLayersToLoad;
@@ -133,7 +133,7 @@ public class TrieLogManager {
     trieLogObservers.unsubscribe(id);
   }
 
-  private TrieLogFactory setupTrieLogFactory(final BesuContext pluginContext) {
+  private TrieLogFactory setupTrieLogFactory(final ServiceManager pluginContext) {
     // if we have a TrieLogService from pluginContext, use it.
     var trieLogServicez =
         Optional.ofNullable(pluginContext)

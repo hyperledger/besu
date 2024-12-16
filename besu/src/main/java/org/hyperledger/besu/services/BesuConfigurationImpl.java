@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
+import org.hyperledger.besu.cli.options.JsonRpcHttpOptions;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -31,7 +31,7 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   private DataStorageConfiguration dataStorageConfiguration;
 
   // defaults
-  private MiningParameters miningParameters;
+  private MiningConfiguration miningConfiguration;
   private Optional<String> rpcHttpHost = Optional.of("http://localhost");
   private Optional<Integer> rpcHttpPort = Optional.of(8545);
 
@@ -59,11 +59,11 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   /**
    * Set the mining parameters
    *
-   * @param miningParameters configured mining parameters
+   * @param miningConfiguration configured mining parameters
    * @return BesuConfigurationImpl instance
    */
-  public BesuConfigurationImpl withMiningParameters(final MiningParameters miningParameters) {
-    this.miningParameters = miningParameters;
+  public BesuConfigurationImpl withMiningParameters(final MiningConfiguration miningConfiguration) {
+    this.miningConfiguration = miningConfiguration;
     return this;
   }
 
@@ -106,7 +106,7 @@ public class BesuConfigurationImpl implements BesuConfiguration {
 
   @Override
   public Wei getMinGasPrice() {
-    return miningParameters.getMinTransactionGasPrice();
+    return miningConfiguration.getMinTransactionGasPrice();
   }
 
   @Override

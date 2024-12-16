@@ -47,9 +47,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
@@ -309,7 +309,7 @@ abstract class AbstractBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
-                        MiningParameters.MINING_DISABLED,
+                        MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
                         new NoOpMetricsSystem())
@@ -342,8 +342,8 @@ abstract class AbstractBlockCreatorTest {
             new BlobCache());
     transactionPool.setEnabled();
 
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
+    final MiningConfiguration miningConfiguration =
+        ImmutableMiningConfiguration.builder()
             .mutableInitValues(
                 MutableInitValues.builder()
                     .extraData(Bytes.fromHexString("deadbeef"))
@@ -355,7 +355,7 @@ abstract class AbstractBlockCreatorTest {
 
     return new CreateOn(
         new TestBlockCreator(
-            miningParameters,
+            miningConfiguration,
             __ -> Address.ZERO,
             __ -> Bytes.fromHexString("deadbeef"),
             transactionPool,
@@ -368,7 +368,7 @@ abstract class AbstractBlockCreatorTest {
   static class TestBlockCreator extends AbstractBlockCreator {
 
     protected TestBlockCreator(
-        final MiningParameters miningParameters,
+        final MiningConfiguration miningConfiguration,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final ExtraDataCalculator extraDataCalculator,
         final TransactionPool transactionPool,
@@ -376,7 +376,7 @@ abstract class AbstractBlockCreatorTest {
         final ProtocolSchedule protocolSchedule,
         final EthScheduler ethScheduler) {
       super(
-          miningParameters,
+          miningConfiguration,
           miningBeneficiaryCalculator,
           extraDataCalculator,
           transactionPool,

@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -27,7 +28,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -110,7 +111,10 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final MutableBlockchain blockchain = blockchainSetupUtil.getBlockchain();
     ProtocolContext context =
         new ProtocolContext(
-            blockchain, blockchainSetupUtil.getWorldArchive(), null, new BadBlockManager());
+            blockchain,
+            blockchainSetupUtil.getWorldArchive(),
+            mock(ConsensusContext.class),
+            new BadBlockManager());
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             blockchainSetupUtil.getProtocolSchedule(),
@@ -119,7 +123,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
             Optional.empty(),
             Optional.empty(),
             ImmutableApiConfiguration.builder().build(),
-            MiningParameters.newDefault().setMinTransactionGasPrice(Wei.ZERO));
+            MiningConfiguration.newDefault().setMinTransactionGasPrice(Wei.ZERO));
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);

@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.CancunFeeMarket;
@@ -67,12 +67,12 @@ public class EthMaxPriorityFeePerGasTest {
   private EthMaxPriorityFeePerGas method;
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private Blockchain blockchain;
-  private MiningParameters miningParameters;
+  private MiningConfiguration miningConfiguration;
 
   @BeforeEach
   public void setUp() {
-    miningParameters =
-        MiningParameters.newDefault().setMinPriorityFeePerGas(DEFAULT_MIN_PRIORITY_FEE_PER_GAS);
+    miningConfiguration =
+        MiningConfiguration.newDefault().setMinPriorityFeePerGas(DEFAULT_MIN_PRIORITY_FEE_PER_GAS);
     method = createEthMaxPriorityFeePerGasMethod();
   }
 
@@ -85,7 +85,7 @@ public class EthMaxPriorityFeePerGasTest {
   public void whenNoTransactionsExistReturnMinPriorityFeePerGasPrice() {
     final JsonRpcRequestContext request = requestWithParams();
     final Wei expectedWei = Wei.ONE;
-    miningParameters.setMinPriorityFeePerGas(expectedWei);
+    miningConfiguration.setMinPriorityFeePerGas(expectedWei);
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedWei.toShortHexString());
 
@@ -111,7 +111,7 @@ public class EthMaxPriorityFeePerGasTest {
   public void returnMinPriorityFeePerGasWhenMedianValueIsLower() {
     final JsonRpcRequestContext request = requestWithParams();
     final Wei expectedWei = Wei.of(100_000);
-    miningParameters.setMinPriorityFeePerGas(expectedWei);
+    miningConfiguration.setMinPriorityFeePerGas(expectedWei);
 
     mockBlockchain(100, 1);
 
@@ -128,7 +128,7 @@ public class EthMaxPriorityFeePerGasTest {
   public void atGenesisReturnMinPriorityFeePerGas() {
     final JsonRpcRequestContext request = requestWithParams();
     final Wei expectedWei = Wei.ONE;
-    miningParameters.setMinPriorityFeePerGas(expectedWei);
+    miningConfiguration.setMinPriorityFeePerGas(expectedWei);
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedWei.toShortHexString());
 
@@ -235,6 +235,6 @@ public class EthMaxPriorityFeePerGasTest {
             Optional.empty(),
             Optional.empty(),
             ImmutableApiConfiguration.builder().build(),
-            miningParameters));
+            miningConfiguration));
   }
 }
