@@ -851,7 +851,7 @@ public abstract class MainnetProtocolSpecs {
       final MetricsSystem metricsSystem) {
 
     final int targetBlobsPerBlock =
-        genesisConfigOptions.getBlobScheduleOptions().getCancun().getTarget();
+        genesisConfigOptions.getBlobScheduleOptions().getOsaka().getTarget();
 
     ProtocolSpecBuilder protocolSpecBuilder =
         pragueDefinition(
