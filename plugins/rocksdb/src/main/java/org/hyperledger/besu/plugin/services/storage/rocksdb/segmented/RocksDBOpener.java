@@ -57,6 +57,14 @@ public class RocksDBOpener {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBOpener.class);
 
   /**
+   * Default constructor.
+   * <p>
+   * This is a utility class and is not meant to be instantiated directly.
+   */
+  private RocksDBOpener() {
+    // Default constructor for RocksDBOpener
+  }
+  /**
    * Opens an {@link OptimisticTransactionDB} instance with a warning mechanism.
    *
    * <p>If the database opening operation takes longer than {@link #DEFAULT_DELAY} seconds, a
