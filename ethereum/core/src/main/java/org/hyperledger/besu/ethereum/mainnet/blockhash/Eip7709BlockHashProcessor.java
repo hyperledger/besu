@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.vm.ContractBasedBlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.Eip7709BlockHashLookup;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 
 public class Eip7709BlockHashProcessor extends PragueBlockHashProcessor {
@@ -24,6 +24,6 @@ public class Eip7709BlockHashProcessor extends PragueBlockHashProcessor {
   @Override
   public BlockHashLookup createBlockHashLookup(
       final Blockchain blockchain, final ProcessableBlockHeader blockHeader) {
-    return new ContractBasedBlockHashLookup(blockHeader, historyStorageAddress, historyServeWindow);
+    return new Eip7709BlockHashLookup(historyStorageAddress, historyServeWindow);
   }
 }
