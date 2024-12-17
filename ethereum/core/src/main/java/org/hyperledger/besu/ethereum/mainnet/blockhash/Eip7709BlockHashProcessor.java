@@ -19,6 +19,11 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.vm.Eip7709BlockHashLookup;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 
+/**
+ * Provides a way to create a BlockHashLookup that fetches hashes from system contract storage, in
+ * accordance with EIP-7709. It is not used yet since the fork that this EIP should go in has not
+ * been decided yet.
+ */
 public class Eip7709BlockHashProcessor extends PragueBlockHashProcessor {
 
   @Override
