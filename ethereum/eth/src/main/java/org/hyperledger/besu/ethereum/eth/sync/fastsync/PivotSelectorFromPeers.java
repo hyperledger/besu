@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerLimiter;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -41,8 +40,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
   public PivotSelectorFromPeers(
       final EthContext ethContext,
       final SynchronizerConfiguration syncConfig,
-      final SyncState syncState,
-      final MetricsSystem metricsSystem) {
+      final SyncState syncState) {
     this.ethContext = ethContext;
     this.syncConfig = syncConfig;
     this.syncState = syncState;
