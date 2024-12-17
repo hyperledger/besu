@@ -171,13 +171,20 @@ public class CheckPointSyncChainDownloaderTest {
     when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
         .thenAnswer(getHeadersAnswer);
 
-    Answer<PeerTaskExecutorResult<List<Block>>> getBlockBodiesAnswer = (invocationOnMock) -> {
-      GetBodiesFromPeerTask task =  invocationOnMock.getArgument(0, GetBodiesFromPeerTask.class);
-      List<Block> blocks = task.getBlockHeaders().stream().map((bh) -> new Block(bh, otherBlockchain.getBlockBody(bh.getBlockHash()).get())).collect(Collectors.toList());
-      return new PeerTaskExecutorResult<List<Block>>(Optional.of(blocks), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
-    };
-    when(peerTaskExecutor.execute(any(GetBodiesFromPeerTask.class))).thenAnswer(getBlockBodiesAnswer);
-    when(peerTaskExecutor.executeAgainstPeer(any(GetBodiesFromPeerTask.class), any(EthPeer.class))).thenAnswer(getBlockBodiesAnswer);
+    Answer<PeerTaskExecutorResult<List<Block>>> getBlockBodiesAnswer =
+        (invocationOnMock) -> {
+          GetBodiesFromPeerTask task = invocationOnMock.getArgument(0, GetBodiesFromPeerTask.class);
+          List<Block> blocks =
+              task.getBlockHeaders().stream()
+                  .map((bh) -> new Block(bh, otherBlockchain.getBlockBody(bh.getBlockHash()).get()))
+                  .collect(Collectors.toList());
+          return new PeerTaskExecutorResult<List<Block>>(
+              Optional.of(blocks), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
+        };
+    when(peerTaskExecutor.execute(any(GetBodiesFromPeerTask.class)))
+        .thenAnswer(getBlockBodiesAnswer);
+    when(peerTaskExecutor.executeAgainstPeer(any(GetBodiesFromPeerTask.class), any(EthPeer.class)))
+        .thenAnswer(getBlockBodiesAnswer);
   }
 
   @AfterEach
