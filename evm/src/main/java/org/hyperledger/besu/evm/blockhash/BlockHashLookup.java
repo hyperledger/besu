@@ -12,16 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet.blockhash;
+package org.hyperledger.besu.evm.blockhash;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
-public interface BlockHashProcessor {
+import java.util.function.BiFunction;
 
-  void processBlockHashes(MutableWorldState worldState, ProcessableBlockHeader currentBlockHeader);
-
-  BlockHashLookup createBlockHashLookup(Blockchain blockchain, ProcessableBlockHeader blockHeader);
-}
+/**
+ * Function that gets the block hash, passed in as part of TxValues.
+ *
+ * <p>Arg is the current executing message frame. The Result is the Hash, which may be zero based on
+ * lookup rules.
+ */
+public interface BlockHashLookup extends BiFunction<MessageFrame, Long, Hash> {}

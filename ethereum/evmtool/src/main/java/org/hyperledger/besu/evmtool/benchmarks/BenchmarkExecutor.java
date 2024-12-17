@@ -63,7 +63,7 @@ public abstract class BenchmarkExecutor {
           .code(CodeV0.EMPTY_CODE)
           .completer(__ -> {})
           .address(Address.ZERO)
-          .blockHashLookup(n -> null)
+          .blockHashLookup((__, ___) -> null)
           .blockValues(new SimpleBlockValues())
           .gasPrice(Wei.ZERO)
           .miningBeneficiary(Address.ZERO)

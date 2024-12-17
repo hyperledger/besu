@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.verkletrie;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyBatchAdapter;
 import org.hyperledger.besu.ethereum.trie.verkle.hasher.CachedPedersenHasher;
@@ -24,6 +23,7 @@ import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -60,13 +60,9 @@ public class TrieKeyPreloader {
   }
 
   public HasherContext createPreloadedHasher(
-      final Address address,
-      final List<Bytes32> accountKeyIds,
-      final List<Bytes32> storageKeyIds,
-      final List<Bytes32> codeChunkIds) {
+      final List<Bytes32> storageKeyIds, final List<Bytes32> codeChunkIds) {
     return new HasherContext(
-        new CachedPedersenHasher(
-            trieKeyAdapter.manyTrieKeyHashes(address, accountKeyIds, storageKeyIds, codeChunkIds)),
+        new CachedPedersenHasher(10_000, new ConcurrentHashMap<>()),
         !storageKeyIds.isEmpty(),
         !codeChunkIds.isEmpty());
   }
