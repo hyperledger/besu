@@ -67,8 +67,6 @@ public class TransactionDBRocksDBColumnarKeyValueStorage extends RocksDBColumnar
 
     } catch (final RocksDBException e) {
       throw parseRocksDBException(e, segments, ignorableSegments);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
     }
   }
 

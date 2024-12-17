@@ -24,6 +24,7 @@ import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.DBOptions;
 import org.rocksdb.OptimisticTransactionDB;
+import org.rocksdb.RocksDBException;
 import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.slf4j.Logger;
@@ -78,14 +79,14 @@ public class RocksDBOpener {
    * @param columnHandles a list of {@link ColumnFamilyHandle} objects to be populated with the
    *     opened column families.
    * @return an instance of {@link OptimisticTransactionDB}.
-   * @throws Exception if the database cannot be opened.
+   * @throws RocksDBException if the database cannot be opened.
    */
   public static OptimisticTransactionDB openOptimisticTransactionDBWithWarning(
       final DBOptions options,
       final String dbPath,
       final List<ColumnFamilyDescriptor> columnDescriptors,
       final List<ColumnFamilyHandle> columnHandles)
-      throws Exception {
+      throws RocksDBException {
     return openDBWithWarning(
         () -> OptimisticTransactionDB.open(options, dbPath, columnDescriptors, columnHandles));
   }
@@ -105,7 +106,7 @@ public class RocksDBOpener {
    * @param columnHandles a list of {@link ColumnFamilyHandle} objects to be populated with the
    *     opened column families.
    * @return an instance of {@link TransactionDB}.
-   * @throws Exception if the database cannot be opened.
+   * @throws RocksDBException if the database cannot be opened.
    */
   public static TransactionDB openTransactionDBWithWarning(
       final DBOptions options,
@@ -113,7 +114,7 @@ public class RocksDBOpener {
       final String dbPath,
       final List<ColumnFamilyDescriptor> columnDescriptors,
       final List<ColumnFamilyHandle> columnHandles)
-      throws Exception {
+      throws RocksDBException {
     return openDBWithWarning(
         () ->
             TransactionDB.open(
@@ -130,9 +131,9 @@ public class RocksDBOpener {
    * @param <T> the type of the database being opened (e.g., {@link OptimisticTransactionDB} or
    *     {@link TransactionDB}).
    * @return an instance of the database being opened.
-   * @throws Exception if the database cannot be opened.
+   * @throws RocksDBException if the database cannot be opened.
    */
-  private static <T> T openDBWithWarning(final DBOperation<T> dbOperation) throws Exception {
+  private static <T> T openDBWithWarning(final DBOperation<T> dbOperation) throws RocksDBException {
     AtomicBoolean operationCompleted = new AtomicBoolean(false);
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     scheduler.schedule(
@@ -164,8 +165,8 @@ public class RocksDBOpener {
      * Opens the database.
      *
      * @return the opened database instance.
-     * @throws Exception if an error occurs while opening the database.
+     * @throws RocksDBException if an error occurs while opening the database.
      */
-    T open() throws Exception;
+    T open() throws RocksDBException;
   }
 }
