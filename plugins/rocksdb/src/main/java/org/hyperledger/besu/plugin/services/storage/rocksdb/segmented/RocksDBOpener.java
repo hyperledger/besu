@@ -58,12 +58,13 @@ public class RocksDBOpener {
 
   /**
    * Default constructor.
-   * <p>
-   * This is a utility class and is not meant to be instantiated directly.
+   *
+   * <p>This is a utility class and is not meant to be instantiated directly.
    */
   private RocksDBOpener() {
     // Default constructor for RocksDBOpener
   }
+
   /**
    * Opens an {@link OptimisticTransactionDB} instance with a warning mechanism.
    *
