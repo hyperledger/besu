@@ -18,7 +18,6 @@ import static org.hyperledger.besu.datatypes.Hash.ZERO;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -35,47 +34,39 @@ import org.slf4j.LoggerFactory;
  * Retrieves block hashes from system contract storage and caches hashes by number, used by
  * BLOCKHASH operation.
  */
-public class ContractBasedBlockHashLookup implements BlockHashLookup {
-  private static final Logger LOG = LoggerFactory.getLogger(ContractBasedBlockHashLookup.class);
+public class Eip7709BlockHashLookup implements BlockHashLookup {
+  private static final Logger LOG = LoggerFactory.getLogger(Eip7709BlockHashLookup.class);
   private static final long BLOCKHASH_SERVE_WINDOW = 256L;
 
-  private final ProcessableBlockHeader blockHeader;
   private final Address contractAddress;
   private final long historyServeWindow;
   private final long blockHashServeWindow;
   private final HashMap<Long, Hash> hashByNumber = new HashMap<>();
 
   /**
-   * Constructs a ContractBasedBlockHashLookup.
+   * Constructs a Eip7709BlockHashLookup.
    *
-   * @param currentBlock current block header being processed.
    * @param contractAddress the address of the contract storing the history.
    * @param historyServeWindow the number of blocks for which history should be saved.
    */
-  public ContractBasedBlockHashLookup(
-      final ProcessableBlockHeader currentBlock,
-      final Address contractAddress,
-      final long historyServeWindow) {
-    this(currentBlock, contractAddress, historyServeWindow, BLOCKHASH_SERVE_WINDOW);
+  public Eip7709BlockHashLookup(final Address contractAddress, final long historyServeWindow) {
+    this(contractAddress, historyServeWindow, BLOCKHASH_SERVE_WINDOW);
   }
 
   /**
-   * Constructs a ContractBasedBlockHashLookup with a specified blockHashServeWindow. This
-   * constructor is only used for testing.
+   * Constructs a Eip7709BlockHashLookup with a specified blockHashServeWindow. This constructor is
+   * only used for testing.
    *
-   * @param currentBlock current block header being processed.
    * @param contractAddress the address of the contract storing the history.
    * @param historyServeWindow the number of blocks for which history should be saved.
    * @param blockHashServeWindow the number of block for which contract can serve the BLOCKHASH
    *     opcode.
    */
   @VisibleForTesting
-  ContractBasedBlockHashLookup(
-      final ProcessableBlockHeader currentBlock,
+  Eip7709BlockHashLookup(
       final Address contractAddress,
       final long historyServeWindow,
       final long blockHashServeWindow) {
-    this.blockHeader = currentBlock;
     this.contractAddress = contractAddress;
     this.historyServeWindow = historyServeWindow;
     this.blockHashServeWindow = blockHashServeWindow;
@@ -83,10 +74,10 @@ public class ContractBasedBlockHashLookup implements BlockHashLookup {
 
   @Override
   public Hash apply(final MessageFrame frame, final Long blockNumber) {
-    final long currentBlockNumber = blockHeader.getNumber();
+    final long currentBlockNumber = frame.getBlockValues().getNumber();
     final long minBlockServe = Math.max(0, currentBlockNumber - blockHashServeWindow);
     if (blockNumber >= currentBlockNumber || blockNumber < minBlockServe) {
-      LOG.debug("failed to read hash from system account for block {}", blockNumber);
+      LOG.trace("failed to read hash from system account for block {}", blockNumber);
       return ZERO;
     }
 

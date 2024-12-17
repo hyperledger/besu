@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -44,7 +45,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ContractBasedBlockHashLookupTest {
+public class Eip7709BlockHashLookupTest {
   private static final long BLOCKHASH_SERVE_WINDOW = 160;
   private static final Address STORAGE_ADDRESS = Address.fromHexString("0x0");
   private static final long HISTORY_SERVE_WINDOW = 200L;
@@ -57,15 +58,9 @@ public class ContractBasedBlockHashLookupTest {
   @BeforeEach
   void setUp() {
     headers = new ArrayList<>();
-    frame = mock(MessageFrame.class);
-    final WorldUpdater worldUpdater = createWorldUpdater(0, CURRENT_BLOCK_NUMBER);
-    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
+    frame = createMessageFrame(CURRENT_BLOCK_NUMBER, createWorldUpdater(0, CURRENT_BLOCK_NUMBER));
     lookup =
-        new ContractBasedBlockHashLookup(
-            createHeader(CURRENT_BLOCK_NUMBER, headers.getLast()),
-            STORAGE_ADDRESS,
-            HISTORY_SERVE_WINDOW,
-            BLOCKHASH_SERVE_WINDOW);
+        new Eip7709BlockHashLookup(STORAGE_ADDRESS, HISTORY_SERVE_WINDOW, BLOCKHASH_SERVE_WINDOW);
   }
 
   private WorldUpdater createWorldUpdater(final int fromBlockNumber, final int toBlockNumber) {
@@ -81,6 +76,16 @@ public class ContractBasedBlockHashLookupTest {
       parentHeader = header;
     }
     return worldUpdaterMock;
+  }
+
+  private MessageFrame createMessageFrame(
+      final long currentBlockNumber, final WorldUpdater worldUpdater) {
+    final MessageFrame messageFrame = mock(MessageFrame.class);
+    final BlockValues blockValues = mock(BlockValues.class);
+    when(blockValues.getNumber()).thenReturn(currentBlockNumber);
+    when(messageFrame.getBlockValues()).thenReturn(blockValues);
+    when(messageFrame.getWorldUpdater()).thenReturn(worldUpdater);
+    return messageFrame;
   }
 
   @Test
@@ -107,15 +112,12 @@ public class ContractBasedBlockHashLookupTest {
 
   @Test
   void shouldReturnEmptyHashWhenParentBlockNotInContract() {
-    final WorldUpdater worldUpdater =
-        createWorldUpdater(CURRENT_BLOCK_NUMBER - 10, CURRENT_BLOCK_NUMBER);
-    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
+    frame =
+        createMessageFrame(
+            CURRENT_BLOCK_NUMBER,
+            createWorldUpdater(CURRENT_BLOCK_NUMBER - 10, CURRENT_BLOCK_NUMBER));
     lookup =
-        new ContractBasedBlockHashLookup(
-            new BlockHeaderTestFixture().number(CURRENT_BLOCK_NUMBER).buildHeader(),
-            STORAGE_ADDRESS,
-            HISTORY_SERVE_WINDOW,
-            BLOCKHASH_SERVE_WINDOW);
+        new Eip7709BlockHashLookup(STORAGE_ADDRESS, HISTORY_SERVE_WINDOW, BLOCKHASH_SERVE_WINDOW);
     assertHashForBlockNumber(CURRENT_BLOCK_NUMBER - 20, Hash.ZERO);
   }
 
@@ -147,14 +149,9 @@ public class ContractBasedBlockHashLookupTest {
 
   @Test
   void shouldGetHashWhenParentIsGenesis() {
-    final WorldUpdater worldUpdater = createWorldUpdater(0, 1);
-    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
+    frame = createMessageFrame(1, createWorldUpdater(0, 1));
     lookup =
-        new ContractBasedBlockHashLookup(
-            createHeader(1, headers.getFirst()),
-            STORAGE_ADDRESS,
-            HISTORY_SERVE_WINDOW,
-            BLOCKHASH_SERVE_WINDOW);
+        new Eip7709BlockHashLookup(STORAGE_ADDRESS, HISTORY_SERVE_WINDOW, BLOCKHASH_SERVE_WINDOW);
     assertHashForBlockNumber(0);
   }
 
