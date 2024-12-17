@@ -196,39 +196,41 @@ public class BlockSimulatorTest {
 
   @Test
   public void shouldApplyBlockHeaderOverridesCorrectly() {
-    BlockOverrides blockOverrides = mock(BlockOverrides.class);
     ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
 
-    var expectedTimestamp = Optional.of(1L);
-    var expectedBlockNumber = Optional.of(2L);
-    var expectedFeeRecipient = Optional.of(Address.fromHexString("0x1"));
-    var expectedBaseFeePerGas = Optional.of(Wei.of(7L));
-    var expectedGasLimit = Optional.of(5L);
-    var expectedDifficulty = Optional.of(BigInteger.ONE);
-    var expectedMixHashOrPrevRandao = Optional.of(Hash.hash(Bytes.fromHexString("0x01")));
-    var expectedExtraData = Optional.of(Bytes.fromHexString("0x02"));
+    var expectedTimestamp = 1L;
+    var expectedBlockNumber = 2L;
+    var expectedFeeRecipient = Address.fromHexString("0x1");
+    var expectedBaseFeePerGas = Wei.of(7L);
+    var expectedGasLimit = 5L;
+    var expectedDifficulty = BigInteger.ONE;
+    var expectedMixHashOrPrevRandao = Hash.hash(Bytes.fromHexString("0x01"));
+    var expectedExtraData = Bytes.fromHexString("0x02");
 
-    when(blockOverrides.getTimestamp()).thenReturn(expectedTimestamp);
-    when(blockOverrides.getBlockNumber()).thenReturn(expectedBlockNumber);
-    when(blockOverrides.getFeeRecipient()).thenReturn(expectedFeeRecipient);
-    when(blockOverrides.getBaseFeePerGas()).thenReturn(expectedBaseFeePerGas);
-    when(blockOverrides.getGasLimit()).thenReturn(expectedGasLimit);
-    when(blockOverrides.getDifficulty()).thenReturn(expectedDifficulty);
-    when(blockOverrides.getMixHashOrPrevRandao()).thenReturn(expectedMixHashOrPrevRandao);
-    when(blockOverrides.getExtraData()).thenReturn(expectedExtraData);
+    BlockOverrides blockOverrides =
+        BlockOverrides.builder()
+            .timestamp(expectedTimestamp)
+            .blockNumber(expectedBlockNumber)
+            .feeRecipient(expectedFeeRecipient)
+            .baseFeePerGas(expectedBaseFeePerGas)
+            .gasLimit(expectedGasLimit)
+            .difficulty(expectedDifficulty)
+            .mixHashOrPrevRandao(expectedMixHashOrPrevRandao)
+            .extraData(expectedExtraData)
+            .build();
 
     BlockHeader result =
         blockSimulator.applyBlockHeaderOverrides(blockHeader, protocolSpec, blockOverrides);
 
     assertNotNull(result);
-    assertEquals(expectedTimestamp.get(), result.getTimestamp());
-    assertEquals(expectedBlockNumber.get(), result.getNumber());
-    assertEquals(expectedFeeRecipient.get(), result.getCoinbase());
-    assertEquals(expectedBaseFeePerGas, result.getBaseFee());
-    assertEquals(expectedGasLimit.get(), result.getGasLimit());
-    assertThat(result.getDifficulty()).isEqualTo(Difficulty.of(expectedDifficulty.get()));
-    assertEquals(expectedMixHashOrPrevRandao.get(), result.getMixHash());
-    assertEquals(expectedExtraData.get(), result.getExtraData());
+    assertEquals(expectedTimestamp, result.getTimestamp());
+    assertEquals(expectedBlockNumber, result.getNumber());
+    assertEquals(expectedFeeRecipient, result.getCoinbase());
+    assertEquals(Optional.of(expectedBaseFeePerGas), result.getBaseFee());
+    assertEquals(expectedGasLimit, result.getGasLimit());
+    assertThat(result.getDifficulty()).isEqualTo(Difficulty.of(expectedDifficulty));
+    assertEquals(expectedMixHashOrPrevRandao, result.getMixHash());
+    assertEquals(expectedExtraData, result.getExtraData());
   }
 
   @Test

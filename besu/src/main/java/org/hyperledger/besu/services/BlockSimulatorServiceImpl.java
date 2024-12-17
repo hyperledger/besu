@@ -48,6 +48,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
    * @param miningConfiguration the mining configuration
    * @param transactionSimulator the transaction simulator
    * @param protocolSchedule the protocol schedule
+   * @param blockchain the blockchain
    */
   public BlockSimulatorServiceImpl(
       final WorldStateArchive worldStateArchive,
