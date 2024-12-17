@@ -134,7 +134,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
           () ->
               ethContext
                   .getEthPeers()
-                  .waitForPeer((peer) -> true)
+                  .waitForPeer(this::isSuitablePeer)
                   .orTimeout(5, TimeUnit.SECONDS)
                   // execute the task again
                   .whenComplete((r, t) -> executeTaskTimed()));
