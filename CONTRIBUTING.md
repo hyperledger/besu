@@ -16,24 +16,24 @@ Please keep in mind that we do not accept non-code contributions like fixing com
 
 ### Useful contributing links
 
-* [I just have a quick question](https://wiki.hyperledger.org/display/BESU/I+just+have+a+quick+question)
+* [I just have a quick question](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154239/I+just+have+a+quick+question)
 * [How to Contribute]
-* [First contribution workflow](https://wiki.hyperledger.org/display/BESU/First+contribution?src=contextnavpagetreemode)
-* [Did you find a bug?](https://wiki.hyperledger.org/display/BESU/Reporting+Bugs)
-* [Issues](https://wiki.hyperledger.org/display/BESU/Issues)
-* [DCO](https://wiki.hyperledger.org/display/BESU/DCO)
-* [Suggesting Enhancements](https://wiki.hyperledger.org/display/BESU/Suggesting+Enhancements)
-* [Pull Requests](https://wiki.hyperledger.org/display/BESU/Pull+Requests)
-* [Code Reviews](https://wiki.hyperledger.org/display/BESU/Code+Reviews)
+* [First contribution workflow](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154241/First+contribution)
+* [Did you find a bug?](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154255/Reporting+Bugs)
+* [Issues](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154243/Issues)
+* [DCO](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154245/DCO)
+* [Suggesting Enhancements](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154249/Suggesting+Enhancements)
+* [Pull Requests](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154251/Pull+Requests)
+* [Code Reviews](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154254/Code+Reviews)
 
 
-* [Security contributions](https://wiki.hyperledger.org/display/BESU/Security)
+* [Security contributions](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154229/Security)
 
 ### Other important information
 
 * [Roadmap](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154278/Besu+Roadmap+Planning)
-* [Code of Conduct](https://wiki.hyperledger.org/display/BESU/Code+of+Conduct)
-* [Governance](https://wiki.hyperledger.org/display/BESU/Governance)
+* [Code of Conduct](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154295/Code+of+Conduct)
+* [Governance](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22153937/Governance)
 
-[How to Contribute]: https://wiki.hyperledger.org/display/BESU/How+to+Contribute
+[How to Contribute]: https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22156850/How+to+Contribute
 [Linux Foundation (LF) account]: https://identity.linuxfoundation.org/
