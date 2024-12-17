@@ -47,6 +47,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
   private static final String DISCOVERY_CONFIG_KEY = "discovery";
   private static final String CHECKPOINT_CONFIG_KEY = "checkpoint";
+  private static final String BLOB_SCHEDULE_CONFIG_KEY = "blobschedule";
   private static final String ZERO_BASE_FEE_KEY = "zerobasefee";
   private static final String FIXED_BASE_FEE_KEY = "fixedbasefee";
   private static final String WITHDRAWAL_REQUEST_CONTRACT_ADDRESS_KEY =
@@ -197,6 +198,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return JsonUtil.getObjectNode(configRoot, ETHASH_CONFIG_KEY)
         .map(EthashConfigOptions::new)
         .orElse(EthashConfigOptions.DEFAULT);
+  }
+
+  @Override
+  public BlobScheduleOptions getBlobScheduleOptions() {
+    return JsonUtil.getObjectNode(configRoot, BLOB_SCHEDULE_CONFIG_KEY)
+        .map(BlobScheduleOptions::new)
+        .orElse(BlobScheduleOptions.DEFAULT);
   }
 
   @Override
@@ -462,6 +470,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return inputAddress.map(Address::fromHexString);
   }
 
+  // TODO SLD - EIP-7840
   @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();

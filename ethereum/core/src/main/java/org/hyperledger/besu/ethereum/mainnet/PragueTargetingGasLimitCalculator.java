@@ -15,36 +15,22 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
-public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCalculator {
+public class PragueTargetingGasLimitCalculator extends CancunTargetingGasLimitCalculator {
 
   /**
    * The constant MAX_BLOB_GAS_PER_BLOCK represents the maximum gas limit for blob data. =
-   * CancunGasCalculator.BLOB_GAS_PER_BLOB * 6 blobs = 131072 * 6 = 786432 = 0xC0000
+   * CancunGasCalculator.BLOB_GAS_PER_BLOB * 9 blobs = 131072 * 9 = 1179648 = 0x120000
    */
-  private static final int DEFAULT_MAX_BLOBS_PER_BLOCK = 6;
+  private static final int DEFAULT_MAX_BLOBS_PER_BLOCK_PRAGUE = 9;
 
-  /**
-   * The maximum gas limit for blob data per block. getBlobGasPerBlob() * 6 blobs = 131072 * 6 =
-   * 786432 = 0xC0000
-   */
-  private final long maxBlobGasPerBlock;
-
-  public CancunTargetingGasLimitCalculator(
+  public PragueTargetingGasLimitCalculator(
       final long londonForkBlock, final BaseFeeMarket feeMarket) {
-    this(londonForkBlock, feeMarket, DEFAULT_MAX_BLOBS_PER_BLOCK);
+    super(londonForkBlock, feeMarket, DEFAULT_MAX_BLOBS_PER_BLOCK_PRAGUE);
   }
 
-  public CancunTargetingGasLimitCalculator(
+  public PragueTargetingGasLimitCalculator(
       final long londonForkBlock, final BaseFeeMarket feeMarket, final int maxBlobsPerBlock) {
-    super(londonForkBlock, feeMarket);
-    final CancunGasCalculator cancunGasCalculator = new CancunGasCalculator();
-    this.maxBlobGasPerBlock = cancunGasCalculator.getBlobGasPerBlob() * maxBlobsPerBlock;
-  }
-
-  @Override
-  public long currentBlobGasLimit() {
-    return maxBlobGasPerBlock;
+    super(londonForkBlock, feeMarket, maxBlobsPerBlock);
   }
 }

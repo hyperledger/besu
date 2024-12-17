@@ -472,6 +472,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     return Optional.empty();
   }
 
+  @Override
+  public BlobScheduleOptions getBlobScheduleOptions() {
+    return BlobScheduleOptions.DEFAULT;
+  }
+
   /**
    * Homestead block stub genesis config options.
    *

@@ -546,4 +546,11 @@ public interface GenesisConfigOptions {
    * @return the consolidation request contract address
    */
   Optional<Address> getConsolidationRequestContractAddress();
+
+  /**
+   * The blob schedule is a list of hardfork names and their associated target and max blob values.
+   *
+   * @return the blob schedule
+   */
+  BlobScheduleOptions getBlobScheduleOptions();
 }
