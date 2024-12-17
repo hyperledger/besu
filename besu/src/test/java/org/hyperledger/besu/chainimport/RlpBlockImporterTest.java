@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.chainimport;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -21,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -41,9 +43,12 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.CompletionException;
 
+import com.google.common.io.Resources;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -155,5 +160,45 @@ public final class RlpBlockImporterTest {
         rlpBlockImporter.importBlockchain(source, targetController, true);
     assertThat(result.count).isEqualTo(1);
     assertThat(result.td).isEqualTo(UInt256.valueOf(34351349760L));
+  }
+
+  @Test
+  public void ibftImport() throws IOException {
+    final Path source = dataDir.resolve("ibft.blocks");
+    final String config =
+        Resources.toString(this.getClass().getResource("/ibftlegacy_genesis.json"), UTF_8);
+
+    try {
+      Files.write(
+          source,
+          Resources.toByteArray(this.getClass().getResource("/ibft.blocks")),
+          StandardOpenOption.CREATE,
+          StandardOpenOption.TRUNCATE_EXISTING);
+    } catch (final IOException ex) {
+      throw new IllegalStateException(ex);
+    }
+
+    final BesuController controller =
+        new BesuController.Builder()
+            .fromGenesisFile(GenesisConfigFile.fromConfig(config), SyncMode.FULL)
+            .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .storageProvider(new InMemoryKeyValueStorageProvider())
+            .networkId(BigInteger.valueOf(10))
+            .miningParameters(MiningConfiguration.newDefault())
+            .nodeKey(NodeKeyUtils.generate())
+            .metricsSystem(new NoOpMetricsSystem())
+            .privacyParameters(PrivacyParameters.DEFAULT)
+            .dataDirectory(dataDir)
+            .clock(TestClock.fixed())
+            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
+            .gasLimitCalculator(GasLimitCalculator.constant())
+            .evmConfiguration(EvmConfiguration.DEFAULT)
+            .build();
+    final RlpBlockImporter.ImportResult result =
+        rlpBlockImporter.importBlockchain(source, controller, false);
+
+    // Don't count the Genesis block
+    assertThat(result.count).isEqualTo(958);
   }
 }
