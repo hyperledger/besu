@@ -88,7 +88,10 @@ public class ForwardSyncStep {
               .scheduleServiceTask(
                   () -> {
                     GetBodiesFromPeerTask task =
-                        new GetBodiesFromPeerTask(blockHeaders, context.getProtocolSchedule());
+                        new GetBodiesFromPeerTask(
+                            blockHeaders,
+                            context.getProtocolSchedule(),
+                            context.getEthContext().getEthPeers().peerCount());
                     PeerTaskExecutorResult<List<Block>> taskResult =
                         context.getEthContext().getPeerTaskExecutor().execute(task);
                     if (taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS

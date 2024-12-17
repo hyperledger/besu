@@ -40,8 +40,11 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
 
   private static final Logger LOG = LoggerFactory.getLogger(GetBodiesFromPeerTask.class);
 
+  private static final int DEFAULT_RETRIES_AGAINST_OTHER_PEERS = 5;
+
   private final List<BlockHeader> blockHeaders;
   private final ProtocolSchedule protocolSchedule;
+  private final int allowedRetriesAgainstOtherPeers;
 
   private final long requiredBlockchainHeight;
   private final List<Block> blocks = new ArrayList<>();
@@ -49,12 +52,20 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
 
   public GetBodiesFromPeerTask(
       final List<BlockHeader> blockHeaders, final ProtocolSchedule protocolSchedule) {
+    this(blockHeaders, protocolSchedule, DEFAULT_RETRIES_AGAINST_OTHER_PEERS);
+  }
+
+  public GetBodiesFromPeerTask(
+      final List<BlockHeader> blockHeaders,
+      final ProtocolSchedule protocolSchedule,
+      final int allowedRetriesAgainstOtherPeers) {
     if (blockHeaders == null || blockHeaders.isEmpty()) {
       throw new IllegalArgumentException("Block headers must not be empty");
     }
 
     this.blockHeaders = blockHeaders;
     this.protocolSchedule = protocolSchedule;
+    this.allowedRetriesAgainstOtherPeers = allowedRetriesAgainstOtherPeers;
 
     this.requiredBlockchainHeight =
         blockHeaders.stream()
@@ -100,6 +111,11 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
       blocks.add(new Block(blockHeader, blockBody));
     }
     return blocks;
+  }
+
+  @Override
+  public int getRetriesWithOtherPeer() {
+    return allowedRetriesAgainstOtherPeers;
   }
 
   private boolean blockBodyMatchesBlockHeader(
