@@ -327,14 +327,14 @@ final class GenesisStateTest {
     assertThat(header.getRequestsHash().get())
         .isEqualTo(
             Hash.fromHexString(
-                "0x6036c41849da9c076ed79654d434017387a88fb833c2856b32e18218b3341c5f"));
+                "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"));
     assertThat(header.getTargetBlobsPerBlock().isPresent()).isTrue();
     assertThat(header.getTargetBlobsPerBlock().get()).isEqualTo(UInt64.ONE);
 
     assertThat(header.getHash())
         .isEqualTo(
             Hash.fromHexString(
-                "0xdbc64edecb3a432e48cbd270b4a248ffc611b5f3dd666c8a10d546672cae17bd"));
+                "0xdb3cb6f894b434d55c66cf6aeb3d12ab9acc276f130dad82d5791eef8b048f2e"));
   }
 
   @Test

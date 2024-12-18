@@ -15,8 +15,11 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
 import org.hyperledger.besu.datatypes.CodeDelegation;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Gas Calculator for Prague
@@ -26,20 +29,38 @@ import org.hyperledger.besu.datatypes.CodeDelegation;
  * </UL>
  */
 public class PragueGasCalculator extends CancunGasCalculator {
+  private static final long TOTAL_COST_FLOOR_PER_TOKEN = 10L;
+
   final long existingAccountGasRefund;
+
+  /**
+   * The default mainnet target blobs per block for Prague getBlobGasPerBlob() * 6 blobs = 131072 *
+   * 6 = 786432 = 0xC0000
+   */
+  private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_PRAGUE = 6;
 
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
+    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], DEFAULT_TARGET_BLOBS_PER_BLOCK_PRAGUE);
+  }
+
+  /**
+   * Instantiates a new Prague Gas Calculator
+   *
+   * @param targetBlobsPerBlock the target blobs per block
+   */
+  public PragueGasCalculator(final int targetBlobsPerBlock) {
+    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], targetBlobsPerBlock);
   }
 
   /**
    * Instantiates a new Prague Gas Calculator
    *
    * @param maxPrecompile the max precompile
+   * @param targetBlobsPerBlock the target blobs per block
    */
-  protected PragueGasCalculator(final int maxPrecompile) {
-    super(maxPrecompile);
+  protected PragueGasCalculator(final int maxPrecompile, final int targetBlobsPerBlock) {
+    super(maxPrecompile, targetBlobsPerBlock);
     this.existingAccountGasRefund = newAccountGasCost() - CodeDelegation.PER_AUTH_BASE_COST;
   }
 
@@ -51,5 +72,21 @@ public class PragueGasCalculator extends CancunGasCalculator {
   @Override
   public long calculateDelegateCodeGasRefund(final long alreadyExistingAccounts) {
     return existingAccountGasRefund * alreadyExistingAccounts;
+  }
+
+  @Override
+  public long transactionIntrinsicGasCost(
+      final Bytes payload, final boolean isContractCreation, final long evmGasUsed) {
+    final long dynamicIntrinsicGasCost =
+        dynamicIntrinsicGasCost(payload, isContractCreation, evmGasUsed);
+    final long totalCostFloor =
+        tokensInCallData(payload.size(), zeroBytes(payload)) * TOTAL_COST_FLOOR_PER_TOKEN;
+
+    return clampedAdd(TX_BASE_COST, Math.max(dynamicIntrinsicGasCost, totalCostFloor));
+  }
+
+  private long tokensInCallData(final long payloadSize, final long zeroBytes) {
+    // as defined in https://eips.ethereum.org/EIPS/eip-7623#specification
+    return clampedAdd(zeroBytes, (payloadSize - zeroBytes) * 4);
   }
 }
