@@ -40,7 +40,7 @@ import org.apache.tuweni.bytes.Bytes;
  * The EOF layout.
  *
  * @param container The literal EOF bytes fo the whole container
- * @param version The parsed version id. zero if unparseable.
+ * @param version The parsed version id. zero if unparsable.
  * @param codeSections The parsed Code sections. Null if invalid.
  * @param subContainers The parsed subcontainers. Null if invalid.
  * @param dataLength The length of the data as reported by the container. For subcontainers this may
