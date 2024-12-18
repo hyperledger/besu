@@ -24,7 +24,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.RequestType;
@@ -222,20 +221,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           blockParam.getTransactions().stream()
               .map(Bytes::fromHexString)
               .map(in -> TransactionDecoder.decodeOpaqueBytes(in, EncodingContext.BLOCK_BODY))
-              .collect(Collectors.toList());
-      transactions.forEach(
-          transaction ->
-              mergeCoordinator
-                  .getEthScheduler()
-                  .scheduleTxWorkerTask(
-                      () -> {
-                        Address sender = transaction.getSender();
-                        LOG.atTrace()
-                            .setMessage("The sender for transaction {} is calculated : {}")
-                            .addArgument(transaction::getHash)
-                            .addArgument(sender)
-                            .log();
-                      }));
+              .toList();
+      precomputeSenders(transactions);
     } catch (final RLPException | IllegalArgumentException e) {
       return respondWithInvalid(
           reqId,
@@ -389,6 +376,47 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           latestValidAncestor.get(),
           INVALID,
           executionResult.errorMessage.get());
+    }
+  }
+
+  private void precomputeSenders(final List<Transaction> transactions) {
+    transactions.forEach(
+        transaction -> {
+          mergeCoordinator
+              .getEthScheduler()
+              .scheduleTxWorkerTask(
+                  () -> {
+                    final var sender = transaction.getSender();
+                    LOG.atTrace()
+                        .setMessage("The sender for transaction {} is calculated : {}")
+                        .addArgument(transaction::getHash)
+                        .addArgument(sender)
+                        .log();
+                  });
+          if (transaction.getType().supportsDelegateCode()) {
+            precomputeAuthorities(transaction);
+          }
+        });
+  }
+
+  private void precomputeAuthorities(final Transaction transaction) {
+    final var codeDelegations = transaction.getCodeDelegationList().get();
+    int index = 0;
+    for (final var codeDelegation : codeDelegations) {
+      final var constIndex = index++;
+      mergeCoordinator
+          .getEthScheduler()
+          .scheduleTxWorkerTask(
+              () -> {
+                final var authority = codeDelegation.authorizer();
+                LOG.atTrace()
+                    .setMessage(
+                        "The code delegation authority at index {} for transaction {} is calculated : {}")
+                    .addArgument(constIndex)
+                    .addArgument(transaction::getHash)
+                    .addArgument(authority)
+                    .log();
+              });
     }
   }
 
