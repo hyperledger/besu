@@ -164,7 +164,7 @@ keytool -genkeypair -keystore $CLIENT.p12 -storepass test123 -alias $CLIENT \
 -ext san=dns:localhost,ip:127.0.0.1
 ~~~
 
-CSR and reimport
+CSR and re-import
 ~~~
 keytool -storepass test123 -keystore "$CLIENT.p12" -certreq -alias $CLIENT \
 | keytool -storepass test123 -keystore "../ca_certs/${OU}_ca.p12" -gencert -validity 36500 -alias ${OU}_ca \
