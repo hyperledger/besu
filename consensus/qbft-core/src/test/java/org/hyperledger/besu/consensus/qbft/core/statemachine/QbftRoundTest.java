@@ -369,8 +369,6 @@ public class QbftRoundTest {
     round.handleProposalMessage(
         messageFactory.createProposal(
             roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList()));
-
-    // TODO add assertions
   }
 
   @Test
