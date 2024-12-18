@@ -21,7 +21,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.BlobScheduleOptions;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -118,9 +117,6 @@ public class CliqueBesuControllerBuilderTest {
     lenient().when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
     lenient().when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
-    lenient()
-        .when(genesisConfigOptions.getBlobScheduleOptions())
-        .thenReturn(BlobScheduleOptions.DEFAULT);
     lenient()
         .when(storageProvider.createBlockchainStorage(any(), any(), any()))
         .thenReturn(

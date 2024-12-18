@@ -473,8 +473,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
-  public BlobScheduleOptions getBlobScheduleOptions() {
-    return BlobScheduleOptions.DEFAULT;
+  public Optional<BlobScheduleOptions> getBlobScheduleOptions() {
+    return Optional.empty();
   }
 
   /**

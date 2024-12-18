@@ -552,5 +552,5 @@ public interface GenesisConfigOptions {
    *
    * @return the blob schedule
    */
-  BlobScheduleOptions getBlobScheduleOptions();
+  Optional<BlobScheduleOptions> getBlobScheduleOptions();
 }

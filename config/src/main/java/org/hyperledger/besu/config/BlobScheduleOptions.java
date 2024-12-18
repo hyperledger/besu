@@ -19,10 +19,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 /** The Checkpoint config options. */
 public class BlobScheduleOptions {
 
-  /** The constant DEFAULT. */
-  public static final BlobScheduleOptions DEFAULT =
-      new BlobScheduleOptions(JsonUtil.createEmptyObjectNode());
-
   private final ObjectNode blobScheduleOptionsConfigRoot;
 
   private static final String CANCUN_KEY = "cancun";
@@ -73,18 +69,30 @@ public class BlobScheduleOptions {
 
   /** The Blob schedule for a particular fork. */
   public static class BlobSchedule {
-    private final ObjectNode blobScheduleConfigRoot;
+    private final int target;
+    private final int max;
 
     /** The constant DEFAULT. */
     public static final BlobSchedule DEFAULT = new BlobSchedule(JsonUtil.createEmptyObjectNode());
 
+    public static final BlobSchedule CANCUN_DEFAULT = new BlobSchedule(3, 6);
+    public static final BlobSchedule PRAGUE_DEFAULT = new BlobSchedule(6, 9);
+    public static final BlobSchedule OSAKA_DEFAULT = new BlobSchedule(9, 12);
+
     /**
      * Instantiates a new Blob schedule.
      *
-     * @param blobScheduleItemConfigRoot the blob schedule item config root
+     * @param blobScheduleConfigRoot the blob schedule config root
      */
-    public BlobSchedule(final ObjectNode blobScheduleItemConfigRoot) {
-      this.blobScheduleConfigRoot = blobScheduleItemConfigRoot;
+    public BlobSchedule(final ObjectNode blobScheduleConfigRoot) {
+      // TODO SLD EIP-7840 - reasonable defaults?
+      this.target = JsonUtil.getInt(blobScheduleConfigRoot, "target").orElse(3);
+      this.max = JsonUtil.getInt(blobScheduleConfigRoot, "max").orElse(6);
+    }
+
+    private BlobSchedule(final int target, final int max) {
+      this.target = target;
+      this.max = max;
     }
 
     /**
@@ -93,8 +101,7 @@ public class BlobScheduleOptions {
      * @return the target
      */
     public int getTarget() {
-      // TODO SLD EIP-7840 - reasonable default?
-      return JsonUtil.getInt(blobScheduleConfigRoot, "target").orElse(3);
+      return target;
     }
 
     /**
@@ -103,8 +110,7 @@ public class BlobScheduleOptions {
      * @return the max
      */
     public int getMax() {
-      // TODO SLD EIP-7840 - reasonable default?
-      return JsonUtil.getInt(blobScheduleConfigRoot, "max").orElse(6);
+      return max;
     }
   }
 }

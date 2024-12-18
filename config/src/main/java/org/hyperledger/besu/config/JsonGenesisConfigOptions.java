@@ -201,10 +201,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public BlobScheduleOptions getBlobScheduleOptions() {
+  public Optional<BlobScheduleOptions> getBlobScheduleOptions() {
     return JsonUtil.getObjectNode(configRoot, BLOB_SCHEDULE_CONFIG_KEY)
-        .map(BlobScheduleOptions::new)
-        .orElse(BlobScheduleOptions.DEFAULT);
+        .map(BlobScheduleOptions::new);
   }
 
   @Override

@@ -26,11 +26,13 @@ public class BlobScheduleOptionsTest {
         GenesisConfigFile.fromResource("/mainnet_with_blob_schedule.json");
     final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
 
-    assertThat(configOptions.getBlobScheduleOptions().getCancun().getTarget()).isEqualTo(3);
-    assertThat(configOptions.getBlobScheduleOptions().getCancun().getMax()).isEqualTo(6);
-    assertThat(configOptions.getBlobScheduleOptions().getPrague().getTarget()).isEqualTo(6);
-    assertThat(configOptions.getBlobScheduleOptions().getPrague().getMax()).isEqualTo(9);
-    assertThat(configOptions.getBlobScheduleOptions().getOsaka().getTarget()).isEqualTo(9);
-    assertThat(configOptions.getBlobScheduleOptions().getOsaka().getMax()).isEqualTo(12);
+    assertThat(configOptions.getBlobScheduleOptions()).isNotEmpty();
+    final BlobScheduleOptions blobScheduleOptions = configOptions.getBlobScheduleOptions().get();
+    assertThat(blobScheduleOptions.getCancun().getTarget()).isEqualTo(3);
+    assertThat(blobScheduleOptions.getCancun().getMax()).isEqualTo(6);
+    assertThat(blobScheduleOptions.getPrague().getTarget()).isEqualTo(6);
+    assertThat(blobScheduleOptions.getPrague().getMax()).isEqualTo(9);
+    assertThat(blobScheduleOptions.getOsaka().getTarget()).isEqualTo(9);
+    assertThat(blobScheduleOptions.getOsaka().getMax()).isEqualTo(12);
   }
 }
