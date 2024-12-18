@@ -85,7 +85,7 @@ import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
@@ -332,8 +332,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
-  private final Supplier<GenesisConfigFile> genesisConfigFileSupplier =
-      Suppliers.memoize(this::readGenesisConfigFile);
+  private final Supplier<GenesisConfig> genesisConfigSupplier =
+      Suppliers.memoize(this::readGenesisConfig);
   private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
   private final Supplier<MiningConfiguration> miningParametersSupplier =
@@ -1587,21 +1587,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private GenesisConfigFile readGenesisConfigFile() {
-    GenesisConfigFile effectiveGenesisFile;
+  private GenesisConfig readGenesisConfig() {
+    GenesisConfig effectiveGenesisFile;
     effectiveGenesisFile =
         network.equals(EPHEMERY)
             ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
             : genesisFile != null
-                ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
-                : GenesisConfigFile.fromResource(
+                ? GenesisConfig.fromSource(genesisConfigSource(genesisFile))
+                : GenesisConfig.fromResource(
                     Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
   private GenesisConfigOptions readGenesisConfigOptions() {
     try {
-      return genesisConfigFileSupplier.get().getConfigOptions();
+      return genesisConfigSupplier.get().getConfigOptions();
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine, "Unable to load genesis file. " + e.getCause());
@@ -2337,7 +2337,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setDnsDiscoveryUrl(null);
     }
 
-    builder.setGenesisConfigFile(genesisConfigFileSupplier.get());
+    builder.setGenesisConfig(genesisConfigSupplier.get());
 
     if (networkId != null) {
       builder.setNetworkId(networkId);

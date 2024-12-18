@@ -464,9 +464,9 @@ public class EvmToolCommand implements Runnable {
                 .coinbase(coinbase)
                 .difficulty(
                     Difficulty.fromHexString(
-                        genesisFileModule.providesGenesisConfigFile().getDifficulty()))
+                        genesisFileModule.providesGenesisConfig().getDifficulty()))
                 .number(0)
-                .gasLimit(genesisFileModule.providesGenesisConfigFile().getGasLimit())
+                .gasLimit(genesisFileModule.providesGenesisConfig().getGasLimit())
                 .timestamp(0)
                 .ommersHash(Hash.EMPTY_LIST_HASH)
                 .stateRoot(Hash.EMPTY_TRIE_HASH)
@@ -483,7 +483,7 @@ public class EvmToolCommand implements Runnable {
                         .getBlockchain()
                         .getChainHeadHeader()
                         .getBaseFee()
-                        .or(() -> genesisFileModule.providesGenesisConfigFile().getBaseFeePerGas())
+                        .or(() -> genesisFileModule.providesGenesisConfig().getBaseFeePerGas())
                         .orElse(
                             protocolSpec.getFeeMarket().implementsBaseFee() ? Wei.of(0xa) : null))
                 .buildBlockHeader();
