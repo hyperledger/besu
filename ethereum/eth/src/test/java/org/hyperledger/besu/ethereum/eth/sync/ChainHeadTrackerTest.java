@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -63,7 +63,7 @@ public class ChainHeadTrackerTest {
 
   private final ProtocolSchedule protocolSchedule =
       FixedDifficultyProtocolSchedule.create(
-          GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
+          GenesisConfig.fromResource("/dev.json").getConfigOptions(),
           false,
           EvmConfiguration.DEFAULT,
           MiningConfiguration.MINING_DISABLED,

@@ -20,7 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.CliqueConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonCliqueConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
@@ -61,7 +61,7 @@ public class CliqueProtocolScheduleTest {
             + "\"byzantiumBlock\": 1035301}"
             + "}";
 
-    final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
+    final GenesisConfigOptions config = GenesisConfig.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
         CliqueProtocolSchedule.create(
             config,
@@ -91,7 +91,7 @@ public class CliqueProtocolScheduleTest {
         new ForksSchedule<>(List.of(new ForkSpec<>(0, JsonCliqueConfigOptions.DEFAULT)));
     final ProtocolSpec homestead =
         CliqueProtocolSchedule.create(
-                GenesisConfigFile.DEFAULT.getConfigOptions(),
+                GenesisConfig.DEFAULT.getConfigOptions(),
                 forksSchedule,
                 NODE_KEY,
                 PrivacyParameters.DEFAULT,
@@ -163,7 +163,7 @@ public class CliqueProtocolScheduleTest {
     final String jsonInput =
         "{\"config\": " + "\t{\"chainId\": 1337,\n" + "\t\"londonBlock\": 2}\n" + "}";
 
-    final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
+    final GenesisConfigOptions config = GenesisConfig.fromConfig(jsonInput).getConfigOptions();
     final ForksSchedule<CliqueConfigOptions> forksSchedule =
         new ForksSchedule<>(List.of(new ForkSpec<>(0, JsonCliqueConfigOptions.DEFAULT)));
     final ProtocolSchedule protocolSchedule =

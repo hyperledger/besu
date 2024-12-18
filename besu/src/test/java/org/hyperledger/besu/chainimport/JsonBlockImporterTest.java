@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.hyperledger.besu.components.BesuCommandModule;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.components.BesuPluginContextModule;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -78,14 +78,14 @@ public abstract class JsonBlockImporterTest {
   @TempDir public Path dataDir;
 
   protected String consensusEngine;
-  protected GenesisConfigFile genesisConfigFile;
+  protected GenesisConfig genesisConfig;
   protected boolean isEthash;
 
   protected void setup(final String consensusEngine) throws IOException {
     this.consensusEngine = consensusEngine;
     final String genesisData = getFileContents("genesis.json");
-    this.genesisConfigFile = GenesisConfigFile.fromConfig(genesisData);
-    this.isEthash = genesisConfigFile.getConfigOptions().isEthHash();
+    this.genesisConfig = GenesisConfig.fromConfig(genesisData);
+    this.isEthash = genesisConfig.getConfigOptions().isEthHash();
   }
 
   public static class SingletonTests extends JsonBlockImporterTest {
@@ -106,7 +106,7 @@ public abstract class JsonBlockImporterTest {
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessage(
               "Unable to create block using current consensus engine: "
-                  + genesisConfigFile.getConfigOptions().getConsensusEngine());
+                  + genesisConfig.getConfigOptions().getConsensusEngine());
     }
   }
 
@@ -419,7 +419,7 @@ public abstract class JsonBlockImporterTest {
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage(
                 "Some fields (coinbase, extraData) are unsupported by the current consensus engine: "
-                    + genesisConfigFile.getConfigOptions().getConsensusEngine());
+                    + genesisConfig.getConfigOptions().getConsensusEngine());
       }
     }
 
@@ -448,12 +448,12 @@ public abstract class JsonBlockImporterTest {
   }
 
   protected BesuController createController() throws IOException {
-    return createController(genesisConfigFile);
+    return createController(genesisConfig);
   }
 
-  protected BesuController createController(final GenesisConfigFile genesisConfigFile) {
+  protected BesuController createController(final GenesisConfig genesisConfig) {
     return new BesuController.Builder()
-        .fromGenesisFile(genesisConfigFile, SyncMode.FAST)
+        .fromGenesisFile(genesisConfig, SyncMode.FAST)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
