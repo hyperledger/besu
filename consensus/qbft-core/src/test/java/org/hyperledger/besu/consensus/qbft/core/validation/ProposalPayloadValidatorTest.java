@@ -17,15 +17,16 @@ package org.hyperledger.besu.consensus.qbft.core.validation;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
@@ -43,6 +44,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,6 +57,7 @@ public class ProposalPayloadValidatorTest {
   @Mock private BlockValidator blockValidator;
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
+  @Mock private BftExtraDataCodec bftExtraDataCodec;
   private ProtocolContext protocolContext;
 
   private static final int CHAIN_HEIGHT = 3;
@@ -66,7 +69,6 @@ public class ProposalPayloadValidatorTest {
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   final ConsensusRoundIdentifier roundIdentifier =
       ConsensusRoundHelpers.createFrom(targetRound, 1, 0);
-  final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
 
   @BeforeEach
   public void setup() {
@@ -80,6 +82,7 @@ public class ProposalPayloadValidatorTest {
 
   @Test
   public void validationPassesWhenProposerAndRoundMatchAndBlockIsValid() {
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
             expectedProposer, roundIdentifier, blockValidator, protocolContext);
@@ -101,6 +104,7 @@ public class ProposalPayloadValidatorTest {
 
   @Test
   public void validationPassesWhenBlockRoundDoesNotMatchProposalRound() {
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
             expectedProposer, roundIdentifier, blockValidator, protocolContext);
@@ -126,6 +130,7 @@ public class ProposalPayloadValidatorTest {
 
   @Test
   public void validationFailsWhenBlockFailsValidation() {
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
     final ConsensusRoundIdentifier roundIdentifier =
         ConsensusRoundHelpers.createFrom(targetRound, 1, 0);
 
@@ -199,6 +204,8 @@ public class ProposalPayloadValidatorTest {
 
   @Test
   public void validationFailsForBlockWithIncorrectHeight() {
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
+
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
             expectedProposer, roundIdentifier, blockValidator, protocolContext);

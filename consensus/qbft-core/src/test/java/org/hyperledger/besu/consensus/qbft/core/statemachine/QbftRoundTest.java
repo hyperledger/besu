@@ -18,7 +18,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftBlockInterface;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
@@ -91,7 +91,6 @@ public class QbftRoundTest {
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final MessageFactory messageFactory2 = new MessageFactory(nodeKey2);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
-  private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
   private ProtocolContext protocolContext;
 
   @Mock private BftProtocolSchedule protocolSchedule;
@@ -105,11 +104,12 @@ public class QbftRoundTest {
   @Mock private ProtocolSpec protocolSpec;
   @Mock private BlockImporter blockImporter;
   @Mock private BlockHeader parentHeader;
+  @Mock private BftExtraDataCodec bftExtraDataCodec;
+  @Mock private BftBlockInterface bftBlockInteface;
 
   @Captor private ArgumentCaptor<Block> blockCaptor;
 
   private Block proposedBlock;
-  private BftExtraData proposedExtraData;
 
   private final SECPSignature remoteCommitSeal =
       SignatureAlgorithmFactory.getInstance()
@@ -121,18 +121,14 @@ public class QbftRoundTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(
-                BftContext.class, emptyList(), new QbftExtraDataCodec()),
+            setupContextWithBftBlockInterface(BftContext.class, emptyList(), bftBlockInteface),
             new BadBlockManager());
 
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(any())).thenReturn(true);
     when(messageValidator.validateCommit(any())).thenReturn(true);
 
-    proposedExtraData =
-        new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
-    headerTestFixture.extraData(new QbftExtraDataCodec().encode(proposedExtraData));
     headerTestFixture.number(1);
 
     final BlockHeader header = headerTestFixture.buildHeader();
@@ -148,6 +144,16 @@ public class QbftRoundTest {
 
     when(blockImporter.importBlock(any(), any(), any()))
         .thenReturn(new BlockImportResult(BlockImportResult.BlockImportStatus.IMPORTED));
+
+    BftExtraData bftExtraData =
+        new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
+    when(bftExtraDataCodec.decode(any())).thenReturn(bftExtraData);
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
+    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
+    when(bftExtraDataCodec.encodeWithoutCommitSealsAndRoundNumber(any())).thenReturn(Bytes.EMPTY);
+    when(bftBlockInteface.replaceRoundInBlock(
+            eq(proposedBlock), eq(roundIdentifier.getRoundNumber()), any()))
+        .thenReturn(proposedBlock);
 
     subscribers.subscribe(minedBlockObserver);
   }
@@ -186,6 +192,9 @@ public class QbftRoundTest {
             roundTimer,
             bftExtraDataCodec,
             parentHeader);
+
+    when(bftBlockInteface.replaceRoundInBlock(eq(proposedBlock), eq(0), any()))
+        .thenReturn(proposedBlock);
 
     round.handleProposalMessage(
         messageFactory.createProposal(
@@ -256,10 +265,6 @@ public class QbftRoundTest {
     verify(transmitter, times(1))
         .multicastPrepare(eq(roundIdentifier), eq(blockCaptor.getValue().getHash()));
 
-    final BftExtraData proposedExtraData =
-        new QbftExtraDataCodec().decode(blockCaptor.getValue().getHeader());
-    assertThat(proposedExtraData.getRound()).isEqualTo(roundIdentifier.getRoundNumber());
-
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which
     // indicates the block has entered the roundState (note: all msgs are deemed valid due to mocks)
     round.handlePrepareMessage(
@@ -326,6 +331,9 @@ public class QbftRoundTest {
             bftExtraDataCodec,
             parentHeader);
 
+    when(bftBlockInteface.replaceRoundInBlock(eq(proposedBlock), eq(0), any()))
+        .thenReturn(proposedBlock);
+
     round.handleCommitMessage(
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
 
@@ -352,12 +360,17 @@ public class QbftRoundTest {
             bftExtraDataCodec,
             parentHeader);
 
+    when(bftBlockInteface.replaceRoundInBlock(eq(proposedBlock), eq(0), any()))
+        .thenReturn(proposedBlock);
+
     round.handleCommitMessage(
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
 
     round.handleProposalMessage(
         messageFactory.createProposal(
             roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList()));
+
+    // TODO add assertions
   }
 
   @Test
@@ -381,6 +394,9 @@ public class QbftRoundTest {
             roundTimer,
             bftExtraDataCodec,
             parentHeader);
+
+    when(bftBlockInteface.replaceRoundInBlock(eq(proposedBlock), eq(0), any()))
+        .thenReturn(proposedBlock);
 
     round.handleProposalMessage(
         messageFactory.createProposal(

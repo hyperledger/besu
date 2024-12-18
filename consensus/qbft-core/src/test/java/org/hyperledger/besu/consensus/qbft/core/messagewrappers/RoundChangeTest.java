@@ -16,11 +16,9 @@ package org.hyperledger.besu.consensus.qbft.core.messagewrappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
@@ -37,20 +35,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class RoundChangeTest {
-  private static final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
-  private static final BftExtraData extraData =
-      new BftExtraData(
-          Bytes32.ZERO, Collections.emptyList(), Optional.empty(), 1, Collections.emptyList());
+  @Mock private BftExtraDataCodec bftExtraDataCodec;
 
   private static final Block BLOCK =
       new Block(
-          new BlockHeaderTestFixture()
-              .extraData(new QbftExtraDataCodec().encode(extraData))
-              .buildHeader(),
+          new BlockHeaderTestFixture().buildHeader(),
           new BlockBody(Collections.emptyList(), Collections.emptyList()));
 
   @Test

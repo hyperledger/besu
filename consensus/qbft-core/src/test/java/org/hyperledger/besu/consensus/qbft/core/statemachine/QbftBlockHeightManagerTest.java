@@ -43,7 +43,6 @@ import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
@@ -107,7 +106,6 @@ public class QbftBlockHeightManagerTest {
   private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
-  private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
 
   @Mock private BftFinalState finalState;
   @Mock private QbftMessageTransmitter messageTransmitter;
@@ -122,6 +120,7 @@ public class QbftBlockHeightManagerTest {
   @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   @Mock private ValidatorMulticaster validatorMulticaster;
   @Mock private BlockHeader parentHeader;
+  @Mock private BftExtraDataCodec bftExtraDataCodec;
 
   @Captor private ArgumentCaptor<MessageData> sentMessageArgCaptor;
 
@@ -133,11 +132,6 @@ public class QbftBlockHeightManagerTest {
   private Block createdBlock;
 
   private void buildCreatedBlock() {
-
-    final BftExtraData extraData =
-        new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators);
-
-    headerTestFixture.extraData(bftExtraDataCodec.encode(extraData));
     final BlockHeader header = headerTestFixture.buildHeader();
     createdBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
   }
@@ -175,8 +169,7 @@ public class QbftBlockHeightManagerTest {
         new ProtocolContext(
             blockchain,
             null,
-            setupContextWithBftExtraDataEncoder(
-                BftContext.class, validators, new QbftExtraDataCodec()),
+            setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec),
             new BadBlockManager());
 
     final ProtocolScheduleBuilder protocolScheduleBuilder =
@@ -234,6 +227,12 @@ public class QbftBlockHeightManagerTest {
                   bftExtraDataCodec,
                   parentHeader);
             });
+
+    when(bftExtraDataCodec.decode(any()))
+        .thenReturn(
+            new BftExtraData(
+                Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators));
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
   }
 
   @Test

@@ -25,13 +25,13 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
@@ -51,6 +51,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,6 +67,7 @@ public class RoundChangeMessageValidatorTest {
   @Mock private BftProtocolSchedule protocolSchedule;
   @Mock private BlockValidator blockValidator;
   @Mock private ProtocolSpec protocolSpec;
+  @Mock private BftExtraDataCodec bftExtraDataCodec;
   private ProtocolContext protocolContext;
 
   private RoundChangeMessageValidator messageValidator;
@@ -76,7 +78,6 @@ public class RoundChangeMessageValidatorTest {
       new ConsensusRoundIdentifier(CHAIN_HEIGHT, 3);
   private final ConsensusRoundIdentifier roundIdentifier =
       ConsensusRoundHelpers.createFrom(targetRound, 0, -1);
-  private final QbftExtraDataCodec bftExtraDataEncoder = new QbftExtraDataCodec();
 
   @BeforeEach
   public void setup() {
@@ -84,7 +85,7 @@ public class RoundChangeMessageValidatorTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataEncoder),
+            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataCodec),
             new BadBlockManager());
 
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
@@ -116,6 +117,8 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
+    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -127,7 +130,7 @@ public class RoundChangeMessageValidatorTest {
 
     final Block block =
         ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataEncoder);
+            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
     final PreparedCertificate prepCert =
         createPreparedCertificate(
             block, roundIdentifier, toArray(validators.getNodes(), QbftNode.class));
@@ -142,6 +145,8 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
+    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -153,7 +158,7 @@ public class RoundChangeMessageValidatorTest {
 
     final Block block =
         ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataEncoder);
+            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
     final PreparedCertificate prepCert =
         createPreparedCertificate(
             block,
@@ -212,6 +217,8 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
+    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -223,7 +230,7 @@ public class RoundChangeMessageValidatorTest {
 
     final Block block =
         ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataEncoder);
+            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
     final PreparedCertificate prepCert =
         createPreparedCertificate(
             block, roundIdentifier, validators.getNode(0), validators.getNode(1));
@@ -238,6 +245,8 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
+    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -251,7 +260,7 @@ public class RoundChangeMessageValidatorTest {
 
     final Block block =
         ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataEncoder);
+            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
     final PreparedCertificate prepCert =
         createPreparedCertificate(
             block, roundIdentifier, validators.getNode(0), validators.getNode(1), nonValidator);
@@ -266,6 +275,8 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
+    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -277,7 +288,7 @@ public class RoundChangeMessageValidatorTest {
 
     final Block block =
         ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataEncoder);
+            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
     final PreparedCertificate prepCert =
         new PreparedCertificate(
             block,
@@ -300,6 +311,8 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
+    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -311,7 +324,7 @@ public class RoundChangeMessageValidatorTest {
 
     final Block block =
         ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataEncoder);
+            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
     final PreparedCertificate prepCert =
         new PreparedCertificate(
             block,
@@ -336,6 +349,8 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
+    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -347,7 +362,7 @@ public class RoundChangeMessageValidatorTest {
 
     final Block block =
         ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataEncoder);
+            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
     final PreparedCertificate prepCert =
         new PreparedCertificate(
             block,
@@ -372,6 +387,8 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
+    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -383,7 +400,7 @@ public class RoundChangeMessageValidatorTest {
 
     final Block block =
         ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataEncoder);
+            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
     final PreparedCertificate prepCert =
         createPreparedCertificate(
             block,

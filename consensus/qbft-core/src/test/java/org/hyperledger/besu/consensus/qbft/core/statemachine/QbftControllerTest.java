@@ -35,7 +35,6 @@ import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.ProposalMessageData;
@@ -68,14 +67,13 @@ import org.mockito.quality.Strictness;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class QbftControllerTest {
-  private static final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
-
   @Mock private Blockchain blockChain;
   @Mock private BftFinalState bftFinalState;
   @Mock private QbftBlockHeightManagerFactory blockHeightManagerFactory;
   @Mock private BlockHeader chainHeadBlockHeader;
   @Mock private BlockHeader nextBlock;
   @Mock private BaseQbftBlockHeightManager blockHeightManager;
+  @Mock private BftExtraDataCodec bftExtraDataCodec;
 
   @Mock private Proposal proposal;
   private Message proposalMessage;
