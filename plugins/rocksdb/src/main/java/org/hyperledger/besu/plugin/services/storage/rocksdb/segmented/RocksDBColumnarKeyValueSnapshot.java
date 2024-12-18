@@ -158,11 +158,6 @@ public class RocksDBColumnarKeyValueSnapshot
   }
 
   @Override
-  public boolean isPersistent() {
-    return false;
-  }
-
-  @Override
   public void clear(final SegmentIdentifier segment) {
     throw new UnsupportedOperationException(
         "RocksDBColumnarKeyValueSnapshot does not support clear");

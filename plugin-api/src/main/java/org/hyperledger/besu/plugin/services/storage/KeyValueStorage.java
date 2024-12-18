@@ -143,11 +143,4 @@ public interface KeyValueStorage extends Closeable {
    * @return boolean indicating whether the storage is closed.
    */
   boolean isClosed();
-
-  /**
-   * Is this storage persistent or ephemeral.
-   *
-   * @return whether this storage type is persistent or not.
-   */
-  boolean isPersistent();
 }

@@ -195,11 +195,4 @@ public interface SegmentedKeyValueStorage extends Closeable {
       return value.map(Bytes::wrap);
     }
   }
-
-  /**
-   * Whether this storage is persistent or ephemeral.
-   *
-   * @return if storage is persistent.
-   */
-  boolean isPersistent();
 }

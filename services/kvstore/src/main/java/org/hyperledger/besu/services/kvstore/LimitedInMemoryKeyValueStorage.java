@@ -162,11 +162,6 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
     return false;
   }
 
-  @Override
-  public boolean isPersistent() {
-    return false;
-  }
-
   private class MemoryTransaction implements KeyValueStorageTransaction {
 
     private Map<Bytes, byte[]> updatedValues = new HashMap<>();
