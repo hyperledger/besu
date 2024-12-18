@@ -24,70 +24,31 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
-import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
-import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
-import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class TrieLogFactoryImpl implements TrieLogFactory {
-
-  @Override
-  public TrieLogLayer create(final TrieLogAccumulator accumulator, final BlockHeader blockHeader) {
-    TrieLogLayer layer = new TrieLogLayer();
-    layer.setBlockHash(blockHeader.getBlockHash());
-    layer.setBlockNumber(blockHeader.getNumber());
-    for (final var updatedAccount : accumulator.getAccountsToUpdate().entrySet()) {
-      final var bonsaiValue = updatedAccount.getValue();
-      final var oldAccountValue = bonsaiValue.getPrior();
-      final var newAccountValue = bonsaiValue.getUpdated();
-      if (oldAccountValue == null && newAccountValue == null) {
-        // by default do not persist empty reads of accounts to the trie log
-        continue;
-      }
-      layer.addAccountChange(updatedAccount.getKey(), oldAccountValue, newAccountValue);
-    }
-
-    for (final var updatedCode : accumulator.getCodeToUpdate().entrySet()) {
-      layer.addCodeChange(
-          updatedCode.getKey(),
-          updatedCode.getValue().getPrior(),
-          updatedCode.getValue().getUpdated(),
-          blockHeader.getBlockHash());
-    }
-
-    for (final var updatesStorage : accumulator.getStorageToUpdate().entrySet()) {
-      final Address address = updatesStorage.getKey();
-      for (final var slotUpdate : updatesStorage.getValue().entrySet()) {
-        var val = slotUpdate.getValue();
-
-        if (val.getPrior() == null && val.getUpdated() == null) {
-          // by default do not persist empty reads to the trie log
-          continue;
-        }
-
-        layer.addStorageChange(address, slotUpdate.getKey(), val.getPrior(), val.getUpdated());
-      }
-    }
-    return layer;
-  }
+public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
 
   @Override
   public byte[] serialize(final TrieLog layer) {
     final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
     writeTo(layer, rlpLog);
     return rlpLog.encoded().toArrayUnsafe();
+  }
+
+  @Override
+  public TrieLogLayer deserialize(final byte[] bytes) {
+    return readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
   }
 
   public static void writeTo(final TrieLog layer, final RLPOutput output) {
@@ -98,11 +59,11 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
     addresses.addAll(layer.getCodeChanges().keySet());
     addresses.addAll(layer.getStorageChanges().keySet());
 
-    output.startList(); // container
+    output.startList();
     output.writeBytes(layer.getBlockHash());
 
     for (final Address address : addresses) {
-      output.startList(); // this change
+      output.startList();
       output.writeBytes(address);
 
       final TrieLog.LogTuple<AccountValue> accountChange = layer.getAccountChanges().get(address);
@@ -136,14 +97,9 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
         output.endList();
       }
 
-      output.endList(); // this change
+      output.endList();
     }
-    output.endList(); // container
-  }
-
-  @Override
-  public TrieLogLayer deserialize(final byte[] bytes) {
-    return readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
+    output.endList();
   }
 
   public static TrieLogLayer readFrom(final RLPInput input) {
@@ -201,8 +157,6 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
         newLayer.getStorageChanges().put(address, storageChanges);
       }
 
-      // TODO add trie nodes
-
       // lenient leave list for forward compatible additions.
       input.leaveListLenient();
     }
@@ -210,52 +164,5 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
     newLayer.freeze();
 
     return newLayer;
-  }
-
-  protected static <T> T nullOrValue(final RLPInput input, final Function<RLPInput, T> reader) {
-    if (input.nextIsNull()) {
-      input.skipNext();
-      return null;
-    } else {
-      return reader.apply(input);
-    }
-  }
-
-  protected static boolean getOptionalIsCleared(final RLPInput input) {
-    return Optional.of(input.isEndOfCurrentList())
-        .filter(isEnd -> !isEnd) // isCleared is optional
-        .map(__ -> nullOrValue(input, RLPInput::readInt))
-        .filter(i -> i == 1)
-        .isPresent();
-  }
-
-  public static <T> void writeRlp(
-      final TrieLog.LogTuple<T> value,
-      final RLPOutput output,
-      final BiConsumer<RLPOutput, T> writer) {
-    output.startList();
-    writeInnerRlp(value, output, writer);
-    output.endList();
-  }
-
-  public static <T> void writeInnerRlp(
-      final TrieLog.LogTuple<T> value,
-      final RLPOutput output,
-      final BiConsumer<RLPOutput, T> writer) {
-    if (value.getPrior() == null) {
-      output.writeNull();
-    } else {
-      writer.accept(output, value.getPrior());
-    }
-    if (value.getUpdated() == null) {
-      output.writeNull();
-    } else {
-      writer.accept(output, value.getUpdated());
-    }
-    if (!value.isLastStepCleared()) {
-      output.writeNull();
-    } else {
-      output.writeInt(1);
-    }
   }
 }

@@ -61,8 +61,8 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
                 ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE)),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
     this.flatDbStrategyProvider =
-        new BonsaiFlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
-    flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
+        new BonsaiFlatDbStrategyProvider(
+            metricsSystem, dataStorageConfiguration, composedWorldStateStorage);
   }
 
   public BonsaiWorldStateKeyValueStorage(
@@ -177,8 +177,7 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
 
   @Override
   public BonsaiFlatDbStrategy getFlatDbStrategy() {
-    return (BonsaiFlatDbStrategy)
-        flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage);
+    return (BonsaiFlatDbStrategy) flatDbStrategyProvider.getFlatDbStrategy();
   }
 
   @Override

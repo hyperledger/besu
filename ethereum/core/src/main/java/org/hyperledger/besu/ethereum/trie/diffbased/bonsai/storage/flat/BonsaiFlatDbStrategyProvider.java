@@ -33,8 +33,10 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbStrategyProvider.class);
 
   public BonsaiFlatDbStrategyProvider(
-      final MetricsSystem metricsSystem, final DataStorageConfiguration dataStorageConfiguration) {
-    super(metricsSystem, dataStorageConfiguration);
+      final MetricsSystem metricsSystem,
+      final DataStorageConfiguration dataStorageConfiguration,
+      final SegmentedKeyValueStorage segmentedKeyValueStorage) {
+    super(metricsSystem, dataStorageConfiguration, segmentedKeyValueStorage);
   }
 
   @Override

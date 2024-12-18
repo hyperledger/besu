@@ -39,7 +39,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.BonsaiTrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
@@ -313,7 +313,7 @@ class BonsaiWorldStateProviderTest {
     final BytesValueRLPOutput rlpLogBlockB = new BytesValueRLPOutput();
     final TrieLogLayer trieLogLayerBlockB = new TrieLogLayer();
     trieLogLayerBlockB.setBlockHash(blockHeaderChainB.getHash());
-    TrieLogFactoryImpl.writeTo(trieLogLayerBlockB, rlpLogBlockB);
+    BonsaiTrieLogFactoryImpl.writeTo(trieLogLayerBlockB, rlpLogBlockB);
     when(segmentedKeyValueStorage.get(BLOCKCHAIN, blockHeaderChainB.getHash().toArrayUnsafe()))
         .thenReturn(Optional.of(rlpLogBlockB.encoded().toArrayUnsafe()));
 

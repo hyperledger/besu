@@ -24,14 +24,11 @@ public interface VerkleSubStorageConfiguration {
 
   @Value.Default
   default VerkleUnstable getUnstable() {
-    return VerkleUnstable.DEFAULT;
+    return VerkleUnstable.DISABLED;
   }
 
   @Value.Immutable
   interface VerkleUnstable {
-
-    VerkleSubStorageConfiguration.VerkleUnstable DEFAULT =
-        ImmutableVerkleSubStorageConfiguration.VerkleUnstable.builder().build();
 
     VerkleSubStorageConfiguration.VerkleUnstable STEM_MODE =
         ImmutableVerkleSubStorageConfiguration.VerkleUnstable.builder()

@@ -84,9 +84,7 @@ public abstract class AbstractStateTrieAccountValue implements AccountValue {
    * @return the size of the account code (which may be {@link Optional#empty()}).
    */
   @Override
-  public Optional<Long> getCodeSize() {
-    return Optional.empty();
-  }
+  public abstract Optional<Long> getCodeSize();
 
   @Override
   public abstract void writeTo(final RLPOutput out);

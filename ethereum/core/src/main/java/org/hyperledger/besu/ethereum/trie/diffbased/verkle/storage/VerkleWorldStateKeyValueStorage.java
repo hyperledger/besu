@@ -68,8 +68,8 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     this.metricsSystem = metricsSystem;
     this.dataStorageConfiguration = dataStorageConfiguration;
     this.flatDbStrategyProvider =
-        new VerkleFlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
-    flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
+        new VerkleFlatDbStrategyProvider(
+            metricsSystem, dataStorageConfiguration, composedWorldStateStorage);
   }
 
   public VerkleWorldStateKeyValueStorage(
@@ -82,14 +82,14 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     this.metricsSystem = metricsSystem;
     this.dataStorageConfiguration = dataStorageConfiguration;
     this.flatDbStrategyProvider =
-        new VerkleFlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
-    flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
+        new VerkleFlatDbStrategyProvider(
+            metricsSystem, dataStorageConfiguration, composedWorldStateStorage);
     this.stemPreloader = stemPreloader;
   }
 
   @Override
   public FlatDbStrategy getFlatDbStrategy() {
-    return flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage);
+    return flatDbStrategyProvider.getFlatDbStrategy();
   }
 
   @Override
@@ -207,15 +207,14 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       return this;
     }
 
-    public synchronized Updater putStorageValueBySlotHash(
+    public Updater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
       flatDbStrategy.putFlatAccountStorageValueByStorageSlotHash(
           composedWorldStateTransaction, accountHash, slotHash, storage);
       return this;
     }
 
-    public synchronized void removeStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash) {
+    public void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
       flatDbStrategy.removeFlatAccountStorageValueByStorageSlotHash(
           composedWorldStateTransaction, accountHash, slotHash);
     }
@@ -228,17 +227,6 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
           TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
       composedWorldStateTransaction.put(
           TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
-      return this;
-    }
-
-    public Updater putStateTrieNode(final Bytes location, final Bytes node) {
-      composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
-      return this;
-    }
-
-    public Updater removeStateTrieNode(final Bytes location) {
-      composedWorldStateTransaction.remove(TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
       return this;
     }
 

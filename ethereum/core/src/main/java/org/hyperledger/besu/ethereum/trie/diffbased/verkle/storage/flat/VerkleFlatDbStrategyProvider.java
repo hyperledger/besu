@@ -20,12 +20,15 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbSt
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 public class VerkleFlatDbStrategyProvider extends FlatDbStrategyProvider {
 
   public VerkleFlatDbStrategyProvider(
-      final MetricsSystem metricsSystem, final DataStorageConfiguration dataStorageConfiguration) {
-    super(metricsSystem, dataStorageConfiguration);
+      final MetricsSystem metricsSystem,
+      final DataStorageConfiguration dataStorageConfiguration,
+      final SegmentedKeyValueStorage segmentedKeyValueStorage) {
+    super(metricsSystem, dataStorageConfiguration, segmentedKeyValueStorage);
   }
 
   @Override

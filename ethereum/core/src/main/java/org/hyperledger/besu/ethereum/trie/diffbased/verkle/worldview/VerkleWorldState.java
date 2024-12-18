@@ -119,9 +119,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
       final VerkleWorldStateUpdateAccumulator worldStateUpdater) {
 
     final VerkleTrie stateTrie =
-        createTrie(
-            (location, hash) -> worldStateKeyValueStorage.getStateTrieNode(location),
-            worldStateRootHash);
+        createTrie((location, hash) -> worldStateKeyValueStorage.getStateTrieNode(location));
 
     final Map<Address, Hasher> preloadedHashers = new ConcurrentHashMap<>();
 
@@ -428,7 +426,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
     return Collections.emptyMap();
   }
 
-  private VerkleTrie createTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {
+  private VerkleTrie createTrie(final NodeLoader nodeLoader) {
     return new VerkleTrie(nodeLoader);
   }
 

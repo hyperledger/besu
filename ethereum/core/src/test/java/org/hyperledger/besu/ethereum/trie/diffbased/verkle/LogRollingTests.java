@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.StemPreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.trielog.TrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.trielog.VerkleTrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -285,7 +285,7 @@ class LogRollingTests {
     final Optional<byte[]> value = trieLogStorage.get(headerOne.getHash().toArrayUnsafe());
 
     final TrieLogLayer layer =
-        TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get()), false));
+        VerkleTrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get()), false));
 
     secondUpdater.rollForward(layer);
     secondUpdater.commit();
@@ -608,7 +608,9 @@ class LogRollingTests {
   private TrieLogLayer getTrieLogLayer(final KeyValueStorage storage, final Bytes key) {
     return storage
         .get(key.toArrayUnsafe())
-        .map(bytes -> TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false)))
+        .map(
+            bytes ->
+                VerkleTrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false)))
         .get();
   }
 

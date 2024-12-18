@@ -94,8 +94,8 @@ public class VerkleAccount extends DiffBasedAccount {
     final RLPInput in = RLP.input(encoded);
     in.enterList();
 
-    final Wei balance = Wei.of(in.readUInt256Scalar());
     final long nonce = in.readLongScalar();
+    final Wei balance = Wei.of(in.readUInt256Scalar());
     final Hash codeHash = Hash.wrap(in.readBytes32());
     final long codeSize = in.readLongScalar();
     in.leaveList();
@@ -138,8 +138,8 @@ public class VerkleAccount extends DiffBasedAccount {
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-    out.writeUInt256Scalar(balance);
     out.writeLongScalar(nonce);
+    out.writeUInt256Scalar(balance);
     out.writeBytes(codeHash);
     out.writeLongScalar(codeSize);
 

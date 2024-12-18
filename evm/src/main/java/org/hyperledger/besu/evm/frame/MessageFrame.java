@@ -930,17 +930,6 @@ public class MessageFrame {
   }
 
   /**
-   * Checks if there is an account for this address in the world state. This is different from
-   * `wasCreatedInTransaction` since an account could have been created in another transaction.
-   *
-   * @param address the address to check
-   * @return true if account already exists in world state
-   */
-  public boolean accountExists(final Address address) {
-    return worldUpdater.get(address) != null;
-  }
-
-  /**
    * Add refund to the refunds map if not already present.
    *
    * @param beneficiary the beneficiary of the refund.

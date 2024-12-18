@@ -86,7 +86,7 @@ public class SnapServerTest {
   final BonsaiWorldStateKeyValueStorage inMemoryStorage =
       new BonsaiWorldStateKeyValueStorage(
           new BonsaiFlatDbStrategyProvider(
-              noopMetrics, DataStorageConfiguration.DEFAULT_BONSAI_CONFIG) {
+              noopMetrics, DataStorageConfiguration.DEFAULT_BONSAI_CONFIG, storage) {
             @Override
             public FlatDbMode getFlatDbMode() {
               return FlatDbMode.FULL;
