@@ -545,11 +545,11 @@ public interface GasCalculator {
    *
    * @param transactionPayload The encoded transaction, as bytes
    * @param isContractCreation Is this transaction a contract creation transaction?
-   * @param evmGasUsed The gas used by access lists and code delegation authorizations
+   * @param baselineGas The gas used by access lists and code delegation authorizations
    * @return the transaction's intrinsic gas cost
    */
   long transactionIntrinsicGasCost(
-      Bytes transactionPayload, boolean isContractCreation, long evmGasUsed);
+      Bytes transactionPayload, boolean isContractCreation, long baselineGas);
 
   /**
    * Returns the gas cost of the explicitly declared access list.

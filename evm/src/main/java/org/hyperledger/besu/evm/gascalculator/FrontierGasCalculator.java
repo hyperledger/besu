@@ -130,9 +130,9 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long transactionIntrinsicGasCost(
-      final Bytes payload, final boolean isContractCreation, final long evmGasUsed) {
+      final Bytes payload, final boolean isContractCreation, final long baselineGas) {
     final long dynamicIntrinsicGasCost =
-        dynamicIntrinsicGasCost(payload, isContractCreation, evmGasUsed);
+        dynamicIntrinsicGasCost(payload, isContractCreation, baselineGas);
 
     if (dynamicIntrinsicGasCost == Long.MIN_VALUE || dynamicIntrinsicGasCost == Long.MAX_VALUE) {
       return dynamicIntrinsicGasCost;
@@ -145,14 +145,14 @@ public class FrontierGasCalculator implements GasCalculator {
    *
    * @param payload the call data payload
    * @param isContractCreation whether the transaction is a contract creation
-   * @param evmGasUsed how much gas is used by access lists and code delegations
+   * @param baselineGas how much gas is used by access lists and code delegations
    * @return the dynamic part of the intrinsic gas cost
    */
   protected long dynamicIntrinsicGasCost(
-      final Bytes payload, final boolean isContractCreation, final long evmGasUsed) {
+      final Bytes payload, final boolean isContractCreation, final long baselineGas) {
     final int payloadSize = payload.size();
     final long zeroBytes = zeroBytes(payload);
-    long cost = clampedAdd(callDataCost(payloadSize, zeroBytes), evmGasUsed);
+    long cost = clampedAdd(callDataCost(payloadSize, zeroBytes), baselineGas);
 
     if (cost == Long.MIN_VALUE || cost == Long.MAX_VALUE) {
       return cost;
