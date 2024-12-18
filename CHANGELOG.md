@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
-- `--host-whitelist` has been deprecated since 2020 and its related option will be removed in a future release.
+- `--host-whitelist` has been deprecated since 2020 and this option is removed. Use the equivalent `--host-allowlist` instead. 
 
 ### Upcoming Breaking Changes
 - Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
@@ -16,12 +16,29 @@
   - Proof of Work consensus
   - Fast Sync
 
-
-
 ### Additions and Improvements
+- Add RPC HTTP options to specify custom truststore and its password [#7978](https://github.com/hyperledger/besu/pull/7978)
 - Retrieve all transaction receipts for a block in one request [#6646](https://github.com/hyperledger/besu/pull/6646)
 
+
 ### Bug fixes
+- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
+
+## 24.12.2 Hotfix
+
+This is an optional hotfix to address serialization of state overrides parameter when `movePrecompileToAddress` is present. 
+
+There is no need to upgrade from 24.12.0 (or 24.12.1) to this release if you are not yet using this functionality.
+
+### Bug fixes
+- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
+
+## 24.12.1 Hotfix
+
+This is a hotfix to address publishing besu maven artifacts.  There are no issues with 24.12.0 other than incomplete artifact publishing, and there is no functional difference between 24.12.0 and 24.12.1 release binaries.
+
+### Bug fixes
+- Fix BOM pom publication to Artifactory [#8201](https://github.com/hyperledger/besu/pull/8021)
 
 ## 24.12.0
 
