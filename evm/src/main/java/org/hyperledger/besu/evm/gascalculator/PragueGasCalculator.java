@@ -76,9 +76,9 @@ public class PragueGasCalculator extends CancunGasCalculator {
 
   @Override
   public long transactionIntrinsicGasCost(
-      final Bytes payload, final boolean isContractCreation, final long evmGasUsed) {
+      final Bytes payload, final boolean isContractCreation, final long baselineGas) {
     final long dynamicIntrinsicGasCost =
-        dynamicIntrinsicGasCost(payload, isContractCreation, evmGasUsed);
+        dynamicIntrinsicGasCost(payload, isContractCreation, baselineGas);
     final long totalCostFloor =
         tokensInCallData(payload.size(), zeroBytes(payload)) * TOTAL_COST_FLOOR_PER_TOKEN;
 

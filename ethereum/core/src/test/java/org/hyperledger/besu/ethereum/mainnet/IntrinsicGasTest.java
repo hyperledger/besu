@@ -118,7 +118,7 @@ public class IntrinsicGasTest {
     Transaction t = Transaction.readFrom(RLP.input(rlp));
     Assertions.assertThat(
             gasCalculator.transactionIntrinsicGasCost(
-                t.getPayload(), t.isContractCreation(), evmGasUsed(gasCalculator, t)))
+                t.getPayload(), t.isContractCreation(), baselineGas(gasCalculator, t)))
         .isEqualTo(expectedGas);
   }
 
@@ -129,7 +129,7 @@ public class IntrinsicGasTest {
         .isTrue();
   }
 
-  long evmGasUsed(final GasCalculator gasCalculator, final Transaction transaction) {
+  long baselineGas(final GasCalculator gasCalculator, final Transaction transaction) {
     final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
 
     int accessListStorageCount = 0;
