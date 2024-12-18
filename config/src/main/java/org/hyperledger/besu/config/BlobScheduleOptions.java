@@ -75,8 +75,13 @@ public class BlobScheduleOptions {
     /** The constant DEFAULT. */
     public static final BlobSchedule DEFAULT = new BlobSchedule(JsonUtil.createEmptyObjectNode());
 
+    /** The constant CANCUN_DEFAULT. */
     public static final BlobSchedule CANCUN_DEFAULT = new BlobSchedule(3, 6);
+
+    /** The constant PRAGUE_DEFAULT. */
     public static final BlobSchedule PRAGUE_DEFAULT = new BlobSchedule(6, 9);
+
+    /** The constant OSAKA_DEFAULT. */
     public static final BlobSchedule OSAKA_DEFAULT = new BlobSchedule(9, 12);
 
     /**
