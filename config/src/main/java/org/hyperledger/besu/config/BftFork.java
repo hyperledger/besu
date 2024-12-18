@@ -158,7 +158,7 @@ public class BftFork implements Fork {
    * @return the validators
    * @throws IllegalArgumentException the illegal argument exception
    */
-  public Optional<List<String>> getValidators() throws IllegalArgumentException {
+  public Optional<List<String>> getValidators() {
     final Optional<ArrayNode> validatorNode = JsonUtil.getArrayNode(forkConfigRoot, VALIDATORS_KEY);
 
     if (validatorNode.isEmpty()) {
