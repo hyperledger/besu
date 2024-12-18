@@ -17,10 +17,11 @@ package org.hyperledger.besu.ethereum.trie.diffbased.common.trielog;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.BonsaiTrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.trielog.TrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.trielog.VerkleTrieLogFactoryImpl;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.TrieLogService;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -157,10 +158,10 @@ public class TrieLogManager {
     }
     // Otherwise default to VERKLE TrieLogFactoryImpl
     if (dataStorageFormat.equals(DataStorageFormat.VERKLE)) {
-      return new TrieLogFactoryImpl();
+      return new VerkleTrieLogFactoryImpl();
     }
     // or default to BONSAI TrieLogFactoryImpl
-    return new org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactoryImpl();
+    return new BonsaiTrieLogFactoryImpl();
   }
 
   private TrieLogProvider getTrieLogProvider() {

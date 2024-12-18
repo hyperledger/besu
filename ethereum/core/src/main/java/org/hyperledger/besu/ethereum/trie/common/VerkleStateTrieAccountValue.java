@@ -47,6 +47,7 @@ public class VerkleStateTrieAccountValue extends AbstractStateTrieAccountValue
    *
    * @return the size of the account code (which may be {@link Optional#empty()}).
    */
+  @Override
   public Optional<Long> getCodeSize() {
     return codeSize;
   }
@@ -70,9 +71,8 @@ public class VerkleStateTrieAccountValue extends AbstractStateTrieAccountValue
   @Override
   public void writeTo(final RLPOutput out) {
     out.startList();
-
-    out.writeUInt256Scalar(balance);
     out.writeLongScalar(nonce);
+    out.writeUInt256Scalar(balance);
     out.writeBytes(codeHash);
     codeSize.ifPresent(out::writeLongScalar);
     out.endList();
@@ -80,9 +80,8 @@ public class VerkleStateTrieAccountValue extends AbstractStateTrieAccountValue
 
   public static VerkleStateTrieAccountValue readFrom(final RLPInput in) {
     in.enterList();
-
-    final Wei balance = Wei.of(in.readUInt256Scalar());
     final long nonce = in.readLongScalar();
+    final Wei balance = Wei.of(in.readUInt256Scalar());
     Bytes32 codeHash;
     final Optional<Long> codeSize;
     if (in.nextIsNull()) {

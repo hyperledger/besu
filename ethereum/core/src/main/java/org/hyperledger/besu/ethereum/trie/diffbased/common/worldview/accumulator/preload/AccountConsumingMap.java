@@ -22,6 +22,16 @@ import javax.annotation.Nonnull;
 
 import com.google.common.collect.ForwardingMap;
 
+/**
+ * A map that stores Ethereum account addresses and their associated values, with a consumer to
+ * process updates.
+ *
+ * <p>Each time a new value is added or updated, the consumer processes the value for the associated
+ * address.
+ *
+ * <p>This class uses a thread-safe {@link ConcurrentMap} to store data, allowing concurrent
+ * modifications.
+ */
 public class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
 
   private final ConcurrentMap<Address, T> accounts;
@@ -42,6 +52,7 @@ public class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
     return consumer;
   }
 
+  @Nonnull
   @Override
   protected Map<Address, T> delegate() {
     return accounts;

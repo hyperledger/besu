@@ -32,7 +32,7 @@ public class VerkleTrie {
 
   private final StoredNodeFactory<Bytes> nodeFactory;
 
-  public VerkleTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {
+  public VerkleTrie(final NodeLoader nodeLoader) {
     nodeFactory = new StoredNodeFactory<>(nodeLoader, value -> value);
     verkleTrie = new StoredBatchedVerkleTrie<>(new VerkleTrieBatchHasher(), nodeFactory);
   }

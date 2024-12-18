@@ -154,18 +154,20 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   public synchronized Optional<MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash) {
 
-    /*Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
-    if(blockHeader.isPresent()){
-      Optional<BlockHeader> parentHeader = blockchain.getBlockHeader(blockHeader.get().getParentHash());
-      if(parentHeader.isPresent()){
-        Optional<MutableWorldState> worldState = rollMutableStateToBlockHash(persistedState, parentHeader.get().getBlockHash());
-        if(worldState.isEmpty()){
-          System.out.println("failed rollback to "+parentHeader.get().getNumber());
+    Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
+    if (blockHeader.isPresent()) {
+      Optional<BlockHeader> parentHeader =
+          blockchain.getBlockHeader(blockHeader.get().getParentHash());
+      if (parentHeader.isPresent()) {
+        Optional<MutableWorldState> worldState =
+            rollMutableStateToBlockHash(persistedState, parentHeader.get().getBlockHash());
+        if (worldState.isEmpty()) {
+          System.out.println("failed rollback to " + parentHeader.get().getNumber());
           throw new RuntimeException("invalid trielog");
         }
-        System.out.println("rollback to "+parentHeader.get().getNumber());
+        System.out.println("rollback to " + parentHeader.get().getNumber());
       }
-    }*/
+    }
     return rollMutableStateToBlockHash(persistedState, blockHash);
   }
 
