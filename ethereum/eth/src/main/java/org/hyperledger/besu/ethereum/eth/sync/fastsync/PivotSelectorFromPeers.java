@@ -17,13 +17,11 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerLimiter;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -38,17 +36,14 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
   protected final EthContext ethContext;
   protected final SynchronizerConfiguration syncConfig;
   private final SyncState syncState;
-  private final MetricsSystem metricsSystem;
 
   public PivotSelectorFromPeers(
       final EthContext ethContext,
       final SynchronizerConfiguration syncConfig,
-      final SyncState syncState,
-      final MetricsSystem metricsSystem) {
+      final SyncState syncState) {
     this.ethContext = ethContext;
     this.syncConfig = syncConfig;
     this.syncState = syncState;
-    this.metricsSystem = metricsSystem;
   }
 
   @Override
@@ -58,15 +53,19 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
 
   @Override
   public CompletableFuture<Void> prepareRetry() {
+    final long estimatedPivotBlock = conservativelyEstimatedPivotBlock();
     final TrailingPeerLimiter trailingPeerLimiter =
         new TrailingPeerLimiter(
             ethContext.getEthPeers(),
             () ->
                 new TrailingPeerRequirements(
-                    conservativelyEstimatedPivotBlock(), syncConfig.getMaxTrailingPeers()));
+                    estimatedPivotBlock, syncConfig.getMaxTrailingPeers()));
     trailingPeerLimiter.enforceTrailingPeerLimit();
 
-    return waitForPeers(syncConfig.getSyncMinimumPeerCount());
+    return ethContext
+        .getEthPeers()
+        .waitForPeer((peer) -> peer.chainState().getEstimatedHeight() >= estimatedPivotBlock)
+        .thenRun(() -> {});
   }
 
   @Override
@@ -128,11 +127,5 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
     final long estimatedNextPivot =
         syncState.getLocalChainHeight() + syncConfig.getSyncPivotDistance();
     return Math.min(syncState.bestChainHeight(), estimatedNextPivot);
-  }
-
-  private CompletableFuture<Void> waitForPeers(final int count) {
-    final WaitForPeersTask waitForPeersTask =
-        WaitForPeersTask.create(ethContext, count, metricsSystem);
-    return waitForPeersTask.run();
   }
 }
