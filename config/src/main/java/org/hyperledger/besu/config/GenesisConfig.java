@@ -29,11 +29,11 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /** The Genesis config file. */
-public class GenesisConfigFile {
+public class GenesisConfig {
 
   /** The constant DEFAULT. */
-  public static final GenesisConfigFile DEFAULT =
-      new GenesisConfigFile(new GenesisReader.FromObjectNode(JsonUtil.createEmptyObjectNode()));
+  public static final GenesisConfig DEFAULT =
+      new GenesisConfig(new GenesisReader.FromObjectNode(JsonUtil.createEmptyObjectNode()));
 
   /** The constant BASEFEE_AT_GENESIS_DEFAULT_VALUE. */
   public static final Wei BASEFEE_AT_GENESIS_DEFAULT_VALUE = Wei.of(1_000_000_000L);
@@ -42,7 +42,7 @@ public class GenesisConfigFile {
   private final ObjectNode genesisRoot;
   private Map<String, String> overrides;
 
-  private GenesisConfigFile(final GenesisReader loader) {
+  private GenesisConfig(final GenesisReader loader) {
     this.loader = loader;
     this.genesisRoot = loader.getRoot();
   }
@@ -52,8 +52,8 @@ public class GenesisConfigFile {
    *
    * @return the genesis config file
    */
-  public static GenesisConfigFile mainnet() {
-    return fromSource(GenesisConfigFile.class.getResource("/mainnet.json"));
+  public static GenesisConfig mainnet() {
+    return fromSource(GenesisConfig.class.getResource("/mainnet.json"));
   }
 
   /**
@@ -62,7 +62,7 @@ public class GenesisConfigFile {
    * @param jsonSource the URL
    * @return the genesis config file
    */
-  public static GenesisConfigFile fromSource(final URL jsonSource) {
+  public static GenesisConfig fromSource(final URL jsonSource) {
     return fromConfig(JsonUtil.objectNodeFromURL(jsonSource, false));
   }
 
@@ -72,8 +72,8 @@ public class GenesisConfigFile {
    * @param resourceName the resource name
    * @return the genesis config file
    */
-  public static GenesisConfigFile fromResource(final String resourceName) {
-    return fromConfig(GenesisConfigFile.class.getResource(resourceName));
+  public static GenesisConfig fromResource(final String resourceName) {
+    return fromConfig(GenesisConfig.class.getResource(resourceName));
   }
 
   /**
@@ -82,8 +82,8 @@ public class GenesisConfigFile {
    * @param jsonSource the json string
    * @return the genesis config file
    */
-  public static GenesisConfigFile fromConfig(final URL jsonSource) {
-    return new GenesisConfigFile(new GenesisReader.FromURL(jsonSource));
+  public static GenesisConfig fromConfig(final URL jsonSource) {
+    return new GenesisConfig(new GenesisReader.FromURL(jsonSource));
   }
 
   /**
@@ -92,7 +92,7 @@ public class GenesisConfigFile {
    * @param json the json string
    * @return the genesis config file
    */
-  public static GenesisConfigFile fromConfig(final String json) {
+  public static GenesisConfig fromConfig(final String json) {
     return fromConfig(JsonUtil.objectNodeFromString(json, false));
   }
 
@@ -102,8 +102,8 @@ public class GenesisConfigFile {
    * @param config the config
    * @return the genesis config file
    */
-  public static GenesisConfigFile fromConfig(final ObjectNode config) {
-    return new GenesisConfigFile(new GenesisReader.FromObjectNode(config));
+  public static GenesisConfig fromConfig(final ObjectNode config) {
+    return new GenesisConfig(new GenesisReader.FromObjectNode(config));
   }
 
   /**
@@ -137,7 +137,7 @@ public class GenesisConfigFile {
    * @param overrides the overrides
    * @return the config options
    */
-  public GenesisConfigFile withOverrides(final Map<String, String> overrides) {
+  public GenesisConfig withOverrides(final Map<String, String> overrides) {
 
     this.overrides = overrides;
     return this;
@@ -350,7 +350,7 @@ public class GenesisConfigFile {
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    final GenesisConfigFile that = (GenesisConfigFile) o;
+    final GenesisConfig that = (GenesisConfig) o;
     return Objects.equals(genesisRoot, that.genesisRoot);
   }
 

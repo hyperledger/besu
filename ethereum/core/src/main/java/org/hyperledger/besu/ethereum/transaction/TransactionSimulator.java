@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.crypto.SECPSignature;
@@ -176,7 +177,7 @@ public class TransactionSimulator {
   }
 
   public ProcessableBlockHeader simulatePendingBlockHeader() {
-    final long timestamp = System.currentTimeMillis();
+    final long timestamp = MILLISECONDS.toSeconds(System.currentTimeMillis());
     final var chainHeadHeader = blockchain.getChainHeadHeader();
     final ProtocolSpec protocolSpec =
         protocolSchedule.getForNextBlockHeader(chainHeadHeader, timestamp);
