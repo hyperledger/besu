@@ -28,11 +28,14 @@ public class BlobScheduleOptionsTest {
 
     assertThat(configOptions.getBlobScheduleOptions()).isNotEmpty();
     final BlobScheduleOptions blobScheduleOptions = configOptions.getBlobScheduleOptions().get();
-    assertThat(blobScheduleOptions.getCancun().getTarget()).isEqualTo(4);
-    assertThat(blobScheduleOptions.getCancun().getMax()).isEqualTo(7);
-    assertThat(blobScheduleOptions.getPrague().getTarget()).isEqualTo(7);
-    assertThat(blobScheduleOptions.getPrague().getMax()).isEqualTo(10);
-    assertThat(blobScheduleOptions.getOsaka().getTarget()).isEqualTo(10);
-    assertThat(blobScheduleOptions.getOsaka().getMax()).isEqualTo(13);
+    assertThat(blobScheduleOptions.getCancun()).isNotEmpty();
+    assertThat(blobScheduleOptions.getCancun().get().getTarget()).isEqualTo(4);
+    assertThat(blobScheduleOptions.getCancun().get().getMax()).isEqualTo(7);
+    assertThat(blobScheduleOptions.getPrague()).isNotEmpty();
+    assertThat(blobScheduleOptions.getPrague().get().getTarget()).isEqualTo(7);
+    assertThat(blobScheduleOptions.getPrague().get().getMax()).isEqualTo(10);
+    assertThat(blobScheduleOptions.getOsaka()).isNotEmpty();
+    assertThat(blobScheduleOptions.getOsaka().get().getTarget()).isEqualTo(10);
+    assertThat(blobScheduleOptions.getOsaka().get().getMax()).isEqualTo(13);
   }
 }
