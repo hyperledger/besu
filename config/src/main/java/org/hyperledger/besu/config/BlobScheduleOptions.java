@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.config;
 
+import java.util.Map;
+import java.util.Optional;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.ImmutableMap;
 
 /** The Checkpoint config options. */
 public class BlobScheduleOptions {
@@ -39,10 +43,8 @@ public class BlobScheduleOptions {
    *
    * @return the cancun blob schedule
    */
-  public BlobSchedule getCancun() {
-    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, CANCUN_KEY)
-        .map(BlobSchedule::new)
-        .orElse(BlobSchedule.DEFAULT);
+  public Optional<BlobSchedule> getCancun() {
+    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, CANCUN_KEY).map(BlobSchedule::new);
   }
 
   /**
@@ -50,10 +52,8 @@ public class BlobScheduleOptions {
    *
    * @return the prague blob schedule
    */
-  public BlobSchedule getPrague() {
-    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, PRAGUE_KEY)
-        .map(BlobSchedule::new)
-        .orElse(BlobSchedule.DEFAULT);
+  public Optional<BlobSchedule> getPrague() {
+    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, PRAGUE_KEY).map(BlobSchedule::new);
   }
 
   /**
@@ -61,19 +61,27 @@ public class BlobScheduleOptions {
    *
    * @return the osaka blob schedule
    */
-  public BlobSchedule getOsaka() {
-    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, OSAKA_KEY)
-        .map(BlobSchedule::new)
-        .orElse(BlobSchedule.DEFAULT);
+  public Optional<BlobSchedule> getOsaka() {
+    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, OSAKA_KEY).map(BlobSchedule::new);
+  }
+
+  /**
+   * As map.
+   *
+   * @return the map
+   */
+  public Map<String, Object> asMap() {
+    final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+    getCancun().ifPresent(bs -> builder.put(CANCUN_KEY, bs.asMap()));
+    getPrague().ifPresent(bs -> builder.put(PRAGUE_KEY, bs.asMap()));
+    getOsaka().ifPresent(bs -> builder.put(OSAKA_KEY, bs.asMap()));
+    return builder.build();
   }
 
   /** The Blob schedule for a particular fork. */
   public static class BlobSchedule {
     private final int target;
     private final int max;
-
-    /** The constant DEFAULT. */
-    public static final BlobSchedule DEFAULT = new BlobSchedule(JsonUtil.createEmptyObjectNode());
 
     /** The constant CANCUN_DEFAULT. */
     public static final BlobSchedule CANCUN_DEFAULT = new BlobSchedule(3, 6);
@@ -90,9 +98,8 @@ public class BlobScheduleOptions {
      * @param blobScheduleConfigRoot the blob schedule config root
      */
     public BlobSchedule(final ObjectNode blobScheduleConfigRoot) {
-      // TODO SLD EIP-7840 - reasonable defaults?
-      this.target = JsonUtil.getInt(blobScheduleConfigRoot, "target").orElse(3);
-      this.max = JsonUtil.getInt(blobScheduleConfigRoot, "max").orElse(6);
+      this.target = JsonUtil.getInt(blobScheduleConfigRoot, "target").orElseThrow();
+      this.max = JsonUtil.getInt(blobScheduleConfigRoot, "max").orElseThrow();
     }
 
     private BlobSchedule(final int target, final int max) {
@@ -116,6 +123,15 @@ public class BlobScheduleOptions {
      */
     public int getMax() {
       return max;
+    }
+
+    /**
+     * As map.
+     *
+     * @return the map
+     */
+    Map<String, Object> asMap() {
+      return Map.of("target", target, "max", max);
     }
   }
 }

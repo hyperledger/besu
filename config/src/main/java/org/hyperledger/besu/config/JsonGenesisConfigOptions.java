@@ -469,7 +469,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return inputAddress.map(Address::fromHexString);
   }
 
-  // TODO SLD - EIP-7840
   @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
@@ -543,6 +542,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
     if (isFixedBaseFee()) {
       builder.put("fixedBaseFee", true);
+    }
+
+    if (getBlobScheduleOptions().isPresent()) {
+      builder.put("blobSchedule", getBlobScheduleOptions().get().asMap());
     }
 
     return builder.build();
