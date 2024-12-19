@@ -108,7 +108,7 @@ public class BlockchainServiceImpl implements BlockchainService {
   public void storeBlock(
       final BlockHeader blockHeader,
       final BlockBody blockBody,
-      final List<TransactionReceipt> receipts) {
+      final List<? extends TransactionReceipt> receipts) {
     final org.hyperledger.besu.ethereum.core.BlockHeader coreHeader =
         (org.hyperledger.besu.ethereum.core.BlockHeader) blockHeader;
     final org.hyperledger.besu.ethereum.core.BlockBody coreBody =
