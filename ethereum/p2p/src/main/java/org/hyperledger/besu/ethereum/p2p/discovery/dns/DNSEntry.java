@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.crypto.SECP256K1;
-import org.apache.tuweni.devp2p.EthereumNodeRecord;
 import org.apache.tuweni.io.Base32;
 import org.apache.tuweni.io.Base64URLSafe;
 import org.bouncycastle.math.ec.ECPoint;
