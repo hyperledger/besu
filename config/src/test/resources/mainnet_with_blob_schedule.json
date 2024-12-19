@@ -18,16 +18,16 @@
     "cancunTime": 0,
     "blobSchedule": {
       "cancun": {
-        "target": 3,
-        "max": 6
+        "target": 4,
+        "max": 7
       },
       "prague": {
-        "target": 6,
-        "max": 9
+        "target": 7,
+        "max": 10
       },
       "osaka": {
-        "target": 9,
-        "max": 12
+        "target": 10,
+        "max": 13
       }
     },
     "depositContractAddress": "0x4242424242424242424242424242424242424242",
