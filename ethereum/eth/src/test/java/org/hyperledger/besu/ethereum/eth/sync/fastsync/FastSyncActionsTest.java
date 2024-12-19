@@ -450,6 +450,7 @@ public class FastSyncActionsTest {
         syncConfig,
         worldStateStorageCoordinator,
         protocolSchedule,
+        () -> null,
         protocolContext,
         ethContext,
         new SyncState(blockchain, ethContext.getEthPeers(), true, Optional.empty()),
