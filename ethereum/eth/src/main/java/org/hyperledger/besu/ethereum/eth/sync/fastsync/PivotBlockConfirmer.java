@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -175,7 +174,6 @@ class PivotBlockConfirmer {
       // Stop loop if this task is done
       return CompletableFuture.failedFuture(new CancellationException());
     }
-
     final Optional<RetryingGetHeaderFromPeerByNumberTask> query = createPivotQuery(blockNumber);
     final CompletableFuture<BlockHeader> pivotHeaderFuture;
     if (query.isPresent()) {
@@ -188,9 +186,17 @@ class PivotBlockConfirmer {
       pivotHeaderFuture =
           ethContext
               .getScheduler()
-              .timeout(WaitForPeerTask.create(ethContext, metricsSystem), Duration.ofSeconds(5))
-              .handle((err, res) -> null) // Ignore result
-              .thenCompose(res -> executePivotQuery(blockNumber));
+              .scheduleFutureTask(
+                  () ->
+                      ethContext
+                          .getEthPeers()
+                          .waitForPeer(
+                              (peer) -> !pivotBlockQueriesByPeerId.containsKey(peer.nodeId()))
+                          // Ignore result, ensure even a timeout will result in calling
+                          // executePivotQuery
+                          .handle((r, e) -> null)
+                          .thenCompose(res -> executePivotQuery(blockNumber)),
+                  Duration.ofSeconds(5));
     }
 
     return pivotHeaderFuture;

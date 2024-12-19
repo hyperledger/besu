@@ -19,7 +19,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.DetermineCommonAncestorTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -117,13 +116,16 @@ public abstract class AbstractSyncTargetManager {
   protected abstract CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget();
 
   private CompletableFuture<SyncTarget> waitForPeerAndThenSetSyncTarget() {
-    return waitForNewPeer().handle((r, t) -> r).thenCompose((r) -> findSyncTarget());
-  }
-
-  private CompletableFuture<?> waitForNewPeer() {
     return ethContext
         .getScheduler()
-        .timeout(WaitForPeerTask.create(ethContext, metricsSystem), Duration.ofSeconds(5));
+        .scheduleFutureTask(
+            () ->
+                ethContext
+                    .getEthPeers()
+                    .waitForPeer((peer) -> true)
+                    .handle((ignored, ignored2) -> null)
+                    .thenCompose((r) -> findSyncTarget()),
+            Duration.ofSeconds(5));
   }
 
   private boolean isCancelled() {

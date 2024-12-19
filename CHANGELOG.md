@@ -6,10 +6,8 @@
 - `--host-whitelist` has been deprecated since 2020 and this option is removed. Use the equivalent `--host-allowlist` instead. 
 
 ### Upcoming Breaking Changes
-- Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
-- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
-- `--host-whitelist` has been deprecated in favor of `--host-allowlist` since 2020 and will be removed in a future release
+- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release. Use docker or none instead.
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Tessera privacy
   - Smart-contract-based (onchain) permissioning
@@ -23,6 +21,7 @@
 
 ### Bug fixes
 - Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
+- Revise the approach for setting level_compaction_dynamic_level_bytes RocksDB configuration option [#8037](https://github.com/hyperledger/besu/pull/8037)
 
 ## 24.12.2 Hotfix
 
