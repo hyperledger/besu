@@ -27,23 +27,26 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class PivotSelectorFromPeersTest {
-  private EthContext ethContext;
-  private EthPeers ethPeers;
-  private SynchronizerConfiguration syncConfig;
-  private SyncState syncState;
+  private @Mock EthContext ethContext;
+  private @Mock EthPeers ethPeers;
+  private @Mock SyncState syncState;
 
   private PivotSelectorFromPeers selector;
 
   @BeforeEach
   public void beforeTest() {
-    ethContext = Mockito.mock(EthContext.class);
-    ethPeers = Mockito.mock(EthPeers.class);
-    syncConfig =
+    SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder().syncMinimumPeerCount(2).syncPivotDistance(1).build();
-    syncState = Mockito.mock(SyncState.class);
 
     selector = new PivotSelectorFromPeers(ethContext, syncConfig, syncState);
   }
