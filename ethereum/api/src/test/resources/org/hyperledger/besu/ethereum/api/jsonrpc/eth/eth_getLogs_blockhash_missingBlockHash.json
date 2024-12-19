@@ -10,9 +10,12 @@
     }]
   },
   "response": {
-    "jsonrpc": "2.0",
-    "id": 406,
-    "result" : [ ]
+    "jsonrpc" : "2.0",
+    "id" : 406,
+    "error" : {
+      "code": -32000,
+      "message": "Block not found"
+    }
   },
   "statusCode": 200
 }

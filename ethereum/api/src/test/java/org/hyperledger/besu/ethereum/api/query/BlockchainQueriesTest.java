@@ -18,10 +18,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -402,12 +405,19 @@ public class BlockchainQueriesTest {
   }
 
   @Test
-  public void matchingLogsShouldReturnAnEmptyListWhenGivenAnInvalidBlockHash() {
+  public void matchingLogsShouldThrowWhenGivenAnInvalidBlockHash() {
     final BlockchainWithData data = setupBlockchain(3);
     final BlockchainQueries queries = data.blockchainQueries;
-    List<LogWithMetadata> logs =
-        queries.matchingLogs(Hash.ZERO, new LogsQuery.Builder().build(), () -> true);
-    assertThat(logs).isEmpty();
+
+    var exception =
+        assertThrows(
+            InvalidJsonRpcParameters.class,
+            () -> {
+              queries.matchingLogs(Hash.ZERO, new LogsQuery.Builder().build(), () -> true);
+            });
+
+    assertThat(exception.getMessage()).isEqualTo("Unknown block hash");
+    assertThat(exception.getRpcErrorType()).isEqualTo(RpcErrorType.BLOCK_NOT_FOUND);
   }
 
   @Test
