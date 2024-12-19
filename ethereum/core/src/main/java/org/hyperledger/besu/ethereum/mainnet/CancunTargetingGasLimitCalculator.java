@@ -19,23 +19,20 @@ import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
 public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCalculator {
 
-  /**
-   * The constant MAX_BLOB_GAS_PER_BLOCK represents the maximum gas limit for blob data. =
-   * CancunGasCalculator.BLOB_GAS_PER_BLOB * 6 blobs = 131072 * 6 = 786432 = 0xC0000
-   */
-  private static final int DEFAULT_MAX_BLOBS_PER_BLOCK = 6;
+  /** The mainnet default maximum number of blobs per block for Cancun */
+  private static final int DEFAULT_MAX_BLOBS_PER_BLOCK_CANCUN = 6;
 
-  /**
-   * The maximum gas limit for blob data per block. getBlobGasPerBlob() * 6 blobs = 131072 * 6 =
-   * 786432 = 0xC0000
-   */
   private final long maxBlobGasPerBlock;
 
   public CancunTargetingGasLimitCalculator(
       final long londonForkBlock, final BaseFeeMarket feeMarket) {
-    this(londonForkBlock, feeMarket, DEFAULT_MAX_BLOBS_PER_BLOCK);
+    this(londonForkBlock, feeMarket, DEFAULT_MAX_BLOBS_PER_BLOCK_CANCUN);
   }
 
+  /**
+   * Using Cancun mainnet default of 6 blobs for maxBlobsPerBlock: getBlobGasPerBlob() * 6 blobs =
+   * 131072 * 6 = 786432 = 0xC0000
+   */
   public CancunTargetingGasLimitCalculator(
       final long londonForkBlock, final BaseFeeMarket feeMarket, final int maxBlobsPerBlock) {
     super(londonForkBlock, feeMarket);

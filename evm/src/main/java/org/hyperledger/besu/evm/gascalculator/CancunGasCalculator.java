@@ -96,29 +96,6 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
     return targetBlobGasPerBlock;
   }
 
-  //  /**
-  //   * Computes the excess blob gas for a given block based on the parent's excess blob gas and
-  // blob
-  //   * gas used. If the sum of parent's excess blob gas and parent's blob gas used is less than
-  // the
-  //   * target blob gas per block, the excess blob gas is calculated as 0. Otherwise, it is
-  // computed as
-  //   * the difference between the sum and the target blob gas per block.
-  //   *
-  //   * @param parentExcessBlobGas The excess blob gas of the parent block.
-  //   * @param newBlobs blob gas incurred by current block
-  //   * @return The excess blob gas for the current block.
-  //   */
-  //  @Override
-  //  public long computeExcessBlobGas(final long parentExcessBlobGas, final int newBlobs) {
-  //    final long consumedBlobGas = blobGasCost(newBlobs);
-  //    final long currentExcessBlobGas = parentExcessBlobGas + consumedBlobGas;
-  //    if (currentExcessBlobGas < TARGET_BLOB_GAS_PER_BLOCK) {
-  //      return 0L;
-  //    }
-  //    return currentExcessBlobGas - TARGET_BLOB_GAS_PER_BLOCK;
-  //  }
-
   @Override
   public long computeExcessBlobGas(final long parentExcessBlobGas, final long parentBlobGasUsed) {
     final long currentExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed;
