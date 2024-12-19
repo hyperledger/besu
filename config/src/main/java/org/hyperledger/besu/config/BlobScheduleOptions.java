@@ -20,7 +20,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
-/** The Checkpoint config options. */
+/** The Blob Schedule config options. */
 public class BlobScheduleOptions {
 
   private final ObjectNode blobScheduleOptionsConfigRoot;
