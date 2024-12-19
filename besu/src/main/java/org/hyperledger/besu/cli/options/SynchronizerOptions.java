@@ -319,6 +319,13 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
           "Temporary feature toggle to enable using the new peertask system (default: ${DEFAULT-VALUE})")
   private final Boolean isPeerTaskSystemEnabled = false;
 
+  @CommandLine.Option(
+      names = {"--Xmem-optimized-download-enabled"},
+      hidden = true,
+      description =
+          "Temporary feature toggle to enable using the new peertask system (default: ${DEFAULT-VALUE})")
+  private final Boolean isSMemOptimizedDownloadEnabled = false;
+
   private SynchronizerOptions() {}
 
   /**
@@ -346,6 +353,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
    */
   public boolean isPeerTaskSystemEnabled() {
     return isPeerTaskSystemEnabled;
+  }
+
+  /**
+   * Flag to indicate whether the peer task system should be used where available
+   *
+   * @return true if the peer task system should be used where available
+   */
+  public boolean isMemOptimizedDownloadEnabled() {
+    return isSMemOptimizedDownloadEnabled;
   }
 
   /**
@@ -435,6 +451,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
     builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
+    builder.isMemOptimizedDownloadEnabled(isSMemOptimizedDownloadEnabled);
     return builder;
   }
 

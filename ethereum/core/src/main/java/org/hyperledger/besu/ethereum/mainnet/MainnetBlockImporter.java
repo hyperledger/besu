@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult.BlockImportStatus;
 
@@ -72,5 +73,15 @@ public class MainnetBlockImporter implements BlockImporter {
     }
 
     return new BlockImportResult(false);
+  }
+
+  @Override
+  public BlockImportResult importSyncBlockForSyncing(
+      final ProtocolContext context,
+      final SyncBlock syncBlock,
+      final List<TransactionReceipt> receipts) {
+
+    context.getBlockchain().appendSyncBlock(syncBlock, receipts);
+    return new BlockImportResult(true);
   }
 }

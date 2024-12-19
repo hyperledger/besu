@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -421,6 +422,12 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public synchronized void appendSyncBlock(
+      final SyncBlock block, final List<TransactionReceipt> receipts) {
+    appendSyncBlockHelper(block, receipts);
+  }
+
+  @Override
   public synchronized void storeBlock(final Block block, final List<TransactionReceipt> receipts) {
     if (numberOfBlocksToCache != 0) cacheBlockData(block, receipts);
     appendBlockHelper(new BlockWithReceipts(block, receipts), true);
@@ -473,6 +480,30 @@ public class DefaultBlockchain implements MutableBlockchain {
       if (blockAddedEvent.isNewCanonicalHead()) {
         updateCacheForNewCanonicalHead(block, td);
       }
+    }
+
+    updater.commit();
+    blockAddedObservers.forEach(observer -> observer.onBlockAdded(blockAddedEvent));
+  }
+
+  private void appendSyncBlockHelper(
+      final SyncBlock block, final List<TransactionReceipt> receipts) {
+
+    final Hash hash = block.getHash();
+    final Difficulty td = calculateTotalDifficulty(block.getHeader());
+
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+
+    updater.putBlockHeader(hash, block.getHeader());
+    updater.putSyncBlockBody(hash, block.getBody());
+    updater.putTransactionReceipts(hash, receipts);
+    updater.putTotalDifficulty(hash, td);
+
+    final BlockAddedEvent blockAddedEvent;
+
+    blockAddedEvent = updateCanonicalChainData(updater, block, receipts);
+    if (blockAddedEvent.isNewCanonicalHead()) {
+      updateCacheForNewCanonicalHead(block, td);
     }
 
     updater.commit();
@@ -548,6 +579,31 @@ public class DefaultBlockchain implements MutableBlockchain {
     }
   }
 
+  private BlockAddedEvent updateCanonicalChainData(
+      final BlockchainStorage.Updater updater,
+      final SyncBlock newBlock,
+      final List<TransactionReceipt> receipts) {
+
+    final Hash chainHead = blockchainStorage.getChainHead().orElse(null);
+
+    if (newBlock.getHeader().getNumber() != BlockHeader.GENESIS_BLOCK_NUMBER && chainHead == null) {
+      throw new IllegalStateException("Blockchain is missing chain head.");
+    }
+
+    try {
+      if (newBlock.getHeader().getParentHash().equals(chainHead) || chainHead == null) {
+        return handleNewHead(updater, newBlock, receipts);
+      } else {
+        throw new RuntimeException("Blocks during sync should always be in order");
+      }
+    } catch (final NoSuchElementException e) {
+      // Any Optional.get() calls in this block should be present, missing data means data
+      // corruption or a bug.
+      updater.rollback();
+      throw new IllegalStateException("Blockchain is missing data that should be present.", e);
+    }
+  }
+
   private BlockAddedEvent handleStoreOnly(final BlockWithReceipts blockWithReceipts) {
     return BlockAddedEvent.createForStoredOnly(blockWithReceipts.getBlock());
   }
@@ -570,6 +626,25 @@ public class DefaultBlockchain implements MutableBlockchain {
         LogWithMetadata.generate(
             blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false),
         blockWithReceipts.getReceipts());
+  }
+
+  private BlockAddedEvent handleNewHead(
+      final Updater updater, final SyncBlock newBlock, final List<TransactionReceipt> receipts) {
+    // This block advances the chain, update the chain head
+    final Hash newBlockHash = newBlock.getHash();
+
+    updater.putBlockHash(newBlock.getHeader().getNumber(), newBlockHash);
+    updater.setChainHead(newBlockHash);
+    //    indexTransactionsForBlock(
+    //            updater, newBlockHash, blockWithReceipts.getBlock().getBody().getTransactions());
+    gasUsedCounter.inc(newBlock.getHeader().getGasUsed());
+    numberOfTransactionsCounter.inc(receipts.size());
+
+    return BlockAddedEvent.createForSyncHeadAdvancement(
+        newBlock.getHeader(),
+        null, // TODO: We won't have receipts once we use SyncTransactionReceipt. Do these logs even
+        // make sense during sync?
+        receipts);
   }
 
   private BlockAddedEvent handleFork(final BlockchainStorage.Updater updater, final Block fork) {
@@ -786,6 +861,13 @@ public class DefaultBlockchain implements MutableBlockchain {
     totalDifficulty = uInt256;
     chainHeadTransactionCount = block.getBody().getTransactions().size();
     chainHeadOmmerCount = block.getBody().getOmmers().size();
+  }
+
+  private void updateCacheForNewCanonicalHead(final SyncBlock block, final Difficulty uInt256) {
+    chainHeader = block.getHeader();
+    totalDifficulty = uInt256;
+    chainHeadTransactionCount = block.getBody().getTransactionCount();
+    chainHeadOmmerCount = 0; // TODO: we could work this out in SyncBlockBody if we wanted to
   }
 
   private static void indexTransactionsForBlock(

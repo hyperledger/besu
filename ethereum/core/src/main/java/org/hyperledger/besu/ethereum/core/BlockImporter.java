@@ -81,4 +81,20 @@ public interface BlockImporter {
       HeaderValidationMode headerValidationMode,
       HeaderValidationMode ommerValidationMode,
       BodyValidationMode bodyValidationMode);
+
+  /**
+   * Attempts to import the given syncBlock. Uses "fast" validation. Performs light validation using
+   * the syncBlock's receipts rather than processing all transactions and fully validating world
+   * state.
+   *
+   * @param context The context to attempt to update
+   * @param syncBlock The syncBlock
+   * @param receipts The receipts associated with this syncBlock.
+   * @return {@code BlockImportResult}
+   * @see BlockImportResult
+   */
+  BlockImportResult importSyncBlockForSyncing(
+      final ProtocolContext context,
+      final SyncBlock syncBlock,
+      final List<TransactionReceipt> receipts);
 }

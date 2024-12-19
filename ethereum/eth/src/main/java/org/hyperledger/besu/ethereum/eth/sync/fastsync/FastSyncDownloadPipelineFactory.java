@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
+import org.hyperledger.besu.ethereum.eth.sync.DownloadSyncBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersFetcher;
@@ -139,37 +140,73 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             metricsSystem);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
-    final DownloadBodiesStep downloadBodiesStep =
-        new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
-    final DownloadReceiptsStep downloadReceiptsStep =
-        new DownloadReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
-    final ImportBlocksStep importBlockStep =
-        new ImportBlocksStep(
-            protocolSchedule,
-            protocolContext,
-            attachedValidationPolicy,
-            ommerValidationPolicy,
-            ethContext,
-            fastSyncState.getPivotBlockHeader().get());
+    if (syncConfig.isMemOptimizedDownloadEnabled()) {
+      final DownloadSyncBodiesStep downloadSyncBodiesStep =
+          new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem);
+      final DownloadSyncReceiptsStep downloadSyncReceiptsStep =
+          new DownloadSyncReceiptsStep(protocolSchedule, ethContext);
+      final ImportSyncBlocksStep importSyncBlocksStep =
+          new ImportSyncBlocksStep(
+              protocolSchedule,
+              protocolContext,
+              attachedValidationPolicy,
+              ommerValidationPolicy,
+              ethContext,
+              fastSyncState.getPivotBlockHeader().get());
 
-    return PipelineBuilder.createPipelineFrom(
-            "fetchCheckpoints",
-            checkpointRangeSource,
-            downloaderParallelism,
-            metricsSystem.createLabelledCounter(
-                BesuMetricCategory.SYNCHRONIZER,
-                "chain_download_pipeline_processed_total",
-                "Number of entries process by each chain download pipeline stage",
-                "step",
-                "action"),
-            true,
-            "fastSync")
-        .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
-        .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
-        .inBatches(headerRequestSize)
-        .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
-        .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
-        .andFinishWith("importBlock", importBlockStep);
+      return PipelineBuilder.createPipelineFrom(
+              "fetchCheckpoints",
+              checkpointRangeSource,
+              downloaderParallelism,
+              metricsSystem.createLabelledCounter(
+                  BesuMetricCategory.SYNCHRONIZER,
+                  "chain_download_pipeline_processed_total",
+                  "Number of entries process by each chain download pipeline stage",
+                  "step",
+                  "action"),
+              true,
+              "fastSync")
+          .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
+          .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
+          .inBatches(headerRequestSize)
+          .thenProcessAsyncOrdered(
+              "downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
+          .thenProcessAsyncOrdered(
+              "downloadReceipts", downloadSyncReceiptsStep, downloaderParallelism)
+          .andFinishWith("importBlock", importSyncBlocksStep);
+    } else {
+      final DownloadBodiesStep downloadBodiesStep =
+          new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
+      final DownloadReceiptsStep downloadReceiptsStep =
+          new DownloadReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
+      final ImportBlocksStep importBlockStep =
+          new ImportBlocksStep(
+              protocolSchedule,
+              protocolContext,
+              attachedValidationPolicy,
+              ommerValidationPolicy,
+              ethContext,
+              fastSyncState.getPivotBlockHeader().get());
+
+      return PipelineBuilder.createPipelineFrom(
+              "fetchCheckpoints",
+              checkpointRangeSource,
+              downloaderParallelism,
+              metricsSystem.createLabelledCounter(
+                  BesuMetricCategory.SYNCHRONIZER,
+                  "chain_download_pipeline_processed_total",
+                  "Number of entries process by each chain download pipeline stage",
+                  "step",
+                  "action"),
+              true,
+              "fastSync")
+          .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
+          .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
+          .inBatches(headerRequestSize)
+          .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
+          .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
+          .andFinishWith("importBlock", importBlockStep);
+    }
   }
 
   protected BlockHeader getCommonAncestor(final SyncTarget syncTarget) {
