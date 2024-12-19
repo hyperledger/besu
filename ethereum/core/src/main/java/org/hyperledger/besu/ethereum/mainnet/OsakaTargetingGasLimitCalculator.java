@@ -28,7 +28,7 @@ public class OsakaTargetingGasLimitCalculator extends PragueTargetingGasLimitCal
 
   /**
    * Using Osaka mainnet default of 12 blobs for maxBlobsPerBlock:
-   * CancunGasCalculator.BLOB_GAS_PER_BLOB * 9 blobs = 131072 * 12 = 1572864 = 0x180000
+   * CancunGasCalculator.BLOB_GAS_PER_BLOB * 12 blobs = 131072 * 12 = 1572864 = 0x180000
    */
   public OsakaTargetingGasLimitCalculator(
       final long londonForkBlock, final BaseFeeMarket feeMarket, final int maxBlobsPerBlock) {
