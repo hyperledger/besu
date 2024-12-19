@@ -33,7 +33,6 @@ dependencies {
   implementation project(':consensus:common')
   implementation project(':crypto:services')
   implementation project(':datatypes')
-  implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
@@ -42,11 +41,7 @@ dependencies {
   implementation project(':evm')
 
   implementation 'com.google.guava:guava'
-  implementation 'io.vertx:vertx-core'
-  implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
-  implementation 'org.web3j:abi'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
