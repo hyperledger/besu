@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlocksFromPeersTask;
 
@@ -53,9 +56,9 @@ public class ForwardSyncStep {
       LOG.atDebug()
           .setMessage("Requesting {} blocks {}->{} ({})")
           .addArgument(blockHeaders::size)
-          .addArgument(() -> blockHeaders.get(0).getNumber())
-          .addArgument(() -> blockHeaders.get(blockHeaders.size() - 1).getNumber())
-          .addArgument(() -> blockHeaders.get(0).getHash().toHexString())
+          .addArgument(() -> blockHeaders.getFirst().getNumber())
+          .addArgument(() -> blockHeaders.getLast().getNumber())
+          .addArgument(() -> blockHeaders.getFirst().getHash().toHexString())
           .log();
       return requestBodies(blockHeaders)
           .thenApply(this::saveBlocks)
@@ -76,23 +79,47 @@ public class ForwardSyncStep {
 
   @VisibleForTesting
   protected CompletableFuture<List<Block>> requestBodies(final List<BlockHeader> blockHeaders) {
-    final RetryingGetBlocksFromPeersTask getBodiesFromPeerTask =
-        RetryingGetBlocksFromPeersTask.forHeaders(
-            context.getProtocolSchedule(),
-            context.getEthContext(),
-            context.getMetricsSystem(),
-            context.getEthContext().getEthPeers().peerCount(),
-            blockHeaders);
+    CompletableFuture<List<Block>> blocksFuture;
+    if (context.getSynchronizerConfiguration().isPeerTaskSystemEnabled()) {
+      blocksFuture =
+          context
+              .getEthContext()
+              .getScheduler()
+              .scheduleServiceTask(
+                  () -> {
+                    GetBodiesFromPeerTask task =
+                        new GetBodiesFromPeerTask(
+                            blockHeaders,
+                            context.getProtocolSchedule(),
+                            context.getEthContext().getEthPeers().peerCount());
+                    PeerTaskExecutorResult<List<Block>> taskResult =
+                        context.getEthContext().getPeerTaskExecutor().execute(task);
+                    if (taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
+                        && taskResult.result().isPresent()) {
+                      return CompletableFuture.completedFuture(taskResult.result().get());
+                    } else {
+                      return CompletableFuture.failedFuture(
+                          new RuntimeException(taskResult.responseCode().toString()));
+                    }
+                  });
+    } else {
+      final RetryingGetBlocksFromPeersTask getBodiesFromPeerTask =
+          RetryingGetBlocksFromPeersTask.forHeaders(
+              context.getProtocolSchedule(),
+              context.getEthContext(),
+              context.getMetricsSystem(),
+              context.getEthContext().getEthPeers().peerCount(),
+              blockHeaders);
 
-    final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<Block>>> run =
-        getBodiesFromPeerTask.run();
-    return run.thenApply(AbstractPeerTask.PeerTaskResult::getResult)
-        .thenApply(
-            blocks -> {
-              LOG.debug("Got {} blocks from peers", blocks.size());
-              blocks.sort(Comparator.comparing(block -> block.getHeader().getNumber()));
-              return blocks;
-            });
+      blocksFuture =
+          getBodiesFromPeerTask.run().thenApply(AbstractPeerTask.PeerTaskResult::getResult);
+    }
+    return blocksFuture.thenApply(
+        blocks -> {
+          LOG.debug("Got {} blocks from peers", blocks.size());
+          blocks.sort(Comparator.comparing(block -> block.getHeader().getNumber()));
+          return blocks;
+        });
   }
 
   @VisibleForTesting
