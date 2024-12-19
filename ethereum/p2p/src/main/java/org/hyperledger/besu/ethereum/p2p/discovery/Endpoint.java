@@ -29,12 +29,15 @@ import java.util.Optional;
 
 import com.google.common.net.InetAddresses;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Encapsulates the network coordinates of a {@link DiscoveryPeer} as well as serialization logic
  * used in various Discovery messages.
  */
 public class Endpoint {
+  private static final Logger LOG = LoggerFactory.getLogger(Endpoint.class);
   private final Optional<String> host;
   private final int udpPort;
   private final Optional<Integer> tcpPort;
@@ -49,15 +52,16 @@ public class Endpoint {
   }
 
   public static Endpoint fromEnode(final EnodeURL enode) {
-    final int discoveryPort =
-        enode
-            .getDiscoveryPort()
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Attempt to create a discovery endpoint for an enode with discovery disabled."));
+    Optional<Integer> discoveryPort = enode.getDiscoveryPort();
+
+    if (discoveryPort.isEmpty()) {
+      int defaultPort = EnodeURLImpl.DEFAULT_LISTENING_PORT;
+      LOG.debug("Discovery disabled for enode {}. Using default port {}.", enode, defaultPort);
+      return new Endpoint(enode.getIp().getHostAddress(), defaultPort, Optional.empty());
+    }
+
     final Optional<Integer> listeningPort = enode.getListeningPort();
-    return new Endpoint(enode.getIp().getHostAddress(), discoveryPort, listeningPort);
+    return new Endpoint(enode.getIp().getHostAddress(), discoveryPort.get(), listeningPort);
   }
 
   public EnodeURL toEnode(final Bytes nodeId) {
