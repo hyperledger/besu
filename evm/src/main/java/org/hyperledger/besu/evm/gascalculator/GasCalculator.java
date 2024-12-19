@@ -633,28 +633,6 @@ public interface GasCalculator {
     return 0L;
   }
 
-  //  /**
-  //   * Compute the new value for the excess blob gas, given the parent value, the parent blob gas
-  // used
-  //   * and the parent target blobs per block, if present. Used from Cancun onwards. Presence of
-  //   * parentTargetBlobsPerBlock implies EIP-7442/Prague enabled. Default to Cancun constant
-  // target
-  //   * gas value if parentTargetBlobsPerBlock is not present.
-  //   *
-  //   * @param parentExcessBlobGas excess blob gas from the parent
-  //   * @param parentBlobGasUsed blob gas used from the parent
-  //   * @return the new excess blob gas value
-  //   */
-  //  default long computeExcessBlobGas(
-  //      final long parentExcessBlobGas,
-  //      final long parentBlobGasUsed) {
-  //    final long currentExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed;
-  //
-  //    if (currentExcessBlobGas < parentTargetBlobGas) {
-  //      return 0L;
-  //    }
-  //    return currentExcessBlobGas - parentTargetBlobGas;
-  //  }
   /**
    * Compute the new value for the excess blob gas, given the parent value and the blob gas used
    *

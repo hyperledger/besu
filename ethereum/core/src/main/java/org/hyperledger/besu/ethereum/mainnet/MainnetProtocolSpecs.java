@@ -805,6 +805,7 @@ public abstract class MainnetProtocolSpecs {
             .map(BlobScheduleOptions::getPrague)
             .orElse(BlobScheduleOptions.BlobSchedule.PRAGUE_DEFAULT);
 
+    // EIP-3074 AUTH and AUTHCALL gas | EIP-7840 Blob schedule | EIP-7691 6/9 blob increase
     final java.util.function.Supplier<GasCalculator> pragueGasCalcSupplier =
         () -> new PragueGasCalculator(pragueBlobSchedule.getTarget());
 
@@ -816,9 +817,8 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        // EIP-3074 AUTH and AUTHCALL gas | EIP-7840 Blob schedule
         .gasCalculator(pragueGasCalcSupplier)
-        // EIP-7840 Blob schedule
+        // EIP-7840 Blob schedule | EIP-7691 6/9 blob increase
         .gasLimitCalculatorBuilder(
             feeMarket ->
                 new PragueTargetingGasLimitCalculator(
@@ -854,8 +854,10 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.DELEGATE_CODE),
                     evm.getMaxInitcodeSize()))
 
-        // TODO Can we dynamically wire in the appropriate GasCalculator instead of overriding
+        // TODO SLD EIP-7840 Can we dynamically wire in the appropriate GasCalculator instead of
+        // overriding
         // blockHeaderValidatorBuilder every time the GasCalculator changes?
+        // EIP-7840 blob schedule | EIP-7691 6/9 blob increase
         .blockHeaderValidatorBuilder(
             fm ->
                 MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(

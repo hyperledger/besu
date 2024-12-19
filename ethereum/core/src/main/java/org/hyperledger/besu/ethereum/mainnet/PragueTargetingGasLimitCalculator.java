@@ -18,10 +18,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
 public class PragueTargetingGasLimitCalculator extends CancunTargetingGasLimitCalculator {
 
-  /**
-   * The constant MAX_BLOB_GAS_PER_BLOCK represents the maximum gas limit for blob data. =
-   * CancunGasCalculator.BLOB_GAS_PER_BLOB * 9 blobs = 131072 * 9 = 1179648 = 0x120000
-   */
+  /** The mainnet default maximum number of blobs per block for Prague */
   private static final int DEFAULT_MAX_BLOBS_PER_BLOCK_PRAGUE = 9;
 
   public PragueTargetingGasLimitCalculator(
@@ -29,6 +26,10 @@ public class PragueTargetingGasLimitCalculator extends CancunTargetingGasLimitCa
     super(londonForkBlock, feeMarket, DEFAULT_MAX_BLOBS_PER_BLOCK_PRAGUE);
   }
 
+  /**
+   * Using Prague mainnet default of 9 blobs for maxBlobsPerBlock:
+   * CancunGasCalculator.BLOB_GAS_PER_BLOB * 9 blobs = 131072 * 9 = 1179648 = 0x120000
+   */
   public PragueTargetingGasLimitCalculator(
       final long londonForkBlock, final BaseFeeMarket feeMarket, final int maxBlobsPerBlock) {
     super(londonForkBlock, feeMarket, maxBlobsPerBlock);
