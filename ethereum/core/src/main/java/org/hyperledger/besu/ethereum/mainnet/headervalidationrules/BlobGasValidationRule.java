@@ -44,8 +44,7 @@ public class BlobGasValidationRule implements DetachedBlockHeaderValidationRule 
     long parentBlobGasUsed = parent.getBlobGasUsed().orElse(0L);
 
     long calculatedExcessBlobGas =
-        gasCalculator.computeExcessBlobGas(
-            parentExcessBlobGas, parentBlobGasUsed, parent.getTargetBlobsPerBlock());
+        gasCalculator.computeExcessBlobGas(parentExcessBlobGas, parentBlobGasUsed);
 
     if (headerExcessBlobGas != calculatedExcessBlobGas) {
       LOG.info(
