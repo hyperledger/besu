@@ -31,7 +31,6 @@ public class HashTest {
   public void shouldGetExpectedValueForEmptyRequestsHash() {
     assertThat(Hash.EMPTY_REQUESTS_HASH)
         .isEqualTo(
-            Hash.fromHexString(
-                "0x6036c41849da9c076ed79654d434017387a88fb833c2856b32e18218b3341c5f"));
+            Hash.fromHexString("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"));
   }
 }
