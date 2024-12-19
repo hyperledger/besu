@@ -412,7 +412,7 @@ class GenesisConfigOptionsTest {
   @Test
   void asMapIncludesBlobFeeSchedule() {
     final GenesisConfigOptions config =
-        GenesisConfigFile.fromConfig(
+        GenesisConfig.fromConfig(
                 "{\n"
                     + "  \"config\": {\n"
                     + "    \"blobSchedule\": {\n"
