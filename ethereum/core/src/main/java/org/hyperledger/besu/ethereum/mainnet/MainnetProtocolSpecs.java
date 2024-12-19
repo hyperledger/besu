@@ -57,6 +57,7 @@ import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
@@ -684,11 +685,14 @@ public abstract class MainnetProtocolSpecs {
           FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
     }
 
-    final var blobSchedule =
+    final var cancunBlobSchedule =
         genesisConfigOptions
             .getBlobScheduleOptions()
             .map(BlobScheduleOptions::getCancun)
             .orElse(BlobScheduleOptions.BlobSchedule.CANCUN_DEFAULT);
+
+    final java.util.function.Supplier<GasCalculator> cancunGasCalcSupplier =
+        () -> new CancunGasCalculator(cancunBlobSchedule.getTarget());
 
     return shanghaiDefinition(
             chainId,
@@ -700,12 +704,12 @@ public abstract class MainnetProtocolSpecs {
             metricsSystem)
         .feeMarket(cancunFeeMarket)
         // gas calculator for EIP-4844 blob gas
-        .gasCalculator(() -> new CancunGasCalculator(blobSchedule.getTarget()))
+        .gasCalculator(cancunGasCalcSupplier)
         // gas limit with EIP-4844 max blob gas per block
         .gasLimitCalculatorBuilder(
             feeMarket ->
                 new CancunTargetingGasLimitCalculator(
-                    londonForkBlockNumber, (BaseFeeMarket) feeMarket, blobSchedule.getMax()))
+                    londonForkBlockNumber, (BaseFeeMarket) feeMarket, cancunBlobSchedule.getMax()))
         // EVM changes to support EIP-1153: TSTORE and EIP-5656: MCOPY
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -746,7 +750,10 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.BLOB),
                     evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::cancunBlockHeaderValidator)
+        .blockHeaderValidatorBuilder(
+            fm ->
+                MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(
+                    fm, cancunGasCalcSupplier))
         .blockHashProcessor(new CancunBlockHashProcessor())
         .name("Cancun");
   }
@@ -792,11 +799,14 @@ public abstract class MainnetProtocolSpecs {
         RequestContractAddresses.fromGenesis(genesisConfigOptions);
 
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
-    final var blobSchedule =
+    final var pragueBlobSchedule =
         genesisConfigOptions
             .getBlobScheduleOptions()
-            .map(BlobScheduleOptions::getCancun)
+            .map(BlobScheduleOptions::getPrague)
             .orElse(BlobScheduleOptions.BlobSchedule.PRAGUE_DEFAULT);
+
+    final java.util.function.Supplier<GasCalculator> pragueGasCalcSupplier =
+        () -> new PragueGasCalculator(pragueBlobSchedule.getTarget());
 
     return cancunDefinition(
             chainId,
@@ -806,13 +816,13 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        // EIP-3074 AUTH and AUTCALL gas | EIP-7840 Blob schedule
-        .gasCalculator(() -> new PragueGasCalculator(blobSchedule.getTarget()))
+        // EIP-3074 AUTH and AUTHCALL gas | EIP-7840 Blob schedule
+        .gasCalculator(pragueGasCalcSupplier)
         // EIP-7840 Blob schedule
         .gasLimitCalculatorBuilder(
             feeMarket ->
                 new PragueTargetingGasLimitCalculator(
-                    londonForkBlockNumber, (BaseFeeMarket) feeMarket, blobSchedule.getMax()))
+                    londonForkBlockNumber, (BaseFeeMarket) feeMarket, pragueBlobSchedule.getMax()))
         // EIP-3074 AUTH and AUTHCALL
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -844,6 +854,12 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.DELEGATE_CODE),
                     evm.getMaxInitcodeSize()))
 
+        // TODO Can we dynamically wire in the appropriate GasCalculator instead of overriding
+        // blockHeaderValidatorBuilder every time the GasCalculator changes?
+        .blockHeaderValidatorBuilder(
+            fm ->
+                MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(
+                    fm, pragueGasCalcSupplier))
         // EIP-2935 Blockhash processor
         .blockHashProcessor(new PragueBlockHashProcessor())
         .name("Prague");
@@ -858,10 +874,10 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
 
-    final var blobSchedule =
+    final var osakaBlobSchedule =
         genesisConfigOptions
             .getBlobScheduleOptions()
-            .map(BlobScheduleOptions::getCancun)
+            .map(BlobScheduleOptions::getOsaka)
             .orElse(BlobScheduleOptions.BlobSchedule.OSAKA_DEFAULT);
 
     ProtocolSpecBuilder protocolSpecBuilder =
@@ -873,7 +889,7 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem);
-    return addEOF(chainId, evmConfiguration, protocolSpecBuilder, blobSchedule.getTarget())
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder, osakaBlobSchedule.getTarget())
         .name("Osaka");
   }
 
