@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.evm.frame;
 
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
-
 import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 
 import java.util.Deque;
 import java.util.List;

@@ -15,13 +15,13 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static org.hyperledger.besu.evm.frame.MessageFrame.DEFAULT_MAX_STACK_SIZE;
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -157,6 +157,8 @@ public class MessageFrameTestFixture {
     final Blockchain localBlockchain = this.blockchain.orElseGet(this::createDefaultBlockchain);
     final BlockHeader localBlockHeader =
         this.blockHeader.orElseGet(() -> localBlockchain.getBlockHeader(0).get());
+    final ProtocolSpec protocolSpec =
+        executionContextTestFixture.getProtocolSchedule().getByBlockHeader(localBlockHeader);
     final MessageFrame frame =
         MessageFrame.builder()
             .parentMessageFrame(parentFrame)
@@ -178,7 +180,10 @@ public class MessageFrameTestFixture {
             .miningBeneficiary(localBlockHeader.getCoinbase())
             .blockHashLookup(
                 blockHashLookup.orElseGet(
-                    () -> new CachingBlockHashLookup(localBlockHeader, localBlockchain)))
+                    () ->
+                        protocolSpec
+                            .getBlockHashProcessor()
+                            .createBlockHashLookup(localBlockchain, localBlockHeader)))
             .maxStackSize(maxStackSize)
             .build();
     stackItems.forEach(frame::pushStackItem);

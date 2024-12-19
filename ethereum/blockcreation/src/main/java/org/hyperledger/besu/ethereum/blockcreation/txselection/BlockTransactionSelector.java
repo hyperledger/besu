@@ -45,9 +45,8 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
@@ -376,7 +375,9 @@ public class BlockTransactionSelector {
   private TransactionProcessingResult processTransaction(
       final PendingTransaction pendingTransaction, final WorldUpdater worldStateUpdater) {
     final BlockHashLookup blockHashLookup =
-        new CachingBlockHashLookup(blockSelectionContext.pendingBlockHeader(), blockchain);
+        blockSelectionContext
+            .blockHashProcessor()
+            .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
     return transactionProcessor.processTransaction(
         worldStateUpdater,
         blockSelectionContext.pendingBlockHeader(),
