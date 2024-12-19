@@ -27,11 +27,11 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractGetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
@@ -323,26 +323,44 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
     // even though the header is known bad we are downloading the block body for the debug_badBlocks
     // RPC
     final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
-    return GetBodiesFromPeerTask.forHeaders(
-            protocolSchedule, ethContext, List.of(badHeader), metricsSystem)
-        .assignPeer(badPeer)
-        .run()
-        .whenComplete(
-            (blockPeerTaskResult, error) -> {
-              final HeaderValidationMode validationMode =
-                  validationPolicy.getValidationModeForNextBlock();
-              final String description =
-                  String.format("Failed header validation (%s)", validationMode);
-              final BadBlockCause cause = BadBlockCause.fromValidationFailure(description);
-              if (blockPeerTaskResult != null) {
-                final Optional<Block> block = blockPeerTaskResult.getResult().stream().findFirst();
-                block.ifPresentOrElse(
-                    (b) -> badBlockManager.addBadBlock(b, cause),
-                    () -> badBlockManager.addBadHeader(badHeader, cause));
-              } else {
-                badBlockManager.addBadHeader(badHeader, cause);
-              }
-            });
+    CompletableFuture<Block> blockFuture;
+    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+      blockFuture =
+          ethContext
+              .getScheduler()
+              .scheduleServiceTask(
+                  () -> {
+                    GetBodiesFromPeerTask task =
+                        new GetBodiesFromPeerTask(List.of(badHeader), protocolSchedule);
+                    PeerTaskExecutorResult<List<Block>> taskResult =
+                        ethContext.getPeerTaskExecutor().executeAgainstPeer(task, badPeer);
+                    if (taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
+                      return CompletableFuture.completedFuture(
+                          taskResult.result().map(List::getFirst).orElse(null));
+                    } else {
+                      return CompletableFuture.failedFuture(new RuntimeException());
+                    }
+                  });
+    } else {
+      blockFuture =
+          org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask.forHeaders(
+                  protocolSchedule, ethContext, List.of(badHeader), metricsSystem)
+              .assignPeer(badPeer)
+              .run()
+              .thenApply((blockPeerTaskResult) -> blockPeerTaskResult.getResult().getFirst());
+    }
+    return blockFuture.whenComplete(
+        (blockResult, error) -> {
+          final HeaderValidationMode validationMode =
+              validationPolicy.getValidationModeForNextBlock();
+          final String description = String.format("Failed header validation (%s)", validationMode);
+          final BadBlockCause cause = BadBlockCause.fromValidationFailure(description);
+          if (blockResult != null) {
+            badBlockManager.addBadBlock(blockResult, cause);
+          } else {
+            badBlockManager.addBadHeader(badHeader, cause);
+          }
+        });
   }
 
   private boolean checkHeaderInRange(final BlockHeader header) {

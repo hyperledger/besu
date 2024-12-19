@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
@@ -59,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -167,6 +170,21 @@ public class CheckPointSyncChainDownloaderTest {
     when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class))).thenAnswer(getHeadersAnswer);
     when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
         .thenAnswer(getHeadersAnswer);
+
+    Answer<PeerTaskExecutorResult<List<Block>>> getBlockBodiesAnswer =
+        (invocationOnMock) -> {
+          GetBodiesFromPeerTask task = invocationOnMock.getArgument(0, GetBodiesFromPeerTask.class);
+          List<Block> blocks =
+              task.getBlockHeaders().stream()
+                  .map((bh) -> new Block(bh, otherBlockchain.getBlockBody(bh.getBlockHash()).get()))
+                  .collect(Collectors.toList());
+          return new PeerTaskExecutorResult<List<Block>>(
+              Optional.of(blocks), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
+        };
+    when(peerTaskExecutor.execute(any(GetBodiesFromPeerTask.class)))
+        .thenAnswer(getBlockBodiesAnswer);
+    when(peerTaskExecutor.executeAgainstPeer(any(GetBodiesFromPeerTask.class), any(EthPeer.class)))
+        .thenAnswer(getBlockBodiesAnswer);
   }
 
   @AfterEach

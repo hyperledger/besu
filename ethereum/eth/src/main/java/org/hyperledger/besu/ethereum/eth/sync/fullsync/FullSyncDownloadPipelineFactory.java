@@ -67,7 +67,8 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
     this.fullSyncTerminationCondition = syncTerminationCondition;
-    betterSyncTargetEvaluator = new BetterSyncTargetEvaluator(syncConfig, ethContext.getEthPeers());
+    this.betterSyncTargetEvaluator =
+        new BetterSyncTargetEvaluator(syncConfig, ethContext.getEthPeers());
   }
 
   @Override
@@ -105,7 +106,7 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final DownloadBodiesStep downloadBodiesStep =
-        new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
+        new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
     final ExtractTxSignaturesStep extractTxSignaturesStep = new ExtractTxSignaturesStep();
     final FullImportBlockStep importBlockStep =
         new FullImportBlockStep(
