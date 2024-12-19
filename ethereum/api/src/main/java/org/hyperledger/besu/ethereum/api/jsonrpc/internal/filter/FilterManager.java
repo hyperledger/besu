@@ -159,7 +159,7 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
   }
 
   public void recordBlockEvent(final BlockAddedEvent event) {
-    final Hash blockHash = event.getBlock().getHash();
+    final Hash blockHash = event.getHeader().getHash();
     final Collection<BlockFilter> blockFilters =
         filterRepository.getFiltersOfType(BlockFilter.class);
     blockFilters.forEach(
@@ -179,7 +179,7 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
             filter -> {
               final Optional<Long> maybeToBlockNumber = filter.getToBlock().getNumber();
               return maybeToBlockNumber.isEmpty()
-                  || maybeToBlockNumber.get() >= event.getBlock().getHeader().getNumber();
+                  || maybeToBlockNumber.get() >= event.getHeader().getNumber();
             })
         .forEach(
             filter -> {

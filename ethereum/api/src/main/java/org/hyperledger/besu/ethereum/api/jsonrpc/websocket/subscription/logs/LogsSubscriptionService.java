@@ -75,7 +75,7 @@ public class LogsSubscriptionService implements Consumer<LogWithMetadata> {
       final LogsQuery logsQuery = subscription.getFilterParameter().getLogsQuery();
 
       privacyQueries
-          .matchingLogs(privacyGroupId, event.getBlock().getHash(), logsQuery)
+          .matchingLogs(privacyGroupId, event.getHeader().getHash(), logsQuery)
           .forEach(logWithMetadata -> sendLogToSubscription(logWithMetadata, subscription));
     };
   }

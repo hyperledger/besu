@@ -249,7 +249,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             o ->
                 miningConfiguration.setBlockPeriodSeconds(
                     forksSchedule
-                        .getFork(o.getBlock().getHeader().getNumber() + 1)
+                        .getFork(o.getHeader().getNumber() + 1)
                         .getValue()
                         .getBlockPeriodSeconds()));
 

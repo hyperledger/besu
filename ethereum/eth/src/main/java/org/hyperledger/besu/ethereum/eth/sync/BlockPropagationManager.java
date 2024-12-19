@@ -183,21 +183,23 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
 
   private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {
     // Check to see if any of our pending blocks are now ready for import
-    final Block newBlock = blockAddedEvent.getBlock();
-    LOG.atTrace()
-        .setMessage("Block added event type {} for block {}. Current status {}")
-        .addArgument(blockAddedEvent::getEventType)
-        .addArgument(newBlock::toLogString)
-        .addArgument(this)
-        .log();
-
-    // If there is no children to process, maybe try non announced blocks
-    if (!maybeProcessPendingChildrenBlocks(newBlock)) {
+    if (blockAddedEvent.getEventType() != EventType.HEAD_ADVANCED_DURING_SYNC) {
+      final Block newBlock = blockAddedEvent.getBlock();
       LOG.atTrace()
-          .setMessage("There are no pending blocks ready to import for block {}")
+          .setMessage("Block added event type {} for block {}. Current status {}")
+          .addArgument(blockAddedEvent::getEventType)
           .addArgument(newBlock::toLogString)
+          .addArgument(this)
           .log();
-      maybeProcessNonAnnouncedBlocks(newBlock);
+
+      // If there is no children to process, maybe try non announced blocks
+      if (!maybeProcessPendingChildrenBlocks(newBlock)) {
+        LOG.atTrace()
+            .setMessage("There are no pending blocks ready to import for block {}")
+            .addArgument(newBlock::toLogString)
+            .log();
+        maybeProcessNonAnnouncedBlocks(newBlock);
+      }
     }
 
     if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {

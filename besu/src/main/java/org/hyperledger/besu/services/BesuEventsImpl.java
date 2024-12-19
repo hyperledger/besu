@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -85,12 +86,13 @@ public class BesuEventsImpl implements BesuEvents {
   @Override
   public long addBlockAddedListener(final BlockAddedListener listener) {
     return blockchain.observeBlockAdded(
-        event ->
+        event -> {
+          if (event.getEventType() != BlockAddedEvent.EventType.HEAD_ADVANCED_DURING_SYNC) {
             listener.onBlockAdded(
                 blockAddedContext(
-                    event.getBlock()::getHeader,
-                    event.getBlock()::getBody,
-                    event::getTransactionReceipts)));
+                    event::getHeader, event.getBlock()::getBody, event::getTransactionReceipts));
+          }
+        });
   }
 
   @Override
