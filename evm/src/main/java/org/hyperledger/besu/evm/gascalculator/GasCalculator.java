@@ -673,8 +673,8 @@ public interface GasCalculator {
   }
 
   /**
-   * Calculates the refund for proessing the 7702 code delegation list if an delegater account
-   * already exist in the trie.
+   * Calculates the refund for processing the 7702 code delegation list if a delegator account
+   * already exists in the trie.
    *
    * @param alreadyExistingAccountSize The number of accounts already in the trie
    * @return the gas refund

@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.merge;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -46,7 +46,7 @@ public class MergeProtocolScheduleTest {
             + "\"LondonBlock\": 1559}"
             + "}";
 
-    final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
+    final GenesisConfigOptions config = GenesisConfig.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
             config,
@@ -67,7 +67,7 @@ public class MergeProtocolScheduleTest {
   @Test
   public void mergeSpecificModificationsAreUnappliedForShanghai() {
 
-    final GenesisConfigOptions config = GenesisConfigFile.mainnet().getConfigOptions();
+    final GenesisConfigOptions config = GenesisConfig.mainnet().getConfigOptions();
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
             config,
@@ -108,7 +108,7 @@ public class MergeProtocolScheduleTest {
             + "\"cancunTime\": 1000}"
             + "}";
 
-    final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
+    final GenesisConfigOptions config = GenesisConfig.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
             config,
@@ -141,7 +141,7 @@ public class MergeProtocolScheduleTest {
 
   @Test
   public void mergeSpecificModificationsAreUnappliedForAllMainnetForksAfterParis() {
-    final GenesisConfigOptions config = GenesisConfigFile.mainnet().getConfigOptions();
+    final GenesisConfigOptions config = GenesisConfig.mainnet().getConfigOptions();
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
             config,
@@ -178,7 +178,7 @@ public class MergeProtocolScheduleTest {
   public void parametersAlignWithMainnetWithAdjustments() {
     final ProtocolSpec london =
         MergeProtocolSchedule.create(
-                GenesisConfigFile.DEFAULT.getConfigOptions(),
+                GenesisConfig.DEFAULT.getConfigOptions(),
                 false,
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),

@@ -22,7 +22,7 @@ import org.hyperledger.besu.components.BesuPluginContextModule;
 import org.hyperledger.besu.components.MockBesuCommandModule;
 import org.hyperledger.besu.components.NoOpMetricsSystemModule;
 import org.hyperledger.besu.components.PrivacyTestModule;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -146,7 +146,7 @@ class FlexGroupPrivacyTest {
         @Named("dataDir") final Path dataDir) {
 
       return new BesuController.Builder()
-          .fromGenesisFile(GenesisConfigFile.mainnet(), SyncMode.FULL)
+          .fromGenesisFile(GenesisConfig.mainnet(), SyncMode.FULL)
           .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
           .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
           .storageProvider(new InMemoryKeyValueStorageProvider())

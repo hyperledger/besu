@@ -85,7 +85,7 @@ import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
@@ -334,8 +334,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
-  private final Supplier<GenesisConfigFile> genesisConfigFileSupplier =
-      Suppliers.memoize(this::readGenesisConfigFile);
+  private final Supplier<GenesisConfig> genesisConfigSupplier =
+      Suppliers.memoize(this::readGenesisConfig);
   private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
   private final Supplier<MiningConfiguration> miningParametersSupplier =
@@ -611,14 +611,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
       defaultValue = "localhost,127.0.0.1")
   private final JsonRPCAllowlistHostsProperty hostsAllowlist = new JsonRPCAllowlistHostsProperty();
-
-  @Option(
-      names = {"--host-whitelist"},
-      hidden = true,
-      paramLabel = "<hostname>[,<hostname>...]... or * or all",
-      description =
-          "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
-  private final JsonRPCAllowlistHostsProperty hostsWhitelist = new JsonRPCAllowlistHostsProperty();
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
@@ -1606,21 +1598,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private GenesisConfigFile readGenesisConfigFile() {
-    GenesisConfigFile effectiveGenesisFile;
+  private GenesisConfig readGenesisConfig() {
+    GenesisConfig effectiveGenesisFile;
     effectiveGenesisFile =
         network.equals(EPHEMERY)
             ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
             : genesisFile != null
-                ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
-                : GenesisConfigFile.fromResource(
+                ? GenesisConfig.fromSource(genesisConfigSource(genesisFile))
+                : GenesisConfig.fromResource(
                     Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
   private GenesisConfigOptions readGenesisConfigOptions() {
     try {
-      return genesisConfigFileSupplier.get().getConfigOptions();
+      return genesisConfigSupplier.get().getConfigOptions();
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine, "Unable to load genesis file. " + e.getCause());
@@ -1712,15 +1704,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             unstableIpcOptions.getRpcIpcApis());
     inProcessRpcConfiguration = inProcessRpcOptions.toDomainObject();
     dataStorageConfiguration = getDataStorageConfiguration();
-    // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
-    if (!hostsWhitelist.isEmpty()) {
-      // if allowlist == default values, remove the default values
-      if (hostsAllowlist.size() == 2
-          && hostsAllowlist.containsAll(List.of("localhost", "127.0.0.1"))) {
-        hostsAllowlist.removeAll(List.of("localhost", "127.0.0.1"));
-      }
-      hostsAllowlist.addAll(hostsWhitelist);
-    }
 
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
@@ -2365,7 +2348,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setDnsDiscoveryUrl(null);
     }
 
-    builder.setGenesisConfigFile(genesisConfigFileSupplier.get());
+    builder.setGenesisConfig(genesisConfigSupplier.get());
 
     if (networkId != null) {
       builder.setNetworkId(networkId);
