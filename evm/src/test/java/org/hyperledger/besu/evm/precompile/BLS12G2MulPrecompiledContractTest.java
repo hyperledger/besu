@@ -34,9 +34,13 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 
+/**
+ * G2 MUL was removed from EIP-2537 in favor of single point/scalar MSM. This test is being
+ * repurposed to test single point/pairs.
+ */
 class BLS12G2MulPrecompiledContractTest {
 
-  final BLS12G2MulPrecompiledContract contract = new BLS12G2MulPrecompiledContract();
+  final BLS12G2MultiExpPrecompiledContract contract = new BLS12G2MultiExpPrecompiledContract();
 
   private final MessageFrame messageFrame = mock(MessageFrame.class);
 
@@ -44,7 +48,7 @@ class BLS12G2MulPrecompiledContractTest {
     return CharStreams.readLines(
             new InputStreamReader(
                 Objects.requireNonNull(
-                    BLS12G2MulPrecompiledContractTest.class.getResourceAsStream("g2_mul.csv")),
+                    BLS12G2MultiExpPrecompiledContract.class.getResourceAsStream("g2_mul.csv")),
                 UTF_8))
         .stream()
         .map(line -> Arguments.of((Object[]) line.split(",", 4)))
