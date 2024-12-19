@@ -189,7 +189,7 @@ public class EvmToyCommand implements Runnable {
               .blockValues(new ToyBlockValues())
               .completer(c -> {})
               .miningBeneficiary(Address.ZERO)
-              .blockHashLookup(n -> null)
+              .blockHashLookup((__, ___) -> null)
               .build();
 
       final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);
