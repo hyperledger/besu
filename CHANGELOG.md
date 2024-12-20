@@ -17,6 +17,7 @@
 ### Additions and Improvements
 - Add RPC HTTP options to specify custom truststore and its password [#7978](https://github.com/hyperledger/besu/pull/7978)
 - Retrieve all transaction receipts for a block in one request [#6646](https://github.com/hyperledger/besu/pull/6646)
+- Implement EIP-7840: Add blob schedule to config files [#8042](https://github.com/hyperledger/besu/pull/8042)
 
 
 ### Bug fixes
