@@ -408,6 +408,46 @@ class GenesisConfigOptionsTest {
         .containsValue(Address.ZERO);
   }
 
+  @SuppressWarnings("unchecked")
+  @Test
+  void asMapIncludesBlobFeeSchedule() {
+    final GenesisConfigOptions config =
+        GenesisConfig.fromConfig(
+                "{\n"
+                    + "  \"config\": {\n"
+                    + "    \"blobSchedule\": {\n"
+                    + "      \"cancun\": {\n"
+                    + "        \"target\": 1,\n"
+                    + "        \"max\": 2\n"
+                    + "      },\n"
+                    + "      \"prague\": {\n"
+                    + "        \"target\": 3,\n"
+                    + "        \"max\": 4\n"
+                    + "      },\n"
+                    + "      \"osaka\": {\n"
+                    + "        \"target\": 4,\n"
+                    + "        \"max\": 5\n"
+                    + "      }\n"
+                    + "    }\n"
+                    + "  }\n"
+                    + "}")
+            .getConfigOptions();
+
+    final Map<String, Object> map = config.asMap();
+    assertThat(map).containsOnlyKeys("blobSchedule");
+    final Map<String, Object> blobSchedule = (Map<String, Object>) map.get("blobSchedule");
+    assertThat(blobSchedule).containsOnlyKeys("cancun", "prague", "osaka");
+    assertThat((Map<String, Object>) blobSchedule.get("cancun"))
+        .containsOnlyKeys("target", "max")
+        .containsValues(1, 2);
+    assertThat((Map<String, Object>) blobSchedule.get("prague"))
+        .containsOnlyKeys("target", "max")
+        .containsValues(3, 4);
+    assertThat((Map<String, Object>) blobSchedule.get("osaka"))
+        .containsOnlyKeys("target", "max")
+        .containsValues(4, 5);
+  }
+
   private GenesisConfigOptions fromConfigOptions(final Map<String, Object> configOptions) {
     final ObjectNode rootNode = JsonUtil.createEmptyObjectNode();
     final ObjectNode options = JsonUtil.objectNodeFromMap(configOptions);
