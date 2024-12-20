@@ -333,7 +333,7 @@ public final class GenesisState {
     return isVerkleAtGenesis(genesis);
   }
 
-  private static boolean isVerkleAtGenesis(final GenesisConfigFile genesis) {
+  private static boolean isVerkleAtGenesis(final GenesisConfig genesis) {
     final OptionalLong verkleTimestamp = genesis.getConfigOptions().getVerkleTime();
     if (verkleTimestamp.isPresent()) {
       return genesis.getTimestamp() >= verkleTimestamp.getAsLong();
