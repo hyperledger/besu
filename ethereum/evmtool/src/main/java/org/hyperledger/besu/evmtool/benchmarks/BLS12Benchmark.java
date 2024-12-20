@@ -17,10 +17,8 @@ package org.hyperledger.besu.evmtool.benchmarks;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BLS12G1AddPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12G1MulPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BLS12G1MultiExpPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BLS12G2AddPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12G2MulPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BLS12G2MultiExpPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BLS12MapFp2ToG2PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BLS12MapFpToG1PrecompiledContract;
@@ -166,11 +164,9 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     }
 
     benchmarkG1Add(output);
-    benchmarkG1Mul(output);
     benchmarkG1MultiExp32Pairs(output);
     benchmarkMapFpToG1(output);
     benchmarkG2Add(output);
-    benchmarkG2Mul(output);
     benchmarkG2MultiExp32Pairs(output);
     benchmarkMapFp2ToG2(output);
     benchmarkBlsPairing(output);
@@ -195,28 +191,6 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     gasCost /= testCases.size();
     output.printf(
         "Bls12 G1 Add %,6d avg gas @%,7.1f µs /%,8.1f MGps%n",
-        gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
-  }
-
-  private void benchmarkG1Mul(final PrintStream output) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
-    for (int i = 0; i < g1PointPairs.length; i++) {
-      testCases.put("G1 Mul " + i, Bytes.fromHexString(g1PointPairs[i] + scalars[i]));
-    }
-
-    BLS12G1MulPrecompiledContract g1addContract = new BLS12G1MulPrecompiledContract();
-    warmup = MATH_WARMUP / testCases.size();
-    iterations = MATH_ITERATIONS / testCases.size();
-    double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
-    long gasCost = 0;
-    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), g1addContract);
-      gasCost += g1addContract.gasRequirement(testCase.getValue());
-    }
-    execTime /= testCases.size();
-    gasCost /= testCases.size();
-    output.printf(
-        "Bls12 G1 Mul %,6d avg gas @%,7.1f µs /%,8.1f MGps%n",
         gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
   }
 
@@ -287,28 +261,6 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     gasCost /= testCases.size();
     output.printf(
         "Bls12 G2 Add %,6d avg gas @%,7.1f µs /%,8.1f MGps%n",
-        gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
-  }
-
-  private void benchmarkG2Mul(final PrintStream output) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
-    for (int i = 0; i < g2PointPairs.length; i++) {
-      testCases.put("G2 Mul " + i, Bytes.fromHexString(g2PointPairs[i] + scalars[i]));
-    }
-
-    BLS12G2MulPrecompiledContract g1addContract = new BLS12G2MulPrecompiledContract();
-    warmup = MATH_WARMUP / testCases.size();
-    iterations = MATH_ITERATIONS / testCases.size();
-    double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
-    long gasCost = 0;
-    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), g1addContract);
-      gasCost += g1addContract.gasRequirement(testCase.getValue());
-    }
-    execTime /= testCases.size();
-    gasCost /= testCases.size();
-    output.printf(
-        "Bls12 G2 Mul %,6d avg gas @%,7.1f µs /%,8.1f MGps%n",
         gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
   }
 
