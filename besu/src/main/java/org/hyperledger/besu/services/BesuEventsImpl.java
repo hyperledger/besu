@@ -88,6 +88,7 @@ public class BesuEventsImpl implements BesuEvents {
     return blockchain.observeBlockAdded(
         event -> {
           if (event.getEventType() != BlockAddedEvent.EventType.HEAD_ADVANCED_DURING_SYNC) {
+            // TODO: No body available when SyncBlock is used for syncing. Is that OK?
             listener.onBlockAdded(
                 blockAddedContext(
                     event::getHeader, event.getBlock()::getBody, event::getTransactionReceipts));
