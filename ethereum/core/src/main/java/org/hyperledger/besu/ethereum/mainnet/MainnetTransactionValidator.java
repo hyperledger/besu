@@ -52,6 +52,8 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
  */
 public class MainnetTransactionValidator implements TransactionValidator {
 
+  public static final BigInteger TWO_POW_8 = BigInteger.TWO.pow(8);
+  public static final BigInteger TWO_POW_64 = BigInteger.TWO.pow(64);
   public static final BigInteger TWO_POW_256 = BigInteger.TWO.pow(256);
 
   private final GasCalculator gasCalculator;
@@ -158,30 +160,26 @@ public class MainnetTransactionValidator implements TransactionValidator {
           "transaction code delegation transactions must have a to address");
     }
 
-    final BigInteger halfCurveOrder = SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
     final Optional<ValidationResult<TransactionInvalidReason>> validationResult =
         transaction
             .getCodeDelegationList()
             .map(
                 codeDelegations -> {
                   for (CodeDelegation codeDelegation : codeDelegations) {
-                    if (codeDelegation.chainId().compareTo(TWO_POW_256) >= 0) {
+                    if (codeDelegation.chainId().compareTo(TWO_POW_64) >= 0) {
                       throw new IllegalArgumentException(
-                          "Invalid 'chainId' value, should be < 2^256 but got "
+                          "Invalid 'chainId' value, should be < 2^64 but got "
                               + codeDelegation.chainId());
                     }
 
-                    if (codeDelegation.signature().getS().compareTo(halfCurveOrder) > 0) {
-                      return ValidationResult.invalid(
-                          TransactionInvalidReason.INVALID_SIGNATURE,
-                          "Invalid signature for code delegation. S value must be less or equal than the half curve order.");
+                    if (codeDelegation.r().compareTo(TWO_POW_256) >= 0) {
+                      throw new IllegalArgumentException(
+                          "Invalid 'r' value, should be < 2^256 but got " + codeDelegation.r());
                     }
 
-                    if (codeDelegation.signature().getRecId() != 0
-                        && codeDelegation.signature().getRecId() != 1) {
-                      return ValidationResult.invalid(
-                          TransactionInvalidReason.INVALID_SIGNATURE,
-                          "Invalid signature for code delegation. RecId value must be 0 or 1.");
+                    if (codeDelegation.s().compareTo(TWO_POW_256) >= 0) {
+                      throw new IllegalArgumentException(
+                          "Invalid 's' value, should be < 2^256 but got " + codeDelegation.s());
                     }
                   }
 

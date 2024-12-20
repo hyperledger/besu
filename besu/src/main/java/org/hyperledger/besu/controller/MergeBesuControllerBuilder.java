@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -79,6 +80,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         new BackwardSyncContext(
             protocolContext,
             protocolSchedule,
+            syncConfig,
             metricsSystem,
             ethProtocolManager.ethContext(),
             syncState,
@@ -235,14 +237,17 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
-    List<PeerValidator> retval = super.createPeerValidators(protocolSchedule);
+  protected List<PeerValidator> createPeerValidators(
+      final ProtocolSchedule protocolSchedule, final PeerTaskExecutor peerTaskExecutor) {
+    List<PeerValidator> retval = super.createPeerValidators(protocolSchedule, peerTaskExecutor);
     final OptionalLong powTerminalBlockNumber = genesisConfigOptions.getTerminalBlockNumber();
     final Optional<Hash> powTerminalBlockHash = genesisConfigOptions.getTerminalBlockHash();
     if (powTerminalBlockHash.isPresent() && powTerminalBlockNumber.isPresent()) {
       retval.add(
           new RequiredBlocksPeerValidator(
               protocolSchedule,
+              peerTaskExecutor,
+              syncConfig,
               metricsSystem,
               powTerminalBlockNumber.getAsLong(),
               powTerminalBlockHash.get(),

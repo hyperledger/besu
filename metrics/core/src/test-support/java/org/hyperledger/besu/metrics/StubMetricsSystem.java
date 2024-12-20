@@ -18,9 +18,10 @@ import static java.util.Arrays.asList;
 
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedSummary;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
@@ -30,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.cache.Cache;
@@ -98,11 +98,13 @@ public class StubMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public void trackExternalSummary(
+  public LabelledSuppliedSummary createLabelledSuppliedSummary(
       final MetricCategory category,
       final String name,
       final String help,
-      final Supplier<ExternalSummary> summarySupplier) {}
+      final String... labelNames) {
+    return NoOpMetricsSystem.getLabelledSuppliedSummary(labelNames.length);
+  }
 
   @Override
   public void createGauge(
@@ -111,6 +113,16 @@ public class StubMetricsSystem implements ObservableMetricsSystem {
       final String help,
       final DoubleSupplier valueSupplier) {
     gauges.put(name, valueSupplier);
+  }
+
+  @Override
+  public LabelledMetric<Histogram> createLabelledHistogram(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final double[] buckets,
+      final String... labelNames) {
+    return NoOpMetricsSystem.getHistogramLabelledMetric(labelNames.length);
   }
 
   @Override

@@ -37,6 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
  * <p>Manages the lifecycle of a TCP connection according to a particular variant of the Stratum
  * protocol.
  */
+@Deprecated(since = "24.12.0")
 public interface StratumProtocol {
 
   /**

@@ -120,7 +120,6 @@ public class AdminPeersTest {
     final EthPeer ethPeer =
         new EthPeer(
             p,
-            "eth",
             c -> {},
             List.of(),
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,

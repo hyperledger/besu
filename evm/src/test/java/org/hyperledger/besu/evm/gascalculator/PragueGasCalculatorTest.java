@@ -18,13 +18,52 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 
-import org.junit.jupiter.api.Test;
+import java.util.List;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PragueGasCalculatorTest {
+
+  private static final long TARGET_BLOB_GAS_PER_BLOCK_PRAGUE = 0xC0000;
+  private final PragueGasCalculator pragueGasCalculator = new PragueGasCalculator();
+
   @Test
   void testPrecompileSize() {
     PragueGasCalculator subject = new PragueGasCalculator();
     assertThat(subject.isPrecompile(Address.precompiled(0x14))).isFalse();
     assertThat(subject.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
+  }
+
+  @ParameterizedTest(
+      name = "{index} - parent gas {0}, used gas {1}, blob target {2} new excess {3}")
+  @MethodSource("blobGasses")
+  public void shouldCalculateExcessBlobGasCorrectly(
+      final long parentExcess, final long used, final long expected) {
+    final long usedBlobGas = pragueGasCalculator.blobGasCost(used);
+    assertThat(pragueGasCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
+        .isEqualTo(expected);
+  }
+
+  Iterable<Arguments> blobGasses() {
+    long sixBlobTargetGas = TARGET_BLOB_GAS_PER_BLOCK_PRAGUE;
+    long newTargetCount = 6;
+
+    return List.of(
+        // New target count
+        Arguments.of(0L, 0L, 0L),
+        Arguments.of(sixBlobTargetGas, 0L, 0L),
+        Arguments.of(newTargetCount, 0L, 0L),
+        Arguments.of(0L, newTargetCount, 0L),
+        Arguments.of(1L, newTargetCount, 1L),
+        Arguments.of(
+            pragueGasCalculator.blobGasCost(newTargetCount),
+            1L,
+            pragueGasCalculator.getBlobGasPerBlob()),
+        Arguments.of(sixBlobTargetGas, newTargetCount, sixBlobTargetGas));
   }
 }

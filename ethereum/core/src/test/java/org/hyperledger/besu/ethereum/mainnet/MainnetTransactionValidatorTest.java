@@ -24,7 +24,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -589,7 +589,7 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldAcceptTransactionWithAtLeastOneBlob() {
-    when(gasCalculator.blobGasCost(anyInt())).thenReturn(2L);
+    when(gasCalculator.blobGasCost(anyLong())).thenReturn(2L);
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,

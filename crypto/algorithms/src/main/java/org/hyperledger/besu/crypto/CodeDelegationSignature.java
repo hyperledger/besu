@@ -42,7 +42,7 @@ public class CodeDelegationSignature extends SECPSignature {
    * @return the new CodeDelegationSignature
    */
   public static CodeDelegationSignature create(
-      final BigInteger r, final BigInteger s, final BigInteger yParity) {
+      final BigInteger r, final BigInteger s, final byte yParity) {
     checkNotNull(r);
     checkNotNull(s);
 
@@ -56,11 +56,6 @@ public class CodeDelegationSignature extends SECPSignature {
           "Invalid 's' value, should be < 2^256 but got " + s.toString(16));
     }
 
-    if (yParity.compareTo(TWO_POW_256) >= 0) {
-      throw new IllegalArgumentException(
-          "Invalid 'yParity' value, should be < 2^256 but got " + yParity.toString(16));
-    }
-
-    return new CodeDelegationSignature(r, s, yParity.byteValue());
+    return new CodeDelegationSignature(r, s, yParity);
   }
 }

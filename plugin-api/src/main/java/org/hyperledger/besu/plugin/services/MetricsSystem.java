@@ -16,9 +16,11 @@ package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedSummary;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
@@ -184,7 +186,13 @@ public interface MetricsSystem extends BesuService {
    * @param help A human readable description of the metric.
    * @param valueSupplier A supplier for the double value to be presented.
    */
-  void createGauge(MetricCategory category, String name, String help, DoubleSupplier valueSupplier);
+  default void createGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final DoubleSupplier valueSupplier) {
+    createLabelledSuppliedGauge(category, name, help).labels(valueSupplier);
+  }
 
   /**
    * Creates a gauge for displaying integer values.
@@ -219,7 +227,48 @@ public interface MetricsSystem extends BesuService {
   }
 
   /**
-   * Track a summary that is computed externally to this metric system. Useful when existing
+   * Creates a histogram with assigned labels
+   *
+   * @param category The {@link MetricCategory} this histogram is assigned to.
+   * @param name A name for this metric.
+   * @param help A human-readable description of the metric.
+   * @param buckets An array of buckets to assign to the histogram
+   * @param labelNames An array of labels to assign to the histogram.
+   * @return The labelled histogram.
+   */
+  LabelledMetric<Histogram> createLabelledHistogram(
+      MetricCategory category, String name, String help, double[] buckets, String... labelNames);
+
+  /**
+   * Creates a histogram
+   *
+   * @param category The {@link MetricCategory} this histogram is assigned to.
+   * @param name A name for this metric.
+   * @param help A human-readable description of the metric.
+   * @param buckets An array of buckets to assign to the histogram
+   * @return The labelled histogram.
+   */
+  default Histogram createHistogram(
+      final MetricCategory category, final String name, final String help, final double[] buckets) {
+    return createLabelledHistogram(category, name, help, buckets).labels();
+  }
+
+  /**
+   * Create a summary with assigned labels, that is computed externally to this metric system.
+   * Useful when existing libraries calculate the summary data on their own, and we want to export
+   * that summary via the configured metric system. A notable example are RocksDB statistics.
+   *
+   * @param category The {@link MetricCategory} this external summary is assigned to.
+   * @param name A name for the metric.
+   * @param help A human readable description of the metric.
+   * @param labelNames An array of labels to assign to the supplier summary.
+   * @return The created labelled supplied summary
+   */
+  LabelledSuppliedSummary createLabelledSuppliedSummary(
+      MetricCategory category, String name, String help, String... labelNames);
+
+  /**
+   * Create a summary that is computed externally to this metric system. Useful when existing
    * libraries calculate the summary data on their own, and we want to export that summary via the
    * configured metric system. A notable example are RocksDB statistics.
    *
@@ -228,8 +277,13 @@ public interface MetricsSystem extends BesuService {
    * @param help A human readable description of the metric.
    * @param summarySupplier A supplier to retrieve the summary data when needed.
    */
-  void trackExternalSummary(
-      MetricCategory category, String name, String help, Supplier<ExternalSummary> summarySupplier);
+  default void createSummary(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final Supplier<ExternalSummary> summarySupplier) {
+    createLabelledSuppliedSummary(category, name, help).labels(summarySupplier);
+  }
 
   /**
    * Collect metrics from Guava cache.

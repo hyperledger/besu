@@ -15,21 +15,37 @@
 package org.hyperledger.besu.metrics.prometheus;
 
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-import io.prometheus.client.Summary;
+import java.util.Map;
 
-class PrometheusTimer implements LabelledMetric<OperationTimer> {
+import io.prometheus.metrics.core.datapoints.DistributionDataPoint;
+import io.prometheus.metrics.core.metrics.Summary;
 
-  private final Summary summary;
+/**
+ * An implementation of Besu timer backed by a Prometheus summary. The summary provides a total
+ * count of durations and a sum of all observed durations, it calculates configurable quantiles over
+ * a sliding time window.
+ */
+class PrometheusTimer extends AbstractPrometheusSummary implements LabelledMetric<OperationTimer> {
 
-  public PrometheusTimer(final Summary summary) {
-    this.summary = summary;
+  public PrometheusTimer(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final Map<Double, Double> quantiles,
+      final String... labelNames) {
+    super(category, name);
+    final var summaryBuilder =
+        Summary.builder().name(this.prefixedName).help(help).labelNames(labelNames);
+    quantiles.forEach(summaryBuilder::quantile);
+    this.collector = summaryBuilder.build();
   }
 
   @Override
   public OperationTimer labels(final String... labels) {
-    final Summary.Child metric = summary.labels(labels);
+    final DistributionDataPoint metric = ((Summary) collector).labelValues(labels);
     return () -> metric.startTimer()::observeDuration;
   }
 }

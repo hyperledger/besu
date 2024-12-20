@@ -42,8 +42,8 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogMa
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -110,7 +110,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
         0,
         transaction,
         miningBeneficiary,
-        (blockNumber) -> Hash.EMPTY,
+        (__, ___) -> Hash.EMPTY,
         blobGasPrice,
         privateMetadataUpdater);
 
@@ -121,7 +121,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
             eq(transaction),
             eq(miningBeneficiary),
             any(OperationTracer.class),
-            any(BlockHashOperation.BlockHashLookup.class),
+            any(BlockHashLookup.class),
             eq(true),
             eq(TransactionValidationParams.processingBlock()),
             eq(privateMetadataUpdater),
@@ -156,7 +156,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
         0,
         transaction,
         miningBeneficiary,
-        (blockNumber) -> Hash.EMPTY,
+        (__, ___) -> Hash.EMPTY,
         blobGasPrice,
         privateMetadataUpdater);
 
@@ -185,7 +185,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
         0,
         transaction,
         miningBeneficiary,
-        (blockNumber) -> Hash.EMPTY,
+        (__, ___) -> Hash.EMPTY,
         blobGasPrice,
         privateMetadataUpdater);
 
@@ -196,7 +196,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
             eq(transaction),
             eq(miningBeneficiary),
             any(OperationTracer.class),
-            any(BlockHashOperation.BlockHashLookup.class),
+            any(BlockHashLookup.class),
             eq(true),
             eq(TransactionValidationParams.processingBlock()),
             eq(privateMetadataUpdater),

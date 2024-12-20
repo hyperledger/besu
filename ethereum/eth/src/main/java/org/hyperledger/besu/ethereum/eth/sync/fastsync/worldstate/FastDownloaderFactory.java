@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -60,7 +59,6 @@ public class FastDownloaderFactory {
       final ProtocolContext protocolContext,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SyncState syncState,
       final Clock clock,
@@ -128,7 +126,6 @@ public class FastDownloaderFactory {
                 protocolSchedule,
                 protocolContext,
                 ethContext,
-                peerTaskExecutor,
                 syncState,
                 pivotBlockSelector,
                 metricsSystem),

@@ -56,32 +56,40 @@ public class PermissionsOptions {
           "Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
   private String accountPermissionsConfigFile = null;
 
+  private static final String DEPRECATION_PREFIX =
+      "Deprecated. Onchain permissioning is deprecated. See CHANGELOG for alternative options. ";
+
   @CommandLine.Option(
       names = {"--permissions-nodes-contract-address"},
-      description = "Address of the node permissioning smart contract",
+      description = DEPRECATION_PREFIX + "Address of the node permissioning smart contract",
       arity = "1")
   private final Address permissionsNodesContractAddress = null;
 
   @CommandLine.Option(
       names = {"--permissions-nodes-contract-version"},
-      description = "Version of the EEA Node Permissioning interface (default: ${DEFAULT-VALUE})")
+      description =
+          DEPRECATION_PREFIX
+              + "Version of the EEA Node Permissioning interface (default: ${DEFAULT-VALUE})")
   private final Integer permissionsNodesContractVersion = 1;
 
   @CommandLine.Option(
       names = {"--permissions-nodes-contract-enabled"},
-      description = "Enable node level permissions via smart contract (default: ${DEFAULT-VALUE})")
+      description =
+          DEPRECATION_PREFIX
+              + "Enable node level permissions via smart contract (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsNodesContractEnabled = false;
 
   @CommandLine.Option(
       names = {"--permissions-accounts-contract-address"},
-      description = "Address of the account permissioning smart contract",
+      description = DEPRECATION_PREFIX + "Address of the account permissioning smart contract",
       arity = "1")
   private final Address permissionsAccountsContractAddress = null;
 
   @CommandLine.Option(
       names = {"--permissions-accounts-contract-enabled"},
       description =
-          "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})")
+          DEPRECATION_PREFIX
+              + "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsAccountsContractEnabled = false;
 
   /** Default constructor. */
@@ -151,6 +159,7 @@ public class PermissionsOptions {
         SmartContractPermissioningConfiguration.createDefault();
 
     if (Boolean.TRUE.equals(permissionsNodesContractEnabled)) {
+      logger.warn("Onchain (contract) node permissioning options are " + DEPRECATION_PREFIX);
       if (permissionsNodesContractAddress == null) {
         throw new CommandLine.ParameterException(
             commandLine,
@@ -170,6 +179,7 @@ public class PermissionsOptions {
     }
 
     if (Boolean.TRUE.equals(permissionsAccountsContractEnabled)) {
+      logger.warn("Onchain (contract) account permissioning options are " + DEPRECATION_PREFIX);
       if (permissionsAccountsContractAddress == null) {
         throw new CommandLine.ParameterException(
             commandLine,

@@ -65,6 +65,7 @@ import org.slf4j.LoggerFactory;
  * TCP server allowing miners to connect to the client over persistent TCP connections, using the
  * various Stratum protocols.
  */
+@Deprecated(since = "24.12.0")
 public class StratumServer implements PoWObserver {
 
   private static final Logger logger = LoggerFactory.getLogger(StratumServer.class);

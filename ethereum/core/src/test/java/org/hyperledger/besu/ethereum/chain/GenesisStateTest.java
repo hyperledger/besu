@@ -328,8 +328,8 @@ final class GenesisStateTest {
         .isEqualTo(
             Hash.fromHexString(
                 "0x6036c41849da9c076ed79654d434017387a88fb833c2856b32e18218b3341c5f"));
-    assertThat(header.getTargetBlobCount().isPresent()).isTrue();
-    assertThat(header.getTargetBlobCount().get()).isEqualTo(UInt64.ONE);
+    assertThat(header.getTargetBlobsPerBlock().isPresent()).isTrue();
+    assertThat(header.getTargetBlobsPerBlock().get()).isEqualTo(UInt64.ONE);
 
     assertThat(header.getHash())
         .isEqualTo(

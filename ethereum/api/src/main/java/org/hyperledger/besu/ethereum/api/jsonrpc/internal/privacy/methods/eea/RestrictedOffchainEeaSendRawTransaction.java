@@ -35,7 +35,7 @@ import java.util.Optional;
 import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
 
-@Deprecated(since = "24.11.0")
+@Deprecated(since = "24.12.0")
 public class RestrictedOffchainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
   final PrivacyController privacyController;

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
@@ -214,30 +215,31 @@ public class GetReceiptsFromPeerTaskTest {
         new GetReceiptsFromPeerTask(
             List.of(blockHeader1, blockHeader2, blockHeader3), protocolSchedule);
 
-    EthPeer failForIncorrectProtocol = mockPeer("incorrectProtocol", 5);
-    EthPeer failForShortChainHeight = mockPeer("incorrectProtocol", 1);
-    EthPeer successfulCandidate = mockPeer(EthProtocol.NAME, 5);
+    EthPeer failForShortChainHeight = mockPeer(1);
+    EthPeer successfulCandidate = mockPeer(5);
 
-    Assertions.assertFalse(task.getPeerRequirementFilter().test(failForIncorrectProtocol));
     Assertions.assertFalse(task.getPeerRequirementFilter().test(failForShortChainHeight));
     Assertions.assertTrue(task.getPeerRequirementFilter().test(successfulCandidate));
   }
 
   @Test
-  public void testIsSuccessForPartialSuccess() {
+  public void testValidateResultForPartialSuccess() {
     GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(Collections.emptyList(), null);
 
-    Assertions.assertFalse(task.isSuccess(Collections.emptyMap()));
+    Assertions.assertEquals(
+        PeerTaskValidationResponse.NO_RESULTS_RETURNED,
+        task.validateResult(Collections.emptyMap()));
   }
 
   @Test
-  public void testIsSuccessForFullSuccess() {
+  public void testValidateResultForFullSuccess() {
     GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(Collections.emptyList(), null);
 
     Map<BlockHeader, List<TransactionReceipt>> map = new HashMap<>();
     map.put(mockBlockHeader(1), null);
 
-    Assertions.assertTrue(task.isSuccess(map));
+    Assertions.assertEquals(
+        PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD, task.validateResult(map));
   }
 
   private BlockHeader mockBlockHeader(final long blockNumber) {
@@ -251,11 +253,10 @@ public class GetReceiptsFromPeerTaskTest {
     return blockHeader;
   }
 
-  private EthPeer mockPeer(final String protocol, final long chainHeight) {
+  private EthPeer mockPeer(final long chainHeight) {
     EthPeer ethPeer = Mockito.mock(EthPeer.class);
     ChainState chainState = Mockito.mock(ChainState.class);
 
-    Mockito.when(ethPeer.getProtocolName()).thenReturn(protocol);
     Mockito.when(ethPeer.chainState()).thenReturn(chainState);
     Mockito.when(chainState.getEstimatedHeight()).thenReturn(chainHeight);
 

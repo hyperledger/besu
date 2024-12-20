@@ -21,7 +21,7 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SEPOLIA_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SEPOLIA_DISCOVERY_URL;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 
 import java.math.BigInteger;
 
@@ -77,8 +77,8 @@ public class EthNetworkConfigTest {
     EthNetworkConfig config =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
             .setNetworkId(BigInteger.valueOf(42))
-            .setGenesisConfigFile(
-                GenesisConfigFile.fromConfig(
+            .setGenesisConfig(
+                GenesisConfig.fromConfig(
                     """
             {
               "config":{
@@ -87,7 +87,7 @@ public class EthNetworkConfigTest {
             }
             """))
             .build();
-    assertThat(config.genesisConfigFile().getConfigOptions().getChainId())
+    assertThat(config.genesisConfig().getConfigOptions().getChainId())
         .contains(BigInteger.valueOf(1234567));
     assertThat(config.dnsDiscoveryUrl()).isNotNull();
     assertThat(config.bootNodes()).isNotEmpty();

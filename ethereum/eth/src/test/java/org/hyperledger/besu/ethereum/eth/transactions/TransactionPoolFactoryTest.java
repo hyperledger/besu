@@ -112,7 +112,6 @@ public class TransactionPoolFactoryTest {
     final NodeMessagePermissioningProvider nmpp = (destinationEnode, code) -> true;
     ethPeers =
         new EthPeers(
-            "ETH",
             () -> protocolSpec,
             TestClock.fixed(),
             new NoOpMetricsSystem(),

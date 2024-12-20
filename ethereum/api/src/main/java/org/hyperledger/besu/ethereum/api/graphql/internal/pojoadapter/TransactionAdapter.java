@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
@@ -65,6 +66,25 @@ public class TransactionAdapter extends AdapterBase {
     this.transactionWithMetadata = transactionWithMetadata;
   }
 
+  /**
+   * Constructs a new TransactionAdapter object with receipt.
+   *
+   * @param transactionWithMetadata the TransactionWithMetadata object to adapt.
+   * @param transactionReceiptWithMetadata the TransactionReceiptWithMetadata object to adapt.
+   */
+  public TransactionAdapter(
+      final @Nonnull TransactionWithMetadata transactionWithMetadata,
+      final @Nullable TransactionReceiptWithMetadata transactionReceiptWithMetadata) {
+    this.transactionWithMetadata = transactionWithMetadata;
+    this.transactionReceiptWithMetadata = Optional.ofNullable(transactionReceiptWithMetadata);
+  }
+
+  /**
+   * Reurns the receipt of the transaction.
+   *
+   * @param environment the data fetching environment.
+   * @return the receipt of the transaction.
+   */
   private Optional<TransactionReceiptWithMetadata> getReceipt(
       final DataFetchingEnvironment environment) {
     if (transactionReceiptWithMetadata == null) {

@@ -29,12 +29,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** Manages the execution of PeerTasks, respecting their PeerTaskRetryBehavior */
 public class PeerTaskExecutor {
+  private static final Logger LOG = LoggerFactory.getLogger(PeerTaskExecutor.class);
 
   private final PeerSelector peerSelector;
   private final PeerTaskRequestSender requestSender;
@@ -98,8 +101,8 @@ public class PeerTaskExecutor {
       if (peer.isEmpty()) {
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE);
-        continue;
+                Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE, Optional.empty());
+        break;
       }
       usedEthPeers.add(peer.get());
       executorResult = executeAgainstPeer(peerTask, peer.get());
@@ -138,43 +141,59 @@ public class PeerTaskExecutor {
           inflightRequestCountForThisTaskClass.decrementAndGet();
         }
 
-        if (peerTask.isSuccess(result)) {
+        PeerTaskValidationResponse validationResponse = peerTask.validateResult(result);
+        if (validationResponse == PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD) {
           peer.recordUsefulResponse();
           executorResult =
               new PeerTaskExecutorResult<>(
-                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS);
+                  Optional.ofNullable(result),
+                  PeerTaskExecutorResponseCode.SUCCESS,
+                  Optional.of(peer));
+          peerTask.postProcessResult(executorResult);
         } else {
-          // At this point, the result is most likely empty. Technically, this is a valid result, so
-          // we don't penalise the peer, but it's also a useless result, so we return
-          // INVALID_RESPONSE code
+          LOG.debug(
+              "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId());
+          validationResponse
+              .getDisconnectReason()
+              .ifPresent((disconnectReason) -> peer.disconnect(disconnectReason));
           executorResult =
               new PeerTaskExecutorResult<>(
-                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.INVALID_RESPONSE);
+                  Optional.ofNullable(result),
+                  PeerTaskExecutorResponseCode.INVALID_RESPONSE,
+                  Optional.of(peer));
         }
 
       } catch (PeerNotConnected e) {
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.PEER_DISCONNECTED);
+                Optional.empty(),
+                PeerTaskExecutorResponseCode.PEER_DISCONNECTED,
+                Optional.of(peer));
 
       } catch (InterruptedException | TimeoutException e) {
         peer.recordRequestTimeout(requestMessageData.getCode());
         timeoutCounter.labels(taskClassName).inc();
         executorResult =
-            new PeerTaskExecutorResult<>(Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT);
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, Optional.of(peer));
 
       } catch (InvalidPeerTaskResponseException e) {
         peer.recordUselessResponse(e.getMessage());
         invalidResponseCounter.labels(taskClassName).inc();
+        LOG.debug(
+            "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId(), e);
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE);
+                Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE, Optional.of(peer));
 
-      } catch (ExecutionException e) {
+      } catch (Exception e) {
         internalExceptionCounter.labels(taskClassName).inc();
+        LOG.error("Server error found for {} from peer {}", taskClassName, peer.getLoggableId(), e);
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR);
+                Optional.empty(),
+                PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR,
+                Optional.of(peer));
       }
     } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS

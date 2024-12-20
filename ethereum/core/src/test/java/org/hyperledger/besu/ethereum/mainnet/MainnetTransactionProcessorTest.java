@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
@@ -31,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
@@ -90,7 +90,7 @@ class MainnetTransactionProcessorTest {
         MAX_STACK_SIZE,
         FeeMarket.legacy(),
         CoinbaseFeePriceCalculator.frontier(),
-        new CodeDelegationProcessor(Optional.of(BigInteger.ONE)));
+        new CodeDelegationProcessor(Optional.of(BigInteger.ONE), BigInteger.TEN));
   }
 
   @Test

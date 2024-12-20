@@ -108,13 +108,13 @@ public interface ProcessableBlockHeader {
   Optional<? extends Bytes32> getParentBeaconBlockRoot();
 
   /**
-   * The target_blob_count of this header.
+   * The target_blobs_per_block of this header.
    *
-   * @return The target blob count of this header.
+   * @return The target blobs per block of this header.
    */
   @Unstable
   // TODO SLD should be Quantity or new subclass of Quantity?
-  default Optional<UInt64> getTargetBlobCount() {
+  default Optional<UInt64> getTargetBlobsPerBlock() {
     return Optional.empty();
   }
 }
