@@ -43,11 +43,11 @@ public class JsonCallParameterUtil {
         && (callParams.getMaxFeePerGas().isPresent()
             || callParams.getMaxPriorityFeePerGas().isPresent())) {
       try {
-        LOG.warn(
+        LOG.debug(
             "gasPrice will be ignored since 1559 values are defined (maxFeePerGas or maxPriorityFeePerGas). {}",
             Arrays.toString(request.getRequest().getParams()));
       } catch (Exception e) {
-        LOG.warn(
+        LOG.debug(
             "gasPrice will be ignored since 1559 values are defined (maxFeePerGas or maxPriorityFeePerGas)");
       }
     }
