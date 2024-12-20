@@ -182,7 +182,8 @@ public class TestNode implements Closeable {
             syncState,
             TransactionPoolConfiguration.DEFAULT,
             new BlobCache(),
-            MiningConfiguration.newDefault());
+            MiningConfiguration.newDefault(),
+            false);
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
