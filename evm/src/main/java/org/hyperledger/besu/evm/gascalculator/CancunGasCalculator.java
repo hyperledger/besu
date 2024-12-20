@@ -26,18 +26,35 @@ import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
  */
 public class CancunGasCalculator extends ShanghaiGasCalculator {
 
+  /** The default mainnet target blobs per block for Cancun */
+  private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_CANCUN = 3;
+
+  /** this.getBlobGasPerBlob() * 3 blobs = 131072 * 6 = 393216 = 0x60000 */
+  private final long targetBlobGasPerBlock;
+
   /** Instantiates a new Cancun Gas Calculator. */
   public CancunGasCalculator() {
-    this(KZG_POINT_EVAL.toArrayUnsafe()[19]);
+    this(KZG_POINT_EVAL.toArrayUnsafe()[19], DEFAULT_TARGET_BLOBS_PER_BLOCK_CANCUN);
+  }
+
+  /**
+   * Instantiates a new Cancun Gas Calculator
+   *
+   * @param targetBlobsPerBlock the target blobs per block
+   */
+  public CancunGasCalculator(final int targetBlobsPerBlock) {
+    this(KZG_POINT_EVAL.toArrayUnsafe()[19], targetBlobsPerBlock);
   }
 
   /**
    * Instantiates a new Cancun Gas Calculator
    *
    * @param maxPrecompile the max precompile
+   * @param targetBlobsPerBlock the target blobs per block
    */
-  protected CancunGasCalculator(final int maxPrecompile) {
+  protected CancunGasCalculator(final int maxPrecompile, final int targetBlobsPerBlock) {
     super(maxPrecompile);
+    this.targetBlobGasPerBlock = getBlobGasPerBlob() * targetBlobsPerBlock;
   }
 
   private static final long TLOAD_GAS = WARM_STORAGE_READ_COST;
@@ -48,9 +65,6 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
    * block.
    */
   private static final long BLOB_GAS_PER_BLOB = 1 << 17;
-
-  /** The target blob gas per block. */
-  static final long TARGET_BLOB_GAS_PER_BLOCK = 0x60000;
 
   // EIP-1153
   @Override
@@ -79,6 +93,15 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
    * @return The target blob gas per block.
    */
   public long getTargetBlobGasPerBlock() {
-    return TARGET_BLOB_GAS_PER_BLOCK;
+    return targetBlobGasPerBlock;
+  }
+
+  @Override
+  public long computeExcessBlobGas(final long parentExcessBlobGas, final long parentBlobGasUsed) {
+    final long currentExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed;
+    if (currentExcessBlobGas < targetBlobGasPerBlock) {
+      return 0L;
+    }
+    return currentExcessBlobGas - targetBlobGasPerBlock;
   }
 }
