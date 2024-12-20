@@ -12,21 +12,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet.requests;
+package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.vm.Eip7709BlockHashLookup;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 
-import java.util.List;
+/**
+ * Provides a way to create a BlockHashLookup that fetches hashes from system contract storage, in
+ * accordance with EIP-7709. It is not used yet since the fork that this EIP should go in has not
+ * been decided yet.
+ */
+public class Eip7709BlockHashProcessor extends PragueBlockHashProcessor {
 
-public record ProcessRequestContext(
-    ProcessableBlockHeader blockHeader,
-    MutableWorldState mutableWorldState,
-    ProtocolSpec protocolSpec,
-    List<TransactionReceipt> transactionReceipts,
-    BlockHashLookup blockHashLookup,
-    OperationTracer operationTracer) {}
+  @Override
+  public BlockHashLookup createBlockHashLookup(
+      final Blockchain blockchain, final ProcessableBlockHeader blockHeader) {
+    return new Eip7709BlockHashLookup(historyStorageAddress, historyServeWindow);
+  }
+}

@@ -25,8 +25,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -41,7 +41,7 @@ public class SystemCallProcessorTest {
   private static final Bytes EXPECTED_OUTPUT = Bytes.fromHexString("0x01");
   private ProcessableBlockHeader mockBlockHeader;
   private MainnetTransactionProcessor mockTransactionProcessor;
-  private BlockHashOperation.BlockHashLookup mockBlockHashLookup;
+  private BlockHashLookup mockBlockHashLookup;
   private AbstractMessageProcessor mockMessageCallProcessor;
 
   @BeforeEach
@@ -49,7 +49,7 @@ public class SystemCallProcessorTest {
     mockBlockHeader = mock(ProcessableBlockHeader.class);
     mockTransactionProcessor = mock(MainnetTransactionProcessor.class);
     mockMessageCallProcessor = mock(MessageCallProcessor.class);
-    mockBlockHashLookup = mock(BlockHashOperation.BlockHashLookup.class);
+    mockBlockHashLookup = mock(BlockHashLookup.class);
     when(mockTransactionProcessor.getMessageProcessor(any())).thenReturn(mockMessageCallProcessor);
   }
 
