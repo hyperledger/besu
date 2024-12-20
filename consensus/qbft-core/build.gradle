@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-qbft'
+  archiveBaseName = 'besu-qbft-core'
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -31,11 +31,8 @@ jar {
 dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
-  implementation project(':consensus:qbft-core')
-  implementation project(':consensus:ibftlegacy')
   implementation project(':crypto:services')
   implementation project(':datatypes')
-  implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
@@ -44,11 +41,7 @@ dependencies {
   implementation project(':evm')
 
   implementation 'com.google.guava:guava'
-  implementation 'io.vertx:vertx-core'
-  implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
-  implementation 'org.web3j:abi'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
@@ -73,6 +66,7 @@ dependencies {
   integrationTestImplementation project(':crypto:algorithms')
   integrationTestImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
+  integrationTestImplementation project(':consensus:qbft')
   integrationTestImplementation project(':evm')
   integrationTestImplementation project(':metrics:core')
   integrationTestImplementation project(':testutil')
