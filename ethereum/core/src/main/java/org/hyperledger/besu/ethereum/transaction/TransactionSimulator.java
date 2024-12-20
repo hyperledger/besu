@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
@@ -438,7 +437,9 @@ public class TransactionSimulator {
             blockHeaderToProcess,
             transaction,
             miningBeneficiary,
-            new CachingBlockHashLookup(blockHeaderToProcess, blockchain),
+            protocolSpec
+                .getBlockHashProcessor()
+                .createBlockHashLookup(blockchain, blockHeaderToProcess),
             false,
             transactionValidationParams,
             operationTracer,
