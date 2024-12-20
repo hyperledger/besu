@@ -84,6 +84,7 @@ public interface AccessWitness {
    * in the account.
    *
    * @param address where the contract is being deployed
+   * @param codeLength total size of the contract's code
    * @return stateless costs associated with accesses
    */
   long touchCodeChunksUponContractCreation(Address address, long codeLength);
