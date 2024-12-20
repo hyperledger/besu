@@ -194,7 +194,7 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void shouldReturnGasEstimateErrorWhenGasPricePresentForEip1559Transaction() {
+  public void shouldNotErrorWhenGasPricePresentForEip1559Transaction() {
     final Wei gasPrice = Wei.of(1000);
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(eip1559TransactionCallParameter(Optional.of(gasPrice)));
@@ -586,11 +586,11 @@ public class EthEstimateGasTest {
     return eip1559TransactionCallParameter(Optional.empty());
   }
 
-  private JsonCallParameter eip1559TransactionCallParameter(final Optional<Wei> gasPrice) {
+  private JsonCallParameter eip1559TransactionCallParameter(final Optional<Wei> maybeGasPrice) {
     return new JsonCallParameter.JsonCallParameterBuilder()
         .withFrom(Address.fromHexString("0x0"))
         .withTo(Address.fromHexString("0x0"))
-        .withGasPrice(gasPrice.orElse(null))
+        .withGasPrice(maybeGasPrice.orElse(null))
         .withMaxPriorityFeePerGas(Wei.fromHexString("0x10"))
         .withMaxFeePerGas(Wei.fromHexString("0x10"))
         .withValue(Wei.ZERO)
