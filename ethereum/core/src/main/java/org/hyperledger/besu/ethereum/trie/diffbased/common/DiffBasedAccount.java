@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -201,6 +202,11 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
   @Override
   public Hash getCodeHash() {
     return codeHash;
+  }
+
+  @Override
+  public Optional<Long> getCodeSize() {
+    return Optional.of((long) getCode().size());
   }
 
   @Override

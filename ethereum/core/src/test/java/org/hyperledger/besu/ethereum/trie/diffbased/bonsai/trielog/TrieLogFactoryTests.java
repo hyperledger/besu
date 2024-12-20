@@ -42,6 +42,8 @@ public class TrieLogFactoryTests {
 
   final Address accountFixture = Address.fromHexString("0xdeadbeef");
 
+  final Bytes code = Bytes.fromHexString("0xfeeddeadbeef");
+
   final BlockHeader headerFixture =
       new BlockHeaderTestFixture()
           .parentHash(setup.getGenesisState().getBlock().getHash())
@@ -54,21 +56,34 @@ public class TrieLogFactoryTests {
           .addAccountChange(
               accountFixture,
               null,
-              new PmtStateTrieAccountValue(0, Wei.fromEth(1), Hash.EMPTY, Hash.EMPTY))
-          .addCodeChange(
-              Address.ZERO,
-              null,
-              Bytes.fromHexString("0xfeeddeadbeef"),
-              headerFixture.getBlockHash())
-          .addStorageChange(Address.ZERO, new StorageSlotKey(UInt256.ZERO), null, UInt256.ONE);
+              new PmtStateTrieAccountValue(0, Wei.fromEth(1), Hash.EMPTY, Hash.hash(code)))
+          .addCodeChange(accountFixture, null, code, headerFixture.getBlockHash())
+          .addStorageChange(accountFixture, new StorageSlotKey(UInt256.ZERO), null, UInt256.ONE);
 
   @Test
   public void testSerializeDeserializeAreEqual() {
 
-    TrieLogFactory factory = new TrieLogFactoryImpl();
+    TrieLogFactory factory = new BonsaiTrieLogFactoryImpl();
     byte[] rlp = factory.serialize(trieLogFixture);
 
     TrieLog layer = factory.deserialize(rlp);
     assertThat(layer).isEqualTo(trieLogFixture);
+  }
+
+  @Test
+  public void onlyStoresSlotHashInTrieLog() {
+
+    TrieLogFactory factory = new BonsaiTrieLogFactoryImpl();
+    byte[] rlp = factory.serialize(trieLogFixture);
+
+    TrieLog layer = factory.deserialize(rlp);
+    assertThat(layer).isEqualTo(trieLogFixture);
+
+    final long count =
+        layer.getStorageChanges().get(accountFixture).keySet().stream()
+            .filter(storageSlotKey -> storageSlotKey.getSlotKey().isPresent())
+            .count();
+
+    assertThat(count).isZero();
   }
 }

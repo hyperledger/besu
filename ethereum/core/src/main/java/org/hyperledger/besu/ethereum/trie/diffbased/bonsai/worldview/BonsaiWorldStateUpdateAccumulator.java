@@ -40,7 +40,14 @@ public class BonsaiWorldStateUpdateAccumulator
       final Consumer<DiffBasedValue<BonsaiAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
       final EvmConfiguration evmConfiguration) {
-    super(world, accountPreloader, storagePreloader, evmConfiguration);
+    super(
+        world,
+        accountPreloader,
+        storagePreloader,
+        (__, ___) -> {
+          /*nothing to preload for the code*/
+        },
+        evmConfiguration);
   }
 
   @Override
@@ -82,11 +89,9 @@ public class BonsaiWorldStateUpdateAccumulator
       final Hash addressHash,
       final long nonce,
       final Wei balance,
-      final Hash storageRoot,
-      final Hash codeHash,
       final boolean mutable) {
     return new BonsaiAccount(
-        context, address, addressHash, nonce, balance, storageRoot, codeHash, mutable);
+        context, address, addressHash, nonce, balance, Hash.EMPTY_TRIE_HASH, Hash.EMPTY, mutable);
   }
 
   @Override

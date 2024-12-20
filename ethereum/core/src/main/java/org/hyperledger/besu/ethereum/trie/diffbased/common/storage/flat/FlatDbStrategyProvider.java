@@ -42,9 +42,12 @@ public abstract class FlatDbStrategyProvider {
   protected FlatDbStrategy flatDbStrategy;
 
   public FlatDbStrategyProvider(
-      final MetricsSystem metricsSystem, final DataStorageConfiguration dataStorageConfiguration) {
+      final MetricsSystem metricsSystem,
+      final DataStorageConfiguration dataStorageConfiguration,
+      final SegmentedKeyValueStorage composedWorldStateStorage) {
     this.metricsSystem = metricsSystem;
     this.dataStorageConfiguration = dataStorageConfiguration;
+    loadFlatDbStrategy(composedWorldStateStorage);
   }
 
   public void loadFlatDbStrategy(final SegmentedKeyValueStorage composedWorldStateStorage) {
@@ -131,11 +134,7 @@ public abstract class FlatDbStrategyProvider {
     return flatDbMode;
   }
 
-  public FlatDbStrategy getFlatDbStrategy(
-      final SegmentedKeyValueStorage composedWorldStateStorage) {
-    if (flatDbStrategy == null) {
-      loadFlatDbStrategy(composedWorldStateStorage);
-    }
+  public FlatDbStrategy getFlatDbStrategy() {
     return flatDbStrategy;
   }
 

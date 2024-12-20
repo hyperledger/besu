@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -42,7 +41,12 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
       final VerkleWorldStateKeyValueStorage parentWorldStateStorage,
       final SnappedKeyValueStorage segmentedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
-    super(parentWorldStateStorage.flatDbStrategy, segmentedWorldStateStorage, trieLogStorage);
+    super(
+        segmentedWorldStateStorage,
+        trieLogStorage,
+        parentWorldStateStorage.stemPreloader,
+        parentWorldStateStorage.dataStorageConfiguration,
+        parentWorldStateStorage.metricsSystem);
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
@@ -69,12 +73,7 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
     return new Updater(
         ((SnappedKeyValueStorage) composedWorldStateStorage).getSnapshotTransaction(),
         trieLogStorage.startTransaction(),
-        flatDbStrategy);
-  }
-
-  @Override
-  public Optional<Bytes> getAccount(final Hash accountHash) {
-    return isClosedGet() ? Optional.empty() : super.getAccount(accountHash);
+        getFlatDbStrategy());
   }
 
   @Override
@@ -100,14 +99,6 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
   @Override
   public Optional<Hash> getWorldStateBlockHash() {
     return isClosedGet() ? Optional.empty() : super.getWorldStateBlockHash();
-  }
-
-  @Override
-  public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Hash accountHash, final StorageSlotKey storageSlotKey) {
-    return isClosedGet()
-        ? Optional.empty()
-        : super.getStorageValueByStorageSlotKey(accountHash, storageSlotKey);
   }
 
   @Override

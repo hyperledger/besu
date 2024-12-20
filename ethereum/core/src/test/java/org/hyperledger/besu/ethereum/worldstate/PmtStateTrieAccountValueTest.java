@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-public class StateTrieAccountValueTest {
+public class PmtStateTrieAccountValueTest {
 
   @Test
   public void roundTripMainNetAccountValue() {

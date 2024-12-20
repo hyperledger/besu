@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.StemPreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -86,7 +87,8 @@ public class KeyValueStorageProvider implements StorageProvider {
     if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
       return new BonsaiWorldStateKeyValueStorage(this, metricsSystem, dataStorageConfiguration);
     } else if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.VERKLE)) {
-      return new VerkleWorldStateKeyValueStorage(this, metricsSystem);
+      return new VerkleWorldStateKeyValueStorage(
+          this, new StemPreloader(), dataStorageConfiguration, metricsSystem);
     } else {
       return new ForestWorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));

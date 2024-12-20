@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DiffBasedUnstable;
+import org.hyperledger.besu.ethereum.worldstate.VerkleSubStorageConfiguration.VerkleUnstable;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import org.immutables.value.Value;
@@ -48,11 +49,33 @@ public interface DataStorageConfiguration {
           .diffBasedSubStorageConfiguration(DiffBasedSubStorageConfiguration.DISABLED)
           .build();
 
+  DataStorageConfiguration DEFAULT_VERKLE_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.VERKLE)
+          .diffBasedSubStorageConfiguration(DiffBasedSubStorageConfiguration.DEFAULT)
+          .verkleSubStorageConfiguration(VerkleSubStorageConfiguration.DEFAULT)
+          .build();
+
+  DataStorageConfiguration DEFAULT_VERKLE_STEM_DB_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.VERKLE)
+          .diffBasedSubStorageConfiguration(DiffBasedSubStorageConfiguration.DEFAULT)
+          .verkleSubStorageConfiguration(
+              ImmutableVerkleSubStorageConfiguration.builder()
+                  .unstable(VerkleUnstable.STEM_MODE)
+                  .build())
+          .build();
+
   DataStorageFormat getDataStorageFormat();
 
   @Value.Default
   default DiffBasedSubStorageConfiguration getDiffBasedSubStorageConfiguration() {
     return DiffBasedSubStorageConfiguration.DEFAULT;
+  }
+
+  @Value.Default
+  default VerkleSubStorageConfiguration getVerkleSubStorageConfiguration() {
+    return VerkleSubStorageConfiguration.DEFAULT;
   }
 
   @Value.Default

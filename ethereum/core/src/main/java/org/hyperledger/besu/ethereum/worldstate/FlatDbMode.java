@@ -34,7 +34,8 @@ import org.apache.tuweni.bytes.Bytes;
 public enum FlatDbMode {
   NO_FLATTENED(Bytes.EMPTY),
   PARTIAL(Bytes.of(0x00)),
-  FULL(Bytes.of(0x01));
+  FULL(Bytes.of(0x01)),
+  STEM(Bytes.of(0x02));
 
   final Bytes version;
 

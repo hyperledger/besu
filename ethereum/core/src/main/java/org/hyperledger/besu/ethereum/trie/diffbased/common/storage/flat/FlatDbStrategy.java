@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -232,5 +233,10 @@ public abstract class FlatDbStrategy {
                 () -> new TreeMap<>(Comparator.comparing(Bytes::toHexString))));
     pairStream.close();
     return collected;
+  }
+
+  @VisibleForTesting
+  public CodeStorageStrategy getCodeStorageStrategy() {
+    return codeStorageStrategy;
   }
 }
