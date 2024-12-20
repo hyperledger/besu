@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
-@Deprecated(since = "24.11.0")
+@Deprecated(since = "24.12.0")
 public class JsonRpcErrorResponseException extends RuntimeException {
 
   private final RpcErrorType jsonRpcError;

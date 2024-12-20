@@ -58,7 +58,7 @@ public class EthPeersTest {
   @BeforeEach
   public void setup() throws Exception {
     when(peerRequest.sendRequest(any())).thenReturn(responseStream);
-    ethProtocolManager = EthProtocolManagerTestUtil.create();
+    ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     ethPeers = ethProtocolManager.ethContext().getEthPeers();
     final ChainHeadTracker mock = mock(ChainHeadTracker.class);
     final BlockHeader blockHeader = mock(BlockHeader.class);

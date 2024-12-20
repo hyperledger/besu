@@ -30,6 +30,9 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.security.KeyStore;
 import java.util.Base64;
 import java.util.HashMap;
@@ -390,14 +393,20 @@ public class WebSocketServiceTLSTest {
       clientTrustStore.store(fos, "password".toCharArray());
     }
 
+    File tempFile = File.createTempFile("pwdfile", ".txt");
+    tempFile.deleteOnExit();
+    try (Writer writer = Files.newBufferedWriter(tempFile.toPath(), Charset.defaultCharset())) {
+      writer.write("password");
+    }
+
     // Configure WebSocket with SSL and client authentication enabled
     config.setSslEnabled(true);
     config.setKeyStorePath(serverKeystoreFile.getAbsolutePath());
-    config.setKeyStorePassword("password");
+    config.setKeyStorePasswordFile(tempFile.getAbsolutePath());
     config.setKeyStoreType("PKCS12");
     config.setClientAuthEnabled(true);
     config.setTrustStorePath(serverTruststoreFile.getAbsolutePath());
-    config.setTrustStorePassword("password");
+    config.setTrustStorePasswordFile(tempFile.getAbsolutePath());
     config.setTrustStoreType("PKCS12");
 
     // Create and start WebSocketService

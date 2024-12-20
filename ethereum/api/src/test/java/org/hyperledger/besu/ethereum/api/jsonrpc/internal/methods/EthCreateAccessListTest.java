@@ -27,7 +27,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -51,7 +50,6 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,6 +70,7 @@ public class EthCreateAccessListTest {
   @Mock private BlockHeader latestBlockHeader;
   @Mock private BlockHeader finalizedBlockHeader;
   @Mock private BlockHeader genesisBlockHeader;
+  @Mock private BlockHeader pendingBlockHeader;
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
@@ -93,6 +92,9 @@ public class EthCreateAccessListTest {
     when(blockchain.getChainHeadHeader()).thenReturn(latestBlockHeader);
     when(latestBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
     when(latestBlockHeader.getNumber()).thenReturn(2L);
+    when(pendingBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
+    when(pendingBlockHeader.getNumber()).thenReturn(3L);
+    when(transactionSimulator.simulatePendingBlockHeader()).thenReturn(pendingBlockHeader);
     when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(true);
 
     method = new EthCreateAccessList(blockchainQueries, transactionSimulator);
@@ -140,14 +142,28 @@ public class EthCreateAccessListTest {
   }
 
   @Test
-  public void shouldReturnGasEstimateErrorWhenGasPricePresentForEip1559Transaction() {
+  public void pendingBlockTagEstimateOnPendingBlock() {
     final JsonRpcRequestContext request =
-        ethCreateAccessListRequest(eip1559TransactionCallParameter(Optional.of(Wei.of(10))));
-    mockTransactionSimulatorResult(false, false, 1L, latestBlockHeader);
+        ethCreateAccessListRequest(legacyTransactionCallParameter(Wei.ZERO), "pending");
+    mockTransactionSimulatorResult(true, false, 1L, pendingBlockHeader);
 
-    Assertions.assertThatThrownBy(() -> method.response(request))
-        .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, new CreateAccessListResult(new ArrayList<>(), 1L));
+
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void shouldNotErrorWhenGasPricePresentForEip1559Transaction() {
+    final Wei gasPrice = Wei.of(1000);
+    final List<AccessListEntry> expectedAccessList = new ArrayList<>();
+    final JsonRpcRequestContext request =
+        ethCreateAccessListRequest(eip1559TransactionCallParameter(Optional.of(gasPrice)));
+    mockTransactionSimulatorResult(true, false, 1L, latestBlockHeader);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, new CreateAccessListResult(expectedAccessList, 1L));
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -186,7 +202,8 @@ public class EthCreateAccessListTest {
     mockTransactionSimulatorResult(true, false, 1L, latestBlockHeader);
 
     assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionSimulator, times(1)).process(any(), any(), any(), eq(latestBlockHeader));
+    verify(transactionSimulator, times(1))
+        .process(any(), eq(Optional.empty()), any(), any(), eq(latestBlockHeader));
   }
 
   @Test
@@ -207,7 +224,8 @@ public class EthCreateAccessListTest {
     assertThat(responseWithMockTracer(request, tracer))
         .usingRecursiveComparison()
         .isEqualTo(expectedResponse);
-    verify(transactionSimulator, times(2)).process(any(), any(), any(), eq(latestBlockHeader));
+    verify(transactionSimulator, times(2))
+        .process(any(), eq(Optional.empty()), any(), any(), eq(latestBlockHeader));
   }
 
   @Test
@@ -224,7 +242,8 @@ public class EthCreateAccessListTest {
     // Set TransactionSimulator.process response
     mockTransactionSimulatorResult(true, false, 1L, latestBlockHeader);
     assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionSimulator, times(1)).process(any(), any(), any(), eq(latestBlockHeader));
+    verify(transactionSimulator, times(1))
+        .process(any(), eq(Optional.empty()), any(), any(), eq(latestBlockHeader));
   }
 
   @Test
@@ -245,7 +264,8 @@ public class EthCreateAccessListTest {
     assertThat(responseWithMockTracer(request, tracer))
         .usingRecursiveComparison()
         .isEqualTo(expectedResponse);
-    verify(transactionSimulator, times(1)).process(any(), any(), any(), eq(latestBlockHeader));
+    verify(transactionSimulator, times(1))
+        .process(any(), eq(Optional.empty()), any(), any(), eq(latestBlockHeader));
   }
 
   @Test
@@ -269,7 +289,8 @@ public class EthCreateAccessListTest {
     assertThat(responseWithMockTracer(request, tracer))
         .usingRecursiveComparison()
         .isEqualTo(expectedResponse);
-    verify(transactionSimulator, times(2)).process(any(), any(), any(), eq(latestBlockHeader));
+    verify(transactionSimulator, times(2))
+        .process(any(), eq(Optional.empty()), any(), any(), eq(latestBlockHeader));
   }
 
   @Test
@@ -289,7 +310,8 @@ public class EthCreateAccessListTest {
     assertThat(responseWithMockTracer(request, tracer))
         .usingRecursiveComparison()
         .isEqualTo(expectedResponse);
-    verify(transactionSimulator, times(2)).process(any(), any(), any(), eq(finalizedBlockHeader));
+    verify(transactionSimulator, times(2))
+        .process(any(), eq(Optional.empty()), any(), any(), eq(finalizedBlockHeader));
   }
 
   @Test
@@ -309,7 +331,8 @@ public class EthCreateAccessListTest {
     assertThat(responseWithMockTracer(request, tracer))
         .usingRecursiveComparison()
         .isEqualTo(expectedResponse);
-    verify(transactionSimulator, times(2)).process(any(), any(), any(), eq(genesisBlockHeader));
+    verify(transactionSimulator, times(2))
+        .process(any(), eq(Optional.empty()), any(), any(), eq(genesisBlockHeader));
   }
 
   private JsonRpcResponse responseWithMockTracer(
@@ -328,14 +351,21 @@ public class EthCreateAccessListTest {
     return tracer;
   }
 
+  @SuppressWarnings("ReferenceEquality")
   private void mockTransactionSimulatorResult(
       final boolean isSuccessful,
       final boolean isReverted,
       final long estimateGas,
       final BlockHeader blockHeader) {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
-    when(transactionSimulator.process(any(), any(), any(), eq(blockHeader)))
-        .thenReturn(Optional.of(mockTxSimResult));
+    if (blockHeader == pendingBlockHeader) {
+      when(transactionSimulator.processOnPending(
+              any(), eq(Optional.empty()), any(), any(), eq(blockHeader)))
+          .thenReturn(Optional.of(mockTxSimResult));
+    } else {
+      when(transactionSimulator.process(any(), eq(Optional.empty()), any(), any(), eq(blockHeader)))
+          .thenReturn(Optional.of(mockTxSimResult));
+    }
     final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
     when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
     when(mockResult.getRevertReason())

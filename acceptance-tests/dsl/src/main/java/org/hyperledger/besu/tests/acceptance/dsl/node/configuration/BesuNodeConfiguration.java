@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -56,7 +55,6 @@ public class BesuNodeConfiguration {
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean p2pEnabled;
   private final int p2pPort;
-  private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean discoveryEnabled;
   private final boolean bootnodeEligible;
@@ -95,7 +93,6 @@ public class BesuNodeConfiguration {
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
       final int p2pPort,
-      final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
@@ -131,7 +128,6 @@ public class BesuNodeConfiguration {
     this.genesisConfigProvider = genesisConfigProvider;
     this.p2pEnabled = p2pEnabled;
     this.p2pPort = p2pPort;
-    this.tlsConfiguration = tlsConfiguration;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
@@ -224,10 +220,6 @@ public class BesuNodeConfiguration {
 
   public int getP2pPort() {
     return p2pPort;
-  }
-
-  public Optional<TLSConfiguration> getTLSConfiguration() {
-    return tlsConfiguration;
   }
 
   public NetworkingConfiguration getNetworkingConfiguration() {

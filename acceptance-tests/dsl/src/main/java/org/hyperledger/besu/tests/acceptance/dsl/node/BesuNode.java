@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -96,7 +95,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final Properties portsProperties = new Properties();
   private final Boolean p2pEnabled;
   private final int p2pPort;
-  private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean revertReasonEnabled;
 
@@ -156,7 +154,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
       final int p2pPort,
-      final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
@@ -207,7 +204,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.network = network;
     this.p2pEnabled = p2pEnabled;
     this.p2pPort = p2pPort;
-    this.tlsConfiguration = tlsConfiguration;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
@@ -657,10 +653,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public boolean isP2pEnabled() {
     return p2pEnabled;
-  }
-
-  public Optional<TLSConfiguration> getTLSConfiguration() {
-    return tlsConfiguration;
   }
 
   public NetworkingConfiguration getNetworkingConfiguration() {

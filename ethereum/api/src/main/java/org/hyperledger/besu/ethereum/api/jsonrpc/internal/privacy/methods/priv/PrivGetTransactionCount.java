@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Deprecated(since = "24.11.0")
+@Deprecated(since = "24.12.0")
 public class PrivGetTransactionCount implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivGetTransactionCount.class);

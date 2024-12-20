@@ -202,7 +202,7 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
           excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           requestsHash != null ? Hash.fromHexString(requestsHash) : null,
-          null, // TODO SLD EIP-7742 use targetBlobCount when reference tests are updated
+          null, // TODO SLD EIP-7742 use targetBlobsPerBlock when reference tests are updated
           null, // TODO MANAGE WITNESS FROM VERKLE
           new BlockHeaderFunctions() {
             @Override

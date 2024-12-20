@@ -171,7 +171,7 @@ public class RocksDBStats {
 
     for (final var histogramType : HISTOGRAM_TYPES) {
 
-      metricsSystem.trackExternalSummary(
+      metricsSystem.createSummary(
           KVSTORE_ROCKSDB_STATS,
           KVSTORE_ROCKSDB_STATS.getName() + "_" + histogramType.name().toLowerCase(Locale.ROOT),
           "RocksDB histogram for " + histogramType.name(),

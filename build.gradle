@@ -580,7 +580,7 @@ subprojects {
           password = artifactoryKey
         }
         defaults {
-          publications('mavenJava')
+          publications('mavenJava', 'mavenJavaPlatform')
           publishArtifacts = true
           publishPom = true
         }

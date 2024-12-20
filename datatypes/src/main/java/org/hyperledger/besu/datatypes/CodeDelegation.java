@@ -25,7 +25,7 @@ import java.util.Optional;
  */
 public interface CodeDelegation {
   /** The cost of delegating code on an existing account. */
-  long PER_AUTH_BASE_COST = 2_500L;
+  long PER_AUTH_BASE_COST = 12_500L;
 
   /**
    * Return the chain id.

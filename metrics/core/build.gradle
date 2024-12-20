@@ -55,11 +55,12 @@ dependencies {
   implementation 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure'
   implementation 'io.opentelemetry.semconv:opentelemetry-semconv'
 
-  implementation 'io.prometheus:simpleclient'
-  implementation 'io.prometheus:simpleclient_common'
-  implementation 'io.prometheus:simpleclient_guava'
-  implementation 'io.prometheus:simpleclient_hotspot'
-  implementation 'io.prometheus:simpleclient_pushgateway'
+  implementation 'io.prometheus:prometheus-metrics-core'
+  implementation 'io.prometheus:prometheus-metrics-instrumentation-guava'
+  implementation 'io.prometheus:prometheus-metrics-instrumentation-jvm'
+  implementation 'io.prometheus:prometheus-metrics-exporter-httpserver'
+  implementation 'io.prometheus:prometheus-metrics-exporter-pushgateway'
+
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
 

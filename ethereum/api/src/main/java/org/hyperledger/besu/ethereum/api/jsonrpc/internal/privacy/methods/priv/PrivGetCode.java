@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.apache.tuweni.bytes.Bytes;
 
-@Deprecated(since = "24.11.0")
+@Deprecated(since = "24.12.0")
 public class PrivGetCode extends AbstractBlockParameterMethod {
 
   private final PrivacyController privacyController;

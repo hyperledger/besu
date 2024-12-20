@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+@Deprecated(since = "24.12.0")
 public class EthGetMinerDataByBlockNumber extends AbstractBlockParameterMethod {
   private final ProtocolSchedule protocolSchedule;
 

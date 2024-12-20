@@ -37,6 +37,35 @@ import picocli.CommandLine;
 
 /** This class represents the WebSocket options for the RPC. */
 public class RpcWebsocketOptions {
+
+  static class KeystorePasswordOptions {
+    @CommandLine.Option(
+        names = {"--rpc-ws-ssl-keystore-password"},
+        paramLabel = "<PASSWORD>",
+        description = "Password for the WebSocket RPC keystore file")
+    private String rpcWsKeyStorePassword;
+
+    @CommandLine.Option(
+        names = {"--rpc-ws-ssl-keystore-password-file"},
+        paramLabel = "<FILE>",
+        description = "File containing the password for WebSocket keystore.")
+    private String rpcWsKeystorePasswordFile;
+  }
+
+  static class TruststorePasswordOptions {
+    @CommandLine.Option(
+        names = {"--rpc-ws-ssl-truststore-password"},
+        paramLabel = "<PASSWORD>",
+        description = "Password for the WebSocket RPC truststore file")
+    private String rpcWsTrustStorePassword;
+
+    @CommandLine.Option(
+        names = {"--rpc-ws-ssl-truststore-password-file"},
+        paramLabel = "<FILE>",
+        description = "File containing the password for WebSocket truststore.")
+    private String rpcWsTruststorePasswordFile;
+  }
+
   @CommandLine.Option(
       names = {"--rpc-ws-authentication-jwt-algorithm"},
       description =
@@ -132,12 +161,6 @@ public class RpcWebsocketOptions {
   private String rpcWsKeyStoreFile = null;
 
   @CommandLine.Option(
-      names = {"--rpc-ws-ssl-keystore-password"},
-      paramLabel = "<PASSWORD>",
-      description = "Password for the WebSocket RPC keystore file")
-  private String rpcWsKeyStorePassword = null;
-
-  @CommandLine.Option(
       names = {"--rpc-ws-ssl-key-file"},
       paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
       description = "Path to the PEM key file for the WebSocket RPC service")
@@ -168,12 +191,6 @@ public class RpcWebsocketOptions {
   private String rpcWsTrustStoreFile = null;
 
   @CommandLine.Option(
-      names = {"--rpc-ws-ssl-truststore-password"},
-      paramLabel = "<PASSWORD>",
-      description = "Password for the WebSocket RPC truststore file")
-  private String rpcWsTrustStorePassword = null;
-
-  @CommandLine.Option(
       names = {"--rpc-ws-ssl-trustcert-file"},
       paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
       description = "Path to the PEM trustcert file for the WebSocket RPC service")
@@ -184,6 +201,12 @@ public class RpcWebsocketOptions {
       paramLabel = "<TYPE>",
       description = "Type of the truststore (JKS, PKCS12, PEM)")
   private String rpcWsTrustStoreType = null;
+
+  @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
+  private KeystorePasswordOptions keystorePasswordOptions;
+
+  @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
+  private TruststorePasswordOptions truststorePasswordOptions;
 
   /** Default Constructor. */
   public RpcWebsocketOptions() {}
@@ -292,7 +315,7 @@ public class RpcWebsocketOptions {
             commandLine,
             "--rpc-ws-ssl-keystore-file",
             rpcWsKeyStoreFile == null,
-            List.of("--rpc-ws-ssl-keystore-password"));
+            List.of("--rpc-ws-ssl-keystore-password", "--rpc-ws-ssl-keystore-password-file"));
       }
     }
 
@@ -302,7 +325,7 @@ public class RpcWebsocketOptions {
           commandLine,
           "--rpc-ws-ssl-truststore-file",
           rpcWsTrustStoreFile == null,
-          List.of("--rpc-ws-ssl-truststore-password"));
+          List.of("--rpc-ws-ssl-truststore-password", "--rpc-ws-ssl-truststore-password-file"));
     }
 
     if (isRpcWsAuthenticationEnabled) {
@@ -343,15 +366,26 @@ public class RpcWebsocketOptions {
     webSocketConfiguration.setTimeoutSec(wsTimoutSec);
     webSocketConfiguration.setSslEnabled(isRpcWsSslEnabled);
     webSocketConfiguration.setKeyStorePath(rpcWsKeyStoreFile);
-    webSocketConfiguration.setKeyStorePassword(rpcWsKeyStorePassword);
     webSocketConfiguration.setKeyStoreType(rpcWsKeyStoreType);
     webSocketConfiguration.setClientAuthEnabled(isRpcWsClientAuthEnabled);
     webSocketConfiguration.setTrustStorePath(rpcWsTrustStoreFile);
-    webSocketConfiguration.setTrustStorePassword(rpcWsTrustStorePassword);
     webSocketConfiguration.setTrustStoreType(rpcWsTrustStoreType);
     webSocketConfiguration.setKeyPath(rpcWsKeyFile);
     webSocketConfiguration.setCertPath(rpcWsCertFile);
     webSocketConfiguration.setTrustCertPath(rpcWsTrustCertFile);
+
+    if (keystorePasswordOptions != null) {
+      webSocketConfiguration.setKeyStorePassword(keystorePasswordOptions.rpcWsKeyStorePassword);
+      webSocketConfiguration.setKeyStorePasswordFile(
+          keystorePasswordOptions.rpcWsKeystorePasswordFile);
+    }
+
+    if (truststorePasswordOptions != null) {
+      webSocketConfiguration.setTrustStorePassword(
+          truststorePasswordOptions.rpcWsTrustStorePassword);
+      webSocketConfiguration.setTrustStorePasswordFile(
+          truststorePasswordOptions.rpcWsTruststorePasswordFile);
+    }
 
     return webSocketConfiguration;
   }

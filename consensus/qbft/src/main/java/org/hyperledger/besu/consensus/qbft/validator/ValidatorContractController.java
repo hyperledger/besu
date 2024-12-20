@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -94,10 +93,7 @@ public class ValidatorContractController {
     final CallParameter callParams =
         new CallParameter(null, contractAddress, -1, null, null, payload);
     final TransactionValidationParams transactionValidationParams =
-        ImmutableTransactionValidationParams.builder()
-            .from(TransactionValidationParams.transactionSimulator())
-            .isAllowExceedingBalance(true)
-            .build();
+        TransactionValidationParams.transactionSimulatorAllowExceedingBalance();
     return transactionSimulator.process(
         callParams, transactionValidationParams, OperationTracer.NO_TRACING, blockNumber);
   }

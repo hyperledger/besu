@@ -17,7 +17,7 @@ package org.hyperledger.besu.cli.options;
 import static picocli.CommandLine.Option;
 
 /** The Privacy plugin Cli options. */
-@Deprecated(since = "24.11.0")
+@Deprecated(since = "24.12.0")
 public class PrivacyPluginOptions {
   /** Default Constructor. */
   PrivacyPluginOptions() {}

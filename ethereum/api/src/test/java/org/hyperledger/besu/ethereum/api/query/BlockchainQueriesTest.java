@@ -331,6 +331,41 @@ public class BlockchainQueriesTest {
   }
 
   @Test
+  public void getTransactionReceiptsByHash() {
+    final BlockchainWithData data = setupBlockchain(3);
+    final BlockchainQueries queries = data.blockchainQueries;
+
+    final Block targetBlock = data.blockData.get(1).block;
+
+    final Optional<List<TransactionReceiptWithMetadata>> receipts =
+        queries.transactionReceiptsByBlockHash(
+            targetBlock.getHash(), Mockito.mock(ProtocolSchedule.class));
+    assertThat(receipts).isNotEmpty();
+
+    receipts
+        .get()
+        .forEach(
+            receipt -> {
+              final long gasUsed = receipt.getGasUsed();
+
+              assertThat(gasUsed)
+                  .isEqualTo(
+                      targetBlock.getHeader().getGasUsed()
+                          / targetBlock.getBody().getTransactions().size());
+            });
+  }
+
+  @Test
+  public void getTransactionReceiptsByInvalidHash() {
+    final BlockchainWithData data = setupBlockchain(3);
+    final BlockchainQueries queries = data.blockchainQueries;
+
+    final Optional<List<TransactionReceiptWithMetadata>> result =
+        queries.transactionReceiptsByBlockHash(gen.hash(), Mockito.mock(ProtocolSchedule.class));
+    assertThat(result).isEmpty();
+  }
+
+  @Test
   public void logsShouldBeFlaggedAsRemovedWhenBlockIsNotInCanonicalChain() {
     // create initial blockchain
     final BlockchainWithData data = setupBlockchain(3);

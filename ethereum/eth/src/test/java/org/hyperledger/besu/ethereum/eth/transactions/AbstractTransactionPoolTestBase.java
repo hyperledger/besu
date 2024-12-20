@@ -32,7 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.quality.Strictness.LENIENT;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
@@ -56,7 +56,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
-import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredTransactionPoolBaseFeeTest;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.LegacyTransactionPoolBaseFeeTest;
@@ -174,7 +174,7 @@ public abstract class AbstractTransactionPoolTestBase {
   protected abstract ExecutionContextTestFixture createExecutionContextTestFixture();
 
   protected static ExecutionContextTestFixture createExecutionContextTestFixtureBaseFeeMarket() {
-    final var genesisConfigFile = GenesisConfigFile.fromResource("/txpool-test-genesis.json");
+    final var genesisConfigFile = GenesisConfig.fromResource("/txpool-test-genesis.json");
     final ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
                 genesisConfigFile.getConfigOptions(),
@@ -225,7 +225,11 @@ public abstract class AbstractTransactionPoolTestBase {
     protocolSchedule = spy(executionContext.getProtocolSchedule());
     doReturn(protocolSpec).when(protocolSchedule).getByBlockHeader(any());
     blockGasLimit = blockchain.getChainHeadBlock().getHeader().getGasLimit();
-    ethProtocolManager = EthProtocolManagerTestUtil.create();
+    ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(protocolSchedule)
+            .setBlockchain(blockchain)
+            .build();
     ethContext = spy(ethProtocolManager.ethContext());
 
     final EthScheduler ethScheduler = spy(ethContext.getScheduler());

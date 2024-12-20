@@ -24,8 +24,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
-
 /**
  * An object that buffers updates made over a particular {@link WorldView}.
  *
@@ -75,29 +73,8 @@ public interface WorldUpdater extends MutableWorldView {
    *     #createAccount(Address)} (and thus all his fields will be zero/empty).
    */
   default MutableAccount getOrCreate(final Address address) {
-    MutableAccount account = getAccount(address);
-    if (account == null) {
-      account = createAccount(address);
-      if (parentUpdater().isPresent() && parentUpdater().get().isDeleted(address)) {
-        account.clearStorage();
-        account.setCode(Bytes.EMPTY);
-      }
-    }
-    return account;
-  }
-
-  /**
-   * Check this and parent updaters to see if an address has been deleted since the last persist
-   *
-   * @param address address to check
-   * @return true if any updaters have marked the address as deleted.
-   */
-  default boolean isDeleted(final Address address) {
-    if (getDeletedAccountAddresses().contains(address)) {
-      return true;
-    } else {
-      return parentUpdater().map(wu -> wu.isDeleted(address)).orElse(false);
-    }
+    final MutableAccount account = getAccount(address);
+    return account == null ? createAccount(address) : account;
   }
 
   /**

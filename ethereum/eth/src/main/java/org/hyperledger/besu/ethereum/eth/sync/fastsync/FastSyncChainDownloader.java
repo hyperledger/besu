@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -36,7 +35,6 @@ public class FastSyncChainDownloader {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState,
@@ -55,13 +53,7 @@ public class FastSyncChainDownloader {
         syncState,
         syncTargetManager,
         new FastSyncDownloadPipelineFactory(
-            config,
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            peerTaskExecutor,
-            fastSyncState,
-            metricsSystem),
+            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem),
         ethContext.getScheduler(),
         metricsSystem,
         syncDurationMetrics);

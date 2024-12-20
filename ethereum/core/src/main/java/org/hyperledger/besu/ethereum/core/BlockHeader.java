@@ -67,7 +67,7 @@ public class BlockHeader extends SealableBlockHeader
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
-      final UInt64 targetBlobCount,
+      final UInt64 targetBlobsPerBlock,
       final ExecutionWitness executionWitness,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
@@ -91,7 +91,7 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        targetBlobCount,
+        targetBlobsPerBlock,
         executionWitness);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
@@ -194,8 +194,8 @@ public class BlockHeader extends SealableBlockHeader
       if (requestsHash == null) break;
       out.writeBytes(requestsHash);
 
-      if (targetBlobCount == null) break;
-      out.writeUInt64Scalar(targetBlobCount);
+      if (targetBlobsPerBlock == null) break;
+      out.writeUInt64Scalar(targetBlobsPerBlock);
     } while (false);
     out.endList();
   }
@@ -230,7 +230,8 @@ public class BlockHeader extends SealableBlockHeader
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
 
     final Hash requestsHash = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
-    final UInt64 targetBlobCount = !input.isEndOfCurrentList() ? input.readUInt64Scalar() : null;
+    final UInt64 targetBlobsPerBlock =
+        !input.isEndOfCurrentList() ? input.readUInt64Scalar() : null;
 
     final ExecutionWitness executionWitness =
         !input.isEndOfCurrentList() ? ExecutionWitness.readFrom(input) : null;
@@ -258,7 +259,7 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        targetBlobCount,
+        targetBlobsPerBlock,
         executionWitness,
         blockHeaderFunctions);
   }
@@ -313,8 +314,8 @@ public class BlockHeader extends SealableBlockHeader
     if (requestsHash != null) {
       sb.append("requestsHash=").append(requestsHash);
     }
-    if (targetBlobCount != null) {
-      sb.append("targetBlobCount=").append(targetBlobCount);
+    if (targetBlobsPerBlock != null) {
+      sb.append("targetBlobsPerBlock=").append(targetBlobsPerBlock);
     }
     return sb.append("}").toString();
   }
@@ -350,7 +351,7 @@ public class BlockHeader extends SealableBlockHeader
             .getRequestsHash()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
-        pluginBlockHeader.getTargetBlobCount().orElse(null),
+        pluginBlockHeader.getTargetBlobsPerBlock().orElse(null),
         (ExecutionWitness) pluginBlockHeader.getExecutionWitness().orElse(null),
         blockHeaderFunctions);
   }

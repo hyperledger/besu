@@ -15,5 +15,5 @@
 package org.hyperledger.besu.plugin;
 
 /** Deprecated in favor of the more precisely named ServiceManager interface. */
-@Deprecated(since = "24.11.0", forRemoval = true)
+@Deprecated(since = "24.12.0")
 public interface BesuContext extends ServiceManager {}

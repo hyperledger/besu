@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.components;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 
 import javax.inject.Named;
 
@@ -26,13 +26,13 @@ public class GenesisConfigModule {
 
   @Named("default")
   @Provides
-  GenesisConfigFile provideDefaultGenesisConfigFile() {
-    return GenesisConfigFile.DEFAULT;
+  GenesisConfig provideDefaultGenesisConfig() {
+    return GenesisConfig.DEFAULT;
   }
 
   @Named("mainnet")
   @Provides
-  GenesisConfigFile provideMainnetGenesisConfigFile() {
-    return GenesisConfigFile.mainnet();
+  GenesisConfig provideMainnetGenesisConfig() {
+    return GenesisConfig.mainnet();
   }
 }

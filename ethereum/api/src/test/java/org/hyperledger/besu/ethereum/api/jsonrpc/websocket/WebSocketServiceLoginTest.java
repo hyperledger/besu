@@ -54,6 +54,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -205,7 +206,8 @@ public class WebSocketServiceLoginTest {
                     mock(EthPeers.class),
                     vertx,
                     mock(ApiConfiguration.class),
-                    Optional.empty()));
+                    Optional.empty(),
+                    mock(TransactionSimulator.class)));
 
     websocketMethods.putAll(rpcMethods);
     webSocketMessageHandlerSpy =
