@@ -20,14 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallPar
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
-import java.util.Arrays;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class JsonCallParameterUtil {
-
-  private static final Logger LOG = LoggerFactory.getLogger(JsonCallParameterUtil.class);
 
   private JsonCallParameterUtil() {}
 
@@ -43,13 +36,9 @@ public class JsonCallParameterUtil {
     if (callParams.getGasPrice() != null
         && (callParams.getMaxFeePerGas().isPresent()
             || callParams.getMaxPriorityFeePerGas().isPresent())) {
-      try {
-        LOG.warn(
-            "gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas {}",
-            Arrays.toString(request.getRequest().getParams()));
-      } catch (Exception e) {
-        LOG.warn("gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas");
-      }
+      throw new InvalidJsonRpcParameters(
+          "gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas",
+          RpcErrorType.INVALID_GAS_PRICE_PARAMS);
     }
     return callParams;
   }

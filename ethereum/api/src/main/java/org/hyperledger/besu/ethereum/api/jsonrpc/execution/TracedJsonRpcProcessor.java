@@ -82,6 +82,7 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
         case INVALID_EXECUTION_REQUESTS_PARAMS:
         case INVALID_EXTRA_DATA_PARAMS:
         case INVALID_FILTER_PARAMS:
+        case INVALID_GAS_PRICE_PARAMS:
         case INVALID_HASH_RATE_PARAMS:
         case INVALID_ID_PARAMS:
         case INVALID_RETURN_COMPLETE_TRANSACTION_PARAMS:
