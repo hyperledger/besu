@@ -815,6 +815,18 @@ public abstract class MainnetProtocolSpecs {
     final java.util.function.Supplier<GasCalculator> pragueGasCalcSupplier =
         () -> new PragueGasCalculator(pragueBlobSchedule.getTarget());
 
+    final BaseFeeMarket pragueFeeMarket;
+    if (genesisConfigOptions.isZeroBaseFee()) {
+      pragueFeeMarket = FeeMarket.zeroBaseFee(londonForkBlockNumber);
+    } else if (genesisConfigOptions.isFixedBaseFee()) {
+      pragueFeeMarket =
+          FeeMarket.fixedBaseFee(
+              londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
+    } else {
+      pragueFeeMarket =
+          FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+    }
+
     return cancunDefinition(
             chainId,
             enableRevertReason,
@@ -823,6 +835,7 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
+        .feeMarket(pragueFeeMarket)
         .gasCalculator(pragueGasCalcSupplier)
         // EIP-7840 Blob schedule | EIP-7691 6/9 blob increase
         .gasLimitCalculatorBuilder(
