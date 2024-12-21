@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,19 +23,14 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CancunFeeMarket extends LondonFeeMarket {
-  private static final Logger LOG = LoggerFactory.getLogger(CancunFeeMarket.class);
-  protected static final BigInteger BLOB_GAS_PRICE = BigInteger.ONE;
-  private static final BigInteger BLOB_GAS_PRICE_UPDATE_FRACTION = BigInteger.valueOf(3338477);
+public class PragueFeeMarket extends CancunFeeMarket {
+  private static final BigInteger BLOB_BASE_FEE_UPDATE_FRACTION_ELECTRA =
+      BigInteger.valueOf(5007716);
+  private static final Logger LOG = LoggerFactory.getLogger(PragueFeeMarket.class);
 
-  public CancunFeeMarket(
+  public PragueFeeMarket(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
     super(londonForkBlockNumber, baseFeePerGasOverride);
-  }
-
-  @Override
-  public boolean implementsDataFee() {
-    return true;
   }
 
   @Override
@@ -43,7 +38,9 @@ public class CancunFeeMarket extends LondonFeeMarket {
     final var blobGasPrice =
         Wei.of(
             fakeExponential(
-                BLOB_GAS_PRICE, excessBlobGas.toBigInteger(), BLOB_GAS_PRICE_UPDATE_FRACTION));
+                BLOB_GAS_PRICE,
+                excessBlobGas.toBigInteger(),
+                BLOB_BASE_FEE_UPDATE_FRACTION_ELECTRA));
     LOG.atTrace()
         .setMessage("parentExcessBlobGas: {} blobGasPrice: {}")
         .addArgument(excessBlobGas::toShortHexString)
@@ -51,20 +48,5 @@ public class CancunFeeMarket extends LondonFeeMarket {
         .log();
 
     return blobGasPrice;
-  }
-
-  protected BigInteger fakeExponential(
-      final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
-    int i = 1;
-    BigInteger output = BigInteger.ZERO;
-    BigInteger numeratorAccumulator = factor.multiply(denominator);
-    while (numeratorAccumulator.signum() > 0) {
-      output = output.add(numeratorAccumulator);
-      numeratorAccumulator =
-          (numeratorAccumulator.multiply(numerator))
-              .divide(denominator.multiply(BigInteger.valueOf(i)));
-      ++i;
-    }
-    return output.divide(denominator);
   }
 }
