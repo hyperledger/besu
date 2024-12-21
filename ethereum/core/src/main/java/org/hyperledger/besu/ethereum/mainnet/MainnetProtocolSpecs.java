@@ -824,7 +824,7 @@ public abstract class MainnetProtocolSpecs {
               londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
     } else {
       pragueFeeMarket =
-          FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+          FeeMarket.prague(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
     }
 
     return cancunDefinition(
