@@ -56,7 +56,7 @@ RUN chmod +x /opt/besu/bin/besu-entry.sh
 ENV BESU_USER_NAME=${BESU_USER}
 
 ENTRYPOINT ["besu-entry.sh"]
-HEALTHCHECK --start-period=5s --interval=5s --timeout=1s --retries=10 CMD bash -c "[ -f /tmp/pid ]"
+HEALTHCHECK --start-period=5s --interval=5s --timeout=1s --retries=10 CMD ["bash", "-c", "[ -f /tmp/pid ]"]
 
 # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
