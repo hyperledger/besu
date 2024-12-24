@@ -66,8 +66,8 @@ public class IbftBlockHeaderValidationRulesetFactory {
     return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
-        .addRule(
-            new GasLimitRangeAndDeltaValidationRule(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT))
+/*        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT))*/
         .addRule(new TimestampBoundedByFutureParameter(1))
         .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
         .addRule(

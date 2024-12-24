@@ -17,8 +17,11 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.IbftLegacyConfigOptions;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.IbftLegacyContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyBlockInterface;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
@@ -46,13 +49,14 @@ import org.slf4j.LoggerFactory;
 public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(IbftLegacyBesuControllerBuilder.class);
-  private final BlockInterface blockInterface = new IbftLegacyBlockInterface();
+  private final BftBlockInterface blockInterface ;
 
   // TODO remove this warning once IBFT1 has been deprecated
   /** Default constructor */
   public IbftLegacyBesuControllerBuilder() {
     LOG.warn(
         "IBFT1 is being deprecated and will be removed in a future release. Consider using QBFT instead of IBFT1 or using GoQuorum instead of Besu if you need to use IBFT1");
+    this.blockInterface = new IbftLegacyBlockInterface(new IbftExtraDataCodec());
   }
 
   @Override

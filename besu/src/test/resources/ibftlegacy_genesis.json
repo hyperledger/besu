@@ -9,6 +9,12 @@
       "epochLength": 30000,
       "blockPeriodSeconds" : 1,
       "requestTimeoutSeconds": 10
+    },
+    "qbft": {
+      "epochLength": 30000,
+      "blockPeriodSeconds" : 1,
+      "requestTimeoutSeconds": 10,
+      "startBlock": 959
     }
   },
   "nonce": "0x0",

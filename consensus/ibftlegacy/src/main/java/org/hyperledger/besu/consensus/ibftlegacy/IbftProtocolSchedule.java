@@ -18,6 +18,8 @@ import static org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHeaderValidatio
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.IbftLegacyConfigOptions;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
@@ -35,6 +37,7 @@ import java.util.Optional;
 public class IbftProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
+  private static final IbftExtraDataCodec ibftExtraDataCodec = new IbftExtraDataCodec();
 
   /**
    * Create protocol schedule.
@@ -99,6 +102,7 @@ public class IbftProtocolSchedule {
         // .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
         .blockReward(Wei.ZERO)
         .skipZeroBlockRewards(true)
-        .blockHeaderFunctions(new LegacyIbftBlockHeaderFunctions());
+        .blockHeaderFunctions(new BftBlockHeaderFunctions(IbftBlockHashing::calculateHashOfIbftBlockOnchain,
+                ibftExtraDataCodec));
   }
 }
