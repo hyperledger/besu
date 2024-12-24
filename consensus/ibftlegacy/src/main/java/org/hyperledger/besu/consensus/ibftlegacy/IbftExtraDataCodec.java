@@ -17,12 +17,13 @@ package org.hyperledger.besu.consensus.ibftlegacy;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -39,8 +40,8 @@ import org.slf4j.LoggerFactory;
  * Represents the data structure stored in the extraData field of the BlockHeader used when
  * operating under an IBFT consensus mechanism.
  */
-public class IbftExtraData implements ParsedExtraData {
-  private static final Logger LOG = LoggerFactory.getLogger(IbftExtraData.class);
+public class IbftExtraDataCodec extends BftExtraDataCodec {
+  // private static final Logger LOG = LoggerFactory.getLogger(IbftExtraDataCodec.class);
 
   /** The constant EXTRA_VANITY_LENGTH. */
   public static final int EXTRA_VANITY_LENGTH = 32;
@@ -48,10 +49,6 @@ public class IbftExtraData implements ParsedExtraData {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  private final Bytes vanityData;
-  private final Collection<SECPSignature> seals;
-  private final SECPSignature proposerSeal;
-  private final Collection<Address> validators;
 
   /**
    * Instantiates a new Ibft extra data.
@@ -61,7 +58,7 @@ public class IbftExtraData implements ParsedExtraData {
    * @param proposerSeal the proposer seal
    * @param validators the validators
    */
-  public IbftExtraData(
+/*  public IbftExtraDataCodec(
       final Bytes vanityData,
       final Collection<SECPSignature> seals,
       final SECPSignature proposerSeal,
@@ -75,24 +72,7 @@ public class IbftExtraData implements ParsedExtraData {
     this.seals = seals;
     this.proposerSeal = proposerSeal;
     this.validators = validators;
-  }
-
-  /**
-   * Decode header and return ibft extra data.
-   *
-   * @param header the header
-   * @return the ibft extra data
-   */
-  public static IbftExtraData decode(final BlockHeader header) {
-    final Object inputExtraData = header.getParsedExtraData();
-    if (inputExtraData instanceof IbftExtraData) {
-      return (IbftExtraData) inputExtraData;
-    }
-    LOG.warn(
-        "Expected a IbftExtraData instance but got {}. Reparsing required.",
-        inputExtraData != null ? inputExtraData.getClass().getName() : "null");
-    return decodeRaw(header.getExtraData());
-  }
+  }*/
 
   /**
    * Decode raw input and return ibft extra data.
@@ -100,7 +80,8 @@ public class IbftExtraData implements ParsedExtraData {
    * @param input the input
    * @return the ibft extra data
    */
-  static IbftExtraData decodeRaw(final Bytes input) {
+  @Override
+  public BftExtraData decodeRaw(final Bytes input) {
     checkArgument(
         input.size() > EXTRA_VANITY_LENGTH,
         "Invalid Bytes supplied - too short to produce a valid IBFT Extra Data object.");
@@ -117,7 +98,7 @@ public class IbftExtraData implements ParsedExtraData {
         rlpInput.readList(rlp -> SIGNATURE_ALGORITHM.get().decodeSignature(rlp.readBytes()));
     rlpInput.leaveList();
 
-    return new IbftExtraData(vanityData, seals, proposerSeal, validators);
+    return new BftExtraData(vanityData, seals, proposerSeal, validators);
   }
 
   private static SECPSignature parseProposerSeal(final RLPInput rlpInput) {
@@ -130,55 +111,20 @@ public class IbftExtraData implements ParsedExtraData {
    *
    * @return the bytes
    */
-  public Bytes encode() {
+  @Override
+  public Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType) {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
-    if (proposerSeal != null) {
-      encoder.writeBytes(proposerSeal.encodedBytes());
+    encoder.writeList(bftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
+    if (bftExtraData.getProposerSeal() != null) {
+      encoder.writeBytes(bftExtraData.getProposerSeal().encodedBytes());
     } else {
       encoder.writeNull();
     }
-    encoder.writeList(seals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
+    encoder.writeList(bftExtraData.getSeals(), (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
     encoder.endList();
 
-    return Bytes.wrap(vanityData, encoder.encoded());
+    return Bytes.wrap(bftExtraData.getVanityData(), encoder.encoded());
   }
 
-  /**
-   * Gets vanity data.
-   *
-   * @return the vanity data
-   */
-  // Accessors
-  public Bytes getVanityData() {
-    return vanityData;
-  }
-
-  /**
-   * Gets seals.
-   *
-   * @return the seals
-   */
-  public Collection<SECPSignature> getSeals() {
-    return seals;
-  }
-
-  /**
-   * Gets proposer seal.
-   *
-   * @return the proposer seal
-   */
-  public SECPSignature getProposerSeal() {
-    return proposerSeal;
-  }
-
-  /**
-   * Gets validators.
-   *
-   * @return the validators
-   */
-  public Collection<Address> getValidators() {
-    return validators;
-  }
 }

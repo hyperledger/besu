@@ -166,7 +166,7 @@ public final class RlpBlockImporterTest {
   public void ibftImport() throws IOException {
     final Path source = dataDir.resolve("ibft.blocks");
     final String config =
-        Resources.toString(this.getClass().getResource("/ibftlegacy_genesis.json"), UTF_8);
+        Resources.toString(this.getClass().getResource("/ibft-genesis-2.json"), UTF_8);
 
     try {
       Files.write(
@@ -194,9 +194,11 @@ public final class RlpBlockImporterTest {
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .networkConfiguration(NetworkingConfiguration.create())
+            .apiConfiguration(ImmutableApiConfiguration.builder().build())
             .build();
     final RlpBlockImporter.ImportResult result =
-        rlpBlockImporter.importBlockchain(source, controller, false);
+        rlpBlockImporter.importBlockchain(source, controller, true);
 
     // Don't count the Genesis block
     assertThat(result.count).isEqualTo(958);

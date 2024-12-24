@@ -16,16 +16,17 @@ package org.hyperledger.besu.consensus.ibft;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.PoaContext;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 
 /** Holds the BFT specific mutable state. */
-public class IbftLegacyContext implements PoaContext {
+public class IbftLegacyContext extends BftContext {
 
   private final ValidatorProvider validatorProvider;
   private final EpochManager epochManager;
-  private final BlockInterface blockInterface;
+  private final BftBlockInterface blockInterface;
 
   /**
    * Instantiates a new Ibft legacy context.
@@ -37,8 +38,9 @@ public class IbftLegacyContext implements PoaContext {
   public IbftLegacyContext(
       final ValidatorProvider validatorProvider,
       final EpochManager epochManager,
-      final BlockInterface blockInterface) {
-    this.validatorProvider = validatorProvider;
+      final BftBlockInterface blockInterface) {
+      super(validatorProvider, epochManager, blockInterface);
+      this.validatorProvider = validatorProvider;
     this.epochManager = epochManager;
     this.blockInterface = blockInterface;
   }
@@ -48,6 +50,7 @@ public class IbftLegacyContext implements PoaContext {
    *
    * @return the validator provider
    */
+  @Override
   public ValidatorProvider getValidatorProvider() {
     return validatorProvider;
   }
@@ -57,12 +60,13 @@ public class IbftLegacyContext implements PoaContext {
    *
    * @return the epoch manager
    */
+  @Override
   public EpochManager getEpochManager() {
     return epochManager;
   }
 
   @Override
-  public BlockInterface getBlockInterface() {
+  public BftBlockInterface getBlockInterface() {
     return blockInterface;
   }
 

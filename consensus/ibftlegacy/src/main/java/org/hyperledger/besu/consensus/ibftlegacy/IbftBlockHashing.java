@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibftlegacy;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -31,6 +32,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class IbftBlockHashing {
 
   private static final Bytes COMMIT_MSG_CODE = Bytes.wrap(new byte[] {2});
+  private static final IbftExtraDataCodec ibftExtraDataCodec = new IbftExtraDataCodec();
 
   /**
    * Constructs a hash of the block header, suitable for use when creating the proposer seal. The
@@ -42,7 +44,7 @@ public class IbftBlockHashing {
    * @return the hash of the header suitable for signing as the proposer seal
    */
   public static Hash calculateDataHashForProposerSeal(
-      final BlockHeader header, final IbftExtraData ibftExtraData) {
+      final BlockHeader header, final BftExtraData ibftExtraData) {
     final Bytes headerRlp =
         serializeHeader(header, () -> encodeExtraDataWithoutCommittedSeals(ibftExtraData, null));
 
@@ -60,7 +62,7 @@ public class IbftBlockHashing {
    * @return the hash of the header including the validator and proposer seal in the extra data
    */
   public static Hash calculateDataHashForCommittedSeal(
-      final BlockHeader header, final IbftExtraData ibftExtraData) {
+      final BlockHeader header, final BftExtraData ibftExtraData) {
     // The data signed by a committer is an array of [Hash, COMMIT_MSG_CODE]
     final Hash dataHash = Hash.hash(serializeHeaderWithoutCommittedSeals(header, ibftExtraData));
     final Bytes seal = Bytes.wrap(dataHash, COMMIT_MSG_CODE);
@@ -75,12 +77,13 @@ public class IbftBlockHashing {
    * @return the hash of the header including the validator and proposer seal in the extra data
    */
   public static Hash calculateHashOfIbftBlockOnchain(final BlockHeader header) {
-    final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
-    return Hash.hash(serializeHeaderWithoutCommittedSeals(header, ibftExtraData));
+    final BftExtraData ibftExtraData = ibftExtraDataCodec.decode(header);
+    Hash hash = Hash.hash(serializeHeaderWithoutCommittedSeals(header, ibftExtraData));
+    return hash;
   }
 
   private static Bytes serializeHeaderWithoutCommittedSeals(
-      final BlockHeader header, final IbftExtraData ibftExtraData) {
+      final BlockHeader header, final BftExtraData ibftExtraData) {
     return serializeHeader(
         header,
         () -> encodeExtraDataWithoutCommittedSeals(ibftExtraData, ibftExtraData.getProposerSeal()));
@@ -94,9 +97,10 @@ public class IbftBlockHashing {
    * @return the proposer address
    */
   public static Address recoverProposerAddress(
-      final BlockHeader header, final IbftExtraData ibftExtraData) {
+      final BlockHeader header, final BftExtraData ibftExtraData) {
     final Hash proposerHash = calculateDataHashForProposerSeal(header, ibftExtraData);
-    return Util.signatureToAddress(ibftExtraData.getProposerSeal(), proposerHash);
+    Address addr = Util.signatureToAddress(ibftExtraData.getProposerSeal(), proposerHash);
+    return addr;
   }
 
   /**
@@ -107,7 +111,7 @@ public class IbftBlockHashing {
    * @return the addresses of validators that provided a committed seal
    */
   public static List<Address> recoverCommitterAddresses(
-      final BlockHeader header, final IbftExtraData ibftExtraData) {
+      final BlockHeader header, final BftExtraData ibftExtraData) {
     final Hash committerHash =
         IbftBlockHashing.calculateDataHashForCommittedSeal(header, ibftExtraData);
 
@@ -117,7 +121,7 @@ public class IbftBlockHashing {
   }
 
   private static Bytes encodeExtraDataWithoutCommittedSeals(
-      final IbftExtraData ibftExtraData, final SECPSignature proposerSeal) {
+          final BftExtraData ibftExtraData, final SECPSignature proposerSeal) {
     final BytesValueRLPOutput extraDataEncoding = new BytesValueRLPOutput();
     extraDataEncoding.startList();
     extraDataEncoding.writeList(
@@ -135,7 +139,9 @@ public class IbftBlockHashing {
 
     extraDataEncoding.endList();
 
-    return Bytes.wrap(ibftExtraData.getVanityData(), extraDataEncoding.encoded());
+    Bytes vanityBytes = ibftExtraData.getVanityData();
+
+    return Bytes.wrap(vanityBytes, extraDataEncoding.encoded());
   }
 
   private static Bytes serializeHeader(
@@ -150,7 +156,8 @@ public class IbftBlockHashing {
     out.writeBytes(header.getTransactionsRoot());
     out.writeBytes(header.getReceiptsRoot());
     out.writeBytes(header.getLogsBloom());
-    out.writeBytes(header.getDifficulty().toMinimalBytes());
+    //out.writeBytes(header.getDifficulty());
+    out.writeBytes(Bytes.fromHexString("0x01"));
     out.writeLongScalar(header.getNumber());
     out.writeLongScalar(header.getGasLimit());
     out.writeLongScalar(header.getGasUsed());
@@ -164,6 +171,7 @@ public class IbftBlockHashing {
     out.writeBytes(header.getMixHash());
     out.writeLong(header.getNonce());
     out.endList();
-    return out.encoded();
+    Bytes encoded = out.encoded();
+    return encoded;
   }
 }

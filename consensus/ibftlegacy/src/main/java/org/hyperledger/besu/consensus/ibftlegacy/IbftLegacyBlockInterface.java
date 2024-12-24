@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.consensus.ibftlegacy;
 
-import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.datatypes.Address;
@@ -28,7 +32,7 @@ import com.google.common.collect.ImmutableBiMap;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Ibft legacy block interface. */
-public class IbftLegacyBlockInterface implements BlockInterface {
+public class IbftLegacyBlockInterface extends BftBlockInterface {
 
   /** The constant NO_VOTE_SUBJECT. */
   public static final Address NO_VOTE_SUBJECT = Address.wrap(Bytes.wrap(new byte[Address.SIZE]));
@@ -44,16 +48,23 @@ public class IbftLegacyBlockInterface implements BlockInterface {
           VoteType.ADD, ADD_NONCE,
           VoteType.DROP, DROP_NONCE);
 
+  private static final IbftExtraDataCodec ibftExtraDataCodec = new IbftExtraDataCodec();
+
+  public IbftLegacyBlockInterface(final BftExtraDataCodec bftExtraDataCodec) {
+    super(bftExtraDataCodec);
+  }
+
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
-    final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
+    final BftExtraData ibftExtraData = ibftExtraDataCodec.decode(header);
     return IbftBlockHashing.recoverProposerAddress(header, ibftExtraData);
   }
 
   @Override
   public Address getProposerOfBlock(final org.hyperledger.besu.plugin.data.BlockHeader header) {
     return getProposerOfBlock(
-        BlockHeader.convertPluginBlockHeader(header, new LegacyIbftBlockHeaderFunctions()));
+        BlockHeader.convertPluginBlockHeader(header, new BftBlockHeaderFunctions(h -> new BftBlockHashing(ibftExtraDataCodec).calculateDataHashForCommittedSeal(h),
+                ibftExtraDataCodec)));
   }
 
   @Override
@@ -91,7 +102,7 @@ public class IbftLegacyBlockInterface implements BlockInterface {
 
   @Override
   public Collection<Address> validatorsInBlock(final BlockHeader header) {
-    return IbftExtraData.decode(header).getValidators();
+    return ibftExtraDataCodec.decode(header).getValidators();
   }
 
   /**
