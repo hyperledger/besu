@@ -45,7 +45,7 @@ public class EthNewFilter implements JsonRpcMethod {
       filter = requestContext.getRequiredParameter(0, FilterParameter.class);
     } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
-          "Invalid filter paramters (index 0)", RpcErrorType.INVALID_FILTER_PARAMS, e);
+          "Invalid filter parameters (index 0)", RpcErrorType.INVALID_FILTER_PARAMS, e);
     }
 
     if (!filter.isValid()) {
