@@ -59,7 +59,7 @@ public class PrettyPrintSubCommand implements Runnable {
 
   @CommandLine.Option(
       names = {"-f", "--force"},
-      description = "Always print well formated code, even if there is an error",
+      description = "Always print well formatted code, even if there is an error",
       paramLabel = "<boolean>")
   private final Boolean force = false;
 
