@@ -36,7 +36,7 @@ public final class CodeSection {
   /** The byte offset from the beginning of the container that the section starts at */
   final int entryPoint;
 
-  /** Is this a returing code section (i.e. contains RETF or JUMPF into a returning section)? */
+  /** Is this a returning code section (i.e. contains RETF or JUMPF into a returning section)? */
   final boolean returning;
 
   /**
@@ -95,7 +95,7 @@ public final class CodeSection {
   }
 
   /**
-   * Does this code seciton have a RETF return anywhere?
+   * Does this code section have a RETF return anywhere?
    *
    * @return returning
    */
