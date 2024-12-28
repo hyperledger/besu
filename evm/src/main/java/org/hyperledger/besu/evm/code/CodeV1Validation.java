@@ -60,7 +60,7 @@ public class CodeV1Validation implements EOFValidator {
   protected final int maxContainerSize;
 
   /**
-   * Create a new container, with a configurable maximim container size.
+   * Create a new container, with a configurable maximum container size.
    *
    * @param maxContainerSize the maximum size of any container.
    */
