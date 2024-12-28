@@ -39,7 +39,7 @@ public interface EOFValidator {
   String validateCode(final EOFLayout eofLayout);
 
   /**
-   * Performs stack validation of the EOF layout. Presumes that code validation has been perfromed
+   * Performs stack validation of the EOF layout. Presumes that code validation has been performed
    *
    * @param eofLayout The EOF Layout
    * @return validation code, null otherwise.
