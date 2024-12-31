@@ -26,7 +26,7 @@ do
     status=1
     commit_hash="$(echo "$results" | cut -d' ' -f1)"
     >&2 echo "$commit_hash is missing Signed-off-by line."
-  done < <(git log "$branch" --no-merges --pretty="%H %ae" --grep 'Signed-off-by' --invert-grep -- )
+  done < <(git log "$branch" --no-merges --pretty="%H %ae" --grep 'Signed-off-by' --invert-grep )
 done
 
 exit $status
