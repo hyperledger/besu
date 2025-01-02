@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -323,8 +322,7 @@ public class EthGetTransactionReceiptTest {
   }
 
   private void mockProtocolSpec(final BlockHeader blockHeader) {
-    FeeMarket feeMarket = mock(CancunFeeMarket.class);
-    when(feeMarket.blobGasPricePerGas(any())).thenCallRealMethod();
+    FeeMarket feeMarket = new CancunFeeMarket(0, Optional.empty());
     ProtocolSpec spec = mock(ProtocolSpec.class);
     when(spec.getFeeMarket()).thenReturn(feeMarket);
     when(spec.getGasCalculator()).thenReturn(new CancunGasCalculator());

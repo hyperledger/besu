@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersExce
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -131,11 +130,13 @@ public class FastSyncActions {
   private CompletableFuture<FastSyncState> internalDownloadPivotBlockHeader(
       final FastSyncState currentState) {
     if (currentState.hasPivotBlockHeader()) {
-      LOG.info("Initial sync state {} already contains the block header", currentState);
+      LOG.debug("Initial sync state {} already contains the block header", currentState);
       return completedFuture(currentState);
     }
 
-    return waitForPeers(1)
+    return ethContext
+        .getEthPeers()
+        .waitForPeer((peer) -> true)
         .thenCompose(
             unused ->
                 currentState
@@ -244,12 +245,5 @@ public class FastSyncActions {
 
   public boolean isBlockchainBehind(final long blockNumber) {
     return protocolContext.getBlockchain().getChainHeadHeader().getNumber() < blockNumber;
-  }
-
-  private CompletableFuture<Void> waitForPeers(final int count) {
-
-    final WaitForPeersTask waitForPeersTask =
-        WaitForPeersTask.create(ethContext, count, metricsSystem);
-    return waitForPeersTask.run();
   }
 }

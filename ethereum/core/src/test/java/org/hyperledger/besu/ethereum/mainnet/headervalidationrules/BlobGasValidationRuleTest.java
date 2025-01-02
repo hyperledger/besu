@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
-import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -88,16 +87,17 @@ public class BlobGasValidationRuleTest {
   }
 
   /**
-   * Prague EIP-7742 - Tests that the header blob gas matches the calculated blob gas and passes
+   * Prague EIP-7840 - Tests that the header blob gas matches the calculated blob gas and passes
    * validation.
    */
   @Test
-  public void validateHeader_BlobGasMatchesCalculated_SuccessValidation_Prague_Target3() {
+  public void validateHeader_BlobGasMatchesCalculated_SuccessValidation_Prague() {
+    long target = pragueGasCalculator.getTargetBlobGasPerBlock();
+
     // Create parent header
     final BlockHeaderTestFixture parentBuilder = new BlockHeaderTestFixture();
     parentBuilder.excessBlobGas(BlobGas.of(1L));
-    parentBuilder.blobGasUsed(pragueGasCalculator.blobGasCost(3));
-    parentBuilder.targetBlobsPerBlock(UInt64.valueOf(3));
+    parentBuilder.blobGasUsed(target);
     final BlockHeader parentHeader = parentBuilder.buildHeader();
 
     // Create block header with matching excessBlobGas
@@ -109,23 +109,23 @@ public class BlobGasValidationRuleTest {
   }
 
   /**
-   * Prague EIP-7742 - Tests that the header blob gas matches the calculated blob gas and passes
-   * validation.
+   * Prague EIP-7840 - Tests that the header blob gas is different from the calculated blob gas and
+   * fails validation.
    */
   @Test
-  public void validateHeader_BlobGasMatchesCalculated_SuccessValidation_Prague_Target4() {
+  public void validateHeader_BlobGasDifferentFromCalculated_FailsValidation_Prague() {
+    long target = pragueGasCalculator.getTargetBlobGasPerBlock();
+
     // Create parent header
     final BlockHeaderTestFixture parentBuilder = new BlockHeaderTestFixture();
     parentBuilder.excessBlobGas(BlobGas.of(1L));
-    parentBuilder.blobGasUsed(pragueGasCalculator.blobGasCost(4));
-    parentBuilder.targetBlobsPerBlock(UInt64.valueOf(4));
+    parentBuilder.blobGasUsed(target);
     final BlockHeader parentHeader = parentBuilder.buildHeader();
 
-    // Create block header with matching excessBlobGas
+    // Create block header with different excessBlobGas
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-    headerBuilder.excessBlobGas(BlobGas.of(1L));
     final BlockHeader header = headerBuilder.buildHeader();
 
-    assertThat(pragueBlobGasValidationRule.validate(header, parentHeader)).isTrue();
+    assertThat(pragueBlobGasValidationRule.validate(header, parentHeader)).isFalse();
   }
 }

@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -47,7 +47,7 @@ public class ProtocolScheduleFixture {
   private static GenesisConfigOptions getMainnetConfigOptions() {
     // this method avoids reading all the alloc accounts when all we want is the "config" section
     try (final JsonParser jsonParser =
-        new JsonFactory().createParser(GenesisConfigFile.class.getResource("/mainnet.json"))) {
+        new JsonFactory().createParser(GenesisConfig.class.getResource("/mainnet.json"))) {
 
       while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
         if ("config".equals(jsonParser.getCurrentName())) {

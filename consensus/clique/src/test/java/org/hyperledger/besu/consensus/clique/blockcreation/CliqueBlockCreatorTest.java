@@ -22,7 +22,7 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
@@ -110,7 +110,7 @@ public class CliqueBlockCreatorTest {
 
     protocolSchedule =
         CliqueProtocolSchedule.create(
-            GenesisConfigFile.DEFAULT.getConfigOptions(),
+            GenesisConfig.DEFAULT.getConfigOptions(),
             new ForksSchedule<>(List.of()),
             proposerNodeKey,
             PrivacyParameters.DEFAULT,
@@ -125,7 +125,7 @@ public class CliqueBlockCreatorTest {
     CliqueHelpers.setCliqueContext(cliqueContext);
 
     final Block genesis =
-        GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
+        GenesisState.fromConfig(GenesisConfig.mainnet(), protocolSchedule).getBlock();
     blockchain = createInMemoryBlockchain(genesis);
     protocolContext =
         new ProtocolContext(blockchain, stateArchive, cliqueContext, new BadBlockManager());

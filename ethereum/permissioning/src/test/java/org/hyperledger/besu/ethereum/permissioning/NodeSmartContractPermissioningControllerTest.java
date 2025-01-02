@@ -23,7 +23,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -63,7 +63,7 @@ public class NodeSmartContractPermissioningControllerTest {
 
     final ObjectNode jsonData = JsonUtil.objectNodeFromString(emptyContractFile, true);
     final GenesisState genesisState =
-        GenesisState.fromConfig(GenesisConfigFile.fromConfig(jsonData), protocolSchedule);
+        GenesisState.fromConfig(GenesisConfig.fromConfig(jsonData), protocolSchedule);
 
     final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
     final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();

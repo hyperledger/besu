@@ -22,7 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -61,8 +61,7 @@ public class TransactionSmartContractPermissioningControllerTest {
 
     final GenesisState genesisState =
         GenesisState.fromConfig(
-            GenesisConfigFile.fromSource(this.getClass().getResource(resourceName)),
-            protocolSchedule);
+            GenesisConfig.fromSource(this.getClass().getResource(resourceName)), protocolSchedule);
 
     final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
     final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();

@@ -20,7 +20,7 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -85,15 +85,15 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
   @Test
   void createMainnetBlock1() throws IOException {
-    final var genesisConfigFile = GenesisConfigFile.mainnet();
+    final var genesisConfig = GenesisConfig.mainnet();
 
     final MiningConfiguration miningConfiguration = createMiningParameters(BLOCK_1_NONCE);
 
     final ExecutionContextTestFixture executionContextTestFixture =
-        ExecutionContextTestFixture.builder(genesisConfigFile)
+        ExecutionContextTestFixture.builder(genesisConfig)
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        genesisConfigFile.getConfigOptions(),
+                        genesisConfig.getConfigOptions(),
                         Optional.of(BigInteger.valueOf(42)),
                         ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
@@ -143,23 +143,23 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
   @Test
   void createMainnetBlock1_fixedDifficulty1() {
-    final var genesisConfigFile =
-        GenesisConfigFile.fromResource("/block-creation-fixed-difficulty-genesis.json");
+    final var genesisConfig =
+        GenesisConfig.fromResource("/block-creation-fixed-difficulty-genesis.json");
 
     final MiningConfiguration miningConfiguration = createMiningParameters(FIXED_DIFFICULTY_NONCE);
 
     final ExecutionContextTestFixture executionContextTestFixture =
-        ExecutionContextTestFixture.builder(genesisConfigFile)
+        ExecutionContextTestFixture.builder(genesisConfig)
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        genesisConfigFile.getConfigOptions(),
+                        genesisConfig.getConfigOptions(),
                         Optional.of(BigInteger.valueOf(42)),
                         ProtocolSpecAdapters.create(
                             0,
                             specBuilder ->
                                 specBuilder.difficultyCalculator(
                                     FixedDifficultyCalculators.calculator(
-                                        genesisConfigFile.getConfigOptions()))),
+                                        genesisConfig.getConfigOptions()))),
                         PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
@@ -201,21 +201,21 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
   @Test
   void rewardBeneficiary_zeroReward_skipZeroRewardsFalse() {
-    final var genesisConfigFile =
-        GenesisConfigFile.fromResource("/block-creation-fixed-difficulty-genesis.json");
+    final var genesisConfig =
+        GenesisConfig.fromResource("/block-creation-fixed-difficulty-genesis.json");
 
     final MiningConfiguration miningConfiguration = createMiningParameters(FIXED_DIFFICULTY_NONCE);
 
     ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
-                genesisConfigFile.getConfigOptions(),
+                genesisConfig.getConfigOptions(),
                 Optional.of(BigInteger.valueOf(42)),
                 ProtocolSpecAdapters.create(
                     0,
                     specBuilder ->
                         specBuilder.difficultyCalculator(
                             FixedDifficultyCalculators.calculator(
-                                genesisConfigFile.getConfigOptions()))),
+                                genesisConfig.getConfigOptions()))),
                 PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
@@ -225,7 +225,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                 new NoOpMetricsSystem())
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
-        ExecutionContextTestFixture.builder(genesisConfigFile)
+        ExecutionContextTestFixture.builder(genesisConfig)
             .protocolSchedule(protocolSchedule)
             .build();
 
@@ -278,21 +278,21 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
   @Test
   void rewardBeneficiary_zeroReward_skipZeroRewardsTrue() {
-    final var genesisConfigFile =
-        GenesisConfigFile.fromResource("/block-creation-fixed-difficulty-genesis.json");
+    final var genesisConfig =
+        GenesisConfig.fromResource("/block-creation-fixed-difficulty-genesis.json");
 
     final MiningConfiguration miningConfiguration = createMiningParameters(FIXED_DIFFICULTY_NONCE);
 
     ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
-                genesisConfigFile.getConfigOptions(),
+                genesisConfig.getConfigOptions(),
                 Optional.of(BigInteger.valueOf(42)),
                 ProtocolSpecAdapters.create(
                     0,
                     specBuilder ->
                         specBuilder.difficultyCalculator(
                             FixedDifficultyCalculators.calculator(
-                                genesisConfigFile.getConfigOptions()))),
+                                genesisConfig.getConfigOptions()))),
                 PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
@@ -302,7 +302,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                 new NoOpMetricsSystem())
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
-        ExecutionContextTestFixture.builder(genesisConfigFile)
+        ExecutionContextTestFixture.builder(genesisConfig)
             .protocolSchedule(protocolSchedule)
             .build();
 

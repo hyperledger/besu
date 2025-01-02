@@ -61,7 +61,8 @@ public class BlobSizeTransactionSelector extends AbstractTransactionSelector {
 
       if (remainingBlobGas == 0) {
         LOG.atTrace()
-            .setMessage("The block already contains the max number of allowed blobs")
+            .setMessage(
+                "The block already contains the max number of allowed blobs, pending tx: {}")
             .addArgument(evaluationContext.getPendingTransaction()::toTraceLog)
             .log();
         return TransactionSelectionResult.BLOBS_FULL;

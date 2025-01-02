@@ -16,9 +16,9 @@ package org.hyperledger.besu.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
+import static org.hyperledger.besu.config.GenesisConfig.fromConfig;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -44,7 +44,7 @@ public class EphemeryGenesisUpdaterTest {
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID))
           .put("timestamp", GENESIS_TEST_TIMESTAMP);
 
-  private static final GenesisConfigFile INVALID_GENESIS_JSON = fromConfig("{}");
+  private static final GenesisConfig INVALID_GENESIS_JSON = fromConfig("{}");
   private static final JsonObject INVALID_GENESIS_JSON_WITHOUT_CHAINID =
       (new JsonObject()).put("timestamp", GENESIS_TEST_TIMESTAMP);
 
@@ -54,16 +54,16 @@ public class EphemeryGenesisUpdaterTest {
 
   @Test
   public void testEphemeryWhenChainIdIsAbsent() {
-    final GenesisConfigFile config =
-        GenesisConfigFile.fromConfig(INVALID_GENESIS_JSON_WITHOUT_CHAINID.toString());
+    final GenesisConfig config =
+        GenesisConfig.fromConfig(INVALID_GENESIS_JSON_WITHOUT_CHAINID.toString());
     Optional<BigInteger> chainId = config.getConfigOptions().getChainId();
     assertThat(chainId).isNotPresent();
   }
 
   @Test
   public void testShouldDefaultTimestampToZero() {
-    final GenesisConfigFile config =
-        GenesisConfigFile.fromConfig(INVALID_GENESIS_JSON_WITHOUT_TIMESTAMP.toString());
+    final GenesisConfig config =
+        GenesisConfig.fromConfig(INVALID_GENESIS_JSON_WITHOUT_TIMESTAMP.toString());
     assertThat(config.getTimestamp()).isZero();
   }
 
@@ -76,7 +76,7 @@ public class EphemeryGenesisUpdaterTest {
 
   @Test
   public void testEphemeryWhenGenesisJsonIsValid() {
-    final GenesisConfigFile config = GenesisConfigFile.fromConfig(VALID_GENESIS_JSON.toString());
+    final GenesisConfig config = GenesisConfig.fromConfig(VALID_GENESIS_JSON.toString());
     assertThat(String.valueOf(config.getTimestamp()))
         .isEqualTo(String.valueOf(GENESIS_TEST_TIMESTAMP));
     assertThat(config.getConfigOptions().getChainId())
@@ -87,7 +87,7 @@ public class EphemeryGenesisUpdaterTest {
 
   @Test
   public void testEphemeryNotYetDueForUpdate() {
-    final GenesisConfigFile config = GenesisConfigFile.fromConfig(VALID_GENESIS_JSON.toString());
+    final GenesisConfig config = GenesisConfig.fromConfig(VALID_GENESIS_JSON.toString());
     assertThat(EARLIER_TIMESTAMP).isLessThan(config.getTimestamp() + PERIOD_IN_SECONDS);
   }
 
@@ -100,7 +100,7 @@ public class EphemeryGenesisUpdaterTest {
     long expectedGenesisTimestamp =
         GENESIS_TEST_TIMESTAMP + (PERIOD_SINCE_GENESIS * PERIOD_IN_SECONDS);
 
-    final GenesisConfigFile config = GenesisConfigFile.fromResource("/ephemery.json");
+    final GenesisConfig config = GenesisConfig.fromResource("/ephemery.json");
 
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     override.put("chainId", String.valueOf(expectedChainId));
@@ -116,7 +116,7 @@ public class EphemeryGenesisUpdaterTest {
 
   @Test
   public void testEphemeryWhenSuccessful() {
-    final GenesisConfigFile config = GenesisConfigFile.fromConfig(VALID_GENESIS_JSON.toString());
+    final GenesisConfig config = GenesisConfig.fromConfig(VALID_GENESIS_JSON.toString());
 
     BigInteger expectedChainId =
         BigInteger.valueOf(GENESIS_CONFIG_TEST_CHAINID)
@@ -127,7 +127,7 @@ public class EphemeryGenesisUpdaterTest {
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     override.put("chainId", String.valueOf(expectedChainId));
     override.put("timestamp", String.valueOf(expectedGenesisTimestamp));
-    final GenesisConfigFile updatedConfig = config.withOverrides(override);
+    final GenesisConfig updatedConfig = config.withOverrides(override);
 
     assertThat(LATER_TIMESTAMP)
         .isGreaterThan(Long.parseLong(String.valueOf(GENESIS_TEST_TIMESTAMP + PERIOD_IN_SECONDS)));

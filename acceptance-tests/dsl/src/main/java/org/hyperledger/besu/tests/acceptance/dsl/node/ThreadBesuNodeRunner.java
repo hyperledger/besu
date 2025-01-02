@@ -25,7 +25,7 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -155,8 +155,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     networkConfigBuilder.setBootNodes(bootnodes);
     node.getConfiguration()
         .getGenesisConfig()
-        .map(GenesisConfigFile::fromConfig)
-        .ifPresent(networkConfigBuilder::setGenesisConfigFile);
+        .map(GenesisConfig::fromConfig)
+        .ifPresent(networkConfigBuilder::setGenesisConfig);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
     final BesuControllerBuilder builder = component.besuControllerBuilder();
     builder.isRevertReasonEnabled(node.isRevertReasonEnabled());
@@ -166,9 +166,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     builder.nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))));
     builder.privacyParameters(node.getPrivacyParameters());
 
-    node.getGenesisConfig()
-        .map(GenesisConfigFile::fromConfig)
-        .ifPresent(builder::genesisConfigFile);
+    node.getGenesisConfig().map(GenesisConfig::fromConfig).ifPresent(builder::genesisConfig);
 
     final BesuController besuController = component.besuController();
 
