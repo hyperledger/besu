@@ -2126,7 +2126,7 @@ Features added between 20.10.0 to 21.1.0 include:
   * Goerli 4_460_644 (17 Mar 2021)
   * Rinkeby 8_290_928 (24 Mar 2021)
   * Ethereum 12_244_000 (14 Apr 2021)
-* Besu Launcher: Besu now has support for the [Quorum Mainnet Launcher](https://github.com/ConsenSys/quorum-mainnet-launcher) which makes it easy for users to configure and launch Besu on the Ethereum mainnet.
+* Besu Launcher: Besu now has support for the [Quorum Mainnet Launcher](https://github.com/ConsenSys/quorum) which makes it easy for users to configure and launch Besu on the Ethereum mainnet.
 * Bonsai Tries: A new database format which reduces storage requirements and improves performance for access to recent state. _Note: only full sync is currently supported._
 * Miner Data JSON-RPC: The `eth_getMinerDataByBlockHash` and `eth_getMinerDataByBlockNumber` endpoints return miner rewards and coinbase address for a given block.
 * EIP-1898 support: [The EIP](https://eips.ethereum.org/EIPS/eip-1898) adds `blockHash` to JSON-RPC methods which accept a default block parameter.
