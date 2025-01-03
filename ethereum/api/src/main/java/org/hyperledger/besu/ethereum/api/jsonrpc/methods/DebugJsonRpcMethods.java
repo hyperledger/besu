@@ -45,7 +45,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
@@ -100,10 +99,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new DebugStorageRangeAt(blockchainQueries, blockReplay),
         new DebugMetrics(metricsSystem),
         new DebugResyncWorldstate(protocolContext, synchronizer),
-        new DebugTraceBlock(
-            () -> new BlockTracer(blockReplay),
-            ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
-            blockchainQueries),
+        new DebugTraceBlock(protocolSchedule, blockchainQueries, metricsSystem),
         new DebugSetHead(blockchainQueries, protocolContext),
         new DebugReplayBlock(blockchainQueries, protocolContext, protocolSchedule),
         new DebugTraceBlockByNumber(protocolSchedule, blockchainQueries, metricsSystem),

@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -50,17 +51,11 @@ import org.mockito.MockitoAnnotations;
 public class DebugTraceBlockByNumberTest {
 
   @Mock private BlockchainQueries blockchainQueries;
-
   @Mock private Blockchain blockchain;
-
   @Mock private Block block;
-
   @Mock private BlockHeader blockHeader;
-
   @Mock private ProtocolSchedule protocolSchedule;
-
   @Mock private ObservableMetricsSystem metricsSystem;
-
   private DebugTraceBlockByNumber debugTraceBlockByNumber;
 
   @BeforeEach
@@ -100,10 +95,11 @@ public class DebugTraceBlockByNumberTest {
                       eq(blockchainQueries), eq(Optional.of(blockHeader)), any(Function.class)))
           .thenReturn(Optional.of(resultList));
 
-      final JsonRpcSuccessResponse response =
-          (JsonRpcSuccessResponse) debugTraceBlockByNumber.response(request);
-      final Collection<DebugTraceTransactionResult> traceResult = getResult(response);
+      final JsonRpcResponse jsonRpcResponse = debugTraceBlockByNumber.response(request);
+      assertThat(jsonRpcResponse).isInstanceOf(JsonRpcSuccessResponse.class);
+      JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) jsonRpcResponse;
 
+      final Collection<DebugTraceTransactionResult> traceResult = getResult(response);
       assertThat(traceResult).isNotEmpty();
       assertThat(traceResult).isInstanceOf(Collection.class).hasSize(2);
       assertThat(traceResult).containsExactly(result1, result2);

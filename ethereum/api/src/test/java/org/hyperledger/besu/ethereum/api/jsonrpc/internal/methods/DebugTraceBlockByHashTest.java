@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -49,17 +50,11 @@ import org.mockito.MockitoAnnotations;
 
 public class DebugTraceBlockByHashTest {
   @Mock private ProtocolSchedule protocolSchedule;
-
   @Mock private BlockchainQueries blockchainQueries;
-
   @Mock private ObservableMetricsSystem metricsSystem;
-
   @Mock private Blockchain blockchain;
-
   @Mock private Block block;
-
   private DebugTraceBlockByHash debugTraceBlockByHash;
-
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
@@ -97,8 +92,10 @@ public class DebugTraceBlockByHashTest {
                   Tracer.processTracing(eq(blockchainQueries), eq(blockHash), any(Function.class)))
           .thenReturn(Optional.of(resultList));
 
-      final JsonRpcSuccessResponse response =
-          (JsonRpcSuccessResponse) debugTraceBlockByHash.response(request);
+      final JsonRpcResponse jsonRpcResponse = debugTraceBlockByHash.response(request);
+      assertThat(jsonRpcResponse).isInstanceOf(JsonRpcSuccessResponse.class);
+      JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) jsonRpcResponse;
+
       final Collection<DebugTraceTransactionResult> traceResult = getResult(response);
       assertThat(traceResult).isNotEmpty();
       assertThat(traceResult).isInstanceOf(Collection.class).hasSize(2);
