@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -31,51 +32,42 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 
 public class DebugTraceBlockByNumberTest {
 
-  @Mock
-  private BlockchainQueries blockchainQueries;
+  @Mock private BlockchainQueries blockchainQueries;
 
-  @Mock
-  private Blockchain blockchain;
+  @Mock private Blockchain blockchain;
 
-  @Mock
-  private Block block;
+  @Mock private Block block;
 
-  @Mock
-  private BlockHeader blockHeader;
+  @Mock private BlockHeader blockHeader;
 
-  @Mock
-  private ProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
 
-  @Mock
-  private EthScheduler ethScheduler;
-
-  @Mock
-  private ObservableMetricsSystem metricsSystem;
+  @Mock private ObservableMetricsSystem metricsSystem;
 
   private DebugTraceBlockByNumber debugTraceBlockByNumber;
 
   @BeforeEach
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-    when(blockchainQueries.getEthScheduler()).thenReturn(Optional.of(ethScheduler));
-    debugTraceBlockByNumber = new DebugTraceBlockByNumber(protocolSchedule, blockchainQueries, metricsSystem);
+    debugTraceBlockByNumber =
+        new DebugTraceBlockByNumber(protocolSchedule, blockchainQueries, metricsSystem);
   }
 
   @Test
@@ -85,16 +77,15 @@ public class DebugTraceBlockByNumberTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void shouldReturnCollectionOfTwoDebugTraceTransactionResults() {
+  public void shouldReturnCorrectResponse() {
 
     final long blockNumber = 1L;
     final Object[] params = new Object[] {Long.toHexString(blockNumber)};
     final JsonRpcRequestContext request =
-            new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlockByNumber", params));
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlockByNumber", params));
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getBlockByNumber(blockNumber)).thenReturn(Optional.of(block));
     when(block.getHeader()).thenReturn(blockHeader);
-
 
     DebugTraceTransactionResult result1 = mock(DebugTraceTransactionResult.class);
     DebugTraceTransactionResult result2 = mock(DebugTraceTransactionResult.class);
@@ -102,20 +93,20 @@ public class DebugTraceBlockByNumberTest {
     List<DebugTraceTransactionResult> resultList = Arrays.asList(result1, result2);
 
     try (MockedStatic<Tracer> mockedTracer = mockStatic(Tracer.class)) {
-      mockedTracer.when(() -> Tracer.processTracing(
-                      eq(blockchainQueries),
-                      eq(Optional.of(blockHeader)),
-                      any(Function.class)))
-              .thenReturn(Optional.of(resultList));
+      mockedTracer
+          .when(
+              () ->
+                  Tracer.processTracing(
+                      eq(blockchainQueries), eq(Optional.of(blockHeader)), any(Function.class)))
+          .thenReturn(Optional.of(resultList));
 
       final JsonRpcSuccessResponse response =
-              (JsonRpcSuccessResponse) debugTraceBlockByNumber.response(request);
+          (JsonRpcSuccessResponse) debugTraceBlockByNumber.response(request);
       final Collection<DebugTraceTransactionResult> traceResult = getResult(response);
 
       assertThat(traceResult).isNotEmpty();
-      assertThat(traceResult)
-              .isInstanceOf(Collection.class).hasSize(2);
-      assertThat(traceResult).containsExactly(result1, result2);  // Check that the result contains both elements
+      assertThat(traceResult).isInstanceOf(Collection.class).hasSize(2);
+      assertThat(traceResult).containsExactly(result1, result2);
     }
   }
 
@@ -126,15 +117,13 @@ public class DebugTraceBlockByNumberTest {
 
   @Test
   public void shouldHandleInvalidParametersGracefully() {
-    // Simulate a JsonRpcRequestContext with invalid block number or trace options
     final Object[] invalidParams = new Object[] {"invalid-block-number"};
     final JsonRpcRequestContext request =
-            new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlockByNumber", invalidParams));
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "debug_traceBlockByNumber", invalidParams));
 
-    // Expect an exception to be thrown when invalid parameters are given
     assertThatThrownBy(() -> debugTraceBlockByNumber.response(request))
-            .isInstanceOf(InvalidJsonRpcParameters.class)
-            .hasMessageContaining("Invalid block parameter");
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessageContaining("Invalid block parameter");
   }
-
 }

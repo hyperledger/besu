@@ -48,7 +48,7 @@ import java.util.concurrent.ExecutionException;
 
 public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
 
-  protected final ProtocolSchedule protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final LabelledMetric<Counter> outputCounter;
 
   public DebugTraceBlockByNumber(
