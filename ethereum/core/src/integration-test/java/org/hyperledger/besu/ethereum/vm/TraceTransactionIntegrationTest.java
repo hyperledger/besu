@@ -153,7 +153,6 @@ public class TraceTransactionIntegrationTest {
     // No storage changes before the SSTORE call.
     TraceFrame frame = tracer.getTraceFrames().get(170);
     assertThat(frame.getOpcode()).isEqualTo("DUP6");
-    //assertStorageContainsExactly(frame);
 
     // Storage changes show up in the SSTORE frame.
     frame = tracer.getTraceFrames().get(171);

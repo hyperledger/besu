@@ -165,8 +165,7 @@ public class DebugTraceTransactionTest {
     assertThat(transactionResult.getStructLogs().size()).isEqualTo(1);
     assertThat(transactionResult.getStructLogs().get(0).stack().length).isEqualTo(1);
     assertThat(transactionResult.getStructLogs().get(0).stack()[0])
-        .isEqualTo(
-                StructLog.toCompactHex(stackBytes[0], true));
+        .isEqualTo(StructLog.toCompactHex(stackBytes[0], true));
     assertThat(transactionResult.getStructLogs().get(0).memory().length).isEqualTo(1);
     assertThat(transactionResult.getStructLogs().get(0).memory()[0])
         .isEqualTo(StructLog.toCompactHex(memoryBytes[0], true));
