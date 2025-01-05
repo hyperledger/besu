@@ -36,6 +36,10 @@ import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Implements PeerTask for getting block bodies from peers, and matches headers to bodies to supply
+ * full blocks
+ */
 public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
 
   private static final Logger LOG = LoggerFactory.getLogger(GetBodiesFromPeerTask.class);
