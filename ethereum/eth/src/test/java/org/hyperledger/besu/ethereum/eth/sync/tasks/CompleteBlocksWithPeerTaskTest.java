@@ -63,7 +63,7 @@ public class CompleteBlocksWithPeerTaskTest {
 
     CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
         new CompleteBlocksWithPeerTask(protocolSchedule, List.of(blockHeader), peerTaskExecutor);
-    final List<Block> blocks = completeBlocksWithPeerTask.getBlocks();
+    final List<Block> blocks = completeBlocksWithPeerTask.retrieveBlocksFromPeers();
     assertThat(blocks).isNotEmpty();
     assertThat(blocks.size()).isEqualTo(1);
     assertThat(BlockHeader.hasEmptyBlock(blocks.get(0).getHeader())).isTrue();
@@ -102,7 +102,7 @@ public class CompleteBlocksWithPeerTaskTest {
     final CompleteBlocksWithPeerTask task =
         new CompleteBlocksWithPeerTask(
             mockProtocolSchedule, asList(header1, header2), peerTaskExecutor);
-    final List<Block> blocks = task.getBlocks();
+    final List<Block> blocks = task.retrieveBlocksFromPeers();
 
     assertThat(blocks).isEqualTo(expectedBlocks);
   }
@@ -124,7 +124,7 @@ public class CompleteBlocksWithPeerTaskTest {
         new CompleteBlocksWithPeerTask(
             protocolSchedule, List.of(nonEmptyBlockHeaderMock), peerTaskExecutor);
 
-    final List<Block> blocks = completeBlocksWithPeerTask.getBlocks();
+    final List<Block> blocks = completeBlocksWithPeerTask.retrieveBlocksFromPeers();
     assertThat(blocks).isNotEmpty();
     assertThat(blocks.size()).isEqualTo(1);
     assertThat(blocks.get(0)).isEqualTo(block);
@@ -157,7 +157,7 @@ public class CompleteBlocksWithPeerTaskTest {
                 emptyBlockHeaderMock),
             peerTaskExecutor);
 
-    final List<Block> blocks = completeBlocksWithPeerTask.getBlocks();
+    final List<Block> blocks = completeBlocksWithPeerTask.retrieveBlocksFromPeers();
     assertThat(blocks).isNotEmpty();
     assertThat(blocks.size()).isEqualTo(4);
     assertThat(blocks.get(0)).isEqualTo(block1);
@@ -198,7 +198,7 @@ public class CompleteBlocksWithPeerTaskTest {
                 emptyBlockHeaderMock),
             peerTaskExecutor);
 
-    final List<Block> blocks = completeBlocksWithPeerTask.getBlocks();
+    final List<Block> blocks = completeBlocksWithPeerTask.retrieveBlocksFromPeers();
     assertThat(blocks).isNotEmpty();
     assertThat(blocks.size()).isEqualTo(4);
     assertThat(blocks.get(0)).isEqualTo(block1);

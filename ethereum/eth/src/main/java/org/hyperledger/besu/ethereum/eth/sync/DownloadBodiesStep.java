@@ -63,7 +63,7 @@ public class DownloadBodiesStep
 
     final CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
         new CompleteBlocksWithPeerTask(protocolSchedule, headers, ethContext.getPeerTaskExecutor());
-    final List<Block> blocks = completeBlocksWithPeerTask.getBlocks();
+    final List<Block> blocks = completeBlocksWithPeerTask.retrieveBlocksFromPeers();
     return CompletableFuture.completedFuture(blocks);
   }
 }

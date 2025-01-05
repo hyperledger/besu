@@ -90,7 +90,13 @@ public class CompleteBlocksWithPeerTask {
     return protocolSchedule.getByBlockHeader(header).getWithdrawalsProcessor().isPresent();
   }
 
-  public List<Block> getBlocks() {
+  /**
+   * Retrieves all remaining blocks from connected peers. Subsequent calls will have no affect.
+   *
+   * @return A List of all blocks for the headers supplied when constructing this
+   *     CompleteBlocksWithPeerTask
+   */
+  public List<Block> retrieveBlocksFromPeers() {
     while (remainingBlocks > 0) {
       LOG.atDebug()
           .setMessage("Requesting {} bodies from peer")
