@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -62,7 +61,6 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
       final ProtocolContext protocolContext,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SyncState syncState,
       final Clock clock,
@@ -112,7 +110,6 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
               protocolSchedule,
               protocolContext,
               ethContext,
-              peerTaskExecutor,
               syncState,
               pivotBlockSelector,
               metricsSystem);
@@ -130,7 +127,6 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
               protocolSchedule,
               protocolContext,
               ethContext,
-              peerTaskExecutor,
               syncState,
               pivotBlockSelector,
               metricsSystem);

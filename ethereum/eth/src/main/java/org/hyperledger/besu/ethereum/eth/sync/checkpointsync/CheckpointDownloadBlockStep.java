@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
@@ -40,7 +39,6 @@ public class CheckpointDownloadBlockStep {
 
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
-  private final PeerTaskExecutor peerTaskExecutor;
   private final Checkpoint checkpoint;
   private final SynchronizerConfiguration synchronizerConfiguration;
   private final MetricsSystem metricsSystem;
@@ -48,13 +46,11 @@ public class CheckpointDownloadBlockStep {
   public CheckpointDownloadBlockStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
       final Checkpoint checkpoint,
       final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
-    this.peerTaskExecutor = peerTaskExecutor;
     this.checkpoint = checkpoint;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.metricsSystem = metricsSystem;
@@ -65,6 +61,7 @@ public class CheckpointDownloadBlockStep {
         GetBlockFromPeerTask.create(
             protocolSchedule,
             ethContext,
+            synchronizerConfiguration,
             Optional.of(hash),
             checkpoint.blockNumber(),
             metricsSystem);
@@ -85,7 +82,7 @@ public class CheckpointDownloadBlockStep {
                 GetReceiptsFromPeerTask task =
                     new GetReceiptsFromPeerTask(List.of(block.getHeader()), protocolSchedule);
                 PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> executorResult =
-                    peerTaskExecutor.execute(task);
+                    ethContext.getPeerTaskExecutor().execute(task);
 
                 if (executorResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
                   List<TransactionReceipt> transactionReceipts =

@@ -32,7 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.quality.Strictness.LENIENT;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
@@ -174,7 +174,7 @@ public abstract class AbstractTransactionPoolTestBase {
   protected abstract ExecutionContextTestFixture createExecutionContextTestFixture();
 
   protected static ExecutionContextTestFixture createExecutionContextTestFixtureBaseFeeMarket() {
-    final var genesisConfigFile = GenesisConfigFile.fromResource("/txpool-test-genesis.json");
+    final var genesisConfigFile = GenesisConfig.fromResource("/txpool-test-genesis.json");
     final ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
                 genesisConfigFile.getConfigOptions(),

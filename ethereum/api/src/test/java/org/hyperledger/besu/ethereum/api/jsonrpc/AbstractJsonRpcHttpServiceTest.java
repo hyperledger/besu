@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -147,6 +148,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
     final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
+    when(miningConfiguration.getCoinbase()).thenReturn(Optional.of(Address.ZERO));
+
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             blockchainSetupUtil.getProtocolSchedule(),
@@ -175,6 +178,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             blockchainSetupUtil.getBlockchain(),
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getProtocolSchedule(),
+            miningConfiguration,
             0L);
 
     return new JsonRpcMethodsFactory()

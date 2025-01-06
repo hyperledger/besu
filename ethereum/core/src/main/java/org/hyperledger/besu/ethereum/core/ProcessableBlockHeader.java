@@ -196,4 +196,25 @@ public class ProcessableBlockHeader
   public String toLogString() {
     return getNumber() + " (time: " + getTimestamp() + ")";
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("ProcessableBlockHeader{");
+    sb.append("number=").append(number).append(", ");
+    sb.append("parentHash=").append(parentHash).append(", ");
+    sb.append("coinbase=").append(coinbase).append(", ");
+    sb.append("difficulty=").append(difficulty).append(", ");
+    sb.append("gasLimit=").append(gasLimit).append(", ");
+    sb.append("timestamp=").append(timestamp).append(", ");
+    sb.append("baseFee=").append(baseFee).append(", ");
+    sb.append("mixHashOrPrevRandao=").append(mixHashOrPrevRandao).append(", ");
+    if (parentBeaconBlockRoot != null) {
+      sb.append("parentBeaconBlockRoot=").append(parentBeaconBlockRoot).append(", ");
+    }
+    if (targetBlobsPerBlock != null) {
+      sb.append("targetBlobsPerBlock=").append(targetBlobsPerBlock);
+    }
+    return sb.append("}").toString();
+  }
 }
