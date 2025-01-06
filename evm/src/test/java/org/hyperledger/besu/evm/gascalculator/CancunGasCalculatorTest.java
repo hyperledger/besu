@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.gascalculator;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -28,6 +27,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class CancunGasCalculatorTest {
 
+  private static final long TARGET_BLOB_GAS_PER_BLOCK_CANCUN = 0x60000;
   private final CancunGasCalculator cancunGasCalculator = new CancunGasCalculator();
 
   @ParameterizedTest(name = "{index} - parent gas {0}, used gas {1}, new excess {2}")
@@ -35,13 +35,12 @@ public class CancunGasCalculatorTest {
   public void shouldCalculateExcessBlobGasCorrectly(
       final long parentExcess, final long used, final long expected) {
     final long usedBlobGas = cancunGasCalculator.blobGasCost(used);
-    assertThat(
-            cancunGasCalculator.computeExcessBlobGas(parentExcess, usedBlobGas, Optional.empty()))
+    assertThat(cancunGasCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
         .isEqualTo(expected);
   }
 
   Iterable<Arguments> blobGasses() {
-    long targetGasPerBlock = CancunGasCalculator.TARGET_BLOB_GAS_PER_BLOCK;
+    long targetGasPerBlock = TARGET_BLOB_GAS_PER_BLOCK_CANCUN;
     return List.of(
         Arguments.of(0L, 0L, 0L),
         Arguments.of(targetGasPerBlock, 0L, 0L),
