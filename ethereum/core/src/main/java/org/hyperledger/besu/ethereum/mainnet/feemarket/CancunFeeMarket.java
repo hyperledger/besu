@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 public class CancunFeeMarket extends LondonFeeMarket {
   private static final Logger LOG = LoggerFactory.getLogger(CancunFeeMarket.class);
-  private static final BigInteger BLOB_GAS_PRICE = BigInteger.ONE;
+  protected static final BigInteger BLOB_GAS_PRICE = BigInteger.ONE;
   private static final BigInteger BLOB_GAS_PRICE_UPDATE_FRACTION = BigInteger.valueOf(3338477);
 
   public CancunFeeMarket(
@@ -53,7 +53,7 @@ public class CancunFeeMarket extends LondonFeeMarket {
     return blobGasPrice;
   }
 
-  private BigInteger fakeExponential(
+  protected BigInteger fakeExponential(
       final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
     int i = 1;
     BigInteger output = BigInteger.ZERO;
