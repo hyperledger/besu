@@ -79,6 +79,7 @@ public class DebugTraceBlockByHashTest {
 
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getBlockByHash(blockHash)).thenReturn(Optional.of(block));
+    when(block.getHash()).thenReturn(blockHash);
 
     DebugTraceTransactionResult result1 = mock(DebugTraceTransactionResult.class);
     DebugTraceTransactionResult result2 = mock(DebugTraceTransactionResult.class);
