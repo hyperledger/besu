@@ -367,8 +367,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
             EnodeURLImpl.builder()
                 .ipAddress(enr.ip())
                 .nodeId(enr.publicKey())
-                .discoveryPort(Optional.ofNullable(enr.udp()))
-                .listeningPort(Optional.ofNullable(enr.tcp()))
+                .discoveryPort(enr.udp())
+                .listeningPort(enr.tcp())
                 .build();
         final DiscoveryPeer peer = DiscoveryPeer.fromEnode(enodeURL);
         peers.add(peer);

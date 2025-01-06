@@ -42,8 +42,8 @@ class EthereumNodeRecordTest {
     // assertions
     assertThat(enr.ip()).isEqualTo(expectedIPAddr);
     assertThat(enr.publicKey()).isEqualTo(expectedPublicKey);
-    assertThat(enr.tcp()).isEqualTo(30303);
-    assertThat(enr.udp()).isEqualTo(30303);
+    assertThat(enr.tcp()).isNotEmpty().contains(30303);
+    assertThat(enr.udp()).isNotEmpty().contains(30303);
   }
 
   @Test

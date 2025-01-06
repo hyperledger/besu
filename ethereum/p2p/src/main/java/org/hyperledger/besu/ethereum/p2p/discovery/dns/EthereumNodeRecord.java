@@ -21,8 +21,10 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -30,33 +32,8 @@ import org.apache.tuweni.bytes.Bytes;
  * A modified implementation of Ethereum Node Record (ENR) that is used by DNSResolver. See <a
  * href="https://eips.ethereum.org/EIPS/eip-778">EIP-778</a>
  */
-public class EthereumNodeRecord {
-  private final Map<String, Bytes> data;
-  private final Bytes rlp;
-  private final Bytes publicKey;
-
-  /**
-   * Creates an ENR from its components
-   *
-   * @param data the arbitrary data of the record
-   * @param rlp RLP encoding of the record
-   */
-  public EthereumNodeRecord(final Map<String, Bytes> data, final Bytes rlp) {
-    this.data = data;
-    this.rlp = rlp;
-    publicKey = initPublicKeyBytes(data);
-  }
-
-  private static Bytes initPublicKeyBytes(final Map<String, Bytes> data) {
-    var keyBytes = data.get("secp256k1");
-    if (keyBytes == null) {
-      throw new IllegalArgumentException("Missing secp256k1 entry in ENR");
-    }
-    // convert 33 bytes compressed public key to uncompressed using Bouncy Castle
-    var curve = SignatureAlgorithmFactory.getInstance().getCurve();
-    var ecPoint = curve.getCurve().decodePoint(keyBytes.toArrayUnsafe());
-    return Bytes.wrap(ecPoint.getEncoded(false)).slice(1);
-  }
+public record EthereumNodeRecord(
+    Bytes rlp, Bytes publicKey, InetAddress ip, Optional<Integer> tcp, Optional<Integer> udp) {
 
   /**
    * Creates an ENR from its serialized form as a RLP list
@@ -90,24 +67,36 @@ public class EthereumNodeRecord {
     }
 
     input.leaveList();
-    return new EthereumNodeRecord(data, rlp);
+
+    var publicKey = initPublicKeyBytes(data);
+
+    return new EthereumNodeRecord(rlp, publicKey, initIPAddr(data), initTCP(data), initUDP(data));
   }
 
   /**
-   * Decompressed 64 bytes public key of the ENR
+   * Returns the public key of the ENR
    *
    * @return the public key of the ENR
    */
-  public Bytes publicKey() {
-    return publicKey;
+  static Bytes initPublicKeyBytes(final Map<String, Bytes> data) {
+    var keyBytes = data.get("secp256k1");
+    if (keyBytes == null) {
+      throw new IllegalArgumentException("Missing secp256k1 entry in ENR");
+    }
+    // convert 33 bytes compressed public key to uncompressed using Bouncy Castle
+    var curve = SignatureAlgorithmFactory.getInstance().getCurve();
+    var ecPoint = curve.getCurve().decodePoint(keyBytes.toArrayUnsafe());
+    // uncompressed public key is 65 bytes, first byte is 0x04.
+    var encodedPubKey = ecPoint.getEncoded(false);
+    return Bytes.of(Arrays.copyOfRange(encodedPubKey, 1, encodedPubKey.length));
   }
 
   /**
-   * The ip associated with the ENR
+   * Returns the InetAddress of the ENR
    *
    * @return The IP address of the ENR
    */
-  public InetAddress ip() {
+  static InetAddress initIPAddr(final Map<String, Bytes> data) {
     var ipBytes = data.get("ip");
     if (ipBytes != null) {
       try {
@@ -124,19 +113,19 @@ public class EthereumNodeRecord {
    *
    * @return the TCP port associated with this ENR
    */
-  public Integer tcp() {
+  static Optional<Integer> initTCP(final Map<String, Bytes> data) {
     var tcpBytes = data.get("tcp");
-    return tcpBytes != null ? tcpBytes.toInt() : null;
+    return tcpBytes != null ? Optional.of(tcpBytes.toInt()) : Optional.empty();
   }
 
   /**
-   * The UDP port of the ENR
+   * The UDP port of the ENR. If the UDP port is not present, the TCP port is used.
    *
    * @return the UDP port associated with this ENR
    */
-  public Integer udp() {
+  static Optional<Integer> initUDP(final Map<String, Bytes> data) {
     var udpBytes = data.get("udp");
-    return udpBytes != null ? udpBytes.toInt() : tcp();
+    return udpBytes != null ? Optional.of(udpBytes.toInt()) : initTCP(data);
   }
 
   /**
@@ -147,6 +136,7 @@ public class EthereumNodeRecord {
     return "enr:" + ip() + ":" + tcp() + "?udp=" + udp();
   }
 
+  /** Override equals method to compare the RLP bytes */
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -155,6 +145,7 @@ public class EthereumNodeRecord {
     return rlp.equals(that.rlp);
   }
 
+  /** Override hashCode method to use hashCode of the RLP bytes */
   @Override
   public int hashCode() {
     return rlp.hashCode();

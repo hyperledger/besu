@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 
 import java.security.Security;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.vertx.core.DeploymentOptions;
@@ -77,8 +76,8 @@ class DNSDaemonTest {
                       EnodeURLImpl.builder()
                           .ipAddress(enr.ip())
                           .nodeId(enr.publicKey())
-                          .discoveryPort(Optional.ofNullable(enr.udp()))
-                          .listeningPort(Optional.ofNullable(enr.tcp()))
+                          .discoveryPort(enr.udp())
+                          .listeningPort(enr.tcp())
                           .build();
                     } catch (final Exception e) {
                       testContext.failNow(e);
