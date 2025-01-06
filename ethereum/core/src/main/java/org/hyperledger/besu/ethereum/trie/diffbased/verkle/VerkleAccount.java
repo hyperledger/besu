@@ -80,6 +80,7 @@ public class VerkleAccount extends DiffBasedAccount {
         tracked.getNonce(),
         tracked.getBalance(),
         tracked.getCodeHash(),
+        tracked.getCode(),
         true);
     this.codeSize = tracked.getCodeSize().orElse(0L);
     updatedStorage.putAll(tracked.getUpdatedStorage());
