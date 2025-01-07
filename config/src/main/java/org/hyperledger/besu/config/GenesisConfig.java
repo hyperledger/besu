@@ -266,17 +266,6 @@ public class GenesisConfig {
   }
 
   /**
-   * Gets target blobs per block.
-   *
-   * @return the target blobs per block
-   */
-  public Optional<String> getTargetBlobsPerBlock() {
-    // TODO SLD EIP-7742 not sure if we should use a default value here or enforce any
-    // "pragueAtGenesis" genesis file (used in devnets) to have this value
-    return JsonUtil.getValueAsString(genesisRoot, "targetblobsperblock");
-  }
-
-  /**
    * Gets coinbase.
    *
    * @return the coinbase
