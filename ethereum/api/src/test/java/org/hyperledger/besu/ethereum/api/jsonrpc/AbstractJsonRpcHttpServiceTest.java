@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -46,6 +47,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -146,6 +148,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
     final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
+    when(miningConfiguration.getCoinbase()).thenReturn(Optional.of(Address.ZERO));
+
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             blockchainSetupUtil.getProtocolSchedule(),
@@ -168,6 +172,14 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     supportedCapabilities.add(EthProtocol.ETH63);
 
     final NatService natService = new NatService(Optional.empty());
+
+    final var transactionSimulator =
+        new TransactionSimulator(
+            blockchainSetupUtil.getBlockchain(),
+            blockchainSetupUtil.getWorldArchive(),
+            blockchainSetupUtil.getProtocolSchedule(),
+            miningConfiguration,
+            0L);
 
     return new JsonRpcMethodsFactory()
         .methods(
@@ -201,7 +213,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             mock(EthPeers.class),
             syncVertx,
             mock(ApiConfiguration.class),
-            Optional.empty());
+            Optional.empty(),
+            transactionSimulator);
   }
 
   protected void startService() throws Exception {

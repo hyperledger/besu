@@ -23,10 +23,14 @@ import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.witness.ExecutionWitness;
+import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -78,7 +82,7 @@ public class BlockHeaderBuilder {
   private Long blobGasUsed = null;
   private BlobGas excessBlobGas = null;
   private Bytes32 parentBeaconBlockRoot = null;
-  private UInt64 targetBlobCount = null;
+  private UInt64 targetBlobsPerBlock = null;
   private ExecutionWitness executionWitness = null;
 
   public static BlockHeaderBuilder create() {
@@ -129,7 +133,7 @@ public class BlockHeaderBuilder {
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
         .requestsHash(header.getRequestsHash().orElse(null))
-        .targetBlobCount(header.getTargetBlobCount().orElse(null))
+        .targetBlobsPerBlock(header.getTargetBlobsPerBlock().orElse(null))
         .executionWitness(header.getExecutionWitness().orElse(null));
   }
 
@@ -155,11 +159,60 @@ public class BlockHeaderBuilder {
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
             .requestsHash(fromBuilder.requestsHash)
-            .targetBlobCount(fromBuilder.targetBlobCount)
+            .targetBlobsPerBlock(fromBuilder.targetBlobsPerBlock)
             .executionWitness(fromBuilder.executionWitness)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
+  }
+
+  public static BlockHeaderBuilder createPending(
+      final ProtocolSpec protocolSpec,
+      final BlockHeader parentHeader,
+      final MiningConfiguration miningConfiguration,
+      final long timestamp,
+      final Optional<Bytes32> maybePrevRandao,
+      final Optional<Bytes32> maybeParentBeaconBlockRoot) {
+
+    final long newBlockNumber = parentHeader.getNumber() + 1;
+    final long gasLimit =
+        protocolSpec
+            .getGasLimitCalculator()
+            .nextGasLimit(
+                parentHeader.getGasLimit(),
+                miningConfiguration.getTargetGasLimit().orElse(parentHeader.getGasLimit()),
+                newBlockNumber);
+
+    final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
+    final var difficulty =
+        Difficulty.of(difficultyCalculator.nextDifficulty(timestamp, parentHeader));
+
+    final Wei baseFee;
+    if (protocolSpec.getFeeMarket().implementsBaseFee()) {
+      final var baseFeeMarket = (BaseFeeMarket) protocolSpec.getFeeMarket();
+      baseFee =
+          baseFeeMarket.computeBaseFee(
+              newBlockNumber,
+              parentHeader.getBaseFee().orElse(Wei.ZERO),
+              parentHeader.getGasUsed(),
+              baseFeeMarket.targetGasUsed(parentHeader));
+    } else {
+      baseFee = null;
+    }
+
+    final Bytes32 prevRandao = maybePrevRandao.orElse(null);
+    final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(null);
+
+    return BlockHeaderBuilder.create()
+        .parentHash(parentHeader.getHash())
+        .coinbase(miningConfiguration.getCoinbase().orElseThrow())
+        .difficulty(difficulty)
+        .number(newBlockNumber)
+        .gasLimit(gasLimit)
+        .timestamp(timestamp)
+        .baseFee(baseFee)
+        .prevRandao(prevRandao)
+        .parentBeaconBlockRoot(parentBeaconBlockRoot);
   }
 
   public BlockHeader buildBlockHeader() {
@@ -187,7 +240,7 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        targetBlobCount,
+        targetBlobsPerBlock,
         executionWitness,
         blockHeaderFunctions);
   }
@@ -205,7 +258,7 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         parentBeaconBlockRoot,
-        targetBlobCount);
+        targetBlobsPerBlock);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -232,7 +285,7 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        targetBlobCount,
+        targetBlobsPerBlock,
         executionWitness);
   }
 
@@ -273,7 +326,7 @@ public class BlockHeaderBuilder {
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
     processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     processableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
-    processableBlockHeader.getTargetBlobCount().ifPresent(this::targetBlobCount);
+    processableBlockHeader.getTargetBlobsPerBlock().ifPresent(this::targetBlobsPerBlock);
     return this;
   }
 
@@ -299,7 +352,7 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     requestsHash(sealableBlockHeader.getRequestsHash().orElse(null));
-    sealableBlockHeader.getTargetBlobCount().ifPresent(this::targetBlobCount);
+    sealableBlockHeader.getTargetBlobsPerBlock().ifPresent(this::targetBlobsPerBlock);
     executionWitness(sealableBlockHeader.getExecutionWitness().orElse(null));
     return this;
   }
@@ -435,8 +488,8 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder targetBlobCount(final UInt64 targetBlobCount) {
-    this.targetBlobCount = targetBlobCount;
+  public BlockHeaderBuilder targetBlobsPerBlock(final UInt64 targetBlobsPerBlock) {
+    this.targetBlobsPerBlock = targetBlobsPerBlock;
     return this;
   }
 

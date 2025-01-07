@@ -132,7 +132,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   @Mock EthScheduler ethScheduler;
 
-  private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
+  private final Address coinbase = genesisAllocations(getPosGenesisConfig()).findFirst().get();
 
   private MiningConfiguration miningConfiguration =
       ImmutableMiningConfiguration.builder()
@@ -148,7 +148,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   private final ProtocolSchedule protocolSchedule = spy(getMergeProtocolSchedule());
   private final GenesisState genesisState =
-      GenesisState.fromConfig(getPosGenesisConfigFile(), protocolSchedule);
+      GenesisState.fromConfig(getPosGenesisConfig(), protocolSchedule);
 
   private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 

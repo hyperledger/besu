@@ -712,24 +712,22 @@ public interface GasCalculator {
   }
 
   /**
+   * Returns the blob gas cost per blob. This is the gas cost for each blob of data that is added to
+   * the block.
+   *
+   * @return the blob gas cost per blob
+   */
+  default long getBlobGasPerBlob() {
+    return 0L;
+  }
+
+  /**
    * Return the gas cost given the number of blobs
    *
    * @param blobCount the number of blobs
    * @return the total gas cost
    */
-  default long blobGasCost(final int blobCount) {
-    return 0L;
-  }
-
-  /**
-   * Compute the new value for the excess blob gas, given the parent value and the count of new
-   * blobs
-   *
-   * @param parentExcessBlobGas excess blob gas from the parent
-   * @param newBlobs count of new blobs
-   * @return the new excess blob gas value
-   */
-  default long computeExcessBlobGas(final long parentExcessBlobGas, final int newBlobs) {
+  default long blobGasCost(final long blobCount) {
     return 0L;
   }
 
@@ -755,23 +753,13 @@ public interface GasCalculator {
   }
 
   /**
-   * Calculates the refund for proessing the 7702 code delegation list if an delegater account
-   * already exist in the trie.
+   * Calculates the refund for processing the 7702 code delegation list if a delegator account
+   * already exists in the trie.
    *
    * @param alreadyExistingAccountSize The number of accounts already in the trie
    * @return the gas refund
    */
   default long calculateDelegateCodeGasRefund(final long alreadyExistingAccountSize) {
-    return 0L;
-  }
-
-  /**
-   * Returns the gas cost for resolving the code of a delegate account.
-   *
-   * @param isWarm whether the account is warm
-   * @return the gas cost
-   */
-  default long delegatedCodeResolutionGasCost(final boolean isWarm) {
     return 0L;
   }
 

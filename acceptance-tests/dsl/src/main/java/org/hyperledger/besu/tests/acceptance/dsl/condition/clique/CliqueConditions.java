@@ -19,7 +19,7 @@ import static org.hyperledger.besu.datatypes.Hash.fromHexString;
 import static org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions.LATEST;
 
 import org.hyperledger.besu.config.CliqueConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.blockchain.ExpectBlockNotCreated;
@@ -89,9 +89,9 @@ public class CliqueConditions {
 
   private int cliqueBlockPeriod(final BesuNode node) {
     final String config = node.getGenesisConfigProvider().create(emptyList()).get();
-    final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(config);
+    final GenesisConfig genesisConfig = GenesisConfig.fromConfig(config);
     final CliqueConfigOptions cliqueConfigOptions =
-        genesisConfigFile.getConfigOptions().getCliqueConfigOptions();
+        genesisConfig.getConfigOptions().getCliqueConfigOptions();
     return cliqueConfigOptions.getBlockPeriodSeconds();
   }
 
