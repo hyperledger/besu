@@ -52,12 +52,38 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   @FunctionalInterface
   public interface TransactionReceiptFactory {
-
+    /**
+     * Use to create a receipt for a transaction during block processing.
+     *
+     * @param transactionType the transaction type
+     * @param result the transaction processing result
+     * @param worldState the world state updated with the execution of this transaction, that is
+     *     used to calculate the forestStateRoot if needed
+     * @param gasUsed the gas used by the transaction
+     * @return the transaction receipt
+     */
     TransactionReceipt create(
         TransactionType transactionType,
         TransactionProcessingResult result,
         WorldState worldState,
         long gasUsed);
+
+    /**
+     * Use to create a receipt for a transaction selected during block creation. Conversely to the
+     * other method, world state here is not required, since creating block for hard forks that
+     * require the calculation of the forestStateRoot is not supported anymore.
+     *
+     * @param transactionType the transaction type
+     * @param result the transaction processing result
+     * @param gasUsed the gas used by the transaction
+     * @return the transaction receipt
+     */
+    default TransactionReceipt create(
+        final TransactionType transactionType,
+        final TransactionProcessingResult result,
+        final long gasUsed) {
+      return create(transactionType, result, null, gasUsed);
+    }
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBlockProcessor.class);

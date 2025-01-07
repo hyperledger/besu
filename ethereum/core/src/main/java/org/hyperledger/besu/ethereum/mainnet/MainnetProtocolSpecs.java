@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
@@ -163,7 +164,7 @@ public abstract class MainnetProtocolSpecs {
         .ommerHeaderValidatorBuilder(
             feeMarket -> MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator())
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
+        .transactionReceiptFactory(frontierTransactionReceiptFactory())
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
         .blockProcessorBuilder(
@@ -1016,17 +1017,30 @@ public abstract class MainnetProtocolSpecs {
         .name("ExperimentalEips");
   }
 
-  private static TransactionReceipt frontierTransactionReceiptFactory(
-      // ignored because it's always FRONTIER
-      final TransactionType __,
-      final TransactionProcessingResult result,
-      final WorldState worldState,
-      final long gasUsed) {
-    return new TransactionReceipt(
-        worldState.frontierRootHash(),
-        gasUsed,
-        result.getLogs(),
-        Optional.empty()); // No revert reason in frontier
+  private static TransactionReceiptFactory frontierTransactionReceiptFactory() {
+    return new TransactionReceiptFactory() {
+      @Override
+      public TransactionReceipt create(
+          final TransactionType transactionType,
+          final TransactionProcessingResult result,
+          final WorldState worldState,
+          final long gasUsed) {
+        return new TransactionReceipt(
+            worldState.frontierRootHash(),
+            gasUsed,
+            result.getLogs(),
+            Optional.empty()); // No revert reason in frontier
+      }
+
+      @Override
+      public TransactionReceipt create(
+          final TransactionType transactionType,
+          final TransactionProcessingResult result,
+          final long gasUsed) {
+        throw new UnsupportedOperationException(
+            "Creating blocks before Byzantium hard fork is not supported anymore");
+      }
+    };
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
