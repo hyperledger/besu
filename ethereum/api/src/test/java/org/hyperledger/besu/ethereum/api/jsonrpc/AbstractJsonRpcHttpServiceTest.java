@@ -216,7 +216,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             mock(ApiConfiguration.class),
             Optional.empty(),
             transactionSimulator,
-            new EthScheduler(1,1,1,new NoOpMetricsSystem()));
+            new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
   }
 
   protected void startService() throws Exception {

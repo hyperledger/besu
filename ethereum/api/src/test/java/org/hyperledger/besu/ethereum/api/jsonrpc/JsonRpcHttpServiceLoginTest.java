@@ -173,7 +173,7 @@ public class JsonRpcHttpServiceLoginTest {
                 mock(ApiConfiguration.class),
                 Optional.empty(),
                 mock(TransactionSimulator.class),
-                    new EthScheduler(1,1,1,new NoOpMetricsSystem()));
+                new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
     service = createJsonRpcHttpService();
     jwtAuth = service.authenticationService.get().getJwtAuthProvider();
     service.start().join();

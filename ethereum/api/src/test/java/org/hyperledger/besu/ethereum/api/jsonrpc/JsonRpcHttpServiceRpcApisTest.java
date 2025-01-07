@@ -239,7 +239,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                 mock(ApiConfiguration.class),
                 Optional.empty(),
                 mock(TransactionSimulator.class),
-                    new EthScheduler(1,1,1,new NoOpMetricsSystem()));
+                new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -352,7 +352,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                 mock(ApiConfiguration.class),
                 Optional.empty(),
                 mock(TransactionSimulator.class),
-                    new EthScheduler(1,1,1,new NoOpMetricsSystem()));
+                new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,

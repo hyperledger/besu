@@ -208,7 +208,7 @@ public class WebSocketServiceLoginTest {
                     mock(ApiConfiguration.class),
                     Optional.empty(),
                     mock(TransactionSimulator.class),
-                    new EthScheduler(1,1,1, new NoOpMetricsSystem())));
+                    new EthScheduler(1, 1, 1, new NoOpMetricsSystem())));
 
     websocketMethods.putAll(rpcMethods);
     webSocketMessageHandlerSpy =

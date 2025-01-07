@@ -230,6 +230,6 @@ public class JsonRpcTestMethodsFactory {
             ImmutableApiConfiguration.builder().build(),
             Optional.empty(),
             transactionSimulator,
-            new EthScheduler(1,1,1,new NoOpMetricsSystem()));
+            new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
   }
 }
