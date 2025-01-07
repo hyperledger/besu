@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -95,6 +96,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   @Override
   public BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
@@ -103,6 +105,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     return processBlock(
+        protocolContext,
         blockchain,
         worldState,
         blockHeader,
@@ -114,6 +117,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   }
 
   protected BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
@@ -148,7 +152,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     final Optional<PreprocessingContext> preProcessingContext =
         preprocessingBlockFunction.run(
-            worldState,
+            protocolContext,
             privateMetadataUpdater,
             blockHeader,
             transactions,
@@ -239,7 +243,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         protocolSpec.getRequestProcessorCoordinator();
     Optional<List<Request>> maybeRequests = Optional.empty();
     if (requestProcessor.isPresent()) {
-      ProcessRequestContext context =
+      ProcessRequestContext processRequestContext =
           new ProcessRequestContext(
               blockHeader,
               worldState,
@@ -248,7 +252,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               OperationTracer.NO_TRACING);
 
-      maybeRequests = Optional.of(requestProcessor.get().process(context));
+      maybeRequests = Optional.of(requestProcessor.get().process(processRequestContext));
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
@@ -332,7 +336,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   public interface PreprocessingFunction {
     Optional<PreprocessingContext> run(
-        final MutableWorldState worldState,
+        final ProtocolContext protocolContext,
         final PrivateMetadataUpdater privateMetadataUpdater,
         final BlockHeader blockHeader,
         final List<Transaction> transactions,
@@ -344,7 +348,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       @Override
       public Optional<PreprocessingContext> run(
-          final MutableWorldState worldState,
+          final ProtocolContext protocolContext,
           final PrivateMetadataUpdater privateMetadataUpdater,
           final BlockHeader blockHeader,
           final List<Transaction> transactions,

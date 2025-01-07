@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -31,7 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -137,6 +138,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
 
   @Override
   public BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
@@ -146,6 +148,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final BlockProcessingResult blockProcessingResult =
         super.processBlock(
+            protocolContext,
             blockchain,
             worldState,
             blockHeader,
@@ -154,6 +157,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
             maybeWithdrawals,
             privateMetadataUpdater,
             new ParallelTransactionPreprocessing());
+
     if (blockProcessingResult.isFailed()) {
       // Fallback to non-parallel processing if there is a block processing exception .
       LOG.warn(
@@ -161,6 +165,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           blockHeader.getNumber(),
           blockHeader.getBlockHash());
       return super.processBlock(
+          protocolContext,
           blockchain,
           worldState,
           blockHeader,
@@ -209,20 +214,20 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
 
     @Override
     public Optional<PreprocessingContext> run(
-        final MutableWorldState worldState,
+        final ProtocolContext protocolContext,
         final PrivateMetadataUpdater privateMetadataUpdater,
         final BlockHeader blockHeader,
         final List<Transaction> transactions,
         final Address miningBeneficiary,
         final BlockHashOperation.BlockHashLookup blockHashLookup,
         final Wei blobGasPrice) {
-      if ((worldState instanceof DiffBasedWorldState)) {
+      if ((protocolContext.getWorldStateArchive() instanceof DiffBasedWorldStateProvider)) {
         ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor =
             new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
         // runAsyncBlock, if activated, facilitates the  non-blocking parallel execution of
         // transactions in the background through an optimistic strategy.
         parallelizedConcurrentTransactionProcessor.runAsyncBlock(
-            worldState,
+            protocolContext,
             blockHeader,
             transactions,
             miningBeneficiary,
