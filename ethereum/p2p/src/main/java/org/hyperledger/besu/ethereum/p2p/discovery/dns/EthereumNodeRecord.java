@@ -139,7 +139,7 @@ public record EthereumNodeRecord(
 
   /** Override equals method to compare the RLP bytes */
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (!(o instanceof EthereumNodeRecord that)) {
       return false;
     }
