@@ -28,7 +28,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -52,7 +51,6 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -196,13 +194,15 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void shouldReturnGasEstimateErrorWhenGasPricePresentForEip1559Transaction() {
+  public void shouldNotErrorWhenGasPricePresentForEip1559Transaction() {
+    final Wei gasPrice = Wei.of(1000);
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(eip1559TransactionCallParameter(Optional.of(Wei.of(10))));
-    mockTransientProcessorResultGasEstimate(1L, false, false, latestBlockHeader);
-    Assertions.assertThatThrownBy(() -> method.response(request))
-        .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas");
+        ethEstimateGasRequest(eip1559TransactionCallParameter(Optional.of(gasPrice)));
+    mockTransientProcessorResultGasEstimate(
+        1L, true, gasPrice, Optional.empty(), latestBlockHeader);
+
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
+    assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -534,6 +534,14 @@ public class EthEstimateGasTest {
               any(OperationTracer.class),
               eq(blockHeader)))
           .thenReturn(Optional.of(mockTxSimResult));
+      // for testing different combination of gasPrice params
+      when(transactionSimulator.process(
+              eq(modifiedEip1559TransactionCallParameter(Optional.of(gasPrice))),
+              eq(Optional.empty()), // no account overrides
+              any(TransactionValidationParams.class),
+              any(OperationTracer.class),
+              eq(blockHeader)))
+          .thenReturn(Optional.of(mockTxSimResult));
     }
     final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
     when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
@@ -578,11 +586,11 @@ public class EthEstimateGasTest {
     return eip1559TransactionCallParameter(Optional.empty());
   }
 
-  private JsonCallParameter eip1559TransactionCallParameter(final Optional<Wei> gasPrice) {
+  private JsonCallParameter eip1559TransactionCallParameter(final Optional<Wei> maybeGasPrice) {
     return new JsonCallParameter.JsonCallParameterBuilder()
         .withFrom(Address.fromHexString("0x0"))
         .withTo(Address.fromHexString("0x0"))
-        .withGasPrice(gasPrice.orElse(null))
+        .withGasPrice(maybeGasPrice.orElse(null))
         .withMaxPriorityFeePerGas(Wei.fromHexString("0x10"))
         .withMaxFeePerGas(Wei.fromHexString("0x10"))
         .withValue(Wei.ZERO)
@@ -592,11 +600,15 @@ public class EthEstimateGasTest {
   }
 
   private CallParameter modifiedEip1559TransactionCallParameter() {
+    return modifiedEip1559TransactionCallParameter(Optional.empty());
+  }
+
+  private CallParameter modifiedEip1559TransactionCallParameter(final Optional<Wei> gasPrice) {
     return new CallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
         Long.MAX_VALUE,
-        Wei.ZERO,
+        gasPrice.orElse(Wei.ZERO),
         Optional.of(Wei.fromHexString("0x10")),
         Optional.of(Wei.fromHexString("0x10")),
         Wei.ZERO,
