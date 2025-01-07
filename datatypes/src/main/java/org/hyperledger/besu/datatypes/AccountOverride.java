@@ -14,17 +14,16 @@
  */
 package org.hyperledger.besu.datatypes;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** Account Override parameter class */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -36,16 +35,20 @@ public class AccountOverride {
   private final Optional<Long> nonce;
   private final Optional<String> code;
   private final Optional<Map<String, String>> stateDiff;
+  private final Optional<String> movePrecompileToAddress;
 
   private AccountOverride(
       final Optional<Wei> balance,
       final Optional<Long> nonce,
       final Optional<String> code,
-      final Optional<Map<String, String>> stateDiff) {
+      final Optional<Map<String, String>> stateDiff,
+      final Optional<String> movePrecompileToAddress
+      ) {
     this.balance = balance;
     this.nonce = nonce;
     this.code = code;
     this.stateDiff = stateDiff;
+    this.movePrecompileToAddress = movePrecompileToAddress;
   }
 
   /**
@@ -84,6 +87,15 @@ public class AccountOverride {
     return stateDiff;
   }
 
+  /**
+   * Gets the movePrecompileToAddress override
+   *
+   * @return the movePrecompileToAddress if present
+   */
+  public Optional<String> getMovePrecompileToAddress() {
+    return movePrecompileToAddress;
+  }
+
   /** Builder class for Account overrides */
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Builder {
@@ -91,6 +103,7 @@ public class AccountOverride {
     private Optional<Long> nonce = Optional.empty();
     private Optional<String> code = Optional.empty();
     private Optional<Map<String, String>> stateDiff = Optional.empty();
+    private Optional<String> movePrecompileToAddress = Optional.empty();
 
     /** Default constructor. */
     public Builder() {}
@@ -103,6 +116,17 @@ public class AccountOverride {
      */
     public Builder withBalance(final Wei balance) {
       this.balance = Optional.ofNullable(balance);
+      return this;
+    }
+
+    /**
+     * Sets the movePrecompileToAddress override
+     *
+     * @param movePrecompileToAddress the address
+     * @return the builder
+     */
+    public Builder withMovePrecompileToAddress(final String movePrecompileToAddress) {
+      this.movePrecompileToAddress = Optional.ofNullable(movePrecompileToAddress);
       return this;
     }
 
@@ -145,7 +169,7 @@ public class AccountOverride {
      * @return account override
      */
     public AccountOverride build() {
-      return new AccountOverride(balance, nonce, code, stateDiff);
+      return new AccountOverride(balance, nonce, code, stateDiff, movePrecompileToAddress);
     }
   }
 
@@ -176,25 +200,28 @@ public class AccountOverride {
     return balance.equals(accountOverride.balance)
         && nonce.equals(accountOverride.nonce)
         && code.equals(accountOverride.code)
-        && stateDiff.equals(accountOverride.stateDiff);
+        && stateDiff.equals(accountOverride.stateDiff)
+            && movePrecompileToAddress.equals(accountOverride.movePrecompileToAddress);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(balance, nonce, code, stateDiff);
+    return Objects.hash(balance, nonce, code, stateDiff, movePrecompileToAddress);
   }
 
   @Override
   public String toString() {
     return "AccountOverride{"
-        + "balance="
-        + balance
-        + ", nonce="
-        + nonce
-        + ", code="
-        + code
-        + ", stateDiff="
-        + stateDiff
-        + '}';
+            + "balance="
+            + balance
+            + ", nonce="
+            + nonce
+            + ", code="
+            + code
+            + ", stateDiff="
+            + stateDiff
+            + ", movePrecompileToAddress="
+            + movePrecompileToAddress
+            + '}';
   }
 }
