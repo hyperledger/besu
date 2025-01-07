@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -36,34 +36,37 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 
 public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
 
   protected final ProtocolSchedule protocolSchedule;
   private final LabelledMetric<Counter> outputCounter;
+  private final EthScheduler ethScheduler;
 
   public DebugTraceBlockByNumber(
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
-      final ObservableMetricsSystem metricsSystem) {
+      final ObservableMetricsSystem metricsSystem,
+      final EthScheduler ethScheduler) {
     super(blockchainQueries);
     this.protocolSchedule = protocolSchedule;
     this.outputCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.BLOCKCHAIN,
-            "transactions_debugTraceblock_pipeline_processed_total",
+            "transactions_debugtraceblock_pipeline_processed_total",
             "Number of transactions processed for each block",
             "step",
             "action");
+    this.ethScheduler = ethScheduler;
   }
 
   @Override
@@ -108,8 +111,8 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                     getBlockchainQueries(),
                     Optional.of(block.getHeader()),
                     traceableState -> {
-                      Collection<DebugTraceTransactionResult> tracesList =
-                          new CopyOnWriteArrayList<>();
+                      List<DebugTraceTransactionResult> tracesList =
+                          Collections.synchronizedList(new ArrayList<>());
                       final ProtocolSpec protocolSpec =
                           protocolSchedule.getByBlockHeader(block.getHeader());
                       final MainnetTransactionProcessor transactionProcessor =
@@ -144,17 +147,7 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                               .andFinishWith("collect_results", tracesList::add);
 
                       try {
-                        if (getBlockchainQueries().getEthScheduler().isPresent()) {
-                          getBlockchainQueries()
-                              .getEthScheduler()
-                              .get()
-                              .startPipeline(traceBlockPipeline)
-                              .get();
-                        } else {
-                          EthScheduler ethScheduler =
-                              new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
-                          ethScheduler.startPipeline(traceBlockPipeline).get();
-                        }
+                        ethScheduler.startPipeline(traceBlockPipeline).get();
                       } catch (InterruptedException | ExecutionException e) {
                         throw new RuntimeException(e);
                       }

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -207,7 +207,8 @@ public class WebSocketServiceLoginTest {
                     vertx,
                     mock(ApiConfiguration.class),
                     Optional.empty(),
-                    mock(TransactionSimulator.class)));
+                    mock(TransactionSimulator.class),
+                    new EthScheduler(1,1,1, new NoOpMetricsSystem())));
 
     websocketMethods.putAll(rpcMethods);
     webSocketMessageHandlerSpy =

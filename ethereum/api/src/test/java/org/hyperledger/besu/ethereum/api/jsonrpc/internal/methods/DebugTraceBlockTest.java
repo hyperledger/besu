@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -56,10 +57,15 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class DebugTraceBlockTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private Blockchain blockchain;
@@ -70,7 +76,6 @@ public class DebugTraceBlockTest {
 
   @BeforeEach
   public void setUp() {
-    MockitoAnnotations.openMocks(this);
     // As we build the block from RLP in DebugTraceBlock, we need to have non mocked
     // protocolSchedule (and ProtocolSpec)
     // to be able to get the hash of the block
@@ -105,7 +110,10 @@ public class DebugTraceBlockTest {
             .build();
     debugTraceBlock =
         new DebugTraceBlock(
-            executionContextTestFixture.getProtocolSchedule(), blockchainQueries, metricsSystem);
+            executionContextTestFixture.getProtocolSchedule(),
+            blockchainQueries,
+            metricsSystem,
+            new EthScheduler(1, 1, 1, metricsSystem));
   }
 
   @Test

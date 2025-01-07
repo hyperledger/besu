@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -48,8 +49,9 @@ public class DebugTraceBlock extends AbstractDebugTraceBlock {
   public DebugTraceBlock(
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
-      final ObservableMetricsSystem metricsSystem) {
-    super(protocolSchedule, blockchainQueries, metricsSystem);
+      final ObservableMetricsSystem metricsSystem,
+      final EthScheduler ethScheduler) {
+    super(protocolSchedule, blockchainQueries, metricsSystem, ethScheduler);
     this.blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 

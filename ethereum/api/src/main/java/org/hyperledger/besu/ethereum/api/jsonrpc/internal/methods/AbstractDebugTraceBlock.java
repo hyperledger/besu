@@ -34,14 +34,15 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
@@ -52,11 +53,13 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
   private final ProtocolSchedule protocolSchedule;
   private final LabelledMetric<Counter> outputCounter;
   private final Supplier<BlockchainQueries> blockchainQueriesSupplier;
+  private final EthScheduler ethScheduler;
 
   public AbstractDebugTraceBlock(
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
-      final ObservableMetricsSystem metricsSystem) {
+      final ObservableMetricsSystem metricsSystem,
+      final EthScheduler ethScheduler) {
     this.blockchainQueriesSupplier = Suppliers.ofInstance(blockchainQueries);
     this.protocolSchedule = protocolSchedule;
     this.outputCounter =
@@ -66,6 +69,7 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
             "Number of transactions processed for each block",
             "step",
             "action");
+    this.ethScheduler = ethScheduler;
   }
 
   protected BlockchainQueries getBlockchainQueries() {
@@ -100,8 +104,8 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                     getBlockchainQueries(),
                     block.getHash(),
                     traceableState -> {
-                      Collection<DebugTraceTransactionResult> tracesList =
-                          new CopyOnWriteArrayList<>();
+                      List<DebugTraceTransactionResult> tracesList =
+                          Collections.synchronizedList(new ArrayList<>());
                       final ProtocolSpec protocolSpec =
                           protocolSchedule.getByBlockHeader(block.getHeader());
                       final MainnetTransactionProcessor transactionProcessor =
@@ -136,17 +140,7 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                               .andFinishWith("collect_results", tracesList::add);
 
                       try {
-                        if (getBlockchainQueries().getEthScheduler().isPresent()) {
-                          getBlockchainQueries()
-                              .getEthScheduler()
-                              .get()
-                              .startPipeline(traceBlockPipeline)
-                              .get();
-                        } else {
-                          EthScheduler ethScheduler =
-                              new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
-                          ethScheduler.startPipeline(traceBlockPipeline).get();
-                        }
+                        ethScheduler.startPipeline(traceBlockPipeline).get();
                       } catch (InterruptedException | ExecutionException e) {
                         throw new RuntimeException(e);
                       }
