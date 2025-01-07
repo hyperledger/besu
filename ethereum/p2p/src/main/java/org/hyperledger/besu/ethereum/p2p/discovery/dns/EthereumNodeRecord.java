@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -138,16 +139,16 @@ public record EthereumNodeRecord(
 
   /** Override equals method to compare the RLP bytes */
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    EthereumNodeRecord that = (EthereumNodeRecord) o;
-    return rlp.equals(that.rlp);
+  public boolean equals(Object o) {
+    if (!(o instanceof EthereumNodeRecord that)) {
+      return false;
+    }
+    return Objects.equals(rlp, that.rlp);
   }
 
   /** Override hashCode method to use hashCode of the RLP bytes */
   @Override
   public int hashCode() {
-    return rlp.hashCode();
+    return Objects.hashCode(rlp);
   }
 }
