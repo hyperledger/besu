@@ -25,7 +25,6 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt64;
 
 public class BlockHeaderTestFixture {
 
@@ -56,7 +55,6 @@ public class BlockHeaderTestFixture {
   private Optional<BlobGas> excessBlobGas = Optional.empty();
   private Optional<Long> blobGasUsed = Optional.empty();
   private Optional<Bytes32> parentBeaconBlockRoot = Optional.empty();
-  private Optional<UInt64> targetBlobsPerBlock = Optional.empty();
 
   public BlockHeader buildHeader() {
     final BlockHeaderBuilder builder = BlockHeaderBuilder.create();
@@ -82,7 +80,6 @@ public class BlockHeaderTestFixture {
     blobGasUsed.ifPresent(builder::blobGasUsed);
     requestsHash.ifPresent(builder::requestsHash);
     parentBeaconBlockRoot.ifPresent(builder::parentBeaconBlockRoot);
-    targetBlobsPerBlock.ifPresent(builder::targetBlobsPerBlock);
     builder.blockHeaderFunctions(blockHeaderFunctions);
 
     return builder.buildBlockHeader();
@@ -202,11 +199,6 @@ public class BlockHeaderTestFixture {
   public BlockHeaderTestFixture parentBeaconBlockRoot(
       final Optional<Bytes32> parentBeaconBlockRoot) {
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
-    return this;
-  }
-
-  public BlockHeaderTestFixture targetBlobsPerBlock(final UInt64 targetBlobsPerBlock) {
-    this.targetBlobsPerBlock = Optional.of(targetBlobsPerBlock);
     return this;
   }
 }
