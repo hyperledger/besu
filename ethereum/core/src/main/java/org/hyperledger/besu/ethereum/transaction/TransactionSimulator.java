@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.crypto.SECPSignature;
@@ -33,11 +34,11 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
@@ -176,7 +177,7 @@ public class TransactionSimulator {
   }
 
   public ProcessableBlockHeader simulatePendingBlockHeader() {
-    final long timestamp = System.currentTimeMillis();
+    final long timestamp = MILLISECONDS.toSeconds(System.currentTimeMillis());
     final var chainHeadHeader = blockchain.getChainHeadHeader();
     final ProtocolSpec protocolSpec =
         protocolSchedule.getForNextBlockHeader(chainHeadHeader, timestamp);
@@ -346,6 +347,28 @@ public class TransactionSimulator {
       final Optional<AccountOverrideMap> maybeStateOverrides,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
+      final BlockHeader header,
+      final WorldUpdater updater,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator) {
+
+    final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(header);
+
+    return processWithWorldUpdater(
+        callParams,
+        maybeStateOverrides,
+        transactionValidationParams,
+        operationTracer,
+        header,
+        updater,
+        miningBeneficiary);
+  }
+
+  @Nonnull
+  public Optional<TransactionSimulatorResult> processWithWorldUpdater(
+      final CallParameter callParams,
+      final Optional<AccountOverrideMap> maybeStateOverrides,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
       final ProcessableBlockHeader processableHeader,
       final WorldUpdater updater,
       final Address miningBeneficiary) {
@@ -414,7 +437,9 @@ public class TransactionSimulator {
             blockHeaderToProcess,
             transaction,
             miningBeneficiary,
-            new CachingBlockHashLookup(blockHeaderToProcess, blockchain),
+            protocolSpec
+                .getBlockHashProcessor()
+                .createBlockHashLookup(blockchain, blockHeaderToProcess),
             false,
             transactionValidationParams,
             operationTracer,
