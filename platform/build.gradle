@@ -111,7 +111,6 @@ dependencies {
     api 'io.tmio:tuweni-config:2.4.2'
     api 'io.tmio:tuweni-concurrent:2.4.2'
     api 'io.tmio:tuweni-crypto:2.4.2'
-    api 'io.tmio:tuweni-devp2p:2.4.2'
     api 'io.tmio:tuweni-io:2.4.2'
     api 'io.tmio:tuweni-net:2.4.2'
     api 'io.tmio:tuweni-rlp:2.4.2'
