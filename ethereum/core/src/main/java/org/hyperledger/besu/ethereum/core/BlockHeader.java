@@ -246,6 +246,7 @@ public class BlockHeader extends SealableBlockHeader
             out.writeBytes(requestsHash);
           } while (false);
           out.endList();
+        });
   }
 
   public static BlockHeader readFrom(
