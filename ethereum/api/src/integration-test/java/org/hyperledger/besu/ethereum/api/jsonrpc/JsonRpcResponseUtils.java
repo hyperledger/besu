@@ -63,7 +63,6 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.apache.tuweni.units.bigints.UInt64;
 
 public class JsonRpcResponseUtils {
 
@@ -107,10 +106,6 @@ public class JsonRpcResponseUtils {
         values.containsKey(WITHDRAWALS_ROOT) ? hash(values.get(WITHDRAWALS_ROOT)) : null;
     final Hash requestsHash =
         values.containsKey(REQUESTS_HASH) ? hash(values.get(REQUESTS_HASH)) : null;
-    final UInt64 targetBlobsPerBlock =
-        values.containsKey(JsonRpcResponseKey.TARGET_BLOBS_PER_BLOCK)
-            ? UInt64.fromHexString(values.get(JsonRpcResponseKey.TARGET_BLOBS_PER_BLOCK))
-            : null;
     final List<JsonNode> ommers = new ArrayList<>();
 
     final BlockHeader header =
@@ -136,7 +131,6 @@ public class JsonRpcResponseUtils {
             null, // ToDo 4844: set with the value of excess_blob_gas field
             null, // TODO 4788: set with the value of the parent beacon block root field
             requestsHash,
-            targetBlobsPerBlock,
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(
