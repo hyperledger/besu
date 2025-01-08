@@ -133,17 +133,13 @@ public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
     if (!BodyValidation.ommersHash(blockBody.getOmmers()).equals(blockHeader.getOmmersHash())) {
       return false;
     }
-    if (blockBody.getWithdrawals().isPresent()) {
-      if (blockHeader.getWithdrawalsRoot().isEmpty()) {
-        return false;
-      }
-      if (!BodyValidation.withdrawalsRoot(blockBody.getWithdrawals().get())
-          .equals(blockHeader.getWithdrawalsRoot().get())) {
-        return false;
-      }
-    } else if (blockHeader.getWithdrawalsRoot().isPresent()) {
+    if (!blockBody
+        .getWithdrawals()
+        .map(BodyValidation::withdrawalsRoot)
+        .equals(blockHeader.getWithdrawalsRoot())) {
       return false;
     }
+
     return true;
   }
 
