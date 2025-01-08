@@ -33,9 +33,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTran
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -68,10 +68,7 @@ public class DebugTraceBlockByHashTest {
   public void setUp() {
     debugTraceBlockByHash =
         new DebugTraceBlockByHash(
-            protocolSchedule,
-            blockchainQueries,
-            metricsSystem,
-            new EthScheduler(1, 1, 1, metricsSystem));
+            protocolSchedule, blockchainQueries, metricsSystem, new DeterministicEthScheduler());
   }
 
   @Test

@@ -153,6 +153,6 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                       }
                       return Optional.of(tracesList);
                     }))
-        .orElse(null);
+        .orElse(Collections.emptyList());
   }
 }

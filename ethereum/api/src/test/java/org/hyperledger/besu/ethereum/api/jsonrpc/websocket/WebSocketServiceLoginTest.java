@@ -58,6 +58,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.math.BigInteger;
 import java.net.URISyntaxException;
@@ -208,7 +209,7 @@ public class WebSocketServiceLoginTest {
                     mock(ApiConfiguration.class),
                     Optional.empty(),
                     mock(TransactionSimulator.class),
-                    new EthScheduler(1, 1, 1, new NoOpMetricsSystem())));
+                    new DeterministicEthScheduler()));
 
     websocketMethods.putAll(rpcMethods);
     webSocketMessageHandlerSpy =
