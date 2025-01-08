@@ -75,9 +75,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
       // Side effect is creation of the Metadata version file
       final BaseVersionedStorageFormat expectedVersion =
-          dataStorageFormat == BONSAI
-              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
-              : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
+          BaseVersionedStorageFormat.defaultForNewDB(dataStorageConfiguration);
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
           .isEqualTo(expectedVersion);
     }
@@ -98,9 +96,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
       // Side effect is creation of the Metadata version file
       final BaseVersionedStorageFormat expectedVersion =
-          dataStorageFormat == BONSAI
-              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
-              : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
+          BaseVersionedStorageFormat.defaultForNewDB(dataStorageConfiguration);
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
           .isEqualTo(expectedVersion);
     }

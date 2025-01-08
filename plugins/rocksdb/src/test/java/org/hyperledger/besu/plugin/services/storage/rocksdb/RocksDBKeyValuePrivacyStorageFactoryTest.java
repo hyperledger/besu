@@ -15,8 +15,6 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
-import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.FOREST;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorageTest.TestSegment;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
@@ -31,15 +29,21 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVe
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivacyVersionedStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -61,7 +65,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     final Path tempPrivateDatabaseDir = tempDatabaseDir.resolve("private");
     Files.createDirectories(tempPrivateDatabaseDir);
     Files.createDirectories(tempDataDir);
-    mockCommonConfiguration(tempDataDir, tempDatabaseDir);
+    mockCommonConfiguration(tempDataDir, tempDatabaseDir, DataStorageFormat.FOREST);
 
     Utils.createDatabaseMetadataV1Privacy(
         tempDataDir, PrivacyVersionedStorageFormat.FOREST_ORIGINAL);
@@ -74,18 +78,17 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
                 RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS));
 
     // Side effect is creation of the Metadata version file
-    try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
+    storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
-    }
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+        .isEqualTo(PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
   }
 
   @Test
   public void shouldCreateCorrectMetadataFileForLatestVersion() throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
-    mockCommonConfiguration(tempDataDir, tempDatabaseDir);
+    mockCommonConfiguration(tempDataDir, tempDatabaseDir, DataStorageFormat.FOREST);
 
     final RocksDBKeyValuePrivacyStorageFactory storageFactory =
         new RocksDBKeyValuePrivacyStorageFactory(
@@ -95,10 +98,10 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
                 RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS));
 
     // Side effect is creation of the Metadata version file
-    try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
-      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
-    }
+    storageFactory.create(segment, commonConfiguration, metricsSystem);
+
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+        .isEqualTo(PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
   }
 
   @ParameterizedTest
@@ -109,33 +112,50 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     mockCommonConfiguration(tempDataDir, tempDatabaseDir, dataStorageFormat);
 
+    try (final RocksDBKeyValueStorageFactory storageFactory =
+        new RocksDBKeyValueStorageFactory(
+            () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)) {
+
+      storageFactory.create(segment, commonConfiguration, metricsSystem);
+
+      final BaseVersionedStorageFormat expectedBaseVersion =
+          BaseVersionedStorageFormat.defaultForNewDB(dataStorageConfiguration);
+      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+          .isEqualTo(expectedBaseVersion);
+    }
+  }
+
+  static class PrivacySupportedDataStorageFormatTestArguments implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
+      return Stream.of(
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+    }
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(PrivacySupportedDataStorageFormatTestArguments.class)
+  public void shouldUpdateCorrectMetadataFileForLatestVersionInPrivacySetup(
+      final DataStorageFormat dataStorageFormat) throws Exception {
+    final Path tempDataDir = temporaryFolder.resolve("data");
+    final Path tempDatabaseDir = temporaryFolder.resolve("db");
+    mockCommonConfiguration(tempDataDir, tempDatabaseDir, dataStorageFormat);
+
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
             () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS);
 
-    try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
-      final BaseVersionedStorageFormat expectedBaseVersion =
-          dataStorageFormat == BONSAI
-              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
-              : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
-      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(expectedBaseVersion);
-    }
-    storageFactory.close();
+    storageFactory.create(segment, commonConfiguration, metricsSystem);
 
     final RocksDBKeyValuePrivacyStorageFactory privacyStorageFactory =
         new RocksDBKeyValuePrivacyStorageFactory(storageFactory);
 
-    try (final var storage =
-        privacyStorageFactory.create(segment, commonConfiguration, metricsSystem)) {
-      final PrivacyVersionedStorageFormat expectedPrivacyVersion =
-          dataStorageFormat == BONSAI
-              ? PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
-              : PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
-      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(expectedPrivacyVersion);
-    }
-    privacyStorageFactory.close();
+    privacyStorageFactory.create(segment, commonConfiguration, metricsSystem);
+
+    final VersionedStorageFormat expectedPrivacyVersion =
+        PrivacyVersionedStorageFormat.defaultForNewDB(dataStorageConfiguration);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+        .isEqualTo(expectedPrivacyVersion);
   }
 
   @ParameterizedTest
@@ -146,37 +166,42 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     mockCommonConfiguration(tempDataDir, tempDatabaseDir, dataStorageFormat);
 
+    try (final RocksDBKeyValueStorageFactory storageFactory =
+        new RocksDBKeyValueStorageFactory(
+            () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)) {
+
+      storageFactory.create(segment, commonConfiguration, metricsSystem);
+
+      final BaseVersionedStorageFormat expectedBaseVersion =
+          BaseVersionedStorageFormat.defaultForNewDB(dataStorageConfiguration);
+      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+          .isEqualTo(expectedBaseVersion);
+    }
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(PrivacySupportedDataStorageFormatTestArguments.class)
+  public void shouldUpdateCorrectMetadataFileForLatestVersionWithReceiptCompactionInPrivacySetup(
+      final DataStorageFormat dataStorageFormat) throws Exception {
+    final Path tempDataDir = temporaryFolder.resolve("data");
+    final Path tempDatabaseDir = temporaryFolder.resolve("db");
+    mockCommonConfiguration(tempDataDir, tempDatabaseDir, dataStorageFormat);
+
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
             () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS);
 
-    try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
-      final BaseVersionedStorageFormat expectedBaseVersion =
-          dataStorageFormat == BONSAI
-              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
-              : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
-      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(expectedBaseVersion);
-    }
-    storageFactory.close();
+    storageFactory.create(segment, commonConfiguration, metricsSystem);
 
     final RocksDBKeyValuePrivacyStorageFactory privacyStorageFactory =
         new RocksDBKeyValuePrivacyStorageFactory(storageFactory);
 
-    try (final var storage =
-        privacyStorageFactory.create(segment, commonConfiguration, metricsSystem)) {
-      final PrivacyVersionedStorageFormat expectedPrivacyVersion =
-          dataStorageFormat == BONSAI
-              ? PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
-              : PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
-      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(expectedPrivacyVersion);
-    }
-    privacyStorageFactory.close();
-  }
+    privacyStorageFactory.create(segment, commonConfiguration, metricsSystem);
 
-  private void mockCommonConfiguration(final Path tempDataDir, final Path tempDatabaseDir) {
-    mockCommonConfiguration(tempDataDir, tempDatabaseDir, FOREST);
+    final VersionedStorageFormat expectedPrivacyVersion =
+        PrivacyVersionedStorageFormat.defaultForNewDB(dataStorageConfiguration);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+        .isEqualTo(expectedPrivacyVersion);
   }
 
   private void mockCommonConfiguration(

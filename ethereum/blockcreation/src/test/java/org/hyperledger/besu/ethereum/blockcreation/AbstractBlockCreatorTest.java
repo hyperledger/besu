@@ -24,7 +24,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -298,12 +298,12 @@ abstract class AbstractBlockCreatorTest {
 
   private CreateOn createBlockCreator(final ProtocolSpecAdapters protocolSpecAdapters) {
 
-    final var genesisConfigFile = GenesisConfigFile.fromResource("/block-creation-genesis.json");
+    final var genesisConfig = GenesisConfig.fromResource("/block-creation-genesis.json");
     final ExecutionContextTestFixture executionContextTestFixture =
-        ExecutionContextTestFixture.builder(genesisConfigFile)
+        ExecutionContextTestFixture.builder(genesisConfig)
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        genesisConfigFile.getConfigOptions(),
+                        genesisConfig.getConfigOptions(),
                         Optional.of(BigInteger.valueOf(42)),
                         protocolSpecAdapters,
                         PrivacyParameters.DEFAULT,

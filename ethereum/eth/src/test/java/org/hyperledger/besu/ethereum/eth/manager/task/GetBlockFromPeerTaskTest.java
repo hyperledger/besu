@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.AbstractMessageTaskTest;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.util.Optional;
@@ -32,6 +34,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class GetBlockFromPeerTaskTest
     extends AbstractMessageTaskTest<Block, AbstractPeerTask.PeerTaskResult<Block>> {
@@ -47,9 +50,11 @@ public class GetBlockFromPeerTaskTest
 
   @Override
   protected EthTask<AbstractPeerTask.PeerTaskResult<Block>> createTask(final Block requestedData) {
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     return GetBlockFromPeerTask.create(
         protocolSchedule,
         ethContext,
+        SynchronizerConfiguration.builder().build(),
         Optional.of(requestedData.getHash()),
         BLOCK_NUMBER,
         metricsSystem);

@@ -18,7 +18,6 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PER
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
@@ -37,6 +36,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -296,7 +296,7 @@ public class MainnetTransactionProcessor {
       final TransactionValidationParams transactionValidationParams,
       final PrivateMetadataUpdater privateMetadataUpdater,
       final Wei blobGasPrice) {
-    final EVMWorldUpdater evmWorldUpdater = new EVMWorldUpdater(worldState);
+    final EVMWorldUpdater evmWorldUpdater = new EVMWorldUpdater(worldState, gasCalculator);
     try {
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
@@ -362,6 +362,8 @@ public class MainnetTransactionProcessor {
         codeDelegationRefund =
             gasCalculator.calculateDelegateCodeGasRefund(
                 (codeDelegationResult.alreadyExistingDelegators()));
+
+        evmWorldUpdater.commit();
       }
 
       final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
@@ -428,7 +430,6 @@ public class MainnetTransactionProcessor {
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .contextVariables(contextVariablesBuilder.build())
-              .accessListWarmAddresses(warmAddressList)
               .accessListWarmStorage(storageList)
               .accessWitness(accessWitness);
 
@@ -453,11 +454,17 @@ public class MainnetTransactionProcessor {
                 .contract(contractAddress)
                 .inputData(initCodeBytes.slice(code.getSize()))
                 .code(code)
+                .accessListWarmAddresses(warmAddressList)
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
         final Optional<Account> maybeContract = Optional.ofNullable(evmWorldUpdater.get(to));
+
+        if (maybeContract.isPresent() && maybeContract.get().hasDelegatedCode()) {
+          warmAddressList.add(maybeContract.get().delegatedCodeAddress().get());
+        }
+
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.MESSAGE_CALL)
@@ -468,6 +475,7 @@ public class MainnetTransactionProcessor {
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
                         .orElse(CodeV0.EMPTY_CODE))
+                .accessListWarmAddresses(warmAddressList)
                 .build();
       }
       Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();

@@ -16,10 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +33,7 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -87,6 +85,7 @@ public class TransactionTracerTest {
 
   @Mock private ProtocolSpec protocolSpec;
   @Mock private GasCalculator gasCalculator;
+  @Mock private BlockHashProcessor blockHashProcessor;
 
   @Mock private Tracer.TraceableState mutableWorldState;
 
@@ -123,8 +122,8 @@ public class TransactionTracerTest {
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
+    when(protocolSpec.getBlockHashProcessor()).thenReturn(blockHashProcessor);
     when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
-    lenient().when(gasCalculator.computeExcessBlobGas(anyLong(), anyInt())).thenReturn(0L);
   }
 
   @Test
