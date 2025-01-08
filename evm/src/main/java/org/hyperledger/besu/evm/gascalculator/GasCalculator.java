@@ -270,6 +270,12 @@ public interface GasCalculator {
    */
   long gasAvailableForChildCall(MessageFrame frame, long stipend, boolean transfersValue);
 
+  /**
+   * The cost of creating a contract account to the trie.
+   *
+   * @param frame The current frame
+   * @return the gas cost
+   */
   long completedCreateContractGasCost(final MessageFrame frame);
 
   /**
@@ -333,6 +339,13 @@ public interface GasCalculator {
    */
   long initcodeCost(final int initCodeLength);
 
+  /**
+   * The cost of checking if a contract already exists in the trie.
+   *
+   * @param frame The current frame
+   * @param address The contract address
+   * @return the gas cost for the proof of absence check
+   */
   default long proofOfAbsenceCost(final MessageFrame frame, final Address address) {
     return 0;
   }
@@ -370,6 +383,15 @@ public interface GasCalculator {
   long codeCopyOperationGasCost(
       MessageFrame frame, long memOffset, long codeOffset, long readSize, final long codeSize);
 
+  /**
+   * Returns the amount of gas consumed by a PUSH operation.
+   *
+   * @param frame The current frame
+   * @param codeOffset offset of the code in bytes where the EVM is currently executing
+   * @param readSize size, in bytes, of the code that is being read by the PUSH operation
+   * @param codeSize full size of the code
+   * @return the amount of gas consumed by a PUSH operation
+   */
   long pushOperationGasCost(MessageFrame frame, long codeOffset, long readSize, long codeSize);
 
   /**
@@ -538,6 +560,9 @@ public interface GasCalculator {
   /**
    * Returns the cost for executing a {@link SLoadOperation}.
    *
+   * @param frame The current frame
+   * @param key The slot key
+   * @param slotIsWarm The storage slot is warm
    * @return the cost for executing the storage load operation
    */
   long sloadOperationGasCost(MessageFrame frame, UInt256 key, final boolean slotIsWarm);
@@ -763,6 +788,11 @@ public interface GasCalculator {
     return 0L;
   }
 
+  /**
+   * Creates a new access witness instance.
+   *
+   * @return an access witness instance that by default is an access witness that does nothing
+   */
   default AccessWitness newAccessWitness() {
     return NoopAccessWitness.get();
   }

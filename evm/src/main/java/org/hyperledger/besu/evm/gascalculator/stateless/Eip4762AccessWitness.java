@@ -36,6 +36,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** Implementation of the AccessWitness as per EIP-4762. */
 public class Eip4762AccessWitness implements AccessWitness {
 
   private static final Logger LOG = LoggerFactory.getLogger(Eip4762AccessWitness.class);
@@ -45,10 +46,17 @@ public class Eip4762AccessWitness implements AccessWitness {
   private final Map<LeafAccessKey, Integer> leaves;
   private final Map<BranchAccessKey, Integer> branches;
 
+  /** Instantiates a new EIP-4762 access witness. */
   public Eip4762AccessWitness() {
     this(new HashMap<>(), new HashMap<>());
   }
 
+  /**
+   * Instantiates a new EIP-4762 access witness.
+   *
+   * @param leaves Collection the controls access to leaves in the trie.
+   * @param branches Collection the controls access to branches in the trie.
+   */
   public Eip4762AccessWitness(
       final Map<LeafAccessKey, Integer> leaves, final Map<BranchAccessKey, Integer> branches) {
     this.branches = branches;
@@ -240,18 +248,18 @@ public class Eip4762AccessWitness implements AccessWitness {
 
   private long touchAddressOnWriteResetAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
-    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessMode.WRITE_RESET);
+    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessEvents.LEAF_RESET);
   }
 
   private long touchAddressOnWriteSetAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
-    // TODO: change to WRITE_SET when CHUNK_FILL is implemented. Still not implemented in devnet-7
-    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessMode.WRITE_RESET);
+    // TODO: change to LEAF_SET when CHUNK_FILL is implemented. Still not implemented in devnet-7
+    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessEvents.LEAF_RESET);
   }
 
   private long touchAddressOnReadAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
-    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessMode.READ);
+    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessEvents.LEAF_READ);
   }
 
   private List<UInt256> getStorageSlotTreeIndexes(final UInt256 storageKey) {
@@ -276,12 +284,12 @@ public class Eip4762AccessWitness implements AccessWitness {
     return touchAddressOnWriteResetAndComputeGas(address, treeIndexes.get(0), treeIndexes.get(1));
   }
 
-  public long touchAddressAndChargeGas(
+  private long touchAddressAndChargeGas(
       final Address address,
       final UInt256 treeIndex,
       final UInt256 subIndex,
       final int accessMode) {
-    final short accessEvents = touchAddress(address, treeIndex, subIndex, accessMode);
+    final int accessEvents = touchAddress(address, treeIndex, subIndex, accessMode);
     long gas = 0;
     if (AccessEvents.isBranchRead(accessEvents)) {
       gas = clampedAdd(gas, AccessEvents.getBranchReadCost());
@@ -315,7 +323,7 @@ public class Eip4762AccessWitness implements AccessWitness {
     return gas;
   }
 
-  private static String costSchedulePrettyPrint(final short accessEvents) {
+  private static String costSchedulePrettyPrint(final int accessEvents) {
     String message = "";
     if (AccessEvents.isBranchRead(accessEvents)) {
       message += "\n\tWITNESS_BRANCH_COST " + AccessEvents.getBranchReadCost();
@@ -335,33 +343,32 @@ public class Eip4762AccessWitness implements AccessWitness {
     return message;
   }
 
-  public short touchAddress(
+  private int touchAddress(
       final Address addr, final UInt256 treeIndex, final UInt256 leafIndex, final int accessMode) {
-    short accessEvents = AccessEvents.NONE;
     BranchAccessKey branchKey = new BranchAccessKey(addr, treeIndex);
 
-    accessEvents |= touchAddressForBranch(branchKey, accessMode);
+    int accessEvents = AccessEvents.NONE;
+    accessEvents = touchAddressForBranch(accessMode, branchKey, accessEvents);
     if (leafIndex != null) {
-      accessEvents |= touchAddressForLeaf(branchKey, leafIndex, accessMode);
+      accessEvents = touchAddressForLeaf(accessMode, branchKey, leafIndex, accessEvents);
     }
 
     return accessEvents;
   }
 
-  private short touchAddressForBranch(final BranchAccessKey branchKey, final int accessMode) {
-    short accessEvents = AccessEvents.NONE;
-
+  private int touchAddressForBranch(
+      final int accessMode, final BranchAccessKey branchKey, final int accEvents) {
+    int accessEvents = accEvents;
     if (!this.branches.containsKey(branchKey)) {
-      accessEvents |= AccessEvents.BRANCH_READ;
-      this.branches.put(branchKey, AccessMode.READ);
+      accessEvents = AccessEvents.branchRead(accessEvents);
+      this.branches.put(branchKey, AccessEvents.BRANCH_READ);
     }
 
     // A write is always a read
-    if (AccessMode.isWrite(accessMode)) {
-      int previousAccessMode =
-          !this.branches.containsKey(branchKey) ? AccessMode.NONE : this.branches.get(branchKey);
-      if (!AccessMode.isWrite(previousAccessMode)) {
-        accessEvents |= AccessEvents.BRANCH_WRITE;
+    if (AccessEvents.isWrite(accessMode)) {
+      int previousAccessMode = this.branches.getOrDefault(branchKey, AccessEvents.NONE);
+      if (!AccessEvents.isWrite(previousAccessMode)) {
+        accessEvents = AccessEvents.branchWrite(accessEvents);
         this.branches.put(branchKey, (previousAccessMode | accessMode));
       }
     }
@@ -369,24 +376,26 @@ public class Eip4762AccessWitness implements AccessWitness {
     return accessEvents;
   }
 
-  private short touchAddressForLeaf(
-      final BranchAccessKey branchKey, final UInt256 subIndex, final int accessMode) {
+  private int touchAddressForLeaf(
+      final int accessMode,
+      final BranchAccessKey branchKey,
+      final UInt256 subIndex,
+      final int accEvents) {
     LeafAccessKey leafKey = new LeafAccessKey(branchKey, subIndex);
-    short accessEvents = AccessEvents.NONE;
 
+    int accessEvents = accEvents;
     if (!this.leaves.containsKey(leafKey)) {
-      accessEvents |= AccessEvents.LEAF_READ;
-      this.leaves.put(leafKey, AccessMode.READ);
+      accessEvents = AccessEvents.leafRead(accessEvents);
+      this.leaves.put(leafKey, AccessEvents.LEAF_READ);
     }
 
     // A write is always a read
-    if (AccessMode.isWrite(accessMode)) {
-      int previousAccessMode =
-          !this.leaves.containsKey(leafKey) ? AccessMode.NONE : this.leaves.get(leafKey);
-      if (!AccessMode.isWrite(previousAccessMode)) {
-        accessEvents |= AccessEvents.LEAF_RESET;
-        if (AccessMode.isWriteSet(accessMode)) {
-          accessEvents |= AccessEvents.LEAF_SET;
+    if (AccessEvents.isWrite(accessMode)) {
+      int previousAccessMode = this.leaves.getOrDefault(leafKey, AccessEvents.NONE);
+      if (!AccessEvents.isWrite(previousAccessMode)) {
+        accessEvents = AccessEvents.leafReset(accessEvents);
+        if (AccessEvents.isLeafSet(accessMode)) {
+          accessEvents = AccessEvents.leafSet(accessEvents);
         }
         this.leaves.put(leafKey, (previousAccessMode | accessMode));
       }
@@ -412,7 +421,7 @@ public class Eip4762AccessWitness implements AccessWitness {
     return "AccessWitness{" + "leaves=" + leaves + ", branches=" + branches + '}';
   }
 
-  public record BranchAccessKey(Address address, UInt256 treeIndex) {}
+  record BranchAccessKey(Address address, UInt256 treeIndex) {}
 
-  public record LeafAccessKey(BranchAccessKey branchAccessKey, UInt256 leafIndex) {}
+  record LeafAccessKey(BranchAccessKey branchAccessKey, UInt256 leafIndex) {}
 }
