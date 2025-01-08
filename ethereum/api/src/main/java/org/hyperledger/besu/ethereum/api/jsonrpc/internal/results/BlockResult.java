@@ -88,7 +88,6 @@ public class BlockResult implements JsonRpcResult {
   private final String blobGasUsed;
   private final String excessBlobGas;
   private final String parentBeaconBlockRoot;
-  private final String targetBlobsPerBlock;
   private final List<CallProcessingResult> callProcessingResults;
 
   public BlockResult(
@@ -153,7 +152,6 @@ public class BlockResult implements JsonRpcResult {
     this.excessBlobGas = header.getExcessBlobGas().map(Quantity::create).orElse(null);
     this.parentBeaconBlockRoot =
         header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
-    this.targetBlobsPerBlock = header.getTargetBlobsPerBlock().map(Quantity::create).orElse(null);
   }
 
   @JsonGetter(value = "number")
@@ -290,11 +288,6 @@ public class BlockResult implements JsonRpcResult {
   @JsonGetter(value = "parentBeaconBlockRoot")
   public String getParentBeaconBlockRoot() {
     return parentBeaconBlockRoot;
-  }
-
-  @JsonGetter(value = "targetBlobsPerBlock")
-  public String getTargetBlobsPerBlock() {
-    return targetBlobsPerBlock;
   }
 
   @JsonGetter(value = "calls")
