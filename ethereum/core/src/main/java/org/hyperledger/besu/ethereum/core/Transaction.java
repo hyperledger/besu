@@ -137,13 +137,7 @@ public class Transaction
   }
 
   public static Transaction readFrom(final RLPInput rlpInput) {
-    RLPInput transactionRlp = rlpInput.readAsRlp();
-    Transaction transaction =
-        TransactionDecoder.decodeRLP(transactionRlp, EncodingContext.BLOCK_BODY);
-    return Transaction.builder()
-        .copiedFrom(transaction)
-        .rawRlp(Optional.of(transactionRlp.raw()))
-        .build();
+    return TransactionDecoder.decodeRLP(rlpInput, EncodingContext.BLOCK_BODY);
   }
 
   /**
@@ -675,6 +669,10 @@ public class Transaction
    */
   public final Wei getEffectiveGasPrice(final Optional<Wei> baseFeePerGas) {
     return getEffectivePriorityFeePerGas(baseFeePerGas).addExact(baseFeePerGas.orElse(Wei.ZERO));
+  }
+
+  public Optional<Bytes> getRawRlp() {
+    return rawRlp;
   }
 
   @Override

@@ -79,7 +79,12 @@ public class TransactionDecoder {
     TransactionType transactionType =
         getTransactionType(typedTransactionBytes)
             .orElseThrow((() -> new IllegalArgumentException("Unsupported transaction type")));
-    return decodeTypedTransaction(typedTransactionBytes, transactionType, context);
+    Transaction typedTransaction =
+        decodeTypedTransaction(typedTransactionBytes, transactionType, context);
+    return Transaction.builder()
+        .copiedFrom(typedTransaction)
+        .rawRlp(Optional.of(typedTransactionBytes))
+        .build();
   }
 
   /**
