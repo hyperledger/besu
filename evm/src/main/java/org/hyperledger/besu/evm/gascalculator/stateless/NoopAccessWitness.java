@@ -22,12 +22,18 @@ import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** An access witness that does nothing. */
 public class NoopAccessWitness implements AccessWitness {
 
   private static NoopAccessWitness instance;
 
   private NoopAccessWitness() {}
 
+  /**
+   * Gets a singleton to an access witness that does nothing.
+   *
+   * @return the singleton
+   */
   public static NoopAccessWitness get() {
     if (instance == null) {
       instance = new NoopAccessWitness();

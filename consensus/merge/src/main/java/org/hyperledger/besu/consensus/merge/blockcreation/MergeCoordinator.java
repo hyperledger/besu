@@ -641,7 +641,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     return ForkchoiceResult.withResult(newFinalized, Optional.of(newHead));
   }
 
-  public boolean setNewHead(final MutableBlockchain blockchain, final BlockHeader newHead) {
+  private boolean setNewHead(final MutableBlockchain blockchain, final BlockHeader newHead) {
 
     if (newHead.getHash().equals(blockchain.getChainHeadHash())) {
       LOG.atDebug()
