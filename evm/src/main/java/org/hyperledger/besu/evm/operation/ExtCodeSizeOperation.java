@@ -58,11 +58,13 @@ public class ExtCodeSizeOperation extends AbstractOperation {
   /**
    * Cost of Ext code size operation.
    *
+   * @param frame The current frame
+   * @param address The address of the account's code
    * @param accountIsWarm the account is warm
    * @return the long
    */
   protected long cost(
-      final boolean accountIsWarm, final MessageFrame frame, final Address address) {
+      final MessageFrame frame, final Address address, final boolean accountIsWarm) {
     return gasCalculator().extCodeSizeOperationGasCost(frame, accountIsWarm, address);
   }
 
@@ -71,7 +73,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
     final Address address = Words.toAddress(frame.popStackItem());
     final boolean accountIsWarm =
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-    final long cost = cost(accountIsWarm, frame, address);
+    final long cost = cost(frame, address, accountIsWarm);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     } else {

@@ -80,6 +80,11 @@ public interface MutableAccount extends Account {
    */
   void setBalance(Wei value);
 
+  /**
+   * Gets the code size of this account.
+   *
+   * @return the code size of this account.
+   */
   Optional<Long> getCodeSize();
 
   /**
