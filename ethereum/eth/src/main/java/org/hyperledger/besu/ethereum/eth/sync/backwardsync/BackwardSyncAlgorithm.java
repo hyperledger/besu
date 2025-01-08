@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
-import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.util.Optional;
@@ -189,7 +188,12 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
         final boolean await = latch.get().await(2, TimeUnit.MINUTES);
         if (await) {
           LOG.debug("Preconditions meet, ensure at least one peer is connected");
-          waitForPeers(1).get();
+          context
+              .getEthContext()
+              .getEthPeers()
+              .waitForPeer((peer) -> true)
+              .orTimeout(5, TimeUnit.SECONDS)
+              .get();
         }
       }
     } catch (InterruptedException e) {
@@ -209,12 +213,6 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
     if (context.isReady()) {
       latch.get().countDown();
     }
-  }
-
-  private CompletableFuture<Void> waitForPeers(final int count) {
-    final WaitForPeersTask waitForPeersTask =
-        WaitForPeersTask.create(context.getEthContext(), count, context.getMetricsSystem());
-    return waitForPeersTask.run();
   }
 
   @Override

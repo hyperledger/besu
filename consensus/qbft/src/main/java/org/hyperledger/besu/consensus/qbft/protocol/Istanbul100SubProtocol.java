@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.protocol;
 
-import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
+import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 

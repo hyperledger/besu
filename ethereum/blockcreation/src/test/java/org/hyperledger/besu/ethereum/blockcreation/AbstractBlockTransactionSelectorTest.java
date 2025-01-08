@@ -33,7 +33,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
@@ -132,7 +132,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       Address.extract(Hash.hash(keyPair.getPublicKey().getEncodedBytes()));
 
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
-  protected GenesisConfigFile genesisConfigFile;
+  protected GenesisConfig genesisConfig;
   protected MutableBlockchain blockchain;
   protected TransactionPool transactionPool;
   protected MutableWorldState worldState;
@@ -152,7 +152,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   @BeforeEach
   public void setup() {
-    genesisConfigFile = getGenesisConfigFile();
+    genesisConfig = getGenesisConfig();
     protocolSchedule = createProtocolSchedule();
     transactionSelectionService = new TransactionSelectionServiceImpl();
     defaultTestMiningConfiguration =
@@ -162,8 +162,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             MIN_OCCUPANCY_80_PERCENT,
             DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME);
 
-    final Block genesisBlock =
-        GenesisState.fromConfig(genesisConfigFile, protocolSchedule).getBlock();
+    final Block genesisBlock = GenesisState.fromConfig(genesisConfig, protocolSchedule).getBlock();
 
     blockchain =
         DefaultBlockchain.createMutable(
@@ -198,7 +197,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             });
   }
 
-  protected abstract GenesisConfigFile getGenesisConfigFile();
+  protected abstract GenesisConfig getGenesisConfig();
 
   protected abstract ProtocolSchedule createProtocolSchedule();
 
@@ -232,7 +231,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   public void emptyPendingTransactionsResultsInEmptyVettingResult() {
     final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
+            GenesisConfig.fromResource("/dev.json").getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),

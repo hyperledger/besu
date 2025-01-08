@@ -16,7 +16,7 @@ package org.hyperledger.besu.util;
 
 import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -46,16 +46,16 @@ public class EphemeryGenesisUpdater {
    * @return the updated GenesisConfigFile
    * @throws RuntimeException if an error occurs during the update process
    */
-  public static GenesisConfigFile updateGenesis(final Map<String, String> overrides)
+  public static GenesisConfig updateGenesis(final Map<String, String> overrides)
       throws RuntimeException {
-    GenesisConfigFile genesisConfigFile;
+    GenesisConfig genesisConfig;
     try {
       if (EPHEMERY.getGenesisFile() == null) {
         throw new IOException("Genesis file or config options are null");
       }
-      genesisConfigFile = GenesisConfigFile.fromResource(EPHEMERY.getGenesisFile());
-      long genesisTimestamp = genesisConfigFile.getTimestamp();
-      Optional<BigInteger> genesisChainId = genesisConfigFile.getConfigOptions().getChainId();
+      genesisConfig = GenesisConfig.fromResource(EPHEMERY.getGenesisFile());
+      long genesisTimestamp = genesisConfig.getTimestamp();
+      Optional<BigInteger> genesisChainId = genesisConfig.getConfigOptions().getChainId();
       long currentTimestamp = Instant.now().getEpochSecond();
       long periodsSinceGenesis =
           ChronoUnit.DAYS.between(Instant.ofEpochSecond(genesisTimestamp), Instant.now())
@@ -71,9 +71,9 @@ public class EphemeryGenesisUpdater {
       if (currentTimestamp > (genesisTimestamp + PERIOD_IN_SECONDS)) {
         overrides.put("chainId", String.valueOf(updatedChainId));
         overrides.put("timestamp", String.valueOf(updatedTimestamp));
-        genesisConfigFile = genesisConfigFile.withOverrides(overrides);
+        genesisConfig = genesisConfig.withOverrides(overrides);
       }
-      return genesisConfigFile.withOverrides(overrides);
+      return genesisConfig.withOverrides(overrides);
     } catch (IOException e) {
       throw new RuntimeException("Error updating ephemery genesis: " + e.getMessage(), e);
     }

@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -288,6 +287,10 @@ final class GenesisStateTest {
             GenesisStateTest.class.getResource("genesis_prague.json"),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
+    assertThat(header.getHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x554807b22674e6d335f734485993857bbad7a9543affb0663a10c14d78135ec7"));
     assertThat(header.getGasLimit()).isEqualTo(0x2fefd8);
     assertThat(header.getGasUsed()).isZero();
     assertThat(header.getNumber()).isZero();
@@ -328,13 +331,6 @@ final class GenesisStateTest {
         .isEqualTo(
             Hash.fromHexString(
                 "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"));
-    assertThat(header.getTargetBlobsPerBlock().isPresent()).isTrue();
-    assertThat(header.getTargetBlobsPerBlock().get()).isEqualTo(UInt64.ONE);
-
-    assertThat(header.getHash())
-        .isEqualTo(
-            Hash.fromHexString(
-                "0xdb3cb6f894b434d55c66cf6aeb3d12ab9acc276f130dad82d5791eef8b048f2e"));
   }
 
   @Test
