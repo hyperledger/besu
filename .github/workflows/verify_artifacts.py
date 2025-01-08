@@ -3,21 +3,36 @@ import argparse
 
 
 def create_artifact_paths(version):
-    artifacts = []
     artifacts_base_path = "https://hyperledger.jfrog.io/hyperledger/besu-maven/org/hyperledger/besu"
     # add to this list here to update the list of artifacts to check 
-    besu_paths = [
-        f"evm/{version}/evm-{version}",
-        f"plugin-api/{version}/plugin-api-{version}",
-        f"internal/metrics-core/{version}/metrics-core-{version}",
-        f"internal/core/{version}/core-{version}",
-        f"internal/config/{version}/config-{version}"
+    artifacts = [
+        # besu/evm
+        f"{artifacts_base_path}/evm/{version}/evm-{version}.module",
+        f"{artifacts_base_path}/evm/{version}/evm-{version}.pom",
+        f"{artifacts_base_path}/evm/{version}/evm-{version}.jar",
+        # besu/plugin-api
+        f"{artifacts_base_path}/plugin-api/{version}/plugin-api-{version}.module",
+        f"{artifacts_base_path}/plugin-api/{version}/plugin-api-{version}.pom",
+        f"{artifacts_base_path}/plugin-api/{version}/plugin-api-{version}.jar",
+        # besu/metrics-core
+        f"{artifacts_base_path}/internal/metrics-core/{version}/metrics-core-{version}.module",
+        f"{artifacts_base_path}/internal/metrics-core/{version}/metrics-core-{version}.pom",
+        f"{artifacts_base_path}/internal/metrics-core/{version}/metrics-core-{version}.jar",
+        # besu/internal/core
+        f"{artifacts_base_path}/internal/core/{version}/core-{version}.module",
+        f"{artifacts_base_path}/internal/core/{version}/core-{version}.pom",
+        f"{artifacts_base_path}/internal/core/{version}/core-{version}.jar",
+        # besu/internal/config
+        f"{artifacts_base_path}/internal/config/{version}/config-{version}.module",
+        f"{artifacts_base_path}/internal/config/{version}/config-{version}.pom",
+        f"{artifacts_base_path}/internal/config/{version}/config-{version}.jar"
+        # bom
+        f"{artifacts_base_path}/bom/{version}/bom-{version}.module",
+        f"{artifacts_base_path}/bom/{version}/bom-{version}.pom",
     ]
-    for path in besu_paths:
-        artifacts.append(f"{artifacts_base_path}/{path}.module")
-        artifacts.append(f"{artifacts_base_path}/{path}.pom")
-        artifacts.append(f"{artifacts_base_path}/{path}.jar")
     return artifacts
+
+
 
 def check_url(url):
     print(f"Checking artifact at: {url}")
@@ -27,11 +42,11 @@ def check_url(url):
 
 def main():
     parser = argparse.ArgumentParser(description='Check besu artifacts')
-    parser.add_argument('--besu_version', action="store", dest='besu_version', default="")
+    parser.add_argument('--besu_{version}', action="store", dest='besu_{version}', default="")
     args = parser.parse_args()
-    print(args.besu_version)
+    print(args.besu_{version})
 
-    artifacts = create_artifact_paths(args.besu_version)
+    artifacts = create_artifact_paths(args.besu_{version})
     print(artifacts)
     for url in artifacts:
         check_url(url)
