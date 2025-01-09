@@ -42,7 +42,7 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
 
   private static final Bytes POINT_AT_INFINITY = Bytes.repeat((byte) 0, 64);
   private final long gasCost;
-  private static final Cache<Bytes, PrecompileContractResult> bnMulCache =
+  private static final Cache<Integer, PrecompileInputResultTuple> bnMulCache =
       Caffeine.newBuilder().maximumSize(1000).build();
 
   private AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
@@ -84,9 +84,9 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
-    var res = bnMulCache.getIfPresent(input);
-    if (res != null) {
-      return res;
+    var res = bnMulCache.getIfPresent(input.hashCode());
+    if (res != null && res.cachedInput().equals(input)) {
+      return res.cachedResult();
     }
 
     if (input.size() >= 64 && input.slice(0, 64).equals(POINT_AT_INFINITY)) {
@@ -95,12 +95,12 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     }
 
     if (useNative) {
-      res = computeNative(input, messageFrame);
+      res = new PrecompileInputResultTuple(input, computeNative(input, messageFrame));
     } else {
-      res = computeDefault(input);
+      res = new PrecompileInputResultTuple(input, computeDefault(input));
     }
-    bnMulCache.put(input, res);
-    return res;
+    bnMulCache.put(input.hashCode(), res);
+    return res.cachedResult();
   }
 
   @Nonnull
