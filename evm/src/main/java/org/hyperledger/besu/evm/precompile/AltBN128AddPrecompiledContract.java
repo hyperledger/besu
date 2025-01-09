@@ -38,7 +38,7 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
 
   private final long gasCost;
 
-  private static final Cache<Bytes, PrecompileContractResult> bnAddCache =
+  private static final Cache<Integer, PrecompileInputResultTuple> bnAddCache =
       Caffeine.newBuilder().maximumSize(1000).build();
 
   private AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
@@ -79,18 +79,19 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
-    var res = bnAddCache.getIfPresent(input);
-    if (res != null) {
-      return res;
+    var cachedRes = bnAddCache.getIfPresent(input.hashCode());
+    if (cachedRes != null && cachedRes.cachedInput().equals(input)) {
+      return cachedRes.cachedResult();
     }
 
+    PrecompileInputResultTuple calculatedRes;
     if (useNative) {
-      res = computeNative(input, messageFrame);
+      calculatedRes = new PrecompileInputResultTuple(input, computeNative(input, messageFrame));
     } else {
-      res = computeDefault(input);
+      calculatedRes = new PrecompileInputResultTuple(input, computeDefault(input));
     }
-    bnAddCache.put(input, res);
-    return res;
+    bnAddCache.put(input.hashCode(), calculatedRes);
+    return calculatedRes.cachedResult();
   }
 
   private static PrecompileContractResult computeDefault(final Bytes input) {
