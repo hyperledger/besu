@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class manages the archiving of historic state that is still needed to satisfy queries but
- * doesn't need to be in the main DB segment for. Doing so would degrade block-import performance
+ * doesn't need to be in the main DB segment. Doing so would degrade block-import performance
  * over time so we move state beyond a certain age (in blocks) to other DB segments, assuming there
  * is a more recent (i.e. changed) version of the state. If state is created once and never changed
  * it will remain in the primary DB segment(s).
