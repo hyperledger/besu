@@ -104,6 +104,9 @@ public class GeneralStateReferenceTestTools {
 
     // EOF tests are written against an older version of the spec
     params.ignore("/stEOF/");
+
+    // Prague tests are ignored until the gas repricings is implemented in the reference tests
+    params.ignore("Prague.*");
   }
 
   private GeneralStateReferenceTestTools() {
