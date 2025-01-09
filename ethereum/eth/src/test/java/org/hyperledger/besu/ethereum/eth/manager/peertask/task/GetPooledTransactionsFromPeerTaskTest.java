@@ -59,12 +59,11 @@ public class GetPooledTransactionsFromPeerTaskTest {
 
   @Test
   public void testProcessResponseWithIncorrectTransactionCount() {
-    List<Hash> hashes = List.of(Hash.EMPTY, Hash.EMPTY_LIST_HASH);
+    List<Hash> hashes = List.of(Hash.EMPTY);
     GetPooledTransactionsFromPeerTask task = new GetPooledTransactionsFromPeerTask(hashes);
 
-    Transaction transaction = GENERATOR.transaction();
     PooledTransactionsMessage pooledTransactionsMessage =
-        PooledTransactionsMessage.create(List.of(transaction));
+        PooledTransactionsMessage.create(List.of(GENERATOR.transaction(), GENERATOR.transaction()));
 
     InvalidPeerTaskResponseException exception =
         Assertions.assertThrows(
