@@ -51,7 +51,7 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
    */
   BONSAI_ARCHIVE_WITH_VARIABLES(DataStorageFormat.X_BONSAI_ARCHIVE, 1),
   /**
-   * Current Bonsai version, with receipts using compaction, in order to make Receipts use less disk
+   * Current Bonsai archive version, with receipts using compaction, in order to make Receipts use less disk
    * space
    */
   BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION(DataStorageFormat.X_BONSAI_ARCHIVE, 2);
