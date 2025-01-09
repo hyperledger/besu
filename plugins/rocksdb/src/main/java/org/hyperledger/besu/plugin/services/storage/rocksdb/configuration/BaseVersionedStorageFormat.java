@@ -46,7 +46,7 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
    */
   BONSAI_WITH_RECEIPT_COMPACTION(DataStorageFormat.BONSAI, 3),
   /**
-   * Current Bonsai version, with blockchain variables in a dedicated column family, in order to
+   * Current Bonsai archive version, with blockchain variables in a dedicated column family, in order to
    * make BlobDB more effective
    */
   BONSAI_ARCHIVE_WITH_VARIABLES(DataStorageFormat.X_BONSAI_ARCHIVE, 1),
