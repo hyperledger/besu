@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Comparator;
 import java.util.List;
@@ -78,7 +79,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             protocolContext,
             mergeCoordinator,
             ethPeers,
-            engineCallListener);
+            engineCallListener,
+            new NoOpMetricsSystem());
     lenient().when(protocolSchedule.hardforkFor(any())).thenReturn(Optional.of(pragueHardfork));
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new PragueGasCalculator());
     mockAllowedRequestsValidator();
