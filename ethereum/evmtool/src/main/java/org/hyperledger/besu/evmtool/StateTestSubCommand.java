@@ -270,10 +270,7 @@ public class StateTestSubCommand implements Runnable {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                (__, blockNumber) ->
-                    blockNumber >= blockHeader.getNumber()
-                        ? Hash.ZERO
-                        : Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8))),
+                (__, blockNumber) -> Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8))),
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,
