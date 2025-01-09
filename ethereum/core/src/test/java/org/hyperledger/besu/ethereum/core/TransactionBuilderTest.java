@@ -85,7 +85,7 @@ class TransactionBuilderTest {
             .toList();
 
     assertThat(guessedTypes)
-        .containsExactlyInAnyOrder(
+        .containsExactly(
             TransactionType.FRONTIER,
             TransactionType.ACCESS_LIST,
             TransactionType.EIP1559,
