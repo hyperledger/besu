@@ -27,6 +27,11 @@ import java.util.function.BiFunction;
  */
 public interface BlockHashLookup extends BiFunction<MessageFrame, Long, Hash> {
 
+  /**
+   * How far back from the current block are hash queries valid for? Default is 256.
+   *
+   * @return The number of blocks before the current that should return a hash value.
+   */
   default long getLookback() {
     return 256L;
   }
