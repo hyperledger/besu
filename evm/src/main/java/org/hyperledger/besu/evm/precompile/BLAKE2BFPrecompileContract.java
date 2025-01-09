@@ -26,6 +26,8 @@ import java.math.BigInteger;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +37,8 @@ import org.slf4j.LoggerFactory;
 public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(BLAKE2BFPrecompileContract.class);
+  private static final Cache<Integer, PrecompileInputResultTuple> blakeCache =
+      Caffeine.newBuilder().maximumSize(1000).build();
 
   /**
    * Instantiates a new BLAKE2BF precompile contract.
@@ -77,6 +81,14 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
-    return PrecompileContractResult.success(Hash.blake2bf(input));
+    var res = blakeCache.getIfPresent(input.hashCode());
+    if (res != null && res.cachedInput().equals(input)) {
+      return res.cachedResult();
+    }
+    res =
+        new PrecompileInputResultTuple(
+            input, PrecompileContractResult.success(Hash.blake2bf(input)));
+    blakeCache.put(input.hashCode(), res);
+    return res.cachedResult();
   }
 }
