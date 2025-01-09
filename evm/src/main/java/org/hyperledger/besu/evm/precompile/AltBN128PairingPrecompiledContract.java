@@ -41,11 +41,8 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
 
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
-  private static final Cache<Bytes, PrecompileContractResult> bnPairingCache =
-      Caffeine.newBuilder()
-          .maximumWeight(16_000_000)
-          .weigher((k, v) -> ((Bytes) k).size())
-          .build();
+  private static final Cache<Integer, PrecompileInputResultTuple> bnPairingCache =
+      Caffeine.newBuilder().maximumWeight(16_000_000).weigher((k, v) -> ((Bytes) k).size()).build();
 
   /** The constant FALSE. */
   static final Bytes FALSE =
@@ -106,17 +103,17 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
-    var res = bnPairingCache.getIfPresent(input);
-    if (res != null) {
-      return res;
+    var res = bnPairingCache.getIfPresent(input.hashCode());
+    if (res != null && res.cachedInput().equals(input)) {
+      return res.cachedResult();
     }
     if (useNative) {
-      res = computeNative(input, messageFrame);
+      res = new PrecompileInputResultTuple(input, computeNative(input, messageFrame));
     } else {
-      res = computeDefault(input);
+      res = new PrecompileInputResultTuple(input, computeDefault(input));
     }
-    bnPairingCache.put(input, res);
-    return res;
+    bnPairingCache.put(input.hashCode(), res);
+    return res.cachedResult();
   }
 
   @Nonnull
