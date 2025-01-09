@@ -141,12 +141,9 @@ class Eip7709BlockHashLookupTest {
     assertHashForBlockNumber(blockNumber3);
     assertHashForBlockNumber(blockNumber3);
 
-    verify(account, times(1))
-        .getStorageValue(UInt256.valueOf(blockNumber1 % HISTORY_SERVE_WINDOW));
-    verify(account, times(1))
-        .getStorageValue(UInt256.valueOf(blockNumber2 % HISTORY_SERVE_WINDOW));
-    verify(account, times(1))
-        .getStorageValue(UInt256.valueOf(blockNumber3 % HISTORY_SERVE_WINDOW));
+    verify(account, times(1)).getStorageValue(UInt256.valueOf(blockNumber1 % HISTORY_SERVE_WINDOW));
+    verify(account, times(1)).getStorageValue(UInt256.valueOf(blockNumber2 % HISTORY_SERVE_WINDOW));
+    verify(account, times(1)).getStorageValue(UInt256.valueOf(blockNumber3 % HISTORY_SERVE_WINDOW));
     verifyNoMoreInteractions(account);
   }
 
