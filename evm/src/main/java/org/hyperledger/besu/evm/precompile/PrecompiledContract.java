@@ -109,4 +109,6 @@ public interface PrecompiledContract {
           output, false, MessageFrame.State.EXCEPTIONAL_HALT, haltReason);
     }
   }
+
+  record PrecompileInputResultTuple(Bytes cachedInput, PrecompileContractResult cachedResult) {}
 }
