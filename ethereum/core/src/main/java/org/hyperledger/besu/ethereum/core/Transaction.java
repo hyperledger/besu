@@ -1300,14 +1300,14 @@ public class Transaction
     }
 
     public Builder guessType() {
-      if (versionedHashes != null && !versionedHashes.isEmpty()) {
+      if (codeDelegationAuthorizations.isPresent()) {
+        transactionType = TransactionType.DELEGATE_CODE;
+      } else if (versionedHashes != null && !versionedHashes.isEmpty()) {
         transactionType = TransactionType.BLOB;
       } else if (maxPriorityFeePerGas != null || maxFeePerGas != null) {
         transactionType = TransactionType.EIP1559;
       } else if (accessList.isPresent()) {
         transactionType = TransactionType.ACCESS_LIST;
-      } else if (codeDelegationAuthorizations.isPresent()) {
-        transactionType = TransactionType.DELEGATE_CODE;
       } else {
         transactionType = TransactionType.FRONTIER;
       }
