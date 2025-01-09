@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -35,17 +34,19 @@ import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class Eip7709BlockHashLookupTest {
+class Eip7709BlockHashLookupTest {
   private static final long BLOCKHASH_SERVE_WINDOW = 160;
   private static final Address STORAGE_ADDRESS = Address.fromHexString("0x0");
   private static final long HISTORY_SERVE_WINDOW = 200L;
@@ -58,9 +59,9 @@ public class Eip7709BlockHashLookupTest {
   @BeforeEach
   void setUp() {
     headers = new ArrayList<>();
-    frame = createMessageFrame(CURRENT_BLOCK_NUMBER, createWorldUpdater(0, CURRENT_BLOCK_NUMBER));
     lookup =
         new Eip7709BlockHashLookup(STORAGE_ADDRESS, HISTORY_SERVE_WINDOW, BLOCKHASH_SERVE_WINDOW);
+    frame = createMessageFrame(CURRENT_BLOCK_NUMBER, createWorldUpdater(0, CURRENT_BLOCK_NUMBER));
   }
 
   private WorldUpdater createWorldUpdater(final int fromBlockNumber, final int toBlockNumber) {
@@ -84,6 +85,8 @@ public class Eip7709BlockHashLookupTest {
     final BlockValues blockValues = mock(BlockValues.class);
     when(blockValues.getNumber()).thenReturn(currentBlockNumber);
     when(messageFrame.getBlockValues()).thenReturn(blockValues);
+    when(messageFrame.getBlockHashLookup()).thenReturn(lookup);
+    when(messageFrame.getRemainingGas()).thenReturn(10_000_000L);
     when(messageFrame.getWorldUpdater()).thenReturn(worldUpdater);
     return messageFrame;
   }
@@ -100,7 +103,7 @@ public class Eip7709BlockHashLookupTest {
 
   @Test
   void shouldReturnEmptyHashWhenRequestedBlockHigherThanHead() {
-    assertThat(lookup.apply(frame, CURRENT_BLOCK_NUMBER + 20L)).isEqualTo(Hash.ZERO);
+    assertHashForBlockNumber(CURRENT_BLOCK_NUMBER + 20, Hash.ZERO);
   }
 
   @Test
@@ -139,11 +142,11 @@ public class Eip7709BlockHashLookupTest {
     assertHashForBlockNumber(blockNumber3);
 
     verify(account, times(1))
-        .getStorageValue(eq(UInt256.valueOf(blockNumber1 % HISTORY_SERVE_WINDOW)));
+        .getStorageValue(UInt256.valueOf(blockNumber1 % HISTORY_SERVE_WINDOW));
     verify(account, times(1))
-        .getStorageValue(eq(UInt256.valueOf(blockNumber2 % HISTORY_SERVE_WINDOW)));
+        .getStorageValue(UInt256.valueOf(blockNumber2 % HISTORY_SERVE_WINDOW));
     verify(account, times(1))
-        .getStorageValue(eq(UInt256.valueOf(blockNumber3 % HISTORY_SERVE_WINDOW)));
+        .getStorageValue(UInt256.valueOf(blockNumber3 % HISTORY_SERVE_WINDOW));
     verifyNoMoreInteractions(account);
   }
 
@@ -177,7 +180,14 @@ public class Eip7709BlockHashLookupTest {
   }
 
   private void assertHashForBlockNumber(final int blockNumber, final Hash hash) {
-    Assertions.assertThat(lookup.apply(frame, (long) blockNumber)).isEqualTo(hash);
+    clearInvocations(frame);
+
+    BlockHashOperation op = new BlockHashOperation(new CancunGasCalculator());
+    when(frame.popStackItem()).thenReturn(Bytes.ofUnsignedInt(blockNumber));
+
+    op.execute(frame, null);
+
+    verify(frame).pushStackItem(hash);
   }
 
   private BlockHeader createHeader(final long blockNumber, final BlockHeader parentHeader) {
