@@ -27,7 +27,7 @@ import java.util.function.BiFunction;
  */
 public interface BlockHashLookup extends BiFunction<MessageFrame, Long, Hash> {
 
-    default long getLookback() {
-        return 256L;
-    }
+  default long getLookback() {
+    return 256L;
+  }
 }
