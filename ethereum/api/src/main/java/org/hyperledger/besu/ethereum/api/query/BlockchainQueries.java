@@ -23,6 +23,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
@@ -905,14 +907,17 @@ public class BlockchainQueries {
   public List<LogWithMetadata> matchingLogs(
       final Hash blockHash, final LogsQuery query, final Supplier<Boolean> isQueryAlive) {
     try {
-      final Optional<BlockHeader> blockHeader = getBlockHeader(blockHash, isQueryAlive);
-      if (blockHeader.isEmpty()) {
-        return Collections.emptyList();
-      }
+      final BlockHeader blockHeader =
+          getBlockHeader(blockHash, isQueryAlive)
+              .orElseThrow(
+                  () ->
+                      new InvalidJsonRpcParameters(
+                          "Unknown block hash", RpcErrorType.BLOCK_NOT_FOUND));
+
       // receipts and transactions should exist if the header exists, so throwing is ok.
       final List<TransactionReceipt> receipts = getReceipts(blockHash, isQueryAlive);
       final List<Transaction> transactions = getTransactions(blockHash, isQueryAlive);
-      final long number = blockHeader.get().getNumber();
+      final long number = blockHeader.getNumber();
       final boolean removed = getRemoved(blockHash, isQueryAlive);
 
       final AtomicInteger logIndexOffset = new AtomicInteger();
@@ -939,6 +944,8 @@ public class BlockchainQueries {
           .flatMap(Collection::stream)
           .filter(query::matches)
           .collect(Collectors.toList());
+    } catch (final InvalidJsonRpcParameters e) {
+      throw e;
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
