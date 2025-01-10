@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 
@@ -40,6 +42,8 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
 
   private static final Bytes POINT_AT_INFINITY = Bytes.repeat((byte) 0, 64);
   private final long gasCost;
+  private static final Cache<Integer, PrecompileInputResultTuple> bnMulCache =
+      Caffeine.newBuilder().maximumSize(1000).build();
 
   private AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(
@@ -80,16 +84,28 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
+    PrecompileInputResultTuple res;
+    if (enableResultCaching) {
+      res = bnMulCache.getIfPresent(input.hashCode());
+      if (res != null && res.cachedInput().equals(input)) {
+        return res.cachedResult();
+      }
+    }
+
     if (input.size() >= 64 && input.slice(0, 64).equals(POINT_AT_INFINITY)) {
       return new PrecompileContractResult(
           POINT_AT_INFINITY, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
     }
 
     if (useNative) {
-      return computeNative(input, messageFrame);
+      res = new PrecompileInputResultTuple(input, computeNative(input, messageFrame));
     } else {
-      return computeDefault(input);
+      res = new PrecompileInputResultTuple(input, computeDefault(input));
     }
+    if (enableResultCaching) {
+      bnMulCache.put(input.hashCode(), res);
+    }
+    return res.cachedResult();
   }
 
   @Nonnull

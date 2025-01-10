@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The AltBN128Pairing precompiled contract. */
@@ -39,6 +41,11 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
 
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
+  private static final Cache<Integer, PrecompileInputResultTuple> bnPairingCache =
+      Caffeine.newBuilder()
+          .maximumWeight(16_000_000)
+          .weigher((k, v) -> ((PrecompileInputResultTuple) v).cachedInput().size())
+          .build();
 
   /** The constant FALSE. */
   static final Bytes FALSE =
@@ -99,11 +106,23 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
-    if (useNative) {
-      return computeNative(input, messageFrame);
-    } else {
-      return computeDefault(input);
+    PrecompileInputResultTuple res;
+    if (enableResultCaching) {
+      res = bnPairingCache.getIfPresent(input.hashCode());
+      if (res != null && res.cachedInput().equals(input)) {
+        return res.cachedResult();
+      }
     }
+    if (useNative) {
+      res = new PrecompileInputResultTuple(input, computeNative(input, messageFrame));
+    } else {
+      res = new PrecompileInputResultTuple(input, computeDefault(input));
+    }
+    if (enableResultCaching) {
+      bnPairingCache.put(input.hashCode(), res);
+    }
+
+    return res.cachedResult();
   }
 
   @Nonnull
