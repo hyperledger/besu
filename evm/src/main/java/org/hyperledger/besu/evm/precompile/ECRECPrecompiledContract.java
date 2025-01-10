@@ -82,9 +82,13 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
       return PrecompileContractResult.success(Bytes.EMPTY);
     }
 
-    var res = ecrecCache.getIfPresent(input.hashCode());
-    if (res != null && res.cachedInput().equals(input)) {
-      return res.cachedResult();
+    PrecompileInputResultTuple res;
+
+    if (enableResultCaching) {
+      res = ecrecCache.getIfPresent(input.hashCode());
+      if (res != null && res.cachedInput().equals(input)) {
+        return res.cachedResult();
+      }
     }
 
     final int recId = d.get(63) - V_BASE;
@@ -115,7 +119,9 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
       final MutableBytes32 result = MutableBytes32.create();
       hashed.slice(12).copyTo(result, 12);
       res = new PrecompileInputResultTuple(input, PrecompileContractResult.success(result));
-      ecrecCache.put(input.hashCode(), res);
+      if (enableResultCaching) {
+        ecrecCache.put(input.hashCode(), res);
+      }
       return res.cachedResult();
     } catch (final IllegalArgumentException e) {
       return PrecompileContractResult.success(Bytes.EMPTY);

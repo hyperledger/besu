@@ -53,4 +53,10 @@ public abstract class AbstractPrecompiledContract implements PrecompiledContract
   public String getName() {
     return name;
   }
+
+  protected static Boolean enableResultCaching = Boolean.TRUE;
+
+  public static void setPrecompileCaching(final boolean enablePrecompileCaching) {
+    enableResultCaching = enablePrecompileCaching;
+  }
 }

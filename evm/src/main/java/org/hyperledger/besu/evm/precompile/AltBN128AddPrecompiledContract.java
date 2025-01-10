@@ -37,7 +37,6 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
   private static final int PARAMETER_LENGTH = 128;
 
   private final long gasCost;
-
   private static final Cache<Integer, PrecompileInputResultTuple> bnAddCache =
       Caffeine.newBuilder().maximumSize(1000).build();
 
@@ -79,19 +78,24 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
-    var cachedRes = bnAddCache.getIfPresent(input.hashCode());
-    if (cachedRes != null && cachedRes.cachedInput().equals(input)) {
-      return cachedRes.cachedResult();
-    }
 
-    PrecompileInputResultTuple calculatedRes;
-    if (useNative) {
-      calculatedRes = new PrecompileInputResultTuple(input, computeNative(input, messageFrame));
-    } else {
-      calculatedRes = new PrecompileInputResultTuple(input, computeDefault(input));
+    PrecompileInputResultTuple res;
+
+    if (enableResultCaching) {
+      res = bnAddCache.getIfPresent(input.hashCode());
+      if (res != null && res.cachedInput().equals(input)) {
+        return res.cachedResult();
+      }
     }
-    bnAddCache.put(input.hashCode(), calculatedRes);
-    return calculatedRes.cachedResult();
+    if (useNative) {
+      res = new PrecompileInputResultTuple(input, computeNative(input, messageFrame));
+    } else {
+      res = new PrecompileInputResultTuple(input, computeDefault(input));
+    }
+    if (enableResultCaching) {
+      bnAddCache.put(input.hashCode(), res);
+    }
+    return res.cachedResult();
   }
 
   private static PrecompileContractResult computeDefault(final Bytes input) {

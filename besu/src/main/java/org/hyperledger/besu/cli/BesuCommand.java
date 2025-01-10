@@ -139,6 +139,7 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguratio
 import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -695,6 +696,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfBlocksToCache = 0;
 
+  @CommandLine.Option(
+      names = {"--cache-precompiles"},
+      description = "Specifies whether to cache precompile results (default: ${DEFAULT-VALUE})")
+  private final Boolean enablePrecompileCaching = true;
+
   // Plugins Configuration Option Group
   @CommandLine.ArgGroup(validate = false)
   PluginsConfigurationOptions pluginsConfigurationOptions = new PluginsConfigurationOptions();
@@ -976,6 +982,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
 
       configureNativeLibs(Optional.ofNullable(network));
+      AbstractPrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+
       besuController = buildController();
 
       besuPluginContext.beforeExternalServices();
