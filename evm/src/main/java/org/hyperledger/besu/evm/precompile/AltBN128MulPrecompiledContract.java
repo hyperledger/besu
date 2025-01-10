@@ -84,9 +84,12 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
-    var res = bnMulCache.getIfPresent(input.hashCode());
-    if (res != null && res.cachedInput().equals(input)) {
-      return res.cachedResult();
+    PrecompileInputResultTuple res;
+    if (enableResultCaching) {
+      res = bnMulCache.getIfPresent(input.hashCode());
+      if (res != null && res.cachedInput().equals(input)) {
+        return res.cachedResult();
+      }
     }
 
     if (input.size() >= 64 && input.slice(0, 64).equals(POINT_AT_INFINITY)) {
@@ -99,7 +102,9 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     } else {
       res = new PrecompileInputResultTuple(input, computeDefault(input));
     }
-    bnMulCache.put(input.hashCode(), res);
+    if (enableResultCaching) {
+      bnMulCache.put(input.hashCode(), res);
+    }
     return res.cachedResult();
   }
 
