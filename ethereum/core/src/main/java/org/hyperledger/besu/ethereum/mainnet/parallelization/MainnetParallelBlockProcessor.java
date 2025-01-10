@@ -157,7 +157,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
     if (blockProcessingResult.isFailed()) {
       // Fallback to non-parallel processing if there is a block processing exception .
       LOG.info(
-          "Block processing failed. Falling back to non-parallel processing for block #{} ({})",
+          "Parallel transaction processing failure. Falling back to non-parallel processing for block #{} ({})",
           blockHeader.getNumber(),
           blockHeader.getBlockHash());
       return super.processBlock(
@@ -219,8 +219,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       if ((worldState instanceof DiffBasedWorldState)) {
         ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor =
             new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
-        // runAsyncBlock, if activated, facilitates the  non-blocking parallel execution of
-        // transactions in the background through an optimistic strategy.
+        // When enabled, runAsyncBlock performs non-conflicting parallel execution of transactions
+        // in the background using an optimistic approach.
         parallelizedConcurrentTransactionProcessor.runAsyncBlock(
             worldState,
             blockHeader,
