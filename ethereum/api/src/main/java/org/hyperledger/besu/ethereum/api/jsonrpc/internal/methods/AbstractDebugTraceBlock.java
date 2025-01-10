@@ -16,11 +16,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -41,75 +39,70 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
-public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
+import com.google.common.base.Suppliers;
 
-  protected final ProtocolSchedule protocolSchedule;
+public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
+
+  private final ProtocolSchedule protocolSchedule;
   private final LabelledMetric<Counter> outputCounter;
+  private final Supplier<BlockchainQueries> blockchainQueriesSupplier;
   private final EthScheduler ethScheduler;
 
-  public DebugTraceBlockByNumber(
+  public AbstractDebugTraceBlock(
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
       final ObservableMetricsSystem metricsSystem,
       final EthScheduler ethScheduler) {
-    super(blockchainQueries);
+    this.blockchainQueriesSupplier = Suppliers.ofInstance(blockchainQueries);
     this.protocolSchedule = protocolSchedule;
     this.outputCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.BLOCKCHAIN,
-            "transactions_debugtraceblock_pipeline_processed_total",
+            "transactions_debugTraceblock_pipeline_processed_total",
             "Number of transactions processed for each block",
             "step",
             "action");
     this.ethScheduler = ethScheduler;
   }
 
-  @Override
-  public String getName() {
-    return RpcMethod.DEBUG_TRACE_BLOCK_BY_NUMBER.getMethodName();
+  protected BlockchainQueries getBlockchainQueries() {
+    return blockchainQueriesSupplier.get();
   }
 
-  @Override
-  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    try {
-      return request.getRequiredParameter(0, BlockParameter.class);
-    } catch (JsonRpcParameterException e) {
-      throw new InvalidJsonRpcParameters(
-          "Invalid block parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
-    }
-  }
-
-  @Override
-  protected Object resultByBlockNumber(
-      final JsonRpcRequestContext request, final long blockNumber) {
-
+  protected TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext) {
     final TraceOptions traceOptions;
     try {
       traceOptions =
-          request
+          requestContext
               .getOptionalParameter(1, TransactionTraceParams.class)
               .map(TransactionTraceParams::traceOptions)
               .orElse(TraceOptions.DEFAULT);
-    } catch (JsonRpcParameterException e) {
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid transaction trace parameter (index 1)",
           RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
           e);
     }
-    Optional<Block> maybeBlock =
-        getBlockchainQueries().getBlockchain().getBlockByNumber(blockNumber);
+    return traceOptions;
+  }
 
+  protected Collection<DebugTraceTransactionResult> getTraces(
+      final JsonRpcRequestContext requestContext,
+      final TraceOptions traceOptions,
+      final Optional<Block> maybeBlock) {
     return maybeBlock
         .flatMap(
             block ->
                 Tracer.processTracing(
                     getBlockchainQueries(),
-                    Optional.of(block.getHeader()),
+                    block.getHash(),
                     traceableState -> {
                       List<DebugTraceTransactionResult> tracesList =
                           Collections.synchronizedList(new ArrayList<>());
@@ -140,7 +133,7 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                                   4,
                                   outputCounter,
                                   false,
-                                  "debug_trace_block_by_number")
+                                  "debug_trace_block")
                               .thenProcess("executeTransaction", executeTransactionStep)
                               .thenProcessAsyncOrdered(
                                   "debugTraceTransactionStep", debugTraceTransactionStep, 4)

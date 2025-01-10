@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -74,6 +74,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
@@ -836,7 +837,8 @@ public class RunnerBuilder {
               besuPluginContext.getNamedPlugins(),
               dataDir,
               rpcEndpointServiceImpl,
-              transactionSimulator);
+              transactionSimulator,
+              besuController.getProtocolManager().ethContext().getScheduler());
 
       jsonRpcHttpService =
           Optional.of(
@@ -882,7 +884,8 @@ public class RunnerBuilder {
               besuPluginContext.getNamedPlugins(),
               dataDir,
               rpcEndpointServiceImpl,
-              transactionSimulator);
+              transactionSimulator,
+              besuController.getProtocolManager().ethContext().getScheduler());
 
       final Optional<AuthenticationService> authToUse =
           engineJsonRpcConfiguration.get().isAuthenticationEnabled()
@@ -978,7 +981,8 @@ public class RunnerBuilder {
               besuPluginContext.getNamedPlugins(),
               dataDir,
               rpcEndpointServiceImpl,
-              transactionSimulator);
+              transactionSimulator,
+              besuController.getProtocolManager().ethContext().getScheduler());
 
       createLogsSubscriptionService(
           context.getBlockchain(), subscriptionManager, privacyParameters, blockchainQueries);
@@ -1059,7 +1063,8 @@ public class RunnerBuilder {
               besuPluginContext.getNamedPlugins(),
               dataDir,
               rpcEndpointServiceImpl,
-              transactionSimulator);
+              transactionSimulator,
+              besuController.getProtocolManager().ethContext().getScheduler());
 
       jsonRpcIpcService =
           Optional.of(
@@ -1099,7 +1104,8 @@ public class RunnerBuilder {
               besuPluginContext.getNamedPlugins(),
               dataDir,
               rpcEndpointServiceImpl,
-              transactionSimulator);
+              transactionSimulator,
+              besuController.getProtocolManager().ethContext().getScheduler());
     } else {
       inProcessRpcMethods = Map.of();
     }
@@ -1262,7 +1268,8 @@ public class RunnerBuilder {
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
-      final TransactionSimulator transactionSimulator) {
+      final TransactionSimulator transactionSimulator,
+      final EthScheduler ethScheduler) {
     // sync vertx for engine consensus API, to process requests in FIFO order;
     final Vertx consensusEngineServer = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
 
@@ -1300,7 +1307,8 @@ public class RunnerBuilder {
                 consensusEngineServer,
                 apiConfiguration,
                 enodeDnsConfiguration,
-                transactionSimulator);
+                transactionSimulator,
+                ethScheduler);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     final var pluginMethods =
