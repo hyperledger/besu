@@ -54,6 +54,7 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -95,7 +96,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             protocolContext,
             mergeCoordinator,
             ethPeers,
-            engineCallListener);
+            engineCallListener,
+            new NoOpMetricsSystem());
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
     lenient()
         .when(protocolSpec.getGasLimitCalculator())
@@ -120,7 +122,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             protocolContext,
             mergeCoordinator,
             ethPeers,
-            engineCallListener);
+            engineCallListener,
+            new NoOpMetricsSystem());
     final JsonRpcResponse badParam =
         methodV3.response(
             new JsonRpcRequestContext(

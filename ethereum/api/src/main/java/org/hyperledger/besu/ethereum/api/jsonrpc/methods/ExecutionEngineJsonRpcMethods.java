@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,6 +64,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final String clientVersion;
   private final String commit;
   private final TransactionPool transactionPool;
+  private final MetricsSystem metricsSystem;
 
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
@@ -72,7 +74,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final Vertx consensusEngineServer,
       final String clientVersion,
       final String commit,
-      final TransactionPool transactionPool) {
+      final TransactionPool transactionPool,
+      final MetricsSystem metricsSystem) {
     this.mergeCoordinator =
         Optional.ofNullable(miningCoordinator)
             .filter(mc -> mc.isCompatibleWithEngineApi())
@@ -84,6 +87,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.clientVersion = clientVersion;
     this.commit = commit;
     this.transactionPool = transactionPool;
+    this.metricsSystem = metricsSystem;
   }
 
   @Override
@@ -117,21 +121,24 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                   protocolContext,
                   mergeCoordinator.get(),
                   ethPeers,
-                  engineQosTimer),
+                  engineQosTimer,
+                  metricsSystem),
               new EngineNewPayloadV2(
                   consensusEngineServer,
                   protocolSchedule,
                   protocolContext,
                   mergeCoordinator.get(),
                   ethPeers,
-                  engineQosTimer),
+                  engineQosTimer,
+                  metricsSystem),
               new EngineNewPayloadV3(
                   consensusEngineServer,
                   protocolSchedule,
                   protocolContext,
                   mergeCoordinator.get(),
                   ethPeers,
-                  engineQosTimer),
+                  engineQosTimer,
+                  metricsSystem),
               new EngineForkchoiceUpdatedV1(
                   consensusEngineServer,
                   protocolSchedule,
@@ -193,7 +200,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 protocolContext,
                 mergeCoordinator.get(),
                 ethPeers,
-                engineQosTimer));
+                engineQosTimer,
+                metricsSystem));
       }
 
       return mapOf(executionEngineApisSupported);
