@@ -26,20 +26,20 @@ i=0
 ## Checks on the Dockerfile
 GOSS_FILES_PATH=$TEST_PATH/00 \
 bash $TEST_PATH/dgoss dockerfile $DOCKER_IMAGE $DOCKER_FILE \
-> ./reports/00.xml || i=`expr $i + 1`
+> ./reports/00.xml || ((i++))
 # fail fast if we dont pass static checks
 if [[ $i != 0 ]]; then exit $i; fi
 
 # Test for normal startup with ports opened
-# we test that things listen on the right interface/port, not what interface the advertise
-# hence we dont set p2p-host=0.0.0.0 because this sets what its advertising to devp2p; the important piece is that it defaults to listening on all interfaces
+# we test that things listen on the right interface/port, not what interface they advertise
+# hence we don't set p2p-host=0.0.0.0 because this sets what it's advertising to devp2p; the important piece is that it defaults to listening on all interfaces
 GOSS_FILES_PATH=$TEST_PATH/01 \
 bash $TEST_PATH/dgoss run --sysctl net.ipv6.conf.all.disable_ipv6=1 $DOCKER_IMAGE \
 --network=dev \
 --rpc-http-enabled \
 --rpc-ws-enabled \
 --graphql-http-enabled \
-> ./reports/01.xml || i=`expr $i + 1`
+> ./reports/01.xml || ((i++))
 
 if [[ $i != 0 ]]; then exit $i; fi
 
@@ -47,6 +47,6 @@ if [[ $i != 0 ]]; then exit $i; fi
 GOSS_FILES_PATH=$TEST_PATH/02 \
 bash $TEST_PATH/dgoss run --sysctl net.ipv6.conf.all.disable_ipv6=1 -v besu-data:/var/lib/besu $DOCKER_IMAGE --data-path=/var/lib/besu \
 --network=dev \
-> ./reports/02.xml || i=`expr $i + 1`
+> ./reports/02.xml || ((i++))
 
 exit $i
