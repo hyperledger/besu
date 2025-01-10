@@ -54,8 +54,14 @@ public abstract class AbstractPrecompiledContract implements PrecompiledContract
     return name;
   }
 
-  protected static Boolean enableResultCaching = Boolean.TRUE;
+  /** Default result caching to false unless otherwise set. */
+  protected static Boolean enableResultCaching = Boolean.FALSE;
 
+  /**
+   * Enable or disable precompile result caching.
+   *
+   * @param enablePrecompileCaching boolean indicating whether to cache precompile results
+   */
   public static void setPrecompileCaching(final boolean enablePrecompileCaching) {
     enableResultCaching = enablePrecompileCaching;
   }

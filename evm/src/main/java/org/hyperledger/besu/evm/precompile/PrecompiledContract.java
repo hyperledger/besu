@@ -110,5 +110,11 @@ public interface PrecompiledContract {
     }
   }
 
+  /**
+   * Record type used for precompile result caching.
+   *
+   * @param cachedInput cached input bytes
+   * @param cachedResult cached result
+   */
   record PrecompileInputResultTuple(Bytes cachedInput, PrecompileContractResult cachedResult) {}
 }
