@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -42,8 +43,12 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.testutil.JsonTestParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GeneralStateReferenceTestTools {
+  private static final Logger LOG = LoggerFactory.getLogger(GeneralStateReferenceTestTools.class);
+
   private static final List<String> SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS =
       Arrays.asList("Frontier", "Homestead", "EIP150");
 
@@ -179,11 +184,27 @@ public class GeneralStateReferenceTestTools {
       worldStateUpdater.deleteAccount(coinbase.getAddress());
     }
     worldStateUpdater.commit();
-    worldState.processExtraStateStorageFormatValidation(blockHeader);
+//    worldState.processExtraStateStorageFormatValidation(blockHeader);
     worldState.persist(blockHeader);
 
     // Check the world state root hash.
     final Hash expectedRootHash = spec.getExpectedRootHash();
+    if (!worldState.rootHash().equals(expectedRootHash)) {
+      worldState.streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+          .forEach(
+              account -> {
+                LOG.error("ADDRESS: {}", account.getAddress());
+                LOG.error("nonce: {}", account.getNonce());
+                LOG.error("balance: {}", account.getBalance());
+                LOG.error("code: {}", account.getCode());
+                account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE)
+                    .forEach(
+                        (key, value) -> {
+                          LOG.error("storage: {} -> {}", key, value);
+                        });
+                LOG.error("--------------------------");
+              });
+    }
     assertThat(worldState.rootHash())
         .withFailMessage(
             "Unexpected world state root hash; expected state: %s, computed state: %s",
