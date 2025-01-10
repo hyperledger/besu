@@ -81,14 +81,22 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
-    var res = blakeCache.getIfPresent(input.hashCode());
-    if (res != null && res.cachedInput().equals(input)) {
-      return res.cachedResult();
+    PrecompileInputResultTuple res = null;
+    if (enableResultCaching) {
+      res = blakeCache.getIfPresent(input.hashCode());
+      if (res != null && res.cachedInput().equals(input)) {
+        return res.cachedResult();
+      }
     }
+
     res =
         new PrecompileInputResultTuple(
             input, PrecompileContractResult.success(Hash.blake2bf(input)));
-    blakeCache.put(input.hashCode(), res);
+
+    if (enableResultCaching) {
+      blakeCache.put(input.hashCode(), res);
+    }
+
     return res.cachedResult();
   }
 }
