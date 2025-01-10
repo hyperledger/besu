@@ -93,6 +93,10 @@ public class BlockchainReferenceTestTools {
 
     // None of the Prague tests have withdrawals and deposits handling
     params.ignore("\\[Prague\\]");
+
+    // TODO: remove once updated EIP-2537 gas cost artifacts exist
+    params.ignore("/eip2537_bls_12_381_precompiles/");
+    params.ignore("/stEIP2537/");
   }
 
   private BlockchainReferenceTestTools() {
