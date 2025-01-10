@@ -356,8 +356,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     // execute block and return result response
     final long startTimeMs = System.currentTimeMillis();
     final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
-    lastExecutionTime = System.currentTimeMillis() - startTimeMs;
     if (executionResult.isSuccessful()) {
+      lastExecutionTime = System.currentTimeMillis() - startTimeMs;
       logImportedBlockInfo(
           block,
           blobTransactions.stream()
