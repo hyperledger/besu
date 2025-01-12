@@ -171,12 +171,14 @@ public class ClassicProtocolSpecs {
                     evm, true, Collections.singletonList(MaxCodeSizeRule.from(evm)), 1))
         .transactionProcessorBuilder(
             (gasCalculator,
+                refundCalculator,
                 feeMarket,
                 transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
+                    refundCalculator,
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
@@ -353,12 +355,14 @@ public class ClassicProtocolSpecs {
         // EIP-3651
         .transactionProcessorBuilder(
             (gasCalculator,
+                refundCalculator,
                 feeMarket,
                 transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
+                    refundCalculator,
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
