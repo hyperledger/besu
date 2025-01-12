@@ -25,17 +25,23 @@ import org.apache.tuweni.bytes.Bytes;
 public class EIP1559TransactionEncoder {
 
   public static void encode(final Transaction transaction, final RLPOutput out) {
-    out.startList();
-    out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());
-    out.writeLongScalar(transaction.getNonce());
-    out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
-    out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());
-    out.writeLongScalar(transaction.getGasLimit());
-    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-    out.writeUInt256Scalar(transaction.getValue());
-    out.writeBytes(transaction.getPayload());
-    writeAccessList(out, transaction.getAccessList());
-    writeSignatureAndRecoveryId(transaction, out);
-    out.endList();
+    transaction
+        .getRawRlp()
+        .ifPresentOrElse(
+            out::writeRLPBytes,
+            () -> {
+              out.startList();
+              out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());
+              out.writeLongScalar(transaction.getNonce());
+              out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
+              out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());
+              out.writeLongScalar(transaction.getGasLimit());
+              out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+              out.writeUInt256Scalar(transaction.getValue());
+              out.writeBytes(transaction.getPayload());
+              writeAccessList(out, transaction.getAccessList());
+              writeSignatureAndRecoveryId(transaction, out);
+              out.endList();
+            });
   }
 }

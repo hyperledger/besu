@@ -126,6 +126,8 @@ public class Transaction
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
   private final Optional<List<CodeDelegation>> maybeCodeDelegationList;
 
+  private final Optional<Bytes> rawRlp;
+
   public static Builder builder() {
     return new Builder();
   }
@@ -181,7 +183,8 @@ public class Transaction
       final Optional<BigInteger> chainId,
       final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments,
-      final Optional<List<CodeDelegation>> maybeCodeDelegationList) {
+      final Optional<List<CodeDelegation>> maybeCodeDelegationList,
+      final Optional<Bytes> rawRlp) {
 
     if (!forCopy) {
       if (transactionType.requiresChainId()) {
@@ -242,6 +245,7 @@ public class Transaction
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
     this.maybeCodeDelegationList = maybeCodeDelegationList;
+    this.rawRlp = rawRlp;
   }
 
   /**
@@ -485,7 +489,9 @@ public class Transaction
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY);
+    rawRlp.ifPresentOrElse(
+        out::writeRLPBytes,
+        () -> TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY));
   }
 
   @Override
@@ -663,6 +669,10 @@ public class Transaction
    */
   public final Wei getEffectiveGasPrice(final Optional<Wei> baseFeePerGas) {
     return getEffectivePriorityFeePerGas(baseFeePerGas).addExact(baseFeePerGas.orElse(Wei.ZERO));
+  }
+
+  public Optional<Bytes> getRawRlp() {
+    return rawRlp;
   }
 
   @Override
@@ -1116,7 +1126,8 @@ public class Transaction
             chainId,
             detachedVersionedHashes,
             detachedBlobsWithCommitments,
-            detachedCodeDelegationList);
+            detachedCodeDelegationList,
+            Optional.empty());
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
@@ -1194,6 +1205,7 @@ public class Transaction
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
+    protected Optional<Bytes> rawRlp = Optional.empty();
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;
@@ -1299,6 +1311,11 @@ public class Transaction
       return this;
     }
 
+    public Builder rawRlp(final Optional<Bytes> rawRlp) {
+      this.rawRlp = rawRlp;
+      return this;
+    }
+
     public Builder guessType() {
       if (codeDelegationAuthorizations.isPresent()) {
         transactionType = TransactionType.DELEGATE_CODE;
@@ -1338,7 +1355,8 @@ public class Transaction
           chainId,
           Optional.ofNullable(versionedHashes),
           Optional.ofNullable(blobsWithCommitments),
-          codeDelegationAuthorizations);
+          codeDelegationAuthorizations,
+          rawRlp);
     }
 
     public Transaction signAndBuild(final KeyPair keys) {

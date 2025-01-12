@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -37,21 +38,23 @@ public class EIP1559TransactionDecoder {
   }
 
   public static Transaction decode(final RLPInput input) {
-    input.enterList();
-    final BigInteger chainId = input.readBigIntegerScalar();
+    RLPInput transactionRlp = input.readAsRlp();
+    transactionRlp.enterList();
+    final BigInteger chainId = transactionRlp.readBigIntegerScalar();
     final Transaction.Builder builder =
         Transaction.builder()
             .type(TransactionType.EIP1559)
             .chainId(chainId)
-            .nonce(input.readLongScalar())
-            .maxPriorityFeePerGas(Wei.of(input.readUInt256Scalar()))
-            .maxFeePerGas(Wei.of(input.readUInt256Scalar()))
-            .gasLimit(input.readLongScalar())
-            .to(input.readBytes(v -> v.isEmpty() ? null : Address.wrap(v)))
-            .value(Wei.of(input.readUInt256Scalar()))
-            .payload(input.readBytes())
+            .nonce(transactionRlp.readLongScalar())
+            .maxPriorityFeePerGas(Wei.of(transactionRlp.readUInt256Scalar()))
+            .maxFeePerGas(Wei.of(transactionRlp.readUInt256Scalar()))
+            .gasLimit(transactionRlp.readLongScalar())
+            .to(transactionRlp.readBytes(v -> v.isEmpty() ? null : Address.wrap(v)))
+            .value(Wei.of(transactionRlp.readUInt256Scalar()))
+            .payload(transactionRlp.readBytes())
+            .rawRlp(Optional.of(transactionRlp.raw()))
             .accessList(
-                input.readList(
+                transactionRlp.readList(
                     accessListEntryRLPInput -> {
                       accessListEntryRLPInput.enterList();
                       final AccessListEntry accessListEntry =
@@ -61,18 +64,18 @@ public class EIP1559TransactionDecoder {
                       accessListEntryRLPInput.leaveList();
                       return accessListEntry;
                     }));
-    final byte recId = (byte) input.readUnsignedByteScalar();
+    final byte recId = (byte) transactionRlp.readUnsignedByteScalar();
     final Transaction transaction =
         builder
             .signature(
                 SIGNATURE_ALGORITHM
                     .get()
                     .createSignature(
-                        input.readUInt256Scalar().toUnsignedBigInteger(),
-                        input.readUInt256Scalar().toUnsignedBigInteger(),
+                        transactionRlp.readUInt256Scalar().toUnsignedBigInteger(),
+                        transactionRlp.readUInt256Scalar().toUnsignedBigInteger(),
                         recId))
             .build();
-    input.leaveList();
+    transactionRlp.leaveList();
     return transaction;
   }
 }
