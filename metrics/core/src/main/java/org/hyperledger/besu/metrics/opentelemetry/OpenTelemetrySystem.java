@@ -372,7 +372,11 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     final Attributes usedNonHeap = Attributes.of(typeKey, USED, areaKey, NON_HEAP);
     final Attributes committedHeap = Attributes.of(typeKey, COMMITTED, areaKey, HEAP);
     final Attributes committedNonHeap = Attributes.of(typeKey, COMMITTED, areaKey, NON_HEAP);
-    // TODO: Decide if max is needed or not. May be derived with some approximation from max(used).
+    // The max memory metric represents the upper limit of memory that can be allocated by the JVM.
+    // This is different from the historical maximum of used memory and is important for:
+    // 1. Capacity planning
+    // 2. Calculating memory utilization percentage (used/max)
+    // 3. Monitoring memory pressure
     final Attributes maxHeap = Attributes.of(typeKey, MAX, areaKey, HEAP);
     final Attributes maxNonHeap = Attributes.of(typeKey, MAX, areaKey, NON_HEAP);
     meter
@@ -410,8 +414,8 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
                 MemoryUsage poolUsage = poolBeans.get(i).getUsage();
                 resultLongObserver.record(poolUsage.getUsed(), usedLabelSets.get(i));
                 resultLongObserver.record(poolUsage.getCommitted(), committedLabelSets.get(i));
-                // TODO: Decide if max is needed or not. May be derived with some approximation from
-                //  max(used).
+                // The max memory metric represents the upper limit of memory that can be allocated by the JVM.
+                // This is different from the historical maximum of used memory and is important for capacity planning.
                 resultLongObserver.record(poolUsage.getMax(), maxLabelSets.get(i));
               }
             });
