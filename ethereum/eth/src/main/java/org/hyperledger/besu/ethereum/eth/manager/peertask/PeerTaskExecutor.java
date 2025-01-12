@@ -136,7 +136,7 @@ public class PeerTaskExecutor {
           MessageData responseMessageData =
               requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
 
-          if(responseMessageData == null) {
+          if (responseMessageData == null) {
             throw new InvalidPeerTaskResponseException();
           }
 
