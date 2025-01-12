@@ -167,7 +167,9 @@ public class BlockResultFactory {
                 rqs ->
                     rqs.stream()
                         .sorted(Comparator.comparing(Request::getType))
-                        .map(r -> r.getData().toHexString())
+                        .filter(r -> !r.getData().isEmpty())
+                        .map(Request::getEncodedRequest)
+                        .map(Bytes::toHexString)
                         .toList());
 
     final BlobsBundleV1 blobsBundleV1 =
