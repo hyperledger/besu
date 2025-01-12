@@ -396,3 +396,23 @@ jobs:
           ARTIFACTORY_USER: ${{ secrets.BESU_ARTIFACTORY_USER }}
           ARTIFACTORY_KEY: ${{ secrets.BESU_ARTIFACTORY_TOKEN }}
         run: ./gradlew -Prelease.releaseVersion=${{ env.RELEASE_VERSION }} -Pversion=${{env.RELEASE_VERSION}} artifactoryPublish
+
+  verify_artifactory:
+    runs-on: ubuntu-22.04
+    needs: [artifactory, validate, test-linux, test-windows]
+    steps:
+      - name: checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          ref: ${{ env.RELEASE_VERSION }}
+
+      # actions/setup-python@5.3 
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: pip install requests argparse
+
+      - name: Run the script
+        run: python3 .github/workflows/verify_artifacts.py --besu_version="${{ needs.validate.outputs.release_version }}"
