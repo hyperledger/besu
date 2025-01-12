@@ -173,7 +173,8 @@ public class BesuEventsImplTest {
             syncState,
             txPoolConfig,
             new BlobCache(),
-            MiningConfiguration.newDefault());
+            MiningConfiguration.newDefault(),
+            false);
 
     serviceImpl =
         new BesuEventsImpl(
