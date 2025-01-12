@@ -25,4 +25,14 @@ import java.util.function.BiFunction;
  * <p>Arg is the current executing message frame. The Result is the Hash, which may be zero based on
  * lookup rules.
  */
-public interface BlockHashLookup extends BiFunction<MessageFrame, Long, Hash> {}
+public interface BlockHashLookup extends BiFunction<MessageFrame, Long, Hash> {
+
+  /**
+   * How far back from the current block are hash queries valid for? Default is 256.
+   *
+   * @return The number of blocks before the current that should return a hash value.
+   */
+  default long getLookback() {
+    return 256L;
+  }
+}

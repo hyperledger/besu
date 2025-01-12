@@ -395,13 +395,8 @@ public class T8nExecutor {
           // from them so need to
           // add in a manual BlockHashLookup
           blockHashLookup =
-              (__, blockNumber) -> {
-                if (referenceTestEnv.getNumber() - blockNumber > 256L
-                    || blockNumber >= referenceTestEnv.getNumber()) {
-                  return Hash.ZERO;
-                }
-                return referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO);
-              };
+              (__, blockNumber) ->
+                  referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO);
         }
         result =
             processor.processTransaction(

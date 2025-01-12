@@ -74,13 +74,6 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
 
   @Override
   public Hash apply(final MessageFrame frame, final Long blockNumber) {
-    final long currentBlockNumber = frame.getBlockValues().getNumber();
-    final long minBlockServe = Math.max(0, currentBlockNumber - blockHashServeWindow);
-    if (blockNumber >= currentBlockNumber || blockNumber < minBlockServe) {
-      LOG.trace("failed to read hash from system account for block {}", blockNumber);
-      return ZERO;
-    }
-
     final Hash cachedHash = hashByNumber.get(blockNumber);
     if (cachedHash != null) {
       return cachedHash;
@@ -104,5 +97,10 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
     Hash blockHash = Hash.wrap(value);
     hashByNumber.put(blockNumber, blockHash);
     return blockHash;
+  }
+
+  @Override
+  public long getLookback() {
+    return blockHashServeWindow;
   }
 }

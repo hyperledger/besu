@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -27,10 +28,14 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +52,7 @@ class BlockchainBasedBlockHashLookupTest {
   private BlockHeader[] headers;
   private BlockHashLookup lookup;
   private final MessageFrame messageFrameMock = mock(MessageFrame.class);
+  private final BlockValues blockValuesMock = mock(BlockValues.class);
 
   @BeforeEach
   void setUp() {
@@ -138,7 +144,18 @@ class BlockchainBasedBlockHashLookupTest {
   }
 
   private void assertHashForBlockNumber(final int blockNumber, final Hash hash) {
-    Assertions.assertThat(lookup.apply(messageFrameMock, (long) blockNumber)).isEqualTo(hash);
+    clearInvocations(messageFrameMock, blockValuesMock);
+
+    BlockHashOperation op = new BlockHashOperation(new CancunGasCalculator());
+    when(messageFrameMock.getRemainingGas()).thenReturn(10_000_000L);
+    when(messageFrameMock.popStackItem()).thenReturn(Bytes.ofUnsignedInt(blockNumber));
+    when(messageFrameMock.getBlockValues()).thenReturn(blockValuesMock);
+    when(messageFrameMock.getBlockHashLookup()).thenReturn(lookup);
+    when(blockValuesMock.getNumber()).thenReturn((long) CURRENT_BLOCK_NUMBER);
+
+    op.execute(messageFrameMock, null);
+
+    verify(messageFrameMock).pushStackItem(hash);
   }
 
   private BlockHeader createHeader(final int blockNumber, final BlockHeader parentHeader) {
