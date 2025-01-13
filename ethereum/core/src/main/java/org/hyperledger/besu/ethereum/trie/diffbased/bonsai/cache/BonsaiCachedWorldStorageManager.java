@@ -19,11 +19,11 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiSnapsho
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateSharedConfig;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.function.Supplier;
@@ -33,8 +33,8 @@ public class BonsaiCachedWorldStorageManager extends DiffBasedCachedWorldStorage
   public BonsaiCachedWorldStorageManager(
       final BonsaiWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Supplier<DiffBasedWorldStateConfig> defaultBonsaiWorldStateConfigSupplier) {
-    super(archive, worldStateKeyValueStorage, defaultBonsaiWorldStateConfigSupplier);
+      final Supplier<WorldStateSharedConfig> worldStateSharedConfigSupplier) {
+    super(archive, worldStateKeyValueStorage, worldStateSharedConfigSupplier);
   }
 
   @Override
@@ -46,7 +46,7 @@ public class BonsaiCachedWorldStorageManager extends DiffBasedCachedWorldStorage
         (BonsaiWorldStateProvider) archive,
         (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
         evmConfiguration,
-        defaultBonsaiWorldStateConfigSupplier.get());
+        worldStateSharedConfigSupplier.get());
   }
 
   @Override

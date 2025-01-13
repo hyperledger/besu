@@ -60,13 +60,17 @@ public abstract class DiffBasedWorldState
 
   protected Hash worldStateRootHash;
   protected Hash worldStateBlockHash;
-  protected DiffBasedWorldStateConfig worldStateConfig;
+
+  // configuration parameters for the world state.
+  protected WorldStateSharedConfig worldStateSpec;
+  // configuration parameters for the storage of the world state.
+  protected WorldStateStorageConfig worldStateStorageSpec;
 
   protected DiffBasedWorldState(
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
-      final DiffBasedWorldStateConfig diffBasedWorldStateConfig) {
+      final WorldStateSharedConfig worldStateSpec) {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.worldStateRootHash =
         Hash.wrap(
@@ -77,7 +81,8 @@ public abstract class DiffBasedWorldState
             Bytes32.wrap(worldStateKeyValueStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
     this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;
-    this.worldStateConfig = diffBasedWorldStateConfig;
+    this.worldStateSpec = worldStateSpec;
+    this.worldStateStorageSpec = WorldStateStorageConfig.newBuilder().build();
   }
 
   /**
@@ -108,12 +113,33 @@ public abstract class DiffBasedWorldState
     return worldStateRootHash;
   }
 
+  /**
+   * Checks if the current world state is modifying the head of the node.
+   *
+   * <p>This method determines whether the current world state is capable of making changes to the
+   * head of the node. The head of the node will never be of type snapshot or layered. These
+   * instances are copies of the head or of the head at a previous block or other points in time.
+   *
+   * @return {@code true} if the current world state is modifying the head, {@code false} otherwise.
+   */
   @Override
-  public boolean isPersisted() {
-    return isPersisted(worldStateKeyValueStorage);
+  public boolean isHeadModifyingWorldState() {
+    return isHeadModifyingWorldState(worldStateKeyValueStorage);
   }
 
-  private boolean isPersisted(final WorldStateKeyValueStorage worldStateKeyValueStorage) {
+  /**
+   * Determines if the provided world state key-value storage is modifying the head of the node.
+   *
+   * <p>This method checks if the given world state key-value storage is an instance that can modify
+   * the head of the node. The head of the node will never be of type {@link
+   * DiffBasedSnapshotWorldStateKeyValueStorage}. These instances are copies of the head or of the
+   * head at a previous block or other points in time.
+   *
+   * @param worldStateKeyValueStorage the world state key-value storage to check.
+   * @return {@code true} if the provided storage is modifying the head, {@code false} otherwise.
+   */
+  private boolean isHeadModifyingWorldState(
+      final WorldStateKeyValueStorage worldStateKeyValueStorage) {
     return !(worldStateKeyValueStorage instanceof DiffBasedSnapshotWorldStateKeyValueStorage);
   }
 
@@ -141,7 +167,8 @@ public abstract class DiffBasedWorldState
       final DiffBasedWorldStateKeyValueStorage.Updater stateUpdater) {
     // calling calculateRootHash in order to update the state
     calculateRootHash(
-        worldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater), accumulator);
+        worldStateStorageSpec.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
+        accumulator);
     return blockHeader.getStateRoot();
   }
 
@@ -164,10 +191,10 @@ public abstract class DiffBasedWorldState
     try {
       final Hash calculatedRootHash;
 
-      if (blockHeader == null || !worldStateConfig.isTrieDisabled()) {
+      if (blockHeader == null || !worldStateSpec.isTrieDisabled()) {
         calculatedRootHash =
             calculateRootHash(
-                worldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
+                worldStateStorageSpec.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
                 accumulator);
       } else {
         // if the trie is disabled, we cannot calculate the state root, so we directly use the root
@@ -186,7 +213,7 @@ public abstract class DiffBasedWorldState
             () -> {
               trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
               // not save a frozen state in the cache
-              if (!worldStateConfig.isFrozen()) {
+              if (!worldStateStorageSpec.isFrozen()) {
                 cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
               }
             };
@@ -218,7 +245,7 @@ public abstract class DiffBasedWorldState
   }
 
   protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
-    if (!worldStateConfig.isTrieDisabled() && !calculatedStateRoot.equals(header.getStateRoot())) {
+    if (!worldStateSpec.isTrieDisabled() && !calculatedStateRoot.equals(header.getStateRoot())) {
       throw new RuntimeException(
           "World State Root does not match expected value, header "
               + header.getStateRoot().toHexString()
@@ -234,7 +261,7 @@ public abstract class DiffBasedWorldState
 
   @Override
   public Hash rootHash() {
-    if (worldStateConfig.isFrozen() && accumulator.isAccumulatorStateChanged()) {
+    if (worldStateStorageSpec.isFrozen() && accumulator.isAccumulatorStateChanged()) {
       worldStateRootHash = calculateRootHash(Optional.empty(), accumulator.copy());
       accumulator.resetAccumulatorStateChanged();
     }
@@ -307,9 +334,9 @@ public abstract class DiffBasedWorldState
   @Override
   public void close() {
     try {
-      if (!isPersisted()) {
+      if (!isHeadModifyingWorldState()) {
         this.worldStateKeyValueStorage.close();
-        if (worldStateConfig.isFrozen()) {
+        if (worldStateStorageSpec.isFrozen()) {
           closeFrozenStorage();
         }
       }
@@ -322,7 +349,7 @@ public abstract class DiffBasedWorldState
     try {
       final DiffBasedLayeredWorldStateKeyValueStorage worldStateLayerStorage =
           (DiffBasedLayeredWorldStateKeyValueStorage) worldStateKeyValueStorage;
-      if (!isPersisted(worldStateLayerStorage.getParentWorldStateStorage())) {
+      if (!isHeadModifyingWorldState(worldStateLayerStorage.getParentWorldStateStorage())) {
         worldStateLayerStorage.getParentWorldStateStorage().close();
       }
     } catch (Exception e) {

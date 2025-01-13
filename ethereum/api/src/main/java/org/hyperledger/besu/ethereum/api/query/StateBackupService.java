@@ -228,7 +228,6 @@ public class StateBackupService {
               header.get().getStateRoot(),
               Function.identity(),
               Function.identity());
-
       accountTrie.visitLeafs(this::visitAccount);
       backupStatus.currentAccount = null;
     }

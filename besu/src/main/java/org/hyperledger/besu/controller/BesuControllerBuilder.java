@@ -621,7 +621,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             worldStateHealerSupplier::get);
 
     if (maybeStoredGenesisBlockHash.isEmpty()) {
-      genesisState.writeStateTo(worldStateArchive.getMutable());
+      genesisState.writeStateTo(worldStateArchive.getWorldState());
     }
 
     transactionSimulator =

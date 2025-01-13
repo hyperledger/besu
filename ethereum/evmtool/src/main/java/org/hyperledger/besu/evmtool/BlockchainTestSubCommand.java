@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evmtool;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndNoUpdateNodeHead;
 import static org.hyperledger.besu.evmtool.BlockchainTestSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -168,7 +169,9 @@ public class BlockchainTestSubCommand implements Runnable {
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     final MutableWorldState worldState =
         spec.getWorldStateArchive()
-            .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
+            .getWorldState(
+                withStateRootAndBlockHashAndNoUpdateNodeHead(
+                    genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .orElseThrow();
 
     final ProtocolSchedule schedule =
