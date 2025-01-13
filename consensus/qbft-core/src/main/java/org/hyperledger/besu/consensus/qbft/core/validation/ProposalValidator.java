@@ -24,6 +24,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
@@ -32,7 +33,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collection;
@@ -152,7 +152,7 @@ public class ProposalValidator {
         // block that we get the SAME hash as PreparedCert.
         final BftBlockInterface bftBlockInterface =
             protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
-        final Block currentBlockWithOldRound =
+        final QbftBlock currentBlockWithOldRound =
             bftBlockInterface.replaceRoundInBlock(
                 proposal.getBlock(),
                 metadata.getPreparedRound(),

@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.qbft.core.network;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.ProposalMessageData;
@@ -31,7 +32,6 @@ import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.util.List;
@@ -70,7 +70,7 @@ public class QbftMessageTransmitter {
    */
   public void multicastProposal(
       final ConsensusRoundIdentifier roundIdentifier,
-      final Block block,
+      final QbftBlock block,
       final List<SignedData<RoundChangePayload>> roundChanges,
       final List<SignedData<PreparePayload>> prepares) {
     try {

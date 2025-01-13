@@ -18,11 +18,11 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.payload.ProposalPayload;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -80,7 +80,7 @@ public class ProposalPayloadValidator {
       return false;
     }
 
-    final Block block = payload.getProposedBlock();
+    final QbftBlock block = payload.getProposedBlock();
     if (!validateBlock(block)) {
       return false;
     }
@@ -93,7 +93,7 @@ public class ProposalPayloadValidator {
     return true;
   }
 
-  private boolean validateBlock(final Block block) {
+  private boolean validateBlock(final QbftBlock block) {
     checkState(blockValidator != null, "block validation not possible, no block validator.");
 
     final var validationResult =

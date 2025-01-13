@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.qbft.core.payload;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -31,7 +31,7 @@ public class ProposalPayload extends QbftPayload {
 
   private static final int TYPE = QbftV1.PROPOSAL;
   private final ConsensusRoundIdentifier roundIdentifier;
-  private final Block proposedBlock;
+  private final QbftBlock proposedBlock;
 
   /**
    * Instantiates a new Proposal payload.
@@ -40,7 +40,7 @@ public class ProposalPayload extends QbftPayload {
    * @param proposedBlock the proposed block
    */
   public ProposalPayload(
-      final ConsensusRoundIdentifier roundIdentifier, final Block proposedBlock) {
+      final ConsensusRoundIdentifier roundIdentifier, final QbftBlock proposedBlock) {
     this.roundIdentifier = roundIdentifier;
     this.proposedBlock = proposedBlock;
   }
@@ -56,8 +56,8 @@ public class ProposalPayload extends QbftPayload {
       final RLPInput rlpInput, final BftExtraDataCodec bftExtraDataCodec) {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = readConsensusRound(rlpInput);
-    final Block proposedBlock =
-        Block.readFrom(rlpInput, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
+    final QbftBlock proposedBlock =
+        QbftBlock.readFrom(rlpInput, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     rlpInput.leaveList();
 
     return new ProposalPayload(roundIdentifier, proposedBlock);
@@ -76,7 +76,7 @@ public class ProposalPayload extends QbftPayload {
    *
    * @return the proposed block
    */
-  public Block getProposedBlock() {
+  public QbftBlock getProposedBlock() {
     return proposedBlock;
   }
 

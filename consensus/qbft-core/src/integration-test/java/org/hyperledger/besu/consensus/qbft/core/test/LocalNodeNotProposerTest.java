@@ -18,13 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.qbft.core.support.IntegrationTestHelpers.createSignedCommitPayload;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
-import org.hyperledger.besu.ethereum.core.Block;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ public class LocalNodeNotProposerTest {
 
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
 
-  private final Block blockToPropose =
+  private final QbftBlock blockToPropose =
       context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
 
   private Prepare expectedTxPrepare;

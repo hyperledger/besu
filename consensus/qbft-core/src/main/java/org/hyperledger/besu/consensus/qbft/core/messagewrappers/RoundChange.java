@@ -18,10 +18,10 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -34,7 +34,7 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Round change payload message. */
 public class RoundChange extends BftMessage<RoundChangePayload> {
 
-  private final Optional<Block> proposedBlock;
+  private final Optional<QbftBlock> proposedBlock;
   private final List<SignedData<PreparePayload>> prepares;
 
   /**
@@ -46,7 +46,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
    */
   public RoundChange(
       final SignedData<RoundChangePayload> payload,
-      final Optional<Block> proposedBlock,
+      final Optional<QbftBlock> proposedBlock,
       final List<SignedData<PreparePayload>> prepares) {
     super(payload);
     this.proposedBlock = proposedBlock;
@@ -58,7 +58,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
    *
    * @return the proposed block
    */
-  public Optional<Block> getProposedBlock() {
+  public Optional<QbftBlock> getProposedBlock() {
     return proposedBlock;
   }
 
@@ -113,14 +113,15 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     rlpIn.enterList();
     final SignedData<RoundChangePayload> payload = readPayload(rlpIn, RoundChangePayload::readFrom);
 
-    final Optional<Block> block;
+    final Optional<QbftBlock> block;
     if (rlpIn.nextIsList() && rlpIn.nextSize() == 0) {
       rlpIn.skipNext();
       block = Optional.empty();
     } else {
       block =
           Optional.of(
-              Block.readFrom(rlpIn, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec)));
+              QbftBlock.readFrom(
+                  rlpIn, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec)));
     }
 
     final List<SignedData<PreparePayload>> prepares =

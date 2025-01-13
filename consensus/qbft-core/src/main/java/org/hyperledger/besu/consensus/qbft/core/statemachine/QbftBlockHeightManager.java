@@ -19,6 +19,7 @@ import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
@@ -155,11 +155,11 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     }
 
     final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
-    final Block block = qbftRound.createBlock(headerTimeStampSeconds);
-    final boolean blockHasTransactions = !block.getBody().getTransactions().isEmpty();
-    if (blockHasTransactions) {
+    final QbftBlock block = qbftRound.createBlock(headerTimeStampSeconds);
+    final boolean blockIsEmpty = block.isEmpty();
+    if (!blockIsEmpty) {
       LOG.trace(
-          "Block has transactions and this node is a proposer so it will send a proposal: "
+          "Block is not empty and this node is a proposer so it will send a proposal: "
               + roundIdentifier);
       qbftRound.updateStateWithProposalAndTransmit(block);
 

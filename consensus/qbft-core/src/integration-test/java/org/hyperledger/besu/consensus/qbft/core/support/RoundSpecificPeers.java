@@ -23,6 +23,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.ProposalMessageData;
@@ -34,7 +35,6 @@ import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.util.Arrays;
@@ -92,7 +92,7 @@ public class RoundSpecificPeers {
         .collect(Collectors.toList());
   }
 
-  public void commit(final ConsensusRoundIdentifier roundId, final Block block) {
+  public void commit(final ConsensusRoundIdentifier roundId, final QbftBlock block) {
     peers.forEach(peer -> peer.injectCommit(roundId, block));
   }
 

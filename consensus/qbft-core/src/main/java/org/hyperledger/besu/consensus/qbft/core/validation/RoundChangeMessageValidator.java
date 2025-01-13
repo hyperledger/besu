@@ -19,13 +19,13 @@ import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHel
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -94,7 +94,7 @@ public class RoundChangeMessageValidator {
     return msg.getPreparedRoundMetadata().isEmpty();
   }
 
-  private boolean validateBlock(final Block block) {
+  private boolean validateBlock(final QbftBlock block) {
 
     final BlockValidator blockValidator =
         protocolSchedule.getByBlockHeader(block.getHeader()).getBlockValidator();
@@ -115,7 +115,7 @@ public class RoundChangeMessageValidator {
   }
 
   private boolean validateWithBlock(final RoundChange msg) {
-    final Block block = msg.getProposedBlock().get();
+    final QbftBlock block = msg.getProposedBlock().get();
 
     if (!validateBlock(block)) {
       return false;

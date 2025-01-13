@@ -66,6 +66,7 @@ import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftBlockHeightManagerFactory;
@@ -86,7 +87,6 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -269,7 +269,7 @@ public class TestContextBuilder {
         throw new IllegalStateException(e);
       }
     } else {
-      final Block genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
+      final QbftBlock genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
       blockChain =
           createInMemoryBlockchain(
               genesisBlock, BftBlockHeaderFunctions.forOnchainBlock(BFT_EXTRA_DATA_ENCODER));
@@ -344,7 +344,7 @@ public class TestContextBuilder {
     return testContext;
   }
 
-  private static Block createGenesisBlock(final Set<Address> validators) {
+  private static QbftBlock createGenesisBlock(final Set<Address> validators) {
     final Address coinbase = Iterables.get(validators, 0);
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
     final BftExtraData extraData =
@@ -361,7 +361,7 @@ public class TestContextBuilder {
     headerTestFixture.coinbase(coinbase);
 
     final BlockHeader genesisHeader = headerTestFixture.buildHeader();
-    return new Block(
+    return new QbftBlock(
         genesisHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
   }
 

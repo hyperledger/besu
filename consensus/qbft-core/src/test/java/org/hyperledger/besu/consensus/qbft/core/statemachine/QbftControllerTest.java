@@ -35,6 +35,7 @@ import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
+import org.hyperledger.besu.consensus.qbft.core.BlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.ProposalMessageData;
@@ -48,7 +49,6 @@ import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 

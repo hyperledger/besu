@@ -23,10 +23,10 @@ import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 
@@ -96,33 +96,35 @@ public class TestContext {
     return messageFactory;
   }
 
-  public Block createBlockForProposalFromChainHead(final long timestamp) {
+  public QbftBlock createBlockForProposalFromChainHead(final long timestamp) {
     return createBlockForProposalFromChainHead(timestamp, finalState.getLocalAddress(), 0);
   }
 
-  public Block createBlockForProposalFromChainHead(final long timestamp, final int roundNumber) {
+  public QbftBlock createBlockForProposalFromChainHead(
+      final long timestamp, final int roundNumber) {
     return createBlockForProposalFromChainHead(
         timestamp, finalState.getLocalAddress(), roundNumber);
   }
 
-  public Block createBlockForProposalFromChainHead(final long timestamp, final Address proposer) {
+  public QbftBlock createBlockForProposalFromChainHead(
+      final long timestamp, final Address proposer) {
     // this implies that EVERY block will have this node as the proposer :/
     return createBlockForProposal(blockchain.getChainHeadHeader(), timestamp, proposer, 0);
   }
 
-  public Block createBlockForProposalFromChainHead(
+  public QbftBlock createBlockForProposalFromChainHead(
       final long timestamp, final Address proposer, final int roundNumber) {
     // this implies that EVERY block will have this node as the proposer :/
     return createBlockForProposal(
         blockchain.getChainHeadHeader(), timestamp, proposer, roundNumber);
   }
 
-  public Block createBlockForProposal(
+  public QbftBlock createBlockForProposal(
       final BlockHeader parent,
       final long timestamp,
       final Address proposer,
       final int roundNumber) {
-    final Block block =
+    final QbftBlock block =
         finalState
             .getBlockCreatorFactory()
             .create(roundNumber)
@@ -135,10 +137,10 @@ public class TestContext {
         .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();
 
-    return new Block(newHeader, block.getBody());
+    return new QbftBlock(newHeader, block.getBody());
   }
 
-  public Block createBlockForProposal(
+  public QbftBlock createBlockForProposal(
       final BlockHeader parent, final long timestamp, final Address proposer) {
     return createBlockForProposal(parent, timestamp, proposer, 0);
   }

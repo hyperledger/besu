@@ -32,6 +32,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.core.Block;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
@@ -43,7 +44,6 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 

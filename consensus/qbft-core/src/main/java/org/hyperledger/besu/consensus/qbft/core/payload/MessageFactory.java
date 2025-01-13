@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.qbft.core.payload;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collections;
 import java.util.List;
@@ -56,7 +56,7 @@ public class MessageFactory {
    */
   public Proposal createProposal(
       final ConsensusRoundIdentifier roundIdentifier,
-      final Block block,
+      final QbftBlock block,
       final List<SignedData<RoundChangePayload>> roundChanges,
       final List<SignedData<PreparePayload>> prepares) {
 
@@ -107,7 +107,7 @@ public class MessageFactory {
     final RoundChangePayload payload;
     if (preparedRoundData.isPresent()) {
 
-      final Block preparedBlock = preparedRoundData.get().getBlock();
+      final QbftBlock preparedBlock = preparedRoundData.get().getBlock();
       payload =
           new RoundChangePayload(
               roundIdentifier,

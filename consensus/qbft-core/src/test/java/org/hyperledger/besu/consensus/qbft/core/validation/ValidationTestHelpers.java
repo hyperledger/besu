@@ -16,11 +16,11 @@ package org.hyperledger.besu.consensus.qbft.core.validation;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.core.Block;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.List;
 import java.util.Optional;

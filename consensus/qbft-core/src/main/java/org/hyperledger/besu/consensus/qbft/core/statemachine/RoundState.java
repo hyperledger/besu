@@ -15,12 +15,12 @@
 package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator;
 import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -141,7 +141,7 @@ public class RoundState {
    *
    * @return the proposed block
    */
-  public Optional<Block> getProposedBlock() {
+  public Optional<QbftBlock> getProposedBlock() {
     return proposalMessage.map(p -> p.getSignedPayload().getPayload().getProposedBlock());
   }
 

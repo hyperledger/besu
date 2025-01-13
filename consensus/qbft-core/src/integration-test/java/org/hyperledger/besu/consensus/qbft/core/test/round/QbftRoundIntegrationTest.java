@@ -32,6 +32,7 @@ import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftRound;
@@ -46,7 +47,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -94,7 +94,7 @@ public class QbftRoundIntegrationTest {
   @Mock private StubValidatorMulticaster multicaster;
   @Mock private BlockHeader parentHeader;
 
-  private Block proposedBlock;
+  private QbftBlock proposedBlock;
 
   private final SECPSignature remoteCommitSeal =
       SignatureAlgorithmFactory.getInstance()
@@ -118,7 +118,7 @@ public class QbftRoundIntegrationTest {
     headerTestFixture.extraData(qbftExtraDataEncoder.encode(proposedExtraData));
     headerTestFixture.number(1);
     final BlockHeader header = headerTestFixture.buildHeader();
-    proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
+    proposedBlock = new QbftBlock(header, new BlockBody(emptyList(), emptyList()));
 
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);

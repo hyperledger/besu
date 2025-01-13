@@ -17,10 +17,10 @@ package org.hyperledger.besu.consensus.qbft.core.messagewrappers;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -74,7 +74,7 @@ public class Proposal extends BftMessage<ProposalPayload> {
    *
    * @return the block
    */
-  public Block getBlock() {
+  public QbftBlock getBlock() {
     return getPayload().getProposedBlock();
   }
 
