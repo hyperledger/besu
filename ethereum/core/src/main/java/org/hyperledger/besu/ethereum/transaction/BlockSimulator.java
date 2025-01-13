@@ -236,7 +236,7 @@ public class BlockSimulator {
   /**
    * Applies state overrides to the world state.
    *
-   * @param stateOverrideMap The stateOverrideMap containing the state overrides.
+   * @param stateOverrideMap The StateOverrideMap containing the state overrides.
    * @param ws The MutableWorldState to apply the overrides to.
    */
   @VisibleForTesting
