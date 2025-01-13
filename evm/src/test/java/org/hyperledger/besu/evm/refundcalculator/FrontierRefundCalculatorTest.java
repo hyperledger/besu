@@ -17,16 +17,17 @@ package org.hyperledger.besu.evm.refundcalculator;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.when;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -35,22 +36,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FrontierRefundCalculatorTest {
   private final FrontierRefundCalculator refundCalculator = new FrontierRefundCalculator();
-  @Mock private GasCalculator gasCalculator;
+  private final GasCalculator gasCalculator = new FrontierGasCalculator();
   @Mock private Transaction transaction;
   @Mock private MessageFrame messageFrame;
 
   @Test
   void shouldCalculateRefundWithNoSelfDestructs() {
     // Arrange
-    when(gasCalculator.getSelfDestructRefundAmount()).thenReturn(24000L);
-    when(gasCalculator.getMaxRefundQuotient()).thenReturn(5L);
     when(messageFrame.getSelfDestructs()).thenReturn(Collections.emptySet());
     when(messageFrame.getGasRefund()).thenReturn(1000L);
     when(messageFrame.getRemainingGas()).thenReturn(5000L);
     when(transaction.getGasLimit()).thenReturn(100000L);
 
     // Act
-    long refund = refundCalculator.calculateGasRefund(gasCalculator, transaction, messageFrame, 500L);
+    long refund =
+        refundCalculator.calculateGasRefund(gasCalculator, transaction, messageFrame, 500L);
 
     // Assert
     assertThat(refund)
@@ -64,33 +64,31 @@ class FrontierRefundCalculatorTest {
     selfDestructs.add(Address.wrap(Bytes.random(20)));
     selfDestructs.add(Address.wrap(Bytes.random(20)));
 
-    when(gasCalculator.getSelfDestructRefundAmount()).thenReturn(24000L);
-    when(gasCalculator.getMaxRefundQuotient()).thenReturn(5L);
     when(messageFrame.getSelfDestructs()).thenReturn(selfDestructs);
     when(messageFrame.getGasRefund()).thenReturn(1000L);
     when(messageFrame.getRemainingGas()).thenReturn(5000L);
     when(transaction.getGasLimit()).thenReturn(100000L);
 
     // Act
-    long refund = refundCalculator.calculateGasRefund(gasCalculator, transaction, messageFrame, 500L);
+    long refund =
+        refundCalculator.calculateGasRefund(gasCalculator, transaction, messageFrame, 500L);
 
     // Assert
     assertThat(refund)
-        .isEqualTo(24000L); // 5000 (remaining) + min(49500 (total refund), 19000 (max allowance))
+        .isEqualTo(52500L); // 5000 (remaining) + min(47500 (total refund), 49500 (max allowance))
   }
 
   @Test
   void shouldRespectMaxRefundAllowance() {
     // Arrange
-    when(gasCalculator.getSelfDestructRefundAmount()).thenReturn(24000L);
-    when(gasCalculator.getMaxRefundQuotient()).thenReturn(2L);
     when(messageFrame.getSelfDestructs()).thenReturn(Collections.emptySet());
     when(messageFrame.getGasRefund()).thenReturn(100000L);
     when(messageFrame.getRemainingGas()).thenReturn(20000L);
     when(transaction.getGasLimit()).thenReturn(100000L);
 
     // Act
-    long refund = refundCalculator.calculateGasRefund(gasCalculator, transaction, messageFrame, 1000L);
+    long refund =
+        refundCalculator.calculateGasRefund(gasCalculator, transaction, messageFrame, 1000L);
 
     // Assert
     assertThat(refund)
@@ -100,8 +98,6 @@ class FrontierRefundCalculatorTest {
   @Test
   void shouldHandleZeroValuesCorrectly() {
     // Arrange
-    when(gasCalculator.getSelfDestructRefundAmount()).thenReturn(0L);
-    when(gasCalculator.getMaxRefundQuotient()).thenReturn(5L);
     when(messageFrame.getSelfDestructs()).thenReturn(Collections.emptySet());
     when(messageFrame.getGasRefund()).thenReturn(0L);
     when(messageFrame.getRemainingGas()).thenReturn(0L);
