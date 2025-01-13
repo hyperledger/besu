@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.datatypes.AccountOverrideMap;
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -69,7 +69,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
    * @param blockNumber the block number
    * @param transactions the transactions to include in the block
    * @param blockOverrides the blockSimulationOverride of the block
-   * @param accountOverrides state overrides of the block
+   * @param stateOverrides state overrides of the block
    * @return the block context
    */
   @Override
@@ -77,8 +77,8 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
       final long blockNumber,
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides,
-      final AccountOverrideMap accountOverrides) {
-    return processSimulation(blockNumber, transactions, blockOverrides, accountOverrides, false);
+      final StateOverrideMap stateOverrides) {
+    return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, false);
   }
 
   /**
@@ -88,7 +88,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
    * @param blockNumber the block number
    * @param transactions the transactions to include in the block
    * @param blockOverrides block overrides for the block
-   * @param accountOverrides state overrides of the block
+   * @param stateOverrides state overrides of the block
    * @return the PluginBlockSimulationResult
    */
   @Unstable
@@ -97,21 +97,21 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
       final long blockNumber,
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides,
-      final AccountOverrideMap accountOverrides) {
-    return processSimulation(blockNumber, transactions, blockOverrides, accountOverrides, true);
+      final StateOverrideMap stateOverrides) {
+    return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, true);
   }
 
   private PluginBlockSimulationResult processSimulation(
       final long blockNumber,
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides,
-      final AccountOverrideMap accountOverrides,
+      final StateOverrideMap stateOverrides,
       final boolean persistWorldState) {
     BlockHeader header = getBlockHeader(blockNumber);
     List<CallParameter> callParameters =
         transactions.stream().map(CallParameter::fromTransaction).toList();
     BlockStateCall blockStateCall =
-        new BlockStateCall(callParameters, blockOverrides, accountOverrides, true);
+        new BlockStateCall(callParameters, blockOverrides, stateOverrides, true);
     try (final MutableWorldState ws = getWorldState(header, persistWorldState)) {
       List<BlockSimulationResult> results =
           blockSimulator.process(header, List.of(blockStateCall), ws);

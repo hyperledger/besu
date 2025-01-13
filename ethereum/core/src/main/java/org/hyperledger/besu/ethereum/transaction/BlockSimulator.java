@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
-import org.hyperledger.besu.datatypes.AccountOverride;
-import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateOverride;
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -141,7 +141,7 @@ public class BlockSimulator {
 
     // Apply block header overrides and state overrides
     BlockHeader blockHeader = applyBlockHeaderOverrides(header, newProtocolSpec, blockOverrides);
-    blockStateCall.getAccountOverrides().ifPresent(overrides -> applyStateOverrides(overrides, ws));
+    blockStateCall.getStateOverrideMap().ifPresent(overrides -> applyStateOverrides(overrides, ws));
 
     // Override the mining beneficiary calculator if a fee recipient is specified, otherwise use the
     // default
@@ -236,15 +236,15 @@ public class BlockSimulator {
   /**
    * Applies state overrides to the world state.
    *
-   * @param accountOverrideMap The AccountOverrideMap containing the state overrides.
+   * @param stateOverrideMap The StateOverrideMap containing the state overrides.
    * @param ws The MutableWorldState to apply the overrides to.
    */
   @VisibleForTesting
   protected void applyStateOverrides(
-      final AccountOverrideMap accountOverrideMap, final MutableWorldState ws) {
+      final StateOverrideMap stateOverrideMap, final MutableWorldState ws) {
     var updater = ws.updater();
-    for (Address accountToOverride : accountOverrideMap.keySet()) {
-      final AccountOverride override = accountOverrideMap.get(accountToOverride);
+    for (Address accountToOverride : stateOverrideMap.keySet()) {
+      final StateOverride override = stateOverrideMap.get(accountToOverride);
       MutableAccount account = updater.getOrCreate(accountToOverride);
       override.getNonce().ifPresent(account::setNonce);
       if (override.getBalance().isPresent()) {
