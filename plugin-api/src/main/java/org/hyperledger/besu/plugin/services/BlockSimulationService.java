@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services;
 
-import org.hyperledger.besu.datatypes.AccountOverrideMap;
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
@@ -31,14 +31,14 @@ public interface BlockSimulationService extends BesuService {
    * @param blockNumber the block number
    * @param transactions the transactions to include in the block
    * @param blockOverrides the blockSimulationOverride of the block
-   * @param accountOverrides state overrides of the block
+   * @param stateOverrides state overrides of the block
    * @return the block context
    */
   PluginBlockSimulationResult simulate(
       long blockNumber,
       List<? extends Transaction> transactions,
       BlockOverrides blockOverrides,
-      AccountOverrideMap accountOverrides);
+      StateOverrideMap stateOverrides);
 
   /**
    * This method is experimental and should be used with caution. Simulate the processing of a block
@@ -47,7 +47,7 @@ public interface BlockSimulationService extends BesuService {
    * @param blockNumber the block number
    * @param transactions the transactions to include in the block
    * @param blockOverrides block overrides for the block
-   * @param accountOverrides state overrides of the block
+   * @param stateOverrides state overrides of the block
    * @return the PluginBlockSimulationResult
    */
   @Unstable
@@ -55,5 +55,5 @@ public interface BlockSimulationService extends BesuService {
       long blockNumber,
       List<? extends Transaction> transactions,
       BlockOverrides blockOverrides,
-      AccountOverrideMap accountOverrides);
+      StateOverrideMap stateOverrides);
 }
