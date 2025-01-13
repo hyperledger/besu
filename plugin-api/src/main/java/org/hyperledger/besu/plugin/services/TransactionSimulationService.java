@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services;
 
-import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.Unstable;
@@ -32,7 +32,7 @@ public interface TransactionSimulationService extends BesuService {
    * pending block, with optional state overrides that can be applied before the simulation.
    *
    * @param transaction tx
-   * @param accountOverrides state overrides to apply to this simulation
+   * @param stateOverrides state overrides to apply to this simulation
    * @param maybeBlockHash optional hash of the block, empty to simulate on pending block
    * @param operationTracer the tracer
    * @param isAllowExceedingBalance should ignore the sender balance during the simulation?
@@ -40,7 +40,7 @@ public interface TransactionSimulationService extends BesuService {
    */
   Optional<TransactionSimulationResult> simulate(
       Transaction transaction,
-      Optional<AccountOverrideMap> accountOverrides,
+      Optional<StateOverrideMap> stateOverrides,
       Optional<Hash> maybeBlockHash,
       OperationTracer operationTracer,
       boolean isAllowExceedingBalance);
@@ -93,7 +93,7 @@ public interface TransactionSimulationService extends BesuService {
    * overrides that can be applied before the simulation.
    *
    * @param transaction tx
-   * @param accountOverrides state overrides to apply to this simulation
+   * @param stateOverrides state overrides to apply to this simulation
    * @param blockHash the hash of the block
    * @param operationTracer the tracer
    * @param isAllowExceedingBalance should ignore the sender balance during the simulation?
@@ -103,13 +103,13 @@ public interface TransactionSimulationService extends BesuService {
   @Deprecated(since = "24.12", forRemoval = true)
   default Optional<TransactionSimulationResult> simulate(
       final Transaction transaction,
-      final Optional<AccountOverrideMap> accountOverrides,
+      final Optional<StateOverrideMap> stateOverrides,
       final Hash blockHash,
       final OperationTracer operationTracer,
       final boolean isAllowExceedingBalance) {
     return simulate(
         transaction,
-        accountOverrides,
+        stateOverrides,
         Optional.of(blockHash),
         operationTracer,
         isAllowExceedingBalance);

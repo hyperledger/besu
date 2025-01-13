@@ -17,6 +17,7 @@ package org.hyperledger.besu.services;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -152,16 +153,13 @@ public class TraceServiceImpl implements TraceService {
             .toList();
     Tracer.processTracing(
         blockchainQueries,
-        blocks.get(0).getHash(),
+        blocks.getFirst().getHash(),
         traceableState -> {
           final WorldUpdater worldStateUpdater = traceableState.updater();
           final ChainUpdater chainUpdater = new ChainUpdater(traceableState, worldStateUpdater);
           beforeTracing.accept(worldStateUpdater);
           final List<TransactionProcessingResult> results = new ArrayList<>();
-          blocks.forEach(
-              block -> {
-                results.addAll(trace(blockchain, block, chainUpdater, tracer));
-              });
+          blocks.forEach(block -> results.addAll(trace(blockchain, block, chainUpdater, tracer)));
           afterTracing.accept(chainUpdater.getNextUpdater());
           return Optional.of(results);
         });
@@ -191,7 +189,9 @@ public class TraceServiceImpl implements TraceService {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
     final BlockHeader header = block.getHeader();
-    tracer.traceStartBlock(block.getHeader(), block.getBody());
+    final Address miningBeneficiary =
+        protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(block.getHeader());
+    tracer.traceStartBlock(block.getHeader(), block.getBody(), miningBeneficiary);
 
     block
         .getBody()

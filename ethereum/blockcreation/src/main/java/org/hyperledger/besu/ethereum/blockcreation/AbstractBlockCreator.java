@@ -222,7 +222,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final BlockAwareOperationTracer operationTracer =
           pluginTransactionSelector.getOperationTracer();
 
-      operationTracer.traceStartBlock(processableBlockHeader);
+      operationTracer.traceStartBlock(processableBlockHeader, miningBeneficiary);
       timings.register("preTxsSelection");
       final TransactionSelectionResults transactionResults =
           selectTransactions(
