@@ -30,8 +30,19 @@ public class WorldStateStorageConfig {
     return new WorldStateStorageConfig.Builder();
   }
 
+  public static WorldStateStorageConfig.Builder newBuilder(
+      final WorldStateStorageConfig worldStateStorageConfig) {
+    return new WorldStateStorageConfig.Builder(worldStateStorageConfig);
+  }
+
   public static class Builder {
     private boolean isFrozen = false;
+
+    public Builder() {}
+
+    public Builder(final WorldStateStorageConfig spec) {
+      this.isFrozen = spec.isFrozen();
+    }
 
     public Builder setFrozen(final boolean isFrozen) {
       this.isFrozen = isFrozen;

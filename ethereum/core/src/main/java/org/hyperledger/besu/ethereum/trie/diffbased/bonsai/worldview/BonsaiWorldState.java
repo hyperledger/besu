@@ -446,7 +446,8 @@ public class BonsaiWorldState extends DiffBasedWorldState {
 
   @Override
   public MutableWorldState freeze() {
-    this.worldStateStorageSpec = WorldStateStorageConfig.newBuilder().setFrozen(true).build();
+    this.worldStateStorageSpec =
+        WorldStateStorageConfig.newBuilder(worldStateStorageSpec).setFrozen(true).build();
     this.worldStateKeyValueStorage = new BonsaiWorldStateLayerStorage(getWorldStateStorage());
     return this;
   }

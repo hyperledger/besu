@@ -91,14 +91,14 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     this.cachedWorldStorageManager = cachedWorldStorageManager;
   }
 
-  protected void loadHeadWorldState(final DiffBasedWorldState persistedState) {
-    this.headWorldState = persistedState;
+  protected void loadHeadWorldState(final DiffBasedWorldState headWorldState) {
+    this.headWorldState = headWorldState;
     blockchain
-        .getBlockHeader(persistedState.getWorldStateBlockHash())
+        .getBlockHeader(headWorldState.getWorldStateBlockHash())
         .ifPresent(
             blockHeader ->
                 this.cachedWorldStorageManager.addCachedLayer(
-                    blockHeader, persistedState.getWorldStateRootHash(), persistedState));
+                    blockHeader, headWorldState.getWorldStateRootHash(), headWorldState));
   }
 
   @Override
