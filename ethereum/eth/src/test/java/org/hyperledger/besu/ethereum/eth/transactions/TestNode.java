@@ -134,7 +134,7 @@ public class TestNode implements Closeable {
     final MutableBlockchain blockchain =
         createInMemoryBlockchain(genesisState.getBlock(), blockHeaderFunctions);
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-    genesisState.writeStateTo(worldStateArchive.getMutable());
+    genesisState.writeStateTo(worldStateArchive.getWorldState());
     final ProtocolContext protocolContext =
         new ProtocolContext(
             blockchain, worldStateArchive, mock(ConsensusContext.class), new BadBlockManager());

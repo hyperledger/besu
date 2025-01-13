@@ -379,7 +379,7 @@ public class SnapServerGetAccountRangeTest {
 
   @SuppressWarnings("UnusedVariable")
   private void initAccounts() {
-    rootHash = protocolContext.getWorldStateArchive().getMutable().rootHash();
+    rootHash = protocolContext.getWorldStateArchive().getWorldState().rootHash();
     GetAccountRangeMessage requestMessage =
         GetAccountRangeMessage.create(rootHash, Hash.ZERO, Hash.LAST, BigInteger.valueOf(4000));
     AccountRangeMessage resultMessage =
