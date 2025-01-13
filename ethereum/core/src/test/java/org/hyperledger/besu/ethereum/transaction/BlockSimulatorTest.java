@@ -25,10 +25,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.AccountOverride;
-import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateOverride;
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -167,26 +167,25 @@ public class BlockSimulatorTest {
 
   @Test
   public void shouldApplyStateOverridesCorrectly() {
-    AccountOverrideMap accountOverrideMap = mock(AccountOverrideMap.class);
+    StateOverrideMap stateOverrideMap = mock(StateOverrideMap.class);
     Address address = mock(Address.class);
-    AccountOverride accountOverride = mock(AccountOverride.class);
+    StateOverride stateOverride = mock(StateOverride.class);
     MutableAccount mutableAccount = mock(MutableAccount.class);
 
-    when(accountOverrideMap.keySet()).thenReturn(Set.of(address));
-    when(accountOverrideMap.get(address)).thenReturn(accountOverride);
+    when(stateOverrideMap.keySet()).thenReturn(Set.of(address));
+    when(stateOverrideMap.get(address)).thenReturn(stateOverride);
 
     WorldUpdater worldUpdater = mock(WorldUpdater.class);
     when(mutableWorldState.updater()).thenReturn(worldUpdater);
 
     when(worldUpdater.getOrCreate(address)).thenReturn(mutableAccount);
 
-    when(accountOverride.getNonce()).thenReturn(Optional.of(123L));
-    when(accountOverride.getBalance()).thenReturn(Optional.of(Wei.of(456L)));
-    when(accountOverride.getCode()).thenReturn(Optional.of(""));
-    when(accountOverride.getStateDiff())
-        .thenReturn(Optional.of(new HashMap<>(Map.of("0x0", "0x1"))));
+    when(stateOverride.getNonce()).thenReturn(Optional.of(123L));
+    when(stateOverride.getBalance()).thenReturn(Optional.of(Wei.of(456L)));
+    when(stateOverride.getCode()).thenReturn(Optional.of(""));
+    when(stateOverride.getStateDiff()).thenReturn(Optional.of(new HashMap<>(Map.of("0x0", "0x1"))));
 
-    blockSimulator.applyStateOverrides(accountOverrideMap, mutableWorldState);
+    blockSimulator.applyStateOverrides(stateOverrideMap, mutableWorldState);
 
     verify(mutableAccount).setNonce(anyLong());
     verify(mutableAccount).setBalance(any(Wei.class));
