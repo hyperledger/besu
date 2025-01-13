@@ -71,6 +71,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.refundcalculator.FrontierRefundCalculator;
+import org.hyperledger.besu.evm.refundcalculator.PragueRefundCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -849,6 +850,7 @@ public abstract class MainnetProtocolSpecs {
             metricsSystem)
         .feeMarket(pragueFeeMarket)
         .gasCalculator(pragueGasCalcSupplier)
+        .refundCalculator(PragueRefundCalculator::new)
         // EIP-7840 Blob schedule | EIP-7691 6/9 blob increase
         .gasLimitCalculatorBuilder(
             feeMarket ->
