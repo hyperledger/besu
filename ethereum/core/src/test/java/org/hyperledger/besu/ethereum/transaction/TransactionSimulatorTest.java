@@ -28,10 +28,10 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.AccountOverride;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateOverride;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -116,8 +116,8 @@ public class TransactionSimulatorTest {
   public void testOverrides_whenNoOverrides_noUpdates() {
     MutableAccount mutableAccount = mock(MutableAccount.class);
     when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM); // called from logging
-    AccountOverride.Builder builder = new AccountOverride.Builder();
-    AccountOverride override = builder.build();
+    StateOverride.Builder builder = new StateOverride.Builder();
+    StateOverride override = builder.build();
     transactionSimulator.applyOverrides(mutableAccount, override);
     verify(mutableAccount).getAddress();
     verifyNoMoreInteractions(mutableAccount);
@@ -127,8 +127,8 @@ public class TransactionSimulatorTest {
   public void testOverrides_whenBalanceOverrides_balanceIsUpdated() {
     MutableAccount mutableAccount = mock(MutableAccount.class);
     when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM);
-    AccountOverride.Builder builder = new AccountOverride.Builder().withBalance(Wei.of(99));
-    AccountOverride override = builder.build();
+    StateOverride.Builder builder = new StateOverride.Builder().withBalance(Wei.of(99));
+    StateOverride override = builder.build();
     transactionSimulator.applyOverrides(mutableAccount, override);
     verify(mutableAccount).setBalance(eq(Wei.of(99)));
   }
@@ -139,9 +139,9 @@ public class TransactionSimulatorTest {
     when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM);
     final String storageKey = "0x01a2";
     final String storageValue = "0x00ff";
-    AccountOverride.Builder builder =
-        new AccountOverride.Builder().withStateDiff(Map.of(storageKey, storageValue));
-    AccountOverride override = builder.build();
+    StateOverride.Builder builder =
+        new StateOverride.Builder().withStateDiff(Map.of(storageKey, storageValue));
+    StateOverride override = builder.build();
     transactionSimulator.applyOverrides(mutableAccount, override);
     verify(mutableAccount)
         .setStorageValue(

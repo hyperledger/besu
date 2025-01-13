@@ -28,16 +28,16 @@ import org.slf4j.LoggerFactory;
 
 /** Account Override parameter class */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonDeserialize(builder = AccountOverride.Builder.class)
-public class AccountOverride {
-  private static final Logger LOG = LoggerFactory.getLogger(AccountOverride.class);
+@JsonDeserialize(builder = StateOverride.Builder.class)
+public class StateOverride {
+  private static final Logger LOG = LoggerFactory.getLogger(StateOverride.class);
 
   private final Optional<Wei> balance;
   private final Optional<Long> nonce;
   private final Optional<String> code;
   private final Optional<Map<String, String>> stateDiff;
 
-  private AccountOverride(
+  private StateOverride(
       final Optional<Wei> balance,
       final Optional<Long> nonce,
       final Optional<String> code,
@@ -144,8 +144,8 @@ public class AccountOverride {
      *
      * @return account override
      */
-    public AccountOverride build() {
-      return new AccountOverride(balance, nonce, code, stateDiff);
+    public StateOverride build() {
+      return new StateOverride(balance, nonce, code, stateDiff);
     }
   }
 
@@ -172,11 +172,11 @@ public class AccountOverride {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final AccountOverride accountOverride = (AccountOverride) o;
-    return balance.equals(accountOverride.balance)
-        && nonce.equals(accountOverride.nonce)
-        && code.equals(accountOverride.code)
-        && stateDiff.equals(accountOverride.stateDiff);
+    final StateOverride stateOverride = (StateOverride) o;
+    return balance.equals(stateOverride.balance)
+        && nonce.equals(stateOverride.nonce)
+        && code.equals(stateOverride.code)
+        && stateDiff.equals(stateOverride.stateDiff);
   }
 
   @Override
@@ -186,7 +186,7 @@ public class AccountOverride {
 
   @Override
   public String toString() {
-    return "AccountOverride{"
+    return "StateOverride{"
         + "balance="
         + balance
         + ", nonce="
