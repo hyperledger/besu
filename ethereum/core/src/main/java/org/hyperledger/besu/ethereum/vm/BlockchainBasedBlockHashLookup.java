@@ -35,16 +35,12 @@ import java.util.Map;
  * all transactions within that block.
  */
 public class BlockchainBasedBlockHashLookup implements BlockHashLookup {
-  private static final int MAX_RELATIVE_BLOCK = 256;
-
-  private final long currentBlockNumber;
   private ProcessableBlockHeader searchStartHeader;
   private final Blockchain blockchain;
   private final Map<Long, Hash> hashByNumber = new HashMap<>();
 
   public BlockchainBasedBlockHashLookup(
       final ProcessableBlockHeader currentBlock, final Blockchain blockchain) {
-    this.currentBlockNumber = currentBlock.getNumber();
     this.searchStartHeader = currentBlock;
     this.blockchain = blockchain;
     hashByNumber.put(currentBlock.getNumber() - 1, currentBlock.getParentHash());
@@ -52,14 +48,6 @@ public class BlockchainBasedBlockHashLookup implements BlockHashLookup {
 
   @Override
   public Hash apply(final MessageFrame frame, final Long blockNumber) {
-    // If the current block is the genesis block or the sought block is
-    // not within the last 256 completed blocks, zero is returned.
-    if (currentBlockNumber == 0
-        || blockNumber >= currentBlockNumber
-        || blockNumber < (currentBlockNumber - MAX_RELATIVE_BLOCK)) {
-      return ZERO;
-    }
-
     final Hash cachedHash = hashByNumber.get(blockNumber);
     if (cachedHash != null) {
       return cachedHash;
