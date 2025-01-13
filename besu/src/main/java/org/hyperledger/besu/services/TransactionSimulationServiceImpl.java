@@ -54,7 +54,7 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
   @Override
   public Optional<TransactionSimulationResult> simulate(
       final Transaction transaction,
-      final Optional<StateOverrideMap> stateOverrides,
+      final Optional<StateOverrideMap> maybeStateOverrides,
       final Optional<Hash> maybeBlockHash,
       final OperationTracer operationTracer,
       final boolean isAllowExceedingBalance) {
@@ -89,7 +89,7 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
     return transactionSimulator
         .processOnPending(
             callParameter,
-            stateOverrides,
+            maybeStateOverrides,
             isAllowExceedingBalance
                 ? TransactionValidationParams.transactionSimulatorAllowExceedingBalance()
                 : TransactionValidationParams.transactionSimulator(),
