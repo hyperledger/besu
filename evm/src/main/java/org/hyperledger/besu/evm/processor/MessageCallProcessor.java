@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 public class MessageCallProcessor extends AbstractMessageProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(MessageCallProcessor.class);
 
-  private final PrecompileContractRegistry precompiles;
+  protected final PrecompileContractRegistry precompiles;
 
   /**
    * Instantiates a new Message call processor.

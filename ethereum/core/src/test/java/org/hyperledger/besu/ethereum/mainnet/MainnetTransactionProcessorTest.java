@@ -34,7 +34,8 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
+import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
@@ -67,8 +68,8 @@ class MainnetTransactionProcessorTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private TransactionValidatorFactory transactionValidatorFactory;
 
-  @Mock private AbstractMessageProcessor contractCreationProcessor;
-  @Mock private AbstractMessageProcessor messageCallProcessor;
+  @Mock private ContractCreationProcessor contractCreationProcessor;
+  @Mock private MessageCallProcessor messageCallProcessor;
 
   @Mock private WorldUpdater worldState;
   @Mock private ProcessableBlockHeader blockHeader;

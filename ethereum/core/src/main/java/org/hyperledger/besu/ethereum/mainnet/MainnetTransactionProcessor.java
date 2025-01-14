@@ -41,6 +41,8 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
+import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -70,7 +72,7 @@ public class MainnetTransactionProcessor {
 
   private final AbstractMessageProcessor contractCreationProcessor;
 
-  private final AbstractMessageProcessor messageCallProcessor;
+  private final MessageCallProcessor messageCallProcessor;
 
   private final int maxStackSize;
 
@@ -86,8 +88,8 @@ public class MainnetTransactionProcessor {
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
       final TransactionValidatorFactory transactionValidatorFactory,
-      final AbstractMessageProcessor contractCreationProcessor,
-      final AbstractMessageProcessor messageCallProcessor,
+      final ContractCreationProcessor contractCreationProcessor,
+      final MessageCallProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final boolean warmCoinbase,
       final int maxStackSize,
@@ -109,8 +111,8 @@ public class MainnetTransactionProcessor {
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
       final TransactionValidatorFactory transactionValidatorFactory,
-      final AbstractMessageProcessor contractCreationProcessor,
-      final AbstractMessageProcessor messageCallProcessor,
+      final ContractCreationProcessor contractCreationProcessor,
+      final MessageCallProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final boolean warmCoinbase,
       final int maxStackSize,
@@ -635,6 +637,10 @@ public class MainnetTransactionProcessor {
     };
   }
 
+  public MessageCallProcessor getMessageCallProcessor() {
+    return messageCallProcessor;
+  }
+
   protected long refunded(
       final Transaction transaction, final long gasRemaining, final long gasRefund) {
     // Integer truncation takes care of the floor calculation needed after the divide.
@@ -652,5 +658,106 @@ public class MainnetTransactionProcessor {
     }
 
     return builder.toString();
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  private MainnetTransactionProcessor(Builder builder) {
+    this.gasCalculator = builder.gasCalculator;
+    this.transactionValidatorFactory = builder.transactionValidatorFactory;
+    this.contractCreationProcessor = builder.contractCreationProcessor;
+    this.messageCallProcessor = builder.messageCallProcessor;
+    this.clearEmptyAccounts = builder.clearEmptyAccounts;
+    this.warmCoinbase = builder.warmCoinbase;
+    this.maxStackSize = builder.maxStackSize;
+    this.feeMarket = builder.feeMarket;
+    this.coinbaseFeePriceCalculator = builder.coinbaseFeePriceCalculator;
+    this.maybeCodeDelegationProcessor = Optional.ofNullable(builder.maybeCodeDelegationProcessor);
+  }
+
+  public static class Builder {
+    private GasCalculator gasCalculator;
+    private TransactionValidatorFactory transactionValidatorFactory;
+    private AbstractMessageProcessor contractCreationProcessor;
+    private MessageCallProcessor messageCallProcessor;
+    private boolean clearEmptyAccounts;
+    private boolean warmCoinbase;
+    private int maxStackSize;
+    private FeeMarket feeMarket;
+    private CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
+    private CodeDelegationProcessor maybeCodeDelegationProcessor;
+
+    public Builder gasCalculator(GasCalculator gasCalculator) {
+      this.gasCalculator = gasCalculator;
+      return this;
+    }
+
+    public Builder transactionValidatorFactory(
+        TransactionValidatorFactory transactionValidatorFactory) {
+      this.transactionValidatorFactory = transactionValidatorFactory;
+      return this;
+    }
+
+    public Builder contractCreationProcessor(AbstractMessageProcessor contractCreationProcessor) {
+      this.contractCreationProcessor = contractCreationProcessor;
+      return this;
+    }
+
+    public Builder messageCallProcessor(MessageCallProcessor messageCallProcessor) {
+      this.messageCallProcessor = messageCallProcessor;
+      return this;
+    }
+
+    public Builder clearEmptyAccounts(boolean clearEmptyAccounts) {
+      this.clearEmptyAccounts = clearEmptyAccounts;
+      return this;
+    }
+
+    public Builder warmCoinbase(boolean warmCoinbase) {
+      this.warmCoinbase = warmCoinbase;
+      return this;
+    }
+
+    public Builder maxStackSize(int maxStackSize) {
+      this.maxStackSize = maxStackSize;
+      return this;
+    }
+
+    public Builder feeMarket(FeeMarket feeMarket) {
+      this.feeMarket = feeMarket;
+      return this;
+    }
+
+    public Builder coinbaseFeePriceCalculator(
+        CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
+      this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
+      return this;
+    }
+
+    public Builder maybeCodeDelegationProcessor(
+        CodeDelegationProcessor maybeCodeDelegationProcessor) {
+      this.maybeCodeDelegationProcessor = maybeCodeDelegationProcessor;
+      return this;
+    }
+
+    public Builder populateFrom(MainnetTransactionProcessor processor) {
+      this.gasCalculator = processor.gasCalculator;
+      this.transactionValidatorFactory = processor.transactionValidatorFactory;
+      this.contractCreationProcessor = processor.contractCreationProcessor;
+      this.messageCallProcessor = processor.messageCallProcessor;
+      this.clearEmptyAccounts = processor.clearEmptyAccounts;
+      this.warmCoinbase = processor.warmCoinbase;
+      this.maxStackSize = processor.maxStackSize;
+      this.feeMarket = processor.feeMarket;
+      this.coinbaseFeePriceCalculator = processor.coinbaseFeePriceCalculator;
+      this.maybeCodeDelegationProcessor = processor.maybeCodeDelegationProcessor.orElse(null);
+      return this;
+    }
+
+    public MainnetTransactionProcessor build() {
+      return new MainnetTransactionProcessor(this);
+    }
   }
 }
