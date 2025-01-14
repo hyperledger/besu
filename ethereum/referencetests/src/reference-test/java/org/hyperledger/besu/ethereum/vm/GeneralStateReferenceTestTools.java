@@ -244,7 +244,7 @@ public class GeneralStateReferenceTestTools {
                   .map(
                       e ->
                           Map.entry(
-                              e.getKey().orElse(UInt256.ZERO),
+                              e.getKey().orElse(UInt256.fromBytes(Bytes.EMPTY)),
                               account.getStorageValue(UInt256.fromBytes(e.getKey().get()))))
                   .sorted(Map.Entry.comparingByKey())
                   .forEach(e -> storageJson.put(e.getKey().toQuantityHexString(), e.getValue().toQuantityHexString()));
@@ -252,7 +252,7 @@ public class GeneralStateReferenceTestTools {
               if (!storageEntries.isEmpty()) {
                 accountJson.set("storage", storageJson);
               }
-              worldStateJson.set(account.getAddress().orElse(Address.ZERO).toHexString(), accountJson);
+              worldStateJson.set(account.getAddress().orElse(Address.wrap(Bytes.EMPTY)).toHexString(), accountJson);
             });
     LOG.error("Calculated world state: \n{}", worldStateJson.toPrettyString());
   }
