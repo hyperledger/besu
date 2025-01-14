@@ -22,14 +22,15 @@ import java.util.Objects;
 import java.util.TreeMap;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 @JsonPropertyOrder({"pc", "op", "gas", "gasCost", "depth", "stack", "memory", "storage"})
 public class StructLog {
 
+  private static final char[] hexChars = "0123456789abcdef".toCharArray();
   private final int depth;
   private final long gas;
   private final long gasCost;
@@ -39,7 +40,6 @@ public class StructLog {
   private final String[] stack;
   private final Object storage;
   private final String reason;
-  static final String bytes32ZeroString = Bytes32.ZERO.toUnprefixedHexString();
 
   public StructLog(final TraceFrame traceFrame) {
     depth = traceFrame.getDepth() + 1;
@@ -48,7 +48,9 @@ public class StructLog {
     memory =
         traceFrame
             .getMemory()
-            .map(a -> Arrays.stream(a).map(Bytes::toUnprefixedHexString).toArray(String[]::new))
+            .map(
+                a ->
+                    Arrays.stream(a).map(bytes -> toCompactHex(bytes, true)).toArray(String[]::new))
             .orElse(null);
     op = traceFrame.getOpcode();
     pc = traceFrame.getPc();
@@ -57,28 +59,17 @@ public class StructLog {
             .getStack()
             .map(
                 a ->
-                    Arrays.stream(a)
-                        .map(Bytes::toUnprefixedHexString)
-                        .map(this::stringLeftPadTo64)
-                        .toArray(String[]::new))
+                    Arrays.stream(a).map(bytes -> toCompactHex(bytes, true)).toArray(String[]::new))
             .orElse(null);
 
     storage = traceFrame.getStorage().map(StructLog::formatStorage).orElse(null);
-    reason = traceFrame.getRevertReason().map(Bytes::toShortHexString).orElse(null);
-  }
-
-  private String stringLeftPadTo64(final String unPaddedHexString) {
-    StringBuilder sb = new StringBuilder(64);
-    sb.append(bytes32ZeroString, 0, 64 - unPaddedHexString.length());
-    sb.append(unPaddedHexString);
-    return sb.toString();
+    reason = traceFrame.getRevertReason().map(bytes -> toCompactHex(bytes, true)).orElse(null);
   }
 
   private static Map<String, String> formatStorage(final Map<UInt256, UInt256> storage) {
     final Map<String, String> formattedStorage = new TreeMap<>();
     storage.forEach(
-        (key, value) ->
-            formattedStorage.put(key.toUnprefixedHexString(), value.toUnprefixedHexString()));
+        (key, value) -> formattedStorage.put(toCompactHex(key, false), toCompactHex(value, false)));
     return formattedStorage;
   }
 
@@ -98,6 +89,7 @@ public class StructLog {
   }
 
   @JsonGetter("memory")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   public String[] memory() {
     return memory;
   }
@@ -113,16 +105,19 @@ public class StructLog {
   }
 
   @JsonGetter("stack")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   public String[] stack() {
     return stack;
   }
 
   @JsonGetter("storage")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   public Object storage() {
     return storage;
   }
 
   @JsonGetter("reason")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   public String reason() {
     return reason;
   }
@@ -152,5 +147,40 @@ public class StructLog {
     result = 31 * result + Arrays.hashCode(memory);
     result = 31 * result + Arrays.hashCode(stack);
     return result;
+  }
+
+  public static String toCompactHex(final Bytes abytes, final boolean prefix) {
+    if (abytes.isEmpty()) {
+      if (prefix) return "0x0";
+      else return "0";
+    }
+
+    byte[] bytes = abytes.toArrayUnsafe();
+    final int size = bytes.length;
+    final StringBuilder result = new StringBuilder(prefix ? (size * 2) + 2 : size * 2);
+
+    if (prefix) {
+      result.append("0x");
+    }
+
+    boolean leadingZero = true;
+
+    for (int i = 0; i < size; i++) {
+      byte b = bytes[i];
+
+      int highNibble = (b >> 4) & 0xF;
+      if (!leadingZero || highNibble != 0) {
+        result.append(hexChars[highNibble]);
+        leadingZero = false;
+      }
+
+      int lowNibble = b & 0xF;
+      if (!leadingZero || lowNibble != 0 || i == size - 1) {
+        result.append(hexChars[lowNibble]);
+        leadingZero = false;
+      }
+    }
+
+    return result.toString();
   }
 }

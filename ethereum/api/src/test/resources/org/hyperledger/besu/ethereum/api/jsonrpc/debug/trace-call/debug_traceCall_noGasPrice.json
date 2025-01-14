@@ -20,22 +20,16 @@
     "jsonrpc": "2.0",
     "id": 1,
     "result": {
-      "gas": 21164,
-      "failed": false,
-      "returnValue": "",
-      "structLogs": [
-        {
-          "pc": 0,
-          "op": "STOP",
-          "gas": 17592186023252,
-          "gasCost": 0,
-          "depth": 1,
-          "stack": null,
-          "memory": null,
-          "storage": null,
-          "reason": null
-        }
-      ]
+      "gas" : 21164,
+      "failed" : false,
+      "returnValue" : "",
+      "structLogs" : [ {
+        "pc" : 0,
+        "op" : "STOP",
+        "gas" : 17592186023252,
+        "gasCost" : 0,
+        "depth" : 1
+      } ]
     }
   },
   "statusCode": 200

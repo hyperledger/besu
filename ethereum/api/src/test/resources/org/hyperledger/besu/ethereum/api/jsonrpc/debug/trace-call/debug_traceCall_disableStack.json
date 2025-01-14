@@ -28,271 +28,177 @@
         "op" : "PUSH1",
         "gas" : 16755910,
         "gasCost" : 3,
-        "depth" : 1,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 1
       }, {
         "pc" : 2,
         "op" : "PUSH1",
         "gas" : 16755907,
         "gasCost" : 3,
-        "depth" : 1,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 1
       }, {
         "pc" : 4,
         "op" : "PUSH1",
         "gas" : 16755904,
         "gasCost" : 3,
-        "depth" : 1,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 1
       }, {
         "pc" : 6,
         "op" : "CALLDATASIZE",
         "gas" : 16755901,
         "gasCost" : 2,
-        "depth" : 1,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 1
       }, {
         "pc" : 7,
         "op" : "SUB",
         "gas" : 16755899,
         "gasCost" : 3,
-        "depth" : 1,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 1
       }, {
         "pc" : 8,
         "op" : "DUP1",
         "gas" : 16755896,
         "gasCost" : 3,
-        "depth" : 1,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 1
       }, {
         "pc" : 9,
         "op" : "PUSH1",
         "gas" : 16755893,
         "gasCost" : 3,
-        "depth" : 1,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 1
       }, {
         "pc" : 11,
         "op" : "PUSH1",
         "gas" : 16755890,
         "gasCost" : 3,
-        "depth" : 1,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 1
       }, {
         "pc" : 13,
         "op" : "CALLDATACOPY",
         "gas" : 16755887,
         "gasCost" : 9,
         "depth" : 1,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000001" ]
       }, {
         "pc" : 14,
         "op" : "PUSH1",
         "gas" : 16755878,
         "gasCost" : 3,
         "depth" : 1,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000001" ]
       }, {
         "pc" : 16,
         "op" : "CALLVALUE",
         "gas" : 16755875,
         "gasCost" : 2,
         "depth" : 1,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000001" ]
       }, {
         "pc" : 17,
         "op" : "PUSH1",
         "gas" : 16755873,
         "gasCost" : 3,
         "depth" : 1,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000001" ]
       }, {
         "pc" : 19,
         "op" : "CALLDATALOAD",
         "gas" : 16755870,
         "gasCost" : 3,
         "depth" : 1,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000001" ]
       }, {
         "pc" : 20,
         "op" : "GAS",
         "gas" : 16755867,
         "gasCost" : 2,
         "depth" : 1,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000001" ]
       }, {
         "pc" : 21,
         "op" : "CALLCODE",
         "gas" : 16755865,
         "gasCost" : 16494066,
         "depth" : 1,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000001" ]
       }, {
         "pc" : 0,
         "op" : "PUSH1",
         "gas" : 16493366,
         "gasCost" : 3,
-        "depth" : 2,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 2
       }, {
         "pc" : 2,
         "op" : "CALLDATALOAD",
         "gas" : 16493363,
         "gasCost" : 3,
-        "depth" : 2,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 2
       }, {
         "pc" : 3,
         "op" : "PUSH1",
         "gas" : 16493360,
         "gasCost" : 3,
-        "depth" : 2,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 2
       }, {
         "pc" : 5,
         "op" : "ADD",
         "gas" : 16493357,
         "gasCost" : 3,
-        "depth" : 2,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 2
       }, {
         "pc" : 6,
         "op" : "PUSH1",
         "gas" : 16493354,
         "gasCost" : 3,
-        "depth" : 2,
-        "stack" : null,
-        "memory" : [ ],
-        "storage" : { },
-        "reason" : null
+        "depth" : 2
       }, {
         "pc" : 8,
         "op" : "MSTORE",
         "gas" : 16493351,
         "gasCost" : 6,
         "depth" : 2,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000002" ]
       }, {
         "pc" : 9,
         "op" : "PUSH1",
         "gas" : 16493345,
         "gasCost" : 3,
         "depth" : 2,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000002" ]
       }, {
         "pc" : 11,
         "op" : "PUSH1",
         "gas" : 16493342,
         "gasCost" : 3,
         "depth" : 2,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000002" ]
       }, {
         "pc" : 13,
         "op" : "RETURN",
         "gas" : 16493339,
         "gasCost" : 0,
         "depth" : 2,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000002" ]
       }, {
         "pc" : 22,
         "op" : "PUSH1",
         "gas" : 16755138,
         "gasCost" : 3,
         "depth" : 1,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000002" ]
       }, {
         "pc" : 24,
         "op" : "PUSH1",
         "gas" : 16755135,
         "gasCost" : 3,
         "depth" : 1,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000002" ]
       }, {
         "pc" : 26,
         "op" : "RETURN",
         "gas" : 16755132,
         "gasCost" : 0,
         "depth" : 1,
-        "stack" : null,
-        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
-        "storage" : { },
-        "reason" : null
+        "memory" : [ "0xf000000000000000000000000000000000000000000000000000000000000002" ]
       } ]
     }
   },
