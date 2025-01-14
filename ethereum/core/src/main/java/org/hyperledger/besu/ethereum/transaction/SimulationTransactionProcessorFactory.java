@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.evm.processor.ModifiablePrecompilesMessageCallProcessor;
+import org.hyperledger.besu.evm.processor.OverriddenPrecompilesMessageCallProcessor;
 
 import java.util.Map;
 import java.util.Optional;
@@ -53,12 +53,13 @@ public class SimulationTransactionProcessorFactory {
         protocolSchedule.getByBlockHeader(processableHeader).getTransactionProcessor();
 
     return maybeStateOverrides
-        .flatMap(this::extractAddressOverrides)
-        .map(overrides -> createProcessorWithOverrides(baseProcessor, overrides))
+        .flatMap(this::extractPrecompileAddressOverrides)
+        .map(
+            precompileOverrides -> createProcessorWithOverrides(baseProcessor, precompileOverrides))
         .orElse(baseProcessor);
   }
 
-  private Optional<Map<Address, Address>> extractAddressOverrides(
+  private Optional<Map<Address, Address>> extractPrecompileAddressOverrides(
       final StateOverrideMap stateOverrides) {
     Map<Address, Address> addressOverrides =
         stateOverrides.entrySet().stream()
@@ -73,12 +74,12 @@ public class SimulationTransactionProcessorFactory {
 
   private MainnetTransactionProcessor createProcessorWithOverrides(
       final MainnetTransactionProcessor baseProcessor,
-      final Map<Address, Address> addressOverrides) {
+      final Map<Address, Address> precompileAddressOverrides) {
     return MainnetTransactionProcessor.builder()
         .populateFrom(baseProcessor)
         .messageCallProcessor(
-            new ModifiablePrecompilesMessageCallProcessor(
-                baseProcessor.getMessageCallProcessor(), addressOverrides))
+            new OverriddenPrecompilesMessageCallProcessor(
+                baseProcessor.getMessageCallProcessor(), precompileAddressOverrides))
         .build();
   }
 }

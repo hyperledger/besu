@@ -23,7 +23,7 @@ import java.util.Map;
  * A message call processor designed specifically for simulation purposes that allows for overriding
  * precompile addresses.
  */
-public class ModifiablePrecompilesMessageCallProcessor extends MessageCallProcessor {
+public class OverriddenPrecompilesMessageCallProcessor extends MessageCallProcessor {
 
   /**
    * Instantiates a new Modifiable precompiles message call processor for simulation.
@@ -31,12 +31,12 @@ public class ModifiablePrecompilesMessageCallProcessor extends MessageCallProces
    * @param originalProcessor the original processor
    * @param precompileOverrides the address overrides
    */
-  public ModifiablePrecompilesMessageCallProcessor(
+  public OverriddenPrecompilesMessageCallProcessor(
       final MessageCallProcessor originalProcessor,
       final Map<Address, Address> precompileOverrides) {
     super(
         originalProcessor.evm,
-        createRegistryWithOverrides(originalProcessor.precompiles, precompileOverrides));
+        createRegistryWithPrecompileOverrides(originalProcessor.precompiles, precompileOverrides));
   }
 
   /**
@@ -46,7 +46,7 @@ public class ModifiablePrecompilesMessageCallProcessor extends MessageCallProces
    * @param precompileOverrides the address overrides
    * @return a new PrecompileContractRegistry with the overrides applied
    */
-  private static PrecompileContractRegistry createRegistryWithOverrides(
+  private static PrecompileContractRegistry createRegistryWithPrecompileOverrides(
       final PrecompileContractRegistry originalRegistry,
       final Map<Address, Address> precompileOverrides) {
     PrecompileContractRegistry newRegistry = new PrecompileContractRegistry();

@@ -174,6 +174,11 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
     }
   }
 
+  /**
+   * Gets the precompile addresses.
+   *
+   * @return the precompile addresses
+   */
   @VisibleForTesting
   public Set<Address> getPrecompileAddresses() {
     return precompiles.getPrecompileAddresses();
