@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,5 +172,10 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
       frame.setState(result.getState());
       frame.setExceptionalHaltReason(result.getHaltReason());
     }
+  }
+
+  @VisibleForTesting
+  public PrecompileContractRegistry getPrecompiles() {
+    return precompiles;
   }
 }
