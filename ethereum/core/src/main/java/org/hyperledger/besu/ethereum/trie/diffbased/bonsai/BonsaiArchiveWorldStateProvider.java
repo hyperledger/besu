@@ -25,9 +25,10 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.ServiceManager;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -42,15 +43,17 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
-      final BesuContext pluginContext,
-      final EvmConfiguration evmConfiguration) {
+      final ServiceManager pluginContext,
+      final EvmConfiguration evmConfiguration,
+      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
     super(
         worldStateKeyValueStorage,
         blockchain,
         maxLayersToLoad,
         bonsaiCachedMerkleTrieLoader,
         pluginContext,
-        evmConfiguration);
+        evmConfiguration,
+        worldStateHealerSupplier);
   }
 
   @VisibleForTesting
@@ -60,14 +63,16 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
     super(
         bonsaiCachedWorldStorageManager,
         trieLogManager,
         worldStateKeyValueStorage,
         blockchain,
         bonsaiCachedMerkleTrieLoader,
-        evmConfiguration);
+        evmConfiguration,
+        worldStateHealerSupplier);
   }
 
   @Override
