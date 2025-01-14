@@ -105,8 +105,10 @@ public class GeneralStateReferenceTestTools {
     // EOF tests are written against an older version of the spec
     params.ignore("/stEOF/");
 
-    // Prague tests are ignored until the gas repricings is implemented in the reference tests
-    params.ignore("Prague.*");
+    // TODO: remove once updated EIP-2537 gas cost artifacts exist
+    params.ignore("/eip2537_bls_12_381_precompiles/");
+    params.ignore("/stEIP2537/");
+
   }
 
   private GeneralStateReferenceTestTools() {

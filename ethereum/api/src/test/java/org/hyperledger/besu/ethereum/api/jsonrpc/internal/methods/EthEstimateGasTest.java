@@ -21,9 +21,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.AccountOverride;
-import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.StateOverride;
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -104,19 +104,19 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void noAccountOverrides() {
+  public void noStateOverrides() {
     final Wei gasPrice = Wei.of(1000);
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(defaultLegacyTransactionCallParameter(gasPrice), "latest");
-    Optional<AccountOverrideMap> overrideMap = method.getAddressAccountOverrideMap(request);
+    Optional<StateOverrideMap> overrideMap = method.getAddressStateOverrideMap(request);
     assertThat(overrideMap.isPresent()).isFalse();
   }
 
   @Test
-  public void someAccountOverrides() {
-    AccountOverrideMap expectedOverrides = new AccountOverrideMap();
-    AccountOverride override =
-        new AccountOverride.Builder().withNonce(new UnsignedLongParameter("0x9e")).build();
+  public void someStateOverrides() {
+    StateOverrideMap expectedOverrides = new StateOverrideMap();
+    StateOverride override =
+        new StateOverride.Builder().withNonce(new UnsignedLongParameter("0x9e")).build();
     final Address address = Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3");
     expectedOverrides.put(address, override);
 
@@ -125,9 +125,9 @@ public class EthEstimateGasTest {
         ethEstimateGasRequestWithStateOverrides(
             defaultLegacyTransactionCallParameter(gasPrice), "latest", expectedOverrides);
 
-    Optional<AccountOverrideMap> maybeOverrideMap = method.getAddressAccountOverrideMap(request);
+    Optional<StateOverrideMap> maybeOverrideMap = method.getAddressStateOverrideMap(request);
     assertThat(maybeOverrideMap.isPresent()).isTrue();
-    AccountOverrideMap overrideMap = maybeOverrideMap.get();
+    StateOverrideMap overrideMap = maybeOverrideMap.get();
     assertThat(overrideMap.keySet()).hasSize(1);
     assertThat(overrideMap.values()).hasSize(1);
 
@@ -630,7 +630,7 @@ public class EthEstimateGasTest {
   private JsonRpcRequestContext ethEstimateGasRequestWithStateOverrides(
       final CallParameter callParameter,
       final String blockParam,
-      final AccountOverrideMap overrides) {
+      final StateOverrideMap overrides) {
     return new JsonRpcRequestContext(
         new JsonRpcRequest(
             "2.0", "eth_estimateGas", new Object[] {callParameter, blockParam, overrides}));
