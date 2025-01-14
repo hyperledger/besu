@@ -140,6 +140,11 @@ public class FrontierGasCalculator implements GasCalculator {
     return clampedAdd(TX_BASE_COST, dynamicIntrinsicGasCost);
   }
 
+  @Override
+  public long transactionFloorCost(final Bytes payload) {
+    return 0;
+  }
+
   /**
    * Calculates the dynamic part of the intrinsic gas cost
    *

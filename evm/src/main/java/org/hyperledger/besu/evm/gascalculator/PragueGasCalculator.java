@@ -77,12 +77,16 @@ public class PragueGasCalculator extends CancunGasCalculator {
   @Override
   public long transactionIntrinsicGasCost(
       final Bytes payload, final boolean isContractCreation, final long baselineGas) {
-    final long dynamicIntrinsicGasCost =
-        dynamicIntrinsicGasCost(payload, isContractCreation, baselineGas);
-    final long totalCostFloor =
-        tokensInCallData(payload.size(), zeroBytes(payload)) * TOTAL_COST_FLOOR_PER_TOKEN;
+    return clampedAdd(
+        TX_BASE_COST, dynamicIntrinsicGasCost(payload, isContractCreation, baselineGas));
+  }
 
-    return clampedAdd(TX_BASE_COST, Math.max(dynamicIntrinsicGasCost, totalCostFloor));
+  @Override
+  public long transactionFloorCost(final Bytes transactionPayload) {
+    return clampedAdd(
+        TX_BASE_COST,
+        tokensInCallData(transactionPayload.size(), zeroBytes(transactionPayload))
+            * TOTAL_COST_FLOOR_PER_TOKEN);
   }
 
   private long tokensInCallData(final long payloadSize, final long zeroBytes) {

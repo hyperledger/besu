@@ -32,22 +32,35 @@ public class FrontierRefundCalculator implements RefundCalculator {
       final Transaction transaction,
       final MessageFrame initialFrame,
       final long codeDelegationRefund) {
+
+    final long refundAllowance =
+        calculateRefundAllowance(gasCalculator, transaction, initialFrame, codeDelegationRefund);
+
+    return initialFrame.getRemainingGas() + refundAllowance;
+  }
+
+  /**
+   * Calculate the refund allowance for a transaction.
+   *
+   * @param gasCalculator the gas calculator
+   * @param transaction the transaction
+   * @param initialFrame the initial frame
+   * @param codeDelegationRefund the code delegation refund
+   * @return the refund allowance
+   */
+  protected long calculateRefundAllowance(
+      final GasCalculator gasCalculator,
+      final Transaction transaction,
+      final MessageFrame initialFrame,
+      final long codeDelegationRefund) {
     final long selfDestructRefund =
         gasCalculator.getSelfDestructRefundAmount() * initialFrame.getSelfDestructs().size();
     final long baseRefundGas =
         initialFrame.getGasRefund() + selfDestructRefund + codeDelegationRefund;
-    return refunded(gasCalculator, transaction, initialFrame.getRemainingGas(), baseRefundGas);
-  }
-
-  private long refunded(
-      final GasCalculator gasCalculator,
-      final Transaction transaction,
-      final long gasRemaining,
-      final long gasRefund) {
     // Integer truncation takes care of the floor calculation needed after the divide.
     final long maxRefundAllowance =
-        (transaction.getGasLimit() - gasRemaining) / gasCalculator.getMaxRefundQuotient();
-    final long refundAllowance = Math.min(maxRefundAllowance, gasRefund);
-    return gasRemaining + refundAllowance;
+        (transaction.getGasLimit() - initialFrame.getRemainingGas())
+            / gasCalculator.getMaxRefundQuotient();
+    return Math.min(maxRefundAllowance, baseRefundGas);
   }
 }

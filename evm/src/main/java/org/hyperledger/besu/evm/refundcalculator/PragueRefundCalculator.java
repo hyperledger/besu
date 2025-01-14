@@ -27,12 +27,18 @@ public class PragueRefundCalculator extends FrontierRefundCalculator implements 
   }
 
   @Override
-  // TODO: Implement the calculateGasRefund method for Prague, this is a simple placeholder
   public long calculateGasRefund(
       final GasCalculator gasCalculator,
       final Transaction transaction,
       final MessageFrame initialFrame,
       final long codeDelegationRefund) {
-    return super.calculateGasRefund(gasCalculator, transaction, initialFrame, codeDelegationRefund);
+    final long refundAllowance =
+        calculateRefundAllowance(gasCalculator, transaction, initialFrame, codeDelegationRefund);
+
+    final long executionGasUsed =
+        transaction.getGasLimit() - initialFrame.getRemainingGas() - refundAllowance;
+    final long transactionFloorCost = gasCalculator.transactionFloorCost(transaction.getPayload());
+    final long totalGasUsed = Math.max(executionGasUsed, transactionFloorCost);
+    return transaction.getGasLimit() - totalGasUsed;
   }
 }
