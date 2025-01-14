@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -51,6 +51,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.math.BigInteger;
 import java.nio.file.Path;
@@ -97,12 +98,13 @@ public class JsonRpcTestMethodsFactory {
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
+    final var miningConfiguration = MiningConfiguration.newDefault();
     this.blockchainQueries =
-        new BlockchainQueries(
-            protocolSchedule, blockchain, stateArchive, MiningConfiguration.newDefault());
+        new BlockchainQueries(protocolSchedule, blockchain, stateArchive, miningConfiguration);
 
     this.transactionSimulator =
-        new TransactionSimulator(blockchain, stateArchive, protocolSchedule, 0L);
+        new TransactionSimulator(
+            blockchain, stateArchive, protocolSchedule, miningConfiguration, 0L);
   }
 
   public JsonRpcTestMethodsFactory(
@@ -115,15 +117,14 @@ public class JsonRpcTestMethodsFactory {
     this.stateArchive = stateArchive;
     this.context = context;
     this.protocolSchedule = importer.getProtocolSchedule();
+    final var miningConfiguration = MiningConfiguration.newDefault();
     this.blockchainQueries =
         new BlockchainQueries(
-            importer.getProtocolSchedule(),
-            blockchain,
-            stateArchive,
-            MiningConfiguration.newDefault());
+            importer.getProtocolSchedule(), blockchain, stateArchive, miningConfiguration);
     this.synchronizer = mock(Synchronizer.class);
     this.transactionSimulator =
-        new TransactionSimulator(blockchain, stateArchive, protocolSchedule, 0L);
+        new TransactionSimulator(
+            blockchain, stateArchive, protocolSchedule, miningConfiguration, 0L);
   }
 
   public JsonRpcTestMethodsFactory(
@@ -138,14 +139,13 @@ public class JsonRpcTestMethodsFactory {
     this.context = context;
     this.synchronizer = synchronizer;
     this.protocolSchedule = importer.getProtocolSchedule();
+    final var miningConfiguration = MiningConfiguration.newDefault();
     this.blockchainQueries =
         new BlockchainQueries(
-            importer.getProtocolSchedule(),
-            blockchain,
-            stateArchive,
-            MiningConfiguration.newDefault());
+            importer.getProtocolSchedule(), blockchain, stateArchive, miningConfiguration);
     this.transactionSimulator =
-        new TransactionSimulator(blockchain, stateArchive, protocolSchedule, 0L);
+        new TransactionSimulator(
+            blockchain, stateArchive, protocolSchedule, miningConfiguration, 0L);
   }
 
   public BlockchainQueries getBlockchainQueries() {
@@ -229,6 +229,7 @@ public class JsonRpcTestMethodsFactory {
             Vertx.vertx(new VertxOptions().setWorkerPoolSize(1)),
             ImmutableApiConfiguration.builder().build(),
             Optional.empty(),
-            transactionSimulator);
+            transactionSimulator,
+            new DeterministicEthScheduler());
   }
 }

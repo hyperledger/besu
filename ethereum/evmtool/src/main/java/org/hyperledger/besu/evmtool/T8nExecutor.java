@@ -52,8 +52,9 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.BlockchainBasedBlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -353,9 +354,7 @@ public class T8nExecutor {
     long blobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
 
     if (!referenceTestEnv.isStateTest()) {
-      protocolSpec
-          .getBlockHashProcessor()
-          .processBlockHashes(blockchain, worldState, referenceTestEnv);
+      protocolSpec.getBlockHashProcessor().processBlockHashes(worldState, referenceTestEnv);
     }
 
     final WorldUpdater rootWorldStateUpdater = worldState.updater();
@@ -389,13 +388,23 @@ public class T8nExecutor {
         tracer = tracerManager.getManagedTracer(transactionIndex, transaction.getHash());
         tracer.tracePrepareTransaction(worldStateUpdater, transaction);
         tracer.traceStartTransaction(worldStateUpdater, transaction);
+        BlockHashLookup blockHashLookup =
+            protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader);
+        if (blockHashLookup instanceof BlockchainBasedBlockHashLookup) {
+          // basically t8n test cases for blockhash are broken and one cannot create a blockchain
+          // from them so need to
+          // add in a manual BlockHashLookup
+          blockHashLookup =
+              (__, blockNumber) ->
+                  referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO);
+        }
         result =
             processor.processTransaction(
                 worldStateUpdater,
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                number -> referenceTestEnv.getBlockhashByNumber(number).orElse(Hash.ZERO),
+                blockHashLookup,
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,
@@ -528,7 +537,7 @@ public class T8nExecutor {
               worldState,
               protocolSpec,
               receipts,
-              new CachingBlockHashLookup(blockHeader, blockchain),
+              protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader),
               OperationTracer.NO_TRACING);
       Optional<List<Request>> maybeRequests = Optional.of(rpc.process(context));
       Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));

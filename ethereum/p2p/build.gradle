@@ -46,9 +46,6 @@ dependencies {
 
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-crypto'
-  implementation('io.tmio:tuweni-devp2p') {
-    exclude group:'ch.qos.logback', module:'logback-classic'
-  }
   implementation 'io.tmio:tuweni-io'
   implementation 'io.tmio:tuweni-rlp'
   implementation 'io.tmio:tuweni-units'

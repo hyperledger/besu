@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -104,6 +105,7 @@ public class PivotBlockRetrieverTest {
                 protocolSchedule,
                 ethProtocolManager.ethContext(),
                 metricsSystem,
+                SynchronizerConfiguration.builder().build(),
                 PIVOT_BLOCK_NUMBER,
                 peersToQuery,
                 pivotBlockDelta,
@@ -162,6 +164,7 @@ public class PivotBlockRetrieverTest {
     // Add new peer that we can query
     final RespondingEthPeer respondingPeerB =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     respondingPeerB.respond(responder);
 
     // We need one more responsive peer before we're done
@@ -172,6 +175,7 @@ public class PivotBlockRetrieverTest {
     // Add new peer that we can query
     final RespondingEthPeer respondingPeerC =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     respondingPeerC.respond(responder);
     assertThat(badPeerA.hasOutstandingRequests()).isFalse();
     assertThat(badPeerB.hasOutstandingRequests()).isFalse();
@@ -213,11 +217,9 @@ public class PivotBlockRetrieverTest {
     final RespondingEthPeer respondingPeerB =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000, peerValidator);
     respondingPeerB.getEthPeer().markValidated(peerValidator);
-    // When our new peer "connects", it is not yet valid, so we need to expire our retry timeout
-    // so that the peer will get re-processed
-    EthProtocolManagerTestUtil.expirePendingTimeouts(ethProtocolManager);
+    // add another peer to ensure we get past the waitForPeer call
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000, peerValidator);
 
-    assertThat(respondingPeerB.hasOutstandingRequests()).isTrue();
     respondingPeerB.respond(responder);
 
     // We need one more responsive peer before we're done
@@ -229,9 +231,9 @@ public class PivotBlockRetrieverTest {
     final RespondingEthPeer respondingPeerC =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000, peerValidator);
     respondingPeerC.getEthPeer().markValidated(peerValidator);
-    EthProtocolManagerTestUtil.expirePendingTimeouts(ethProtocolManager);
+    // add another peer to ensure we get past the waitForPeer call
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000, peerValidator);
 
-    assertThat(respondingPeerC.hasOutstandingRequests()).isTrue();
     respondingPeerC.respond(responder);
     assertThat(badPeerA.hasOutstandingRequests()).isFalse();
     assertThat(badPeerB.hasOutstandingRequests()).isFalse();

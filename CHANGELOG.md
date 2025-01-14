@@ -1,6 +1,52 @@
 # Changelog
 
-## [Unreleased]
+## Unreleased
+
+### Breaking Changes
+- `--host-whitelist` has been deprecated since 2020 and this option is removed. Use the equivalent `--host-allowlist` instead. 
+- Changed tracer API to include the mining beneficiary in BlockAwareOperationTracer::traceStartBlock [#8096](https://github.com/hyperledger/besu/pull/8096)
+- Change the input defaults on debug_trace* calls to not trace memory by default ("disableMemory": true, "disableStack": false,  "disableStorage": false)
+- Change the output format of debug_trace* and trace_* calls to match Geth behaviour
+
+### Upcoming Breaking Changes
+- `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
+- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release. Use docker or none instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Tessera privacy
+  - Smart-contract-based (onchain) permissioning
+  - Proof of Work consensus
+  - Fast Sync
+
+### Additions and Improvements
+- Add RPC HTTP options to specify custom truststore and its password [#7978](https://github.com/hyperledger/besu/pull/7978)
+- Retrieve all transaction receipts for a block in one request [#6646](https://github.com/hyperledger/besu/pull/6646)
+- Implement EIP-7840: Add blob schedule to config files [#8042](https://github.com/hyperledger/besu/pull/8042)
+- Allow gasPrice (legacy) and 1559 gasPrice params to be specified simultaneously for `eth_call`, `eth_createAccessList`, and `eth_estimateGas` [#8059](https://github.com/hyperledger/besu/pull/8059)
+- Improve debug_traceBlock calls performance and reduce output size [#8076](https://github.com/hyperledger/besu/pull/8076)
+- Add support for EIP-7702 transaction in the txpool [#8018](https://github.com/hyperledger/besu/pull/8018) [#7984](https://github.com/hyperledger/besu/pull/7984)
+
+### Bug fixes
+- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
+- Revise the approach for setting level_compaction_dynamic_level_bytes RocksDB configuration option [#8037](https://github.com/hyperledger/besu/pull/8037)
+- Fix possible incomplete txpool restore from dump file [#7991](https://github.com/hyperledger/besu/pull/7991)
+
+## 24.12.2 Hotfix
+
+This is an optional hotfix to address serialization of state overrides parameter when `movePrecompileToAddress` is present. 
+
+There is no need to upgrade from 24.12.0 (or 24.12.1) to this release if you are not yet using this functionality.
+
+### Bug fixes
+- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
+
+## 24.12.1 Hotfix
+
+This is a hotfix to address publishing besu maven artifacts.  There are no issues with 24.12.0 other than incomplete artifact publishing, and there is no functional difference between 24.12.0 and 24.12.1 release binaries.
+
+### Bug fixes
+- Fix BOM pom publication to Artifactory [#8201](https://github.com/hyperledger/besu/pull/8021)
+
+## 24.12.0
 
 ### Breaking Changes
 - Removed Retesteth rpc service and commands [#7833](https://github.com/hyperledger/besu/pull/7783)
@@ -47,12 +93,14 @@
 - Prometheus Java Metrics library upgraded to version 1.3.3 [#7880](https://github.com/hyperledger/besu/pull/7880)
 - Add histogram to Prometheus metrics system [#7944](https://github.com/hyperledger/besu/pull/7944)
 - Improve newPayload and FCU logs [#7961](https://github.com/hyperledger/besu/pull/7961)
-
+- Proper support for `pending` block tag when calling `eth_estimateGas` and `eth_createAccessList` [#7951](https://github.com/hyperledger/besu/pull/7951)
 
 ### Bug fixes
 - Fix registering new metric categories from plugins [#7825](https://github.com/hyperledger/besu/pull/7825)
 - Fix CVE-2024-47535 [7878](https://github.com/hyperledger/besu/pull/7878)
 - Fix QBFT prepared block based proposal validation [#7875](https://github.com/hyperledger/besu/pull/7875)
+- Correct default parameters for frontier transactions in `eth_call` and `eth_estimateGas` [#7965](https://github.com/hyperledger/besu/pull/7965)
+- Correctly parse nonce as hex in `eth_call` account overrides [#7999](https://github.com/hyperledger/besu/pull/7999)
 
 ## 24.10.0
 
