@@ -69,10 +69,7 @@ public class SimulationTransactionProcessorFactoryTest {
     MainnetTransactionProcessor simulationTransactionProcessor =
         factory.getTransactionProcessor(null, Optional.empty());
     Set<Address> precompileAddresses =
-        simulationTransactionProcessor
-            .getMessageCallProcessor()
-            .getPrecompiles()
-            .getPrecompileAddresses();
+        simulationTransactionProcessor.getMessageCallProcessor().getPrecompileAddresses();
 
     assertThat(precompileAddresses).containsExactlyInAnyOrder(originalPrecompileAddress);
   }
@@ -87,10 +84,7 @@ public class SimulationTransactionProcessorFactoryTest {
     MainnetTransactionProcessor simulationTransactionProcessor =
         factory.getTransactionProcessor(null, Optional.of(stateOverrideMap));
     Set<Address> precompileAddresses =
-        simulationTransactionProcessor
-            .getMessageCallProcessor()
-            .getPrecompiles()
-            .getPrecompileAddresses();
+        simulationTransactionProcessor.getMessageCallProcessor().getPrecompileAddresses();
 
     assertThat(precompileAddresses).containsExactlyInAnyOrder(newPrecompileAddress);
   }

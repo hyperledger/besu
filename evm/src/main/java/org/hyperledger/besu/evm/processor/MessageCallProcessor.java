@@ -175,7 +175,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
   }
 
   @VisibleForTesting
-  public PrecompileContractRegistry getPrecompiles() {
-    return precompiles;
+  public Set<Address> getPrecompileAddresses() {
+    return precompiles.getPrecompileAddresses();
   }
 }
