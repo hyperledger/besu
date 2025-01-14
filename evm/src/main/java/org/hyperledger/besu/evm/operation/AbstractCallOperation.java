@@ -228,10 +228,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Bytes inputData = frame.readMutableMemory(inputDataOffset(frame), inputDataLength(frame));
 
-    final Code code =
-        contract == null
-            ? CodeV0.EMPTY_CODE
-            : evm.getCode(contract.getDelegatedCodeHash().get(), contract.getDelegatedCode().get());
+    final Code code = getCode(evm, contract);
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
@@ -346,5 +343,24 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     } else {
       return LEGACY_FAILURE_STACK_ITEM;
     }
+  }
+
+  /**
+   * Gets the code from the contract or EOA with delegated code.
+   *
+   * @param evm the evm
+   * @param account the account which needs to be retrieved
+   * @return the code
+   */
+  protected static Code getCode(final EVM evm, final Account account) {
+    if (account == null) {
+      return CodeV0.EMPTY_CODE;
+    }
+
+    if (account.hasDelegatedCode()) {
+      return evm.getCode(account.getDelegatedCodeHash().get(), account.getDelegatedCode().get());
+    }
+
+    return evm.getCode(account.getCodeHash(), account.getCode());
   }
 }

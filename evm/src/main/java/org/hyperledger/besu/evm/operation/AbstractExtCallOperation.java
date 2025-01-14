@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -164,10 +163,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     currentGas -= cost;
     frame.expandMemory(inputOffset, inputLength);
 
-    final Code code =
-        contract == null
-            ? CodeV0.EMPTY_CODE
-            : evm.getCode(contract.getDelegatedCodeHash().get(), contract.getDelegatedCode().get());
+    final Code code = getCode(evm, contract);
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
