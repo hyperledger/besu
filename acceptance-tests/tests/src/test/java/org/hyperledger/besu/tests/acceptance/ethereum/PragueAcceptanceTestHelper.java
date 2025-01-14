@@ -98,6 +98,10 @@ public class PragueAcceptanceTestHelper {
                 executionPayload.toString(), parentBeaconBlockRoot, executionRequests.toString()));
     try (final Response newPayloadResponse = newPayloadRequest.execute()) {
       assertThat(newPayloadResponse.code()).isEqualTo(200);
+
+      final String responseStatus =
+          mapper.readTree(newPayloadResponse.body().string()).get("result").get("status").asText();
+      assertThat(responseStatus).isEqualTo("VALID");
     }
 
     final Call moveChainAheadRequest = createEngineCall(createForkChoiceRequest(newBlockHash));

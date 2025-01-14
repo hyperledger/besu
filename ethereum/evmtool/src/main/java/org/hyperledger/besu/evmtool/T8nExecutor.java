@@ -546,7 +546,12 @@ public class T8nExecutor {
       ArrayNode requests = resultObject.putArray("requests");
       maybeRequests
           .orElseGet(List::of)
-          .forEach(request -> requests.add(request.getData().toHexString()));
+          .forEach(
+              request -> {
+                if (!request.data().isEmpty()) {
+                  requests.add(request.getEncodedRequest().toHexString());
+                }
+              });
     }
 
     worldState.persist(blockHeader);

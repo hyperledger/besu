@@ -170,7 +170,10 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     final List<String> requestsWithoutRequestId =
         VALID_REQUESTS.stream()
             .sorted(Comparator.comparing(Request::getType))
-            .map(r -> r.getData().toHexString())
+            .map(
+                r ->
+                    Bytes.concatenate(Bytes.of(r.getType().getSerializedType()), r.getData())
+                        .toHexString())
             .toList();
     Object[] params =
         maybeParentBeaconBlockRoot
