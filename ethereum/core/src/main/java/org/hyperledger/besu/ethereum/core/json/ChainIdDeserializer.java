@@ -35,7 +35,12 @@ public class ChainIdDeserializer extends StdDeserializer<BigInteger> {
   @Override
   public BigInteger deserialize(final JsonParser jsonparser, final DeserializationContext context)
       throws IOException {
-    return UInt256.fromHexString(jsonparser.getCodec().readValue(jsonparser, String.class))
-        .toBigInteger();
+    final var chainId =
+        UInt256.fromHexString(jsonparser.getCodec().readValue(jsonparser, String.class))
+            .toBigInteger();
+    if (chainId.signum() < 0) {
+      throw new IllegalArgumentException("Negative chain id: " + chainId);
+    }
+    return chainId;
   }
 }
