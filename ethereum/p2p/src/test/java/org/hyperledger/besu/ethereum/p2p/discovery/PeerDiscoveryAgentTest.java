@@ -913,7 +913,7 @@ public class PeerDiscoveryAgentTest {
 
     assertEquals("127.0.0.1", result.getHost());
 
-    assertEquals(30303, result.getUdpPort());
+    assertEquals(EnodeURLImpl.DEFAULT_LISTENING_PORT, result.getUdpPort());
 
     assertEquals(Optional.empty(), result.getTcpPort());
   }
