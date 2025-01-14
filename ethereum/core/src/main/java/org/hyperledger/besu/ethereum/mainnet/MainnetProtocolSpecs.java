@@ -70,8 +70,6 @@ import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
-import org.hyperledger.besu.evm.refundcalculator.FrontierRefundCalculator;
-import org.hyperledger.besu.evm.refundcalculator.PragueRefundCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -120,7 +118,6 @@ public abstract class MainnetProtocolSpecs {
       final MetricsSystem metricsSystem) {
     return new ProtocolSpecBuilder()
         .gasCalculator(FrontierGasCalculator::new)
-        .refundCalculator(FrontierRefundCalculator::new)
         .gasLimitCalculatorBuilder(feeMarket -> new FrontierTargetingGasLimitCalculator())
         .evmBuilder(MainnetEVMs::frontier)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::frontier)
@@ -135,14 +132,12 @@ public abstract class MainnetProtocolSpecs {
                     evm.getGasCalculator(), gasLimitCalculator, false, Optional.empty()))
         .transactionProcessorBuilder(
             (gasCalculator,
-                refundCalculator,
                 feeMarket,
                 transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
-                    refundCalculator,
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
@@ -298,14 +293,12 @@ public abstract class MainnetProtocolSpecs {
                     evm.getGasCalculator(), gasLimitCalculator, true, chainId))
         .transactionProcessorBuilder(
             (gasCalculator,
-                refundCalculator,
                 feeMarket,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
-                    refundCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
@@ -506,14 +499,12 @@ public abstract class MainnetProtocolSpecs {
                     Integer.MAX_VALUE))
         .transactionProcessorBuilder(
             (gasCalculator,
-                refundCalculator,
                 feeMarket,
                 transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
-                    refundCalculator,
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
@@ -640,14 +631,12 @@ public abstract class MainnetProtocolSpecs {
         // we need to flip the Warm Coinbase flag for EIP-3651 warm coinbase
         .transactionProcessorBuilder(
             (gasCalculator,
-                refundCalculator,
                 feeMarket,
                 transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
-                    refundCalculator,
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
@@ -729,14 +718,12 @@ public abstract class MainnetProtocolSpecs {
         // use Cancun fee market
         .transactionProcessorBuilder(
             (gasCalculator,
-                refundCalculator,
                 feeMarket,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
-                    refundCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
@@ -850,7 +837,6 @@ public abstract class MainnetProtocolSpecs {
             metricsSystem)
         .feeMarket(pragueFeeMarket)
         .gasCalculator(pragueGasCalcSupplier)
-        .refundCalculator(PragueRefundCalculator::new)
         // EIP-7840 Blob schedule | EIP-7691 6/9 blob increase
         .gasLimitCalculatorBuilder(
             feeMarket ->

@@ -41,7 +41,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
-import org.hyperledger.besu.evm.refundcalculator.RefundCalculator;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -50,7 +49,6 @@ import java.util.function.Supplier;
 
 public class ProtocolSpecBuilder {
   private Supplier<GasCalculator> gasCalculatorBuilder;
-  private Supplier<RefundCalculator> refundCalculatorBuilder;
   private Function<FeeMarket, GasLimitCalculator> gasLimitCalculatorBuilder;
   private Wei blockReward;
   private boolean skipZeroBlockRewards;
@@ -94,12 +92,6 @@ public class ProtocolSpecBuilder {
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
-    return this;
-  }
-
-  public ProtocolSpecBuilder refundCalculator(
-      final Supplier<RefundCalculator> refundCalculatorBuilder) {
-    this.refundCalculatorBuilder = refundCalculatorBuilder;
     return this;
   }
 
@@ -305,7 +297,6 @@ public class ProtocolSpecBuilder {
 
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
-    checkNotNull(refundCalculatorBuilder, "Missing refundCalculator");
     checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
     checkNotNull(evmBuilder, "Missing operation registry");
     checkNotNull(evmConfiguration, "Missing evm configuration");
@@ -333,7 +324,6 @@ public class ProtocolSpecBuilder {
     checkNotNull(badBlockManager, "Missing bad blocks manager");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
-    final RefundCalculator refundCalculator = refundCalculatorBuilder.get();
     final GasLimitCalculator gasLimitCalculator = gasLimitCalculatorBuilder.apply(feeMarket);
     final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
     final PrecompiledContractConfiguration precompiledContractConfiguration =
@@ -349,7 +339,6 @@ public class ProtocolSpecBuilder {
     final MainnetTransactionProcessor transactionProcessor =
         transactionProcessorBuilder.apply(
             gasCalculator,
-            refundCalculator,
             feeMarket,
             transactionValidatorFactory,
             contractCreationProcessor,
@@ -478,7 +467,6 @@ public class ProtocolSpecBuilder {
   public interface TransactionProcessorBuilder {
     MainnetTransactionProcessor apply(
         GasCalculator gasCalculator,
-        RefundCalculator refundCalculator,
         FeeMarket feeMarket,
         TransactionValidatorFactory transactionValidatorFactory,
         AbstractMessageProcessor contractCreationProcessor,

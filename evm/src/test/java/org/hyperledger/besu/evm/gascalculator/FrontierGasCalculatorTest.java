@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm.refundcalculator;
+package org.hyperledger.besu.evm.gascalculator;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.when;
@@ -20,8 +20,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -34,9 +32,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class FrontierRefundCalculatorTest {
-  private final FrontierRefundCalculator refundCalculator = new FrontierRefundCalculator();
+public class FrontierGasCalculatorTest {
   private final GasCalculator gasCalculator = new FrontierGasCalculator();
+
   @Mock private Transaction transaction;
   @Mock private MessageFrame messageFrame;
 
@@ -49,8 +47,7 @@ class FrontierRefundCalculatorTest {
     when(transaction.getGasLimit()).thenReturn(100000L);
 
     // Act
-    long refund =
-        refundCalculator.calculateGasRefund(gasCalculator, transaction, messageFrame, 500L);
+    long refund = gasCalculator.calculateGasRefund(transaction, messageFrame, 500L);
 
     // Assert
     assertThat(refund)
@@ -70,8 +67,7 @@ class FrontierRefundCalculatorTest {
     when(transaction.getGasLimit()).thenReturn(100000L);
 
     // Act
-    long refund =
-        refundCalculator.calculateGasRefund(gasCalculator, transaction, messageFrame, 500L);
+    long refund = gasCalculator.calculateGasRefund(transaction, messageFrame, 500L);
 
     // Assert
     assertThat(refund)
@@ -87,8 +83,7 @@ class FrontierRefundCalculatorTest {
     when(transaction.getGasLimit()).thenReturn(100000L);
 
     // Act
-    long refund =
-        refundCalculator.calculateGasRefund(gasCalculator, transaction, messageFrame, 1000L);
+    long refund = gasCalculator.calculateGasRefund(transaction, messageFrame, 1000L);
 
     // Assert
     assertThat(refund)
@@ -104,7 +99,7 @@ class FrontierRefundCalculatorTest {
     when(transaction.getGasLimit()).thenReturn(100000L);
 
     // Act
-    long refund = refundCalculator.calculateGasRefund(gasCalculator, transaction, messageFrame, 0L);
+    long refund = gasCalculator.calculateGasRefund(transaction, messageFrame, 0L);
 
     // Assert
     assertThat(refund).isEqualTo(0L);

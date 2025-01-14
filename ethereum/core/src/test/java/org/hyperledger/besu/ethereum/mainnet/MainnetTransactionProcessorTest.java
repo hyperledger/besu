@@ -35,8 +35,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
-import org.hyperledger.besu.evm.refundcalculator.FrontierRefundCalculator;
-import org.hyperledger.besu.evm.refundcalculator.RefundCalculator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
@@ -65,7 +63,6 @@ class MainnetTransactionProcessorTest {
   private static final int MAX_STACK_SIZE = 1024;
 
   private final GasCalculator gasCalculator = new LondonGasCalculator();
-  private final RefundCalculator refundCalculator = new FrontierRefundCalculator();
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private TransactionValidatorFactory transactionValidatorFactory;
@@ -84,7 +81,6 @@ class MainnetTransactionProcessorTest {
   MainnetTransactionProcessor createTransactionProcessor(final boolean warmCoinbase) {
     return new MainnetTransactionProcessor(
         gasCalculator,
-        refundCalculator,
         transactionValidatorFactory,
         contractCreationProcessor,
         messageCallProcessor,

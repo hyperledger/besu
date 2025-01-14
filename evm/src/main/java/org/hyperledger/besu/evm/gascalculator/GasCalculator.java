@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -664,4 +665,15 @@ public interface GasCalculator {
   default long calculateDelegateCodeGasRefund(final long alreadyExistingAccountSize) {
     return 0L;
   }
+
+  /**
+   * Calculate the gas refund for a transaction.
+   *
+   * @param transaction the transaction
+   * @param initialFrame the initial frame
+   * @param codeDelegationRefund the code delegation refund
+   * @return the gas refund
+   */
+  long calculateGasRefund(
+      Transaction transaction, MessageFrame initialFrame, long codeDelegationRefund);
 }

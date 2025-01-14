@@ -41,7 +41,6 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
-import org.hyperledger.besu.evm.refundcalculator.RefundCalculator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -67,8 +66,6 @@ public class MainnetTransactionProcessor {
 
   protected final GasCalculator gasCalculator;
 
-  private final RefundCalculator refundCalculator;
-
   protected final TransactionValidatorFactory transactionValidatorFactory;
 
   private final AbstractMessageProcessor contractCreationProcessor;
@@ -88,7 +85,6 @@ public class MainnetTransactionProcessor {
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
-      final RefundCalculator refundCalculator,
       final TransactionValidatorFactory transactionValidatorFactory,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
@@ -99,7 +95,6 @@ public class MainnetTransactionProcessor {
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
     this(
         gasCalculator,
-        refundCalculator,
         transactionValidatorFactory,
         contractCreationProcessor,
         messageCallProcessor,
@@ -113,7 +108,6 @@ public class MainnetTransactionProcessor {
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
-      final RefundCalculator refundCalculator,
       final TransactionValidatorFactory transactionValidatorFactory,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
@@ -124,7 +118,6 @@ public class MainnetTransactionProcessor {
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
       final CodeDelegationProcessor maybeCodeDelegationProcessor) {
     this.gasCalculator = gasCalculator;
-    this.refundCalculator = refundCalculator;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
@@ -508,8 +501,7 @@ public class MainnetTransactionProcessor {
       // Refund the sender by what we should and pay the miner fee (note that we're doing them one
       // after the other so that if it is the same account somehow, we end up with the right result)
       final long refundedGas =
-          refundCalculator.calculateGasRefund(
-              gasCalculator, transaction, initialFrame, codeDelegationRefund);
+          gasCalculator.calculateGasRefund(transaction, initialFrame, codeDelegationRefund);
       final Wei refundedWei = transactionGasPrice.multiply(refundedGas);
       final Wei balancePriorToRefund = sender.getBalance();
       sender.incrementBalance(refundedWei);
