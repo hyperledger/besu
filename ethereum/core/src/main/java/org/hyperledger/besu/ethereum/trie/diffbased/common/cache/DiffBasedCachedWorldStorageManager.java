@@ -94,7 +94,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
         Optional.ofNullable(this.cachedWorldStatesByHash.get(blockHeader.getBlockHash()));
     if (cachedDiffBasedWorldView.isPresent()) {
       // only replace if it is a layered storage
-      if (forWorldState.isHeadModifyingWorldState()
+      if (forWorldState.isModifyingHeadWorldState()
           && cachedDiffBasedWorldView.get().getWorldStateStorage()
               instanceof DiffBasedLayeredWorldStateKeyValueStorage) {
         LOG.atDebug()
@@ -113,7 +113,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
           .addArgument(blockHeader::toLogString)
           .addArgument(worldStateRootHash::toShortHexString)
           .log();
-      if (forWorldState.isHeadModifyingWorldState()) {
+      if (forWorldState.isModifyingHeadWorldState()) {
         cachedWorldStatesByHash.put(
             blockHeader.getHash(),
             new DiffBasedCachedWorldView(

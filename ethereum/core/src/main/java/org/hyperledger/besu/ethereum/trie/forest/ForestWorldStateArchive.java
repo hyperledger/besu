@@ -68,7 +68,11 @@ public class ForestWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getWorldState(final WorldStateQueryParams queryParams) {
-    return getWorldState(queryParams.getStateRoot());
+    if (queryParams.getStateRoot().isEmpty()) {
+      throw new IllegalArgumentException(
+          "State root cannot be empty. A valid state root is required to retrieve the world state.");
+    }
+    return getWorldState(queryParams.getStateRoot().get());
   }
 
   @Override

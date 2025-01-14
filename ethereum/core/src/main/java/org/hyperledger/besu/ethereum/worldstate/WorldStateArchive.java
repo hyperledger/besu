@@ -36,7 +36,7 @@ public interface WorldStateArchive extends Closeable {
   boolean isWorldStateAvailable(Hash rootHash, Hash blockHash);
 
   /**
-   * Gets the mutable world state based on the provided query parameters.
+   * Gets a mutable world state based on the provided query parameters.
    *
    * <p>This method retrieves the mutable world state using the provided query parameters. The query
    * parameters can specify various conditions and filters to determine the specific world state to

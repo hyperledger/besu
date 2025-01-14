@@ -599,7 +599,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   }
 
   @Override
-  public boolean isHeadModifyingWorldState() {
+  public boolean isModifyingHeadWorldState() {
     return true;
   }
 

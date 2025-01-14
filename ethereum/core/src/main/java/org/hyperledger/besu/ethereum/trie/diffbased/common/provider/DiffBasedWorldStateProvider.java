@@ -124,15 +124,15 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   }
 
   /**
-   * Gets the mutable world state based on the provided query parameters.
+   * Gets a mutable world state based on the provided query parameters.
    *
    * <p>This method checks if the world state is configured to be stateful. If it is, it retrieves
-   * the stateful world state using the provided query parameters. If the world state is not
-   * configured to be stateful, the stateless one will be returned.
+   * the full world state using the provided query parameters. If the world state is not configured
+   * to be full, the stateless one will be returned.
    *
    * <p>The method follows these steps: 1. Check if the world state is configured to be stateful. 2.
-   * If true, call {@link #getStatefulWorldState(WorldStateQueryParams)} with the query parameters.
-   * 3. If false, throw a RuntimeException indicating that stateless mode is not yet available.
+   * If true, call {@link #getFullWorldState(WorldStateQueryParams)} with the query parameters. 3.
+   * If false, throw a RuntimeException indicating that stateless mode is not yet available.
    *
    * @param queryParams the query parameters
    * @return the mutable world state, if available
@@ -141,7 +141,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   @Override
   public Optional<MutableWorldState> getWorldState(final WorldStateQueryParams queryParams) {
     if (worldStateSharedConfig.isStateful()) {
-      return getStatefulWorldState(queryParams);
+      return getFullWorldState(queryParams);
     } else {
       throw new RuntimeException("stateless mode is not yet available");
     }
@@ -160,48 +160,47 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   }
 
   /**
-   * Gets the stateful world state based on the provided query parameters.
+   * Gets the full world state based on the provided query parameters.
    *
-   * <p>This method determines whether to retrieve the stateful world state from the head or from
-   * the cache based on the query parameters. If the query parameters indicate that the world state
-   * should update the head, the method retrieves the stateful world state from the head. Otherwise,
-   * it retrieves the stateful world state from the cache.
+   * <p>This method determines whether to retrieve the full world state from the head or from the
+   * cache based on the query parameters. If the query parameters indicate that the world state
+   * should update the head, the method retrieves the full world state from the head. Otherwise, it
+   * retrieves the full world state from the cache.
    *
    * <p>The method follows these steps: 1. Check if the query parameters indicate that the world
-   * state should update the head. 2. If true, call {@link #getStatefulWorldStateFromHead(Hash)}
-   * with the block hash from the query parameters. 3. If false, call {@link
-   * #getStatefulWorldStateFromCache(BlockHeader)} with the block header from the query parameters.
+   * state should update the head. 2. If true, call {@link #getFullWorldStateFromHead(Hash)} with
+   * the block hash from the query parameters. 3. If false, call {@link
+   * #getFullWorldStateFromCache(BlockHeader)} with the block header from the query parameters.
    *
    * @param queryParams the query parameters
    * @return the stateful world state, if available
    */
-  private Optional<MutableWorldState> getStatefulWorldState(
-      final WorldStateQueryParams queryParams) {
+  private Optional<MutableWorldState> getFullWorldState(final WorldStateQueryParams queryParams) {
     return queryParams.shouldWorldStateUpdateHead()
-        ? getStatefulWorldStateFromHead(queryParams.getBlockHash())
-        : getStatefulWorldStateFromCache(queryParams.getBlockHeader());
+        ? getFullWorldStateFromHead(queryParams.getBlockHash())
+        : getFullWorldStateFromCache(queryParams.getBlockHeader());
   }
 
   /**
-   * Gets the stateful world state from the head based on the provided block hash.
+   * Gets the full world state from the head based on the provided block hash.
    *
    * <p>This method attempts to roll the head world state to the specified block hash. If the block
    * hash matches the block hash of the head world state, the head world state is returned.
-   * Otherwise, the method attempts to roll the stateful world state to the specified block hash.
+   * Otherwise, the method attempts to roll the full world state to the specified block hash.
    *
    * <p>The method follows these steps: 1. Check if the block hash matches the block hash of the
    * head world state. 2. If it matches, return the head world state. 3. If it does not match,
-   * attempt to roll the stateful world state to the specified block hash.
+   * attempt to roll the full world state to the specified block hash.
    *
    * @param blockHash the block hash
-   * @return the stateful world state, if available
+   * @return the full world state, if available
    */
-  private Optional<MutableWorldState> getStatefulWorldStateFromHead(final Hash blockHash) {
-    return rollStatefulWorldStateToBlockHash(headWorldState, blockHash);
+  private Optional<MutableWorldState> getFullWorldStateFromHead(final Hash blockHash) {
+    return rollFullWorldStateToBlockHash(headWorldState, blockHash);
   }
 
   /**
-   * Gets the stateful world state from the cache based on the provided block header.
+   * Gets the full world state from the cache based on the provided block header.
    *
    * <p>This method attempts to retrieve the world state from the cache using the block header. If
    * the block header is too old (i.e., the number of blocks between the chain head and the provided
@@ -214,10 +213,9 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
    * the block hash of the provided block header. 5. Freeze the world state and return it.
    *
    * @param blockHeader the block header
-   * @return the stateful world state, if available
+   * @return the full world state, if available
    */
-  private Optional<MutableWorldState> getStatefulWorldStateFromCache(
-      final BlockHeader blockHeader) {
+  private Optional<MutableWorldState> getFullWorldStateFromCache(final BlockHeader blockHeader) {
     final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
     if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
         >= trieLogManager.getMaxLayersToLoad()) {
@@ -230,11 +228,11 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
         .getWorldState(blockHeader.getHash())
         .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
         .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
-        .flatMap(worldState -> rollStatefulWorldStateToBlockHash(worldState, blockHeader.getHash()))
+        .flatMap(worldState -> rollFullWorldStateToBlockHash(worldState, blockHeader.getHash()))
         .map(MutableWorldState::freeze);
   }
 
-  private Optional<MutableWorldState> rollStatefulWorldStateToBlockHash(
+  private Optional<MutableWorldState> rollFullWorldStateToBlockHash(
       final DiffBasedWorldState mutableState, final Hash blockHash) {
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);

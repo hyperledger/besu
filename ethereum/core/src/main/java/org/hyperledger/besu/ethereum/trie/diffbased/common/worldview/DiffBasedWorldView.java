@@ -55,7 +55,7 @@ public interface DiffBasedWorldView extends WorldView {
     return out.encoded();
   }
 
-  boolean isHeadModifyingWorldState();
+  boolean isModifyingHeadWorldState();
 
   DiffBasedWorldStateKeyValueStorage getWorldStateStorage();
 

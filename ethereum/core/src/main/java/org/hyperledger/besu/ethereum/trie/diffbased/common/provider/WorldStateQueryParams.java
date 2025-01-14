@@ -18,13 +18,14 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /** Parameters for querying the world state. */
 public class WorldStateQueryParams {
   private final BlockHeader blockHeader;
   private final boolean shouldWorldStateUpdateHead;
   private final Hash blockHash;
-  private final Hash stateRoot;
+  private final Optional<Hash> stateRoot;
 
   /**
    * Private constructor to enforce the use of the Builder.
@@ -36,22 +37,6 @@ public class WorldStateQueryParams {
     this.shouldWorldStateUpdateHead = builder.shouldWorldStateUpdateHead;
     this.blockHash = builder.blockHash;
     this.stateRoot = builder.stateRoot;
-
-    if (blockHash == null && stateRoot == null && blockHeader == null) {
-      // If shouldWorldStateUpdateHead is true, we will update the head.
-      // If blockHash, stateRoot, and blockHeader are all null, it means we return the current head.
-      // If they are not all null, it means we will return the head but perform rolling if necessary
-      // to reach the block passed as a parameter.
-      if (!shouldWorldStateUpdateHead) {
-        throw new IllegalArgumentException(
-            "Either blockHash, stateRoot, or blockHeader must be provided, or shouldWorldStateUpdateHead must be true to return the head.");
-      }
-    } else if (blockHash == null && stateRoot == null) {
-      // If shouldWorldStateUpdateHead is false, either stateRoot or blockHash must be provided to
-      // retrieve the world state from the cache.
-      throw new IllegalArgumentException(
-          "Either blockHash or stateRoot must be provided to find the worldstate in the cache");
-    }
   }
 
   /**
@@ -86,7 +71,7 @@ public class WorldStateQueryParams {
    *
    * @return the state root
    */
-  public Hash getStateRoot() {
+  public Optional<Hash> getStateRoot() {
     return stateRoot;
   }
 
@@ -97,10 +82,6 @@ public class WorldStateQueryParams {
    */
   public static Builder newBuilder() {
     return new Builder();
-  }
-
-  public static WorldStateQueryParams withChainHead() {
-    return newBuilder().withShouldWorldStateUpdateHead(true).build();
   }
 
   /**
@@ -173,12 +154,13 @@ public class WorldStateQueryParams {
     return Objects.hash(blockHeader, shouldWorldStateUpdateHead, blockHash, stateRoot);
   }
 
-  /** Builder for WorldStateQueryParams. */
-  public static class Builder {
+  private static class Builder {
     private BlockHeader blockHeader;
-    private boolean shouldWorldStateUpdateHead;
+    private boolean shouldWorldStateUpdateHead = false;
     private Hash blockHash;
-    private Hash stateRoot;
+    private Optional<Hash> stateRoot = Optional.empty();
+
+    private Builder() {}
 
     /**
      * Sets the block header.
@@ -189,7 +171,7 @@ public class WorldStateQueryParams {
     public Builder withBlockHeader(final BlockHeader blockHeader) {
       this.blockHeader = blockHeader;
       this.blockHash = blockHeader.getBlockHash();
-      this.stateRoot = blockHeader.getStateRoot();
+      this.stateRoot = Optional.of(blockHeader.getStateRoot());
       return this;
     }
 
@@ -223,7 +205,7 @@ public class WorldStateQueryParams {
      * @return the builder
      */
     public Builder withStateRoot(final Hash stateRoot) {
-      this.stateRoot = stateRoot;
+      this.stateRoot = Optional.ofNullable(stateRoot);
       return this;
     }
 

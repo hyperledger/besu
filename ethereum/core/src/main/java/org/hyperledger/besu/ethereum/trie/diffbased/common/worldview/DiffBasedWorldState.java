@@ -123,8 +123,8 @@ public abstract class DiffBasedWorldState
    * @return {@code true} if the current world state is modifying the head, {@code false} otherwise.
    */
   @Override
-  public boolean isHeadModifyingWorldState() {
-    return isHeadModifyingWorldState(worldStateKeyValueStorage);
+  public boolean isModifyingHeadWorldState() {
+    return isModifyingHeadWorldState(worldStateKeyValueStorage);
   }
 
   /**
@@ -138,7 +138,7 @@ public abstract class DiffBasedWorldState
    * @param worldStateKeyValueStorage the world state key-value storage to check.
    * @return {@code true} if the provided storage is modifying the head, {@code false} otherwise.
    */
-  private boolean isHeadModifyingWorldState(
+  private boolean isModifyingHeadWorldState(
       final WorldStateKeyValueStorage worldStateKeyValueStorage) {
     return !(worldStateKeyValueStorage instanceof DiffBasedSnapshotWorldStateKeyValueStorage);
   }
@@ -334,7 +334,7 @@ public abstract class DiffBasedWorldState
   @Override
   public void close() {
     try {
-      if (!isHeadModifyingWorldState()) {
+      if (!isModifyingHeadWorldState()) {
         this.worldStateKeyValueStorage.close();
         if (worldStateStorageSpec.isFrozen()) {
           closeFrozenStorage();
@@ -349,7 +349,7 @@ public abstract class DiffBasedWorldState
     try {
       final DiffBasedLayeredWorldStateKeyValueStorage worldStateLayerStorage =
           (DiffBasedLayeredWorldStateKeyValueStorage) worldStateKeyValueStorage;
-      if (!isHeadModifyingWorldState(worldStateLayerStorage.getParentWorldStateStorage())) {
+      if (!isModifyingHeadWorldState(worldStateLayerStorage.getParentWorldStateStorage())) {
         worldStateLayerStorage.getParentWorldStateStorage().close();
       }
     } catch (Exception e) {
