@@ -20,7 +20,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.encoding.CodeDelegationEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.CodeDelegationTransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
@@ -42,8 +42,8 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
   private final Address address;
   private final long nonce;
   private final SECPSignature signature;
-  private Optional<Address> authorizer = Optional.empty();
-  private boolean isAuthorityComputed = false;
+  private final Supplier<Optional<Address>> authorizerSupplier =
+      Suppliers.memoize(this::computeAuthority);
 
   /**
    * An access list entry as defined in EIP-7702
@@ -107,12 +107,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
 
   @Override
   public Optional<Address> authorizer() {
-    if (!isAuthorityComputed) {
-      authorizer = computeAuthority();
-      isAuthorityComputed = true;
-    }
-
-    return authorizer;
+    return authorizerSupplier.get();
   }
 
   @Override
@@ -140,7 +135,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
 
   private Optional<Address> computeAuthority() {
     BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    CodeDelegationEncoder.encodeSingleCodeDelegationWithoutSignature(this, rlpOutput);
+    CodeDelegationTransactionEncoder.encodeSingleCodeDelegationWithoutSignature(this, rlpOutput);
 
     final Hash hash = Hash.hash(Bytes.concatenate(MAGIC, rlpOutput.encoded()));
 

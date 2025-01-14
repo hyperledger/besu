@@ -20,7 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.CliqueConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonCliqueConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -60,12 +61,13 @@ public class CliqueProtocolScheduleTest {
             + "\"byzantiumBlock\": 1035301}"
             + "}";
 
-    final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
+    final GenesisConfigOptions config = GenesisConfig.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
         CliqueProtocolSchedule.create(
             config,
             new ForksSchedule<>(List.of()),
             NODE_KEY,
+            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
@@ -89,9 +91,10 @@ public class CliqueProtocolScheduleTest {
         new ForksSchedule<>(List.of(new ForkSpec<>(0, JsonCliqueConfigOptions.DEFAULT)));
     final ProtocolSpec homestead =
         CliqueProtocolSchedule.create(
-                GenesisConfigFile.DEFAULT.getConfigOptions(),
+                GenesisConfig.DEFAULT.getConfigOptions(),
                 forksSchedule,
                 NODE_KEY,
+                PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,
@@ -118,6 +121,7 @@ public class CliqueProtocolScheduleTest {
                     genesisConfig,
                     new ForksSchedule<>(List.of()),
                     NODE_KEY,
+                    PrivacyParameters.DEFAULT,
                     false,
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
@@ -140,6 +144,7 @@ public class CliqueProtocolScheduleTest {
                     genesisConfig,
                     new ForksSchedule<>(List.of()),
                     NODE_KEY,
+                    PrivacyParameters.DEFAULT,
                     false,
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
@@ -158,7 +163,7 @@ public class CliqueProtocolScheduleTest {
     final String jsonInput =
         "{\"config\": " + "\t{\"chainId\": 1337,\n" + "\t\"londonBlock\": 2}\n" + "}";
 
-    final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
+    final GenesisConfigOptions config = GenesisConfig.fromConfig(jsonInput).getConfigOptions();
     final ForksSchedule<CliqueConfigOptions> forksSchedule =
         new ForksSchedule<>(List.of(new ForkSpec<>(0, JsonCliqueConfigOptions.DEFAULT)));
     final ProtocolSchedule protocolSchedule =
@@ -166,6 +171,7 @@ public class CliqueProtocolScheduleTest {
             config,
             forksSchedule,
             NODE_KEY,
+            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,

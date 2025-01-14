@@ -21,7 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.consensus.clique.BlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.common.EpochManager;
@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableIn
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -73,6 +74,7 @@ public class TransitionControllerBuilderTest {
   @Mock ProtocolContext protocolContext;
   @Mock MutableBlockchain mockBlockchain;
   @Mock TransactionPool transactionPool;
+  @Mock PeerTaskExecutor peerTaskExecutor;
   @Mock SyncState syncState;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
@@ -96,9 +98,9 @@ public class TransitionControllerBuilderTest {
                 preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext));
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     cliqueBuilder.nodeKey(NodeKeyUtils.generate());
-    cliqueBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
-    powBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
-    postMergeBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
+    cliqueBuilder.genesisConfig(GenesisConfig.DEFAULT);
+    powBuilder.genesisConfig(GenesisConfig.DEFAULT);
+    postMergeBuilder.genesisConfig(GenesisConfig.DEFAULT);
     postMergeBuilder.storageProvider(storageProvider);
     lenient().when(protocolContext.getBlockchain()).thenReturn(mockBlockchain);
     lenient()
@@ -265,7 +267,7 @@ public class TransitionControllerBuilderTest {
   TransitionCoordinator buildTransitionCoordinator(
       final BesuControllerBuilder preMerge, final MergeBesuControllerBuilder postMerge) {
     var builder = new TransitionBesuControllerBuilder(preMerge, postMerge);
-    builder.genesisConfigFile(GenesisConfigFile.mainnet());
+    builder.genesisConfig(GenesisConfig.mainnet());
     builder.storageProvider(storageProvider);
     builder.metricsSystem(new NoOpMetricsSystem());
     var coordinator =

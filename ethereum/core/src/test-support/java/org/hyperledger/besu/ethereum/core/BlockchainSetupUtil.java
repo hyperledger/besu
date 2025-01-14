@@ -20,8 +20,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.ethereum.ConsensusContext;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -148,9 +147,9 @@ public class BlockchainSetupUtil {
   }
 
   private static ProtocolSchedule mainnetProtocolScheduleProvider(
-      final GenesisConfigFile genesisConfigFile) {
+      final GenesisConfig genesisConfig) {
     return MainnetProtocolSchedule.fromConfig(
-        genesisConfigFile.getConfigOptions(),
+        genesisConfig.getConfigOptions(),
         EvmConfiguration.DEFAULT,
         MiningConfiguration.newDefault(),
         new BadBlockManager(),
@@ -161,15 +160,7 @@ public class BlockchainSetupUtil {
   private static ProtocolContext mainnetProtocolContextProvider(
       final MutableBlockchain blockchain, final WorldStateArchive worldStateArchive) {
     return new ProtocolContext(
-        blockchain,
-        worldStateArchive,
-        new ConsensusContext() {
-          @Override
-          public <C extends ConsensusContext> C as(final Class<C> klass) {
-            return null;
-          }
-        },
-        new BadBlockManager());
+        blockchain, worldStateArchive, new ConsensusContextFixture(), new BadBlockManager());
   }
 
   private static BlockchainSetupUtil create(
@@ -179,12 +170,10 @@ public class BlockchainSetupUtil {
       final ProtocolContextProvider protocolContextProvider,
       final EthScheduler scheduler) {
     try {
-      final GenesisConfigFile genesisConfigFile =
-          GenesisConfigFile.fromSource(chainResources.getGenesisURL());
-      final ProtocolSchedule protocolSchedule = protocolScheduleProvider.get(genesisConfigFile);
+      final GenesisConfig genesisConfig = GenesisConfig.fromSource(chainResources.getGenesisURL());
+      final ProtocolSchedule protocolSchedule = protocolScheduleProvider.get(genesisConfig);
 
-      final GenesisState genesisState =
-          GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
+      final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
       final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
       final WorldStateArchive worldArchive =
           storageFormat == DataStorageFormat.BONSAI
@@ -194,7 +183,6 @@ public class BlockchainSetupUtil {
 
       genesisState.writeStateTo(worldArchive.getMutable());
       final ProtocolContext protocolContext = protocolContextProvider.get(blockchain, worldArchive);
-      protocolContext.setSynchronizer(new DummySynchronizer());
 
       final Path blocksPath = Path.of(chainResources.getBlocksURL().toURI());
       final List<Block> blocks = new ArrayList<>();
@@ -277,7 +265,7 @@ public class BlockchainSetupUtil {
   }
 
   private interface ProtocolScheduleProvider {
-    ProtocolSchedule get(GenesisConfigFile genesisConfig);
+    ProtocolSchedule get(GenesisConfig genesisConfig);
   }
 
   private interface ProtocolContextProvider {

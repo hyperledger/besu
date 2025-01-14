@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
 import java.util.List;
 
-import org.apache.tuweni.devp2p.EthereumNodeRecord;
-
 // Adapted from https://github.com/tmio/tuweni and licensed under Apache 2.0
 /** Callback listening to updates of the DNS records. */
 @FunctionalInterface

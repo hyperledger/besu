@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -52,7 +53,7 @@ public interface PeerResult {
                 connection.inboundInitiated()))
         .port(Quantity.create(peerInfo.getPort()))
         .id(peerInfo.getNodeId().toString())
-        .protocols(Map.of(peer.getProtocolName(), ProtocolsResult.fromEthPeer(peer)))
+        .protocols(Map.of(EthProtocol.NAME, ProtocolsResult.fromEthPeer(peer)))
         .enode(connection.getRemoteEnode().toString())
         .build();
   }

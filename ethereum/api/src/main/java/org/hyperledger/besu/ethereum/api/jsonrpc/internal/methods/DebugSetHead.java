@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
   private final ProtocolContext protocolContext;
   private static final Logger LOG = LoggerFactory.getLogger(DebugSetHead.class);
-  private static final int DEFAULT_MAX_TRIE_LOGS_TO_ROLL_AT_ONCE = 512;
+  private static final int DEFAULT_MAX_TRIE_LOGS_TO_ROLL_AT_ONCE = 32;
 
   private final long maxTrieLogsToRollAtOnce;
 

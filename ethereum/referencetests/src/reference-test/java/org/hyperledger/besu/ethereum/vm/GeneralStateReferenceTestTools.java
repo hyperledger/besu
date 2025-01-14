@@ -104,6 +104,11 @@ public class GeneralStateReferenceTestTools {
 
     // EOF tests are written against an older version of the spec
     params.ignore("/stEOF/");
+
+    // TODO: remove once updated EIP-2537 gas cost artifacts exist
+    params.ignore("/eip2537_bls_12_381_precompiles/");
+    params.ignore("/stEIP2537/");
+
   }
 
   private GeneralStateReferenceTestTools() {
@@ -155,7 +160,7 @@ public class GeneralStateReferenceTestTools {
             blockHeader,
             transaction,
             blockHeader.getCoinbase(),
-            new CachingBlockHashLookup(blockHeader, blockchain),
+            protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader),
             false,
             TransactionValidationParams.processingBlock(),
             blobGasPrice);

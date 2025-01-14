@@ -25,6 +25,7 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.net.InetSocketAddress;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,6 +35,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -41,6 +43,9 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.net.HostAndPort;
+import io.vertx.core.net.JksOptions;
+import io.vertx.core.net.PemKeyCertOptions;
+import io.vertx.core.net.PemTrustOptions;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -103,18 +108,79 @@ public class WebSocketService {
         "Starting Websocket service on {}:{}", configuration.getHost(), configuration.getPort());
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
+    HttpServerOptions serverOptions =
+        new HttpServerOptions()
+            .setHost(configuration.getHost())
+            .setPort(configuration.getPort())
+            .setHandle100ContinueAutomatically(true)
+            .setCompressionSupported(true)
+            .addWebSocketSubProtocol("undefined")
+            .setMaxWebSocketFrameSize(configuration.getMaxFrameSize())
+            .setMaxWebSocketMessageSize(configuration.getMaxFrameSize() * 4)
+            .setRegisterWebSocketWriteHandlers(true);
+
+    // Check if SSL/TLS is enabled in the configuration
+    if (configuration.isSslEnabled()) {
+      serverOptions.setSsl(true);
+      String keystorePassword = null;
+
+      String keystorePath = configuration.getKeyStorePath().orElse(null);
+      try {
+        keystorePassword = configuration.getKeyStorePassword().orElse(null);
+      } catch (Exception e) {
+        LOG.error("Error reading keystore password", e);
+        resultFuture.completeExceptionally(e);
+        return resultFuture;
+      }
+      String keyPath = configuration.getKeyPath().orElse(null);
+      String certPath = configuration.getCertPath().orElse(null);
+
+      String keystoreType = configuration.getKeyStoreType().orElse("JKS");
+
+      switch (keystoreType.toUpperCase(Locale.getDefault())) {
+        case "PEM":
+          serverOptions.setKeyCertOptions(
+              new PemKeyCertOptions().setKeyPath(keyPath).setCertPath(certPath));
+          break;
+        case "JKS":
+        default:
+          serverOptions.setKeyCertOptions(
+              new JksOptions().setPath(keystorePath).setPassword(keystorePassword));
+          break;
+      }
+    }
+
+    //  Set up truststore for client authentication (mTLS)
+    if (configuration.isClientAuthEnabled()) {
+      serverOptions.setClientAuth(ClientAuth.REQUIRED);
+      String truststorePassword;
+
+      String truststorePath = configuration.getTrustStorePath().orElse(null);
+      try {
+        truststorePassword = configuration.getTrustStorePassword().orElse(null);
+      } catch (Exception e) {
+        LOG.error("Error reading truststore password", e);
+        resultFuture.completeExceptionally(e);
+        return resultFuture;
+      }
+      String truststoreType = configuration.getTrustStoreType().orElse("JKS");
+      String trustCertPath = configuration.getTrustCertPath().orElse(null);
+
+      switch (truststoreType.toUpperCase(Locale.getDefault())) {
+        case "PEM":
+          serverOptions.setTrustOptions(new PemTrustOptions().addCertPath(trustCertPath));
+          break;
+        case "JKS":
+        default:
+          serverOptions.setTrustOptions(
+              new JksOptions().setPath(truststorePath).setPassword(truststorePassword));
+          break;
+      }
+    }
+
     httpServer =
         vertx
-            .createHttpServer(
-                new HttpServerOptions()
-                    .setHost(configuration.getHost())
-                    .setPort(configuration.getPort())
-                    .setHandle100ContinueAutomatically(true)
-                    .setCompressionSupported(true)
-                    .addWebSocketSubProtocol("undefined")
-                    .setMaxWebSocketFrameSize(configuration.getMaxFrameSize())
-                    .setMaxWebSocketMessageSize(configuration.getMaxFrameSize() * 4)
-                    .setRegisterWebSocketWriteHandlers(true))
+            .createHttpServer(serverOptions)
             .webSocketHandler(websocketHandler())
             .connectionHandler(connectionHandler())
             .requestHandler(httpHandler())

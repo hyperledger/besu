@@ -129,7 +129,7 @@ public class MergeProtocolSchedule {
                     gasCalculator, chainId.orElse(BigInteger.ZERO), EvmConfiguration.DEFAULT))
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
-        .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
+        .difficultyCalculator((a, b) -> BigInteger.ZERO)
         .skipZeroBlockRewards(true)
         .isPoS(true)
         .name("Paris");

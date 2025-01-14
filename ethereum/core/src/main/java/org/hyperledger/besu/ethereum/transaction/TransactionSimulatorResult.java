@@ -18,6 +18,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public record TransactionSimulatorResult(
@@ -41,5 +43,9 @@ public record TransactionSimulatorResult(
 
   public ValidationResult<TransactionInvalidReason> getValidationResult() {
     return result.getValidationResult();
+  }
+
+  public Optional<String> getInvalidReason() {
+    return result.getInvalidReason();
   }
 }

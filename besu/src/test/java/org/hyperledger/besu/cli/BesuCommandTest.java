@@ -37,6 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -45,7 +46,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
@@ -187,11 +188,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(1));
 
     // assert that shanghaiTime override is applied
-    final GenesisConfigFile actualGenesisConfigFile = (config.genesisConfigFile());
-    assertThat(actualGenesisConfigFile).isNotNull();
-    assertThat(actualGenesisConfigFile.getConfigOptions().getShanghaiTime()).isNotEmpty();
-    assertThat(actualGenesisConfigFile.getConfigOptions().getShanghaiTime().getAsLong())
-        .isEqualTo(123);
+    final GenesisConfig actualGenesisConfig = (config.genesisConfig());
+    assertThat(actualGenesisConfig).isNotNull();
+    assertThat(actualGenesisConfig.getConfigOptions().getShanghaiTime()).isNotEmpty();
+    assertThat(actualGenesisConfig.getConfigOptions().getShanghaiTime().getAsLong()).isEqualTo(123);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -216,11 +216,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(3141592));
 
     // then assert that the shanghaiTime is applied
-    final GenesisConfigFile actualGenesisConfigFile = (config.genesisConfigFile());
-    assertThat(actualGenesisConfigFile).isNotNull();
-    assertThat(actualGenesisConfigFile.getConfigOptions().getShanghaiTime()).isNotEmpty();
-    assertThat(actualGenesisConfigFile.getConfigOptions().getShanghaiTime().getAsLong())
-        .isEqualTo(123);
+    final GenesisConfig actualGenesisConfig = (config.genesisConfig());
+    assertThat(actualGenesisConfig).isNotNull();
+    assertThat(actualGenesisConfig.getConfigOptions().getShanghaiTime()).isNotEmpty();
+    assertThat(actualGenesisConfig.getConfigOptions().getShanghaiTime().getAsLong()).isEqualTo(123);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -261,7 +260,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(
-                GenesisConfigFile.fromResource(MAINNET.getGenesisFile()),
+                GenesisConfig.fromResource(MAINNET.getGenesisFile()),
                 MAINNET.getNetworkId(),
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));
@@ -469,8 +468,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    assertThat(networkArg.getValue().genesisConfigFile())
-        .isEqualTo(GenesisConfigFile.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)));
+    assertThat(networkArg.getValue().genesisConfig())
+        .isEqualTo(GenesisConfig.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -635,8 +634,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    assertThat(networkArg.getValue().genesisConfigFile())
-        .isEqualTo(GenesisConfigFile.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)));
+    assertThat(networkArg.getValue().genesisConfig())
+        .isEqualTo(GenesisConfig.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)));
     assertThat(networkArg.getValue().bootNodes()).isEmpty();
     assertThat(networkArg.getValue().networkId()).isEqualTo(GENESIS_CONFIG_TEST_CHAINID);
 
@@ -656,8 +655,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    assertThat(networkArg.getValue().genesisConfigFile())
-        .isEqualTo(GenesisConfigFile.fromConfig(encodeJsonGenesis(GENESIS_INVALID_DATA)));
+    assertThat(networkArg.getValue().genesisConfig())
+        .isEqualTo(GenesisConfig.fromConfig(encodeJsonGenesis(GENESIS_INVALID_DATA)));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -671,7 +670,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     // in this network genesis file.
 
     final var genesisConfig =
-        EthNetworkConfig.getNetworkConfig(MAINNET).genesisConfigFile().getConfigOptions();
+        EthNetworkConfig.getNetworkConfig(MAINNET).genesisConfig().getConfigOptions();
     assertThat(genesisConfig.getChainId().isPresent()).isTrue();
     assertThat(genesisConfig.getChainId().get())
         .isEqualTo(EthNetworkConfig.getNetworkConfig(MAINNET).networkId());
@@ -2412,13 +2411,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void logsWarningWhenFailToLoadJemalloc() {
     assumeTrue(PlatformDetector.getOSType().equals("linux"));
-    setEnvironmentVariable("BESU_USING_JEMALLOC", "true");
+    setEnvironmentVariable("BESU_USING_JEMALLOC", "false");
     parseCommand();
     verify(mockLogger)
         .warn(
-            eq(
-                "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version"),
-            any(Throwable.class));
+            argThat(
+                arg ->
+                    arg.equals(
+                            "besu_using_jemalloc is present but is not set to true, jemalloc library not loaded")
+                        || arg.equals(
+                            "besu_using_jemalloc is present but we failed to load jemalloc library to get the version")));
   }
 
   @Test

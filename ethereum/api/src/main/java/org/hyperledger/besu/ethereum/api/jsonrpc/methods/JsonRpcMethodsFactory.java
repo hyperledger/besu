@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -85,7 +86,8 @@ public class JsonRpcMethodsFactory {
       final EthPeers ethPeers,
       final Vertx consensusEngineServer,
       final ApiConfiguration apiConfiguration,
-      final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
+      final Optional<EnodeDnsConfiguration> enodeDnsConfiguration,
+      final TransactionSimulator transactionSimulator) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
     if (!rpcApis.isEmpty()) {
       final JsonRpcMethod modules = new RpcModules(rpcApis);
@@ -111,7 +113,7 @@ public class JsonRpcMethodsFactory {
                   transactionPool,
                   synchronizer,
                   dataDir,
-                  apiConfiguration),
+                  transactionSimulator),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
@@ -122,7 +124,8 @@ public class JsonRpcMethodsFactory {
                   consensusEngineServer,
                   clientVersion,
                   commit,
-                  transactionPool),
+                  transactionPool,
+                  metricsSystem),
               new EthJsonRpcMethods(
                   blockchainQueries,
                   synchronizer,
@@ -131,7 +134,8 @@ public class JsonRpcMethodsFactory {
                   transactionPool,
                   miningCoordinator,
                   supportedCapabilities,
-                  apiConfiguration),
+                  apiConfiguration,
+                  transactionSimulator),
               new NetJsonRpcMethods(
                   p2pNetwork,
                   networkId,
@@ -151,7 +155,12 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientNodeName),
               new TraceJsonRpcMethods(
-                  blockchainQueries, protocolSchedule, protocolContext, apiConfiguration),
+                  blockchainQueries,
+                  protocolSchedule,
+                  protocolContext,
+                  apiConfiguration,
+                  transactionSimulator,
+                  metricsSystem),
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 

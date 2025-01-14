@@ -15,13 +15,14 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.WorldStateHealerHelper.throwingWorldStateHealerSupplier;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisAccount;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -29,6 +30,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -103,13 +105,13 @@ public abstract class AbstractIsolationTests {
               .createKeyPair(SECPPrivateKey.create(key, "ECDSA"));
   protected final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
-          GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
+          GenesisConfig.fromResource("/dev.json").getConfigOptions(),
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
           new NoOpMetricsSystem());
   protected final GenesisState genesisState =
-      GenesisState.fromConfig(GenesisConfigFile.fromResource("/dev.json"), protocolSchedule);
+      GenesisState.fromConfig(GenesisConfig.fromResource("/dev.json"), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
 
   protected final TransactionPoolConfiguration poolConfiguration =
@@ -142,7 +144,7 @@ public abstract class AbstractIsolationTests {
           ethScheduler);
 
   protected final List<GenesisAccount> accounts =
-      GenesisConfigFile.fromResource("/dev.json")
+      GenesisConfig.fromResource("/dev.json")
           .streamAllocations()
           .filter(ga -> ga.privateKey() != null)
           .toList();
@@ -167,10 +169,13 @@ public abstract class AbstractIsolationTests {
             Optional.of(16L),
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            throwingWorldStateHealerSupplier());
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
-    protocolContext = new ProtocolContext(blockchain, archive, null, new BadBlockManager());
+    protocolContext =
+        new ProtocolContext(
+            blockchain, archive, mock(ConsensusContext.class), new BadBlockManager());
     ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
     transactionPool =
