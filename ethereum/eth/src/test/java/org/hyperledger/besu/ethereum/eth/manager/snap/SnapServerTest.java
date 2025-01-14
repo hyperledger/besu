@@ -70,7 +70,6 @@ import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -116,7 +115,6 @@ public class SnapServerTest {
         null,
         null,
         null,
-        UInt64.ZERO,
         new MainnetBlockHeaderFunctions());
   }
 

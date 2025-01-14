@@ -47,6 +47,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -57,14 +58,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BonsaiWorldState extends DiffBasedWorldState {
 
   protected final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
-
-  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldState.class);
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
@@ -330,7 +327,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
               .orElse(null);
       if (oldAccount == null) {
         // This is when an account is both created and deleted within the scope of the same
-        // block.  A not-uncommon DeFi bot pattern.
+        // block. A not-uncommon DeFi bot pattern.
         continue;
       }
       final Hash addressHash = address.addressHash();
@@ -339,36 +336,40 @@ public class BonsaiWorldState extends DiffBasedWorldState {
               (location, key) -> getStorageTrieNode(addressHash, location, key),
               oldAccount.getStorageRoot());
       try {
-        final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageToDelete =
-            worldStateUpdater.getStorageToUpdate().get(address);
-        if (storageToDelete != null) {
-          Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-          while (!entriesToDelete.isEmpty()) {
-            entriesToDelete.forEach(
-                (k, v) -> {
-                  final StorageSlotKey storageSlotKey =
-                      new StorageSlotKey(Hash.wrap(k), Optional.empty());
-                  final UInt256 slotValue = UInt256.fromBytes(Bytes32.leftPad(RLP.decodeValue(v)));
-                  maybeStateUpdater.ifPresent(
-                      bonsaiUpdater ->
-                          bonsaiUpdater.removeStorageValueBySlotHash(
-                              address.addressHash(), storageSlotKey.getSlotHash()));
-                  storageToDelete
-                      .computeIfAbsent(
-                          storageSlotKey, key -> new DiffBasedValue<>(slotValue, null, true))
-                      .setPrior(slotValue);
-                });
-            entriesToDelete.keySet().forEach(storageTrie::remove);
-            if (entriesToDelete.size() == 256) {
-              entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-            } else {
-              break;
-            }
+        StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageToDelete = null;
+        Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+        while (!entriesToDelete.isEmpty()) {
+          if (storageToDelete == null) {
+            storageToDelete =
+                worldStateUpdater
+                    .getStorageToUpdate()
+                    .computeIfAbsent(
+                        address,
+                        add ->
+                            new StorageConsumingMap<>(
+                                address,
+                                new ConcurrentHashMap<>(),
+                                worldStateUpdater.getStoragePreloader()));
           }
-        } else {
-          LOG.warn(
-              "No storage entries to delete for deleted address {}. Address storage may already have been deleted in this block.",
-              address);
+          for (Map.Entry<Bytes32, Bytes> slot : entriesToDelete.entrySet()) {
+            final StorageSlotKey storageSlotKey =
+                new StorageSlotKey(Hash.wrap(slot.getKey()), Optional.empty());
+            final UInt256 slotValue =
+                UInt256.fromBytes(Bytes32.leftPad(RLP.decodeValue(slot.getValue())));
+            maybeStateUpdater.ifPresent(
+                bonsaiUpdater ->
+                    bonsaiUpdater.removeStorageValueBySlotHash(
+                        address.addressHash(), storageSlotKey.getSlotHash()));
+            storageToDelete
+                .computeIfAbsent(storageSlotKey, key -> new DiffBasedValue<>(slotValue, null, true))
+                .setPrior(slotValue);
+          }
+          entriesToDelete.keySet().forEach(storageTrie::remove);
+          if (entriesToDelete.size() == 256) {
+            entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+          } else {
+            break;
+          }
         }
       } catch (MerkleTrieException e) {
         // need to throw to trigger the heal
