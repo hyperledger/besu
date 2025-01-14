@@ -907,7 +907,7 @@ public class PeerDiscoveryAgentTest {
     when(enodeWithNoDiscovery.getDiscoveryPort()).thenReturn(Optional.empty());
     when(enodeWithNoDiscovery.getListeningPort()).thenReturn(Optional.of(8545));
 
-    when(enodeWithNoDiscovery.getIp()).thenReturn(InetAddress.getByName("127.0.0.1"));
+    when(enodeWithNoDiscovery.getIp()).thenReturn(InetAddress.getLoopbackAddress());
 
     Endpoint result = Endpoint.fromEnode(enodeWithNoDiscovery);
 
