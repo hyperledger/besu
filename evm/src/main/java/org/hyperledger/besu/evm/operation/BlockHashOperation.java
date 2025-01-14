@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.OutOfGas;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -52,11 +53,13 @@ public class BlockHashOperation extends AbstractOperation {
 
     final long remainingGas = frame.getRemainingGas();
     final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
-    final Hash blockHash = blockHashLookup.apply(frame, blockArg.toLong());
-    final long lookupCost = remainingGas - frame.getRemainingGas();
-    if (Hash.EMPTY.equals(blockHash)) {
-      return new OperationResult(lookupCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    Hash blockHash;
+    try {
+      blockHash = blockHashLookup.apply(frame, blockArg.toLong());
+    } catch (OutOfGas oog) {
+      return new OperationResult(cost + oog.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
+    final long lookupCost = remainingGas - frame.getRemainingGas();
     // give lookupCost back as it will be taken after
     frame.incrementRemainingGas(lookupCost);
     frame.pushStackItem(blockHash);
