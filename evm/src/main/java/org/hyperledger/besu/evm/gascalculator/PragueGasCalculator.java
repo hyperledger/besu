@@ -18,6 +18,8 @@ import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
 import org.hyperledger.besu.datatypes.CodeDelegation;
+import org.hyperledger.besu.datatypes.Transaction;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -77,12 +79,31 @@ public class PragueGasCalculator extends CancunGasCalculator {
   @Override
   public long transactionIntrinsicGasCost(
       final Bytes payload, final boolean isContractCreation, final long baselineGas) {
-    final long dynamicIntrinsicGasCost =
-        dynamicIntrinsicGasCost(payload, isContractCreation, baselineGas);
-    final long totalCostFloor =
-        tokensInCallData(payload.size(), zeroBytes(payload)) * TOTAL_COST_FLOOR_PER_TOKEN;
+    return clampedAdd(
+        TX_BASE_COST, dynamicIntrinsicGasCost(payload, isContractCreation, baselineGas));
+  }
 
-    return clampedAdd(TX_BASE_COST, Math.max(dynamicIntrinsicGasCost, totalCostFloor));
+  @Override
+  public long calculateGasRefund(
+      final Transaction transaction,
+      final MessageFrame initialFrame,
+      final long codeDelegationRefund) {
+    final long refundAllowance =
+        calculateRefundAllowance(transaction, initialFrame, codeDelegationRefund);
+
+    final long executionGasUsed =
+        transaction.getGasLimit() - initialFrame.getRemainingGas() - refundAllowance;
+    final long transactionFloorCost = transactionFloorCost(transaction.getPayload());
+    final long totalGasUsed = Math.max(executionGasUsed, transactionFloorCost);
+    return transaction.getGasLimit() - totalGasUsed;
+  }
+
+  @Override
+  public long transactionFloorCost(final Bytes transactionPayload) {
+    return clampedAdd(
+        TX_BASE_COST,
+        tokensInCallData(transactionPayload.size(), zeroBytes(transactionPayload))
+            * TOTAL_COST_FLOOR_PER_TOKEN);
   }
 
   private long tokensInCallData(final long payloadSize, final long zeroBytes) {

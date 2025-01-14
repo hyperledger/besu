@@ -141,6 +141,11 @@ public class FrontierGasCalculator implements GasCalculator {
     return clampedAdd(TX_BASE_COST, dynamicIntrinsicGasCost);
   }
 
+  @Override
+  public long transactionFloorCost(final Bytes payload) {
+    return 0;
+  }
+
   /**
    * Calculates the dynamic part of the intrinsic gas cost
    *
@@ -633,19 +638,32 @@ public class FrontierGasCalculator implements GasCalculator {
       final Transaction transaction,
       final MessageFrame initialFrame,
       final long codeDelegationRefund) {
+
+    final long refundAllowance =
+        calculateRefundAllowance(transaction, initialFrame, codeDelegationRefund);
+
+    return initialFrame.getRemainingGas() + refundAllowance;
+  }
+
+  /**
+   * Calculate the refund allowance for a transaction.
+   *
+   * @param transaction the transaction
+   * @param initialFrame the initial frame
+   * @param codeDelegationRefund the code delegation refund
+   * @return the refund allowance
+   */
+  protected long calculateRefundAllowance(
+      final Transaction transaction,
+      final MessageFrame initialFrame,
+      final long codeDelegationRefund) {
     final long selfDestructRefund =
         getSelfDestructRefundAmount() * initialFrame.getSelfDestructs().size();
     final long baseRefundGas =
         initialFrame.getGasRefund() + selfDestructRefund + codeDelegationRefund;
-    return refunded(transaction, initialFrame.getRemainingGas(), baseRefundGas);
-  }
-
-  private long refunded(
-      final Transaction transaction, final long gasRemaining, final long gasRefund) {
     // Integer truncation takes care of the floor calculation needed after the divide.
     final long maxRefundAllowance =
-        (transaction.getGasLimit() - gasRemaining) / getMaxRefundQuotient();
-    final long refundAllowance = Math.min(maxRefundAllowance, gasRefund);
-    return gasRemaining + refundAllowance;
+        (transaction.getGasLimit() - initialFrame.getRemainingGas()) / getMaxRefundQuotient();
+    return Math.min(maxRefundAllowance, baseRefundGas);
   }
 }
