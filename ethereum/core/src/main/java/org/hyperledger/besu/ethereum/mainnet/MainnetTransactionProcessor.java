@@ -651,7 +651,7 @@ public class MainnetTransactionProcessor {
     private int maxStackSize;
     private FeeMarket feeMarket;
     private CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
-    private CodeDelegationProcessor maybeCodeDelegationProcessor;
+    private CodeDelegationProcessor codeDelegationProcessor;
 
     public Builder gasCalculator(final GasCalculator gasCalculator) {
       this.gasCalculator = gasCalculator;
@@ -703,7 +703,7 @@ public class MainnetTransactionProcessor {
 
     public Builder codeDelegationProcessor(
         final CodeDelegationProcessor maybeCodeDelegationProcessor) {
-      this.maybeCodeDelegationProcessor = maybeCodeDelegationProcessor;
+      this.codeDelegationProcessor = maybeCodeDelegationProcessor;
       return this;
     }
 
@@ -717,7 +717,7 @@ public class MainnetTransactionProcessor {
       this.maxStackSize = processor.maxStackSize;
       this.feeMarket = processor.feeMarket;
       this.coinbaseFeePriceCalculator = processor.coinbaseFeePriceCalculator;
-      this.maybeCodeDelegationProcessor = processor.maybeCodeDelegationProcessor.orElse(null);
+      this.codeDelegationProcessor = processor.maybeCodeDelegationProcessor.orElse(null);
       return this;
     }
 
@@ -732,7 +732,7 @@ public class MainnetTransactionProcessor {
           maxStackSize,
           feeMarket,
           coinbaseFeePriceCalculator,
-          maybeCodeDelegationProcessor);
+          codeDelegationProcessor);
     }
   }
 }
