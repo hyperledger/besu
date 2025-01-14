@@ -14,16 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.AccountOverride;
-import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateOverride;
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -33,11 +34,11 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
@@ -132,7 +133,7 @@ public class TransactionSimulator {
 
   public Optional<TransactionSimulatorResult> process(
       final CallParameter callParams,
-      final Optional<AccountOverrideMap> maybeStateOverrides,
+      final Optional<StateOverrideMap> maybeStateOverrides,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
       final BlockHeader blockHeader) {
@@ -147,7 +148,7 @@ public class TransactionSimulator {
 
   public Optional<TransactionSimulatorResult> processOnPending(
       final CallParameter callParams,
-      final Optional<AccountOverrideMap> maybeStateOverrides,
+      final Optional<StateOverrideMap> maybeStateOverrides,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
       final ProcessableBlockHeader pendingBlockHeader) {
@@ -176,7 +177,7 @@ public class TransactionSimulator {
   }
 
   public ProcessableBlockHeader simulatePendingBlockHeader() {
-    final long timestamp = System.currentTimeMillis();
+    final long timestamp = MILLISECONDS.toSeconds(System.currentTimeMillis());
     final var chainHeadHeader = blockchain.getChainHeadHeader();
     final ProtocolSpec protocolSpec =
         protocolSchedule.getForNextBlockHeader(chainHeadHeader, timestamp);
@@ -270,7 +271,7 @@ public class TransactionSimulator {
    */
   public <U> Optional<U> process(
       final CallParameter callParams,
-      final Optional<AccountOverrideMap> maybeStateOverrides,
+      final Optional<StateOverrideMap> maybeStateOverrides,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
       final PreCloseStateHandler<U> preWorldStateCloseGuard,
@@ -343,7 +344,29 @@ public class TransactionSimulator {
   @Nonnull
   public Optional<TransactionSimulatorResult> processWithWorldUpdater(
       final CallParameter callParams,
-      final Optional<AccountOverrideMap> maybeStateOverrides,
+      final Optional<StateOverrideMap> maybeStateOverrides,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
+      final BlockHeader header,
+      final WorldUpdater updater,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator) {
+
+    final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(header);
+
+    return processWithWorldUpdater(
+        callParams,
+        maybeStateOverrides,
+        transactionValidationParams,
+        operationTracer,
+        header,
+        updater,
+        miningBeneficiary);
+  }
+
+  @Nonnull
+  public Optional<TransactionSimulatorResult> processWithWorldUpdater(
+      final CallParameter callParams,
+      final Optional<StateOverrideMap> maybeStateOverrides,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
       final ProcessableBlockHeader processableHeader,
@@ -368,7 +391,7 @@ public class TransactionSimulator {
     }
     if (maybeStateOverrides.isPresent()) {
       for (Address accountToOverride : maybeStateOverrides.get().keySet()) {
-        final AccountOverride overrides = maybeStateOverrides.get().get(accountToOverride);
+        final StateOverride overrides = maybeStateOverrides.get().get(accountToOverride);
         applyOverrides(updater.getOrCreate(accountToOverride), overrides);
       }
     }
@@ -414,7 +437,9 @@ public class TransactionSimulator {
             blockHeaderToProcess,
             transaction,
             miningBeneficiary,
-            new CachingBlockHashLookup(blockHeaderToProcess, blockchain),
+            protocolSpec
+                .getBlockHashProcessor()
+                .createBlockHashLookup(blockchain, blockHeaderToProcess),
             false,
             transactionValidationParams,
             operationTracer,
@@ -424,7 +449,7 @@ public class TransactionSimulator {
   }
 
   @VisibleForTesting
-  protected void applyOverrides(final MutableAccount account, final AccountOverride override) {
+  protected void applyOverrides(final MutableAccount account, final StateOverride override) {
     LOG.debug("applying overrides to state for account {}", account.getAddress());
     override.getNonce().ifPresent(account::setNonce);
     if (override.getBalance().isPresent()) {

@@ -16,9 +16,13 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -28,7 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -37,7 +41,12 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MainnetParallelBlockProcessor.class);
 
   private final Optional<MetricsSystem> metricsSystem;
   private final Optional<Counter> confirmedParallelizedTransactionCounter;
@@ -79,34 +88,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
   }
 
   @Override
-  protected Optional<PreprocessingContext> runBlockPreProcessing(
-      final MutableWorldState worldState,
-      final PrivateMetadataUpdater privateMetadataUpdater,
-      final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final Address miningBeneficiary,
-      final BlockHashOperation.BlockHashLookup blockHashLookup,
-      final Wei blobGasPrice) {
-    if ((worldState instanceof DiffBasedWorldState)) {
-      ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor =
-          new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
-      // runAsyncBlock, if activated, facilitates the  non-blocking parallel execution of
-      // transactions in the background through an optimistic strategy.
-      parallelizedConcurrentTransactionProcessor.runAsyncBlock(
-          worldState,
-          blockHeader,
-          transactions,
-          miningBeneficiary,
-          blockHashLookup,
-          blobGasPrice,
-          privateMetadataUpdater);
-      return Optional.of(
-          new ParallelizedPreProcessingContext(parallelizedConcurrentTransactionProcessor));
-    }
-    return Optional.empty();
-  }
-
-  @Override
   protected TransactionProcessingResult getTransactionProcessingResult(
       final Optional<PreprocessingContext> preProcessingContext,
       final MutableWorldState worldState,
@@ -117,7 +98,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final Address miningBeneficiary,
       final Transaction transaction,
       final int location,
-      final BlockHashOperation.BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup) {
 
     TransactionProcessingResult transactionProcessingResult = null;
 
@@ -126,7 +107,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           (ParallelizedPreProcessingContext) preProcessingContext.get();
       transactionProcessingResult =
           parallelizedPreProcessingContext
-              .getParallelizedConcurrentTransactionProcessor()
+              .parallelizedConcurrentTransactionProcessor()
               .applyParallelizedTransactionResult(
                   worldState,
                   miningBeneficiary,
@@ -154,20 +135,47 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
     }
   }
 
-  static class ParallelizedPreProcessingContext implements PreprocessingContext {
-    final ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor;
-
-    public ParallelizedPreProcessingContext(
-        final ParallelizedConcurrentTransactionProcessor
-            parallelizedConcurrentTransactionProcessor) {
-      this.parallelizedConcurrentTransactionProcessor = parallelizedConcurrentTransactionProcessor;
+  @Override
+  public BlockProcessingResult processBlock(
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final Optional<List<Withdrawal>> maybeWithdrawals,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
+    final BlockProcessingResult blockProcessingResult =
+        super.processBlock(
+            blockchain,
+            worldState,
+            blockHeader,
+            transactions,
+            ommers,
+            maybeWithdrawals,
+            privateMetadataUpdater,
+            new ParallelTransactionPreprocessing());
+    if (blockProcessingResult.isFailed()) {
+      // Fallback to non-parallel processing if there is a block processing exception .
+      LOG.info(
+          "Parallel transaction processing failure. Falling back to non-parallel processing for block #{} ({})",
+          blockHeader.getNumber(),
+          blockHeader.getBlockHash());
+      return super.processBlock(
+          blockchain,
+          worldState,
+          blockHeader,
+          transactions,
+          ommers,
+          maybeWithdrawals,
+          privateMetadataUpdater,
+          new NoPreprocessing());
     }
-
-    public ParallelizedConcurrentTransactionProcessor
-        getParallelizedConcurrentTransactionProcessor() {
-      return parallelizedConcurrentTransactionProcessor;
-    }
+    return blockProcessingResult;
   }
+
+  record ParallelizedPreProcessingContext(
+      ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor)
+      implements PreprocessingContext {}
 
   public static class ParallelBlockProcessorBuilder
       implements ProtocolSpecBuilder.BlockProcessorBuilder {
@@ -194,6 +202,37 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           skipZeroBlockRewards,
           protocolSchedule,
           metricsSystem);
+    }
+  }
+
+  class ParallelTransactionPreprocessing implements PreprocessingFunction {
+
+    @Override
+    public Optional<PreprocessingContext> run(
+        final MutableWorldState worldState,
+        final PrivateMetadataUpdater privateMetadataUpdater,
+        final BlockHeader blockHeader,
+        final List<Transaction> transactions,
+        final Address miningBeneficiary,
+        final BlockHashLookup blockHashLookup,
+        final Wei blobGasPrice) {
+      if ((worldState instanceof DiffBasedWorldState)) {
+        ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor =
+            new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
+        // When enabled, runAsyncBlock performs non-conflicting parallel execution of transactions
+        // in the background using an optimistic approach.
+        parallelizedConcurrentTransactionProcessor.runAsyncBlock(
+            worldState,
+            blockHeader,
+            transactions,
+            miningBeneficiary,
+            blockHashLookup,
+            blobGasPrice,
+            privateMetadataUpdater);
+        return Optional.of(
+            new ParallelizedPreProcessingContext(parallelizedConcurrentTransactionProcessor));
+      }
+      return Optional.empty();
     }
   }
 }

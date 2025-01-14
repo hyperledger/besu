@@ -3,25 +3,45 @@
 ## Unreleased
 
 ### Breaking Changes
-- `--host-whitelist` has been deprecated since 2020 and its related option will be removed in a future release.
+- `--host-whitelist` has been deprecated since 2020 and this option is removed. Use the equivalent `--host-allowlist` instead. 
+- Changed tracer API to include the mining beneficiary in BlockAwareOperationTracer::traceStartBlock [#8096](https://github.com/hyperledger/besu/pull/8096)
 
 ### Upcoming Breaking Changes
-- Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
-- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release
-- `--host-whitelist` has been deprecated in favor of `--host-allowlist` since 2020 and will be removed in a future release
+- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release. Use docker or none instead.
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Tessera privacy
   - Smart-contract-based (onchain) permissioning
   - Proof of Work consensus
   - Fast Sync
 
-
-
 ### Additions and Improvements
+- Add RPC HTTP options to specify custom truststore and its password [#7978](https://github.com/hyperledger/besu/pull/7978)
 - Retrieve all transaction receipts for a block in one request [#6646](https://github.com/hyperledger/besu/pull/6646)
+- Implement EIP-7840: Add blob schedule to config files [#8042](https://github.com/hyperledger/besu/pull/8042)
+- Allow gasPrice (legacy) and 1559 gasPrice params to be specified simultaneously for `eth_call`, `eth_createAccessList`, and `eth_estimateGas` [#8059](https://github.com/hyperledger/besu/pull/8059)
+- Add support for EIP-7702 transaction in the txpool [#8018](https://github.com/hyperledger/besu/pull/8018) [#7984](https://github.com/hyperledger/besu/pull/7984)
 
 ### Bug fixes
+- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
+- Revise the approach for setting level_compaction_dynamic_level_bytes RocksDB configuration option [#8037](https://github.com/hyperledger/besu/pull/8037)
+- Fix possible incomplete txpool restore from dump file [#7991](https://github.com/hyperledger/besu/pull/7991)
+
+## 24.12.2 Hotfix
+
+This is an optional hotfix to address serialization of state overrides parameter when `movePrecompileToAddress` is present. 
+
+There is no need to upgrade from 24.12.0 (or 24.12.1) to this release if you are not yet using this functionality.
+
+### Bug fixes
+- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
+
+## 24.12.1 Hotfix
+
+This is a hotfix to address publishing besu maven artifacts.  There are no issues with 24.12.0 other than incomplete artifact publishing, and there is no functional difference between 24.12.0 and 24.12.1 release binaries.
+
+### Bug fixes
+- Fix BOM pom publication to Artifactory [#8201](https://github.com/hyperledger/besu/pull/8021)
 
 ## 24.12.0
 

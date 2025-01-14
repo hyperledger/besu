@@ -116,6 +116,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         originalTransaction.getMaxGasPrice().multiply(2).divide(10),
         originalTransaction.getPayload().size(),
         originalTransaction.getBlobCount(),
+        originalTransaction.getCodeDelegationList().orElse(null),
         keys);
   }
 
@@ -191,7 +192,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
       final TransactionType type) {
     final PendingTransaction lowGasPriceTx =
         createRemotePendingTransaction(
-            createTransaction(type, 0, DEFAULT_MIN_GAS_PRICE, Wei.ONE, 0, 1, KEYS1));
+            createTransaction(type, 0, DEFAULT_MIN_GAS_PRICE, Wei.ONE, 0, 1, null, KEYS1));
     assertThat(prioritizeTransaction(lowGasPriceTx)).isEqualTo(DROPPED);
     assertEvicted(lowGasPriceTx);
     assertTransactionNotPrioritized(lowGasPriceTx);
@@ -217,6 +218,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
                             0,
                             DEFAULT_MIN_GAS_PRICE.add(1).multiply(20),
                             0,
+                            null,
                             SIGNATURE_ALGORITHM.get().generateKeyPair())))
             .collect(Collectors.toUnmodifiableList());
 
@@ -238,6 +240,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
               DEFAULT_MIN_GAS_PRICE.divide(10),
               0,
               1,
+              null,
               SIGNATURE_ALGORITHM.get().generateKeyPair());
       addedTxs.add(tx);
       assertThat(prioritizeTransaction(tx)).isEqualTo(ADDED);
@@ -251,6 +254,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
             DEFAULT_MIN_GAS_PRICE.divide(10),
             0,
             1,
+            null,
             SIGNATURE_ALGORITHM.get().generateKeyPair());
     assertThat(prioritizeTransaction(overflowTx)).isEqualTo(DROPPED);
 
@@ -272,6 +276,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
               DEFAULT_MIN_GAS_PRICE.divide(10),
               0,
               1,
+              null,
               KEYS1);
       addedTxs.add(tx);
       assertThat(prioritizeTransaction(tx)).isEqualTo(ADDED);
