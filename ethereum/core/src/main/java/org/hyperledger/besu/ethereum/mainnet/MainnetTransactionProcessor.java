@@ -70,7 +70,7 @@ public class MainnetTransactionProcessor {
 
   protected final TransactionValidatorFactory transactionValidatorFactory;
 
-  private final AbstractMessageProcessor contractCreationProcessor;
+  private final ContractCreationProcessor contractCreationProcessor;
 
   private final MessageCallProcessor messageCallProcessor;
 
@@ -85,30 +85,7 @@ public class MainnetTransactionProcessor {
 
   private final Optional<CodeDelegationProcessor> maybeCodeDelegationProcessor;
 
-  public MainnetTransactionProcessor(
-      final GasCalculator gasCalculator,
-      final TransactionValidatorFactory transactionValidatorFactory,
-      final ContractCreationProcessor contractCreationProcessor,
-      final MessageCallProcessor messageCallProcessor,
-      final boolean clearEmptyAccounts,
-      final boolean warmCoinbase,
-      final int maxStackSize,
-      final FeeMarket feeMarket,
-      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
-    this(
-        gasCalculator,
-        transactionValidatorFactory,
-        contractCreationProcessor,
-        messageCallProcessor,
-        clearEmptyAccounts,
-        warmCoinbase,
-        maxStackSize,
-        feeMarket,
-        coinbaseFeePriceCalculator,
-        null);
-  }
-
-  public MainnetTransactionProcessor(
+  private MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
       final TransactionValidatorFactory transactionValidatorFactory,
       final ContractCreationProcessor contractCreationProcessor,
@@ -664,23 +641,10 @@ public class MainnetTransactionProcessor {
     return new Builder();
   }
 
-  private MainnetTransactionProcessor(final Builder builder) {
-    this.gasCalculator = builder.gasCalculator;
-    this.transactionValidatorFactory = builder.transactionValidatorFactory;
-    this.contractCreationProcessor = builder.contractCreationProcessor;
-    this.messageCallProcessor = builder.messageCallProcessor;
-    this.clearEmptyAccounts = builder.clearEmptyAccounts;
-    this.warmCoinbase = builder.warmCoinbase;
-    this.maxStackSize = builder.maxStackSize;
-    this.feeMarket = builder.feeMarket;
-    this.coinbaseFeePriceCalculator = builder.coinbaseFeePriceCalculator;
-    this.maybeCodeDelegationProcessor = Optional.ofNullable(builder.maybeCodeDelegationProcessor);
-  }
-
   public static class Builder {
     private GasCalculator gasCalculator;
     private TransactionValidatorFactory transactionValidatorFactory;
-    private AbstractMessageProcessor contractCreationProcessor;
+    private ContractCreationProcessor contractCreationProcessor;
     private MessageCallProcessor messageCallProcessor;
     private boolean clearEmptyAccounts;
     private boolean warmCoinbase;
@@ -701,7 +665,7 @@ public class MainnetTransactionProcessor {
     }
 
     public Builder contractCreationProcessor(
-        final AbstractMessageProcessor contractCreationProcessor) {
+        final ContractCreationProcessor contractCreationProcessor) {
       this.contractCreationProcessor = contractCreationProcessor;
       return this;
     }
@@ -737,7 +701,7 @@ public class MainnetTransactionProcessor {
       return this;
     }
 
-    public Builder maybeCodeDelegationProcessor(
+    public Builder codeDelegationProcessor(
         final CodeDelegationProcessor maybeCodeDelegationProcessor) {
       this.maybeCodeDelegationProcessor = maybeCodeDelegationProcessor;
       return this;
@@ -758,7 +722,17 @@ public class MainnetTransactionProcessor {
     }
 
     public MainnetTransactionProcessor build() {
-      return new MainnetTransactionProcessor(this);
+      return new MainnetTransactionProcessor(
+          gasCalculator,
+          transactionValidatorFactory,
+          contractCreationProcessor,
+          messageCallProcessor,
+          clearEmptyAccounts,
+          warmCoinbase,
+          maxStackSize,
+          feeMarket,
+          coinbaseFeePriceCalculator,
+          maybeCodeDelegationProcessor);
     }
   }
 }

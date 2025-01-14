@@ -87,7 +87,7 @@ public class TransactionSimulator {
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
   private final MiningConfiguration miningConfiguration;
-  private final SimulationTransactionProcessorFactory transactionProcessorFactory;
+  private final SimulationTransactionProcessorFactory simulationTransactionProcessorFactory;
   private final long rpcGasCap;
 
   public TransactionSimulator(
@@ -101,7 +101,8 @@ public class TransactionSimulator {
     this.protocolSchedule = protocolSchedule;
     this.miningConfiguration = miningConfiguration;
     this.rpcGasCap = rpcGasCap;
-    this.transactionProcessorFactory = new SimulationTransactionProcessorFactory(protocolSchedule);
+    this.simulationTransactionProcessorFactory =
+        new SimulationTransactionProcessorFactory(protocolSchedule);
   }
 
   public Optional<TransactionSimulatorResult> process(
@@ -405,7 +406,8 @@ public class TransactionSimulator {
         calculateSimulationGasCap(callParams.getGasLimit(), blockHeaderToProcess.getGasLimit());
 
     MainnetTransactionProcessor transactionProcessor =
-        transactionProcessorFactory.getTransactionProcessor(processableHeader, maybeStateOverrides);
+        simulationTransactionProcessorFactory.getTransactionProcessor(
+            processableHeader, maybeStateOverrides);
 
     final Optional<BlockHeader> maybeParentHeader =
         blockchain.getBlockHeader(blockHeaderToProcess.getParentHash());

@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/** Factory for creating transaction processors with optional state overrides for simulation. */
 public class SimulationTransactionProcessorFactory {
 
   private final ProtocolSchedule protocolSchedule;

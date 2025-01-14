@@ -80,17 +80,19 @@ class MainnetTransactionProcessorTest {
   @Mock private MutableAccount receiverAccount;
 
   MainnetTransactionProcessor createTransactionProcessor(final boolean warmCoinbase) {
-    return new MainnetTransactionProcessor(
-        gasCalculator,
-        transactionValidatorFactory,
-        contractCreationProcessor,
-        messageCallProcessor,
-        false,
-        warmCoinbase,
-        MAX_STACK_SIZE,
-        FeeMarket.legacy(),
-        CoinbaseFeePriceCalculator.frontier(),
-        new CodeDelegationProcessor(Optional.of(BigInteger.ONE), BigInteger.TEN));
+    return MainnetTransactionProcessor.builder()
+        .gasCalculator(gasCalculator)
+        .transactionValidatorFactory(transactionValidatorFactory)
+        .contractCreationProcessor(contractCreationProcessor)
+        .messageCallProcessor(messageCallProcessor)
+        .clearEmptyAccounts(false)
+        .warmCoinbase(warmCoinbase)
+        .maxStackSize(MAX_STACK_SIZE)
+        .feeMarket(FeeMarket.legacy())
+        .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
+        .codeDelegationProcessor(
+            new CodeDelegationProcessor(Optional.of(BigInteger.ONE), BigInteger.TEN))
+        .build();
   }
 
   @Test
