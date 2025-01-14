@@ -36,6 +36,6 @@ public record Request(RequestType type, Bytes data)
    * @return the serialized request as a byte.
    */
   public Bytes getEncodedRequest() {
-    return Bytes.concatenate(Bytes.of(getType().getSerializedType()), getData());
+    return Bytes.concatenate(Bytes.of(getType().ordinal()), getData());
   }
 }
