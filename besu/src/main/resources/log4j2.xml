@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN">
+<Configuration level="WARN">
     <Properties>
         <Property name="root.log.level">${env:LOG_LEVEL:-INFO}</Property>
         <Property name="root.log.logger">${env:LOGGER:-Console}</Property>
