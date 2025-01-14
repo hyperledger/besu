@@ -18,10 +18,23 @@ import org.hyperledger.besu.datatypes.Address;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** Helper class for 7702 delegated code interactions */
 public class DelegateCodeHelper {
+  /**
+   * The designator that is returned when a ExtCode* operation calls a contract with delegated code
+   */
   public static final Bytes DELEGATED_CODE_DESIGNATOR = Bytes.fromHexString("ef01");
+
+  /** The prefix that is used to identify delegated code */
   public static final Bytes DELEGATED_CODE_PREFIX = Bytes.fromHexString("ef0100");
+
+  /** The size of the delegated code */
   public static final int DELEGATED_CODE_SIZE = DELEGATED_CODE_PREFIX.size() + Address.SIZE;
+
+  /** create a new DelegateCodeHelper */
+  public DelegateCodeHelper() {
+    // empty
+  }
 
   /**
    * Returns if the provided code is delegated code.
@@ -35,6 +48,11 @@ public class DelegateCodeHelper {
         && code.slice(0, DELEGATED_CODE_PREFIX.size()).equals(DELEGATED_CODE_PREFIX);
   }
 
+  /**
+   * Returns the delegated code designator
+   *
+   * @return the hardcoded designator for delegated code: ef01
+   */
   public static Bytes getDelegatedCodeForRead() {
     return DELEGATED_CODE_DESIGNATOR;
   }
