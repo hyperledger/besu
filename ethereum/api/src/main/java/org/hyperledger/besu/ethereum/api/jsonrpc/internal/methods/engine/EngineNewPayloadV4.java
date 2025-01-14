@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,9 +41,16 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EthPeers ethPeers,
-      final EngineCallListener engineCallListener) {
+      final EngineCallListener engineCallListener,
+      final MetricsSystem metricsSystem) {
     super(
-        vertx, timestampSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
+        vertx,
+        timestampSchedule,
+        protocolContext,
+        mergeCoordinator,
+        ethPeers,
+        engineCallListener,
+        metricsSystem);
     pragueMilestone = timestampSchedule.milestoneFor(PRAGUE);
   }
 
