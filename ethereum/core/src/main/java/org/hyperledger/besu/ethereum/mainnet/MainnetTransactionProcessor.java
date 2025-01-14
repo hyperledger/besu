@@ -664,7 +664,7 @@ public class MainnetTransactionProcessor {
     return new Builder();
   }
 
-  private MainnetTransactionProcessor(Builder builder) {
+  private MainnetTransactionProcessor(final Builder builder) {
     this.gasCalculator = builder.gasCalculator;
     this.transactionValidatorFactory = builder.transactionValidatorFactory;
     this.contractCreationProcessor = builder.contractCreationProcessor;
@@ -689,60 +689,61 @@ public class MainnetTransactionProcessor {
     private CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
     private CodeDelegationProcessor maybeCodeDelegationProcessor;
 
-    public Builder gasCalculator(GasCalculator gasCalculator) {
+    public Builder gasCalculator(final GasCalculator gasCalculator) {
       this.gasCalculator = gasCalculator;
       return this;
     }
 
     public Builder transactionValidatorFactory(
-        TransactionValidatorFactory transactionValidatorFactory) {
+        final TransactionValidatorFactory transactionValidatorFactory) {
       this.transactionValidatorFactory = transactionValidatorFactory;
       return this;
     }
 
-    public Builder contractCreationProcessor(AbstractMessageProcessor contractCreationProcessor) {
+    public Builder contractCreationProcessor(
+        final AbstractMessageProcessor contractCreationProcessor) {
       this.contractCreationProcessor = contractCreationProcessor;
       return this;
     }
 
-    public Builder messageCallProcessor(MessageCallProcessor messageCallProcessor) {
+    public Builder messageCallProcessor(final MessageCallProcessor messageCallProcessor) {
       this.messageCallProcessor = messageCallProcessor;
       return this;
     }
 
-    public Builder clearEmptyAccounts(boolean clearEmptyAccounts) {
+    public Builder clearEmptyAccounts(final boolean clearEmptyAccounts) {
       this.clearEmptyAccounts = clearEmptyAccounts;
       return this;
     }
 
-    public Builder warmCoinbase(boolean warmCoinbase) {
+    public Builder warmCoinbase(final boolean warmCoinbase) {
       this.warmCoinbase = warmCoinbase;
       return this;
     }
 
-    public Builder maxStackSize(int maxStackSize) {
+    public Builder maxStackSize(final int maxStackSize) {
       this.maxStackSize = maxStackSize;
       return this;
     }
 
-    public Builder feeMarket(FeeMarket feeMarket) {
+    public Builder feeMarket(final FeeMarket feeMarket) {
       this.feeMarket = feeMarket;
       return this;
     }
 
     public Builder coinbaseFeePriceCalculator(
-        CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
+        final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
       this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
       return this;
     }
 
     public Builder maybeCodeDelegationProcessor(
-        CodeDelegationProcessor maybeCodeDelegationProcessor) {
+        final CodeDelegationProcessor maybeCodeDelegationProcessor) {
       this.maybeCodeDelegationProcessor = maybeCodeDelegationProcessor;
       return this;
     }
 
-    public Builder populateFrom(MainnetTransactionProcessor processor) {
+    public Builder populateFrom(final MainnetTransactionProcessor processor) {
       this.gasCalculator = processor.gasCalculator;
       this.transactionValidatorFactory = processor.transactionValidatorFactory;
       this.contractCreationProcessor = processor.contractCreationProcessor;
