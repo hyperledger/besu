@@ -61,7 +61,6 @@ import java.util.TreeMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -939,7 +938,6 @@ public class BonsaiWorldStateKeyValueStorageTest {
             null,
             null,
             null,
-            UInt64.ZERO,
             new MainnetBlockHeaderFunctions());
     return header;
   }

@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -42,7 +43,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiArchi
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
@@ -59,7 +59,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.bouncycastle.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -153,7 +152,6 @@ public class ArchiverTests {
             null,
             null,
             null,
-            UInt64.ZERO,
             new MainnetBlockHeaderFunctions());
     return Optional.of(new Block(header, BlockBody.empty()));
   }
@@ -288,17 +286,17 @@ public class ArchiverTests {
     // Simulate an account change in block 101. This state will be archived because block 102
     // updates the same account (see below)
     TrieLogLayer block101TrieLogs = new TrieLogLayer();
-    StateTrieAccountValue oldValue =
-        new StateTrieAccountValue(12, Wei.fromHexString("0x123"), Hash.EMPTY, Hash.EMPTY);
-    StateTrieAccountValue newValue =
-        new StateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
+    PmtStateTrieAccountValue oldValue =
+        new PmtStateTrieAccountValue(12, Wei.fromHexString("0x123"), Hash.EMPTY, Hash.EMPTY);
+    PmtStateTrieAccountValue newValue =
+        new PmtStateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
     block101TrieLogs.addAccountChange(address, oldValue, newValue);
 
     // Simulate another change to the same account, this time in block 102. This change won't be
     // archived during the test because it is the current state of the account.
     TrieLogLayer block102TrieLogs = new TrieLogLayer();
-    oldValue = new StateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
-    newValue = new StateTrieAccountValue(14, Wei.fromHexString("0x345"), Hash.EMPTY, Hash.EMPTY);
+    oldValue = new PmtStateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
+    newValue = new PmtStateTrieAccountValue(14, Wei.fromHexString("0x345"), Hash.EMPTY, Hash.EMPTY);
     block102TrieLogs.addAccountChange(address, oldValue, newValue);
     when(trieLogManager.getTrieLogLayer(
             Hash.fromHexString(
@@ -579,10 +577,10 @@ public class ArchiverTests {
     UInt256 slot = UInt256.ONE;
     StorageSlotKey storageSlotKey = new StorageSlotKey(slot);
     block101TrieLogs.addStorageChange(address, storageSlotKey, oldStorageValue, newStorageValue);
-    StateTrieAccountValue oldAccountValue =
-        new StateTrieAccountValue(12, Wei.fromHexString("0x123"), Hash.EMPTY, Hash.EMPTY);
-    StateTrieAccountValue newAccountValue =
-        new StateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
+    PmtStateTrieAccountValue oldAccountValue =
+        new PmtStateTrieAccountValue(12, Wei.fromHexString("0x123"), Hash.EMPTY, Hash.EMPTY);
+    PmtStateTrieAccountValue newAccountValue =
+        new PmtStateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
     block101TrieLogs.addAccountChange(address, oldAccountValue, newAccountValue);
 
     // Simulate a storage AND account change in block 102.
@@ -593,9 +591,9 @@ public class ArchiverTests {
     storageSlotKey = new StorageSlotKey(slot);
     block102TrieLogs.addStorageChange(address, storageSlotKey, oldStorageValue, newStorageValue);
     oldAccountValue =
-        new StateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
+        new PmtStateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
     newAccountValue =
-        new StateTrieAccountValue(14, Wei.fromHexString("0x345"), Hash.EMPTY, Hash.EMPTY);
+        new PmtStateTrieAccountValue(14, Wei.fromHexString("0x345"), Hash.EMPTY, Hash.EMPTY);
     block102TrieLogs.addAccountChange(address, oldAccountValue, newAccountValue);
 
     // Simulate a storage change in block 103. This state will not be archived because it refers to
@@ -768,17 +766,17 @@ public class ArchiverTests {
     // Simulate an account change in block 151. This state will be archived because block 152
     // updates the same account (see below)
     TrieLogLayer block151TrieLogs = new TrieLogLayer();
-    StateTrieAccountValue oldValue =
-        new StateTrieAccountValue(12, Wei.fromHexString("0x123"), Hash.EMPTY, Hash.EMPTY);
-    StateTrieAccountValue newValue =
-        new StateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
+    PmtStateTrieAccountValue oldValue =
+        new PmtStateTrieAccountValue(12, Wei.fromHexString("0x123"), Hash.EMPTY, Hash.EMPTY);
+    PmtStateTrieAccountValue newValue =
+        new PmtStateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
     block151TrieLogs.addAccountChange(address, oldValue, newValue);
 
     // Simulate another change to the same account, this time in block 152. This change won't be
     // archived during the test because it is the current state of the account.
     TrieLogLayer block152TrieLogs = new TrieLogLayer();
-    oldValue = new StateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
-    newValue = new StateTrieAccountValue(14, Wei.fromHexString("0x345"), Hash.EMPTY, Hash.EMPTY);
+    oldValue = new PmtStateTrieAccountValue(13, Wei.fromHexString("0x234"), Hash.EMPTY, Hash.EMPTY);
+    newValue = new PmtStateTrieAccountValue(14, Wei.fromHexString("0x345"), Hash.EMPTY, Hash.EMPTY);
     block152TrieLogs.addAccountChange(address, oldValue, newValue);
     when(trieLogManager.getTrieLogLayer(
             Hash.fromHexString(
