@@ -30,7 +30,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 @JsonPropertyOrder({"pc", "op", "gas", "gasCost", "depth", "stack", "memory", "storage"})
 public class StructLog {
 
-  private static char[] hexChars = "0123456789abcdef".toCharArray();
+  private static final char[] hexChars = "0123456789abcdef".toCharArray();
   private final int depth;
   private final long gas;
   private final long gasCost;
