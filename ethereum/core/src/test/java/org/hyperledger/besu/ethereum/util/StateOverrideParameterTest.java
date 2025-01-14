@@ -18,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.hyperledger.besu.datatypes.AccountOverride;
-import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.StateOverride;
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -30,7 +30,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
-public class AccountOverrideParameterTest {
+public class StateOverrideParameterTest {
 
   private static final String ADDRESS_HEX1 = "0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3";
   private static final String ADDRESS_HEX2 = "0xd5E23607D5d73ff2293152f464C3caB005f87696";
@@ -56,15 +56,14 @@ public class AccountOverrideParameterTest {
             + "}}],\"id\":1}";
 
     final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
-    final AccountOverrideMap accountOverrideParam =
-        request.getRequiredParameter(2, AccountOverrideMap.class);
+    final StateOverrideMap stateOverrideParam =
+        request.getRequiredParameter(2, StateOverrideMap.class);
 
-    final AccountOverride accountOverride =
-        accountOverrideParam.get(Address.fromHexString(ADDRESS_HEX1));
+    final StateOverride stateOverride = stateOverrideParam.get(Address.fromHexString(ADDRESS_HEX1));
 
-    assertThat(accountOverride.getNonce().get()).isEqualTo(158);
-    assertThat(accountOverride.getBalance()).isEqualTo(Optional.of(Wei.of(1)));
-    assertFalse(accountOverride.getStateDiff().isPresent());
+    assertThat(stateOverride.getNonce().get()).isEqualTo(158);
+    assertThat(stateOverride.getBalance()).isEqualTo(Optional.of(Wei.of(1)));
+    assertFalse(stateOverride.getStateDiff().isPresent());
   }
 
   @Test
@@ -84,16 +83,15 @@ public class AccountOverrideParameterTest {
             + "}}],\"id\":1}";
 
     final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
-    final AccountOverrideMap accountOverrideParam =
-        request.getRequiredParameter(2, AccountOverrideMap.class);
+    final StateOverrideMap stateOverrideParam =
+        request.getRequiredParameter(2, StateOverrideMap.class);
 
-    final AccountOverride accountOverride =
-        accountOverrideParam.get(Address.fromHexString(ADDRESS_HEX1));
+    final StateOverride stateOverride = stateOverrideParam.get(Address.fromHexString(ADDRESS_HEX1));
 
-    assertFalse(accountOverride.getNonce().isPresent());
-    assertThat(accountOverride.getBalance()).isEqualTo(Optional.of(Wei.of(1)));
-    assertThat(accountOverride.getCode()).isEqualTo(Optional.of(CODE_STRING));
-    assertFalse(accountOverride.getStateDiff().isPresent());
+    assertFalse(stateOverride.getNonce().isPresent());
+    assertThat(stateOverride.getBalance()).isEqualTo(Optional.of(Wei.of(1)));
+    assertThat(stateOverride.getCode()).isEqualTo(Optional.of(CODE_STRING));
+    assertFalse(stateOverride.getStateDiff().isPresent());
   }
 
   @Test
@@ -113,15 +111,14 @@ public class AccountOverrideParameterTest {
             + "}}],\"id\":1}";
 
     final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
-    final AccountOverrideMap accountOverrideParam =
-        request.getRequiredParameter(2, AccountOverrideMap.class);
+    final StateOverrideMap stateOverrideParam =
+        request.getRequiredParameter(2, StateOverrideMap.class);
 
-    final AccountOverride accountOverride =
-        accountOverrideParam.get(Address.fromHexString(ADDRESS_HEX1));
+    final StateOverride stateOverride = stateOverrideParam.get(Address.fromHexString(ADDRESS_HEX1));
 
-    assertThat(accountOverride.getBalance()).isEqualTo(Optional.of(Wei.of(1)));
-    assertThat(accountOverride.getNonce().get()).isEqualTo(158); // 0x9e
-    assertFalse(accountOverride.getStateDiff().isPresent());
+    assertThat(stateOverride.getBalance()).isEqualTo(Optional.of(Wei.of(1)));
+    assertThat(stateOverride.getNonce().get()).isEqualTo(158); // 0x9e
+    assertFalse(stateOverride.getStateDiff().isPresent());
   }
 
   @Test
@@ -146,20 +143,19 @@ public class AccountOverrideParameterTest {
 
     final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
 
-    final AccountOverrideMap accountOverrideParam =
-        request.getRequiredParameter(2, AccountOverrideMap.class);
-    assertThat(accountOverrideParam.size()).isEqualTo(1);
+    final StateOverrideMap stateOverrideParam =
+        request.getRequiredParameter(2, StateOverrideMap.class);
+    assertThat(stateOverrideParam.size()).isEqualTo(1);
 
-    final AccountOverride accountOverride =
-        accountOverrideParam.get(Address.fromHexString(ADDRESS_HEX1));
-    assertThat(accountOverride.getNonce().get()).isEqualTo(158);
+    final StateOverride stateOverride = stateOverrideParam.get(Address.fromHexString(ADDRESS_HEX1));
+    assertThat(stateOverride.getNonce().get()).isEqualTo(158);
 
-    assertTrue(accountOverride.getStateDiff().isPresent());
-    assertThat(accountOverride.getStateDiff().get().get(STORAGE_KEY)).isEqualTo(STORAGE_VALUE);
+    assertTrue(stateOverride.getStateDiff().isPresent());
+    assertThat(stateOverride.getStateDiff().get().get(STORAGE_KEY)).isEqualTo(STORAGE_VALUE);
   }
 
   @Test
-  public void jsonWithMultipleAccountOverridesDeserializesCorrectly() throws Exception {
+  public void jsonWithMultipleStateOverridesDeserializesCorrectly() throws Exception {
     final String json =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{"
             + "\"from\":\"0x0\", \"to\": \"0x0\"}, "
@@ -193,23 +189,23 @@ public class AccountOverrideParameterTest {
 
     final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
 
-    final AccountOverrideMap accountOverrideParam =
-        request.getRequiredParameter(2, AccountOverrideMap.class);
-    assertThat(accountOverrideParam.size()).isEqualTo(2);
+    final StateOverrideMap stateOverrideParam =
+        request.getRequiredParameter(2, StateOverrideMap.class);
+    assertThat(stateOverrideParam.size()).isEqualTo(2);
 
-    final AccountOverride accountOverride1 =
-        accountOverrideParam.get(Address.fromHexString(ADDRESS_HEX1));
-    assertThat(accountOverride1.getNonce().get()).isEqualTo(158);
-    assertThat(accountOverride1.getBalance()).isEqualTo(Optional.of(Wei.fromHexString("0x01")));
-    assertTrue(accountOverride1.getStateDiff().isPresent());
-    assertThat(accountOverride1.getStateDiff().get().get(STORAGE_KEY)).isEqualTo(STORAGE_VALUE);
+    final StateOverride stateOverride1 =
+        stateOverrideParam.get(Address.fromHexString(ADDRESS_HEX1));
+    assertThat(stateOverride1.getNonce().get()).isEqualTo(158);
+    assertThat(stateOverride1.getBalance()).isEqualTo(Optional.of(Wei.fromHexString("0x01")));
+    assertTrue(stateOverride1.getStateDiff().isPresent());
+    assertThat(stateOverride1.getStateDiff().get().get(STORAGE_KEY)).isEqualTo(STORAGE_VALUE);
 
-    final AccountOverride accountOverride2 =
-        accountOverrideParam.get(Address.fromHexString(ADDRESS_HEX2));
-    assertThat(accountOverride2.getNonce().get()).isEqualTo(157);
-    assertThat(accountOverride2.getBalance()).isEqualTo(Optional.of(Wei.fromHexString("0xFF")));
-    assertTrue(accountOverride2.getStateDiff().isPresent());
-    assertThat(accountOverride2.getStateDiff().get().get(STORAGE_KEY)).isEqualTo(STORAGE_VALUE);
+    final StateOverride stateOverride2 =
+        stateOverrideParam.get(Address.fromHexString(ADDRESS_HEX2));
+    assertThat(stateOverride2.getNonce().get()).isEqualTo(157);
+    assertThat(stateOverride2.getBalance()).isEqualTo(Optional.of(Wei.fromHexString("0xFF")));
+    assertTrue(stateOverride2.getStateDiff().isPresent());
+    assertThat(stateOverride2.getStateDiff().get().get(STORAGE_KEY)).isEqualTo(STORAGE_VALUE);
   }
 
   private JsonRpcRequest readJsonAsJsonRpcRequest(final String json) throws java.io.IOException {

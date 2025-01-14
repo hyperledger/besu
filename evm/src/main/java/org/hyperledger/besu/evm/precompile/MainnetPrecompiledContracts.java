@@ -163,10 +163,8 @@ public interface MainnetPrecompiledContracts {
 
     // EIP-2537 - BLS12-381 curve operations
     registry.put(Address.BLS12_G1ADD, new BLS12G1AddPrecompiledContract());
-    registry.put(Address.BLS12_G1MUL, new BLS12G1MulPrecompiledContract());
     registry.put(Address.BLS12_G1MULTIEXP, new BLS12G1MultiExpPrecompiledContract());
     registry.put(Address.BLS12_G2ADD, new BLS12G2AddPrecompiledContract());
-    registry.put(Address.BLS12_G2MUL, new BLS12G2MulPrecompiledContract());
     registry.put(Address.BLS12_G2MULTIEXP, new BLS12G2MultiExpPrecompiledContract());
     registry.put(Address.BLS12_PAIRING, new BLS12PairingPrecompiledContract());
     registry.put(Address.BLS12_MAP_FP_TO_G1, new BLS12MapFpToG1PrecompiledContract());
