@@ -101,7 +101,8 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
                 .map(MutableWorldState::disableTrie)
                 .flatMap(
                     worldState ->
-                        rollMutableStateToBlockHash( // This is a tiny action for archive state
+                        rollMutableArchiveStateToBlockHash( // This is a tiny action for archive
+                            // state
                             (DiffBasedWorldState) worldState, blockHeader.getHash()))
                 .map(MutableWorldState::freeze);
 
@@ -113,8 +114,7 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
 
   // Archive-specific rollback behaviour. There is no trie-log roll forward/backward, we just roll
   // back the state root, block hash and block number
-  @Override
-  protected Optional<MutableWorldState> rollMutableStateToBlockHash(
+  protected Optional<MutableWorldState> rollMutableArchiveStateToBlockHash(
       final DiffBasedWorldState mutableState, final Hash blockHash) {
     LOG.trace("Rolling mutable archive world state to block hash " + blockHash.toHexString());
     try {
@@ -131,7 +131,7 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
       throw re;
     } catch (final Exception e) {
       LOG.atInfo()
-          .setMessage("State rolling failed on {} for block hash {}")
+          .setMessage("State rolling failed on {} for block hash {}: {}")
           .addArgument(mutableState.getWorldStateStorage().getClass().getSimpleName())
           .addArgument(blockHash)
           .addArgument(e)
