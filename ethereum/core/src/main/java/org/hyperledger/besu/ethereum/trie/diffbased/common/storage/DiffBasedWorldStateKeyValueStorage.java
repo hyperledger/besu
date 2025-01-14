@@ -65,6 +65,9 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   // 0x776f726c64426c6f636b48617368
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
+  // 0x776f726c64426c6f636b4e756d626572
+  public static final byte[] WORLD_BLOCK_NUMBER_KEY =
+      "worldBlockNumber".getBytes(StandardCharsets.UTF_8);
 
   // 0x6172636869766564426C6F636B73
   public static final byte[] ARCHIVED_BLOCKS = "archivedBlocks".getBytes(StandardCharsets.UTF_8);
@@ -220,7 +223,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
       try {
         // Get the key for the previous block
         final BonsaiContext previousContext = new BonsaiContext();
-        previousContext.setBlockHeader(previousBlockHeader.get());
+        previousContext.setBlockNumber(previousBlockHeader.get().getNumber());
         final Bytes previousKey =
             Bytes.of(
                 BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(
@@ -291,7 +294,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
       try {
         // Get the key for the previous block
         final BonsaiContext previousContext = new BonsaiContext();
-        previousContext.setBlockHeader(previousBlockHeader.get());
+        previousContext.setBlockNumber(previousBlockHeader.get().getNumber());
         final Bytes previousKey =
             Bytes.of(
                 BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(

@@ -66,11 +66,6 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
   }
 
-  public BonsaiWorldStateKeyValueStorage getContextSafeCopy() {
-    return new BonsaiWorldStateKeyValueStorage(
-        flatDbStrategyProvider.contextSafeClone(), composedWorldStateStorage, trieLogStorage);
-  }
-
   public BonsaiWorldStateKeyValueStorage(
       final BonsaiFlatDbStrategyProvider flatDbStrategyProvider,
       final SegmentedKeyValueStorage composedWorldStateStorage,
@@ -286,9 +281,9 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     }
 
     public synchronized Updater putStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash, final Bytes storage) {
+        final Hash accountHash, final Hash slotHash, final Bytes storageValue) {
       flatDbStrategy.putFlatAccountStorageValueByStorageSlotHash(
-          composedWorldStateTransaction, accountHash, slotHash, storage);
+          composedWorldStateTransaction, accountHash, slotHash, storageValue);
       return this;
     }
 

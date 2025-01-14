@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.common.worldview;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -38,6 +39,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -146,6 +148,12 @@ public abstract class DiffBasedWorldState
   }
 
   @Override
+  public MutableWorldState disableTrie() {
+    this.worldStateConfig.setTrieDisabled(true);
+    return this;
+  }
+
+  @Override
   public void persist(final BlockHeader blockHeader) {
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
     LOG.atDebug()
@@ -157,7 +165,6 @@ public abstract class DiffBasedWorldState
 
     boolean success = false;
 
-    this.worldStateKeyValueStorage.getFlatDbStrategy().updateBlockContext(blockHeader);
     final DiffBasedWorldStateKeyValueStorage.Updater stateUpdater =
         worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
@@ -176,6 +183,10 @@ public abstract class DiffBasedWorldState
         // the state root must be validated independently and the block should not be trusted
         // implicitly. This mode
         // can be used in cases where Besu would just be a follower of another trusted client.
+        LOG.atDebug()
+            .setMessage("Unsafe state root verification for block header {}")
+            .addArgument(maybeBlockHeader)
+            .log();
         calculatedRootHash = unsafeRootHashUpdate(blockHeader, stateUpdater);
       }
       // if we are persisted with a block header, and the prior state is the parent
@@ -196,6 +207,13 @@ public abstract class DiffBasedWorldState
             .getWorldStateTransaction()
             .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
         worldStateBlockHash = blockHeader.getHash();
+
+        stateUpdater
+            .getWorldStateTransaction()
+            .put(
+                TRIE_BRANCH_STORAGE,
+                WORLD_BLOCK_NUMBER_KEY,
+                Long.toHexString(blockHeader.getNumber()).getBytes(StandardCharsets.UTF_8));
       } else {
         stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
         worldStateBlockHash = null;

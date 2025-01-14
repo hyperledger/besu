@@ -125,7 +125,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
 
   @Override
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
-    return ((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage).getContextSafeCopy();
+    return (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage;
   }
 
   @Override

@@ -135,7 +135,7 @@ public abstract class FlatDbStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash,
-      final Bytes storage);
+      final Bytes storageValue);
 
   /*
    * Removes the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
@@ -235,10 +235,7 @@ public abstract class FlatDbStrategy {
     return collected;
   }
 
-  public abstract void updateBlockContext(final BlockHeader blockHeader);
+  public abstract void updateBlockContext(final Long blockNumber);
 
-  public FlatDbStrategy contextSafeClone() {
-    // FlatDBStrategies that care about bonsai context changes should override this
-    return this;
-  }
+  public abstract void updateBlockContext(final BlockHeader blockHeader);
 }

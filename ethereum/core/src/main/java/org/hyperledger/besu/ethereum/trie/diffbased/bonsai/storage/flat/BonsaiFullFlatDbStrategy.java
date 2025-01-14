@@ -103,6 +103,11 @@ public class BonsaiFullFlatDbStrategy extends BonsaiFlatDbStrategy {
   }
 
   @Override
+  public void updateBlockContext(final Long blockNumber) {
+    // default no-op for strategies that do not care about bonsai context
+  }
+
+  @Override
   public void updateBlockContext(final BlockHeader blockHeader) {
     // default no-op for strategies that do not care about bonsai context
   }

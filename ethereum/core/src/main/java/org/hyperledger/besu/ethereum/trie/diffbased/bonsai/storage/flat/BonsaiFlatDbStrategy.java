@@ -88,11 +88,11 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash,
-      final Bytes storage) {
+      final Bytes storageValue) {
     transaction.put(
         ACCOUNT_STORAGE_STORAGE,
         Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(),
-        storage.toArrayUnsafe());
+        storageValue.toArrayUnsafe());
   }
 
   @Override
@@ -169,11 +169,5 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
     return storage
         .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe())
         .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
-  }
-
-  @Override
-  public FlatDbStrategy contextSafeClone() {
-    // FlatDBStrategies that care about bonsai context changes should override this
-    return this;
   }
 }

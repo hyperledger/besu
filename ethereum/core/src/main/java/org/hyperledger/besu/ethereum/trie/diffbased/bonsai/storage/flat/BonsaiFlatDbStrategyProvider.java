@@ -34,14 +34,6 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbStrategyProvider.class);
 
-  public BonsaiFlatDbStrategyProvider contextSafeClone() {
-    BonsaiFlatDbStrategyProvider copy =
-        new BonsaiFlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
-    copy.flatDbStrategy = flatDbStrategy.contextSafeClone();
-    copy.flatDbMode = flatDbMode;
-    return copy;
-  }
-
   public BonsaiFlatDbStrategyProvider(
       final MetricsSystem metricsSystem, final DataStorageConfiguration dataStorageConfiguration) {
     super(metricsSystem, dataStorageConfiguration);

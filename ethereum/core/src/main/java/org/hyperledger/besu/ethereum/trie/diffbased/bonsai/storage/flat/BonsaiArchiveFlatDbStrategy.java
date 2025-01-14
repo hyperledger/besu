@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -325,14 +324,14 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash,
-      final Bytes storage) {
+      final Bytes storageValue) {
 
     // get natural key from account hash and slot key
     byte[] naturalKey = calculateNaturalSlotKey(accountHash, slotHash);
     // keyNearest, use MIN_BLOCK_SUFFIX in the absence of a block context:
     byte[] keyNearest = calculateArchiveKeyWithMinSuffix(context, naturalKey);
 
-    transaction.put(ACCOUNT_STORAGE_STORAGE, keyNearest, storage.toArrayUnsafe());
+    transaction.put(ACCOUNT_STORAGE_STORAGE, keyNearest, storageValue.toArrayUnsafe());
   }
 
   /*
@@ -382,8 +381,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     return Arrays.concatenate(
         naturalKey,
         context
-            .getBlockHeader()
-            .map(BlockHeader::getNumber)
+            .getBlockNumber()
             .map(Bytes::ofUnsignedLong)
             .map(Bytes::toArrayUnsafe)
             .orElseGet(
@@ -395,12 +393,12 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   }
 
   @Override
-  public void updateBlockContext(final BlockHeader blockHeader) {
-    context.setBlockHeader(blockHeader);
+  public void updateBlockContext(final Long blockNumber) {
+    context.setBlockNumber(blockNumber);
   }
 
   @Override
-  public FlatDbStrategy contextSafeClone() {
-    return new BonsaiArchiveFlatDbStrategy(context.copy(), metricsSystem, codeStorageStrategy);
+  public void updateBlockContext(final BlockHeader blockHeader) {
+    context.setBlockNumber(blockHeader.getNumber());
   }
 }

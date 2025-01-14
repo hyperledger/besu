@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -146,6 +147,18 @@ public abstract class FlatDbStrategyProvider {
       final SegmentedKeyValueStorage composedWorldStateStorage) {
     if (flatDbStrategy == null) {
       loadFlatDbStrategy(composedWorldStateStorage);
+    }
+
+    if (this.flatDbMode == FlatDbMode.ARCHIVE) {
+      // For Bonsai archive update the flat DB strategy context to match the block the state/storage
+      // represents
+      Optional<byte[]> archiveContext =
+          composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
+      if (archiveContext.isPresent()) {
+        // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
+        this.flatDbStrategy.updateBlockContext(
+            Long.decode("0x" + (new String(archiveContext.get(), StandardCharsets.UTF_8))));
+      }
     }
     return flatDbStrategy;
   }

@@ -14,40 +14,27 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.common;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** Context which holds information relevant to a bonsai archive storage query. */
 public class BonsaiContext {
 
-  private final AtomicReference<BlockHeader> blockHeader;
+  private final AtomicReference<Long> blockNumber;
 
   /** Context for Bonsai storage i.e. the block the storage applies to */
   public BonsaiContext() {
-    blockHeader = new AtomicReference<>();
-  }
-
-  /**
-   * Create a copy the current context
-   *
-   * @return the copied context
-   */
-  public BonsaiContext copy() {
-    var newCtx = new BonsaiContext();
-    Optional.ofNullable(blockHeader.get()).ifPresent(newCtx::setBlockHeader);
-    return newCtx;
+    blockNumber = new AtomicReference<>();
   }
 
   /**
    * Set the new block header for the context
    *
-   * @param blockHeader the new block header
+   * @param blockNumber the new block header
    * @return the updated context
    */
-  public BonsaiContext setBlockHeader(final BlockHeader blockHeader) {
-    this.blockHeader.set(blockHeader);
+  public BonsaiContext setBlockNumber(final Long blockNumber) {
+    this.blockNumber.set(blockNumber);
     return this;
   }
 
@@ -56,7 +43,7 @@ public class BonsaiContext {
    *
    * @return the optional block header
    */
-  public Optional<BlockHeader> getBlockHeader() {
-    return Optional.ofNullable(blockHeader.get());
+  public Optional<Long> getBlockNumber() {
+    return Optional.ofNullable(blockNumber.get());
   }
 }
