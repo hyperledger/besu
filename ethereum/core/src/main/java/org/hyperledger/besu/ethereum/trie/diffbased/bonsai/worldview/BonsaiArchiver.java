@@ -73,7 +73,7 @@ public class BonsaiArchiver implements BlockAddedObserver {
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.BLOCKCHAIN,
-        "archived_blocks_state_total",
+        "archived_blocks_state",
         "Total number of blocks for which state has been archived",
         () -> latestArchivedBlock.get());
   }
