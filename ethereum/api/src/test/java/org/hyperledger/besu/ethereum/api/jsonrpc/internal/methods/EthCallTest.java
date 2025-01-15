@@ -136,19 +136,19 @@ public class EthCallTest {
             .withMovePrecompileToAddress(Address.fromHexString("0x1234"))
             .build();
     final Address address = Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3");
-    expectedOverrides.put(address, override);
+    suppliedOverrides.put(address, override);
 
     final JsonRpcRequestContext request =
-        ethCallRequestWithStateOverrides(callParameter(), "latest", expectedOverrides);
+        ethCallRequestWithStateOverrides(callParameter(), "latest", suppliedOverrides);
 
     Optional<StateOverrideMap> maybeOverrideMap = method.getAddressStateOverrideMap(request);
     assertThat(maybeOverrideMap.isPresent()).isTrue();
     StateOverrideMap actualOverrideMap = maybeOverrideMap.get();
-    assertThat(overrideMap.keySet()).hasSize(1);
-    assertThat(overrideMap.values()).hasSize(1);
+    assertThat(actualOverrideMap.keySet()).hasSize(1);
+    assertThat(actualOverrideMap.values()).hasSize(1);
 
-    assertThat(overrideMap).containsKey(address);
-    assertThat(overrideMap).containsValue(override);
+    assertThat(actualOverrideMap).containsKey(address);
+    assertThat(actualOverrideMap).containsValue(override);
   }
 
   @Test
