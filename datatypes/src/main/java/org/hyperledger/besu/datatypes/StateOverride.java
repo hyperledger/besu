@@ -36,16 +36,19 @@ public class StateOverride {
   private final Optional<Long> nonce;
   private final Optional<String> code;
   private final Optional<Map<String, String>> stateDiff;
+  private final Optional<Address> movePrecompileToAddress;
 
   private StateOverride(
       final Optional<Wei> balance,
       final Optional<Long> nonce,
       final Optional<String> code,
-      final Optional<Map<String, String>> stateDiff) {
+      final Optional<Map<String, String>> stateDiff,
+      final Optional<Address> movePrecompileToAddress) {
     this.balance = balance;
     this.nonce = nonce;
     this.code = code;
     this.stateDiff = stateDiff;
+    this.movePrecompileToAddress = movePrecompileToAddress;
   }
 
   /**
@@ -84,6 +87,15 @@ public class StateOverride {
     return stateDiff;
   }
 
+  /**
+   * Gets the new address for the pre-compiled contract
+   *
+   * @return the new address for the pre-compiled contract if present
+   */
+  public Optional<Address> getMovePrecompileToAddress() {
+    return movePrecompileToAddress;
+  }
+
   /** Builder class for Account overrides */
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Builder {
@@ -91,6 +103,7 @@ public class StateOverride {
     private Optional<Long> nonce = Optional.empty();
     private Optional<String> code = Optional.empty();
     private Optional<Map<String, String>> stateDiff = Optional.empty();
+    private Optional<Address> movePrecompileToAddress = Optional.empty();
 
     /** Default constructor. */
     public Builder() {}
@@ -140,12 +153,23 @@ public class StateOverride {
     }
 
     /**
+     * Sets the new address for the pre-compiled contract
+     *
+     * @param newPrecompileAddress the new address for the pre-compile contract
+     * @return the builder
+     */
+    public Builder withMovePrecompileToAddress(final Address newPrecompileAddress) {
+      this.movePrecompileToAddress = Optional.ofNullable(newPrecompileAddress);
+      return this;
+    }
+
+    /**
      * build the account override from the builder
      *
      * @return account override
      */
     public StateOverride build() {
-      return new StateOverride(balance, nonce, code, stateDiff);
+      return new StateOverride(balance, nonce, code, stateDiff, movePrecompileToAddress);
     }
   }
 
@@ -195,6 +219,8 @@ public class StateOverride {
         + code
         + ", stateDiff="
         + stateDiff
+        + ", movePrecompileToAddress="
+        + movePrecompileToAddress
         + '}';
   }
 }

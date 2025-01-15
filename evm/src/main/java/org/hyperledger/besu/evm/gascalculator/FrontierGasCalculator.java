@@ -21,6 +21,7 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import static org.hyperledger.besu.evm.internal.Words.numWords;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -565,5 +566,26 @@ public class FrontierGasCalculator implements GasCalculator {
   @Override
   public long getMinimumTransactionCost() {
     return TX_BASE_COST;
+  }
+
+  @Override
+  public long calculateGasRefund(
+      final Transaction transaction,
+      final MessageFrame initialFrame,
+      final long codeDelegationRefund) {
+    final long selfDestructRefund =
+        getSelfDestructRefundAmount() * initialFrame.getSelfDestructs().size();
+    final long baseRefundGas =
+        initialFrame.getGasRefund() + selfDestructRefund + codeDelegationRefund;
+    return refunded(transaction, initialFrame.getRemainingGas(), baseRefundGas);
+  }
+
+  private long refunded(
+      final Transaction transaction, final long gasRemaining, final long gasRefund) {
+    // Integer truncation takes care of the floor calculation needed after the divide.
+    final long maxRefundAllowance =
+        (transaction.getGasLimit() - gasRemaining) / getMaxRefundQuotient();
+    final long refundAllowance = Math.min(maxRefundAllowance, gasRefund);
+    return gasRemaining + refundAllowance;
   }
 }
