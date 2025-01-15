@@ -456,7 +456,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private void appendBlockHelper(
       final BlockWithReceipts blockWithReceipts,
       final boolean storeOnly,
-      boolean transactionIndexing) {
+      final boolean transactionIndexing) {
 
     if (!blockShouldBeProcessed(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts())) {
       return;
@@ -532,7 +532,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private BlockAddedEvent updateCanonicalChainData(
       final Updater updater,
       final BlockWithReceipts blockWithReceipts,
-      boolean transactionIndexing) {
+      final boolean transactionIndexing) {
 
     final Block newBlock = blockWithReceipts.getBlock();
     final Hash chainHead = blockchainStorage.getChainHead().orElse(null);
@@ -566,7 +566,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private BlockAddedEvent handleNewHead(
       final Updater updater,
       final BlockWithReceipts blockWithReceipts,
-      boolean transactionIndexing) {
+      final boolean transactionIndexing) {
     // This block advances the chain, update the chain head
     final Hash newBlockHash = blockWithReceipts.getHash();
 
