@@ -79,10 +79,12 @@ abstract class AbstractDelegatedCodeAccount implements Account {
   }
 
   private Optional<Bytes> resolveDelegatedCode() {
-    if (gasCalculator.isPrecompile(delegatedCodeAddress)) {
-      return Optional.empty();
+    final Optional<Account> maybeDelegatedAccount = getDelegatedAccount();
+
+    if (gasCalculator.isPrecompile(delegatedCodeAddress) || maybeDelegatedAccount.isEmpty()) {
+      return Optional.of(Bytes.EMPTY);
     }
 
-    return getDelegatedAccount().map(Account::getCode);
+    return Optional.of(maybeDelegatedAccount.get().getCode());
   }
 }
