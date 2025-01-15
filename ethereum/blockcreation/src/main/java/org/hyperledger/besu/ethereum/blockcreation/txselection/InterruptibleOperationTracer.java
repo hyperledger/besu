@@ -42,8 +42,8 @@ public class InterruptibleOperationTracer implements BlockAwareOperationTracer {
 
   @Override
   public void traceStartBlock(
-      final BlockHeader blockHeader, final BlockBody blockBody, final Address miningBeneficiary) {
-    delegate.traceStartBlock(blockHeader, blockBody, miningBeneficiary);
+      final BlockHeader blockHeader, final BlockBody blockBody) {
+    delegate.traceStartBlock(blockHeader, blockBody);
   }
 
   @Override

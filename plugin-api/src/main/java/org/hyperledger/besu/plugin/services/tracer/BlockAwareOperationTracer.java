@@ -35,7 +35,7 @@ public interface BlockAwareOperationTracer extends OperationTracer {
 
   /**
    * Trace the start of a block. Notice: This method has been marked for removal and will be removed
-   * in a future version. Avoid using it and use {@link #traceStartBlock(BlockHeader, BlockBody,
+   * in a future version. Avoid using it and use {@link #traceStartBlock(ProcessableBlockHeader,
    * Address)} instead.
    *
    * @param blockHeader the header of the block which is traced
@@ -43,24 +43,6 @@ public interface BlockAwareOperationTracer extends OperationTracer {
    */
   @Deprecated
   default void traceStartBlock(final BlockHeader blockHeader, final BlockBody blockBody) {}
-
-  /**
-   * Trace the start of a block.
-   *
-   * @param blockHeader the header of the block which is traced
-   * @param blockBody the body of the block which is traced
-   * @param miningBeneficiary the address of miner building the block
-   */
-  default void traceStartBlock(
-      final BlockHeader blockHeader, final BlockBody blockBody, final Address miningBeneficiary) {}
-
-  /**
-   * Trace the end of a block.
-   *
-   * @param blockHeader the header of the block which is traced
-   * @param blockBody the body of the block which is traced
-   */
-  default void traceEndBlock(final BlockHeader blockHeader, final BlockBody blockBody) {}
 
   /**
    * When building a block this API is called at the start of the process. Notice: This method has
@@ -80,6 +62,14 @@ public interface BlockAwareOperationTracer extends OperationTracer {
    */
   default void traceStartBlock(
       final ProcessableBlockHeader processableBlockHeader, final Address miningBeneficiary) {}
+
+  /**
+   * Trace the end of a block.
+   *
+   * @param blockHeader the header of the block which is traced
+   * @param blockBody the body of the block which is traced
+   */
+  default void traceEndBlock(final BlockHeader blockHeader, final BlockBody blockBody) {}
 
   @Override
   default boolean isExtendedTracing() {

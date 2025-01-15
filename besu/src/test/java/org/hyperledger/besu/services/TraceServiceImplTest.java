@@ -38,6 +38,7 @@ import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.BlockTraceResult;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 import org.hyperledger.besu.plugin.data.TransactionTraceResult;
 import org.hyperledger.besu.plugin.services.TraceService;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -116,7 +117,7 @@ class TraceServiceImplTest {
 
     verify(opTracer)
         .traceStartBlock(
-            tracedBlock.getHeader(), tracedBlock.getBody(), tracedBlock.getHeader().getCoinbase());
+            tracedBlock.getHeader(), tracedBlock.getHeader().getCoinbase());
 
     tracedBlock
         .getBody()
@@ -168,7 +169,6 @@ class TraceServiceImplTest {
               verify(opTracer)
                   .traceStartBlock(
                       tracedBlock.getHeader(),
-                      tracedBlock.getBody(),
                       tracedBlock.getHeader().getCoinbase());
               tracedBlock
                   .getBody()
@@ -282,7 +282,7 @@ class TraceServiceImplTest {
 
     private final Set<Transaction> traceStartTxCalled = new HashSet<>();
     private final Set<Transaction> traceEndTxCalled = new HashSet<>();
-    private final Set<Hash> traceStartBlockCalled = new HashSet<>();
+    private final Set<ProcessableBlockHeader> traceStartBlockCalled = new HashSet<>();
     private final Set<Hash> traceEndBlockCalled = new HashSet<>();
 
     @Override
@@ -319,8 +319,8 @@ class TraceServiceImplTest {
 
     @Override
     public void traceStartBlock(
-        final BlockHeader blockHeader, final BlockBody blockBody, final Address miningBeneficiary) {
-      if (!traceStartBlockCalled.add(blockHeader.getBlockHash())) {
+      final ProcessableBlockHeader blockHeader, final Address miningBeneficiary) {
+      if (!traceStartBlockCalled.add(blockHeader)) {
         fail("traceStartBlock already called for block " + blockHeader);
       }
     }
