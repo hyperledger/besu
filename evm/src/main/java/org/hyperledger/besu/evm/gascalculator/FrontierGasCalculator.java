@@ -143,7 +143,7 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long transactionFloorCost(final Bytes payload) {
-    return 0;
+    return 0L;
   }
 
   /**

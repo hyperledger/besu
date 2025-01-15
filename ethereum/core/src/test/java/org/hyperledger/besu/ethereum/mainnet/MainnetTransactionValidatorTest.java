@@ -138,6 +138,26 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
+  public void shouldRejectTransactionIfFloorExceedsGasLimit_EIP_7623() {
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .gasLimit(10)
+            .chainId(Optional.empty())
+            .createTransaction(senderKeys);
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean(), anyLong())).thenReturn(5L);
+    when(gasCalculator.transactionFloorCost(any())).thenReturn(51L);
+
+    assertThat(
+            validator.validate(
+                transaction, Optional.empty(), Optional.empty(), transactionValidationParams))
+        .isEqualTo(
+            ValidationResult.invalid(TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT));
+  }
+
+  @Test
   public void shouldRejectTransactionWhenTransactionHasChainIdAndValidatorDoesNot() {
     final TransactionValidator validator =
         createTransactionValidator(

@@ -77,13 +77,6 @@ public class PragueGasCalculator extends CancunGasCalculator {
   }
 
   @Override
-  public long transactionIntrinsicGasCost(
-      final Bytes payload, final boolean isContractCreation, final long baselineGas) {
-    return clampedAdd(
-        TX_BASE_COST, dynamicIntrinsicGasCost(payload, isContractCreation, baselineGas));
-  }
-
-  @Override
   public long calculateGasRefund(
       final Transaction transaction,
       final MessageFrame initialFrame,
