@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.common.worldview;
 
-/** WorldStateSpec encapsulates the shared configuration parameters for the world state. */
+/** WorldStateSharedConfig encapsulates the shared configuration parameters for the world state. */
 public class WorldStateSharedConfig {
 
   /**
@@ -49,10 +49,11 @@ public class WorldStateSharedConfig {
   }
 
   /**
-   * Merges this WorldStateSpec with another WorldStateSpec and returns a new instance.
+   * Merges this WorldStateSharedConfig with another WorldStateSharedConfig and returns a new
+   * instance.
    *
-   * @param other the other WorldStateSpec to merge with
-   * @return a new WorldStateSpec instance with merged values
+   * @param other the other WorldStateSharedConfig to merge with
+   * @return a new WorldStateSharedConfig instance with merged values
    */
   public WorldStateSharedConfig apply(final WorldStateSharedConfig other) {
     return new Builder(this).trieDisabled(other.isTrieDisabled).stateful(other.isStateful).build();
@@ -62,8 +63,8 @@ public class WorldStateSharedConfig {
     return new Builder();
   }
 
-  public static Builder newBuilder(final WorldStateSharedConfig worldStateSpec) {
-    return new Builder(worldStateSpec);
+  public static Builder newBuilder(final WorldStateSharedConfig worldStateSharedConfig) {
+    return new Builder(worldStateSharedConfig);
   }
 
   public static WorldStateSharedConfig createStatefulConfigWithTrie() {

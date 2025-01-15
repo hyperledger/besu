@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateSharedConfig;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.ServiceManager;
@@ -60,7 +59,7 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     provideCachedWorldStorageManager(
         new BonsaiCachedWorldStorageManager(
-            this, worldStateKeyValueStorage, this::cloneBonsaiWorldStateConfig));
+            this, worldStateKeyValueStorage, worldStateSharedConfig));
     loadHeadWorldState(
         new BonsaiWorldState(
             this, worldStateKeyValueStorage, evmConfiguration, worldStateSharedConfig));
@@ -152,10 +151,6 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     updater.commit();
 
     getBonsaiWorldStateKeyValueStorage().downgradeToPartialFlatDbMode();
-  }
-
-  private WorldStateSharedConfig cloneBonsaiWorldStateConfig() {
-    return WorldStateSharedConfig.newBuilder(worldStateSharedConfig).build();
   }
 
   @Override

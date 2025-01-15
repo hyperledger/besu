@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorl
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateSharedConfig;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateStorageConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
@@ -67,14 +66,14 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration,
-      final WorldStateSharedConfig worldStateSpec) {
+      final WorldStateSharedConfig worldStateConfig) {
     this(
         worldStateKeyValueStorage,
         archive.getCachedMerkleTrieLoader(),
         archive.getCachedWorldStorageManager(),
         archive.getTrieLogManager(),
         evmConfiguration,
-        worldStateSpec);
+        worldStateConfig);
   }
 
   public BonsaiWorldState(
@@ -86,7 +85,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
         worldState.cachedWorldStorageManager,
         worldState.trieLogManager,
         worldState.accumulator.getEvmConfiguration(),
-        WorldStateSharedConfig.newBuilder(worldState.worldStateSpec).build());
+        WorldStateSharedConfig.newBuilder(worldState.worldStateConfig).build());
   }
 
   public BonsaiWorldState(
@@ -95,8 +94,8 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration,
-      final WorldStateSharedConfig worldStateSpec) {
-    super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager, worldStateSpec);
+      final WorldStateSharedConfig worldStateConfig) {
+    super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager, worldStateConfig);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.setAccumulator(
@@ -302,7 +301,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
                         writeStorageTrieNode(
                             bonsaiUpdater, updatedAddressHash, location, key, value)));
         // only use storage root of the trie when trie is enabled
-        if (!worldStateSpec.isTrieDisabled()) {
+        if (!worldStateConfig.isTrieDisabled()) {
           final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
           accountUpdated.setStorageRoot(newStorageRoot);
         }
@@ -446,14 +445,13 @@ public class BonsaiWorldState extends DiffBasedWorldState {
 
   @Override
   public MutableWorldState freeze() {
-    this.worldStateStorageSpec =
-        WorldStateStorageConfig.newBuilder(worldStateStorageSpec).setFrozen(true).build();
+    this.isStorageFrozen = true;
     this.worldStateKeyValueStorage = new BonsaiWorldStateLayerStorage(getWorldStateStorage());
     return this;
   }
 
   private MerkleTrie<Bytes, Bytes> createTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {
-    if (worldStateSpec.isTrieDisabled()) {
+    if (worldStateConfig.isTrieDisabled()) {
       return new NoOpMerkleTrie<>();
     } else {
       return new StoredMerklePatriciaTrie<>(

@@ -26,15 +26,13 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWo
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateSharedConfig;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
-import java.util.function.Supplier;
-
 public class BonsaiCachedWorldStorageManager extends DiffBasedCachedWorldStorageManager {
 
   public BonsaiCachedWorldStorageManager(
       final BonsaiWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Supplier<WorldStateSharedConfig> worldStateSharedConfigSupplier) {
-    super(archive, worldStateKeyValueStorage, worldStateSharedConfigSupplier);
+      final WorldStateSharedConfig worldStateSharedConfig) {
+    super(archive, worldStateKeyValueStorage, worldStateSharedConfig);
   }
 
   @Override
@@ -46,7 +44,7 @@ public class BonsaiCachedWorldStorageManager extends DiffBasedCachedWorldStorage
         (BonsaiWorldStateProvider) archive,
         (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
         evmConfiguration,
-        worldStateSharedConfigSupplier.get());
+        WorldStateSharedConfig.newBuilder(worldStateSharedConfig).build());
   }
 
   @Override

@@ -36,7 +36,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -50,7 +49,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
       LoggerFactory.getLogger(DiffBasedCachedWorldStorageManager.class);
   private final DiffBasedWorldStateProvider archive;
   private final EvmConfiguration evmConfiguration;
-  protected final Supplier<WorldStateSharedConfig> worldStateSharedConfigSupplier;
+  protected final WorldStateSharedConfig worldStateSharedConfig;
   private final Cache<Hash, BlockHeader> stateRootToBlockHeaderCache =
       Caffeine.newBuilder()
           .maximumSize(RETAINED_LAYERS)
@@ -65,25 +64,25 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Map<Bytes32, DiffBasedCachedWorldView> cachedWorldStatesByHash,
       final EvmConfiguration evmConfiguration,
-      final Supplier<WorldStateSharedConfig> worldStateSharedConfigSupplier) {
+      final WorldStateSharedConfig worldStateSharedConfig) {
     worldStateKeyValueStorage.subscribe(this);
     this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;
     this.archive = archive;
     this.evmConfiguration = evmConfiguration;
-    this.worldStateSharedConfigSupplier = worldStateSharedConfigSupplier;
+    this.worldStateSharedConfig = worldStateSharedConfig;
   }
 
   public DiffBasedCachedWorldStorageManager(
       final DiffBasedWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Supplier<WorldStateSharedConfig> worldStateSharedConfigSupplier) {
+      final WorldStateSharedConfig worldStateSharedConfig) {
     this(
         archive,
         worldStateKeyValueStorage,
         new ConcurrentHashMap<>(),
         EvmConfiguration.DEFAULT,
-        worldStateSharedConfigSupplier);
+        worldStateSharedConfig);
   }
 
   public synchronized void addCachedLayer(
