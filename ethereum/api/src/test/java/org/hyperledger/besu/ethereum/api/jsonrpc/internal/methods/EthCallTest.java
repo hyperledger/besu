@@ -126,7 +126,7 @@ public class EthCallTest {
 
   @Test
   public void fullStateOverrides() {
-    StateOverrideMap expectedOverrides = new StateOverrideMap();
+    StateOverrideMap suppliedOverrides = new StateOverrideMap();
     StateOverride override =
         new StateOverride.Builder()
             .withNonce(new UnsignedLongParameter("0x9e"))
