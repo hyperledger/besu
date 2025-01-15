@@ -67,7 +67,7 @@ public class MainnetBlockImporter implements BlockImporter {
 
     if (blockValidator.validateBlockForSyncing(
         context, block, receipts, headerValidationMode, ommerValidationMode, bodyValidationMode)) {
-      context.getBlockchain().appendBlock(block, receipts);
+      context.getBlockchain().appendBlockWithoutTxIndex(block, receipts);
       return new BlockImportResult(true);
     }
 
