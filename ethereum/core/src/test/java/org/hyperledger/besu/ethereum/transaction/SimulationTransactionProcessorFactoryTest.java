@@ -75,7 +75,7 @@ public class SimulationTransactionProcessorFactoryTest {
   }
 
   @Test
-  void shouldReturnProcessorWithExpectedPrecompileAddressesWithOverrides() {
+  void shouldReturnProcessorWithNewPrecompileAddressesWithOverrides() {
     StateOverrideMap stateOverrideMap = new StateOverrideMap();
     stateOverrideMap.put(
         originalPrecompileAddress,
