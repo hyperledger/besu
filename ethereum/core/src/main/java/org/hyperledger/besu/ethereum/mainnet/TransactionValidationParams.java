@@ -20,8 +20,12 @@ import org.immutables.value.Value;
 @Value.Style(allParameters = true)
 public interface TransactionValidationParams {
 
-  TransactionValidationParams processingBlockParams =
+  TransactionValidationParams blockProcessingParams =
       ImmutableTransactionValidationParams.of(false, false, false, true, false, false);
+
+  TransactionValidationParams parallelBlockProcessingParams =
+      ImmutableTransactionValidationParams.copyOf(blockProcessingParams)
+          .withIsAllowFutureNonce(true);
 
   TransactionValidationParams transactionPoolParams =
       ImmutableTransactionValidationParams.of(true, false, true, true, true, false);
@@ -77,7 +81,11 @@ public interface TransactionValidationParams {
   }
 
   static TransactionValidationParams processingBlock() {
-    return processingBlockParams;
+    return blockProcessingParams;
+  }
+
+  static TransactionValidationParams parallelBlockProcessing() {
+    return parallelBlockProcessingParams;
   }
 
   static TransactionValidationParams transactionPool() {
