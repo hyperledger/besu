@@ -143,7 +143,7 @@ public class EthCallTest {
 
     Optional<StateOverrideMap> maybeOverrideMap = method.getAddressStateOverrideMap(request);
     assertThat(maybeOverrideMap.isPresent()).isTrue();
-    StateOverrideMap overrideMap = maybeOverrideMap.get();
+    StateOverrideMap actualOverrideMap = maybeOverrideMap.get();
     assertThat(overrideMap.keySet()).hasSize(1);
     assertThat(overrideMap.values()).hasSize(1);
 
