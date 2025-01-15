@@ -55,6 +55,7 @@ import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -121,6 +122,33 @@ public class EthCallTest {
 
     assertThat(overrideMap).containsKey(address);
     assertThat(overrideMap).containsValue(override);
+  }
+
+  @Test
+  public void fullStateOverrides() {
+    StateOverrideMap suppliedOverrides = new StateOverrideMap();
+    StateOverride override =
+        new StateOverride.Builder()
+            .withNonce(new UnsignedLongParameter("0x9e"))
+            .withBalance(Wei.of(100))
+            .withCode("0x1234")
+            .withStateDiff(Map.of("0x1234", "0x5678"))
+            .withMovePrecompileToAddress(Address.fromHexString("0x1234"))
+            .build();
+    final Address address = Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3");
+    suppliedOverrides.put(address, override);
+
+    final JsonRpcRequestContext request =
+        ethCallRequestWithStateOverrides(callParameter(), "latest", suppliedOverrides);
+
+    Optional<StateOverrideMap> maybeOverrideMap = method.getAddressStateOverrideMap(request);
+    assertThat(maybeOverrideMap.isPresent()).isTrue();
+    StateOverrideMap actualOverrideMap = maybeOverrideMap.get();
+    assertThat(actualOverrideMap.keySet()).hasSize(1);
+    assertThat(actualOverrideMap.values()).hasSize(1);
+
+    assertThat(actualOverrideMap).containsKey(address);
+    assertThat(actualOverrideMap).containsValue(override);
   }
 
   @Test
