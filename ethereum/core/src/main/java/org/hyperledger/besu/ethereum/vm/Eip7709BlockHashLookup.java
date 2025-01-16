@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.OutOfGas;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.HashMap;
@@ -84,10 +83,10 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
     }
 
     final long cost = cost(frame, blockNumber);
-    if (frame.getRemainingGas() < cost) {
-      throw new OutOfGas(cost);
-    }
     frame.decrementRemainingGas(cost);
+    if (frame.getRemainingGas() < cost) {
+      return null;
+    }
 
     final Hash cachedHash = hashByNumber.get(blockNumber);
     if (cachedHash != null) {

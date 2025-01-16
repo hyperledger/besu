@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
@@ -39,7 +38,6 @@ import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.stateless.NoopAccessWitness;
-import org.hyperledger.besu.evm.internal.OutOfGas;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -131,13 +129,14 @@ public class Eip7709BlockHashLookupTest {
   }
 
   @Test
-  void insufficientGasThrowsOutOfGas() {
+  void insufficientGasReturnsNullBlockHash() {
     worldUpdater = new SimpleWorld();
     AccessWitness accessWitness = mock(AccessWitness.class);
     when(accessWitness.touchAndChargeStorageLoad(any(), any())).thenReturn(100L);
     frame = createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, 1L);
     when(frame.getAccessWitness()).thenReturn(accessWitness);
-    assertThrows(OutOfGas.class, () -> lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L));
+    final Hash blockHash = lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L);
+    assertThat(blockHash).isNull();
   }
 
   @Test
