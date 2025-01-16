@@ -18,9 +18,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 
-import org.junit.jupiter.api.Test;
+import java.util.List;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class OsakaGasCalculatorTest {
+
+  private static final long TARGET_BLOB_GAS_PER_BLOCK_OSAKA = 0x120000;
+  private final OsakaGasCalculator osakaGasCalculator = new OsakaGasCalculator();
 
   @Test
   void testPrecompileSize() {
@@ -32,10 +42,35 @@ class OsakaGasCalculatorTest {
   @Test
   void testNewConstants() {
     CancunGasCalculator cancunGas = new CancunGasCalculator();
-    OsakaGasCalculator praugeGasCalculator = new OsakaGasCalculator();
+    assertThat(osakaGasCalculator.getMinCalleeGas()).isGreaterThan(cancunGas.getMinCalleeGas());
+    assertThat(osakaGasCalculator.getMinRetainedGas()).isGreaterThan(cancunGas.getMinRetainedGas());
+  }
 
-    assertThat(praugeGasCalculator.getMinCalleeGas()).isGreaterThan(cancunGas.getMinCalleeGas());
-    assertThat(praugeGasCalculator.getMinRetainedGas())
-        .isGreaterThan(cancunGas.getMinRetainedGas());
+  @ParameterizedTest(
+      name = "{index} - parent gas {0}, used gas {1}, blob target {2} new excess {3}")
+  @MethodSource("blobGasses")
+  public void shouldCalculateExcessBlobGasCorrectly(
+      final long parentExcess, final long used, final long expected) {
+    final long usedBlobGas = osakaGasCalculator.blobGasCost(used);
+    assertThat(osakaGasCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
+        .isEqualTo(expected);
+  }
+
+  Iterable<Arguments> blobGasses() {
+    long nineBlobTargetGas = TARGET_BLOB_GAS_PER_BLOCK_OSAKA;
+    long newTargetCount = 9;
+
+    return List.of(
+        // New target count
+        Arguments.of(0L, 0L, 0L),
+        Arguments.of(nineBlobTargetGas, 0L, 0L),
+        Arguments.of(newTargetCount, 0L, 0L),
+        Arguments.of(0L, newTargetCount, 0L),
+        Arguments.of(1L, newTargetCount, 1L),
+        Arguments.of(
+            osakaGasCalculator.blobGasCost(newTargetCount),
+            1L,
+            osakaGasCalculator.getBlobGasPerBlob()),
+        Arguments.of(nineBlobTargetGas, newTargetCount, nineBlobTargetGas));
   }
 }

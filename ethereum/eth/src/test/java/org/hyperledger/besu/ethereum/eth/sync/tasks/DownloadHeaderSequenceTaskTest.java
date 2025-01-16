@@ -26,12 +26,14 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
@@ -301,6 +303,26 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
                   Optional.of(headers),
                   PeerTaskExecutorResponseCode.SUCCESS,
                   Optional.of(respondingPeer.getEthPeer()));
+            });
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetBodiesFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetBodiesFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetBodiesFromPeerTask.class);
+              EthPeer peer = invocationOnMock.getArgument(1, EthPeer.class);
+              List<Block> blocks =
+                  task.getBlockHeaders().stream()
+                      .map(
+                          (blockHeader) ->
+                              new Block(
+                                  blockHeader,
+                                  blockchain.getBlockBody(blockHeader.getBlockHash()).get()))
+                      .toList();
+              return new PeerTaskExecutorResult<List<Block>>(
+                  Optional.of(blocks), PeerTaskExecutorResponseCode.SUCCESS, Optional.of(peer));
             });
 
     // Execute the task

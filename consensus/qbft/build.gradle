@@ -31,6 +31,7 @@ jar {
 dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
+  implementation project(':consensus:qbft-core')
   implementation project(':crypto:services')
   implementation project(':datatypes')
   implementation project(':ethereum:api')
@@ -67,20 +68,4 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
-
-  integrationTestImplementation project(':crypto:algorithms')
-  integrationTestImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
-  integrationTestImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
-  integrationTestImplementation project(':evm')
-  integrationTestImplementation project(':metrics:core')
-  integrationTestImplementation project(':testutil')
-
-  integrationTestImplementation 'org.assertj:assertj-core'
-  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
-  integrationTestImplementation 'org.mockito:mockito-core'
-  integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
-
-  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
-
-  testSupportImplementation 'org.mockito:mockito-core'
 }

@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -91,7 +92,7 @@ public interface ReferenceTestWorldState extends MutableWorldState {
 
   ReferenceTestWorldState copy();
 
-  void processExtraStateStorageFormatValidation(final BlockHeader blockHeader);
+  Collection<Exception> processExtraStateStorageFormatValidation(final BlockHeader blockHeader);
 
   @JsonCreator
   static ReferenceTestWorldState create(final Map<String, AccountMock> accounts) {

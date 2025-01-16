@@ -17,10 +17,9 @@ package org.hyperledger.besu.evm.gascalculator;
 import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
 
 /**
- * Gas Calculator for Prague
+ * Gas Calculator for Osaka
  *
- * <p>Placeholder for new gas schedule items. If Prague finalzies without changes this can be
- * removed
+ * <p>Placeholder for new gas schedule items. If Osaka finalzies without changes this can be removed
  *
  * <UL>
  *   <LI>TBD
@@ -28,21 +27,34 @@ import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
  */
 public class OsakaGasCalculator extends PragueGasCalculator {
 
+  /** The default mainnet target blobs per block for Osaka */
+  private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_OSAKA = 9;
+
   static final long MIN_RETAINED_GAS = 5_000;
   static final long MIN_CALLEE_GAS = 2300;
 
-  /** Instantiates a new Prague Gas Calculator. */
+  /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
+    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], DEFAULT_TARGET_BLOBS_PER_BLOCK_OSAKA);
   }
 
   /**
-   * Instantiates a new Prague Gas Calculator
+   * Instantiates a new Osaka Gas Calculator
+   *
+   * @param targetBlobsPerBlock the target blobs per block
+   */
+  public OsakaGasCalculator(final int targetBlobsPerBlock) {
+    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], targetBlobsPerBlock);
+  }
+
+  /**
+   * Instantiates a new Osaka Gas Calculator
    *
    * @param maxPrecompile the max precompile
+   * @param targetBlobsPerBlock the target blobs per block
    */
-  protected OsakaGasCalculator(final int maxPrecompile) {
-    super(maxPrecompile);
+  protected OsakaGasCalculator(final int maxPrecompile, final int targetBlobsPerBlock) {
+    super(maxPrecompile, targetBlobsPerBlock);
   }
 
   @Override

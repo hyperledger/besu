@@ -429,7 +429,7 @@ public class JsonRpcHttpService {
     try {
       httpServerOptions
           .setSsl(true)
-          .setPfxKeyCertOptions(
+          .setKeyCertOptions(
               new PfxOptions()
                   .setPath(tlsConfiguration.getKeyStorePath().toString())
                   .setPassword(tlsConfiguration.getKeyStorePassword()))
@@ -472,6 +472,14 @@ public class JsonRpcHttpService {
                 httpServerOptions.setTrustOptions(
                     allowlistClients(
                         knownClientsFile, clientAuthConfiguration.isCaClientsEnabled())));
+    clientAuthConfiguration
+        .getTruststorePath()
+        .ifPresent(
+            truststorePath ->
+                httpServerOptions.setTrustOptions(
+                    new PfxOptions()
+                        .setPath(truststorePath.toString())
+                        .setPassword(clientAuthConfiguration.getTrustStorePassword())));
   }
 
   private String tlsLogMessage() {

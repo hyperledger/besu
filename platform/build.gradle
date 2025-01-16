@@ -110,7 +110,6 @@ dependencies {
     api 'io.tmio:tuweni-config:2.4.2'
     api 'io.tmio:tuweni-concurrent:2.4.2'
     api 'io.tmio:tuweni-crypto:2.4.2'
-    api 'io.tmio:tuweni-devp2p:2.4.2'
     api 'io.tmio:tuweni-io:2.4.2'
     api 'io.tmio:tuweni-net:2.4.2'
     api 'io.tmio:tuweni-rlp:2.4.2'
@@ -138,12 +137,12 @@ dependencies {
 
     api 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
 
-    api 'org.hyperledger.besu:arithmetic:1.0.0'
-    api 'org.hyperledger.besu:blake2bf:1.0.0'
-    api 'org.hyperledger.besu:gnark:1.0.0'
-    api 'org.hyperledger.besu:ipa-multipoint:1.0.0'
-    api 'org.hyperledger.besu:secp256k1:1.0.0'
-    api 'org.hyperledger.besu:secp256r1:1.0.0'
+    api 'org.hyperledger.besu:arithmetic:1.1.1'
+    api 'org.hyperledger.besu:blake2bf:1.1.1'
+    api 'org.hyperledger.besu:gnark:1.1.1'
+    api 'org.hyperledger.besu:ipa-multipoint:1.1.1'
+    api 'org.hyperledger.besu:secp256k1:1.1.1'
+    api 'org.hyperledger.besu:secp256r1:1.1.1'
 
     api 'org.hyperledger.besu:besu-errorprone-checks:1.0.0'
 

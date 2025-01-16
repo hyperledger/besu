@@ -57,7 +57,7 @@ public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKey
     try {
 
       db =
-          OptimisticTransactionDB.open(
+          RocksDBOpener.openOptimisticTransactionDBWithWarning(
               options, configuration.getDatabaseDir().toString(), columnDescriptors, columnHandles);
       initMetrics();
       initColumnHandles();
