@@ -33,22 +33,6 @@ public class DelegatedCodeGasCostHelper {
     // empty constructor
   }
 
-  /** The status of the operation. */
-  public enum Status {
-    /** The operation failed due to insufficient gas. */
-    INSUFFICIENT_GAS,
-    /** The operation was successful. */
-    SUCCESS
-  }
-
-  /**
-   * The result of the operation.
-   *
-   * @param gasCost the gas cost
-   * @param status of the operation
-   */
-  public record Result(long gasCost, Status status) {}
-
   /**
    * Deducts the gas cost for delegated code resolution.
    *
@@ -57,26 +41,18 @@ public class DelegatedCodeGasCostHelper {
    * @param account the account
    * @return the gas cost and result of the operation
    */
-  public static Result deductDelegatedCodeGasCost(
+  public static long delegatedCodeGasCost(
       final MessageFrame frame, final GasCalculator gasCalculator, final Account account) {
     if (!account.hasDelegatedCode()) {
-      return new Result(0, Status.SUCCESS);
+      return 0;
     }
 
     if (account.delegatedCodeAddress().isEmpty()) {
       throw new RuntimeException("A delegated code account must have a delegated code address");
     }
 
-    final long delegatedCodeResolutionGas =
-        calculateDelegatedCodeResolutionGas(
-            frame, gasCalculator, account.delegatedCodeAddress().get());
-
-    if (frame.getRemainingGas() < delegatedCodeResolutionGas) {
-      return new Result(delegatedCodeResolutionGas, Status.INSUFFICIENT_GAS);
-    }
-
-    frame.decrementRemainingGas(delegatedCodeResolutionGas);
-    return new Result(delegatedCodeResolutionGas, Status.SUCCESS);
+    return calculateDelegatedCodeResolutionGas(
+        frame, gasCalculator, account.delegatedCodeAddress().get());
   }
 
   private static long calculateDelegatedCodeResolutionGas(
