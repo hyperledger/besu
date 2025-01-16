@@ -63,7 +63,19 @@ class BlockHashOperationTest {
         ExceptionalHaltReason.INSUFFICIENT_GAS,
         200,
         (__, ___) -> Hash.hash(Bytes.fromHexString("0x1293487297")),
+        1,
         1);
+  }
+
+  @Test
+  void shouldFailWithInsufficientGasBlockHashLookup() {
+    assertFailure(
+        Bytes32.fromHexString("0x64"),
+        ExceptionalHaltReason.INSUFFICIENT_GAS,
+        200,
+        (__, ___) -> null,
+        21L,
+        0);
   }
 
   private void assertBlockHash(
@@ -104,7 +116,8 @@ class BlockHashOperationTest {
       final ExceptionalHaltReason haltReason,
       final long currentBlockNumber,
       final BlockHashLookup blockHashLookup,
-      final long initialGas) {
+      final long initialGas,
+      final int stackSize) {
     final MessageFrame frame =
         new TestMessageFrameBuilder()
             .blockHashLookup(blockHashLookup)
@@ -114,6 +127,6 @@ class BlockHashOperationTest {
             .build();
     Operation.OperationResult operationResult = blockHashOperation.execute(frame, null);
     assertThat(operationResult.getHaltReason()).isEqualTo(haltReason);
-    assertThat(frame.stackSize()).isOne();
+    assertThat(frame.stackSize()).isEqualTo(stackSize);
   }
 }
