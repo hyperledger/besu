@@ -15,12 +15,15 @@
 package org.hyperledger.besu.consensus.qbft.core.support;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
-import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockInterface;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftHashMode;
 import org.hyperledger.besu.consensus.qbft.core.payload.CommitPayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
@@ -30,7 +33,10 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 public class IntegrationTestHelpers {
 
   public static SignedData<CommitPayload> createSignedCommitPayload(
-      final ConsensusRoundIdentifier roundId, final QbftBlock block, final NodeKey nodeKey) {
+      final ConsensusRoundIdentifier roundId,
+      final QbftBlock block,
+      final NodeKey nodeKey,
+      final QbftBlockEncoder blockEncoder) {
 
     final QbftExtraDataCodec qbftExtraDataEncoder = new QbftExtraDataCodec();
 
@@ -41,7 +47,7 @@ public class IntegrationTestHelpers {
             new BftBlockHashing(qbftExtraDataEncoder)
                 .calculateDataHashForCommittedSeal(commitBlock.getHeader()));
 
-    final MessageFactory messageFactory = new MessageFactory(nodeKey);
+    final MessageFactory messageFactory = new MessageFactory(nodeKey, blockEncoder);
 
     return messageFactory.createCommit(roundId, block.getHash(), commitSeal).getSignedPayload();
   }
@@ -62,7 +68,8 @@ public class IntegrationTestHelpers {
       final QbftBlock proposalBlock, final int round) {
     final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
     final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
-    return bftBlockInterface.replaceRoundInBlock(
-        proposalBlock, round, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
+    final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceImpl(bftBlockInterface);
+    return qbftBlockInterface.replaceRoundInBlock(
+        proposalBlock, round, QbftHashMode.COMMITTED_SEAL);
   }
 }

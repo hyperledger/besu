@@ -19,11 +19,10 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockValidator;
 import org.hyperledger.besu.consensus.qbft.core.payload.ProposalPayload;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -37,7 +36,7 @@ public class ProposalPayloadValidator {
   private static final Logger LOG = LoggerFactory.getLogger(ProposalPayloadValidator.class);
   private final Address expectedProposer;
   private final ConsensusRoundIdentifier targetRound;
-  private final BlockValidator blockValidator;
+  private final QbftBlockValidator blockValidator;
   private final ProtocolContext protocolContext;
 
   /**
@@ -52,7 +51,7 @@ public class ProposalPayloadValidator {
   public ProposalPayloadValidator(
       final Address expectedProposer,
       final ConsensusRoundIdentifier targetRound,
-      final BlockValidator blockValidator,
+      final QbftBlockValidator blockValidator,
       final ProtocolContext protocolContext) {
     this.expectedProposer = expectedProposer;
     this.targetRound = targetRound;
@@ -96,15 +95,13 @@ public class ProposalPayloadValidator {
   private boolean validateBlock(final QbftBlock block) {
     checkState(blockValidator != null, "block validation not possible, no block validator.");
 
-    final var validationResult =
-        blockValidator.validateAndProcessBlock(
-            protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL, false);
+    final var validationResult = blockValidator.validateBlock(protocolContext, block);
 
-    if (!validationResult.isSuccessful()) {
+    if (!validationResult.success()) {
       LOG.info(
           "{}: block did not pass validation. Reason {}",
           ERROR_PREFIX,
-          validationResult.errorMessage);
+          validationResult.errorMessage());
       return false;
     }
 

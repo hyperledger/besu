@@ -58,7 +58,10 @@ public class LocalNodeNotProposerTest {
     expectedTxCommit =
         new Commit(
             createSignedCommitPayload(
-                roundId, blockToPropose, context.getLocalNodeParams().getNodeKey()));
+                roundId,
+                blockToPropose,
+                context.getLocalNodeParams().getNodeKey(),
+                context.getBlockEncoder()));
   }
 
   @Test

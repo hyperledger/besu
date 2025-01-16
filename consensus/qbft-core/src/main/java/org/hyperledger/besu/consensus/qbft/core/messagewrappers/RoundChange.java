@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.messagewrappers;
 
-import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftHashMode;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
@@ -35,6 +35,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class RoundChange extends BftMessage<RoundChangePayload> {
 
   private final Optional<QbftBlock> proposedBlock;
+  private final QbftBlockEncoder blockEncoder;
   private final List<SignedData<PreparePayload>> prepares;
 
   /**
@@ -42,14 +43,17 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
    *
    * @param payload the payload
    * @param proposedBlock the proposed block
+   * @param blockEncoder the qbft block encoder
    * @param prepares the prepares
    */
   public RoundChange(
       final SignedData<RoundChangePayload> payload,
       final Optional<QbftBlock> proposedBlock,
+      final QbftBlockEncoder blockEncoder,
       final List<SignedData<PreparePayload>> prepares) {
     super(payload);
     this.proposedBlock = proposedBlock;
+    this.blockEncoder = blockEncoder;
     this.prepares = prepares;
   }
 
@@ -94,7 +98,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
-    proposedBlock.ifPresentOrElse(pb -> pb.writeTo(rlpOut), rlpOut::writeEmptyList);
+    proposedBlock.ifPresentOrElse(pb -> blockEncoder.writeTo(pb, rlpOut), rlpOut::writeEmptyList);
     rlpOut.writeList(prepares, SignedData::writeTo);
     rlpOut.endList();
     return rlpOut.encoded();
@@ -104,10 +108,10 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
    * Decode.
    *
    * @param data the data
-   * @param bftExtraDataCodec the bft extra data codec
+   * @param blockEncoder the qbft block encoder
    * @return the round change
    */
-  public static RoundChange decode(final Bytes data, final BftExtraDataCodec bftExtraDataCodec) {
+  public static RoundChange decode(final Bytes data, final QbftBlockEncoder blockEncoder) {
 
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
@@ -118,16 +122,13 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
       rlpIn.skipNext();
       block = Optional.empty();
     } else {
-      block =
-          Optional.of(
-              QbftBlock.readFrom(
-                  rlpIn, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec)));
+      block = Optional.of(blockEncoder.readFrom(rlpIn, QbftHashMode.COMMITTED_SEAL));
     }
 
     final List<SignedData<PreparePayload>> prepares =
         rlpIn.readList(r -> readPayload(r, PreparePayload::readFrom));
     rlpIn.leaveList();
 
-    return new RoundChange(payload, block, prepares);
+    return new RoundChange(payload, block, blockEncoder, prepares);
   }
 }

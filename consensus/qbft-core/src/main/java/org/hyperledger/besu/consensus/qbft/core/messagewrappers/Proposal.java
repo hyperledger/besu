@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.messagewrappers;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
@@ -97,14 +97,14 @@ public class Proposal extends BftMessage<ProposalPayload> {
    * Decode.
    *
    * @param data the data
-   * @param bftExtraDataCodec the bft extra data codec
+   * @param blockEncoder the qbft block encoder
    * @return the proposal
    */
-  public static Proposal decode(final Bytes data, final BftExtraDataCodec bftExtraDataCodec) {
+  public static Proposal decode(final Bytes data, final QbftBlockEncoder blockEncoder) {
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
     final SignedData<ProposalPayload> payload =
-        readPayload(rlpIn, rlpInput -> ProposalPayload.readFrom(rlpInput, bftExtraDataCodec));
+        readPayload(rlpIn, rlpInput -> ProposalPayload.readFrom(rlpInput, blockEncoder));
 
     rlpIn.enterList();
     final List<SignedData<RoundChangePayload>> roundChanges =

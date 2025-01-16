@@ -20,14 +20,13 @@ import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHel
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockValidator;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collection;
 import java.util.List;
@@ -47,7 +46,7 @@ public class RoundChangeMessageValidator {
   private final long chainHeight;
   private final Collection<Address> validators;
   private final ProtocolContext protocolContext;
-  private final ProtocolSchedule protocolSchedule;
+  private final QbftProtocolSchedule protocolSchedule;
 
   /**
    * Instantiates a new Round change message validator.
@@ -65,7 +64,7 @@ public class RoundChangeMessageValidator {
       final long chainHeight,
       final Collection<Address> validators,
       final ProtocolContext protocolContext,
-      final ProtocolSchedule protocolSchedule) {
+      final QbftProtocolSchedule protocolSchedule) {
     this.roundChangePayloadValidator = roundChangePayloadValidator;
     this.quorumMessageCount = quorumMessageCount;
     this.chainHeight = chainHeight;
@@ -96,18 +95,16 @@ public class RoundChangeMessageValidator {
 
   private boolean validateBlock(final QbftBlock block) {
 
-    final BlockValidator blockValidator =
+    final QbftBlockValidator blockValidator =
         protocolSchedule.getByBlockHeader(block.getHeader()).getBlockValidator();
 
-    final var validationResult =
-        blockValidator.validateAndProcessBlock(
-            protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
+    final var validationResult = blockValidator.validateBlock(protocolContext, block);
 
-    if (!validationResult.isSuccessful()) {
+    if (!validationResult.success()) {
       LOG.info(
           "{}: block did not pass validation. Reason {}",
           ERROR_PREFIX,
-          validationResult.errorMessage);
+          validationResult.errorMessage());
       return false;
     }
 

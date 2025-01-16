@@ -238,7 +238,10 @@ public class ReceivedFutureProposalTest {
     final Commit expectedCommit =
         new Commit(
             IntegrationTestHelpers.createSignedCommitPayload(
-                nextRoundId, block, context.getLocalNodeParams().getNodeKey()));
+                nextRoundId,
+                block,
+                context.getLocalNodeParams().getNodeKey(),
+                context.getBlockEncoder()));
 
     peers.verifyMessagesReceived(expectedCommit);
   }

@@ -18,8 +18,8 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
-import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
@@ -64,7 +64,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   private final FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   private final Clock clock;
   private final Function<ConsensusRoundIdentifier, RoundState> roundStateCreator;
-  private final BftFinalState finalState;
+  private final QbftFinalState finalState;
 
   private Optional<PreparedCertificate> latestPreparedCertificate = Optional.empty();
   private Optional<QbftRound> currentRound = Optional.empty();
@@ -82,7 +82,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
    */
   public QbftBlockHeightManager(
       final BlockHeader parentHeader,
-      final BftFinalState finalState,
+      final QbftFinalState finalState,
       final RoundChangeManager roundChangeManager,
       final QbftRoundFactory qbftRoundFactory,
       final Clock clock,

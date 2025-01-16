@@ -27,14 +27,14 @@ import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.core.Block;
-import org.hyperledger.besu.consensus.qbft.core.BlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.qbft.core.support.ValidatorPeer;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.Instant;
@@ -464,7 +464,7 @@ public class ValidatorContractTest {
     context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));
 
     // peers commit proposed block
-    Block proposedBlock =
+    QbftBlock proposedBlock =
         context.createBlockForProposalFromChainHead(clock.instant().getEpochSecond());
     RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
     peers.commitForNonProposing(roundId, proposedBlock);
@@ -483,7 +483,7 @@ public class ValidatorContractTest {
     context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));
 
     // peers commit proposed block
-    Block proposedBlock = context.createBlockForProposalFromChainHead(timestamp);
+    QbftBlock proposedBlock = context.createBlockForProposalFromChainHead(timestamp);
     RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
     peers.commitForNonProposing(roundId, proposedBlock);
 
@@ -498,7 +498,7 @@ public class ValidatorContractTest {
 
     RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
     ValidatorPeer remoteProposer = peers.getProposer();
-    final Block blockToPropose =
+    final QbftBlock blockToPropose =
         context.createBlockForProposalFromChainHead(
             clock.instant().getEpochSecond(), remoteProposer.getNodeAddress());
     remoteProposer.injectProposal(roundId, blockToPropose);

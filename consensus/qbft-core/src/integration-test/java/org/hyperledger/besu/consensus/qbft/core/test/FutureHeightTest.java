@@ -15,11 +15,9 @@
 package org.hyperledger.besu.consensus.qbft.core.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.util.Lists.emptyList;
 import static org.hyperledger.besu.consensus.qbft.core.support.IntegrationTestHelpers.createSignedCommitPayload;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
@@ -65,7 +63,7 @@ public class FutureHeightTest {
   public void messagesForFutureHeightAreBufferedUntilChainHeightCatchesUp() {
     final QbftBlock currentHeightBlock = context.createBlockForProposalFromChainHead(30);
     final QbftBlock signedCurrentHeightBlock =
-        BftHelpers.createSealedBlock(
+        context.createSealedBlock(
             bftExtraDataCodec, currentHeightBlock, 0, peers.sign(currentHeightBlock.getHash()));
 
     final QbftBlock futureHeightBlock =
@@ -92,7 +90,7 @@ public class FutureHeightTest {
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
 
     // Add block to chain, and notify system of its arrival.
-    context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList());
+    context.appendBlock(signedCurrentHeightBlock);
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
     context
         .getController()
@@ -104,7 +102,10 @@ public class FutureHeightTest {
     final Commit expectedCommitMessage =
         new Commit(
             createSignedCommitPayload(
-                futureHeightRoundId, futureHeightBlock, context.getLocalNodeParams().getNodeKey()));
+                futureHeightRoundId,
+                futureHeightBlock,
+                context.getLocalNodeParams().getNodeKey(),
+                context.getBlockEncoder()));
 
     peers.verifyMessagesReceived(expectedPrepareMessage, expectedCommitMessage);
     assertThat(context.getCurrentChainHeight()).isEqualTo(2);
@@ -115,7 +116,7 @@ public class FutureHeightTest {
     final QbftBlock currentHeightBlock =
         context.createBlockForProposalFromChainHead(30, peers.getProposer().getNodeAddress());
     final QbftBlock signedCurrentHeightBlock =
-        BftHelpers.createSealedBlock(
+        context.createSealedBlock(
             bftExtraDataCodec, currentHeightBlock, 0, peers.sign(currentHeightBlock.getHash()));
 
     peers.getProposer().injectProposal(roundId, currentHeightBlock);
@@ -127,7 +128,7 @@ public class FutureHeightTest {
     peers.verifyMessagesReceived(expectedPrepareMessage);
 
     // Add block to chain, and notify system of its arrival.
-    context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList());
+    context.appendBlock(signedCurrentHeightBlock);
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
     context
         .getController()
@@ -163,7 +164,10 @@ public class FutureHeightTest {
     final Commit expectedCommitMessage =
         new Commit(
             createSignedCommitPayload(
-                roundId, currentHeightBlock, context.getLocalNodeParams().getNodeKey()));
+                roundId,
+                currentHeightBlock,
+                context.getLocalNodeParams().getNodeKey(),
+                context.getBlockEncoder()));
     peers.verifyMessagesReceived(expectedCommitMessage);
   }
 
@@ -171,14 +175,14 @@ public class FutureHeightTest {
   public void correctMessagesAreExtractedFromFutureHeightBuffer() {
     final QbftBlock currentHeightBlock = context.createBlockForProposalFromChainHead(30);
     final QbftBlock signedCurrentHeightBlock =
-        BftHelpers.createSealedBlock(
+        context.createSealedBlock(
             bftExtraDataCodec, currentHeightBlock, 0, peers.sign(currentHeightBlock.getHash()));
 
     final QbftBlock nextHeightBlock =
         context.createBlockForProposal(
             signedCurrentHeightBlock.getHeader(), 60, peers.getProposer().getNodeAddress());
     final QbftBlock signedNextHeightBlock =
-        BftHelpers.createSealedBlock(
+        context.createSealedBlock(
             bftExtraDataCodec, nextHeightBlock, 0, peers.sign(nextHeightBlock.getHash()));
 
     final QbftBlock futureHeightBlock =
@@ -193,7 +197,7 @@ public class FutureHeightTest {
     peers.commitForNonProposing(futureHeightRoundId, futureHeightBlock);
 
     // Add the "interim" block to chain, and notify system of its arrival.
-    context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList());
+    context.appendBlock(signedCurrentHeightBlock);
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
     context
         .getController()
@@ -213,7 +217,7 @@ public class FutureHeightTest {
     peers.getNonProposing(0).injectProposal(futureHeightRoundId, futureHeightBlock);
 
     // Change to the FutureRound, and confirm prepare and commit msgs are sent
-    context.getBlockchain().appendBlock(signedNextHeightBlock, emptyList());
+    context.appendBlock(signedCurrentHeightBlock);
     assertThat(context.getCurrentChainHeight()).isEqualTo(2);
     context
         .getController()
@@ -225,7 +229,10 @@ public class FutureHeightTest {
     final Commit expectedCommitMessage =
         new Commit(
             createSignedCommitPayload(
-                futureHeightRoundId, futureHeightBlock, context.getLocalNodeParams().getNodeKey()));
+                futureHeightRoundId,
+                futureHeightBlock,
+                context.getLocalNodeParams().getNodeKey(),
+                context.getBlockEncoder()));
 
     // Assert ONLY a prepare message was received, not any commits (i.e. futureHeightRoundId
     // messages have not been used.

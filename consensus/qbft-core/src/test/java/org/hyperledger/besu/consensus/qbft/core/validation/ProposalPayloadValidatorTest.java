@@ -26,20 +26,21 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
-import org.hyperledger.besu.consensus.qbft.core.Block;
+import org.hyperledger.besu.consensus.qbft.core.QbftBlockTestFixture;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockValidator;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
@@ -54,10 +55,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class ProposalPayloadValidatorTest {
 
-  @Mock private BlockValidator blockValidator;
+  @Mock private QbftBlockValidator blockValidator;
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
   @Mock private BftExtraDataCodec bftExtraDataCodec;
+  @Mock private QbftBlockEncoder blockEncoder;
   private ProtocolContext protocolContext;
 
   private static final int CHAIN_HEIGHT = 3;
@@ -66,7 +68,7 @@ public class ProposalPayloadValidatorTest {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final Address expectedProposer = Util.publicKeyToAddress(nodeKey.getPublicKey());
-  private final MessageFactory messageFactory = new MessageFactory(nodeKey);
+  private final MessageFactory messageFactory = new MessageFactory(nodeKey, blockEncoder);
   final ConsensusRoundIdentifier roundIdentifier =
       ConsensusRoundHelpers.createFrom(targetRound, 1, 0);
 
@@ -86,18 +88,14 @@ public class ProposalPayloadValidatorTest {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
             expectedProposer, roundIdentifier, blockValidator, protocolContext);
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier, bftExtraDataCodec);
+    final BlockHeader header =
+        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
-    when(blockValidator.validateAndProcessBlock(
-            eq(protocolContext),
-            eq(block),
-            eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL),
-            eq(false)))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(blockValidator.validateBlock(eq(protocolContext), eq(block)))
+        .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isTrue();
   }
@@ -109,21 +107,14 @@ public class ProposalPayloadValidatorTest {
         new ProposalPayloadValidator(
             expectedProposer, roundIdentifier, blockValidator, protocolContext);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(
-            emptyList(),
-            ConsensusRoundHelpers.createFrom(roundIdentifier, 0, +1),
-            bftExtraDataCodec);
+    final BlockHeader header =
+        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
-    when(blockValidator.validateAndProcessBlock(
-            eq(protocolContext),
-            eq(block),
-            eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL),
-            eq(false)))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(blockValidator.validateBlock(eq(protocolContext), eq(block)))
+        .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isTrue();
   }
@@ -137,18 +128,14 @@ public class ProposalPayloadValidatorTest {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
             expectedProposer, roundIdentifier, blockValidator, protocolContext);
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier, bftExtraDataCodec);
+    final BlockHeader header =
+        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
-    when(blockValidator.validateAndProcessBlock(
-            eq(protocolContext),
-            eq(block),
-            eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL),
-            eq(false)))
-        .thenReturn(new BlockProcessingResult("Failed"));
+    when(blockValidator.validateBlock(eq(protocolContext), eq(block)))
+        .thenReturn(new QbftBlockValidator.ValidationResult(false, Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
   }
@@ -158,7 +145,9 @@ public class ProposalPayloadValidatorTest {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
             Address.fromHexString("0x1"), roundIdentifier, blockValidator, protocolContext);
-    final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
+    final BlockHeader header =
+        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
@@ -172,7 +161,9 @@ public class ProposalPayloadValidatorTest {
         new ProposalPayloadValidator(
             expectedProposer, roundIdentifier, blockValidator, protocolContext);
 
-    final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
+    final BlockHeader header =
+        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(
             ConsensusRoundHelpers.createFrom(roundIdentifier, 0, +1),
@@ -190,7 +181,9 @@ public class ProposalPayloadValidatorTest {
         new ProposalPayloadValidator(
             expectedProposer, roundIdentifier, blockValidator, protocolContext);
 
-    final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
+    final BlockHeader header =
+        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(
             ConsensusRoundHelpers.createFrom(roundIdentifier, +1, 0),
@@ -209,21 +202,14 @@ public class ProposalPayloadValidatorTest {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
             expectedProposer, roundIdentifier, blockValidator, protocolContext);
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(
-            emptyList(),
-            ConsensusRoundHelpers.createFrom(roundIdentifier, +1, 0),
-            bftExtraDataCodec);
+    final BlockHeader header =
+        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
-    when(blockValidator.validateAndProcessBlock(
-            eq(protocolContext),
-            eq(block),
-            eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL),
-            eq(false)))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(blockValidator.validateBlock(eq(protocolContext), eq(block)))
+        .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
   }

@@ -38,7 +38,6 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
@@ -48,7 +47,6 @@ import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.UniqueMessageMulticaster;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.inttest.DefaultValidatorPeer;
 import org.hyperledger.besu.consensus.common.bft.inttest.NetworkLayout;
@@ -57,7 +55,6 @@ import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaste
 import org.hyperledger.besu.consensus.common.bft.inttest.StubbedSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.inttest.TestTransitions;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
-import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
@@ -65,8 +62,16 @@ import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockEncoderImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleImpl;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.ExtraDataProvider;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftFinalState;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftBlockHeightManagerFactory;
@@ -84,9 +89,9 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
-import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -141,10 +146,11 @@ public class TestContextBuilder {
   private record ControllerAndState(
       BftExecutors bftExecutors,
       BftEventHandler eventHandler,
-      BftFinalState finalState,
+      QbftFinalState finalState,
       EventMultiplexer eventMultiplexer,
       MessageFactory messageFactory,
-      ValidatorProvider validatorProvider) {}
+      ValidatorProvider validatorProvider,
+      ProposerSelector proposerSelector) {}
 
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private boolean useValidatorContract;
@@ -162,7 +168,7 @@ public class TestContextBuilder {
   public static final int FUTURE_MESSAGES_LIMIT = 1000;
   public static final Address VALIDATOR_CONTRACT_ADDRESS =
       Address.fromHexString("0x0000000000000000000000000000000000008888");
-  private static final BftExtraDataCodec BFT_EXTRA_DATA_ENCODER = new QbftExtraDataCodec();
+  private static final QbftExtraDataCodec BFT_EXTRA_DATA_ENCODER = new QbftExtraDataCodec();
 
   private Clock clock = Clock.fixed(Instant.MIN, ZoneId.of("UTC"));
   private BftEventQueue bftEventQueue = new BftEventQueue(MESSAGE_QUEUE_LIMIT);
@@ -254,6 +260,7 @@ public class TestContextBuilder {
       networkNodes = new NetworkLayout(localNode, addressKeyMap);
     }
 
+    final QbftBlockEncoder blockEncoder = new QbftBlockEncoderImpl(BFT_EXTRA_DATA_ENCODER);
     final MutableBlockchain blockChain;
     final ForestWorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
@@ -269,7 +276,7 @@ public class TestContextBuilder {
         throw new IllegalStateException(e);
       }
     } else {
-      final QbftBlock genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
+      final Block genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
       blockChain =
           createInMemoryBlockchain(
               genesisBlock, BftBlockHeaderFunctions.forOnchainBlock(BFT_EXTRA_DATA_ENCODER));
@@ -281,9 +288,7 @@ public class TestContextBuilder {
         new UniqueMessageMulticaster(multicaster, GOSSIPED_HISTORY_LIMIT);
 
     final Gossiper gossiper =
-        useGossip
-            ? new QbftGossip(uniqueMulticaster, BFT_EXTRA_DATA_ENCODER)
-            : mock(Gossiper.class);
+        useGossip ? new QbftGossip(uniqueMulticaster, blockEncoder) : mock(Gossiper.class);
 
     final StubbedSynchronizerUpdater synchronizerUpdater = new StubbedSynchronizerUpdater();
 
@@ -302,7 +307,8 @@ public class TestContextBuilder {
             useShanghaiMilestone,
             useZeroBaseFee,
             useFixedBaseFee,
-            qbftForks);
+            qbftForks,
+            blockEncoder);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
     // NOTE: the remotePeers needs to be ordered based on Address (as this is used to determine
@@ -315,7 +321,7 @@ public class TestContextBuilder {
                     nodeParams ->
                         new ValidatorPeer(
                             nodeParams,
-                            new MessageFactory(nodeParams.getNodeKey()),
+                            new MessageFactory(nodeParams.getNodeKey(), blockEncoder),
                             controllerAndState.eventMultiplexer()),
                     (u, v) -> {
                       throw new IllegalStateException(String.format("Duplicate key %s", u));
@@ -335,7 +341,9 @@ public class TestContextBuilder {
         controllerAndState.eventMultiplexer(),
         controllerAndState.messageFactory(),
         controllerAndState.validatorProvider(),
-        BFT_EXTRA_DATA_ENCODER);
+        controllerAndState.proposerSelector(),
+        BFT_EXTRA_DATA_ENCODER,
+        blockEncoder);
   }
 
   public TestContext buildAndStart() {
@@ -344,7 +352,7 @@ public class TestContextBuilder {
     return testContext;
   }
 
-  private static QbftBlock createGenesisBlock(final Set<Address> validators) {
+  private static Block createGenesisBlock(final Set<Address> validators) {
     final Address coinbase = Iterables.get(validators, 0);
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
     final BftExtraData extraData =
@@ -361,7 +369,7 @@ public class TestContextBuilder {
     headerTestFixture.coinbase(coinbase);
 
     final BlockHeader genesisHeader = headerTestFixture.buildHeader();
-    return new QbftBlock(
+    return new Block(
         genesisHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
   }
 
@@ -385,7 +393,8 @@ public class TestContextBuilder {
       final boolean useShanghaiMilestone,
       final boolean useZeroBaseFee,
       final boolean useFixedBaseFee,
-      final List<QbftFork> qbftForks) {
+      final List<QbftFork> qbftForks,
+      final QbftBlockEncoder blockEncoder) {
 
     final MiningConfiguration miningConfiguration =
         ImmutableMiningConfiguration.builder()
@@ -491,7 +500,7 @@ public class TestContextBuilder {
     final EthScheduler ethScheduler = new DeterministicEthScheduler();
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final BftBlockCreatorFactory<?> blockCreatorFactory =
+    final QbftBlockCreatorFactory blockCreatorFactory =
         new QbftBlockCreatorFactory(
             transactionPool, // changed from QbftBesuController
             protocolContext,
@@ -507,8 +516,8 @@ public class TestContextBuilder {
 
     final BftExecutors bftExecutors =
         BftExecutors.create(new NoOpMetricsSystem(), BftExecutors.ConsensusType.QBFT);
-    final BftFinalState finalState =
-        new BftFinalState(
+    final QbftFinalState finalState =
+        new QbftFinalStateImpl(
             protocolContext.getConsensusContext(BftContext.class).getValidatorProvider(),
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
@@ -516,16 +525,17 @@ public class TestContextBuilder {
             multicaster,
             new RoundTimer(bftEventQueue, Duration.ofSeconds(ROUND_TIMER_SEC), bftExecutors),
             new BlockTimer(bftEventQueue, forksSchedule, bftExecutors, TestClock.fixed()),
-            blockCreatorFactory,
+            new QbftBlockCreatorFactoryImpl(blockCreatorFactory, BFT_EXTRA_DATA_ENCODER),
             clock);
 
-    final MessageFactory messageFactory = new MessageFactory(nodeKey);
+    final MessageFactory messageFactory = new MessageFactory(nodeKey, blockEncoder);
 
+    QbftProtocolScheduleImpl qbftProtocolSchedule =
+        new QbftProtocolScheduleImpl(protocolSchedule, protocolContext);
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(
-            proposerSelector, protocolSchedule, protocolContext, BFT_EXTRA_DATA_ENCODER);
+        new MessageValidatorFactory(proposerSelector, qbftProtocolSchedule, protocolContext);
 
-    final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
+    final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
 
     final MessageTracker duplicateMessageTracker = new MessageTracker(DUPLICATE_MESSAGE_LIMIT);
     final FutureMessageBuffer futureMessageBuffer =
@@ -533,8 +543,10 @@ public class TestContextBuilder {
             FUTURE_MESSAGES_MAX_DISTANCE,
             FUTURE_MESSAGES_LIMIT,
             blockChain.getChainHeadBlockNumber());
+    final ExtraDataProvider extraDataProvider =
+        new QbftExtraDataProviderImpl(BFT_EXTRA_DATA_ENCODER);
 
-    final BftEventHandler qbftController =
+    final QbftController qbftController =
         new QbftController(
             blockChain,
             finalState,
@@ -543,11 +555,12 @@ public class TestContextBuilder {
                 new QbftRoundFactory(
                     finalState,
                     protocolContext,
-                    protocolSchedule,
+                    qbftProtocolSchedule,
                     minedBlockObservers,
                     messageValidatorFactory,
                     messageFactory,
-                    BFT_EXTRA_DATA_ENCODER),
+                    BFT_EXTRA_DATA_ENCODER,
+                    extraDataProvider),
                 messageValidatorFactory,
                 messageFactory,
                 new ValidatorModeTransitionLogger(forksSchedule)),
@@ -555,7 +568,7 @@ public class TestContextBuilder {
             duplicateMessageTracker,
             futureMessageBuffer,
             synchronizerUpdater,
-            BFT_EXTRA_DATA_ENCODER);
+            blockEncoder);
 
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(qbftController);
     //////////////////////////// END QBFT BesuController ////////////////////////////
@@ -566,7 +579,8 @@ public class TestContextBuilder {
         finalState,
         eventMultiplexer,
         messageFactory,
-        validatorProvider);
+        validatorProvider,
+        proposerSelector);
   }
 
   private static QbftConfigOptions createGenesisConfig(final boolean useValidatorContract) {

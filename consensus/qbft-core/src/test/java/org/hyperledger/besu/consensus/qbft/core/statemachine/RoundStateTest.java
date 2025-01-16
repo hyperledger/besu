@@ -23,7 +23,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.core.Block;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
@@ -67,8 +68,8 @@ public class RoundStateTest {
   private final Hash blockHash = Hash.fromHexStringLenient("1");
 
   @Mock private MessageValidator messageValidator;
-
-  @Mock private Block block;
+  @Mock private QbftBlock block;
+  @Mock private QbftBlockEncoder blockEncoder;
 
   @BeforeEach
   public void setup() {
@@ -76,7 +77,7 @@ public class RoundStateTest {
       final NodeKey newNodeKey = NodeKeyUtils.generate();
       validatorKeys.add(newNodeKey);
       validators.add(Util.publicKeyToAddress(newNodeKey.getPublicKey()));
-      validatorMessageFactories.add(new MessageFactory(newNodeKey));
+      validatorMessageFactories.add(new MessageFactory(newNodeKey, blockEncoder));
     }
   }
 

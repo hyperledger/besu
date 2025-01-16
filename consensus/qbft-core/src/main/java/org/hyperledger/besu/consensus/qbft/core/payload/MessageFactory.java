@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
@@ -35,14 +36,17 @@ import java.util.Optional;
 public class MessageFactory {
 
   private final NodeKey nodeKey;
+  private final QbftBlockEncoder blockEncoder;
 
   /**
    * Instantiates a new Message factory.
    *
    * @param nodeKey the node key
+   * @param blockEncoder the block encoder
    */
-  public MessageFactory(final NodeKey nodeKey) {
+  public MessageFactory(final NodeKey nodeKey, final QbftBlockEncoder blockEncoder) {
     this.nodeKey = nodeKey;
+    this.blockEncoder = blockEncoder;
   }
 
   /**
@@ -60,7 +64,7 @@ public class MessageFactory {
       final List<SignedData<RoundChangePayload>> roundChanges,
       final List<SignedData<PreparePayload>> prepares) {
 
-    final ProposalPayload payload = new ProposalPayload(roundIdentifier, block);
+    final ProposalPayload payload = new ProposalPayload(roundIdentifier, block, blockEncoder);
 
     return new Proposal(createSignedMessage(payload), roundChanges, prepares);
   }
@@ -118,12 +122,13 @@ public class MessageFactory {
       return new RoundChange(
           createSignedMessage(payload),
           Optional.of(preparedBlock),
+          blockEncoder,
           preparedRoundData.get().getPrepares());
 
     } else {
       payload = new RoundChangePayload(roundIdentifier, Optional.empty());
       return new RoundChange(
-          createSignedMessage(payload), Optional.empty(), Collections.emptyList());
+          createSignedMessage(payload), Optional.empty(), blockEncoder, Collections.emptyList());
     }
   }
 

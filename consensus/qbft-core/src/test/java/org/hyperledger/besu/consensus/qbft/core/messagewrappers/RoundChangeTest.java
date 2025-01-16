@@ -16,12 +16,11 @@ package org.hyperledger.besu.consensus.qbft.core.messagewrappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.core.Block;
-import org.hyperledger.besu.consensus.qbft.core.BlockBody;
-import org.hyperledger.besu.consensus.qbft.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.consensus.qbft.core.QbftBlockTestFixture;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
@@ -42,12 +41,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class RoundChangeTest {
-  @Mock private BftExtraDataCodec bftExtraDataCodec;
+  @Mock private QbftBlockEncoder blockEncoder;
 
-  private static final Block BLOCK =
-      new Block(
-          new BlockHeaderTestFixture().buildHeader(),
-          new BlockBody(Collections.emptyList(), Collections.emptyList()));
+  private static final QbftBlock BLOCK = new QbftBlockTestFixture().build();
 
   @Test
   public void canRoundTripARoundChangeMessage() {
@@ -69,10 +65,12 @@ public class RoundChangeTest {
 
     final RoundChange roundChange =
         new RoundChange(
-            signedRoundChangePayload, Optional.of(BLOCK), List.of(signedPreparePayload));
+            signedRoundChangePayload,
+            Optional.of(BLOCK),
+            blockEncoder,
+            List.of(signedPreparePayload));
 
-    final RoundChange decodedRoundChange =
-        RoundChange.decode(roundChange.encode(), bftExtraDataCodec);
+    final RoundChange decodedRoundChange = RoundChange.decode(roundChange.encode(), blockEncoder);
 
     assertThat(decodedRoundChange.getMessageType()).isEqualTo(QbftV1.ROUND_CHANGE);
     assertThat(decodedRoundChange.getAuthor()).isEqualTo(addr);
@@ -97,10 +95,10 @@ public class RoundChangeTest {
         SignedData.create(payload, nodeKey.sign(payload.hashForSignature()));
 
     final RoundChange roundChange =
-        new RoundChange(signedRoundChangePayload, Optional.empty(), Collections.emptyList());
+        new RoundChange(
+            signedRoundChangePayload, Optional.empty(), blockEncoder, Collections.emptyList());
 
-    final RoundChange decodedRoundChange =
-        RoundChange.decode(roundChange.encode(), bftExtraDataCodec);
+    final RoundChange decodedRoundChange = RoundChange.decode(roundChange.encode(), blockEncoder);
 
     assertThat(decodedRoundChange.getMessageType()).isEqualTo(QbftV1.ROUND_CHANGE);
     assertThat(decodedRoundChange.getAuthor()).isEqualTo(addr);

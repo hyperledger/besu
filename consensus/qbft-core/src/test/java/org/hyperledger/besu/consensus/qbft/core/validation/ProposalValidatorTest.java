@@ -28,12 +28,15 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.core.Block;
+import org.hyperledger.besu.consensus.qbft.core.QbftBlockTestFixture;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockValidator;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSchedule;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSpec;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
@@ -41,13 +44,11 @@ import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.HashMap;
@@ -72,12 +73,12 @@ public class ProposalValidatorTest {
 
   private static class RoundSpecificItems {
 
-    public final Block block;
+    public final QbftBlock block;
     public final ConsensusRoundIdentifier roundIdentifier;
     public final ProposalValidator messageValidator;
 
     public RoundSpecificItems(
-        final Block block,
+        final QbftBlock block,
         final ConsensusRoundIdentifier roundIdentifier,
         final ProposalValidator messageValidator) {
       this.block = block;
@@ -87,13 +88,14 @@ public class ProposalValidatorTest {
   }
 
   private static final int VALIDATOR_COUNT = 4;
-  private static final QbftNodeList validators = QbftNodeList.createNodes(VALIDATOR_COUNT);
-  @Mock private BlockValidator blockValidator;
+  @Mock private QbftBlockValidator blockValidator;
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
-  @Mock private BftProtocolSchedule protocolSchedule;
-  @Mock private ProtocolSpec protocolSpec;
+  @Mock private QbftProtocolSchedule protocolSchedule;
+  @Mock private QbftProtocolSpec protocolSpec;
   @Mock private BftExtraDataCodec bftExtraDataCodec;
+  @Mock private QbftBlockEncoder blockEncoder;
+  private QbftNodeList validators;
   private ProtocolContext protocolContext;
 
   private final Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
@@ -106,15 +108,10 @@ public class ProposalValidatorTest {
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataCodec),
             new BadBlockManager());
-
+    validators = QbftNodeList.createNodes(VALIDATOR_COUNT, blockEncoder);
     // typically tests require the blockValidation to be successful
-    when(blockValidator.validateAndProcessBlock(
-            eq(protocolContext),
-            any(),
-            eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL),
-            eq(false)))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(blockValidator.validateBlock(eq(protocolContext), any()))
+        .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
 
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
 
@@ -127,10 +124,14 @@ public class ProposalValidatorTest {
 
   private RoundSpecificItems createRoundSpecificItems(final int roundNumber) {
     final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, roundNumber);
-
+    final BlockHeader blockHeader =
+        new BlockHeaderTestFixture()
+            .number(roundIdentifier.getSequenceNumber())
+            .coinbase(validators.getNodeAddresses().getFirst())
+            .buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(blockHeader).build();
     return new RoundSpecificItems(
-        ProposedBlockHelpers.createProposalBlock(
-            validators.getNodeAddresses(), roundIdentifier, bftExtraDataCodec),
+        block,
         roundIdentifier,
         new ProposalValidator(
             protocolContext,
@@ -138,8 +139,7 @@ public class ProposalValidatorTest {
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             validators.getNodeAddresses(),
             roundIdentifier,
-            validators.getNode(0).getAddress(),
-            bftExtraDataCodec));
+            validators.getNode(0).getAddress()));
   }
 
   // NOTE: tests herein assume the ProposalPayloadValidator works as expected, so other than
@@ -167,13 +167,9 @@ public class ProposalValidatorTest {
     final Proposal proposal = createProposal(roundItem, emptyList(), emptyList());
 
     reset(blockValidator);
-    when(blockValidator.validateAndProcessBlock(
-            eq(protocolContext),
-            any(),
-            eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL),
-            eq(false)))
-        .thenReturn(new BlockProcessingResult("Failed"));
+
+    when(blockValidator.validateBlock(eq(protocolContext), any()))
+        .thenReturn(new QbftBlockValidator.ValidationResult(false, Optional.of("Failed")));
 
     assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
   }
@@ -261,7 +257,7 @@ public class ProposalValidatorTest {
   @Test
   public void validationFailsIfPiggybackedRoundChangePayloadIsFromNonValidation() {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
-    final QbftNode nonValidatorNode = QbftNode.create();
+    final QbftNode nonValidatorNode = QbftNode.create(blockEncoder);
 
     final List<SignedData<RoundChangePayload>> roundChanges =
         createEmptyRoundChangePayloads(
@@ -413,7 +409,7 @@ public class ProposalValidatorTest {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
     final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
 
-    final QbftNode nonValidator = QbftNode.create();
+    final QbftNode nonValidator = QbftNode.create(blockEncoder);
     final Proposal proposal =
         validators
             .getMessageFactory(0)

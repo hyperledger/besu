@@ -17,20 +17,29 @@ package org.hyperledger.besu.consensus.qbft.core.support;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
-import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockImpl;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -48,22 +57,26 @@ public class TestContext {
   private final MutableBlockchain blockchain;
   private final BftExecutors bftExecutors;
   private final BftEventHandler controller;
-  private final BftFinalState finalState;
+  private final QbftFinalState finalState;
   private final EventMultiplexer eventMultiplexer;
   private final MessageFactory messageFactory;
   private final ValidatorProvider validatorProvider;
+  private final ProposerSelector proposerSelector;
   private final BftExtraDataCodec bftExtraDataCodec;
+  private final QbftBlockEncoder blockEncoder;
 
   public TestContext(
       final Map<Address, ValidatorPeer> remotePeers,
       final MutableBlockchain blockchain,
       final BftExecutors bftExecutors,
       final BftEventHandler controller,
-      final BftFinalState finalState,
+      final QbftFinalState finalState,
       final EventMultiplexer eventMultiplexer,
       final MessageFactory messageFactory,
       final ValidatorProvider validatorProvider,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final ProposerSelector proposerSelector,
+      final BftExtraDataCodec bftExtraDataCodec,
+      final QbftBlockEncoder blockEncoder) {
     this.remotePeers = remotePeers;
     this.blockchain = blockchain;
     this.bftExecutors = bftExecutors;
@@ -72,7 +85,9 @@ public class TestContext {
     this.eventMultiplexer = eventMultiplexer;
     this.messageFactory = messageFactory;
     this.validatorProvider = validatorProvider;
+    this.proposerSelector = proposerSelector;
     this.bftExtraDataCodec = bftExtraDataCodec;
+    this.blockEncoder = blockEncoder;
   }
 
   public void start() {
@@ -94,6 +109,10 @@ public class TestContext {
 
   public MessageFactory getLocalNodeMessageFactory() {
     return messageFactory;
+  }
+
+  public QbftBlockEncoder getBlockEncoder() {
+    return blockEncoder;
   }
 
   public QbftBlock createBlockForProposalFromChainHead(final long timestamp) {
@@ -125,11 +144,7 @@ public class TestContext {
       final Address proposer,
       final int roundNumber) {
     final QbftBlock block =
-        finalState
-            .getBlockCreatorFactory()
-            .create(roundNumber)
-            .createBlock(timestamp, parent)
-            .getBlock();
+        finalState.getBlockCreatorFactory().create(roundNumber).createBlock(timestamp, parent);
 
     final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
     headerBuilder
@@ -137,7 +152,7 @@ public class TestContext {
         .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();
 
-    return new QbftBlock(newHeader, block.getBody());
+    return new QbftBlockImpl(newHeader);
   }
 
   public QbftBlock createBlockForProposal(
@@ -145,15 +160,26 @@ public class TestContext {
     return createBlockForProposal(parent, timestamp, proposer, 0);
   }
 
+  public QbftBlock createSealedBlock(
+      final BftExtraDataCodec bftExtraDataCodec,
+      final QbftBlock block,
+      final int roundNumber,
+      final Collection<SECPSignature> commitSeals) {
+    final Block sealedBlock =
+        BftHelpers.createSealedBlock(
+            bftExtraDataCodec, BlockUtil.toBesuBlock(block), roundNumber, commitSeals);
+    return new QbftBlockImpl(sealedBlock.getHeader());
+  }
+
   public RoundSpecificPeers roundSpecificPeers(final ConsensusRoundIdentifier roundId) {
     // This will return NULL if the LOCAL node is the proposer for the specified round
-    final Address proposerAddress = finalState.getProposerForRound(roundId);
+    final Address proposerAddress = proposerSelector.selectProposerForRound(roundId);
     final ValidatorPeer proposer = remotePeers.getOrDefault(proposerAddress, null);
 
     final List<ValidatorPeer> nonProposers = new ArrayList<>(remotePeers.values());
     nonProposers.remove(proposer);
 
-    return new RoundSpecificPeers(proposer, remotePeers.values(), nonProposers, bftExtraDataCodec);
+    return new RoundSpecificPeers(proposer, remotePeers.values(), nonProposers, blockEncoder);
   }
 
   public NodeParams getLocalNodeParams() {
@@ -166,5 +192,10 @@ public class TestContext {
 
   public ValidatorProvider getValidatorProvider() {
     return validatorProvider;
+  }
+
+  public void appendBlock(final QbftBlock signedCurrentHeightBlock) {
+    blockchain.appendBlock(
+        BlockUtil.toBesuBlock(signedCurrentHeightBlock), Collections.emptyList());
   }
 }
