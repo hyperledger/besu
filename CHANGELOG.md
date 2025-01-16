@@ -29,6 +29,7 @@
 - Improve debug_traceBlock calls performance and reduce output size [#8076](https://github.com/hyperledger/besu/pull/8076)
 - Add support for EIP-7702 transaction in the txpool [#8018](https://github.com/hyperledger/besu/pull/8018) [#7984](https://github.com/hyperledger/besu/pull/7984)
 - Add support for `movePrecompileToAddress` in `StateOverrides` (`eth_call`)[8115](https://github.com/hyperledger/besu/pull/8115)
+- Add EIP-7623 - Increase calldata cost [#8093](https://github.com/hyperledger/besu/pull/8093)
 
 ### Bug fixes
 - Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
