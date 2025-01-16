@@ -26,11 +26,22 @@ import org.slf4j.LoggerFactory;
 public class CancunFeeMarket extends LondonFeeMarket {
   private static final Logger LOG = LoggerFactory.getLogger(CancunFeeMarket.class);
   protected static final BigInteger BLOB_GAS_PRICE = BigInteger.ONE;
-  private static final BigInteger BLOB_GAS_PRICE_UPDATE_FRACTION = BigInteger.valueOf(3338477);
+  private static final long BLOB_GAS_PRICE_UPDATE_FRACTION = 3338477;
+
+  protected final BigInteger baseFeeUpdateFraction;
+
+  public CancunFeeMarket(
+      final long londonForkBlockNumber,
+      final Optional<Wei> baseFeePerGasOverride,
+      final long baseFeeUpdateFraction) {
+    super(londonForkBlockNumber, baseFeePerGasOverride);
+
+    this.baseFeeUpdateFraction = BigInteger.valueOf(baseFeeUpdateFraction);
+  }
 
   public CancunFeeMarket(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
-    super(londonForkBlockNumber, baseFeePerGasOverride);
+    this(londonForkBlockNumber, baseFeePerGasOverride, BLOB_GAS_PRICE_UPDATE_FRACTION);
   }
 
   @Override
@@ -42,8 +53,7 @@ public class CancunFeeMarket extends LondonFeeMarket {
   public Wei blobGasPricePerGas(final BlobGas excessBlobGas) {
     final var blobGasPrice =
         Wei.of(
-            fakeExponential(
-                BLOB_GAS_PRICE, excessBlobGas.toBigInteger(), BLOB_GAS_PRICE_UPDATE_FRACTION));
+            fakeExponential(BLOB_GAS_PRICE, excessBlobGas.toBigInteger(), baseFeeUpdateFraction));
     LOG.atTrace()
         .setMessage("parentExcessBlobGas: {} blobGasPrice: {}")
         .addArgument(excessBlobGas::toShortHexString)
