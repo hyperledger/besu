@@ -81,6 +81,7 @@ public class PragueGasCalculator extends CancunGasCalculator {
       final Transaction transaction,
       final MessageFrame initialFrame,
       final long codeDelegationRefund) {
+
     final long refundAllowance =
         calculateRefundAllowance(transaction, initialFrame, codeDelegationRefund);
 
@@ -91,10 +92,24 @@ public class PragueGasCalculator extends CancunGasCalculator {
     return transaction.getGasLimit() - totalGasUsed;
   }
 
+  private long calculateRefundAllowance(
+      final Transaction transaction,
+      final MessageFrame initialFrame,
+      final long codeDelegationRefund) {
+    final long selfDestructRefund =
+        getSelfDestructRefundAmount() * initialFrame.getSelfDestructs().size();
+    final long executionRefund =
+        initialFrame.getGasRefund() + selfDestructRefund + codeDelegationRefund;
+    // Integer truncation takes care of the floor calculation needed after the divide.
+    final long maxRefundAllowance =
+        (transaction.getGasLimit() - initialFrame.getRemainingGas()) / getMaxRefundQuotient();
+    return Math.min(executionRefund, maxRefundAllowance);
+  }
+
   @Override
   public long transactionFloorCost(final Bytes transactionPayload) {
     return clampedAdd(
-        TX_BASE_COST,
+        getMinimumTransactionCost(),
         tokensInCallData(transactionPayload.size(), zeroBytes(transactionPayload))
             * TOTAL_COST_FLOOR_PER_TOKEN);
   }
