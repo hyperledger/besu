@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
+import org.hyperledger.besu.config.BlobScheduleOptions;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -26,7 +27,6 @@ import org.slf4j.LoggerFactory;
 public class CancunFeeMarket extends LondonFeeMarket {
   private static final Logger LOG = LoggerFactory.getLogger(CancunFeeMarket.class);
   protected static final BigInteger BLOB_GAS_PRICE = BigInteger.ONE;
-  private static final long BLOB_GAS_PRICE_UPDATE_FRACTION = 3338477;
 
   protected final BigInteger baseFeeUpdateFraction;
 
@@ -41,7 +41,10 @@ public class CancunFeeMarket extends LondonFeeMarket {
 
   public CancunFeeMarket(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
-    this(londonForkBlockNumber, baseFeePerGasOverride, BLOB_GAS_PRICE_UPDATE_FRACTION);
+    this(
+        londonForkBlockNumber,
+        baseFeePerGasOverride,
+        BlobScheduleOptions.BlobSchedule.CANCUN_DEFAULT.getBaseFeeUpdateFraction());
   }
 
   @Override
