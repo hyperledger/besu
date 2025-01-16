@@ -74,7 +74,7 @@ public class JsonRpcError {
 
   @JsonGetter("message")
   public String getMessage() {
-    return (reason == null ? message : message + ": " + reason);
+    return (reason == null ? message : reason);
   }
 
   @JsonGetter("data")
