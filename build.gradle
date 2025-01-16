@@ -1056,6 +1056,13 @@ tasks.register("verifyDistributions") {
   }
 }
 
+tasks.withType(Test).configureEach {
+  if (!project.hasProperty("createReports")) {
+    reports.html.required = false
+    reports.junitXml.required = false
+  }
+}
+
 dependencies {
   errorprone 'com.google.errorprone:error_prone_core'
   // https://github.com/hyperledger/besu-errorprone-checks/
