@@ -1930,7 +1930,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
-    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong()).isEqualTo(36000000);
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
+        .isEqualTo(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_HOLESKY);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
