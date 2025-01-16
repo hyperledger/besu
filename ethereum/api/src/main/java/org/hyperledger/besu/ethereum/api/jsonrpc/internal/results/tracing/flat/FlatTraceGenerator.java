@@ -492,7 +492,18 @@ public class FlatTraceGenerator {
       traceFrameBuilder = currentContext.getBuilder();
     }
     traceFrameBuilder.error(
-        traceFrame.getExceptionalHaltReason().map(ExceptionalHaltReason::getDescription));
+        traceFrame
+            .getExceptionalHaltReason()
+            .map(
+                exceptionalHaltReason -> {
+                  if (exceptionalHaltReason
+                      .name()
+                      .equals(ExceptionalHaltReason.INVALID_OPERATION.name())) {
+                    return ExceptionalHaltReason.INVALID_OPERATION.getDescription();
+                  } else {
+                    return exceptionalHaltReason.getDescription();
+                  }
+                }));
     if (currentContext != null) {
       final Action.Builder actionBuilder = traceFrameBuilder.getActionBuilder();
       actionBuilder.value(Quantity.create(traceFrame.getValue()));
