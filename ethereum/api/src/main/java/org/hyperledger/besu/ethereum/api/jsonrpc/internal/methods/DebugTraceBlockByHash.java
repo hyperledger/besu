@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,31 +19,28 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.util.Collection;
-import java.util.function.Supplier;
+import java.util.Optional;
 
-public class DebugTraceBlockByHash implements JsonRpcMethod {
-
-  private final Supplier<BlockTracer> blockTracerSupplier;
-  private final Supplier<BlockchainQueries> blockchainQueries;
+public class DebugTraceBlockByHash extends AbstractDebugTraceBlock {
 
   public DebugTraceBlockByHash(
-      final Supplier<BlockTracer> blockTracerSupplier,
-      final Supplier<BlockchainQueries> blockchainQueriesSupplier) {
-    this.blockTracerSupplier = blockTracerSupplier;
-    this.blockchainQueries = blockchainQueriesSupplier;
+      final ProtocolSchedule protocolSchedule,
+      final BlockchainQueries blockchainQueries,
+      final ObservableMetricsSystem metricsSystem,
+      final EthScheduler ethScheduler) {
+    super(protocolSchedule, blockchainQueries, metricsSystem, ethScheduler);
   }
 
   @Override
@@ -60,34 +57,12 @@ public class DebugTraceBlockByHash implements JsonRpcMethod {
       throw new InvalidJsonRpcParameters(
           "Invalid block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_HASH_PARAMS, e);
     }
-    final TraceOptions traceOptions;
-    try {
-      traceOptions =
-          requestContext
-              .getOptionalParameter(1, TransactionTraceParams.class)
-              .map(TransactionTraceParams::traceOptions)
-              .orElse(TraceOptions.DEFAULT);
-    } catch (JsonRpcParameterException e) {
-      throw new InvalidJsonRpcParameters(
-          "Invalid transaction trace parameter (index 1)",
-          RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
-          e);
-    }
+
+    TraceOptions traceOptions = getTraceOptions(requestContext);
+    Optional<Block> maybeBlock = getBlockchainQueries().getBlockchain().getBlockByHash(blockHash);
 
     final Collection<DebugTraceTransactionResult> results =
-        Tracer.processTracing(
-                blockchainQueries.get(),
-                blockHash,
-                mutableWorldState ->
-                    blockTracerSupplier
-                        .get()
-                        .trace(
-                            mutableWorldState,
-                            blockHash,
-                            new DebugOperationTracer(traceOptions, true))
-                        .map(BlockTrace::getTransactionTraces)
-                        .map(DebugTraceTransactionResult::of))
-            .orElse(null);
+        getTraces(requestContext, traceOptions, maybeBlock);
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
   }
 }

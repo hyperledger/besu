@@ -71,7 +71,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -596,8 +595,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     return maybeRequestsParam.map(
         requests ->
-            IntStream.range(0, requests.size())
-                .mapToObj(i -> new Request(RequestType.of(i), Bytes.fromHexString(requests.get(i))))
+            requests.stream()
+                .map(
+                    s -> {
+                      final Bytes request = Bytes.fromHexString(s);
+                      return new Request(RequestType.of(request.get(0)), request.slice(1));
+                    })
                 .collect(Collectors.toList()));
   }
 

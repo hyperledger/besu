@@ -437,7 +437,7 @@ public class T8nExecutor {
       gasUsed += transactionGasUsed;
       long intrinsicGas =
           gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(), transaction.getTo().isEmpty());
+              transaction.getPayload(), transaction.getTo().isEmpty(), 0);
       TransactionReceipt receipt =
           protocolSpec
               .getTransactionReceiptFactory()
@@ -546,7 +546,12 @@ public class T8nExecutor {
       ArrayNode requests = resultObject.putArray("requests");
       maybeRequests
           .orElseGet(List::of)
-          .forEach(request -> requests.add(request.getData().toHexString()));
+          .forEach(
+              request -> {
+                if (!request.data().isEmpty()) {
+                  requests.add(request.getEncodedRequest().toHexString());
+                }
+              });
     }
 
     worldState.persist(blockHeader);
