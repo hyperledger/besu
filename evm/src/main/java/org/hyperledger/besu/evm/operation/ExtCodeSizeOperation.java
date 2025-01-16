@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper.deductDelegatedCodeGasCost;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
@@ -26,7 +24,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper;
+import org.hyperledger.besu.evm.worldstate.DelegateCodeHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -82,20 +80,11 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       } else {
         final Account account = frame.getWorldUpdater().get(address);
 
-        if (account != null) {
-          final DelegatedCodeGasCostHelper.Result result =
-              deductDelegatedCodeGasCost(frame, gasCalculator(), account);
-          if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-            return new Operation.OperationResult(
-                result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
-          }
-        }
-
         Bytes codeSize;
         if (account == null) {
           codeSize = Bytes.EMPTY;
         } else {
-          final Bytes code = account.getCode();
+          final Bytes code = getCode(account);
           if (enableEIP3540
               && code.size() >= 2
               && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
@@ -113,5 +102,15 @@ public class ExtCodeSizeOperation extends AbstractOperation {
     } catch (final OverflowException ofe) {
       return new OperationResult(cost(true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
+  }
+
+  private static Bytes getCode(final Account account) {
+    if (account == null) {
+      return Bytes.EMPTY;
+    }
+
+    return account.hasDelegatedCode()
+        ? DelegateCodeHelper.getDelegatedCodeForRead()
+        : account.getCode();
   }
 }

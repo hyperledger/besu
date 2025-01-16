@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.worldstate.DelegateCodeHelper.hasDelegatedCode;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -33,7 +34,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.worldstate.DelegatedCodeService;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -53,8 +53,6 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
  */
 public class MainnetTransactionValidator implements TransactionValidator {
 
-  public static final BigInteger TWO_POW_8 = BigInteger.TWO.pow(8);
-  public static final BigInteger TWO_POW_64 = BigInteger.TWO.pow(64);
   public static final BigInteger TWO_POW_256 = BigInteger.TWO.pow(256);
 
   private final GasCalculator gasCalculator;
@@ -167,9 +165,9 @@ public class MainnetTransactionValidator implements TransactionValidator {
             .map(
                 codeDelegations -> {
                   for (CodeDelegation codeDelegation : codeDelegations) {
-                    if (codeDelegation.chainId().compareTo(TWO_POW_64) >= 0) {
+                    if (codeDelegation.chainId().compareTo(TWO_POW_256) >= 0) {
                       throw new IllegalArgumentException(
-                          "Invalid 'chainId' value, should be < 2^64 but got "
+                          "Invalid 'chainId' value, should be < 2^256 but got "
                               + codeDelegation.chainId());
                     }
 
@@ -335,8 +333,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
   }
 
   private static boolean canSendTransaction(final Account sender, final Hash codeHash) {
-    return codeHash.equals(Hash.EMPTY)
-        || DelegatedCodeService.hasDelegatedCode(sender.getUnprocessedCode());
+    return codeHash.equals(Hash.EMPTY) || hasDelegatedCode(sender.getCode());
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransactionSignature(

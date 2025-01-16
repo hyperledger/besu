@@ -439,7 +439,16 @@ public class MainnetTransactionProcessor {
                 .inputData(transaction.getPayload())
                 .code(
                     maybeContract
-                        .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
+                        .map(
+                            c -> {
+                              if (c.hasDelegatedCode()) {
+                                return messageCallProcessor.getCodeFromEVM(
+                                    c.getDelegatedCodeHash().get(), c.getDelegatedCode().get());
+                              }
+
+                              return messageCallProcessor.getCodeFromEVM(
+                                  c.getCodeHash(), c.getCode());
+                            })
                         .orElse(CodeV0.EMPTY_CODE))
                 .accessListWarmAddresses(warmAddressList)
                 .build();
