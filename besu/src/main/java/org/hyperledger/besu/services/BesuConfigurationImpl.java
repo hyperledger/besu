@@ -32,8 +32,8 @@ public class BesuConfigurationImpl implements BesuConfiguration {
 
   // defaults
   private MiningConfiguration miningConfiguration;
-  private Optional<String> rpcHttpHost = Optional.of("http://localhost");
-  private Optional<Integer> rpcHttpPort = Optional.of(8545);
+  private String rpcHttpHost = "http://localhost";
+  private Integer rpcHttpPort = 8545;
 
   /** Default Constructor. */
   public BesuConfigurationImpl() {}
@@ -74,18 +74,30 @@ public class BesuConfigurationImpl implements BesuConfiguration {
    * @return BesuConfigurationImpl instance
    */
   public BesuConfigurationImpl withJsonRpcHttpOptions(final JsonRpcHttpOptions rpcHttpOptions) {
-    this.rpcHttpHost = Optional.ofNullable(rpcHttpOptions.getRpcHttpHost());
-    this.rpcHttpPort = Optional.ofNullable(rpcHttpOptions.getRpcHttpPort());
+    this.rpcHttpHost = rpcHttpOptions.getRpcHttpHost();
+    this.rpcHttpPort = rpcHttpOptions.getRpcHttpPort();
     return this;
   }
 
+  @Deprecated
   @Override
   public Optional<String> getRpcHttpHost() {
+    return Optional.of(rpcHttpHost);
+  }
+
+  @Deprecated
+  @Override
+  public Optional<Integer> getRpcHttpPort() {
+    return Optional.of(rpcHttpPort);
+  }
+
+  @Override
+  public String getConfiguredRpcHttpHost() {
     return rpcHttpHost;
   }
 
   @Override
-  public Optional<Integer> getRpcHttpPort() {
+  public Integer getConfiguredRpcHttpPort() {
     return rpcHttpPort;
   }
 

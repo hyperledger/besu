@@ -16,6 +16,8 @@
   - Smart-contract-based (onchain) permissioning
   - Proof of Work consensus
   - Fast Sync
+- Plugins 
+  - `BesuConfiguration` methods `getRpcHttpHost` and `getRpcHttpPort` (which return Optionals) have been deprecated in favour of `getConfiguredRpcHttpHost` and `getConfiguredRpcHttpPort` which return the actual values, which will always be populated since these options have defaults. 
 
 ### Additions and Improvements
 - Add RPC HTTP options to specify custom truststore and its password [#7978](https://github.com/hyperledger/besu/pull/7978)
