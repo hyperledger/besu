@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedLayeredWorldStateKeyValueStorage;
@@ -165,8 +166,23 @@ public abstract class DiffBasedWorldState
 
     boolean success = false;
 
-    final DiffBasedWorldStateKeyValueStorage.Updater stateUpdater =
-        worldStateKeyValueStorage.updater();
+    // Bonsai archive uses context set in the world state storage for the specified block.
+    // Update the block context before putting entries to storage via calculateRootHash()
+    // TODO - rename calculateRootHash() to be clearer that it updates state, it doesn't just
+    // calculate a hash
+    if (worldStateKeyValueStorage.getFlatDbStrategy() instanceof BonsaiArchiveFlatDbStrategy
+        && blockHeader != null) {
+      DiffBasedWorldStateKeyValueStorage.Updater stateUpdater = worldStateKeyValueStorage.updater();
+      stateUpdater
+          .getWorldStateTransaction()
+          .put(
+              TRIE_BRANCH_STORAGE,
+              WORLD_BLOCK_NUMBER_KEY,
+              Long.toHexString(blockHeader.getNumber()).getBytes(StandardCharsets.UTF_8));
+      stateUpdater.commit();
+    }
+
+    DiffBasedWorldStateKeyValueStorage.Updater stateUpdater = worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
 
     try {
@@ -207,13 +223,6 @@ public abstract class DiffBasedWorldState
             .getWorldStateTransaction()
             .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
         worldStateBlockHash = blockHeader.getHash();
-
-        stateUpdater
-            .getWorldStateTransaction()
-            .put(
-                TRIE_BRANCH_STORAGE,
-                WORLD_BLOCK_NUMBER_KEY,
-                Long.toHexString(blockHeader.getNumber()).getBytes(StandardCharsets.UTF_8));
       } else {
         stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
         worldStateBlockHash = null;
