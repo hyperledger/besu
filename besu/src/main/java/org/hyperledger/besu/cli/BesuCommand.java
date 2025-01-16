@@ -2134,6 +2134,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     initMiningParametersMetrics(miningParameters);
     // if network = holesky, set targetGasLimit to 36,000,000 unless otherwise specified
     if (miningParameters.getTargetGasLimit().isEmpty() && NetworkName.HOLESKY.equals(network)) {
+      logger.info(
+          "Setting target gas limit for holesky: {}",
+          MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_HOLESKY);
       miningParameters.setTargetGasLimit(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_HOLESKY);
     }
     return miningParameters;
