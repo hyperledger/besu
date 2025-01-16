@@ -51,11 +51,11 @@ public class FrontierGasCalculatorTest {
 
     // Assert
     assertThat(refund)
-        .isEqualTo(6500L); // 5000 (remaining) + min(1500 (total refund), 19000 (max allowance))
+        .isEqualTo(6000L); // 5000 (remaining) + min(1000 (execution refund), 47500 (max allowance))
   }
 
   @Test
-  void shouldCalculateRefundWithMultipleSelfDestructs() {
+  void shouldCalculateRefundWithMultipleSelfDestructsAndIgnoreCodeDelegation() {
     // Arrange
     Set<Address> selfDestructs = new HashSet<>();
     selfDestructs.add(Address.wrap(Bytes.random(20)));
@@ -71,7 +71,8 @@ public class FrontierGasCalculatorTest {
 
     // Assert
     assertThat(refund)
-        .isEqualTo(52500L); // 5000 (remaining) + min(47500 (total refund), 49500 (max allowance))
+        .isEqualTo(
+            52500L); // 5000 (remaining) + min(49500 (execution refund), 47500 (max allowance))
   }
 
   @Test
@@ -87,7 +88,8 @@ public class FrontierGasCalculatorTest {
 
     // Assert
     assertThat(refund)
-        .isEqualTo(60000L); // 20000 (remaining) + min(101000 (total refund), 40000 (max allowance))
+        .isEqualTo(
+            60000L); // 20000 (remaining) + min(101000 (execution refund), 40000 (max allowance))
   }
 
   @Test
@@ -99,9 +101,23 @@ public class FrontierGasCalculatorTest {
     when(transaction.getGasLimit()).thenReturn(100000L);
 
     // Act
-    long refund = gasCalculator.calculateGasRefund(transaction, messageFrame, 0L);
+    long refund =
+        gasCalculator.calculateGasRefund(
+            transaction,
+            messageFrame,
+            0L); // 0 (remaining) + min(0 (execution refund), 50000 (max allowance))
 
     // Assert
     assertThat(refund).isEqualTo(0L);
+  }
+
+  @Test
+  void transactionFloorCostShouldAlwaysBeZero() {
+    assertThat(gasCalculator.transactionFloorCost(Bytes.EMPTY)).isEqualTo(0L);
+    assertThat(gasCalculator.transactionFloorCost(Bytes.random(256))).isEqualTo(0L);
+    assertThat(gasCalculator.transactionFloorCost(Bytes.repeat((byte) 0x0, Integer.MAX_VALUE)))
+        .isEqualTo(0L);
+    assertThat(gasCalculator.transactionFloorCost(Bytes.repeat((byte) 0x1, Integer.MAX_VALUE)))
+        .isEqualTo(0L);
   }
 }
