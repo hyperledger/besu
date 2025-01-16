@@ -543,10 +543,21 @@ public interface GasCalculator {
    * encoded binary representation when stored on-chain.
    *
    * @param transactionPayload The encoded transaction, as bytes
-   * @param isContractCreate Is this transaction a contract creation transaction?
+   * @param isContractCreation Is this transaction a contract creation transaction?
+   * @param baselineGas The gas used by access lists and code delegation authorizations
    * @return the transaction's intrinsic gas cost
    */
-  long transactionIntrinsicGasCost(Bytes transactionPayload, boolean isContractCreate);
+  long transactionIntrinsicGasCost(
+      Bytes transactionPayload, boolean isContractCreation, long baselineGas);
+
+  /**
+   * Returns the floor gas cost of a transaction payload, i.e. the minimum gas cost that a
+   * transaction will be charged based on its calldata. Introduced in EIP-7623 in Prague.
+   *
+   * @param transactionPayload The encoded transaction, as bytes
+   * @return the transaction's floor gas cost
+   */
+  long transactionFloorCost(final Bytes transactionPayload);
 
   /**
    * Returns the gas cost of the explicitly declared access list.
@@ -579,15 +590,6 @@ public interface GasCalculator {
   default long getMaxRefundQuotient() {
     return 2;
   }
-
-  /**
-   * Maximum Cost of a Transaction of a certain length.
-   *
-   * @param size the length of the transaction, in bytes
-   * @return the maximum gas cost
-   */
-  // what would be the gas for a PMT with hash of all non-zeros
-  long getMaximumTransactionCost(int size);
 
   /**
    * Minimum gas cost of a transaction.
