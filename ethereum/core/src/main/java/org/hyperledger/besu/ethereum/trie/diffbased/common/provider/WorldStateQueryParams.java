@@ -124,6 +124,16 @@ public class WorldStateQueryParams {
   }
 
   /**
+   * Should return a worldstate instance with a state root and should update the node head.
+   *
+   * @param stateRoot the state root
+   * @return an instance of WorldStateQueryParams
+   */
+  public static WorldStateQueryParams withStateRootAndUpdateNodeHead(final Hash stateRoot) {
+    return newBuilder().withStateRoot(stateRoot).withShouldWorldStateUpdateHead(true).build();
+  }
+
+  /**
    * Creates an instance with a state root, block hash, and does not update the node head.
    *
    * @param stateRoot the state root
@@ -154,7 +164,7 @@ public class WorldStateQueryParams {
     return Objects.hash(blockHeader, shouldWorldStateUpdateHead, blockHash, stateRoot);
   }
 
-  private static class Builder {
+  public static class Builder {
     private BlockHeader blockHeader;
     private boolean shouldWorldStateUpdateHead = false;
     private Hash blockHash;

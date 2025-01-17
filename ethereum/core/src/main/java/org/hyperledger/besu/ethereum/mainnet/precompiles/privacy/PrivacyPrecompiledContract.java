@@ -18,7 +18,7 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PER
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -173,9 +173,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
     final MutableWorldState disposablePrivateState =
-        privateWorldStateArchive
-            .getWorldState(withStateRootAndBlockHashAndUpdateNodeHead(lastRootHash, null))
-            .get();
+        privateWorldStateArchive.getWorldState(withStateRootAndUpdateNodeHead(lastRootHash)).get();
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 

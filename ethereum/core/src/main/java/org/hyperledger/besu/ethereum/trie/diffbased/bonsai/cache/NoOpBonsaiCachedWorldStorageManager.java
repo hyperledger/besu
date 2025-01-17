@@ -30,7 +30,7 @@ public class NoOpBonsaiCachedWorldStorageManager extends BonsaiCachedWorldStorag
     super(
         null,
         bonsaiWorldStateKeyValueStorage,
-        WorldStateSharedConfig::createStatefulConfigWithTrie);
+        WorldStateSharedConfig.createStatefulConfigWithTrie());
   }
 
   @Override

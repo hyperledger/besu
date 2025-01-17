@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -83,9 +83,7 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
     final MutableWorldState disposablePrivateState =
-        privateWorldStateArchive
-            .getWorldState(withStateRootAndBlockHashAndUpdateNodeHead(lastRootHash, null))
-            .get();
+        privateWorldStateArchive.getWorldState(withStateRootAndUpdateNodeHead(lastRootHash)).get();
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 

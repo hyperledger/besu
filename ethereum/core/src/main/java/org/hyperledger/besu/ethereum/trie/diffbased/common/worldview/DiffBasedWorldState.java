@@ -353,18 +353,16 @@ public abstract class DiffBasedWorldState
   @Override
   public abstract Hash frontierRootHash();
 
-  /*
+  /**
    * Configures the current world state to operate in "frozen" mode.
    *
-   * In this mode:
-   * - Changes (to accounts, code, or slots) are isolated and not applied to the underlying storage.
-   * - The state root can be recalculated, and a trie log can be generated, but updates will not
-   *   affect the world state storage.
-   * - All modifications are temporary and will be lost once the world state is discarded.
+   * <p>In this mode: - Changes (to accounts, code, or slots) are isolated and not applied to the
+   * underlying storage. - The state root can be recalculated, and a trie log can be generated, but
+   * updates will not affect the world state storage. - All modifications are temporary and will be
+   * lost once the world state is discarded.
    *
-   * Use Cases:
-   * - Calculating the state root after updates without altering the storage.
-   * - Generating a trie log.
+   * <p>Use Cases: - Calculating the state root after updates without altering the storage. -
+   * Generating a trie log.
    *
    * @return The current world state in "frozen" mode.
    */
