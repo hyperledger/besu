@@ -91,9 +91,6 @@ public class BlockchainReferenceTestTools {
     // EOF tests don't have Prague stuff like deposits right now
     params.ignore("/stEOF/");
 
-    // None of the Prague tests have withdrawals and deposits handling
-    params.ignore("\\[Prague\\]");
-
     // TODO: remove once updated EIP-2537 gas cost artifacts exist
     params.ignore("/eip2537_bls_12_381_precompiles/");
     params.ignore("/stEIP2537/");
