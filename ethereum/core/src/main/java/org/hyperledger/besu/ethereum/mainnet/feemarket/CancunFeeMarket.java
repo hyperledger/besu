@@ -28,9 +28,9 @@ public class CancunFeeMarket extends LondonFeeMarket {
   private static final Logger LOG = LoggerFactory.getLogger(CancunFeeMarket.class);
   protected static final BigInteger BLOB_GAS_PRICE = BigInteger.ONE;
 
-  protected final BigInteger baseFeeUpdateFraction;
+  private final BigInteger baseFeeUpdateFraction;
 
-  public CancunFeeMarket(
+  CancunFeeMarket(
       final long londonForkBlockNumber,
       final Optional<Wei> baseFeePerGasOverride,
       final long baseFeeUpdateFraction) {
@@ -39,8 +39,7 @@ public class CancunFeeMarket extends LondonFeeMarket {
     this.baseFeeUpdateFraction = BigInteger.valueOf(baseFeeUpdateFraction);
   }
 
-  public CancunFeeMarket(
-      final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
+  CancunFeeMarket(final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
     this(
         londonForkBlockNumber,
         baseFeePerGasOverride,
@@ -79,5 +78,9 @@ public class CancunFeeMarket extends LondonFeeMarket {
       ++i;
     }
     return output.divide(denominator);
+  }
+
+  protected BigInteger getBaseFeeUpdateFraction() {
+    return baseFeeUpdateFraction;
   }
 }

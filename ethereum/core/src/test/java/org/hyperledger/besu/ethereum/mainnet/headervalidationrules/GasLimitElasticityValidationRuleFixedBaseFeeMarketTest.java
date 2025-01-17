@@ -21,7 +21,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FixedBaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.Optional;
 
@@ -32,7 +32,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 public class GasLimitElasticityValidationRuleFixedBaseFeeMarketTest {
 
   private static final Optional<BaseFeeMarket> fixedBaseFeeMarket =
-      Optional.of(new FixedBaseFeeMarket(10, Wei.ONE));
+      Optional.of(FeeMarket.fixedBaseFee(10, Wei.ONE));
 
   public GasLimitRangeAndDeltaValidationRule uut =
       new GasLimitRangeAndDeltaValidationRule(5000, MAX_VALUE, fixedBaseFeeMarket);

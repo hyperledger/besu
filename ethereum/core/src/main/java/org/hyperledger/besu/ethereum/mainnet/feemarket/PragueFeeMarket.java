@@ -26,15 +26,14 @@ import org.slf4j.LoggerFactory;
 public class PragueFeeMarket extends CancunFeeMarket {
   private static final Logger LOG = LoggerFactory.getLogger(PragueFeeMarket.class);
 
-  public PragueFeeMarket(
+  PragueFeeMarket(
       final long londonForkBlockNumber,
       final Optional<Wei> baseFeePerGasOverride,
       final long baseFeeUpdateFraction) {
     super(londonForkBlockNumber, baseFeePerGasOverride, baseFeeUpdateFraction);
   }
 
-  public PragueFeeMarket(
-      final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
+  PragueFeeMarket(final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
     this(
         londonForkBlockNumber,
         baseFeePerGasOverride,
@@ -45,7 +44,8 @@ public class PragueFeeMarket extends CancunFeeMarket {
   public Wei blobGasPricePerGas(final BlobGas excessBlobGas) {
     final var blobGasPrice =
         Wei.of(
-            fakeExponential(BLOB_GAS_PRICE, excessBlobGas.toBigInteger(), baseFeeUpdateFraction));
+            fakeExponential(
+                BLOB_GAS_PRICE, excessBlobGas.toBigInteger(), getBaseFeeUpdateFraction()));
     LOG.atTrace()
         .setMessage("parentExcessBlobGas: {} blobGasPrice: {}")
         .addArgument(excessBlobGas::toShortHexString)
