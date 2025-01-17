@@ -85,7 +85,7 @@ public class RoundChangeTest {
     assertThat(decodedRoundChange.getProposedBlock()).isNotEmpty();
     assertThat(decodedRoundChange.getProposedBlock().get()).isEqualToComparingFieldByField(BLOCK);
     assertThat(decodedRoundChange.getPrepares()).hasSize(1);
-    assertThat(decodedRoundChange.getPrepares().get(0))
+    assertThat(decodedRoundChange.getPrepares().getFirst())
         .isEqualToComparingFieldByField(signedPreparePayload);
   }
 

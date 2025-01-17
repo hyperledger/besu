@@ -133,7 +133,7 @@ public class QbftRoundTest {
     when(messageValidator.validateCommit(any())).thenReturn(true);
 
     final BlockHeader header = new BlockHeaderTestFixture().number(1).buildHeader();
-    ;
+
     proposedBlock = new QbftBlockTestFixture().blockHeader(header).build();
 
     when(blockCreator.createBlock(anyLong(), any())).thenReturn(proposedBlock);
@@ -203,7 +203,7 @@ public class QbftRoundTest {
   @Test
   public void aProposalWithAnewBlockIsSentUponReceptionOfARoundChangeWithNoCertificate() {
     final BlockHeader header = new BlockHeaderTestFixture().number(0).buildHeader();
-    ;
+
     final QbftBlock commitBlock = new QbftBlockTestFixture().blockHeader(header).build();
     when(blockInteface.replaceRoundInBlock(proposedBlock, 0, QbftHashMode.COMMITTED_SEAL))
         .thenReturn(commitBlock);
