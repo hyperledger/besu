@@ -1588,13 +1588,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateChainDataPruningParams() {
-    if (unstableChainPruningOptions.getChainDataPruningEnabled()
-        && unstableChainPruningOptions.getChainDataPruningBlocksRetained()
-            < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
-      throw new ParameterException(
-          this.commandLine,
-          "--Xchain-pruning-blocks-retained must be >= "
-              + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
+    if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
+      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
+      if (unstableChainPruningOptions.getChainDataPruningBlocksRetained()
+          < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
+        throw new ParameterException(
+            this.commandLine,
+            "--Xchain-pruning-blocks-retained must be >= "
+                + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
+      } else if (genesisConfigOptions.isQbft()
+          && unstableChainPruningOptions.getChainDataPruningBlocksRetained()
+              < genesisConfigOptions.getQbftConfigOptions().getEpochLength()) {
+        throw new ParameterException(
+            this.commandLine,
+            "--Xchain-pruning-blocks-retained must be >= epochlength("
+                + genesisConfigOptions.getQbftConfigOptions().getEpochLength()
+                + ") for QBFT networks");
+      }
     }
   }
 
