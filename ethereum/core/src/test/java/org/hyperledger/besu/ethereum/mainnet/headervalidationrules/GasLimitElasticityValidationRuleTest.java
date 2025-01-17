@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.Optional;
 
@@ -30,7 +30,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 public class GasLimitElasticityValidationRuleTest {
 
-  private static final Optional<BaseFeeMarket> baseFeeMarket = Optional.of(new LondonFeeMarket(10));
+  private static final Optional<BaseFeeMarket> baseFeeMarket = Optional.of(FeeMarket.london(10));
 
   public GasLimitRangeAndDeltaValidationRule uut =
       new GasLimitRangeAndDeltaValidationRule(5000, MAX_VALUE, baseFeeMarket);
