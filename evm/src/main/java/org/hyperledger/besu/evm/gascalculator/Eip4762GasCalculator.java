@@ -30,12 +30,19 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * Gas Calculator as per EIP-4762
+ *
+ * <UL>
+ *   <LI>Gas costs for EIP-4762 (Stateless trie)
+ * </UL>
+ */
 public class Eip4762GasCalculator extends PragueGasCalculator {
-  public static final Address HISTORY_STORAGE_ADDRESS =
+  private static final Address HISTORY_STORAGE_ADDRESS =
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
   private static final long CREATE_OPERATION_GAS_COST = 1_000L;
 
-  /** Instantiates a new Prague Gas Calculator. */
+  /** Instantiates a new EIP-4762 Gas Calculator. */
   public Eip4762GasCalculator() {
     super(KZG_POINT_EVAL.toArrayUnsafe()[19]);
   }

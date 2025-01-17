@@ -38,6 +38,14 @@ public class SLoadOperation extends AbstractOperation {
     super(0x54, "SLOAD", 1, 1, gasCalculator);
   }
 
+  /**
+   * Returns the cost for executing an {@link SLoadOperation}.
+   *
+   * @param frame The current frame
+   * @param key The slot key
+   * @param slotIsWarm The storage slot is warm
+   * @return the cost for executing SLOAD
+   */
   protected long cost(final MessageFrame frame, final Bytes32 key, final boolean slotIsWarm) {
     return gasCalculator().sloadOperationGasCost(frame, UInt256.fromBytes(key), slotIsWarm);
   }
