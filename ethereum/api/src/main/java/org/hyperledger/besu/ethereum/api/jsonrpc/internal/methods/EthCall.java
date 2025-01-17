@@ -129,7 +129,6 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
 
   private JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
-
     final ValidationResult<TransactionInvalidReason> validationResult =
         result.getValidationResult();
     if (validationResult != null && !validationResult.isValid()) {
