@@ -677,6 +677,13 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+
+    final var cancunBlobSchedule =
+        genesisConfigOptions
+            .getBlobScheduleOptions()
+            .flatMap(BlobScheduleOptions::getCancun)
+            .orElse(BlobScheduleOptions.BlobSchedule.CANCUN_DEFAULT);
+
     final BaseFeeMarket cancunFeeMarket;
     if (genesisConfigOptions.isZeroBaseFee()) {
       cancunFeeMarket = FeeMarket.zeroBaseFee(londonForkBlockNumber);
@@ -686,14 +693,11 @@ public abstract class MainnetProtocolSpecs {
               londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
     } else {
       cancunFeeMarket =
-          FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+          FeeMarket.cancun(
+              londonForkBlockNumber,
+              genesisConfigOptions.getBaseFeePerGas(),
+              cancunBlobSchedule.getBaseFeeUpdateFraction());
     }
-
-    final var cancunBlobSchedule =
-        genesisConfigOptions
-            .getBlobScheduleOptions()
-            .flatMap(BlobScheduleOptions::getCancun)
-            .orElse(BlobScheduleOptions.BlobSchedule.CANCUN_DEFAULT);
 
     final java.util.function.Supplier<GasCalculator> cancunGasCalcSupplier =
         () -> new CancunGasCalculator(cancunBlobSchedule.getTarget());
@@ -830,7 +834,10 @@ public abstract class MainnetProtocolSpecs {
               londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
     } else {
       pragueFeeMarket =
-          FeeMarket.prague(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+          FeeMarket.prague(
+              londonForkBlockNumber,
+              genesisConfigOptions.getBaseFeePerGas(),
+              pragueBlobSchedule.getBaseFeeUpdateFraction());
     }
 
     return cancunDefinition(
