@@ -968,7 +968,9 @@ def sep = Pattern.quote(File.separator)
 
 jacocoTestReport {
   reports {
-    xml.required = true
+    xml.required = false
+    csv.required = false
+    html.required = false
   }
 }
 
@@ -1053,13 +1055,6 @@ tasks.register("verifyDistributions") {
     if (distZipFile.length() < minDistributionSize) {
       throw new GradleException("Distribution zip is suspiciously small: " + distZipFile.length() + " bytes")
     }
-  }
-}
-
-tasks.withType(Test).configureEach {
-  if (!project.hasProperty("createReports")) {
-    reports.html.required = false
-    reports.junitXml.required = false
   }
 }
 
