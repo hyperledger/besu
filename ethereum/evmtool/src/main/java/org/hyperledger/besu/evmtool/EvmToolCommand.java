@@ -623,13 +623,10 @@ public class EvmToolCommand implements Runnable {
                             .toList()));
                 out.println("  },");
               }
-              out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
+              out.print("  \"balance\": \"" + account.getBalance().toDecimalString() + "\"");
               if (account.getNonce() != 0) {
                 out.println(",");
-                out.println(
-                    "  \"nonce\": \""
-                        + Bytes.ofUnsignedLong(account.getNonce()).toShortHexString()
-                        + "\"");
+                out.println("  \"nonce\": " + account.getNonce());
               } else {
                 out.println();
               }
