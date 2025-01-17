@@ -15,9 +15,11 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture.getGenesisConfigOptions;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -28,12 +30,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
@@ -76,12 +80,24 @@ class JsonRpcMethodsFactoryTest {
   private final NatService natService = new NatService(Optional.empty());
   private final Vertx vertx = Vertx.vertx();
 
+  private ProtocolSchedule pragueAllMilestonesZeroProtocolSchedule;
   private JsonRpcConfiguration configuration;
 
   @BeforeEach
   public void setup() {
     configuration = JsonRpcConfiguration.createEngineDefault();
     configuration.setPort(0);
+
+    pragueAllMilestonesZeroProtocolSchedule =
+        MainnetProtocolSchedule.fromConfig(
+            getPragueAllZeroMilestonesConfigOptions(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            MiningConfiguration.newDefault(),
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
 
     when(mergeCoordinator.isCompatibleWithEngineApi()).thenReturn(true);
   }
@@ -99,7 +115,7 @@ class JsonRpcMethodsFactoryTest {
                 mock(P2PNetwork.class),
                 blockchainQueries,
                 mock(Synchronizer.class),
-                ProtocolScheduleFixture.PRAGUE_ALL_ZERO_MILESTONES,
+                pragueAllMilestonesZeroProtocolSchedule,
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
                 mock(TransactionPool.class),
@@ -128,5 +144,9 @@ class JsonRpcMethodsFactoryTest {
     assertThat(rpcMethods).containsKey("engine_getPayloadV3");
     assertThat(rpcMethods).containsKey("engine_getPayloadV4");
     assertThat(rpcMethods).containsKey("engine_newPayloadV4");
+  }
+
+  private GenesisConfigOptions getPragueAllZeroMilestonesConfigOptions() {
+    return getGenesisConfigOptions("/prague_all_milestones_zero.json");
   }
 }
