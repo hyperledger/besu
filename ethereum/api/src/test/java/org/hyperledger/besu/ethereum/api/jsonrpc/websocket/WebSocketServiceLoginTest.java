@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -58,6 +58,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.math.BigInteger;
 import java.net.URISyntaxException;
@@ -207,7 +208,8 @@ public class WebSocketServiceLoginTest {
                     vertx,
                     mock(ApiConfiguration.class),
                     Optional.empty(),
-                    mock(TransactionSimulator.class)));
+                    mock(TransactionSimulator.class),
+                    new DeterministicEthScheduler()));
 
     websocketMethods.putAll(rpcMethods);
     webSocketMessageHandlerSpy =

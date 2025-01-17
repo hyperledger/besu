@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Comparator;
 import java.util.List;
@@ -78,7 +79,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             protocolContext,
             mergeCoordinator,
             ethPeers,
-            engineCallListener);
+            engineCallListener,
+            new NoOpMetricsSystem());
     lenient().when(protocolSchedule.hardforkFor(any())).thenReturn(Optional.of(pragueHardfork));
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new PragueGasCalculator());
     mockAllowedRequestsValidator();
@@ -168,7 +170,10 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     final List<String> requestsWithoutRequestId =
         VALID_REQUESTS.stream()
             .sorted(Comparator.comparing(Request::getType))
-            .map(r -> r.getData().toHexString())
+            .map(
+                r ->
+                    Bytes.concatenate(Bytes.of(r.getType().getSerializedType()), r.getData())
+                        .toHexString())
             .toList();
     Object[] params =
         maybeParentBeaconBlockRoot
