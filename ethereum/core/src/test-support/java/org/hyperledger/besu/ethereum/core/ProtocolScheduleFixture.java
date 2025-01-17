@@ -44,10 +44,29 @@ public class ProtocolScheduleFixture {
           false,
           new NoOpMetricsSystem());
 
+  public static final ProtocolSchedule PRAGUE_ALL_ZERO_MILESTONES =
+      MainnetProtocolSchedule.fromConfig(
+          getPragueAllZeroMilestonesConfigOptions(),
+          Optional.empty(),
+          Optional.empty(),
+          Optional.empty(),
+          MiningConfiguration.newDefault(),
+          new BadBlockManager(),
+          false,
+          new NoOpMetricsSystem());
+
   private static GenesisConfigOptions getMainnetConfigOptions() {
+    return getGenesisConfigOptions("/mainnet.json");
+  }
+
+  private static GenesisConfigOptions getPragueAllZeroMilestonesConfigOptions() {
+    return getGenesisConfigOptions("/prague_all_milestones_zero.json");
+  }
+
+  private static GenesisConfigOptions getGenesisConfigOptions(final String genesisConfig) {
     // this method avoids reading all the alloc accounts when all we want is the "config" section
     try (final JsonParser jsonParser =
-        new JsonFactory().createParser(GenesisConfig.class.getResource("/mainnet.json"))) {
+        new JsonFactory().createParser(GenesisConfig.class.getResource(genesisConfig))) {
 
       while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
         if ("config".equals(jsonParser.getCurrentName())) {
