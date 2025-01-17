@@ -53,7 +53,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -121,8 +120,6 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -149,8 +146,6 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -222,8 +217,6 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -250,8 +243,6 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -280,8 +271,6 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -316,8 +305,6 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -354,8 +341,6 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
@@ -392,8 +377,6 @@ public class RoundChangeMessageValidatorTest {
     when(payloadValidator.validate(any())).thenReturn(true);
     when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
