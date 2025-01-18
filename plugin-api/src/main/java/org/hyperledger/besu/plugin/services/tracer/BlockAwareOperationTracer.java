@@ -34,17 +34,6 @@ public interface BlockAwareOperationTracer extends OperationTracer {
   BlockAwareOperationTracer NO_TRACING = new BlockAwareOperationTracer() {};
 
   /**
-   * Trace the start of a block. Notice: This method has been marked for removal and will be removed
-   * in a future version. Avoid using it and use {@link #traceStartBlock(BlockHeader, BlockBody,
-   * Address)} instead.
-   *
-   * @param blockHeader the header of the block which is traced
-   * @param blockBody the body of the block which is traced
-   */
-  @Deprecated
-  default void traceStartBlock(final BlockHeader blockHeader, final BlockBody blockBody) {}
-
-  /**
    * Trace the start of a block.
    *
    * @param blockHeader the header of the block which is traced
@@ -61,16 +50,6 @@ public interface BlockAwareOperationTracer extends OperationTracer {
    * @param blockBody the body of the block which is traced
    */
   default void traceEndBlock(final BlockHeader blockHeader, final BlockBody blockBody) {}
-
-  /**
-   * When building a block this API is called at the start of the process. Notice: This method has
-   * been marked for removal and will be removed in a future version. Avoid using it and use {@link
-   * #traceStartBlock(ProcessableBlockHeader, Address)} instead.
-   *
-   * @param processableBlockHeader the processable header
-   */
-  @Deprecated
-  default void traceStartBlock(final ProcessableBlockHeader processableBlockHeader) {}
 
   /**
    * When building a block this API is called at the start of the process
