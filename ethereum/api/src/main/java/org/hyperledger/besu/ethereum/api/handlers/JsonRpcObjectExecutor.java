@@ -34,8 +34,11 @@ import io.opentelemetry.api.trace.Tracer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractJsonRpcExecutor.class);
   private final ObjectWriter jsonObjectWriter = createObjectWriter();
 
   public JsonRpcObjectExecutor(
@@ -76,7 +79,11 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
       try (final JsonResponseStreamer streamer =
           new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
         // underlying output stream lifecycle is managed by the json object writer
-        lazyTraceLogger(() -> getJsonObjectMapper().writeValueAsString(jsonRpcResponse));
+        if (jsonRpcResponse.getType() != RpcResponseType.ERROR) {
+          lazyTraceLogger(() -> getJsonObjectMapper().writeValueAsString(jsonRpcResponse));
+        } else {
+          LOG.warn("RPC error: {}", getJsonObjectMapper().writeValueAsString(jsonRpcResponse));
+        }
         jsonObjectWriter.writeValue(streamer, jsonRpcResponse);
       }
     }
