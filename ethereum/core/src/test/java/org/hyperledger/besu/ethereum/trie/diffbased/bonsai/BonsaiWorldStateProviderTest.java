@@ -164,7 +164,7 @@ class BonsaiWorldStateProviderTest {
     final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
     final BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class);
     when(mockWorldState.blockHash()).thenReturn(blockHeader.getHash());
-    when(mockWorldState.freeze()).thenReturn(mockWorldState);
+    when(mockWorldState.freezeStorage()).thenReturn(mockWorldState);
 
     when(trieLogManager.getMaxLayersToLoad()).thenReturn(Long.valueOf(512));
     when(cachedWorldStorageManager.getWorldState(blockHeader.getHash()))

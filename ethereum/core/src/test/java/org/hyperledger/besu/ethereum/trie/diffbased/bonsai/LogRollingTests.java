@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateSharedConfig.createStatefulConfigWithTrie;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Address;

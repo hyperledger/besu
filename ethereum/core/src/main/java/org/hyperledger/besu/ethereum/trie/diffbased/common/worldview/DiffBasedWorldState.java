@@ -62,7 +62,7 @@ public abstract class DiffBasedWorldState
   protected Hash worldStateBlockHash;
 
   // configuration parameters for the world state.
-  protected WorldStateSharedConfig worldStateConfig;
+  protected WorldStateConfig worldStateConfig;
 
   /*
    * Indicates whether the world state is in "frozen" mode.
@@ -78,7 +78,7 @@ public abstract class DiffBasedWorldState
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
-      final WorldStateSharedConfig worldStateConfig) {
+      final WorldStateConfig worldStateConfig) {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.worldStateRootHash =
         Hash.wrap(
@@ -367,7 +367,7 @@ public abstract class DiffBasedWorldState
    * @return The current world state in "frozen" mode.
    */
   @Override
-  public abstract MutableWorldState freeze();
+  public abstract MutableWorldState freezeStorage();
 
   @Override
   public abstract Account get(final Address address);

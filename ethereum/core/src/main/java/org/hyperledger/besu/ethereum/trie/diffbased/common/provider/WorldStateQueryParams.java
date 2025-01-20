@@ -225,6 +225,12 @@ public class WorldStateQueryParams {
      * @return an instance of WorldStateQueryParams
      */
     public WorldStateQueryParams build() {
+
+      if (blockHash == null && stateRoot.isEmpty() && blockHeader == null) {
+        throw new IllegalArgumentException(
+            "Either blockHash, stateRoot, or blockHeader must be provided");
+      }
+
       return new WorldStateQueryParams(this);
     }
   }

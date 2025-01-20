@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWor
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateSharedConfig;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
       LoggerFactory.getLogger(DiffBasedCachedWorldStorageManager.class);
   private final DiffBasedWorldStateProvider archive;
   private final EvmConfiguration evmConfiguration;
-  protected final WorldStateSharedConfig worldStateSharedConfig;
+  protected final WorldStateConfig worldStateConfig;
   private final Cache<Hash, BlockHeader> stateRootToBlockHeaderCache =
       Caffeine.newBuilder()
           .maximumSize(RETAINED_LAYERS)
@@ -64,25 +64,25 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Map<Bytes32, DiffBasedCachedWorldView> cachedWorldStatesByHash,
       final EvmConfiguration evmConfiguration,
-      final WorldStateSharedConfig worldStateSharedConfig) {
+      final WorldStateConfig worldStateConfig) {
     worldStateKeyValueStorage.subscribe(this);
     this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;
     this.archive = archive;
     this.evmConfiguration = evmConfiguration;
-    this.worldStateSharedConfig = worldStateSharedConfig;
+    this.worldStateConfig = worldStateConfig;
   }
 
   public DiffBasedCachedWorldStorageManager(
       final DiffBasedWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final WorldStateSharedConfig worldStateSharedConfig) {
+      final WorldStateConfig worldStateConfig) {
     this(
         archive,
         worldStateKeyValueStorage,
         new ConcurrentHashMap<>(),
         EvmConfiguration.DEFAULT,
-        worldStateSharedConfig);
+        worldStateConfig);
   }
 
   public synchronized void addCachedLayer(

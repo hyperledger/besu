@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateSharedConfig.createStatefulConfigWithTrie;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -206,7 +206,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   private BonsaiWorldState createBonsaiWorldState(final boolean isFrozen) {
     final BonsaiReferenceTestWorldState copy = (BonsaiReferenceTestWorldState) this.copy();
     if (isFrozen) {
-      copy.freeze();
+      copy.freezeStorage();
     }
     return copy;
   }

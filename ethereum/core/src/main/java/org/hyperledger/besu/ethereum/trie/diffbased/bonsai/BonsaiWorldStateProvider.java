@@ -58,11 +58,9 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     provideCachedWorldStorageManager(
-        new BonsaiCachedWorldStorageManager(
-            this, worldStateKeyValueStorage, worldStateSharedConfig));
+        new BonsaiCachedWorldStorageManager(this, worldStateKeyValueStorage, worldStateConfig));
     loadHeadWorldState(
-        new BonsaiWorldState(
-            this, worldStateKeyValueStorage, evmConfiguration, worldStateSharedConfig));
+        new BonsaiWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));
   }
 
   @VisibleForTesting
@@ -79,8 +77,7 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     provideCachedWorldStorageManager(bonsaiCachedWorldStorageManager);
     loadHeadWorldState(
-        new BonsaiWorldState(
-            this, worldStateKeyValueStorage, evmConfiguration, worldStateSharedConfig));
+        new BonsaiWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));
   }
 
   public BonsaiCachedMerkleTrieLoader getCachedMerkleTrieLoader() {

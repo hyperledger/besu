@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateSharedConfig.createStatefulConfigWithTrie;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;

@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCached
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateSharedConfig;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -57,7 +57,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   protected DiffBasedWorldState headWorldState;
   protected final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   // Configuration that will be shared by all instances of world state at their creation
-  protected final WorldStateSharedConfig worldStateSharedConfig;
+  protected final WorldStateConfig worldStateConfig;
 
   public DiffBasedWorldStateProvider(
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
@@ -82,7 +82,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
-    this.worldStateSharedConfig = WorldStateSharedConfig.newBuilder().build();
+    this.worldStateConfig = WorldStateConfig.newBuilder().build();
     ;
   }
 
@@ -140,7 +140,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
    */
   @Override
   public Optional<MutableWorldState> getWorldState(final WorldStateQueryParams queryParams) {
-    if (worldStateSharedConfig.isStateful()) {
+    if (worldStateConfig.isStateful()) {
       return getFullWorldState(queryParams);
     } else {
       throw new RuntimeException("stateless mode is not yet available");
@@ -229,7 +229,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
         .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
         .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
         .flatMap(worldState -> rollFullWorldStateToBlockHash(worldState, blockHeader.getHash()))
-        .map(MutableWorldState::freeze);
+        .map(MutableWorldState::freezeStorage);
   }
 
   private Optional<MutableWorldState> rollFullWorldStateToBlockHash(
@@ -330,8 +330,8 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     }
   }
 
-  public WorldStateSharedConfig getWorldStateSharedSpec() {
-    return worldStateSharedConfig;
+  public WorldStateConfig getWorldStateSharedSpec() {
+    return worldStateConfig;
   }
 
   public DiffBasedWorldStateKeyValueStorage getWorldStateKeyValueStorage() {

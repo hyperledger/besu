@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview;
 
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateSharedConfig.createStatefulConfigWithTrie;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
