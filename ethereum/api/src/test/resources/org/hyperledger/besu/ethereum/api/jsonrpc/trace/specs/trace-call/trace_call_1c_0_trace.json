@@ -8,8 +8,7 @@
       "gas" : "0xfffff2",
       "gasPrice" : "0xef",
       "value" : "0x0",
-      "data" : "0x60806040523373ffffffffffffffffffffffffffffffffffffffff16fffe",
-      "nonce" : "0x0"
+      "data" : "0x60806040523373ffffffffffffffffffffffffffffffffffffffff16fffe"
     }, [ "trace" ], "latest" ],
     "id" : 47
   },
