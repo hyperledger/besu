@@ -429,7 +429,9 @@ public class TransactionSimulatorTest {
     long expectedNonce = 2L;
     long accountNonce = 1L;
     final CallParameter callParameter =
-        eip1559TransactionCallParameterBuilder().withNonce(new UnsignedLongParameter(expectedNonce)).build();
+        eip1559TransactionCallParameterBuilder()
+            .withNonce(new UnsignedLongParameter(expectedNonce))
+            .build();
 
     final BlockHeader blockHeader =
         blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
