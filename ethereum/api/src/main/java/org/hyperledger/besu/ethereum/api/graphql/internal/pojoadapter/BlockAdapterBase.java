@@ -356,6 +356,7 @@ public class BlockAdapterBase extends AdapterBase {
             maxFeePerGas,
             valueParam,
             data,
+            Optional.empty(),
             Optional.empty());
 
     return transactionSimulator.process(
