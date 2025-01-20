@@ -72,7 +72,11 @@ public class InvalidOperation extends AbstractOperation {
           public String getDescription() {
             return "invalid opcode: 0x%02x".formatted(opcode);
           }
-          ;
+
+          @Override
+          public String toString() {
+            return name();
+          }
         });
   }
 }
