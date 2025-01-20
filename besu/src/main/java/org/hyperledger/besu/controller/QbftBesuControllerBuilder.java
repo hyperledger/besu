@@ -49,11 +49,14 @@ import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockEncoderImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleImpl;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockInterface;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSchedule;
@@ -208,6 +211,15 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
 
+    final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceImpl(bftBlockInterface);
+    final QbftContext qbftContext = new QbftContext(validatorProvider, qbftBlockInterface);
+    final ProtocolContext qbftProtocolContext =
+        new ProtocolContext(
+            blockchain,
+            protocolContext.getWorldStateArchive(),
+            qbftContext,
+            protocolContext.getBadBlockManager());
+
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, bftBlockInterface, true, validatorProvider);
 
@@ -236,7 +248,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, qbftProtocolSchedule, protocolContext);
+        new MessageValidatorFactory(proposerSelector, qbftProtocolSchedule, qbftProtocolContext);
 
     final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(
@@ -276,7 +288,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                 finalState,
                 new QbftRoundFactory(
                     qbftFinalState,
-                    protocolContext,
+                    qbftProtocolContext,
                     qbftProtocolSchedule,
                     minedBlockObservers,
                     messageValidatorFactory,
