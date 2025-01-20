@@ -72,29 +72,23 @@ public class Address extends DelegatingBytes {
   /** The constant BLS12_G1ADD. */
   public static final Address BLS12_G1ADD = Address.precompiled(0xB);
 
-  /** The constant BLS12_G1MUL. */
-  public static final Address BLS12_G1MUL = Address.precompiled(0xC);
-
   /** The constant BLS12_G1MULTIEXP. */
-  public static final Address BLS12_G1MULTIEXP = Address.precompiled(0xD);
+  public static final Address BLS12_G1MULTIEXP = Address.precompiled(0xC);
 
   /** The constant BLS12_G2ADD. */
-  public static final Address BLS12_G2ADD = Address.precompiled(0xE);
-
-  /** The constant BLS12_G2MUL. */
-  public static final Address BLS12_G2MUL = Address.precompiled(0xF);
+  public static final Address BLS12_G2ADD = Address.precompiled(0xD);
 
   /** The constant BLS12_G2MULTIEXP. */
-  public static final Address BLS12_G2MULTIEXP = Address.precompiled(0x10);
+  public static final Address BLS12_G2MULTIEXP = Address.precompiled(0xE);
 
   /** The constant BLS12_PAIRING. */
-  public static final Address BLS12_PAIRING = Address.precompiled(0x11);
+  public static final Address BLS12_PAIRING = Address.precompiled(0xF);
 
   /** The constant BLS12_MAP_FP_TO_G1. */
-  public static final Address BLS12_MAP_FP_TO_G1 = Address.precompiled(0x12);
+  public static final Address BLS12_MAP_FP_TO_G1 = Address.precompiled(0x10);
 
   /** The constant BLS12_MAP_FP2_TO_G2. */
-  public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x13);
+  public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x11);
 
   /** The constant ZERO. */
   public static final Address ZERO = Address.fromHexString("0x0");

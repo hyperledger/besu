@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Wraps an EOA account and includes delegated code to be run on behalf of it. */
-public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
+public class MutableDelegatedCodeAccount extends AbstractDelegatedCodeAccount
     implements MutableAccount {
 
   private final MutableAccount wrappedAccount;
@@ -83,17 +83,12 @@ public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
 
   @Override
   public Bytes getCode() {
-    return super.getCode();
-  }
-
-  @Override
-  public Bytes getUnprocessedCode() {
     return wrappedAccount.getCode();
   }
 
   @Override
   public Hash getCodeHash() {
-    return super.getCodeHash();
+    return wrappedAccount.getCodeHash();
   }
 
   @Override
@@ -108,7 +103,7 @@ public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
 
   @Override
   public boolean isEmpty() {
-    return getDelegatedNonce() == 0 && getDelegatedBalance().isZero() && !hasCode();
+    return wrappedAccount.isEmpty();
   }
 
   @Override
@@ -155,10 +150,5 @@ public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
   @Override
   public void becomeImmutable() {
     wrappedAccount.becomeImmutable();
-  }
-
-  @Override
-  public boolean hasDelegatedCode() {
-    return true;
   }
 }

@@ -137,6 +137,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                     syncState,
                     metricsSystem,
                     terminationCondition,
+                    peerTaskExecutor,
                     syncDurationMetrics));
 
     if (SyncMode.FAST.equals(syncConfig.getSyncMode())) {

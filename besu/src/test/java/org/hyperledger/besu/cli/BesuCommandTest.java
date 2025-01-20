@@ -1912,6 +1912,58 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void holeskyTargetGasLimitIsSetToHoleskyDefaultWhenNoValueSpecified() {
+    parseCommand("--network", "holesky");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(HOLESKY));
+
+    assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
+    assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
+    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
+        .isEqualTo(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_HOLESKY);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void holeskyTargetGasLimitIsSetToSpecifiedValueWhenValueSpecified() {
+    long customGasLimit = 99000000;
+    parseCommand("--network", "holesky", "--target-gas-limit", String.valueOf(customGasLimit));
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(HOLESKY));
+
+    assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
+    assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
+    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong()).isEqualTo(customGasLimit);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void luksoValuesAreUsed() {
     parseCommand("--network", "lukso");
 

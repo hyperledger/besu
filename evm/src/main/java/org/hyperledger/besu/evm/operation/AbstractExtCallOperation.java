@@ -15,14 +15,12 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper.deductDelegatedCodeGasCost;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -127,16 +125,27 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     Address to = Words.toAddress(toBytes);
     final Account contract = frame.getWorldUpdater().get(to);
 
-    if (contract != null) {
-      final DelegatedCodeGasCostHelper.Result result =
-          deductDelegatedCodeGasCost(frame, gasCalculator, contract);
-      if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-        return new Operation.OperationResult(
-            result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
+    if (contract != null && contract.hasDelegatedCode()) {
+      if (contract.getDelegatedCode().isEmpty()) {
+        throw new RuntimeException("A delegated code account must have delegated code");
       }
+
+      if (contract.getDelegatedCodeHash().isEmpty()) {
+        throw new RuntimeException("A delegated code account must have a delegated code hash");
+      }
+
+      final long delegatedCodeResolutionGas =
+          DelegatedCodeGasCostHelper.delegatedCodeGasCost(frame, gasCalculator(), contract);
+
+      if (frame.getRemainingGas() < delegatedCodeResolutionGas) {
+        return new Operation.OperationResult(
+            delegatedCodeResolutionGas, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      }
+
+      frame.decrementRemainingGas(delegatedCodeResolutionGas);
     }
 
-    boolean accountCreation = contract == null && !zeroValue;
+    boolean accountCreation = (contract == null || contract.isEmpty()) && !zeroValue;
     long cost =
         clampedAdd(
             clampedAdd(
@@ -154,10 +163,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     currentGas -= cost;
     frame.expandMemory(inputOffset, inputLength);
 
-    final Code code =
-        contract == null
-            ? CodeV0.EMPTY_CODE
-            : evm.getCode(contract.getCodeHash(), contract.getCode());
+    final Code code = getCode(evm, contract);
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
