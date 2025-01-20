@@ -333,9 +333,8 @@ public class JsonCallParameter extends CallParameter {
     }
 
     /**
-     * Sets the nonce for the {@link JsonCallParameter}. The nonce is a sequence number used to
-     * prevent replay attacks. It is an optional parameter, and if not specified, it defaults to an
-     * empty {@link Optional}.
+     * Sets the nonce for the {@link JsonCallParameter}. It is an optional parameter, and if not
+     * specified, it defaults to an empty {@link Optional}.
      *
      * @param nonce the nonce, can be {@code null} to indicate no nonce is provided
      * @return the {@link JsonCallParameterBuilder} instance for chaining
