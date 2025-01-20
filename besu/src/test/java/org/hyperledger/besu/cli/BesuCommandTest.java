@@ -2705,4 +2705,43 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(errorOutputString).isEmpty();
   }
+
+  @Test
+  void chainPruningEnabledWithQBFTShouldFailWhenChainPruningBlocksRetainedValueLessThanEpochLength()
+      throws IOException {
+
+    JsonObject genesis = GENESIS_VALID_JSON;
+    genesis.getJsonObject("config").put("qbft", new JsonObject().put("epochlength", 30000));
+
+    final Path genesisFile = createFakeGenesisFile(genesis);
+
+    parseCommand(
+        "--genesis-file",
+        genesisFile.toString(),
+        "--Xchain-pruning-enabled=true",
+        "--Xchain-pruning-blocks-retained=7200",
+        "--version-compatibility-protection=false");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--Xchain-pruning-blocks-retained must be >= epochlength(30000) for QBFT networks");
+  }
+
+  @Test
+  void chainPruningEnabledWithQBFT() throws IOException {
+
+    JsonObject genesis = GENESIS_VALID_JSON;
+    genesis.getJsonObject("config").put("qbft", new JsonObject().put("epochlength", 30000));
+
+    final Path genesisFile = createFakeGenesisFile(genesis);
+
+    parseCommand(
+        "--genesis-file",
+        genesisFile.toString(),
+        "--Xchain-pruning-enabled=true",
+        "--Xchain-pruning-blocks-retained=30000",
+        "--version-compatibility-protection=false");
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
 }
