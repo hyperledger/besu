@@ -861,7 +861,8 @@ public class SnapServerTest {
 
     // Only Bonsai archive cares about this. Do everything as if we're at
     // block 1 so we know which entry to retrieve from the DB
-    flatdb.updateBlockContext(generateBonsaiArchiveContextHeader(1));
+    // MRW
+    // flatdb.updateBlockContext(generateBonsaiArchiveContextHeader(1));
 
     var updater = storage.updater();
     updater.putCode(Hash.hash(mockCode), mockCode);
@@ -874,6 +875,7 @@ public class SnapServerTest {
               rlpOut.writeBytes(mockBytes32);
               trie.put(mockBytes32, rlpOut.encoded());
               flatdb.putFlatAccountStorageValueByStorageSlotHash(
+                  null, // MRW
                   updater.getWorldStateTransaction(),
                   acctHash,
                   Hash.wrap(mockBytes32),

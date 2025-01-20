@@ -170,15 +170,21 @@ public abstract class DiffBasedWorldState
     // Update the block context before putting entries to storage via calculateRootHash()
     // TODO - rename calculateRootHash() to be clearer that it updates state, it doesn't just
     // calculate a hash
-    if (worldStateKeyValueStorage.getFlatDbStrategy() instanceof BonsaiArchiveFlatDbStrategy
-        && blockHeader != null) {
+    if (worldStateKeyValueStorage.getFlatDbStrategy() instanceof BonsaiArchiveFlatDbStrategy) {
+      final long archiveContext;
+      if (blockHeader != null) {
+        archiveContext = blockHeader.getNumber();
+      } else {
+        archiveContext = 0L;
+      }
+
       DiffBasedWorldStateKeyValueStorage.Updater stateUpdater = worldStateKeyValueStorage.updater();
       stateUpdater
           .getWorldStateTransaction()
           .put(
               TRIE_BRANCH_STORAGE,
               WORLD_BLOCK_NUMBER_KEY,
-              Long.toHexString(blockHeader.getNumber()).getBytes(StandardCharsets.UTF_8));
+              Long.toHexString(archiveContext).getBytes(StandardCharsets.UTF_8));
       stateUpdater.commit();
     }
 

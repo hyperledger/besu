@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -100,15 +99,5 @@ public class BonsaiFullFlatDbStrategy extends BonsaiFlatDbStrategy {
   public void resetOnResync(final SegmentedKeyValueStorage storage) {
     // NOOP
     // not need to reset anything in full mode
-  }
-
-  @Override
-  public void updateBlockContext(final Long blockNumber) {
-    // default no-op for strategies that do not care about bonsai context
-  }
-
-  @Override
-  public void updateBlockContext(final BlockHeader blockHeader) {
-    // default no-op for strategies that do not care about bonsai context
   }
 }

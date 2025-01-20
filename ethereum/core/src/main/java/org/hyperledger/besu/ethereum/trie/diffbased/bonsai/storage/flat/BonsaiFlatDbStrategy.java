@@ -71,6 +71,7 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
 
   @Override
   public void putFlatAccount(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Bytes accountValue) {
@@ -79,12 +80,15 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
 
   @Override
   public void removeFlatAccount(
-      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash) {
     transaction.remove(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe());
   }
 
   @Override
   public void putFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash,
@@ -97,6 +101,7 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
 
   @Override
   public void removeFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash) {

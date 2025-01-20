@@ -180,7 +180,8 @@ class FlatDbStrategyProviderTest {
         new AccountHashCodeStorageStrategy();
     // key representing account hash just needs to not be the code hash
     final Hash accountHash = Hash.wrap(Bytes32.fromHexString("0001"));
-    accountHashCodeStorageStrategy.putFlatCode(transaction, accountHash, null, Bytes.of(2));
+    accountHashCodeStorageStrategy.putFlatCode(
+        composedWorldStateStorage, transaction, accountHash, null, Bytes.of(2));
     transaction.commit();
 
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
@@ -215,7 +216,8 @@ class FlatDbStrategyProviderTest {
         new AccountHashCodeStorageStrategy();
     // key representing account hash just needs to not be the code hash
     final Hash accountHash = Hash.wrap(Bytes32.fromHexString("0001"));
-    accountHashCodeStorageStrategy.putFlatCode(transaction, accountHash, null, Bytes.of(2));
+    accountHashCodeStorageStrategy.putFlatCode(
+        composedWorldStateStorage, transaction, accountHash, null, Bytes.of(2));
     transaction.commit();
 
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
@@ -247,7 +249,8 @@ class FlatDbStrategyProviderTest {
 
     final CodeHashCodeStorageStrategy codeHashCodeStorageStrategy =
         new CodeHashCodeStorageStrategy();
-    codeHashCodeStorageStrategy.putFlatCode(transaction, null, Hash.hash(Bytes.of(1)), Bytes.of(1));
+    codeHashCodeStorageStrategy.putFlatCode(
+        composedWorldStateStorage, transaction, null, Hash.hash(Bytes.of(1)), Bytes.of(1));
     transaction.commit();
 
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
@@ -281,7 +284,8 @@ class FlatDbStrategyProviderTest {
 
     final CodeHashCodeStorageStrategy codeHashCodeStorageStrategy =
         new CodeHashCodeStorageStrategy();
-    codeHashCodeStorageStrategy.putFlatCode(transaction, null, Hash.hash(Bytes.of(1)), Bytes.of(1));
+    codeHashCodeStorageStrategy.putFlatCode(
+        composedWorldStateStorage, transaction, null, Hash.hash(Bytes.of(1)), Bytes.of(1));
     transaction.commit();
 
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
-import org.hyperledger.besu.ethereum.trie.diffbased.common.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategyProvider;
@@ -91,8 +90,7 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
     if (flatDbMode == FlatDbMode.FULL) {
       return new BonsaiFullFlatDbStrategy(metricsSystem, codeStorageStrategy);
     } else if (flatDbMode == FlatDbMode.ARCHIVE) {
-      return new BonsaiArchiveFlatDbStrategy(
-          new BonsaiContext(), metricsSystem, codeStorageStrategy);
+      return new BonsaiArchiveFlatDbStrategy(metricsSystem, codeStorageStrategy);
     } else {
       return new BonsaiPartialFlatDbStrategy(metricsSystem, codeStorageStrategy);
     }

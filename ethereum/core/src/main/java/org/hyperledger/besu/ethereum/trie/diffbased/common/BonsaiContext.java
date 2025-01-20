@@ -23,19 +23,8 @@ public class BonsaiContext {
   private final AtomicReference<Long> blockNumber;
 
   /** Context for Bonsai storage i.e. the block the storage applies to */
-  public BonsaiContext() {
-    blockNumber = new AtomicReference<>();
-  }
-
-  /**
-   * Set the new block header for the context
-   *
-   * @param blockNumber the new block header
-   * @return the updated context
-   */
-  public BonsaiContext setBlockNumber(final Long blockNumber) {
-    this.blockNumber.set(blockNumber);
-    return this;
+  public BonsaiContext(final long blockNumber) {
+    this.blockNumber = new AtomicReference<>(blockNumber);
   }
 
   /**

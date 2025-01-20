@@ -97,7 +97,7 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
             trieLogManager.getMaxLayersToLoad());
         Optional<MutableWorldState> cachedWorldState =
             cachedWorldStorageManager
-                .getHeadWorldState(blockchain::getBlockHeader)
+                .getWorldState(chainHeadBlockHeader.getHash())
                 .map(MutableWorldState::disableTrie)
                 .flatMap(
                     worldState ->
@@ -105,7 +105,6 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
                             // state
                             (DiffBasedWorldState) worldState, blockHeader.getHash()))
                 .map(MutableWorldState::freeze);
-
         return cachedWorldState;
       }
       return super.getMutable(blockHeader, false);

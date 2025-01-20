@@ -222,8 +222,8 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     if (previousBlockHeader.isPresent()) {
       try {
         // Get the key for the previous block
-        final BonsaiContext previousContext = new BonsaiContext();
-        previousContext.setBlockNumber(previousBlockHeader.get().getNumber());
+        final BonsaiContext previousContext =
+            new BonsaiContext(previousBlockHeader.get().getNumber());
         final Bytes previousKey =
             Bytes.of(
                 BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(
@@ -293,8 +293,8 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     if (previousBlockHeader.isPresent()) {
       try {
         // Get the key for the previous block
-        final BonsaiContext previousContext = new BonsaiContext();
-        previousContext.setBlockNumber(previousBlockHeader.get().getNumber());
+        final BonsaiContext previousContext =
+            new BonsaiContext(previousBlockHeader.get().getNumber());
         final Bytes previousKey =
             Bytes.of(
                 BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(
