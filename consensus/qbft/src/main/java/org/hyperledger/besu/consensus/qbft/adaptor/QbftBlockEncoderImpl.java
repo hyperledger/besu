@@ -38,7 +38,7 @@ public class QbftBlockEncoderImpl
     final BlockHeaderFunctions blockHeaderFunctions =
         getBlockHeaderFunctions(qbftExtraDataCodec, hashMode);
     Block besuBlock = Block.readFrom(rlpInput, blockHeaderFunctions);
-    return new QbftBlockImpl(besuBlock.getHeader());
+    return new QbftBlockImpl(besuBlock);
   }
 
   @Override

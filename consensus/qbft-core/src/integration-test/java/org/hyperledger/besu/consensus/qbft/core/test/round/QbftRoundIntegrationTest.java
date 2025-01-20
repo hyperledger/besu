@@ -17,13 +17,12 @@ package org.hyperledger.besu.consensus.qbft.core.test.round;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -31,11 +30,13 @@ import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
 import org.hyperledger.besu.consensus.qbft.core.api.ExtraDataProvider;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockImporter;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSpec;
@@ -52,6 +53,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -59,6 +62,7 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleExcepti
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
@@ -124,7 +128,9 @@ public class QbftRoundIntegrationTest {
     headerTestFixture.extraData(qbftExtraDataEncoder.encode(proposedExtraData));
     headerTestFixture.number(1);
     final BlockHeader header = headerTestFixture.buildHeader();
-    proposedBlock = new QbftBlockImpl(header);
+    final Block block = new Block(header, new BlockBody(emptyList(), emptyList()));
+    proposedBlock = new QbftBlockImpl(block);
+    when(extraDataProvider.getExtraData(header)).thenReturn(proposedExtraData);
 
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
@@ -135,8 +141,8 @@ public class QbftRoundIntegrationTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(
-                BftContext.class, emptyList(), qbftExtraDataEncoder),
+            new QbftContext(
+                null, new QbftBlockInterfaceImpl(new BftBlockInterface(qbftExtraDataEncoder))),
             new BadBlockManager());
   }
 
@@ -172,6 +178,16 @@ public class QbftRoundIntegrationTest {
 
   @Test
   public void failuresToSignStillAllowBlockToBeImported() {
+    final BlockHeader header = new BlockHeaderTestFixture().number(1).buildHeader();
+    final Block sealedBesuBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
+    final QbftBlock sealedBlock = new QbftBlockImpl(sealedBesuBlock);
+    when(blockCreator.createSealedBlock(
+            extraDataProvider,
+            proposedBlock,
+            roundIdentifier.getRoundNumber(),
+            List.of(remoteCommitSeal, remoteCommitSeal)))
+        .thenReturn(sealedBlock);
+
     final int QUORUM_SIZE = 2;
     final RoundState roundState = new RoundState(roundIdentifier, QUORUM_SIZE, messageValidator);
     final QbftRound round =

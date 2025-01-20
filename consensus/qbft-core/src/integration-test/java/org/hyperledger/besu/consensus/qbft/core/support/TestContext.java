@@ -34,6 +34,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 
@@ -151,8 +152,9 @@ public class TestContext {
         .coinbase(proposer)
         .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();
-
-    return new QbftBlockImpl(newHeader);
+    final Block newBlock =
+        new Block(newHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+    return new QbftBlockImpl(newBlock);
   }
 
   public QbftBlock createBlockForProposal(
@@ -168,7 +170,7 @@ public class TestContext {
     final Block sealedBlock =
         BftHelpers.createSealedBlock(
             bftExtraDataCodec, BlockUtil.toBesuBlock(block), roundNumber, commitSeals);
-    return new QbftBlockImpl(sealedBlock.getHeader());
+    return new QbftBlockImpl(sealedBlock);
   }
 
   public RoundSpecificPeers roundSpecificPeers(final ConsensusRoundIdentifier roundId) {

@@ -24,13 +24,12 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 public class QbftBlockValidatorImpl implements QbftBlockValidator {
 
   private final BlockValidator blockValidator;
-  private final org.hyperledger.besu.ethereum.ProtocolContext besuProtocolContext;
+  private final ProtocolContext besuProtocolContext;
 
   public QbftBlockValidatorImpl(
-      final BlockValidator blockValidator,
-      final org.hyperledger.besu.ethereum.ProtocolContext besuProtocolContext) {
+      final BlockValidator blockValidator, final ProtocolContext protocolContext) {
     this.blockValidator = blockValidator;
-    this.besuProtocolContext = besuProtocolContext;
+    this.besuProtocolContext = protocolContext;
   }
 
   @Override

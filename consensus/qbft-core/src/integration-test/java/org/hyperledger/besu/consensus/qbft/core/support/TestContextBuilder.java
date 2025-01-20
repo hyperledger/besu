@@ -64,12 +64,15 @@ import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockEncoderImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleImpl;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.api.ExtraDataProvider;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockInterface;
+import org.hyperledger.besu.consensus.qbft.core.api.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.api.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
@@ -436,7 +439,8 @@ public class TestContextBuilder {
 
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);
 
-    final BftBlockInterface blockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
+    final BftBlockInterface bftBlockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
+    final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceImpl(bftBlockInterface);
 
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(genesisConfigOptions);
@@ -459,7 +463,7 @@ public class TestContextBuilder {
 
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
-            blockChain, epochManager, blockInterface, validatorOverrides);
+            blockChain, epochManager, bftBlockInterface, validatorOverrides);
     final TransactionValidatorProvider transactionValidatorProvider =
         new TransactionValidatorProvider(
             blockChain, new ValidatorContractController(transactionSimulator), forksSchedule);
@@ -467,11 +471,17 @@ public class TestContextBuilder {
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, transactionValidatorProvider);
 
-    final ProtocolContext protocolContext =
+    final ProtocolContext bftProtocolContext =
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            new BftContext(validatorProvider, epochManager, blockInterface),
+            new BftContext(validatorProvider, epochManager, bftBlockInterface),
+            new BadBlockManager());
+    final ProtocolContext qbftProtocolContext =
+        new ProtocolContext(
+            blockChain,
+            worldStateArchive,
+            new QbftContext(validatorProvider, qbftBlockInterface),
             new BadBlockManager());
 
     final TransactionPoolConfiguration poolConf =
@@ -488,7 +498,7 @@ public class TestContextBuilder {
         new TransactionPool(
             () -> pendingTransactions,
             protocolSchedule,
-            protocolContext,
+            bftProtocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
@@ -503,7 +513,7 @@ public class TestContextBuilder {
     final QbftBlockCreatorFactory blockCreatorFactory =
         new QbftBlockCreatorFactory(
             transactionPool, // changed from QbftBesuController
-            protocolContext,
+            bftProtocolContext,
             protocolSchedule,
             forksSchedule,
             miningConfiguration,
@@ -512,13 +522,13 @@ public class TestContextBuilder {
             ethScheduler);
 
     final ProposerSelector proposerSelector =
-        new ProposerSelector(blockChain, blockInterface, true, validatorProvider);
+        new ProposerSelector(blockChain, bftBlockInterface, true, validatorProvider);
 
     final BftExecutors bftExecutors =
         BftExecutors.create(new NoOpMetricsSystem(), BftExecutors.ConsensusType.QBFT);
     final QbftFinalState finalState =
         new QbftFinalStateImpl(
-            protocolContext.getConsensusContext(BftContext.class).getValidatorProvider(),
+            validatorProvider,
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
@@ -530,10 +540,10 @@ public class TestContextBuilder {
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey, blockEncoder);
 
-    QbftProtocolScheduleImpl qbftProtocolSchedule =
-        new QbftProtocolScheduleImpl(protocolSchedule, protocolContext);
+    final QbftProtocolScheduleImpl qbftProtocolSchedule =
+        new QbftProtocolScheduleImpl(protocolSchedule, bftProtocolContext);
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, qbftProtocolSchedule, protocolContext);
+        new MessageValidatorFactory(proposerSelector, qbftProtocolSchedule, qbftProtocolContext);
 
     final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
 
@@ -554,7 +564,7 @@ public class TestContextBuilder {
                 finalState,
                 new QbftRoundFactory(
                     finalState,
-                    protocolContext,
+                    qbftProtocolContext,
                     qbftProtocolSchedule,
                     minedBlockObservers,
                     messageValidatorFactory,

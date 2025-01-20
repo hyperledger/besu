@@ -20,9 +20,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 public class BlockUtil {
 
   public static Block toBesuBlock(final QbftBlock block) {
-    if (block instanceof Block) {
-      return (Block) block;
-    }
-    throw new IllegalStateException("Invalid Block type");
+    return ((QbftBlockImpl) block).getBesuBlock();
   }
 }

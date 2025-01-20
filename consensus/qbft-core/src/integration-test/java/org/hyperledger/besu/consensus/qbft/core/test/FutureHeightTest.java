@@ -217,7 +217,7 @@ public class FutureHeightTest {
     peers.getNonProposing(0).injectProposal(futureHeightRoundId, futureHeightBlock);
 
     // Change to the FutureRound, and confirm prepare and commit msgs are sent
-    context.appendBlock(signedCurrentHeightBlock);
+    context.appendBlock(signedNextHeightBlock);
     assertThat(context.getCurrentChainHeight()).isEqualTo(2);
     context
         .getController()

@@ -41,6 +41,6 @@ public class QbftBlockInterfaceImpl implements QbftBlockInterface {
         getBlockHeaderFunctions(bftExtraDataCodec, hashMode);
     final Block updatedRoundBlock =
         bftBlockInterface.replaceRoundInBlock(besuBlock, roundNumber, blockHeaderFunctions);
-    return new QbftBlockImpl(updatedRoundBlock.getHeader());
+    return new QbftBlockImpl(updatedRoundBlock);
   }
 }
