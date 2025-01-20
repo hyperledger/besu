@@ -168,6 +168,14 @@ public class RLPTest {
         .hasMessageContaining("RLP item exceeds max supported size of 2147483647: 2147483648");
   }
 
+  @Test
+  public void testValidateWithEmptyListIncluded() {
+    Bytes validRlp =
+        Bytes.fromHexString(
+            "01f90126018828da1b7df09b04b484e4aed78d880d84a24f16cbf30394d5d9bef76808f3b572e5900112b81927ba5bb5f6a0a99de4ef3bc2b17c8137ad659878f9e93df1f658367aca286452474b9ef3765ea073d51abbd89cb8196f0efb6892f94d68fccc2c35f0b84609e5f12c55dd85aba8f872d69473724dddfb04b01dcceb0c8aead641c58dad5695c0f8599481baeea87c10d40a47902028e61cfdc243d9d160f842a008aabc9fb77cc723a56017e14f1ce8b1698341734a6823ce02043e016b544901a0214a2ddab82fec85c0b9fe0549c475be5b887bb4b8995b24fb5c6846f88b527b01a02c2051ba70ca2d5088c790c065d288f187a06ffb498c6e3b488873c9bf04fbb2a061bac48599e7941469a549570b12c3d997f309386bb0a2594bd28cca706fc6fb");
+    RLP.validate(validRlp);
+  }
+
   private static Bytes h(final String hex) {
     return Bytes.fromHexString(hex);
   }
