@@ -579,6 +579,7 @@ public class EthEstimateGasTest {
         Optional.empty(),
         Wei.ZERO,
         Bytes.EMPTY,
+        Optional.empty(),
         Optional.empty());
   }
 
@@ -613,6 +614,7 @@ public class EthEstimateGasTest {
         Optional.of(Wei.fromHexString("0x10")),
         Wei.ZERO,
         Bytes.EMPTY,
+        Optional.empty(),
         Optional.empty());
   }
 

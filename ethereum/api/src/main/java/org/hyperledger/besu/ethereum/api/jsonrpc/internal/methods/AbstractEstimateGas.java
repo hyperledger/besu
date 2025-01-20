@@ -147,7 +147,8 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
         callParams.getPayload(),
         callParams.getAccessList(),
         callParams.getMaxFeePerBlobGas(),
-        callParams.getBlobVersionedHashes());
+        callParams.getBlobVersionedHashes(),
+        callParams.getNonce());
   }
 
   /**
