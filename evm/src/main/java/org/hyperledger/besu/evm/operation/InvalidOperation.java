@@ -53,6 +53,12 @@ public class InvalidOperation extends AbstractOperation {
     return invalidOperationResult(getOpcode());
   }
 
+  /**
+   * Creates an {@link OperationResult} for an invalid opcode.
+   *
+   * @param opcode the invalid opcode encountered
+   * @return an {@link OperationResult} with zero gas cost and a description of the invalid opcode
+   */
   public static OperationResult invalidOperationResult(final int opcode) {
     return new OperationResult(0, ExceptionalHaltReason.newInvalidOperation(opcode));
   }
