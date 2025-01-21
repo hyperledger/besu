@@ -14,8 +14,22 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
+/**
+ * Provides the ability to select the appropriate QbftProtocolSpec containing the validation and
+ * import for the supplied block header.
+ */
 public interface QbftProtocolSpec {
+  /**
+   * Gets the block importer.
+   *
+   * @return the block importer
+   */
   QbftBlockImporter getBlockImporter();
 
+  /**
+   * Gets the block validator.
+   *
+   * @return the block validator
+   */
   QbftBlockValidator getBlockValidator();
 }

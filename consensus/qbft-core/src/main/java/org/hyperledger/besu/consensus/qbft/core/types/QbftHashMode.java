@@ -14,6 +14,12 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
+/**
+ * The mode in which the block hash is calculated for a QBFT block.
+ *
+ * <p>When a block is hashed, the hash may be calculated in different ways depending on the context
+ * in which the hash is being used.
+ */
 public enum QbftHashMode {
   /**
    * Hash the block for the committed seal. This typically means the block hash excludes the commit

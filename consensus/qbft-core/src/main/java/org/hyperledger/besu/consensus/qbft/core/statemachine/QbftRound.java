@@ -95,7 +95,8 @@ public class QbftRound {
    * @param messageFactory the message factory
    * @param transmitter the transmitter
    * @param roundTimer the round timer
-   * @param qbftExtraDataProvider the extra data provider
+   * @param bftExtraDataCodec the bft extra data codec
+   * @param qbftExtraDataProvider the qbft extra data provider
    * @param parentHeader the parent header
    */
   public QbftRound(

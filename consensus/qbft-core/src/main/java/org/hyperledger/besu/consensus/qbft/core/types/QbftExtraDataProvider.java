@@ -19,5 +19,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 /** Provides the extra data for a block. */
 public interface QbftExtraDataProvider {
+
+  /**
+   * Returns the extra data for the supplied block header.
+   *
+   * @param header the block header to retrieve the extra data from
+   * @return the extra data
+   */
   BftExtraData getExtraData(BlockHeader header);
 }

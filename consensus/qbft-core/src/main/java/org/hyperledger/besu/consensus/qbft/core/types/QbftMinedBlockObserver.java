@@ -14,6 +14,12 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
+/** Observer for mined blocks in QBFT */
 public interface QbftMinedBlockObserver {
+  /**
+   * Called when a block is mined
+   *
+   * @param block the mined block
+   */
   void blockMined(QbftBlock block);
 }

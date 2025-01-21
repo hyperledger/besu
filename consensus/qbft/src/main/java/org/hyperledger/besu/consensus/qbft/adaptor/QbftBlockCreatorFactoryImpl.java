@@ -18,12 +18,19 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreatorFactory;
 
+/** Besu implementation of QbftBlockCreatorFactory used for creating QBFT block creators. */
 public class QbftBlockCreatorFactoryImpl implements QbftBlockCreatorFactory {
 
   private final org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory
       qbftBlockCreatorFactory;
   private final BftExtraDataCodec bftExtraDataCodec;
 
+  /**
+   * Constructs a new QbftBlockCreatorFactory
+   *
+   * @param qbftBlockCreatorFactory The Besu QBFT block creator factory
+   * @param bftExtraDataCodec the bftExtraDataCodec used to encode extra data for the new header
+   */
   public QbftBlockCreatorFactoryImpl(
       final org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory
           qbftBlockCreatorFactory,

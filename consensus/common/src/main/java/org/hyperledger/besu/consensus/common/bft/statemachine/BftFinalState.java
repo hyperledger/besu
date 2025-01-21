@@ -115,7 +115,7 @@ public class BftFinalState {
    * Is local node proposer for round.
    *
    * @param roundIdentifier the round identifier
-   * @return the boolean
+   * @return true if the local node is the proposer for the given round, false otherwise
    */
   public boolean isLocalNodeProposerForRound(final ConsensusRoundIdentifier roundIdentifier) {
     return getProposerForRound(roundIdentifier).equals(localAddress);
@@ -124,7 +124,7 @@ public class BftFinalState {
   /**
    * Is local node validator.
    *
-   * @return the boolean
+   * @return true if the local node is a validator, false otherwise
    */
   public boolean isLocalNodeValidator() {
     final boolean isValidator = getValidators().contains(localAddress);

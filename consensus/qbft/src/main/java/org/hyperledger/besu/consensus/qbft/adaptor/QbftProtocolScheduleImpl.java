@@ -21,11 +21,21 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
+/**
+ * Besu implementation of QbftProtocolSchedule for selecting the appropriate protocol spec based on
+ * a block header.
+ */
 public class QbftProtocolScheduleImpl implements QbftProtocolSchedule {
 
   private final ProtocolSchedule besuProtocolSchedule;
   private final ProtocolContext context;
 
+  /**
+   * Constructs a new Qbft protocol schedule.
+   *
+   * @param besuProtocolSchedule The Besu protocol schedule.
+   * @param context The protocol context.
+   */
   public QbftProtocolScheduleImpl(
       final ProtocolSchedule besuProtocolSchedule, final ProtocolContext context) {
     this.besuProtocolSchedule = besuProtocolSchedule;

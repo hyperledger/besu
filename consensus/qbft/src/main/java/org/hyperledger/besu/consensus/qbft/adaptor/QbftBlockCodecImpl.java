@@ -25,10 +25,16 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+/** Besu implementation of QbftBlockCodec for serializing and deserializing QBFT blocks. */
 public class QbftBlockCodecImpl implements QbftBlockCodec {
 
   private final QbftExtraDataCodec qbftExtraDataCodec;
 
+  /**
+   * Constructs a new Qbft block codec.
+   *
+   * @param qbftExtraDataCodec the QBFT extra data codec
+   */
   public QbftBlockCodecImpl(final QbftExtraDataCodec qbftExtraDataCodec) {
     this.qbftExtraDataCodec = qbftExtraDataCodec;
   }

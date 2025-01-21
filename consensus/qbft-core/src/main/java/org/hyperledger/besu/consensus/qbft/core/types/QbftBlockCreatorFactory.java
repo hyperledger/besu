@@ -14,6 +14,14 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
+/** Factory for creating a {@link QbftBlockCreator} for a specific round. */
 public interface QbftBlockCreatorFactory {
+
+  /**
+   * Create a {@link QbftBlockCreator} for the specified round.
+   *
+   * @param roundNumber The round number for which to create a block creator.
+   * @return A block creator for the specified round.
+   */
   QbftBlockCreator create(int roundNumber);
 }

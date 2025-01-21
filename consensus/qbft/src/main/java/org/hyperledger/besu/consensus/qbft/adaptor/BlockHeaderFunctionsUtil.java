@@ -19,8 +19,18 @@ import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 
+/** Utility class to get the correct BlockHeaderFunctions based on the QbftHashMode. */
 public class BlockHeaderFunctionsUtil {
+  // Private constructor to prevent instantiation
+  private BlockHeaderFunctionsUtil() {}
 
+  /**
+   * Get the correct BlockHeaderFunctions based on the QbftHashMode.
+   *
+   * @param extraDataCodec the extra data codec
+   * @param hashMode the hash mode
+   * @return the block header functions
+   */
   public static BlockHeaderFunctions getBlockHeaderFunctions(
       final QbftExtraDataCodec extraDataCodec, final QbftHashMode hashMode) {
     if (hashMode == QbftHashMode.ONCHAIN) {

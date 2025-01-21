@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-/** The Qbft block interface. */
+/** Utility functions for QBFT blocks */
 public interface QbftBlockInterface {
 
   /**

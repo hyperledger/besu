@@ -50,9 +50,9 @@ import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftQbftExtraDataProviderImpl;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
@@ -293,7 +293,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                     messageValidatorFactory,
                     messageFactory,
                     qbftExtraDataCodec,
-                    new QbftQbftExtraDataProviderImpl(qbftExtraDataCodec)),
+                    new QbftExtraDataProviderImpl(qbftExtraDataCodec)),
                 messageValidatorFactory,
                 messageFactory,
                 new ValidatorModeTransitionLogger(qbftForksSchedule)),

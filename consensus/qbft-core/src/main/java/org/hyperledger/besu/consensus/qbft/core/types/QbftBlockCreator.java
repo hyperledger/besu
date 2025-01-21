@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
 
+/** Responsible for creating a block. */
 public interface QbftBlockCreator {
 
   /**

@@ -65,9 +65,9 @@ import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftQbftExtraDataProviderImpl;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
@@ -554,7 +554,7 @@ public class TestContextBuilder {
             FUTURE_MESSAGES_LIMIT,
             blockChain.getChainHeadBlockNumber());
     final QbftExtraDataProvider qbftExtraDataProvider =
-        new QbftQbftExtraDataProviderImpl(BFT_EXTRA_DATA_ENCODER);
+        new QbftExtraDataProviderImpl(BFT_EXTRA_DATA_ENCODER);
 
     final QbftController qbftController =
         new QbftController(

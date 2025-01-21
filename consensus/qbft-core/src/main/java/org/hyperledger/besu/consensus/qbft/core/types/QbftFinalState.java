@@ -24,26 +24,84 @@ import org.hyperledger.besu.datatypes.Address;
 import java.time.Clock;
 import java.util.Collection;
 
+/** This is the full data set, or context, required for many of the aspects of QBFT workflows. */
 public interface QbftFinalState {
+
+  /**
+   * Gets validator multicaster.
+   *
+   * @return the validator multicaster
+   */
   ValidatorMulticaster getValidatorMulticaster();
 
+  /**
+   * Gets node key.
+   *
+   * @return the node key
+   */
   NodeKey getNodeKey();
 
+  /**
+   * Gets round timer.
+   *
+   * @return the round timer
+   */
   RoundTimer getRoundTimer();
 
+  /**
+   * Is local node validator.
+   *
+   * @return true if the local node is a validator, false otherwise
+   */
   boolean isLocalNodeValidator();
 
+  /**
+   * Gets validators.
+   *
+   * @return the validators
+   */
   Collection<Address> getValidators();
 
+  /**
+   * Gets local address.
+   *
+   * @return the local address
+   */
   Address getLocalAddress();
 
+  /**
+   * Gets clock.
+   *
+   * @return the clock
+   */
   Clock getClock();
 
+  /**
+   * Gets block creator factory.
+   *
+   * @return the block creator factory
+   */
   QbftBlockCreatorFactory getBlockCreatorFactory();
 
+  /**
+   * Gets quorum.
+   *
+   * @return the quorum
+   */
   int getQuorum();
 
+  /**
+   * Gets block timer.
+   *
+   * @return the block timer
+   */
   BlockTimer getBlockTimer();
 
+  /**
+   * Is local node proposer for round.
+   *
+   * @param roundIdentifier the round identifier
+   * @return true if the local node is the proposer for the given round, false otherwise
+   */
   boolean isLocalNodeProposerForRound(ConsensusRoundIdentifier roundIdentifier);
 }

@@ -17,8 +17,18 @@ package org.hyperledger.besu.consensus.qbft.adaptor;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.ethereum.core.Block;
 
+/** Utility class to convert between Besu and QBFT blocks. */
 public class BlockUtil {
 
+  /** Private constructor to prevent instantiation. */
+  private BlockUtil() {}
+
+  /**
+   * Convert a QBFT block to a Besu block.
+   *
+   * @param block the QBFT block
+   * @return the Besu block
+   */
   public static Block toBesuBlock(final QbftBlock block) {
     if (block instanceof QbftBlockImpl) {
       return ((QbftBlockImpl) block).getBesuBlock();

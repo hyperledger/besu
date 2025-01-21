@@ -27,11 +27,18 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 
 import java.util.Collection;
 
+/** Besu implementation of a QbftBlockCreator which is responsible for creating QBFT blocks. */
 public class QbftBlockCreatorImpl implements QbftBlockCreator {
 
   private final org.hyperledger.besu.ethereum.blockcreation.BlockCreator besuBlockCreator;
   private final BftExtraDataCodec bftExtraDataCodec;
 
+  /**
+   * Constructs a new QbftBlockCreator
+   *
+   * @param besuBftBlockCreator the Besu BFT block creator
+   * @param bftExtraDataCodec the bftExtraDataCodec used to encode extra data for the new header
+   */
   public QbftBlockCreatorImpl(
       final org.hyperledger.besu.ethereum.blockcreation.BlockCreator besuBftBlockCreator,
       final BftExtraDataCodec bftExtraDataCodec) {

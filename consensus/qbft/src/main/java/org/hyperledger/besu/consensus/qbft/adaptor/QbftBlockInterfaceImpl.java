@@ -25,10 +25,16 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 
+/** Besu implementation of the QbftBlockInterface providing utility functions for Qbft Blocks */
 public class QbftBlockInterfaceImpl implements QbftBlockInterface {
   private final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
   private final BftBlockInterface bftBlockInterface;
 
+  /**
+   * Constructs a new QbftBlockInterface
+   *
+   * @param bftBlockInterface the BFT block interface
+   */
   public QbftBlockInterfaceImpl(final BftBlockInterface bftBlockInterface) {
     this.bftBlockInterface = bftBlockInterface;
   }

@@ -22,10 +22,20 @@ import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
+/**
+ * Besu implementation of the QbftProtocolSpeck which provides the ability to select the appropriate
+ * QbftProtocolSpec containing the validation and import for the supplied block header.
+ */
 public class QbftProtocolSpecImpl implements QbftProtocolSpec {
   private final ProtocolSpec besuProtocolSpec;
   private final ProtocolContext context;
 
+  /**
+   * Constructs a new Qbft protocol spec.
+   *
+   * @param besuProtocolSpec The Besu protocol spec.
+   * @param context The protocol context.
+   */
   public QbftProtocolSpecImpl(final ProtocolSpec besuProtocolSpec, final ProtocolContext context) {
     this.besuProtocolSpec = besuProtocolSpec;
     this.context = context;

@@ -44,6 +44,11 @@ public class QbftContext implements ConsensusContext {
     return validatorProvider;
   }
 
+  /**
+   * Gets block interface.
+   *
+   * @return the block interface
+   */
   public QbftBlockInterface getBlockInterface() {
     return blockInterface;
   }

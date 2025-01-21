@@ -18,9 +18,23 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 
 import java.util.Optional;
 
+/** Validates a block. */
 public interface QbftBlockValidator {
 
+  /**
+   * Validates a block.
+   *
+   * @param protocolContext the protocol context
+   * @param block the block to validate
+   * @return the validation result
+   */
   ValidationResult validateBlock(ProtocolContext protocolContext, QbftBlock block);
 
+  /**
+   * The result of a block validation.
+   *
+   * @param success whether the validation was successful
+   * @param errorMessage the error message if the validation was not successful
+   */
   record ValidationResult(boolean success, Optional<String> errorMessage) {}
 }

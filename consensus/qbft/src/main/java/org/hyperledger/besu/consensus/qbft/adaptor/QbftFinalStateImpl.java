@@ -29,6 +29,7 @@ import org.hyperledger.besu.datatypes.Address;
 import java.time.Clock;
 import java.util.Collection;
 
+/** Besu implementation of QbftFinalState for maintaining the state of a QBFT network. */
 public class QbftFinalStateImpl implements QbftFinalState {
   private final ValidatorProvider validatorProvider;
   private final NodeKey nodeKey;
@@ -41,7 +42,7 @@ public class QbftFinalStateImpl implements QbftFinalState {
   private final Clock clock;
 
   /**
-   * Instantiates a new Bft final state.
+   * Constructs a new QBFT final state.
    *
    * @param validatorProvider the validator provider
    * @param nodeKey the node key

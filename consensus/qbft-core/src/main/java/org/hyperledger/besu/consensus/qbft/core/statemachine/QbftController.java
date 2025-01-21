@@ -69,6 +69,7 @@ public class QbftController implements BftEventHandler {
    * @param duplicateMessageTracker the duplicate message tracker
    * @param futureMessageBuffer the future message buffer
    * @param synchronizerUpdater the synchronizer updater
+   * @param blockEncoder the block encoder
    */
   public QbftController(
       final Blockchain blockchain,
@@ -90,7 +91,7 @@ public class QbftController implements BftEventHandler {
     this.blockEncoder = blockEncoder;
   }
 
-  protected void handleMessage(final Message message) {
+  private void handleMessage(final Message message) {
     final MessageData messageData = message.getData();
 
     switch (messageData.getCode()) {
@@ -130,11 +131,11 @@ public class QbftController implements BftEventHandler {
     }
   }
 
-  protected void createNewHeightManager(final BlockHeader parentHeader) {
+  private void createNewHeightManager(final BlockHeader parentHeader) {
     currentHeightManager = qbftBlockHeightManagerFactory.create(parentHeader);
   }
 
-  protected BaseQbftBlockHeightManager getCurrentHeightManager() {
+  private BaseQbftBlockHeightManager getCurrentHeightManager() {
     return currentHeightManager;
   }
 
