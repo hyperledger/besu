@@ -489,9 +489,7 @@ public class Transaction
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    rawRlp.ifPresentOrElse(
-        out::writeRLPBytes,
-        () -> TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY));
+    TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY);
   }
 
   @Override

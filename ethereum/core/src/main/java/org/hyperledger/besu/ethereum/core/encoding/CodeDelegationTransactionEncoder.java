@@ -66,7 +66,9 @@ public class CodeDelegationTransactionEncoder {
     transaction
         .getRawRlp()
         .ifPresentOrElse(
-            out::writeRLPBytes,
+            (rawRlp) ->
+                out.writeRLPBytes(
+                    Bytes.concatenate(Bytes.of(transaction.getType().getSerializedType()), rawRlp)),
             () -> {
               out.startList();
               out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());

@@ -30,12 +30,13 @@ jar {
 }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-units'
   implementation 'com.google.guava:guava'
-
 
   jmh project(':util')
 

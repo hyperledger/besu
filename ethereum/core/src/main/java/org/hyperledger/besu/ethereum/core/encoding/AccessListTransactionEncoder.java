@@ -34,7 +34,9 @@ public class AccessListTransactionEncoder {
     transaction
         .getRawRlp()
         .ifPresentOrElse(
-            rlpOutput::writeRLPBytes,
+            (rawRlp) ->
+                rlpOutput.writeRLPBytes(
+                    Bytes.concatenate(Bytes.of(transaction.getType().getSerializedType()), rawRlp)),
             () -> {
               rlpOutput.startList();
               encodeAccessListInner(
@@ -106,8 +108,9 @@ public class AccessListTransactionEncoder {
             out.writeBytes(accessListEntry.address());
             out.writeList(
                 accessListEntry.storageKeys(),
-                (storageKeyBytes, storageKeyBytesRLPOutput) ->
-                    storageKeyBytesRLPOutput.writeBytes(storageKeyBytes));
+                (storageKeyBytes, storageKeyBytesRLPOutput) -> {
+                  storageKeyBytesRLPOutput.writeBytes(storageKeyBytes);
+                });
             accessListEntryRLPOutput.endList();
           });
     }

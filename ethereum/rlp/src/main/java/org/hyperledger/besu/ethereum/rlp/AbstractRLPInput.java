@@ -494,7 +494,11 @@ abstract class AbstractRLPInput implements RLPInput {
    * @return -1 if skipCount==true, otherwise, the number of item of the entered list.
    */
   public int enterList(final boolean skipCount) {
-    LOG.trace("Entering list (depth = {}, endOfListOffset = {}, currentItem = {})", depth, endOfListOffset, currentItem);
+    LOG.trace(
+        "Entering list (depth = {}, endOfListOffset = {}, currentItem = {})",
+        depth,
+        endOfListOffset,
+        currentItem);
     if (currentItem >= size) {
       throw error("Cannot enter a lists, input is fully consumed");
     }
@@ -537,7 +541,13 @@ abstract class AbstractRLPInput implements RLPInput {
 
     // And lastly reset on the list first element before returning
     setTo(listStart);
-    LOG.trace("Entered list (depth = {}, endOfListOffset = {}, currentItem = {}, listEnd = {}, elements = {})", depth, endOfListOffset, currentItem, listEnd, count);
+    LOG.trace(
+        "Entered list (depth = {}, endOfListOffset = {}, currentItem = {}, listEnd = {}, elements = {})",
+        depth,
+        endOfListOffset,
+        currentItem,
+        listEnd,
+        count);
     return count;
   }
 
@@ -552,7 +562,12 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   private void leaveList(final boolean ignoreRest) {
-    LOG.trace("Leaving list (depth = {}, endOfListOffset = {}, ignoreRest = {}, currentItem = {}", depth, endOfListOffset, ignoreRest, currentItem);
+    LOG.trace(
+        "Leaving list (depth = {}, endOfListOffset = {}, ignoreRest = {}, currentItem = {}",
+        depth,
+        endOfListOffset,
+        ignoreRest,
+        currentItem);
     checkState(depth > 0, "Not within an RLP list");
 
     if (!ignoreRest) {
@@ -561,7 +576,12 @@ abstract class AbstractRLPInput implements RLPInput {
     }
 
     --depth;
-    LOG.trace("Left list (depth = {}, endOfListOffset = {}, ignoreRes = {}, currentItem = {}", depth, endOfListOffset, ignoreRest, currentItem);
+    LOG.trace(
+        "Left list (depth = {}, endOfListOffset = {}, ignoreRes = {}, currentItem = {}",
+        depth,
+        endOfListOffset,
+        ignoreRest,
+        currentItem);
   }
 
   @Override
