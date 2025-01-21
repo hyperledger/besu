@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.rlp;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
+import org.assertj.core.api.Assertions;
 import org.hyperledger.besu.ethereum.rlp.util.RLPTestUtil;
 
 import java.util.Random;
@@ -176,7 +177,7 @@ public class RLPTest {
     //  ["0x02"]
     // ]
     Bytes validRlp = Bytes.fromHexString("c4c101c102");
-    RLP.validate(validRlp);
+    Assertions.assertThatCode(() -> RLP.validate(validRlp)).doesNotThrowAnyException();
   }
 
   private static Bytes h(final String hex) {
