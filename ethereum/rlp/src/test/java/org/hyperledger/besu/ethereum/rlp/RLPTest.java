@@ -171,13 +171,11 @@ public class RLPTest {
   @Test
   public void testValidateWithListEndingAtStartOfList() {
     // The structue of the RLP is as shown below
-    //[
+    // [
     //  ["0x01"],
     //  ["0x02"]
-    //]
-    Bytes validRlp =
-        Bytes.fromHexString(
-            "c4c101c102");
+    // ]
+    Bytes validRlp = Bytes.fromHexString("c4c101c102");
     RLP.validate(validRlp);
   }
 
