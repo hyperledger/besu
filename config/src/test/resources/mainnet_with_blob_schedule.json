@@ -19,15 +19,18 @@
     "blobSchedule": {
       "cancun": {
         "target": 4,
-        "max": 7
+        "max": 7,
+        "baseFeeUpdateFraction": 3338477
       },
       "prague": {
         "target": 7,
-        "max": 10
+        "max": 10,
+        "baseFeeUpdateFraction": 5007716
       },
       "osaka": {
         "target": 10,
-        "max": 13
+        "max": 13,
+        "baseFeeUpdateFraction": 5007716
       }
     },
     "depositContractAddress": "0x4242424242424242424242424242424242424242",
