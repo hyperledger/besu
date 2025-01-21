@@ -47,6 +47,11 @@ public class IbftBlockHeaderValidationRulesetFactory {
     return createValidator(secondsBetweenBlocks, true, ceil2nBy3Block);
   }
 
+  public static BlockHeaderValidator.Builder ibftBlockHeaderValidator(
+          final long secondsBetweenBlocks){
+    return createValidator(secondsBetweenBlocks);
+  }
+
   /**
    * Produces a BlockHeaderValidator configured for assessing IBFT proposed blocks (i.e. blocks
    * which need to be vetted by the validators, and do not contain commit seals).
@@ -81,5 +86,26 @@ public class IbftBlockHeaderValidationRulesetFactory {
                 "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
         .addRule(new VoteValidationRule())
         .addRule(new IbftExtraDataValidationRule(validateCommitSeals, ceil2nBy3Block));
+  }
+
+  private static BlockHeaderValidator.Builder createValidator(
+          final long secondsBetweenBlocks) {
+    return new BlockHeaderValidator.Builder()
+            .addRule(new AncestryValidationRule())
+            .addRule(new GasUsageValidationRule())
+/*        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT))*/
+            .addRule(new TimestampBoundedByFutureParameter(1))
+            .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
+            .addRule(
+                    new ConstantFieldValidationRule<>(
+                            "MixHash", BlockHeader::getMixHash, IbftHelpers.EXPECTED_MIX_HASH))
+            .addRule(
+                    new ConstantFieldValidationRule<>(
+                            "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
+            .addRule(
+                    new ConstantFieldValidationRule<>(
+                            "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
+            .addRule(new VoteValidationRule());
   }
 }

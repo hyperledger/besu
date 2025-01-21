@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
@@ -31,6 +32,9 @@ import java.time.Duration;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
+
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
 
 /** The Qbft block header validation ruleset factory. */
 public class QbftBlockHeaderValidationRulesetFactory {
@@ -54,9 +58,9 @@ public class QbftBlockHeaderValidationRulesetFactory {
         new BlockHeaderValidator.Builder()
             .addRule(new AncestryValidationRule())
             .addRule(new GasUsageValidationRule())
-            /*            .addRule(
+           .addRule(
             new GasLimitRangeAndDeltaValidationRule(
-                DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))*/
+                DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
             .addRule(new TimestampBoundedByFutureParameter(1))
             .addRule(
                 new ConstantFieldValidationRule<>(
@@ -64,8 +68,8 @@ public class QbftBlockHeaderValidationRulesetFactory {
             .addRule(
                 new ConstantFieldValidationRule<>(
                     "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
-            .addRule(new QbftValidatorsValidationRule(useValidatorContract))
-            .addRule(new BftCoinbaseValidationRule())
+            /*.addRule(new QbftValidatorsValidationRule(useValidatorContract))*/
+            /*.addRule(new BftCoinbaseValidationRule())*/
             .addRule(new BftCommitSealsValidationRule());
 
     // Currently the minimum acceptable time between blocks is 1 second. The timestamp of an

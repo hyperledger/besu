@@ -219,7 +219,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final EthProtocolManager ethProtocolManager,
       final Optional<SnapProtocolManager> maybeSnapProtocolManager) {
     return besuControllerBuilderSchedule
-        .get(0L)
+        .get(besuControllerBuilderSchedule.keySet().stream().skip(1).findFirst().orElseThrow())
         .createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
   }
 

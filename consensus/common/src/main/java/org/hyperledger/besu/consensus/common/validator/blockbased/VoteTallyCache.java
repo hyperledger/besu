@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.common.validator.blockbased;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.datatypes.Hash;
@@ -76,6 +77,8 @@ class VoteTallyCache {
       return voteTallyCache.get(header.getHash(), () -> populateCacheUptoAndIncluding(header));
     } catch (final ExecutionException ex) {
       throw new RuntimeException("Unable to determine a VoteTally object for the requested block.");
+    } catch (final UncheckedExecutionException ex) {
+      return new VoteTally(blockInterface.validatorsInBlock(header));
     }
   }
 
