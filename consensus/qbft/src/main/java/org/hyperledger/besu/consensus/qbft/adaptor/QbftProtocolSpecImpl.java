@@ -18,8 +18,6 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 /**
@@ -43,13 +41,7 @@ public class QbftProtocolSpecImpl implements QbftProtocolSpec {
 
   @Override
   public QbftBlockImporter getBlockImporter() {
-    return block -> {
-      final BlockImportResult blockImportResult =
-          besuProtocolSpec
-              .getBlockImporter()
-              .importBlock(context, BlockUtil.toBesuBlock(block), HeaderValidationMode.FULL);
-      return blockImportResult.isImported();
-    };
+    return new QbftBlockImporterImpl(besuProtocolSpec.getBlockImporter(), context);
   }
 
   @Override
