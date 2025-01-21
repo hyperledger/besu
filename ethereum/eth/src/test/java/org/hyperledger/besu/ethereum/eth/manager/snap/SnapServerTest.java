@@ -16,16 +16,15 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.eth.manager.snap.SnapServer.HASH_LAST;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
@@ -35,7 +34,6 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetTrieNodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -49,14 +47,15 @@ import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -89,33 +88,6 @@ public class SnapServerTest {
     Bytes accountRLP() {
       return RLP.encode(accountValue::writeTo);
     }
-  }
-
-  private static BlockHeader generateBonsaiArchiveContextHeader(final long blockNumber) {
-    // Fake up a block header
-    return new BlockHeader(
-        Hash.EMPTY,
-        Hash.EMPTY_TRIE_HASH,
-        Address.ZERO,
-        Hash.EMPTY_TRIE_HASH,
-        Hash.EMPTY_TRIE_HASH,
-        Hash.EMPTY_TRIE_HASH,
-        LogsBloomFilter.builder().build(),
-        Difficulty.ONE,
-        blockNumber,
-        0,
-        0,
-        0,
-        Bytes.of(0x00),
-        Wei.ZERO,
-        Hash.EMPTY,
-        0,
-        null,
-        null,
-        null,
-        null,
-        null,
-        new MainnetBlockHeaderFunctions());
   }
 
   static final ObservableMetricsSystem noopMetrics = new NoOpMetricsSystem();
@@ -846,6 +818,16 @@ public class SnapServerTest {
     return createTestContractAccount(acctHash, 1, storage);
   }
 
+  private static void updateStorageArchiveBlock(
+      final SegmentedKeyValueStorage storage, final long blockNumber) {
+    SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+    tx.put(
+        TRIE_BRANCH_STORAGE,
+        WORLD_BLOCK_NUMBER_KEY,
+        Long.toHexString(blockNumber).getBytes(StandardCharsets.UTF_8));
+    tx.commit();
+  }
+
   static SnapTestAccount createTestContractAccount(
       final Hash acctHash, final int slotKeyGap, final BonsaiWorldStateKeyValueStorage storage) {
     MerkleTrie<Bytes32, Bytes> trie =
@@ -861,8 +843,7 @@ public class SnapServerTest {
 
     // Only Bonsai archive cares about this. Do everything as if we're at
     // block 1 so we know which entry to retrieve from the DB
-    // MRW
-    // flatdb.updateBlockContext(generateBonsaiArchiveContextHeader(1));
+    updateStorageArchiveBlock(storage.getComposedWorldStateStorage(), 1);
 
     var updater = storage.updater();
     updater.putCode(Hash.hash(mockCode), mockCode);
@@ -875,7 +856,7 @@ public class SnapServerTest {
               rlpOut.writeBytes(mockBytes32);
               trie.put(mockBytes32, rlpOut.encoded());
               flatdb.putFlatAccountStorageValueByStorageSlotHash(
-                  null, // MRW
+                  storage.getComposedWorldStateStorage(),
                   updater.getWorldStateTransaction(),
                   acctHash,
                   Hash.wrap(mockBytes32),

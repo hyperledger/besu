@@ -143,7 +143,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
       return cachedWorldStorageManager
           .getWorldState(blockHeader.getHash())
           .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
-          .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
+          .or(() -> cachedWorldStorageManager.getWorldState(chainHeadBlockHeader.getHash()))
           .flatMap(worldState -> rollMutableStateToBlockHash(worldState, blockHeader.getHash()))
           .map(MutableWorldState::freeze);
     }
@@ -155,7 +155,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     return rollMutableStateToBlockHash(persistedState, blockHash);
   }
 
-  protected Optional<MutableWorldState> rollMutableStateToBlockHash(
+  Optional<MutableWorldState> rollMutableStateToBlockHash(
       final DiffBasedWorldState mutableState, final Hash blockHash) {
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);

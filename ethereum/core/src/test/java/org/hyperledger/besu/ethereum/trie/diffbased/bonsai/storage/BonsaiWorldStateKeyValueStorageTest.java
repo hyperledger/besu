@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,11 +32,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -48,15 +47,19 @@ import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -64,6 +67,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
@@ -72,6 +76,20 @@ public class BonsaiWorldStateKeyValueStorageTest {
   public static Collection<Object[]> flatDbMode() {
     return Arrays.asList(
         new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.PARTIAL}, {FlatDbMode.ARCHIVE}});
+  }
+
+  public static Stream<Arguments> flatDbModeAndKeyMapper() {
+    Function<byte[], byte[]> flatDBKey = (key) -> key; // No-op
+
+    // For archive we want <32-byte-hex>000000000000000n where n is the current archive block number
+    Function<byte[], byte[]> flatDBArchiveKey =
+        (key) ->
+            org.bouncycastle.util.Arrays.concatenate(key, Bytes.ofUnsignedLong(1).toArrayUnsafe());
+
+    return Stream.of(
+        Arguments.of(FlatDbMode.FULL, flatDBKey),
+        Arguments.of(FlatDbMode.PARTIAL, flatDBKey),
+        Arguments.of(FlatDbMode.ARCHIVE, flatDBArchiveKey));
   }
 
   public static Collection<Object[]> flatDbModeAndCodeStorageMode() {
@@ -407,8 +425,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  void clear_putGetAccountFlatDbStrategy(final FlatDbMode flatDbMode) {
+  @MethodSource("flatDbModeAndKeyMapper")
+  void clear_putGetAccountFlatDbStrategy(
+      final FlatDbMode flatDbMode, final Function<byte[], byte[]> keyMapper) {
     final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
 
     // save world state root hash
@@ -426,6 +445,17 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .commit();
 
     assertThat(storage.getAccount(account.addressHash())).isNotEmpty();
+
+    // Get the raw key/value out of storage and check that as well. The key differs between flat DB
+    // and flat archive DB
+    // and we want to ensure keys put to the archive DB include the archive block context/suffix
+    byte[] lookupKey = keyMapper.apply(account.addressHash().toArrayUnsafe());
+    assertThat(
+            Bytes.wrap(
+                storage.getComposedWorldStateStorage().get(ACCOUNT_INFO_STATE, lookupKey).get()))
+        .isEqualTo(
+            Bytes.fromHexString(
+                "0xF84E823D98887B5E41A364EA8BFCA056E81F171BCC55A6FF8345E692C0F86E5B48E01B996CADC001622FB5E363B421A0C5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470"));
 
     BonsaiAccount retrievedAccount =
         BonsaiAccount.fromRLP(
@@ -445,8 +475,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  void clear_streamFlatAccounts(final FlatDbMode flatDbMode) {
+  @MethodSource({"flatDbModeAndKeyMapper"})
+  void clear_streamFlatAccounts(
+      final FlatDbMode flatDbMode, final Function<byte[], byte[]> keyMapper) {
     final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
 
     // save world state root hash
@@ -456,17 +487,39 @@ public class BonsaiWorldStateKeyValueStorageTest {
     Address account1 =
         Address.fromHexString(
             "0x1111111111111111111111111111111111111111"); // 3rd entry in DB after hashing
-    updater.putAccountInfoState(account1.addressHash(), Bytes32.random()).commit();
+    Bytes32 account1Value = Bytes32.random();
+    updater.putAccountInfoState(account1.addressHash(), account1Value).commit();
     updater = storage.updater();
     Address account2 =
         Address.fromHexString(
             "0x2222222222222222222222222222222222222222"); // 1st entry in the DB after hashing
-    updater.putAccountInfoState(account2.addressHash(), Bytes32.random()).commit();
+    Bytes32 account2Value = Bytes32.random();
+    updater.putAccountInfoState(account2.addressHash(), account2Value).commit();
     updater = storage.updater();
     Address account3 =
         Address.fromHexString(
             "0x3333333333333333333333333333333333333333"); // 2nd entry in the DB after hashing
-    updater.putAccountInfoState(account3.addressHash(), Bytes32.random()).commit();
+    Bytes32 account3Value = Bytes32.random();
+    updater.putAccountInfoState(account3.addressHash(), account3Value).commit();
+
+    // Check that the K/V store entries are correct
+    // Convert the key to lookup the entry we expect to find in K/V storage. No-op for everything
+    // except ARCHIVE, which needs to append the 000000000000000x suffix to the key
+    byte[] lookupKey = keyMapper.apply(account1.addressHash().toArrayUnsafe());
+    assertThat(
+            Bytes32.wrap(
+                storage.getComposedWorldStateStorage().get(ACCOUNT_INFO_STATE, lookupKey).get()))
+        .isEqualTo(account1Value);
+    lookupKey = keyMapper.apply(account2.addressHash().toArrayUnsafe());
+    assertThat(
+            Bytes32.wrap(
+                storage.getComposedWorldStateStorage().get(ACCOUNT_INFO_STATE, lookupKey).get()))
+        .isEqualTo(account2Value);
+    lookupKey = keyMapper.apply(account3.addressHash().toArrayUnsafe());
+    assertThat(
+            Bytes32.wrap(
+                storage.getComposedWorldStateStorage().get(ACCOUNT_INFO_STATE, lookupKey).get()))
+        .isEqualTo(account3Value);
 
     // Streaming the entire range to ensure we get all 3 accounts back
     assertThat(
@@ -541,17 +594,17 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // entry
 
     // Update the account at block 2
-    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(2));
+    updateStorageArchiveBlock(storage.getComposedWorldStateStorage(), 2);
     updater = storage.updater();
     updater.putAccountInfoState(account3.addressHash(), Bytes32.random()).commit();
 
     // Update the account at block 3
-    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(3));
+    updateStorageArchiveBlock(storage.getComposedWorldStateStorage(), 3);
     updater = storage.updater();
     updater.putAccountInfoState(account3.addressHash(), Bytes32.random()).commit();
 
     // Update the account at block 4
-    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(4));
+    updateStorageArchiveBlock(storage.getComposedWorldStateStorage(), 4);
     Bytes32 finalStateUpdate = Bytes32.random();
     updater = storage.updater();
     updater.putAccountInfoState(account3.addressHash(), finalStateUpdate).commit();
@@ -663,7 +716,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // entry
 
     // Update the storage at block 2
-    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(2));
+    updateStorageArchiveBlock(storage.getComposedWorldStateStorage(), 2);
     updater = storage.updater();
     updater
         .putStorageValueBySlotHash(
@@ -671,7 +724,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .commit();
 
     // Update the account at block 3
-    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(3));
+    updateStorageArchiveBlock(storage.getComposedWorldStateStorage(), 3);
     updater = storage.updater();
     updater
         .putStorageValueBySlotHash(
@@ -679,7 +732,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .commit();
 
     // Update the account at block 4
-    storage.getFlatDbStrategy().updateBlockContext(getArchiveBlockContext(4));
+    updateStorageArchiveBlock(storage.getComposedWorldStateStorage(), 4);
     updater = storage.updater();
     updater
         .putStorageValueBySlotHash(
@@ -829,10 +882,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
             new InMemoryKeyValueStorageProvider(),
             new NoOpMetricsSystem(),
             DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG);
-    archiveStorage
-        .getFlatDbStrategy()
-        .updateBlockContext(
-            getArchiveBlockContext(1)); // Do all archive calls under the context of block 1
+    updateStorageArchiveBlock(archiveStorage.getComposedWorldStateStorage(), 1);
     return archiveStorage;
   }
 
@@ -870,10 +920,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
                                 .build())
                         .build())
                 .build());
-    archiveStorage
-        .getFlatDbStrategy()
-        .updateBlockContext(
-            getArchiveBlockContext(1)); // Do all archive calls under the context of block 1
+    updateStorageArchiveBlock(archiveStorage.getComposedWorldStateStorage(), 1);
     return archiveStorage;
   }
 
@@ -914,31 +961,13 @@ public class BonsaiWorldStateKeyValueStorageTest {
         DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
   }
 
-  private static BlockHeader getArchiveBlockContext(final long blockNumber) {
-    final BlockHeader header =
-        new BlockHeader(
-            Hash.EMPTY,
-            Hash.EMPTY_TRIE_HASH,
-            Address.ZERO,
-            Hash.EMPTY_TRIE_HASH,
-            Hash.EMPTY_TRIE_HASH,
-            Hash.EMPTY_TRIE_HASH,
-            LogsBloomFilter.builder().build(),
-            Difficulty.ONE,
-            blockNumber,
-            0,
-            0,
-            0,
-            Bytes.of(0x00),
-            Wei.ZERO,
-            Hash.EMPTY,
-            0,
-            null,
-            null,
-            null,
-            null,
-            null,
-            new MainnetBlockHeaderFunctions());
-    return header;
+  private static void updateStorageArchiveBlock(
+      final SegmentedKeyValueStorage storage, final long blockNumber) {
+    SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+    tx.put(
+        TRIE_BRANCH_STORAGE,
+        WORLD_BLOCK_NUMBER_KEY,
+        Long.toHexString(blockNumber).getBytes(StandardCharsets.UTF_8));
+    tx.commit();
   }
 }

@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
@@ -86,29 +84,6 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     loadPersistedState(
         new BonsaiWorldState(
             this, worldStateKeyValueStorage, evmConfiguration, defaultWorldStateConfig));
-  }
-
-  @Override
-  public Optional<MutableWorldState> getMutable(
-      final BlockHeader blockHeader, final boolean shouldPersistState) {
-    if (shouldPersistState) {
-      return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
-    } else {
-      final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
-      if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
-          >= trieLogManager.getMaxLayersToLoad()) {
-        LOG.warn(
-            "Exceeded the limit of historical blocks that can be loaded ({}). If you need to make older historical queries, configure your `--bonsai-historical-block-limit`.",
-            trieLogManager.getMaxLayersToLoad());
-        return Optional.empty();
-      }
-      return cachedWorldStorageManager
-          .getWorldState(blockHeader.getHash())
-          .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
-          .or(() -> cachedWorldStorageManager.getWorldState(chainHeadBlockHeader.getHash()))
-          .flatMap(worldState -> rollMutableStateToBlockHash(worldState, blockHeader.getHash()))
-          .map(MutableWorldState::freeze);
-    }
   }
 
   public BonsaiCachedMerkleTrieLoader getCachedMerkleTrieLoader() {

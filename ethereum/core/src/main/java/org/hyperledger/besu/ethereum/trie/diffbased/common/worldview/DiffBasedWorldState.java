@@ -24,7 +24,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedLayeredWorldStateKeyValueStorage;
@@ -170,25 +169,17 @@ public abstract class DiffBasedWorldState
     // Update the block context before putting entries to storage via calculateRootHash()
     // TODO - rename calculateRootHash() to be clearer that it updates state, it doesn't just
     // calculate a hash
-    if (worldStateKeyValueStorage.getFlatDbStrategy() instanceof BonsaiArchiveFlatDbStrategy) {
-      final long archiveContext;
-      if (blockHeader != null) {
-        archiveContext = blockHeader.getNumber();
-      } else {
-        archiveContext = 0L;
-      }
-
-      DiffBasedWorldStateKeyValueStorage.Updater stateUpdater = worldStateKeyValueStorage.updater();
-      stateUpdater
-          .getWorldStateTransaction()
-          .put(
-              TRIE_BRANCH_STORAGE,
-              WORLD_BLOCK_NUMBER_KEY,
-              Long.toHexString(archiveContext).getBytes(StandardCharsets.UTF_8));
-      stateUpdater.commit();
-    }
-
     DiffBasedWorldStateKeyValueStorage.Updater stateUpdater = worldStateKeyValueStorage.updater();
+    stateUpdater
+        .getWorldStateTransaction()
+        .put(
+            TRIE_BRANCH_STORAGE,
+            WORLD_BLOCK_NUMBER_KEY,
+            Long.toHexString(blockHeader == null ? 0L : blockHeader.getNumber())
+                .getBytes(StandardCharsets.UTF_8));
+    stateUpdater.commit();
+
+    stateUpdater = worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
 
     try {

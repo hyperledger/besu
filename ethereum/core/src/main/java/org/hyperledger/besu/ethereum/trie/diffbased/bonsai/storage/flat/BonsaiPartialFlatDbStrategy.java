@@ -144,15 +144,4 @@ public class BonsaiPartialFlatDbStrategy extends BonsaiFlatDbStrategy {
     }
     return response;
   }
-
-  /*
-  @Override
-  public void updateBlockContext(final Long blockNumber) {
-    // Not implemented
-  }
-
-  @Override
-  public void updateBlockContext(final BlockHeader blockHeader) {
-    // Not implemented
-  }*/
 }
