@@ -490,7 +490,6 @@ abstract class AbstractRLPInput implements RLPInput {
     if (depth > endOfListOffset.length) {
       endOfListOffset = Arrays.copyOf(endOfListOffset, (endOfListOffset.length * 3) / 2);
     }
-
     // The first list element is the beginning of the payload. Its end is the end of this item.
     final long listStart = currentPayloadOffset;
     final long listEnd = nextItem();
