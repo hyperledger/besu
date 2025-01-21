@@ -16,14 +16,14 @@ package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.qbft.core.api.ExtraDataProvider;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockCreator;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftFinalState;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftMinedBlockObserver;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -40,7 +40,7 @@ public class QbftRoundFactory {
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
   private final BftExtraDataCodec bftExtraDataCodec;
-  private final ExtraDataProvider extraDataProvider;
+  private final QbftExtraDataProvider qbftExtraDataProvider;
 
   /**
    * Instantiates a new Qbft round factory.
@@ -52,7 +52,7 @@ public class QbftRoundFactory {
    * @param messageValidatorFactory the message validator factory
    * @param messageFactory the message factory
    * @param bftExtraDataCodec the bft extra data codec
-   * @param extraDataProvider the bft extra data codec
+   * @param qbftExtraDataProvider the bft extra data codec
    */
   public QbftRoundFactory(
       final QbftFinalState finalState,
@@ -62,7 +62,7 @@ public class QbftRoundFactory {
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,
       final BftExtraDataCodec bftExtraDataCodec,
-      final ExtraDataProvider extraDataProvider) {
+      final QbftExtraDataProvider qbftExtraDataProvider) {
     this.finalState = finalState;
     this.blockCreatorFactory = finalState.getBlockCreatorFactory();
     this.protocolContext = protocolContext;
@@ -71,7 +71,7 @@ public class QbftRoundFactory {
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
     this.bftExtraDataCodec = bftExtraDataCodec;
-    this.extraDataProvider = extraDataProvider;
+    this.qbftExtraDataProvider = qbftExtraDataProvider;
   }
 
   /**
@@ -122,7 +122,7 @@ public class QbftRoundFactory {
         messageTransmitter,
         finalState.getRoundTimer(),
         bftExtraDataCodec,
-        extraDataProvider,
+        qbftExtraDataProvider,
         parentHeader);
   }
 }

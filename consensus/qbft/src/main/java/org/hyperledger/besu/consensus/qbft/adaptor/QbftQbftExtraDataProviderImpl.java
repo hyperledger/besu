@@ -12,12 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.core.api;
+package org.hyperledger.besu.consensus.qbft.adaptor;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-/** Provides the extra data for a block. */
-public interface ExtraDataProvider {
-  BftExtraData getExtraData(BlockHeader header);
+public class QbftQbftExtraDataProviderImpl implements QbftExtraDataProvider {
+  private final BftExtraDataCodec bftExtraDataCodec;
+
+  public QbftQbftExtraDataProviderImpl(final BftExtraDataCodec bftExtraDataCodec) {
+    this.bftExtraDataCodec = bftExtraDataCodec;
+  }
+
+  @Override
+  public BftExtraData getExtraData(final BlockHeader header) {
+    return bftExtraDataCodec.decode(header);
+  }
 }

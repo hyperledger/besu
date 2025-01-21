@@ -31,19 +31,19 @@ import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaste
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
-import org.hyperledger.besu.consensus.qbft.core.api.ExtraDataProvider;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockCreator;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockImporter;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftContext;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftMinedBlockObserver;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSchedule;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSpec;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftRound;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.RoundState;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -98,8 +98,8 @@ public class QbftRoundIntegrationTest {
   private QbftMessageTransmitter transmitter;
   @Mock private StubValidatorMulticaster multicaster;
   @Mock private BlockHeader parentHeader;
-  @Mock private QbftBlockEncoder blockEncoder;
-  @Mock private ExtraDataProvider extraDataProvider;
+  @Mock private QbftBlockCodec blockEncoder;
+  @Mock private QbftExtraDataProvider qbftExtraDataProvider;
 
   private QbftBlock proposedBlock;
 
@@ -130,7 +130,7 @@ public class QbftRoundIntegrationTest {
     final BlockHeader header = headerTestFixture.buildHeader();
     final Block block = new Block(header, new BlockBody(emptyList(), emptyList()));
     proposedBlock = new QbftBlockImpl(block);
-    when(extraDataProvider.getExtraData(header)).thenReturn(proposedExtraData);
+    when(qbftExtraDataProvider.getExtraData(header)).thenReturn(proposedExtraData);
 
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
@@ -162,7 +162,7 @@ public class QbftRoundIntegrationTest {
             transmitter,
             roundTimer,
             bftExtraDataCodec,
-            extraDataProvider,
+            qbftExtraDataProvider,
             parentHeader);
 
     round.handleProposalMessage(
@@ -182,7 +182,7 @@ public class QbftRoundIntegrationTest {
     final Block sealedBesuBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
     final QbftBlock sealedBlock = new QbftBlockImpl(sealedBesuBlock);
     when(blockCreator.createSealedBlock(
-            extraDataProvider,
+            qbftExtraDataProvider,
             proposedBlock,
             roundIdentifier.getRoundNumber(),
             List.of(remoteCommitSeal, remoteCommitSeal)))
@@ -202,7 +202,7 @@ public class QbftRoundIntegrationTest {
             transmitter,
             roundTimer,
             bftExtraDataCodec,
-            extraDataProvider,
+            qbftExtraDataProvider,
             parentHeader);
 
     // inject a block first, then a prepare on it.

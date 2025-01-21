@@ -17,19 +17,19 @@ package org.hyperledger.besu.consensus.qbft.adaptor;
 import static org.hyperledger.besu.consensus.qbft.adaptor.BlockHeaderFunctionsUtil.getBlockHeaderFunctions;
 
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftHashMode;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-public class QbftBlockEncoderImpl
-    implements org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder {
+public class QbftBlockCodecImpl implements QbftBlockCodec {
 
   private final QbftExtraDataCodec qbftExtraDataCodec;
 
-  public QbftBlockEncoderImpl(final QbftExtraDataCodec qbftExtraDataCodec) {
+  public QbftBlockCodecImpl(final QbftExtraDataCodec qbftExtraDataCodec) {
     this.qbftExtraDataCodec = qbftExtraDataCodec;
   }
 

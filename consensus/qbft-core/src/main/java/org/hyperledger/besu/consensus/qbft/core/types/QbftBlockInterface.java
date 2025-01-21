@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.core.api;
+package org.hyperledger.besu.consensus.qbft.core.types;
 
 /** The Qbft block interface. */
 public interface QbftBlockInterface {

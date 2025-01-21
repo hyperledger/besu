@@ -23,8 +23,8 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftContext;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;

@@ -22,14 +22,14 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.QbftBlockTestFixture;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftHashMode;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.core.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -45,7 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class ProposalTest {
-  @Mock private QbftBlockEncoder blockEncoder;
+  @Mock private QbftBlockCodec blockEncoder;
 
   private static final QbftBlock BLOCK = new QbftBlockTestFixture().build();
 

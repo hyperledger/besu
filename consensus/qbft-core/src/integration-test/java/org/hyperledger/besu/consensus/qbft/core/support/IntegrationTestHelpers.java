@@ -20,13 +20,13 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftHashMode;
 import org.hyperledger.besu.consensus.qbft.core.payload.CommitPayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 
@@ -36,7 +36,7 @@ public class IntegrationTestHelpers {
       final ConsensusRoundIdentifier roundId,
       final QbftBlock block,
       final NodeKey nodeKey,
-      final QbftBlockEncoder blockEncoder) {
+      final QbftBlockCodec blockEncoder) {
 
     final QbftExtraDataCodec qbftExtraDataEncoder = new QbftExtraDataCodec();
 

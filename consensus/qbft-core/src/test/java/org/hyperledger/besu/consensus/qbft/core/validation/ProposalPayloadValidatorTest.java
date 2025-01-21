@@ -26,11 +26,11 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.core.QbftBlockTestFixture;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockValidator;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -57,7 +57,7 @@ public class ProposalPayloadValidatorTest {
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
   @Mock private BftExtraDataCodec bftExtraDataCodec;
-  @Mock private QbftBlockEncoder blockEncoder;
+  @Mock private QbftBlockCodec blockEncoder;
   private ProtocolContext protocolContext;
 
   private static final int CHAIN_HEIGHT = 3;

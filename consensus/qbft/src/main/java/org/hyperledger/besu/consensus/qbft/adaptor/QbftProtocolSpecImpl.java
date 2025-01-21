@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockImporter;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockValidator;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSpec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;

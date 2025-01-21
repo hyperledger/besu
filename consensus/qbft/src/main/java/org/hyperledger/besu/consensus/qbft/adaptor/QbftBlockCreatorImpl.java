@@ -17,9 +17,9 @@ package org.hyperledger.besu.consensus.qbft.adaptor;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.core.api.ExtraDataProvider;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockCreator;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -47,13 +47,13 @@ public class QbftBlockCreatorImpl implements QbftBlockCreator {
 
   @Override
   public QbftBlock createSealedBlock(
-      final ExtraDataProvider bftExtraDataProvider,
+      final QbftExtraDataProvider bftQbftExtraDataProvider,
       final QbftBlock block,
       final int roundNumber,
       final Collection<SECPSignature> commitSeals) {
     final Block besuBlock = BlockUtil.toBesuBlock(block);
     final BlockHeader initialBesuHeader = besuBlock.getHeader();
-    BftExtraData initialExtraData = bftExtraDataProvider.getExtraData(initialBesuHeader);
+    final BftExtraData initialExtraData = bftQbftExtraDataProvider.getExtraData(initialBesuHeader);
 
     final BftExtraData sealedExtraData =
         new BftExtraData(
@@ -68,7 +68,7 @@ public class QbftBlockCreatorImpl implements QbftBlockCreator {
             .extraData(bftExtraDataCodec.encode(sealedExtraData))
             .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
             .buildBlockHeader();
-    Block sealedBesuBlock = new Block(sealedHeader, besuBlock.getBody());
+    final Block sealedBesuBlock = new Block(sealedHeader, besuBlock.getBody());
     return new QbftBlockImpl(sealedBesuBlock);
   }
 }

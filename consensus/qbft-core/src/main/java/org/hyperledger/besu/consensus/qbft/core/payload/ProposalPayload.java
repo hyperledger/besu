@@ -15,10 +15,10 @@
 package org.hyperledger.besu.consensus.qbft.core.payload;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftHashMode;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -32,7 +32,7 @@ public class ProposalPayload extends QbftPayload {
   private static final int TYPE = QbftV1.PROPOSAL;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final QbftBlock proposedBlock;
-  private final QbftBlockEncoder blockEncoder;
+  private final QbftBlockCodec blockEncoder;
 
   /**
    * Instantiates a new Proposal payload.
@@ -44,7 +44,7 @@ public class ProposalPayload extends QbftPayload {
   public ProposalPayload(
       final ConsensusRoundIdentifier roundIdentifier,
       final QbftBlock proposedBlock,
-      final QbftBlockEncoder blockEncoder) {
+      final QbftBlockCodec blockEncoder) {
     this.roundIdentifier = roundIdentifier;
     this.proposedBlock = proposedBlock;
     this.blockEncoder = blockEncoder;
@@ -58,7 +58,7 @@ public class ProposalPayload extends QbftPayload {
    * @return the proposal payload
    */
   public static ProposalPayload readFrom(
-      final RLPInput rlpInput, final QbftBlockEncoder blockEncoder) {
+      final RLPInput rlpInput, final QbftBlockCodec blockEncoder) {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = readConsensusRound(rlpInput);
     final QbftBlock proposedBlock = blockEncoder.readFrom(rlpInput, QbftHashMode.COMMITTED_SEAL);

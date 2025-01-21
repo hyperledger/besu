@@ -47,24 +47,24 @@ import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockEncoderImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftQbftExtraDataProviderImpl;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftContext;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftFinalState;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftMinedBlockObserver;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftRoundFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.validator.ValidatorModeTransitionLogger;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
@@ -191,7 +191,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     final BftExecutors bftExecutors =
         BftExecutors.create(metricsSystem, BftExecutors.ConsensusType.QBFT);
-    final QbftBlockEncoder blockEncoder = new QbftBlockEncoderImpl(qbftExtraDataCodec);
+    final QbftBlockCodec blockEncoder = new QbftBlockCodecImpl(qbftExtraDataCodec);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftProtocolSchedule bftProtocolSchedule = (BftProtocolSchedule) protocolSchedule;
@@ -294,7 +294,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                     messageValidatorFactory,
                     messageFactory,
                     qbftExtraDataCodec,
-                    new QbftExtraDataProviderImpl(qbftExtraDataCodec)),
+                    new QbftQbftExtraDataProviderImpl(qbftExtraDataCodec)),
                 messageValidatorFactory,
                 messageFactory,
                 new ValidatorModeTransitionLogger(qbftForksSchedule)),

@@ -39,16 +39,6 @@ import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.QbftBlockTestFixture;
-import org.hyperledger.besu.consensus.qbft.core.api.ExtraDataProvider;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockCreator;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockImporter;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftContext;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftFinalState;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSchedule;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSpec;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
@@ -56,6 +46,16 @@ import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.consensus.qbft.core.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
@@ -112,8 +112,8 @@ public class QbftBlockHeightManagerTest {
   @Mock private QbftProtocolSchedule protocolSchedule;
   @Mock private BlockHeader parentHeader;
   @Mock private BftExtraDataCodec bftExtraDataCodec;
-  @Mock private QbftBlockEncoder blockEncoder;
-  @Mock private ExtraDataProvider extraDataProvider;
+  @Mock private QbftBlockCodec blockEncoder;
+  @Mock private QbftExtraDataProvider qbftExtraDataProvider;
   @Mock private QbftBlockInterface blockInterface;
   @Mock private ValidatorProvider validatorProvider;
   @Mock private QbftProtocolSpec protocolSpec;
@@ -174,7 +174,7 @@ public class QbftBlockHeightManagerTest {
                   messageTransmitter,
                   roundTimer,
                   bftExtraDataCodec,
-                  extraDataProvider,
+                  qbftExtraDataProvider,
                   parentHeader);
             });
 
@@ -193,11 +193,11 @@ public class QbftBlockHeightManagerTest {
                   messageTransmitter,
                   roundTimer,
                   bftExtraDataCodec,
-                  extraDataProvider,
+                  qbftExtraDataProvider,
                   parentHeader);
             });
 
-    when(extraDataProvider.getExtraData(any()))
+    when(qbftExtraDataProvider.getExtraData(any()))
         .thenReturn(
             new BftExtraData(
                 Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators));

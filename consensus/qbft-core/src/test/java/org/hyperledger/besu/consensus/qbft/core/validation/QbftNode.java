@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.validation;
 
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -43,9 +43,9 @@ public class QbftNode {
     return nodeKey;
   }
 
-  public static QbftNode create(final QbftBlockEncoder qbftBlockEncoder) {
+  public static QbftNode create(final QbftBlockCodec qbftBlockCodec) {
     final NodeKey nodeKey = NodeKeyUtils.generate();
-    final MessageFactory factory = new MessageFactory(nodeKey, qbftBlockEncoder);
+    final MessageFactory factory = new MessageFactory(nodeKey, qbftBlockCodec);
 
     return new QbftNode(nodeKey, factory);
   }

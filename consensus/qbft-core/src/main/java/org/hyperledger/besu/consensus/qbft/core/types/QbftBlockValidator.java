@@ -12,10 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.core.api;
+package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 
-public interface QbftProtocolSchedule {
-  QbftProtocolSpec getByBlockHeader(BlockHeader header);
+import java.util.Optional;
+
+public interface QbftBlockValidator {
+
+  ValidationResult validateBlock(ProtocolContext protocolContext, QbftBlock block);
+
+  record ValidationResult(boolean success, Optional<String> errorMessage) {}
 }

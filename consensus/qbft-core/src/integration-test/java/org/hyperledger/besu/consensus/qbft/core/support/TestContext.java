@@ -26,10 +26,10 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockImpl;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -64,7 +64,7 @@ public class TestContext {
   private final ValidatorProvider validatorProvider;
   private final ProposerSelector proposerSelector;
   private final BftExtraDataCodec bftExtraDataCodec;
-  private final QbftBlockEncoder blockEncoder;
+  private final QbftBlockCodec blockEncoder;
 
   public TestContext(
       final Map<Address, ValidatorPeer> remotePeers,
@@ -77,7 +77,7 @@ public class TestContext {
       final ValidatorProvider validatorProvider,
       final ProposerSelector proposerSelector,
       final BftExtraDataCodec bftExtraDataCodec,
-      final QbftBlockEncoder blockEncoder) {
+      final QbftBlockCodec blockEncoder) {
     this.remotePeers = remotePeers;
     this.blockchain = blockchain;
     this.bftExecutors = bftExecutors;
@@ -112,7 +112,7 @@ public class TestContext {
     return messageFactory;
   }
 
-  public QbftBlockEncoder getBlockEncoder() {
+  public QbftBlockCodec getBlockEncoder() {
     return blockEncoder;
   }
 

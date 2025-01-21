@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
 
@@ -39,11 +39,11 @@ public class CommitValidatorTest {
   private final Hash expectedCommitHash = Hash.fromHexStringLenient("0x1");
   private QbftNodeList validators;
   private CommitValidator validator;
-  private @Mock QbftBlockEncoder qbftBlockEncoder;
+  private @Mock QbftBlockCodec qbftBlockCodec;
 
   @BeforeEach
   public void setup() {
-    validators = QbftNodeList.createNodes(VALIDATOR_COUNT, qbftBlockEncoder);
+    validators = QbftNodeList.createNodes(VALIDATOR_COUNT, qbftBlockCodec);
     validator =
         new CommitValidator(validators.getNodeAddresses(), round, expectedHash, expectedCommitHash);
   }
@@ -60,7 +60,7 @@ public class CommitValidatorTest {
 
   @Test
   public void commitSignedByANonValidatorFails() {
-    final QbftNode nonValidator = QbftNode.create(qbftBlockEncoder);
+    final QbftNode nonValidator = QbftNode.create(qbftBlockCodec);
     final SECPSignature commitSeal = nonValidator.getNodeKey().sign(expectedHash);
     final Commit msg =
         nonValidator.getMessageFactory().createCommit(round, expectedHash, commitSeal);

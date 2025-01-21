@@ -21,8 +21,8 @@ import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftFinalState;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 

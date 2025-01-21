@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.datatypes.Hash;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +32,7 @@ public class PrepareValidatorTest {
 
   private final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
   private final Hash expectedHash = Hash.fromHexStringLenient("0x1");
-  @Mock private QbftBlockEncoder blockEncoder;
+  @Mock private QbftBlockCodec blockEncoder;
   private QbftNodeList validators;
   private PrepareValidator validator;
 

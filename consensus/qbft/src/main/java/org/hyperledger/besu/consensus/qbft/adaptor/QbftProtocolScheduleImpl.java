@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
-import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSchedule;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftProtocolSpec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;

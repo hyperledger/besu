@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.core.api;
+package org.hyperledger.besu.consensus.qbft.core.types;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -21,19 +21,26 @@ import java.util.Collection;
 
 public interface QbftBlockCreator {
 
+  /**
+   * Create a block.
+   *
+   * @param headerTimeStampSeconds the header timestamp
+   * @param parentHeader the parent header
+   * @return
+   */
   QbftBlock createBlock(long headerTimeStampSeconds, BlockHeader parentHeader);
 
   /**
    * Create sealed block.
    *
-   * @param extraDataProvider the extra data provider
+   * @param qbftExtraDataProvider the extra data provider
    * @param block the block
    * @param roundNumber the round number
    * @param commitSeals the commit seals
    * @return the block
    */
   QbftBlock createSealedBlock(
-      final ExtraDataProvider extraDataProvider,
+      final QbftExtraDataProvider qbftExtraDataProvider,
       final QbftBlock block,
       final int roundNumber,
       final Collection<SECPSignature> commitSeals);

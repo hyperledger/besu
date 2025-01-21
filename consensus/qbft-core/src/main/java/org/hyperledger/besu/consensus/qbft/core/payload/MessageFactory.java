@@ -17,13 +17,13 @@ package org.hyperledger.besu.consensus.qbft.core.payload;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -36,7 +36,7 @@ import java.util.Optional;
 public class MessageFactory {
 
   private final NodeKey nodeKey;
-  private final QbftBlockEncoder blockEncoder;
+  private final QbftBlockCodec blockEncoder;
 
   /**
    * Instantiates a new Message factory.
@@ -44,7 +44,7 @@ public class MessageFactory {
    * @param nodeKey the node key
    * @param blockEncoder the block encoder
    */
-  public MessageFactory(final NodeKey nodeKey, final QbftBlockEncoder blockEncoder) {
+  public MessageFactory(final NodeKey nodeKey, final QbftBlockCodec blockEncoder) {
     this.nodeKey = nodeKey;
     this.blockEncoder = blockEncoder;
   }

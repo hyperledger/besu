@@ -14,12 +14,16 @@
  */
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.ethereum.core.Block;
 
 public class BlockUtil {
 
   public static Block toBesuBlock(final QbftBlock block) {
-    return ((QbftBlockImpl) block).getBesuBlock();
+    if (block instanceof QbftBlockImpl) {
+      return ((QbftBlockImpl) block).getBesuBlock();
+    } else {
+      throw new IllegalArgumentException("Unsupported block type");
+    }
   }
 }

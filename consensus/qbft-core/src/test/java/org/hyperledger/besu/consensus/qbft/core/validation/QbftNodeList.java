@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.validation;
 
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
@@ -26,7 +26,7 @@ import com.google.common.collect.Lists;
 
 public class QbftNodeList {
 
-  public static QbftNodeList createNodes(final int count, final QbftBlockEncoder blockEncoder) {
+  public static QbftNodeList createNodes(final int count, final QbftBlockCodec blockEncoder) {
     final List<QbftNode> nodes = Lists.newArrayList();
 
     for (int i = 0; i < count; i++) {

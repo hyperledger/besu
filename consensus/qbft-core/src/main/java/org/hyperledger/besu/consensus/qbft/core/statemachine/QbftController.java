@@ -26,13 +26,13 @@ import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Authored;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.RoundChangeMessageData;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
@@ -55,7 +55,7 @@ public class QbftController implements BftEventHandler {
   private final MessageTracker duplicateMessageTracker;
   private final SynchronizerUpdater synchronizerUpdater;
   private final AtomicBoolean started = new AtomicBoolean(false);
-  private final QbftBlockEncoder blockEncoder;
+  private final QbftBlockCodec blockEncoder;
   private BaseQbftBlockHeightManager currentHeightManager;
   private final QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory;
 
@@ -78,7 +78,7 @@ public class QbftController implements BftEventHandler {
       final MessageTracker duplicateMessageTracker,
       final FutureMessageBuffer futureMessageBuffer,
       final SynchronizerUpdater synchronizerUpdater,
-      final QbftBlockEncoder blockEncoder) {
+      final QbftBlockCodec blockEncoder) {
 
     this.blockchain = blockchain;
     this.finalState = finalState;

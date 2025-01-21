@@ -12,13 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.core.api;
+package org.hyperledger.besu.consensus.qbft.core.types;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 /** Block encoding and decoding to and from RLP */
-public interface QbftBlockEncoder {
+public interface QbftBlockCodec {
   /**
    * Read a block from RLP
    *

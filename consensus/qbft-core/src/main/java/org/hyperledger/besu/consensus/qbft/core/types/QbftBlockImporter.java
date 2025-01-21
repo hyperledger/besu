@@ -12,15 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.core.api;
+package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
+/** Imports a block into the chain. */
+public interface QbftBlockImporter {
 
-import java.util.Optional;
-
-public interface QbftBlockValidator {
-
-  ValidationResult validateBlock(ProtocolContext protocolContext, QbftBlock block);
-
-  record ValidationResult(boolean success, Optional<String> errorMessage) {}
+  /**
+   * Import a block into the chain.
+   *
+   * @param block to import
+   * @return true if the block was successfully imported, false otherwise
+   */
+  boolean importBlock(QbftBlock block);
 }

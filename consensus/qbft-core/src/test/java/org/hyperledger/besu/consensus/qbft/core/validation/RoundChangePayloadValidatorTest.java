@@ -18,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -40,11 +40,11 @@ public class RoundChangePayloadValidatorTest {
   private final Hash preparedBlockHash = Hash.fromHexStringLenient("0x1");
   private RoundChangePayloadValidator messageValidator;
   private QbftNodeList validators;
-  @Mock QbftBlockEncoder qbftBlockEncoder;
+  @Mock QbftBlockCodec qbftBlockCodec;
 
   @BeforeEach
   public void setup() {
-    validators = QbftNodeList.createNodes(VALIDATOR_COUNT, qbftBlockEncoder);
+    validators = QbftNodeList.createNodes(VALIDATOR_COUNT, qbftBlockCodec);
     messageValidator = new RoundChangePayloadValidator(validators.getNodeAddresses(), chainHeight);
   }
 

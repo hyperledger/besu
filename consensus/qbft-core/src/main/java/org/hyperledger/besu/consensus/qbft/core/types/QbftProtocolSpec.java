@@ -12,18 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.core.api;
+package org.hyperledger.besu.consensus.qbft.core.types;
 
-public enum QbftHashMode {
-  /**
-   * Hash the block for the committed seal. This typically means the block hash excludes the commit
-   * seal from the hashing.
-   */
-  COMMITTED_SEAL,
+public interface QbftProtocolSpec {
+  QbftBlockImporter getBlockImporter();
 
-  /**
-   * Hash the block for onchain block. This typically means the block hash exclude the commit seals
-   * and round number from the hashing as each node may have a different value for these fields.
-   */
-  ONCHAIN
+  QbftBlockValidator getBlockValidator();
 }

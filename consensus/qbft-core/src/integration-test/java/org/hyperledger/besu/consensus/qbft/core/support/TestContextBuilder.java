@@ -62,24 +62,24 @@ import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockEncoderImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftQbftExtraDataProviderImpl;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.qbft.core.api.ExtraDataProvider;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftContext;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftFinalState;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftRoundFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.validator.ValidatorModeTransitionLogger;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
@@ -263,7 +263,7 @@ public class TestContextBuilder {
       networkNodes = new NetworkLayout(localNode, addressKeyMap);
     }
 
-    final QbftBlockEncoder blockEncoder = new QbftBlockEncoderImpl(BFT_EXTRA_DATA_ENCODER);
+    final QbftBlockCodec blockEncoder = new QbftBlockCodecImpl(BFT_EXTRA_DATA_ENCODER);
     final MutableBlockchain blockChain;
     final ForestWorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
@@ -397,7 +397,7 @@ public class TestContextBuilder {
       final boolean useZeroBaseFee,
       final boolean useFixedBaseFee,
       final List<QbftFork> qbftForks,
-      final QbftBlockEncoder blockEncoder) {
+      final QbftBlockCodec blockEncoder) {
 
     final MiningConfiguration miningConfiguration =
         ImmutableMiningConfiguration.builder()
@@ -553,8 +553,8 @@ public class TestContextBuilder {
             FUTURE_MESSAGES_MAX_DISTANCE,
             FUTURE_MESSAGES_LIMIT,
             blockChain.getChainHeadBlockNumber());
-    final ExtraDataProvider extraDataProvider =
-        new QbftExtraDataProviderImpl(BFT_EXTRA_DATA_ENCODER);
+    final QbftExtraDataProvider qbftExtraDataProvider =
+        new QbftQbftExtraDataProviderImpl(BFT_EXTRA_DATA_ENCODER);
 
     final QbftController qbftController =
         new QbftController(
@@ -570,7 +570,7 @@ public class TestContextBuilder {
                     messageValidatorFactory,
                     messageFactory,
                     BFT_EXTRA_DATA_ENCODER,
-                    extraDataProvider),
+                    qbftExtraDataProvider),
                 messageValidatorFactory,
                 messageFactory,
                 new ValidatorModeTransitionLogger(forksSchedule)),

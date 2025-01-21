@@ -16,12 +16,12 @@ package org.hyperledger.besu.consensus.qbft.core.messagewrappers;
 
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlock;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftBlockEncoder;
-import org.hyperledger.besu.consensus.qbft.core.api.QbftHashMode;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -35,7 +35,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class RoundChange extends BftMessage<RoundChangePayload> {
 
   private final Optional<QbftBlock> proposedBlock;
-  private final QbftBlockEncoder blockEncoder;
+  private final QbftBlockCodec blockEncoder;
   private final List<SignedData<PreparePayload>> prepares;
 
   /**
@@ -49,7 +49,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
   public RoundChange(
       final SignedData<RoundChangePayload> payload,
       final Optional<QbftBlock> proposedBlock,
-      final QbftBlockEncoder blockEncoder,
+      final QbftBlockCodec blockEncoder,
       final List<SignedData<PreparePayload>> prepares) {
     super(payload);
     this.proposedBlock = proposedBlock;
@@ -111,7 +111,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
    * @param blockEncoder the qbft block encoder
    * @return the round change
    */
-  public static RoundChange decode(final Bytes data, final QbftBlockEncoder blockEncoder) {
+  public static RoundChange decode(final Bytes data, final QbftBlockCodec blockEncoder) {
 
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();

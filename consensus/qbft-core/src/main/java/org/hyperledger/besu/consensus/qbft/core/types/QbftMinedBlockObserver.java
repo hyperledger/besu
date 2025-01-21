@@ -12,10 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.core.api;
+package org.hyperledger.besu.consensus.qbft.core.types;
 
-public interface QbftProtocolSpec {
-  QbftBlockImporter getBlockImporter();
-
-  QbftBlockValidator getBlockValidator();
+public interface QbftMinedBlockObserver {
+  void blockMined(QbftBlock block);
 }
