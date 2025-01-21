@@ -1149,7 +1149,8 @@ public final class EthProtocolManagerTest {
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
               TransactionPoolConfiguration.DEFAULT,
               new BlobCache(),
-              MiningConfiguration.newDefault())
+              MiningConfiguration.newDefault(),
+              false)
           .setEnabled();
 
       // Send just a transaction message.
