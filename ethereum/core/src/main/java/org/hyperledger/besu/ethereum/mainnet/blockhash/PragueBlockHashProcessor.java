@@ -16,11 +16,10 @@ package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -36,13 +35,13 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(PragueBlockHashProcessor.class);
 
   public static final Address HISTORY_STORAGE_ADDRESS =
-      Address.fromHexString("0x0aae40965e6800cd9b1f4b05ff21581047e3f91e");
+      Address.fromHexString("0x0F792be4B0c0cb4DAE440Ef133E90C0eCD48CCCC");
 
   /** The HISTORY_SERVE_WINDOW */
-  public static final long HISTORY_SERVE_WINDOW = 8192;
+  private static final long HISTORY_SERVE_WINDOW = 8191;
 
-  private final long historySaveWindow;
-  private final Address historyStorageAddress;
+  protected final long historyServeWindow;
+  protected final Address historyStorageAddress;
 
   /** Constructs a BlockHashProcessor. */
   public PragueBlockHashProcessor() {
@@ -54,21 +53,19 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
    * primarily used for testing.
    *
    * @param historyStorageAddress the address of the contract storing the history
-   * @param historySaveWindow The number of blocks for which history should be saved.
+   * @param historyServeWindow The number of blocks for which history should be saved.
    */
   @VisibleForTesting
   public PragueBlockHashProcessor(
-      final Address historyStorageAddress, final long historySaveWindow) {
+      final Address historyStorageAddress, final long historyServeWindow) {
     this.historyStorageAddress = historyStorageAddress;
-    this.historySaveWindow = historySaveWindow;
+    this.historyServeWindow = historyServeWindow;
   }
 
   @Override
   public void processBlockHashes(
-      final Blockchain blockchain,
-      final MutableWorldState mutableWorldState,
-      final ProcessableBlockHeader currentBlockHeader) {
-    super.processBlockHashes(blockchain, mutableWorldState, currentBlockHeader);
+      final MutableWorldState mutableWorldState, final ProcessableBlockHeader currentBlockHeader) {
+    super.processBlockHashes(mutableWorldState, currentBlockHeader);
 
     WorldUpdater worldUpdater = mutableWorldState.updater();
     final MutableAccount historyStorageAccount = worldUpdater.getOrCreate(historyStorageAddress);
@@ -97,7 +94,7 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
    * @param hash The hash to be stored.
    */
   private void storeHash(final MutableAccount account, final long number, final Hash hash) {
-    UInt256 slot = UInt256.valueOf(number % historySaveWindow);
+    UInt256 slot = UInt256.valueOf(number % historyServeWindow);
     UInt256 value = UInt256.fromBytes(hash);
     LOG.trace(
         "Writing to {} {}=%{}", account.getAddress(), slot.toDecimalString(), value.toHexString());

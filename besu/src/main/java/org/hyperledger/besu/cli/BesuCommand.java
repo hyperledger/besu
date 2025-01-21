@@ -152,6 +152,7 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.plugin.services.BlockSimulationService;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
@@ -178,6 +179,7 @@ import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolServi
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.BlockSimulatorServiceImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.P2PServiceImpl;
@@ -1288,6 +1290,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
 
+    besuPluginContext.addService(
+        BlockSimulationService.class,
+        new BlockSimulatorServiceImpl(
+            besuController.getProtocolContext().getWorldStateArchive(),
+            miningParametersSupplier.get(),
+            besuController.getTransactionSimulator(),
+            besuController.getProtocolSchedule(),
+            besuController.getProtocolContext().getBlockchain()));
+
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
   }
@@ -1805,10 +1816,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
       final DiffBasedSubStorageConfiguration subStorageConfiguration =
           getDataStorageConfiguration().getDiffBasedSubStorageConfiguration();
-      if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
-        besuControllerBuilder.isParallelTxProcessingEnabled(
-            subStorageConfiguration.getUnstable().isParallelTxProcessingEnabled());
-      }
+      besuControllerBuilder.isParallelTxProcessingEnabled(
+          subStorageConfiguration.getUnstable().isParallelTxProcessingEnabled());
     }
     return besuControllerBuilder;
   }
@@ -2123,6 +2132,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
         .ifPresent(miningParameters::setBlockPeriodSeconds);
     initMiningParametersMetrics(miningParameters);
+    // if network = holesky, set targetGasLimit to 36,000,000 unless otherwise specified
+    if (miningParameters.getTargetGasLimit().isEmpty() && NetworkName.HOLESKY.equals(network)) {
+      logger.info(
+          "Setting target gas limit for holesky: {}",
+          MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_HOLESKY);
+      miningParameters.setTargetGasLimit(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_HOLESKY);
+    }
     return miningParameters;
   }
 
