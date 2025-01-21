@@ -146,13 +146,18 @@ public class BesuConfigurationImpl implements BesuConfiguration {
     }
 
     @Override
-    public DataStorageFormat getDatabaseFormat() {
+    public DataStorageFormat getDataStorageFormat() {
       return dataStorageConfiguration.getDataStorageFormat();
     }
 
     @Override
     public boolean getReceiptCompactionEnabled() {
       return dataStorageConfiguration.getReceiptCompactionEnabled();
+    }
+
+    @Override
+    public boolean getHashPreImageStorageEnabled() {
+      return dataStorageConfiguration.getHashPreImageStorageEnabled();
     }
   }
 }

@@ -14,11 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
@@ -31,36 +28,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdateAccumulator {
-  private final BonsaiPreImageProxy preImageProxy;
 
   public BonsaiReferenceTestUpdateAccumulator(
       final PathBasedWorldView world,
       final Consumer<PathBasedValue<BonsaiAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
-      final BonsaiPreImageProxy preImageProxy,
       final EvmConfiguration evmConfiguration) {
     super(world, accountPreloader, storagePreloader, evmConfiguration);
-    this.preImageProxy = preImageProxy;
-  }
-
-  @Override
-  protected Hash hashAndSaveAccountPreImage(final Address address) {
-    return preImageProxy.hashAndSavePreImage(address);
-  }
-
-  @Override
-  protected Hash hashAndSaveSlotPreImage(final UInt256 slotKey) {
-    return preImageProxy.hashAndSavePreImage(slotKey);
   }
 
   public BonsaiReferenceTestUpdateAccumulator createDetachedAccumulator() {
     final BonsaiReferenceTestUpdateAccumulator copy =
         new BonsaiReferenceTestUpdateAccumulator(
-            wrappedWorldView(),
-            accountPreloader,
-            storagePreloader,
-            preImageProxy,
-            evmConfiguration);
+            wrappedWorldView(), accountPreloader, storagePreloader, evmConfiguration);
     getAccountsToUpdate().forEach((k, v) -> copy.getAccountsToUpdate().put(k, v.copy()));
     getCodeToUpdate().forEach((k, v) -> copy.getCodeToUpdate().put(k, v.copy()));
     copy.getStorageToClear().addAll(getStorageToClear());

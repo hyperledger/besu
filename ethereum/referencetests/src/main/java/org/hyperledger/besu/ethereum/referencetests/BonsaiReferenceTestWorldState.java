@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
@@ -42,13 +42,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,17 +54,14 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiReferenceTestWorldState.class);
 
-  private final BonsaiReferenceTestWorldStateStorage refTestStorage;
-  private final BonsaiPreImageProxy preImageProxy;
   private final EvmConfiguration evmConfiguration;
   private final Collection<Exception> exceptionCollector = new ArrayList<>();
 
   protected BonsaiReferenceTestWorldState(
-      final BonsaiReferenceTestWorldStateStorage worldStateKeyValueStorage,
+      final BonsaiWorldStateLayerStorage worldStateKeyValueStorage,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final PathBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
-      final BonsaiPreImageProxy preImageProxy,
       final EvmConfiguration evmConfiguration) {
     super(
         worldStateKeyValueStorage,
@@ -76,8 +70,6 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         trieLogManager,
         evmConfiguration,
         createStatefulConfigWithTrie());
-    this.refTestStorage = worldStateKeyValueStorage;
-    this.preImageProxy = preImageProxy;
     this.evmConfiguration = evmConfiguration;
     setAccumulator(
         new BonsaiReferenceTestUpdateAccumulator(
@@ -88,19 +80,17 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
             (addr, value) ->
                 bonsaiCachedMerkleTrieLoader.preLoadStorageSlot(
                     getWorldStateStorage(), addr, value),
-            preImageProxy,
             evmConfiguration));
   }
 
   @Override
   public ReferenceTestWorldState copy() {
-    var layerCopy = new BonsaiReferenceTestWorldStateStorage(getWorldStateStorage(), preImageProxy);
+    var layerCopy = new BonsaiWorldStateLayerStorage(getWorldStateStorage());
     return new BonsaiReferenceTestWorldState(
         layerCopy,
         bonsaiCachedMerkleTrieLoader,
         cachedWorldStorageManager,
         trieLogManager,
-        preImageProxy,
         evmConfiguration);
   }
 
@@ -227,17 +217,14 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         new BonsaiCachedMerkleTrieLoader(metricsSystem);
     final TrieLogManager trieLogManager = new ReferenceTestsInMemoryTrieLogManager();
 
-    final BonsaiPreImageProxy preImageProxy =
-        new BonsaiPreImageProxy.BonsaiReferenceTestPreImageProxy();
-
     final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(),
             metricsSystem,
             DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
 
-    final BonsaiReferenceTestWorldStateStorage worldStateKeyValueStorage =
-        new BonsaiReferenceTestWorldStateStorage(bonsaiWorldStateKeyValueStorage, preImageProxy);
+    final BonsaiWorldStateLayerStorage worldStateKeyValueStorage =
+        new BonsaiWorldStateLayerStorage(bonsaiWorldStateKeyValueStorage);
 
     final NoOpBonsaiCachedWorldStorageManager noOpCachedWorldStorageManager =
         new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage);
@@ -248,7 +235,6 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
             bonsaiCachedMerkleTrieLoader,
             noOpCachedWorldStorageManager,
             trieLogManager,
-            preImageProxy,
             evmConfiguration);
 
     final WorldUpdater updater = worldState.updater();
@@ -257,12 +243,9 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
           updater, Address.fromHexString(entry.getKey()), entry.getValue());
     }
     updater.commit();
+    // persist in order to save preimages
+    worldState.persist(null);
     return worldState;
-  }
-
-  @Override
-  public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    return this.refTestStorage.streamAccounts(this, startKeyHash, limit);
   }
 
   static class ReferenceTestsInMemoryTrieLogManager extends TrieLogManager {
@@ -297,11 +280,5 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
       trieLogCache.invalidate(blockHash); // remove trielog from the cache
       return Optional.ofNullable(trieLogFactory.deserialize(trielog));
     }
-  }
-
-  @Override
-  protected Hash hashAndSavePreImage(final Bytes value) {
-    // by default do not save has preImages
-    return preImageProxy.hashAndSavePreImage(value);
   }
 }

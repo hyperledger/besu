@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.ServiceManager;
@@ -58,6 +59,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   protected final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   // Configuration that will be shared by all instances of world state at their creation
   protected final WorldStateConfig worldStateConfig;
+  protected final WorldStatePreimageStorage preimageStorage;
 
   public PathBasedWorldStateProvider(
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
@@ -83,7 +85,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
     this.worldStateConfig = WorldStateConfig.newBuilder().build();
-    ;
+    preimageStorage = worldStateKeyValueStorage.getPreimageStorage();
   }
 
   protected void provideCachedWorldStorageManager(

@@ -183,6 +183,32 @@ public abstract class PathBasedWorldState
         worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
     Runnable cacheWorldState = () -> {};
+    Runnable savePreimages =
+        () -> {
+          var preImageUpdater = worldStateKeyValueStorage.getPreimageStorage().updater();
+          localCopy
+              .getAccountsToUpdate()
+              // log.getAccountChanges()
+              .keySet()
+              .forEach(acct -> preImageUpdater.putAccountTrieKeyPreimage(acct.addressHash(), acct));
+          localCopy.getStorageToUpdate().values().stream()
+              .flatMap(z -> z.keySet().stream())
+              .filter(
+                  z -> {
+                    // TODO: we should add logic here to prevent writing
+                    //     common slot keys
+                    return z.getSlotKey().isPresent();
+                  })
+              .distinct()
+              .forEach(
+                  slot -> {
+                    preImageUpdater.putStorageTrieKeyPreimage(
+                        slot.getSlotHash(), slot.getSlotKey().get());
+                  });
+          // prob need to override this in a bonsai implementation that simply defers to the trielog
+          // tx/commit
+          preImageUpdater.commit();
+        };
 
     try {
       final Hash calculatedRootHash;
@@ -235,6 +261,10 @@ public abstract class PathBasedWorldState
           // optionally save the committed worldstate state in the cache
           cacheWorldState.run();
         }
+
+        // TODO: maybe move this, make conditional so we don't affect performance
+        //  if we are not tracking preimages.
+        savePreimages.run();
 
         accumulator.reset();
       } else {
@@ -319,7 +349,7 @@ public abstract class PathBasedWorldState
 
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("storage format do not provide account streaming.");
+    return worldStateKeyValueStorage.streamAccounts(this, startKeyHash, limit);
   }
 
   @Override

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.storage;
 
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_HASH_PREIMAGE_STORAGE_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_RECEIPT_COMPACTION_ENABLED;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
@@ -35,6 +36,9 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
   private static final String DATA_STORAGE_FORMAT = "--data-storage-format";
 
+  /** Feature to store hash preimages as part of worldstate */
+  public static final String HASH_STORE_PREIMAGE_ENABLED = "--hash-preimage-storage-enabled";
+
   // Use Bonsai DB
   @Option(
       names = {DATA_STORAGE_FORMAT},
@@ -48,6 +52,13 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       description = "Enables compact storing of receipts (default: ${DEFAULT-VALUE})",
       fallbackValue = "true")
   private Boolean receiptCompactionEnabled = DEFAULT_RECEIPT_COMPACTION_ENABLED;
+
+  @CommandLine.Option(
+      names = {HASH_STORE_PREIMAGE_ENABLED},
+      description =
+          "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).",
+      arity = "1")
+  private Boolean hashStorePreimagesEnabled = DEFAULT_HASH_PREIMAGE_STORAGE_ENABLED;
 
   /**
    * Options specific to path-based storage modes. Holds the necessary parameters to configure
@@ -91,6 +102,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     dataStorageOptions.pathBasedExtraStorageOptions =
         PathBasedExtraStorageOptions.fromConfig(
             domainObject.getPathBasedExtraStorageConfiguration());
+    dataStorageOptions.hashStorePreimagesEnabled = domainObject.getHashPreImageStorageEnabled();
     return dataStorageOptions;
   }
 
@@ -100,6 +112,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(dataStorageFormat)
             .receiptCompactionEnabled(receiptCompactionEnabled)
+            .pathBasedExtraStorageConfiguration(pathBasedExtraStorageOptions.toDomainObject())
+            .hashPreImageStorageEnabled(hashStorePreimagesEnabled)
             .pathBasedExtraStorageConfiguration(pathBasedExtraStorageOptions.toDomainObject());
     return builder.build();
   }
