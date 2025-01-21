@@ -32,14 +32,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchiver;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -657,8 +656,6 @@ public class ArchiverTests {
 
   @Test
   public void archiveInMemoryDBArchivesAccountStateCorrectly() {
-    final BonsaiPreImageProxy preImageProxy =
-        new BonsaiPreImageProxy.BonsaiReferenceTestPreImageProxy();
 
     final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
@@ -666,8 +663,8 @@ public class ArchiverTests {
             new NoOpMetricsSystem(),
             DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG);
 
-    final BonsaiReferenceTestWorldStateStorage testWorldStateStorage =
-        new BonsaiReferenceTestWorldStateStorage(bonsaiWorldStateKeyValueStorage, preImageProxy);
+    final BonsaiWorldStateLayerStorage testWorldStateStorage =
+        new BonsaiWorldStateLayerStorage(bonsaiWorldStateKeyValueStorage);
 
     assertThat(testWorldStateStorage.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
 
@@ -897,8 +894,6 @@ public class ArchiverTests {
 
   @Test
   public void archiverInMemoryDBArchivesStorageStateCorrectly() {
-    final BonsaiPreImageProxy preImageProxy =
-        new BonsaiPreImageProxy.BonsaiReferenceTestPreImageProxy();
 
     final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
@@ -906,8 +901,8 @@ public class ArchiverTests {
             new NoOpMetricsSystem(),
             DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG);
 
-    final BonsaiReferenceTestWorldStateStorage testWorldStateStorage =
-        new BonsaiReferenceTestWorldStateStorage(bonsaiWorldStateKeyValueStorage, preImageProxy);
+    final BonsaiWorldStateLayerStorage testWorldStateStorage =
+        new BonsaiWorldStateLayerStorage(bonsaiWorldStateKeyValueStorage);
 
     assertThat(testWorldStateStorage.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
 
