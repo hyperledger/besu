@@ -28,7 +28,6 @@ class RLPDecodingHelpers {
     BYTE_ELEMENT,
     SHORT_ELEMENT,
     LONG_ELEMENT,
-    EMPTY_LIST,
     SHORT_LIST,
     LONG_LIST;
 
@@ -39,8 +38,6 @@ class RLPDecodingHelpers {
         return Kind.SHORT_ELEMENT;
       } else if (prefix <= 0xbf) {
         return Kind.LONG_ELEMENT;
-      } else if (prefix == 0xc0) {
-        return Kind.EMPTY_LIST;
       } else if (prefix <= 0xf7) {
         return Kind.SHORT_LIST;
       } else {
@@ -50,7 +47,6 @@ class RLPDecodingHelpers {
 
     boolean isList() {
       switch (this) {
-        case EMPTY_LIST:
         case SHORT_LIST:
         case LONG_LIST:
           return true;
@@ -125,7 +121,6 @@ class RLPDecodingHelpers {
         payloadStart = elementStart + 1 + sizeLengthElt;
         payloadSize = readLongSize(byteGetter, size, elementStart, sizeLengthElt);
         break;
-      case EMPTY_LIST:
       case SHORT_LIST:
         payloadStart = elementStart + 1;
         payloadSize = prefix - 0xc0;
