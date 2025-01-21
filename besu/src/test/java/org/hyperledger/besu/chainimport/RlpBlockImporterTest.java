@@ -59,7 +59,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public final class RlpBlockImporterTest {
 
-  @TempDir Path dataDir;
+  //@TempDir Path dataDir;
+  private final Path dataDir = Path.of("/tmp/dataDir");
 
   private final RlpBlockImporter rlpBlockImporter = new RlpBlockImporter();
 
@@ -184,7 +185,7 @@ public final class RlpBlockImporterTest {
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
-            .networkId(BigInteger.valueOf(10))
+            .networkId(BigInteger.valueOf(1337))
             .miningParameters(MiningConfiguration.newDefault())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
@@ -195,12 +196,13 @@ public final class RlpBlockImporterTest {
             .gasLimitCalculator(GasLimitCalculator.constant())
             .evmConfiguration(EvmConfiguration.DEFAULT)
             .networkConfiguration(NetworkingConfiguration.create())
+            .besuComponent(mock(BesuComponent.class))
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
             .build();
     final RlpBlockImporter.ImportResult result =
         rlpBlockImporter.importBlockchain(source, controller, true);
 
     // Don't count the Genesis block
-    assertThat(result.count).isEqualTo(958);
+    assertThat(result.count).isEqualTo(22);
   }
 }

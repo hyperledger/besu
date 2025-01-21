@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -61,7 +62,7 @@ public class IbftProtocolSchedule {
             Optional.of(DEFAULT_CHAIN_ID),
             ProtocolSpecAdapters.create(
                 0,
-                builder -> applyIbftChanges(blockPeriod, builder, ibftConfig.getCeil2Nby3Block())),
+                builder -> applyIbftChanges(blockPeriod, builder)),
             privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
@@ -89,17 +90,16 @@ public class IbftProtocolSchedule {
 
   private static ProtocolSpecBuilder applyIbftChanges(
       final long secondsBetweenBlocks,
-      final ProtocolSpecBuilder builder,
-      final long ceil2nBy3Block) {
+      final ProtocolSpecBuilder builder) {
     return builder
         .blockHeaderValidatorBuilder(
-            feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks, ceil2nBy3Block))
+            feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks))
         .ommerHeaderValidatorBuilder(
-            feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks, ceil2nBy3Block))
+            feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        // .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
-        // .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
+        .difficultyCalculator((time, parent) -> BigInteger.ONE)
         .blockReward(Wei.ZERO)
         .skipZeroBlockRewards(true)
         .blockHeaderFunctions(new BftBlockHeaderFunctions(IbftBlockHashing::calculateHashOfIbftBlockOnchain,

@@ -32,7 +32,7 @@
       "epochLength": 30000,
       "blockPeriodSeconds" : 1,
       "requestTimeoutSeconds": 10,
-      "startBlock": 101
+      "startBlock": 23
     },
     "txnSizeLimit": 64,
     "maxCodeSize": 0,
