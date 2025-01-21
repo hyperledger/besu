@@ -26,7 +26,7 @@ public interface QbftBlockCreator {
    *
    * @param headerTimeStampSeconds the header timestamp
    * @param parentHeader the parent header
-   * @return
+   * @return the block
    */
   QbftBlock createBlock(long headerTimeStampSeconds, BlockHeader parentHeader);
 

@@ -70,7 +70,7 @@ public class RoundSpecificPeers {
   }
 
   public ValidatorPeer getFirstNonProposer() {
-    return nonProposingPeers.get(0);
+    return nonProposingPeers.getFirst();
   }
 
   public void clearReceivedMessages() {

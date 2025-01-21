@@ -38,7 +38,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -183,7 +182,7 @@ public class ProposalValidator {
   }
 
   private boolean validateRoundZeroProposalHasNoRoundChangesOrPrepares(final Proposal proposal) {
-    if ((proposal.getRoundChanges().size() != 0) || proposal.getPrepares().size() != 0) {
+    if ((!proposal.getRoundChanges().isEmpty()) || !proposal.getPrepares().isEmpty()) {
       LOG.info("{}: round-0 proposal must not contain any prepares or roundchanges", ERROR_PREFIX);
       return false;
     }
@@ -285,12 +284,10 @@ public class ProposalValidator {
             .filter(Optional::isPresent)
             .map(Optional::get)
             .distinct()
-            .collect(Collectors.toList());
+            .toList();
 
     final List<Integer> preparedRounds =
-        distinctMetadatas.stream()
-            .map(PreparedRoundMetadata::getPreparedRound)
-            .collect(Collectors.toList());
+        distinctMetadatas.stream().map(PreparedRoundMetadata::getPreparedRound).toList();
 
     for (final Integer preparedRound : preparedRounds) {
       if (distinctMetadatas.stream().filter(dm -> dm.getPreparedRound() == preparedRound).count()

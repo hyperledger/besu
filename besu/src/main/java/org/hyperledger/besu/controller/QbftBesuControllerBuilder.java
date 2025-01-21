@@ -174,9 +174,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                     Istanbul100SubProtocol.ISTANBUL_100,
                     Istanbul100SubProtocol.get().getName()));
     maybeSnapProtocolManager.ifPresent(
-        snapProtocolManager -> {
-          subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager);
-        });
+        snapProtocolManager ->
+            subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager));
     return subProtocolConfiguration;
   }
 
@@ -469,7 +468,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             String.format(
                 "%s %s #%,d / %d tx / %d pending / %,d (%01.1f%%) gas / (%s)",
                 block.getHeader().getCoinbase().equals(localAddress) ? "Produced" : "Imported",
-                block.getBody().getTransactions().size() == 0 ? "empty block" : "block",
+                block.getBody().getTransactions().isEmpty() ? "empty block" : "block",
                 block.getHeader().getNumber(),
                 block.getBody().getTransactions().size(),
                 transactionPool.count(),

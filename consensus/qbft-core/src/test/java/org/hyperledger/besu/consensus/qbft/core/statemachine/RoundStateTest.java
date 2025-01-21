@@ -35,15 +35,14 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Util;
 
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -60,11 +59,8 @@ public class RoundStateTest {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  private final List<NodeKey> validatorKeys = Lists.newArrayList();
   private final List<MessageFactory> validatorMessageFactories = Lists.newArrayList();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
-
-  private final List<Address> validators = Lists.newArrayList();
   private final Hash blockHash = Hash.fromHexStringLenient("1");
 
   @Mock private MessageValidator messageValidator;
@@ -75,8 +71,6 @@ public class RoundStateTest {
   public void setup() {
     for (int i = 0; i < 3; i++) {
       final NodeKey newNodeKey = NodeKeyUtils.generate();
-      validatorKeys.add(newNodeKey);
-      validators.add(Util.publicKeyToAddress(newNodeKey.getPublicKey()));
       validatorMessageFactories.add(new MessageFactory(newNodeKey, blockEncoder));
     }
   }
@@ -97,7 +91,7 @@ public class RoundStateTest {
 
     final Proposal proposal =
         validatorMessageFactories
-            .get(0)
+            .getFirst()
             .createProposal(
                 roundIdentifier, block, Collections.emptyList(), Collections.emptyList());
 
@@ -116,7 +110,7 @@ public class RoundStateTest {
 
     final Proposal proposal =
         validatorMessageFactories
-            .get(0)
+            .getFirst()
             .createProposal(
                 roundIdentifier, block, Collections.emptyList(), Collections.emptyList());
 
@@ -126,7 +120,7 @@ public class RoundStateTest {
 
     final Commit commit =
         validatorMessageFactories
-            .get(0)
+            .getFirst()
             .createCommit(
                 roundIdentifier,
                 blockHash,
@@ -173,7 +167,7 @@ public class RoundStateTest {
 
     final Proposal proposal =
         validatorMessageFactories
-            .get(0)
+            .getFirst()
             .createProposal(
                 roundIdentifier, block, Collections.emptyList(), Collections.emptyList());
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
@@ -204,7 +198,7 @@ public class RoundStateTest {
 
     final Proposal proposal =
         validatorMessageFactories
-            .get(0)
+            .getFirst()
             .createProposal(
                 roundIdentifier, block, Collections.emptyList(), Collections.emptyList());
 
@@ -331,7 +325,7 @@ public class RoundStateTest {
     assertThat(preparedCertificate.get().getBlock()).isEqualTo(block);
 
     final List<SignedData<PreparePayload>> expectedPrepares =
-        List.of(firstPrepare, secondPrepare).stream()
+        Stream.of(firstPrepare, secondPrepare)
             .map(BftMessage::getSignedPayload)
             .collect(Collectors.toList());
     assertThat(preparedCertificate.get().getPrepares()).isEqualTo(expectedPrepares);

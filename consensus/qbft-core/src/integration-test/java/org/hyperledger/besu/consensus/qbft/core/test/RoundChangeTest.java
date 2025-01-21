@@ -41,6 +41,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
@@ -131,7 +132,7 @@ public class RoundChangeTest {
             Optional.of(
                 new PreparedCertificate(
                     blockToPropose,
-                    List.of(localPrepareMessage, p0, p1, p2).stream()
+                    Stream.of(localPrepareMessage, p0, p1, p2)
                         .map(Prepare::getSignedPayload)
                         .collect(Collectors.toList()),
                     roundId.getRoundNumber())));

@@ -56,24 +56,18 @@ public class QbftGossip implements Gossiper {
   @Override
   public void send(final Message message) {
     final MessageData messageData = message.getData();
-    final Authored decodedMessage;
-    switch (messageData.getCode()) {
-      case QbftV1.PROPOSAL:
-        decodedMessage = ProposalMessageData.fromMessageData(messageData).decode(blockEncoder);
-        break;
-      case QbftV1.PREPARE:
-        decodedMessage = PrepareMessageData.fromMessageData(messageData).decode();
-        break;
-      case QbftV1.COMMIT:
-        decodedMessage = CommitMessageData.fromMessageData(messageData).decode();
-        break;
-      case QbftV1.ROUND_CHANGE:
-        decodedMessage = RoundChangeMessageData.fromMessageData(messageData).decode(blockEncoder);
-        break;
-      default:
-        throw new IllegalArgumentException(
-            "Received message does not conform to any recognised QBFT message structure.");
-    }
+    final Authored decodedMessage =
+        switch (messageData.getCode()) {
+          case QbftV1.PROPOSAL ->
+              ProposalMessageData.fromMessageData(messageData).decode(blockEncoder);
+          case QbftV1.PREPARE -> PrepareMessageData.fromMessageData(messageData).decode();
+          case QbftV1.COMMIT -> CommitMessageData.fromMessageData(messageData).decode();
+          case QbftV1.ROUND_CHANGE ->
+              RoundChangeMessageData.fromMessageData(messageData).decode(blockEncoder);
+          default ->
+              throw new IllegalArgumentException(
+                  "Received message does not conform to any recognised QBFT message structure.");
+        };
     final List<Address> excludeAddressesList =
         Lists.newArrayList(
             message.getConnection().getPeerInfo().getAddress(), decodedMessage.getAuthor());

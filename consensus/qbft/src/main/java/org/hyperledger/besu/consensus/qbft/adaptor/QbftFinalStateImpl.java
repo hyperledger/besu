@@ -121,8 +121,7 @@ public class QbftFinalStateImpl implements QbftFinalState {
    */
   @Override
   public boolean isLocalNodeValidator() {
-    final boolean isValidator = getValidators().contains(localAddress);
-    return isValidator;
+    return getValidators().contains(localAddress);
   }
 
   /**
