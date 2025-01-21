@@ -520,10 +520,6 @@ abstract class AbstractRLPInput implements RLPInput {
       }
     }
 
-    if (currentKind != RLPDecodingHelpers.Kind.EMPTY_LIST) {
-      depth--;
-    }
-
     // And lastly reset on the list first element before returning
     setTo(listStart);
     return count;
