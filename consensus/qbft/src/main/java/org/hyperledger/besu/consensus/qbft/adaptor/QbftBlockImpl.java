@@ -19,6 +19,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import java.util.Objects;
+
 public class QbftBlockImpl implements QbftBlock {
 
   private final BlockHeader header;
@@ -41,5 +43,16 @@ public class QbftBlockImpl implements QbftBlock {
 
   public Block getBesuBlock() {
     return block;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (!(o instanceof QbftBlockImpl qbftBlock)) return false;
+    return Objects.equals(header, qbftBlock.header) && Objects.equals(block, qbftBlock.block);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(header, block);
   }
 }
