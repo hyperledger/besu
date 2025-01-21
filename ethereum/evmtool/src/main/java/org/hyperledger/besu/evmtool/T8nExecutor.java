@@ -395,13 +395,8 @@ public class T8nExecutor {
           // from them so need to
           // add in a manual BlockHashLookup
           blockHashLookup =
-              (__, blockNumber) -> {
-                if (referenceTestEnv.getNumber() - blockNumber > 256L
-                    || blockNumber >= referenceTestEnv.getNumber()) {
-                  return Hash.ZERO;
-                }
-                return referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO);
-              };
+              (__, blockNumber) ->
+                  referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO);
         }
         result =
             processor.processTransaction(
@@ -442,7 +437,7 @@ public class T8nExecutor {
       gasUsed += transactionGasUsed;
       long intrinsicGas =
           gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(), transaction.getTo().isEmpty());
+              transaction.getPayload(), transaction.getTo().isEmpty(), 0);
       TransactionReceipt receipt =
           protocolSpec
               .getTransactionReceiptFactory()
@@ -551,7 +546,12 @@ public class T8nExecutor {
       ArrayNode requests = resultObject.putArray("requests");
       maybeRequests
           .orElseGet(List::of)
-          .forEach(request -> requests.add(request.getData().toHexString()));
+          .forEach(
+              request -> {
+                if (!request.data().isEmpty()) {
+                  requests.add(request.getEncodedRequest().toHexString());
+                }
+              });
     }
 
     worldState.persist(blockHeader);

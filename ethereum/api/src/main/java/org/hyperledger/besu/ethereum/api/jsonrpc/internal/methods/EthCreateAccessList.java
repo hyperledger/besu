@@ -127,7 +127,8 @@ public class EthCreateAccessList extends AbstractEstimateGas {
         callParams.getMaxFeePerGas(),
         callParams.getValue(),
         callParams.getPayload(),
-        Optional.of(accessListEntries));
+        Optional.of(accessListEntries),
+        callParams.getNonce());
   }
 
   private record AccessListSimulatorResult(

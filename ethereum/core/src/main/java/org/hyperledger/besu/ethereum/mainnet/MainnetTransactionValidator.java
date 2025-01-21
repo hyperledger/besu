@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.worldstate.DelegateCodeHelper.hasDelegatedCode;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -32,7 +34,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.worldstate.DelegatedCodeService;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -52,8 +53,6 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
  */
 public class MainnetTransactionValidator implements TransactionValidator {
 
-  public static final BigInteger TWO_POW_8 = BigInteger.TWO.pow(8);
-  public static final BigInteger TWO_POW_64 = BigInteger.TWO.pow(64);
   public static final BigInteger TWO_POW_256 = BigInteger.TWO.pow(256);
 
   private final GasCalculator gasCalculator;
@@ -166,9 +165,9 @@ public class MainnetTransactionValidator implements TransactionValidator {
             .map(
                 codeDelegations -> {
                   for (CodeDelegation codeDelegation : codeDelegations) {
-                    if (codeDelegation.chainId().compareTo(TWO_POW_64) >= 0) {
+                    if (codeDelegation.chainId().compareTo(TWO_POW_256) >= 0) {
                       throw new IllegalArgumentException(
-                          "Invalid 'chainId' value, should be < 2^64 but got "
+                          "Invalid 'chainId' value, should be < 2^256 but got "
                               + codeDelegation.chainId());
                     }
 
@@ -252,17 +251,22 @@ public class MainnetTransactionValidator implements TransactionValidator {
       }
     }
 
-    final long intrinsicGasCost =
-        gasCalculator.transactionIntrinsicGasCost(
-                transaction.getPayload(), transaction.isContractCreation())
-            + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L))
-            + gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
-    if (Long.compareUnsigned(intrinsicGasCost, transaction.getGasLimit()) > 0) {
+    final long baselineGas =
+        clampedAdd(
+            transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L),
+            gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize()));
+    final long intrinsicGasCostOrFloor =
+        Math.max(
+            gasCalculator.transactionIntrinsicGasCost(
+                transaction.getPayload(), transaction.isContractCreation(), baselineGas),
+            gasCalculator.transactionFloorCost(transaction.getPayload()));
+
+    if (Long.compareUnsigned(intrinsicGasCostOrFloor, transaction.getGasLimit()) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
           String.format(
               "intrinsic gas cost %s exceeds gas limit %s",
-              intrinsicGasCost, transaction.getGasLimit()));
+              intrinsicGasCostOrFloor, transaction.getGasLimit()));
     }
 
     if (transaction.calculateUpfrontGasCost(transaction.getMaxGasPrice(), Wei.ZERO, 0).bitLength()
@@ -329,8 +333,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
   }
 
   private static boolean canSendTransaction(final Account sender, final Hash codeHash) {
-    return codeHash.equals(Hash.EMPTY)
-        || DelegatedCodeService.hasDelegatedCode(sender.getUnprocessedCode());
+    return codeHash.equals(Hash.EMPTY) || hasDelegatedCode(sender.getCode());
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransactionSignature(
