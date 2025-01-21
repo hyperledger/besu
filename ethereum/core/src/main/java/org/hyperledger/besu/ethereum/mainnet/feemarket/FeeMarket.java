@@ -49,9 +49,23 @@ public interface FeeMarket {
     return new CancunFeeMarket(londonForkBlockNumber, baseFeePerGasOverride);
   }
 
+  static BaseFeeMarket cancun(
+      final long londonForkBlockNumber,
+      final Optional<Wei> baseFeePerGasOverride,
+      final long baseFeeUpdateFraction) {
+    return new CancunFeeMarket(londonForkBlockNumber, baseFeePerGasOverride, baseFeeUpdateFraction);
+  }
+
   static BaseFeeMarket prague(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
     return new PragueFeeMarket(londonForkBlockNumber, baseFeePerGasOverride);
+  }
+
+  static BaseFeeMarket prague(
+      final long londonForkBlockNumber,
+      final Optional<Wei> baseFeePerGasOverride,
+      final long baseFeeUpdateFraction) {
+    return new PragueFeeMarket(londonForkBlockNumber, baseFeePerGasOverride, baseFeeUpdateFraction);
   }
 
   static BaseFeeMarket zeroBaseFee(final long londonForkBlockNumber) {

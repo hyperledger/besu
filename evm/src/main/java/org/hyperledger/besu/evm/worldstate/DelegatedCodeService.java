@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.evm.worldstate;
 
+import static org.hyperledger.besu.evm.worldstate.DelegateCodeHelper.DELEGATED_CODE_PREFIX;
+import static org.hyperledger.besu.evm.worldstate.DelegateCodeHelper.hasDelegatedCode;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.DelegatedCodeAccount;
@@ -25,8 +28,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** A service that manages the code injection of delegated code. */
 public class DelegatedCodeService {
-  private static final Bytes DELEGATED_CODE_PREFIX = Bytes.fromHexString("ef0100");
-  private static final int DELEGATED_CODE_SIZE = DELEGATED_CODE_PREFIX.size() + Address.SIZE;
 
   private final GasCalculator gasCalculator;
 
@@ -64,7 +65,7 @@ public class DelegatedCodeService {
    * @return {@code true} if the account can set delegated code, {@code false} otherwise.
    */
   public boolean canSetDelegatedCode(final Account account) {
-    return account.getCode().isEmpty() || hasDelegatedCode(account.getUnprocessedCode());
+    return account.getCode().isEmpty() || hasDelegatedCode(account.getCode());
   }
 
   /**
@@ -100,18 +101,6 @@ public class DelegatedCodeService {
 
     return new MutableDelegatedCodeAccount(
         worldUpdater, account, resolveDelegatedAddress(account.getCode()), gasCalculator);
-  }
-
-  /**
-   * Returns if the provided code is delegated code.
-   *
-   * @param code the code to check.
-   * @return {@code true} if the code is delegated code, {@code false} otherwise.
-   */
-  public static boolean hasDelegatedCode(final Bytes code) {
-    return code != null
-        && code.size() == DELEGATED_CODE_SIZE
-        && code.slice(0, DELEGATED_CODE_PREFIX.size()).equals(DELEGATED_CODE_PREFIX);
   }
 
   private Address resolveDelegatedAddress(final Bytes code) {

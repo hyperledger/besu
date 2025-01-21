@@ -31,11 +31,14 @@ public class BlobScheduleOptionsTest {
     assertThat(blobScheduleOptions.getCancun()).isNotEmpty();
     assertThat(blobScheduleOptions.getCancun().get().getTarget()).isEqualTo(4);
     assertThat(blobScheduleOptions.getCancun().get().getMax()).isEqualTo(7);
+    assertThat(blobScheduleOptions.getCancun().get().getBaseFeeUpdateFraction()).isEqualTo(3338477);
     assertThat(blobScheduleOptions.getPrague()).isNotEmpty();
     assertThat(blobScheduleOptions.getPrague().get().getTarget()).isEqualTo(7);
     assertThat(blobScheduleOptions.getPrague().get().getMax()).isEqualTo(10);
+    assertThat(blobScheduleOptions.getPrague().get().getBaseFeeUpdateFraction()).isEqualTo(5007716);
     assertThat(blobScheduleOptions.getOsaka()).isNotEmpty();
     assertThat(blobScheduleOptions.getOsaka().get().getTarget()).isEqualTo(10);
     assertThat(blobScheduleOptions.getOsaka().get().getMax()).isEqualTo(13);
+    assertThat(blobScheduleOptions.getOsaka().get().getBaseFeeUpdateFraction()).isEqualTo(5007716);
   }
 }

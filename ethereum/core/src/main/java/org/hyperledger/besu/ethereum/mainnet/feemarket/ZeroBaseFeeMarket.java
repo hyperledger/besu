@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.Wei;
 
 public class ZeroBaseFeeMarket extends FixedBaseFeeMarket {
 
-  public ZeroBaseFeeMarket(final long londonForkBlockNumber) {
+  ZeroBaseFeeMarket(final long londonForkBlockNumber) {
     super(londonForkBlockNumber, Wei.ZERO);
   }
 

@@ -168,6 +168,17 @@ public class RLPTest {
         .hasMessageContaining("RLP item exceeds max supported size of 2147483647: 2147483648");
   }
 
+  @Test
+  public void testValidateWithListEndingAtStartOfList() {
+    // The structue of the RLP is as shown below
+    // [
+    //  ["0x01"],
+    //  ["0x02"]
+    // ]
+    Bytes validRlp = Bytes.fromHexString("c4c101c102");
+    RLP.validate(validRlp);
+  }
+
   private static Bytes h(final String hex) {
     return Bytes.fromHexString(hex);
   }

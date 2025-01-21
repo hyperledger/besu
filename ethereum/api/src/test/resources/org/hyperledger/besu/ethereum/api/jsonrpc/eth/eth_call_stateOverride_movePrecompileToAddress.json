@@ -5,21 +5,21 @@
     "method": "eth_call",
     "params": [
       {
-        "to": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
-        "from": "a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-        "data": "0x12a7b914"
+        "comment": "Call to ECREC Precompiled on a different address, expect the original behaviour of ECREC precompile",
+        "from": "0xc100000000000000000000000000000000000000",
+        "to": "0x0000000000000000000000000000000000123456",
+        "input": "0x82f3df49d3645876de6313df2bbe9fbce593f21341a7b03acdb9423bc171fcc9000000000000000000000000000000000000000000000000000000000000001cba13918f50da910f2d55a7ea64cf716ba31dad91856f45908dde900530377d8a112d60f36900d18eb8f9d3b4f85a697b545085614509e3520e4b762e35d0d6bd"
       },
       "latest",
       {
-        "a94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+        "0xc100000000000000000000000000000000000000": {
           "balance": "0xde0b6b3a7640000",
           "nonce": 88
         },
-        "0xb9741079a300Cb3B8f324CdDB847c0d1d273a05E": {
-          "stateDiff": {
-            "0x1cf7945003fc5b59d2f6736f0704557aa805c4f2844084ccd1173b8d56946962": "0x000000000000000000000000000000000000000000000000000000110ed03bf7"
-          },
-          "movePrecompileToAddress":null
+        "0x0000000000000000000000000000000000000001": {
+          "comment": "Move ECREC Precompiled to address",
+          "code": "0x60003560010160005260206000f3",
+          "movePrecompileToAddress": "0x0000000000000000000000000000000000123456"
         }
       }
     ]
@@ -27,7 +27,8 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 3,
-    "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    "comment": "The original ECREC precompile behaviour is expected, not the overridden one",
+    "result": "0x000000000000000000000000c6e93f4c1920eaeaa1e699f76a7a8c18e3056074"
   },
   "statusCode": 200
 }
