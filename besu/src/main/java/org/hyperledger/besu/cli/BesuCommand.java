@@ -24,6 +24,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
+import static org.hyperledger.besu.config.GenesisConfig.BASEFEE_AT_GENESIS_DEFAULT_VALUE;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
@@ -48,6 +49,7 @@ import org.hyperledger.besu.cli.options.EngineRPCOptions;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.EthstatsOptions;
 import org.hyperledger.besu.cli.options.EvmOptions;
+import org.hyperledger.besu.cli.options.GenesisCLIOptions;
 import org.hyperledger.besu.cli.options.GraphQlOptions;
 import org.hyperledger.besu.cli.options.InProcessRpcOptions;
 import org.hyperledger.besu.cli.options.IpcOptions;
@@ -303,6 +305,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
+  private final GenesisCLIOptions unstableGenesisCLIOptions = GenesisCLIOptions.create();
 
   // stable CLI options
   final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -1164,6 +1167,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
+            .put("Genesis File Options", unstableGenesisCLIOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1604,10 +1608,37 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         network.equals(EPHEMERY)
             ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
             : genesisFile != null
-                ? GenesisConfig.fromSource(genesisConfigSource(genesisFile))
+                ? getGenesisConfigFromSource()
                 : GenesisConfig.fromResource(
                     Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
+  }
+
+  private GenesisConfig getGenesisConfigFromSource() {
+    final GenesisConfig genesisConfig = GenesisConfig.fromSource(genesisConfigSource(genesisFile));
+
+    if (!unstableGenesisCLIOptions.toDomainObject().gethGenesisFileSupport()) {
+      return genesisConfig;
+    }
+
+    final Map<String, String> gethGenesisConfigOverrides =
+        gethGenesisConfigOverrides(genesisConfig);
+
+    return genesisConfig.withOverrides(gethGenesisConfigOverrides);
+  }
+
+  private Map<String, String> gethGenesisConfigOverrides(final GenesisConfig genesisConfig) {
+    final Map<String, String> overrides = new HashMap<>();
+
+    if (!genesisConfig.getConfigOptions().isEthHash()) {
+      overrides.put("ethash", "");
+    }
+
+    if (genesisConfig.getBaseFeePerGas().isEmpty()) {
+      overrides.put("baseFeePerGas", BASEFEE_AT_GENESIS_DEFAULT_VALUE.toHexString());
+    }
+
+    return overrides;
   }
 
   private GenesisConfigOptions readGenesisConfigOptions() {

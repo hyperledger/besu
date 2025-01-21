@@ -129,7 +129,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public boolean isEthHash() {
-    return configRoot.has(ETHASH_CONFIG_KEY);
+    return getOptionalString(ETHASH_CONFIG_KEY).isPresent();
   }
 
   @Override
@@ -549,6 +549,15 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
 
     return builder.build();
+  }
+
+  private Optional<String> getOptionalString(final String key) {
+    if (configOverrides.containsKey(key)) {
+      final String value = configOverrides.get(key);
+      return value == null || value.isEmpty() ? Optional.empty() : Optional.of(value);
+    }
+
+    return JsonUtil.getString(configRoot, key);
   }
 
   private OptionalLong getOptionalLong(final String key) {
