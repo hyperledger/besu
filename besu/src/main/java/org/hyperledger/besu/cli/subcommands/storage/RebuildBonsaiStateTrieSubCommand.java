@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBa
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView.encodeTrieValue;
 
+import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Hash;
@@ -32,10 +33,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFl
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.function.BiConsumer;
@@ -62,6 +60,16 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
       Hash.wrap(Bytes32.leftPad(Bytes.fromHexString("FF"), (byte) 0xFF));
   static final long FORCED_COMMIT_INTERVAL = 50_000L;
 
+  @CommandLine.Option(
+      names = "--override-blockhash-and-stateroot",
+      paramLabel = DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP,
+      description =
+          "when rebuilding the state trie, force the usage of the specified blockhash:stateroot.  "
+              + "This will bypass block header and worldstate checks.  "
+              + "e.g. --override-blockhash-and-stateroot=0xdeadbeef..deadbeef:0xc0ffee..coffee",
+      arity = "1..1")
+  private String overrideHashes = null;
+
   @SuppressWarnings("unused")
   @ParentCommand
   private StorageSubCommand parentCommand;
@@ -75,9 +83,7 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
 
   @Override
   public void run() {
-    // spec.commandLine().usage(System.out);
     try (final BesuController controller = createController()) {
-
       var storageConfig = controller.getDataStorageConfiguration();
 
       if (!storageConfig.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
@@ -96,34 +102,47 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
         System.exit(-1);
       }
 
-      final BlockHeader header =
+      final BlockHeader headHeader =
           controller.getProtocolContext().getBlockchain().getChainHeadHeader();
 
-      worldStateStorage
-          .getWorldStateRootHash()
-          // we want state root hash to either be empty or same the same as chain head
-          .filter(root -> !root.equals(header.getStateRoot()))
-          .ifPresent(
-              foundRoot -> {
-                LOG.error(
-                    "Chain head {} does not match state root {}.  Refusing to rebuild state trie.",
-                    header.getStateRoot(),
-                    foundRoot);
-                System.exit(-1);
-              });
+      BlockHashAndStateRoot blockHashAndStateRoot = BlockHashAndStateRoot.create(overrideHashes);
+
+      if (blockHashAndStateRoot == null) {
+        worldStateStorage
+            .getWorldStateRootHash()
+            // we want state root hash to either be empty or same the same as chain head
+            .filter(root -> !root.equals(headHeader.getStateRoot()))
+            .ifPresent(
+                foundRoot -> {
+                  LOG.error(
+                      "Chain head {} does not match state root {}.  Refusing to rebuild state trie.",
+                      headHeader.getStateRoot(),
+                      foundRoot);
+                  System.exit(-1);
+                });
+        blockHashAndStateRoot =
+            new BlockHashAndStateRoot(headHeader.getBlockHash(), headHeader.getStateRoot());
+      }
 
       // rebuild trie:
       var newHash = rebuildTrie(worldStateStorage);
 
       // write state root and block hash from the header:
-      if (!header.getStateRoot().equals(newHash)) {
+      if (!blockHashAndStateRoot.stateRoot().equals(newHash)) {
         LOG.error(
             "Catastrophic: calculated state root {} after state rebuild, was expecting {}.",
             newHash,
-            header.getStateRoot());
-        System.exit(-1);
+            blockHashAndStateRoot.stateRoot());
+        if (overrideHashes == null) {
+          LOG.error(
+              "Refusing to write mismatched block hash and state root.  Node needs manual intervention.");
+          System.exit(-1);
+        } else {
+          LOG.error(
+              "Writing the override block hash and state root, but node likely needs manual intervention.");
+        }
       }
-      writeStateRootAndBlockHash(header, worldStateStorage);
+      writeStateRootAndBlockHash(blockHashAndStateRoot, worldStateStorage);
     }
   }
 
@@ -139,15 +158,11 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
     final var accountTrie =
         new StoredMerklePatriciaTrie<>(
             new StoredNodeFactory<>(
-                // this may be inefficient, and we can read through an incrementally committing tx
-                // instead
                 worldStateStorage::getAccountStateTrieNode,
                 Function.identity(),
                 Function.identity()),
             MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
-    // final var accountsTx = new
-    // WrappedTransaction(worldStateStorage.getComposedWorldStateStorage());
     var accountsTx = wss.startTransaction();
     final BiConsumer<StoredMerklePatriciaTrie<Bytes, Bytes>, SegmentedKeyValueStorageTransaction>
         accountTrieCommit =
@@ -187,11 +202,6 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
         accountTrieCommit.accept(accountTrie, accountsTx);
         accountsTx.commit();
         accountsTx = wss.startTransaction();
-
-        // close and reopen the iterator ?
-        // accountsStream.close();
-        // accountsStream = flatdb.accountsToPairStream(wss, accountPair.getFirst());
-        // accountsIterator = accountsStream.iterator();
       }
     }
 
@@ -241,8 +251,8 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
                             value.toArrayUnsafe()));
 
     // put into account trie
-    var accountStorageStream = flatdb
-        .storageToPairStream(
+    var accountStorageStream =
+        flatdb.storageToPairStream(
             wss, Hash.wrap(accountHash), Bytes32.ZERO, HASH_LAST, Function.identity());
     var accountStorageIterator = accountStorageStream.iterator();
 
@@ -267,11 +277,18 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
   }
 
   void writeStateRootAndBlockHash(
-      final BlockHeader header, final BonsaiWorldStateKeyValueStorage worldStateStorage) {
+      final BlockHashAndStateRoot blockHashAndStateRoot,
+      final BonsaiWorldStateKeyValueStorage worldStateStorage) {
     var tx = worldStateStorage.getComposedWorldStateStorage().startTransaction();
-    tx.put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, header.getStateRoot().toArrayUnsafe());
-    tx.put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, header.getBlockHash().toArrayUnsafe());
-    LOG.info("committing blockhash and stateroot {}", header.toLogString());
+    tx.put(
+        TRIE_BRANCH_STORAGE,
+        WORLD_ROOT_HASH_KEY,
+        blockHashAndStateRoot.stateRoot().toArrayUnsafe());
+    tx.put(
+        TRIE_BRANCH_STORAGE,
+        WORLD_BLOCK_HASH_KEY,
+        blockHashAndStateRoot.blockHash().toArrayUnsafe());
+    LOG.info("committing blockhash and stateroot {}", blockHashAndStateRoot);
     tx.commit();
   }
 
@@ -307,40 +324,24 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
     }
   }
 
-  static class WrappedTransaction implements SegmentedKeyValueStorageTransaction {
+  record BlockHashAndStateRoot(Hash blockHash, Hash stateRoot) {
 
-    private final SegmentedKeyValueStorage storage;
-    private SegmentedKeyValueStorageTransaction intervalTx;
-
-    WrappedTransaction(final SegmentedKeyValueStorage storage) {
-      this.storage = storage;
-      this.intervalTx = storage.startTransaction();
+    static BlockHashAndStateRoot create(final String comboString) {
+      if (comboString != null) {
+        var hashArray = comboString.split(":", 2);
+        try {
+          return new BlockHashAndStateRoot(Hash.fromHexString(hashArray[0]),
+              Hash.fromHexString(hashArray[1]));
+        } catch (Exception ex) {
+          System.err.println("failed parsing supplied block hash and stateroot " + ex.getMessage());
+        }
+      }
+      return null;
     }
 
     @Override
-    public void put(
-        final SegmentIdentifier segmentIdentifier, final byte[] key, final byte[] value) {
-      intervalTx.put(segmentIdentifier, key, value);
-    }
-
-    @Override
-    public void remove(final SegmentIdentifier segmentIdentifier, final byte[] key) {
-      intervalTx.remove(segmentIdentifier, key);
-    }
-
-    @Override
-    public void commit() throws StorageException {
-      intervalTx.commit();
-    }
-
-    public void commitAndReopen() throws StorageException {
-      commit();
-      intervalTx = storage.startTransaction();
-    }
-
-    @Override
-    public void rollback() {
-      throw new RuntimeException("WrappedTransaction can not completely rollback.");
+    public String toString() {
+      return blockHash.toHexString() + ":" + stateRoot.toHexString();
     }
   }
 }

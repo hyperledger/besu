@@ -16,6 +16,8 @@ package org.hyperledger.besu.cli.subcommands.storage;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import org.hyperledger.besu.cli.subcommands.storage.RebuildBonsaiStateTrieSubCommand.BlockHashAndStateRoot;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
@@ -72,5 +74,16 @@ public class RebuildBonsaiStateTrieSubCommandTest {
     var newHash = command.rebuildTrie(worldstate.getWorldStateStorage());
 
     assertThat(newHash).isEqualTo(headRootHash);
+  }
+
+  @Test
+  public void assertBlockHashAndStateRootParsing() {
+
+    assertThat(BlockHashAndStateRoot.create("0xdeadbeef:0xdeadbeef")).isNull();
+
+    var mockVal = BlockHashAndStateRoot.create(Hash.EMPTY + ":" + Hash.EMPTY_TRIE_HASH);
+    assertThat(mockVal).isNotNull();
+    assertThat(mockVal.blockHash()).isEqualTo(Hash.EMPTY);
+    assertThat(mockVal.stateRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
   }
 }
