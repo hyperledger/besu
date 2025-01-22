@@ -48,7 +48,7 @@ import com.google.common.annotations.VisibleForTesting;
  * checks for potential conflicts among transactions to ensure data integrity before applying the
  * results to the world state.
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({"unchecked", "rawtypes", "FieldCanBeLocal", "unused"})
 public class ParallelizedConcurrentTransactionProcessor {
 
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
@@ -60,6 +60,8 @@ public class ParallelizedConcurrentTransactionProcessor {
 
   private final Map<Integer, ParallelizedTransactionContext>
       parallelizedTransactionContextByLocation = new ConcurrentHashMap<>();
+
+  private CompletableFuture<Void>[] completableFuturesForBackgroundTransactions;
 
   /**
    * Constructs a PreloadConcurrentTransactionProcessor with a specified transaction processor. This
@@ -104,6 +106,8 @@ public class ParallelizedConcurrentTransactionProcessor {
       final BlockHashOperation.BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
       final PrivateMetadataUpdater privateMetadataUpdater) {
+
+    completableFuturesForBackgroundTransactions = new CompletableFuture[transactions.size()];
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
       final int transactionLocation = i;
@@ -275,6 +279,13 @@ public class ParallelizedConcurrentTransactionProcessor {
         // If there is a conflict, we return an empty result to signal the block processor to
         // re-execute the transaction.
         return Optional.empty();
+      }
+    } else {
+      // stop background processing for this transaction as useless
+      final CompletableFuture<Void> completableFuturesForBackgroundTransaction =
+          completableFuturesForBackgroundTransactions[transactionLocation];
+      if (completableFuturesForBackgroundTransaction != null) {
+        completableFuturesForBackgroundTransaction.cancel(true);
       }
     }
     return Optional.empty();
