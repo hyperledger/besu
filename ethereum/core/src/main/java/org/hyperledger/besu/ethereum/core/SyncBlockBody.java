@@ -129,6 +129,10 @@ public class SyncBlockBody {
     return getRootFromListOfBytes(transactionBytes);
   }
 
+  public List<Bytes> getEncodedTransactions() {
+    return transactionBytes;
+  }
+
   public Hash getOmmersHash() {
     return Hash.wrap(org.hyperledger.besu.crypto.Hash.keccak256(ommersListBytes));
   }

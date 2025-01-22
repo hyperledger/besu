@@ -520,7 +520,9 @@ public class DefaultBlockchain implements MutableBlockchain {
     updater.putBlockHeader(blockHash, block.getHeader());
     updater.putBlockHash(block.getHeader().getNumber(), blockHash);
     updater.putBlockBody(blockHash, block.getBody());
-    indexTransactionsForBlock(updater, blockHash, block.getBody().getTransactions());
+    final List<Hash> listOfTxHashes =
+        block.getBody().getTransactions().stream().map(Transaction::getHash).toList();
+    indexTransactionsForBlock(updater, blockHash, listOfTxHashes);
     updater.putTransactionReceipts(blockHash, transactionReceipts);
     maybeTotalDifficulty.ifPresent(
         totalDifficulty -> updater.putTotalDifficulty(blockHash, totalDifficulty));
@@ -615,8 +617,11 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     updater.putBlockHash(blockWithReceipts.getNumber(), newBlockHash);
     updater.setChainHead(newBlockHash);
-    indexTransactionsForBlock(
-        updater, newBlockHash, blockWithReceipts.getBlock().getBody().getTransactions());
+    final List<Hash> listOfTxHashes =
+        blockWithReceipts.getBlock().getBody().getTransactions().stream()
+            .map(Transaction::getHash)
+            .toList();
+    indexTransactionsForBlock(updater, newBlockHash, listOfTxHashes);
     gasUsedCounter.inc(blockWithReceipts.getHeader().getGasUsed());
     numberOfTransactionsCounter.inc(
         blockWithReceipts.getBlock().getBody().getTransactions().size());
@@ -635,15 +640,16 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     updater.putBlockHash(newBlock.getHeader().getNumber(), newBlockHash);
     updater.setChainHead(newBlockHash);
-    //    indexTransactionsForBlock(
-    //            updater, newBlockHash, blockWithReceipts.getBlock().getBody().getTransactions());
+    final List<Hash> listOfTxHashes =
+        newBlock.getBody().getEncodedTransactions().stream().map(Hash::hash).toList();
+    indexTransactionsForBlock(updater, newBlockHash, listOfTxHashes);
     gasUsedCounter.inc(newBlock.getHeader().getGasUsed());
     numberOfTransactionsCounter.inc(receipts.size());
 
     return BlockAddedEvent.createForSyncHeadAdvancement(
         newBlock.getHeader(),
-        null, // TODO: We won't have receipts once we use SyncTransactionReceipt. Do these logs even
-        // make sense during sync?
+        LogWithMetadata.generate(
+            newBlock.getHeader().getNumber(), newBlock.getHash(), listOfTxHashes, receipts, false),
         receipts);
   }
 
@@ -723,7 +729,9 @@ public class DefaultBlockchain implements MutableBlockchain {
     // Update indexed transactions
     newTransactions.forEach(
         (blockHash, transactionsInBlock) -> {
-          indexTransactionsForBlock(updater, blockHash, transactionsInBlock);
+          final List<Hash> listOfTxHashes =
+              transactionsInBlock.stream().map(Transaction::getHash).toList();
+          indexTransactionsForBlock(updater, blockHash, listOfTxHashes);
           // Don't remove transactions that are being re-indexed.
           removedTransactions.removeAll(transactionsInBlock);
         });
@@ -871,11 +879,10 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   private static void indexTransactionsForBlock(
-      final BlockchainStorage.Updater updater, final Hash blockHash, final List<Transaction> txs) {
-    for (int index = 0; index < txs.size(); index++) {
-      final Hash txHash = txs.get(index).getHash();
+      final BlockchainStorage.Updater updater, final Hash blockHash, final List<Hash> txsHashes) {
+    for (int index = 0; index < txsHashes.size(); index++) {
       final TransactionLocation loc = new TransactionLocation(blockHash, index);
-      updater.putTransactionLocation(txHash, loc);
+      updater.putTransactionLocation(txsHashes.get(index), loc);
     }
   }
 
