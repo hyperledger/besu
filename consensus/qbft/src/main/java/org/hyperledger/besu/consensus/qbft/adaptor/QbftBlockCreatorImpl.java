@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
 import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -30,7 +31,7 @@ import java.util.Collection;
 /** Besu implementation of a QbftBlockCreator which is responsible for creating QBFT blocks. */
 public class QbftBlockCreatorImpl implements QbftBlockCreator {
 
-  private final org.hyperledger.besu.ethereum.blockcreation.BlockCreator besuBlockCreator;
+  private final BlockCreator besuBlockCreator;
   private final BftExtraDataCodec bftExtraDataCodec;
 
   /**
@@ -40,8 +41,7 @@ public class QbftBlockCreatorImpl implements QbftBlockCreator {
    * @param bftExtraDataCodec the bftExtraDataCodec used to encode extra data for the new header
    */
   public QbftBlockCreatorImpl(
-      final org.hyperledger.besu.ethereum.blockcreation.BlockCreator besuBftBlockCreator,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BlockCreator besuBftBlockCreator, final BftExtraDataCodec bftExtraDataCodec) {
     this.besuBlockCreator = besuBftBlockCreator;
     this.bftExtraDataCodec = bftExtraDataCodec;
   }

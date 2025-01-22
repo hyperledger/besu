@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
-
 import java.util.Optional;
 
 /** Validates a block. */
@@ -24,11 +22,10 @@ public interface QbftBlockValidator {
   /**
    * Validates a block.
    *
-   * @param protocolContext the protocol context
    * @param block the block to validate
    * @return the validation result
    */
-  ValidationResult validateBlock(ProtocolContext protocolContext, QbftBlock block);
+  ValidationResult validateBlock(QbftBlock block);
 
   /**
    * The result of a block validation.

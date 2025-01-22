@@ -91,8 +91,7 @@ public class ProposalValidator {
         protocolSchedule.getByBlockHeader(msg.getBlock().getHeader()).getBlockValidator();
 
     final ProposalPayloadValidator payloadValidator =
-        new ProposalPayloadValidator(
-            expectedProposer, roundIdentifier, blockValidator, protocolContext);
+        new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator);
 
     if (!payloadValidator.validate(msg.getSignedPayload())) {
       LOG.info("{}: invalid proposal payload in proposal message", ERROR_PREFIX);

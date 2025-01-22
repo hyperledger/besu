@@ -101,7 +101,6 @@ public class MessageValidatorFactory {
         BftHelpers.calculateRequiredValidatorQuorum(validatorsForHeight.size()),
         chainHeight,
         validatorsForHeight,
-        protocolContext,
         protocolSchedule);
   }
 

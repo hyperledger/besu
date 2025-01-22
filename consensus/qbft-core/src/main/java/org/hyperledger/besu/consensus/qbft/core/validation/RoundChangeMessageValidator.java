@@ -26,7 +26,6 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,7 +44,6 @@ public class RoundChangeMessageValidator {
   private final long quorumMessageCount;
   private final long chainHeight;
   private final Collection<Address> validators;
-  private final ProtocolContext protocolContext;
   private final QbftProtocolSchedule protocolSchedule;
 
   /**
@@ -55,7 +53,6 @@ public class RoundChangeMessageValidator {
    * @param quorumMessageCount the quorum message count
    * @param chainHeight the chain height
    * @param validators the validators
-   * @param protocolContext the protocol context
    * @param protocolSchedule the protocol context
    */
   public RoundChangeMessageValidator(
@@ -63,13 +60,11 @@ public class RoundChangeMessageValidator {
       final long quorumMessageCount,
       final long chainHeight,
       final Collection<Address> validators,
-      final ProtocolContext protocolContext,
       final QbftProtocolSchedule protocolSchedule) {
     this.roundChangePayloadValidator = roundChangePayloadValidator;
     this.quorumMessageCount = quorumMessageCount;
     this.chainHeight = chainHeight;
     this.validators = validators;
-    this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
   }
 
@@ -98,7 +93,7 @@ public class RoundChangeMessageValidator {
     final QbftBlockValidator blockValidator =
         protocolSchedule.getByBlockHeader(block.getHeader()).getBlockValidator();
 
-    final var validationResult = blockValidator.validateBlock(protocolContext, block);
+    final var validationResult = blockValidator.validateBlock(block);
 
     if (!validationResult.success()) {
       LOG.info(

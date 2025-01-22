@@ -22,7 +22,6 @@ import org.hyperledger.besu.consensus.qbft.core.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -37,7 +36,6 @@ public class ProposalPayloadValidator {
   private final Address expectedProposer;
   private final ConsensusRoundIdentifier targetRound;
   private final QbftBlockValidator blockValidator;
-  private final ProtocolContext protocolContext;
 
   /**
    * Instantiates a new Proposal payload validator.
@@ -45,18 +43,15 @@ public class ProposalPayloadValidator {
    * @param expectedProposer the expected proposer
    * @param targetRound the target round
    * @param blockValidator the block validator
-   * @param protocolContext the protocol context
    */
   @VisibleForTesting
   public ProposalPayloadValidator(
       final Address expectedProposer,
       final ConsensusRoundIdentifier targetRound,
-      final QbftBlockValidator blockValidator,
-      final ProtocolContext protocolContext) {
+      final QbftBlockValidator blockValidator) {
     this.expectedProposer = expectedProposer;
     this.targetRound = targetRound;
     this.blockValidator = blockValidator;
-    this.protocolContext = protocolContext;
   }
 
   /**
@@ -95,7 +90,7 @@ public class ProposalPayloadValidator {
   private boolean validateBlock(final QbftBlock block) {
     checkState(blockValidator != null, "block validation not possible, no block validator.");
 
-    final var validationResult = blockValidator.validateBlock(protocolContext, block);
+    final var validationResult = blockValidator.validateBlock(block);
 
     if (!validationResult.success()) {
       LOG.info(

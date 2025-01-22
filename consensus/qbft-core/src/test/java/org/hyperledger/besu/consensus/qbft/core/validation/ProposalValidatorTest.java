@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.qbft.core.validation.ValidationTestHelpers.createEmptyRoundChangePayloads;
 import static org.hyperledger.besu.consensus.qbft.core.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
@@ -100,7 +99,7 @@ public class ProposalValidatorTest {
   public void setup() {
     validators = QbftNodeList.createNodes(VALIDATOR_COUNT, blockEncoder);
     // typically tests require the blockValidation to be successful
-    when(blockValidator.validateBlock(eq(protocolContext), any()))
+    when(blockValidator.validateBlock(any()))
         .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
 
     QbftContext qbftContext = new QbftContext(validatorProvider, blockInterface);
@@ -160,7 +159,7 @@ public class ProposalValidatorTest {
 
     reset(blockValidator);
 
-    when(blockValidator.validateBlock(eq(protocolContext), any()))
+    when(blockValidator.validateBlock(any()))
         .thenReturn(new QbftBlockValidator.ValidationResult(false, Optional.of("Failed")));
 
     assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
