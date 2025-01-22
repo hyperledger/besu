@@ -28,7 +28,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Wraps an EOA account and includes delegated code to be run on behalf of it. */
-public class DelegatedCodeAccount extends AbstractDelegatedCodeAccount implements Account {
+public class CodeDelegationAccount extends AbstractCodeDelegationAccount implements Account {
 
   private final Account wrappedAccount;
 
@@ -40,7 +40,7 @@ public class DelegatedCodeAccount extends AbstractDelegatedCodeAccount implement
    * @param codeDelegationAddress the address of the delegated code.
    * @param gasCalculator the gas calculator to check for precompiles.
    */
-  public DelegatedCodeAccount(
+  public CodeDelegationAccount(
       final WorldUpdater worldUpdater,
       final Account wrappedAccount,
       final Address codeDelegationAddress,
@@ -60,8 +60,8 @@ public class DelegatedCodeAccount extends AbstractDelegatedCodeAccount implement
   }
 
   @Override
-  public Optional<Address> delegatedCodeAddress() {
-    return super.delegatedCodeAddress();
+  public Optional<Address> codeDelegationAddress() {
+    return super.codeDelegationAddress();
   }
 
   @Override

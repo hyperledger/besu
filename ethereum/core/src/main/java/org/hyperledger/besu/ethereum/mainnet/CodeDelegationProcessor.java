@@ -130,7 +130,7 @@ public class CodeDelegationProcessor {
     } else {
       authority = maybeAuthorityAccount.get();
 
-      if (!evmWorldUpdater.authorizedCodeService().canSetDelegatedCode(authority)) {
+      if (!evmWorldUpdater.CodeDelegationService().canSetCodeDelegation(authority)) {
         return;
       }
 
@@ -150,8 +150,8 @@ public class CodeDelegationProcessor {
     }
 
     evmWorldUpdater
-        .authorizedCodeService()
-        .processDelegatedCodeAuthorization(authority, codeDelegation.address());
+        .CodeDelegationService()
+        .processCodeDelegationAuthorization(authority, codeDelegation.address());
     authority.incrementNonce();
   }
 }

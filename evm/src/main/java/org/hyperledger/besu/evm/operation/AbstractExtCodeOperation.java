@@ -17,7 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.worldstate.DelegateCodeHelper;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -50,13 +50,13 @@ abstract class AbstractExtCodeOperation extends AbstractOperation {
    * @param account The account
    * @return the code or the special 7702 designator
    */
-  protected static Bytes getCode(final Account account) {
+  protected Bytes getCode(final Account account) {
     if (account == null) {
       return Bytes.EMPTY;
     }
 
-    return account.hasDelegatedCode()
-        ? DelegateCodeHelper.getDelegatedCodeForRead()
+    return account.hasCodeDelegation()
+        ? CodeDelegationHelper.getCodeDelegationForRead()
         : account.getCode();
   }
 
@@ -67,9 +67,9 @@ abstract class AbstractExtCodeOperation extends AbstractOperation {
    * @param account The account
    * @return the code hash or the hash of the special 7702 designator
    */
-  protected static Hash getCodeHash(final Account account) {
-    if (account.hasDelegatedCode()) {
-      return Hash.hash(DelegateCodeHelper.getDelegatedCodeForRead());
+  protected Hash getCodeHash(final Account account) {
+    if (account.hasCodeDelegation()) {
+      return Hash.hash(CodeDelegationHelper.getCodeDelegationForRead());
     }
 
     return account.getCodeHash();
