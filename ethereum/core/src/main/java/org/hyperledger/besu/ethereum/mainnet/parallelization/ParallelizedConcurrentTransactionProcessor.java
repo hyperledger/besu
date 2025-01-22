@@ -48,7 +48,7 @@ import com.google.common.annotations.VisibleForTesting;
  * checks for potential conflicts among transactions to ensure data integrity before applying the
  * results to the world state.
  */
-@SuppressWarnings({"unchecked", "rawtypes", "FieldCanBeLocal", "unused"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class ParallelizedConcurrentTransactionProcessor {
 
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
@@ -158,7 +158,7 @@ public class ParallelizedConcurrentTransactionProcessor {
               transactionProcessor.processTransaction(
                   roundWorldStateUpdater,
                   blockHeader,
-                  transaction,
+                  transaction.detachedCopy(),
                   miningBeneficiary,
                   new OperationTracer() {
                     @Override
