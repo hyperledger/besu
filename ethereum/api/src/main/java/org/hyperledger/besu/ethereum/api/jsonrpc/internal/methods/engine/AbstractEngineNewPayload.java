@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,9 +22,9 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getRequestsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
+import static org.hyperledger.besu.metrics.BesuMetricCategory.BLOCK_PROCESSING;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.RequestType;
@@ -62,6 +62,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.security.InvalidParameterException;
@@ -70,7 +71,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -86,6 +86,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
   private final MergeMiningCoordinator mergeCoordinator;
   private final EthPeers ethPeers;
+  private long lastExecutionTime = 0L;
 
   public AbstractEngineNewPayload(
       final Vertx vertx,
@@ -93,10 +94,16 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EthPeers ethPeers,
-      final EngineCallListener engineCallListener) {
+      final EngineCallListener engineCallListener,
+      final MetricsSystem metricsSystem) {
     super(vertx, protocolSchedule, protocolContext, engineCallListener);
     this.mergeCoordinator = mergeCoordinator;
     this.ethPeers = ethPeers;
+    metricsSystem.createLongGauge(
+        BLOCK_PROCESSING,
+        "execution_time_head",
+        "The execution time of the last block (head)",
+        this::getLastExecutionTime);
   }
 
   @Override
@@ -222,20 +229,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           blockParam.getTransactions().stream()
               .map(Bytes::fromHexString)
               .map(in -> TransactionDecoder.decodeOpaqueBytes(in, EncodingContext.BLOCK_BODY))
-              .collect(Collectors.toList());
-      transactions.forEach(
-          transaction ->
-              mergeCoordinator
-                  .getEthScheduler()
-                  .scheduleTxWorkerTask(
-                      () -> {
-                        Address sender = transaction.getSender();
-                        LOG.atTrace()
-                            .setMessage("The sender for transaction {} is calculated : {}")
-                            .addArgument(transaction::getHash)
-                            .addArgument(sender)
-                            .log();
-                      }));
+              .toList();
+      precomputeSenders(transactions);
     } catch (final RLPException | IllegalArgumentException e) {
       return respondWithInvalid(
           reqId,
@@ -279,7 +274,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsHash).orElse(null),
-            null, // TODO SLD EIP-7742 wiring in future PR
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -361,8 +355,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     // execute block and return result response
     final long startTimeMs = System.currentTimeMillis();
     final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
-
     if (executionResult.isSuccessful()) {
+      lastExecutionTime = System.currentTimeMillis() - startTimeMs;
       logImportedBlockInfo(
           block,
           blobTransactions.stream()
@@ -370,7 +364,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .flatMap(Optional::stream)
               .mapToInt(List::size)
               .sum(),
-          (System.currentTimeMillis() - startTimeMs) / 1000.0,
+          lastExecutionTime / 1000.0,
           executionResult.getNbParallelizedTransations());
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
@@ -389,6 +383,47 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           latestValidAncestor.get(),
           INVALID,
           executionResult.errorMessage.get());
+    }
+  }
+
+  private void precomputeSenders(final List<Transaction> transactions) {
+    transactions.forEach(
+        transaction -> {
+          mergeCoordinator
+              .getEthScheduler()
+              .scheduleTxWorkerTask(
+                  () -> {
+                    final var sender = transaction.getSender();
+                    LOG.atTrace()
+                        .setMessage("The sender for transaction {} is calculated : {}")
+                        .addArgument(transaction::getHash)
+                        .addArgument(sender)
+                        .log();
+                  });
+          if (transaction.getType().supportsDelegateCode()) {
+            precomputeAuthorities(transaction);
+          }
+        });
+  }
+
+  private void precomputeAuthorities(final Transaction transaction) {
+    final var codeDelegations = transaction.getCodeDelegationList().get();
+    int index = 0;
+    for (final var codeDelegation : codeDelegations) {
+      final var constIndex = index++;
+      mergeCoordinator
+          .getEthScheduler()
+          .scheduleTxWorkerTask(
+              () -> {
+                final var authority = codeDelegation.authorizer();
+                LOG.atTrace()
+                    .setMessage(
+                        "The code delegation authority at index {} for transaction {} is calculated : {}")
+                    .addArgument(constIndex)
+                    .addArgument(transaction::getHash)
+                    .addArgument(authority)
+                    .log();
+              });
     }
   }
 
@@ -560,8 +595,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     return maybeRequestsParam.map(
         requests ->
-            IntStream.range(0, requests.size())
-                .mapToObj(i -> new Request(RequestType.of(i), Bytes.fromHexString(requests.get(i))))
+            requests.stream()
+                .map(
+                    s -> {
+                      final Bytes request = Bytes.fromHexString(s);
+                      return new Request(RequestType.of(request.get(0)), request.slice(1));
+                    })
                 .collect(Collectors.toList()));
   }
 
@@ -601,5 +640,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     message.append("| peers: %2d");
     messageArgs.add(ethPeers.peerCount());
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
+  }
+
+  private long getLastExecutionTime() {
+    return this.lastExecutionTime;
   }
 }

@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -103,7 +103,7 @@ public class ParallelizedConcurrentTransactionProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final Address miningBeneficiary,
-      final BlockHashOperation.BlockHashLookup blockHashLookup,
+      final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
       final PrivateMetadataUpdater privateMetadataUpdater) {
 
@@ -136,7 +136,7 @@ public class ParallelizedConcurrentTransactionProcessor {
       final int transactionLocation,
       final Transaction transaction,
       final Address miningBeneficiary,
-      final BlockHashOperation.BlockHashLookup blockHashLookup,
+      final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
       final PrivateMetadataUpdater privateMetadataUpdater) {
 

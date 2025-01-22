@@ -28,7 +28,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Wraps an EOA account and includes delegated code to be run on behalf of it. */
-public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Account {
+public class DelegatedCodeAccount extends AbstractDelegatedCodeAccount implements Account {
 
   private final Account wrappedAccount;
 
@@ -81,17 +81,12 @@ public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Ac
 
   @Override
   public Bytes getCode() {
-    return super.getCode();
-  }
-
-  @Override
-  public Bytes getUnprocessedCode() {
     return wrappedAccount.getCode();
   }
 
   @Override
   public Hash getCodeHash() {
-    return super.getCodeHash();
+    return wrappedAccount.getCodeHash();
   }
 
   @Override
@@ -106,7 +101,7 @@ public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Ac
 
   @Override
   public boolean isEmpty() {
-    return getDelegatedNonce() == 0 && getDelegatedBalance().isZero() && !hasCode();
+    return wrappedAccount.isEmpty();
   }
 
   @Override
@@ -118,10 +113,5 @@ public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Ac
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
     return wrappedAccount.storageEntriesFrom(startKeyHash, limit);
-  }
-
-  @Override
-  public boolean hasDelegatedCode() {
-    return true;
   }
 }

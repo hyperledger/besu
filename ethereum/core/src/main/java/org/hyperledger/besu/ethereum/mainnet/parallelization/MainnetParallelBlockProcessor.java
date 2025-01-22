@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -99,7 +99,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final Address miningBeneficiary,
       final Transaction transaction,
       final int location,
-      final BlockHashOperation.BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup) {
 
     TransactionProcessingResult transactionProcessingResult = null;
 
@@ -160,8 +160,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
 
     if (blockProcessingResult.isFailed()) {
       // Fallback to non-parallel processing if there is a block processing exception .
-      LOG.warn(
-          "Block processing failed. Falling back to non-parallel processing for block #{} ({})",
+      LOG.info(
+          "Parallel transaction processing failure. Falling back to non-parallel processing for block #{} ({})",
           blockHeader.getNumber(),
           blockHeader.getBlockHash());
       return super.processBlock(
@@ -219,7 +219,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         final BlockHeader blockHeader,
         final List<Transaction> transactions,
         final Address miningBeneficiary,
-        final BlockHashOperation.BlockHashLookup blockHashLookup,
+        final BlockHashLookup blockHashLookup,
         final Wei blobGasPrice) {
       if ((protocolContext.getWorldStateArchive() instanceof DiffBasedWorldStateProvider)) {
         ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor =

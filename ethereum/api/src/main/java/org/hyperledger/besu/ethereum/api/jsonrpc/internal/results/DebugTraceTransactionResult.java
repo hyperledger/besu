@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,10 +36,10 @@ public class DebugTraceTransactionResult {
   public DebugTraceTransactionResult(final TransactionTrace transactionTrace) {
     gas = transactionTrace.getGas();
     returnValue = transactionTrace.getResult().getOutput().toString().substring(2);
-    structLogs =
-        transactionTrace.getTraceFrames().stream()
-            .map(DebugTraceTransactionResult::createStructLog)
-            .collect(Collectors.toList());
+    structLogs = new ArrayList<>(transactionTrace.getTraceFrames().size());
+    transactionTrace.getTraceFrames().parallelStream()
+        .map(DebugTraceTransactionResult::createStructLog)
+        .forEachOrdered(structLogs::add);
     failed = !transactionTrace.getResult().isSuccessful();
   }
 

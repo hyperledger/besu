@@ -15,6 +15,23 @@
     "terminalTotalDifficulty":0,
     "cancunTime":0,
     "pragueTime":0,
+    "blobSchedule": {
+      "cancun": {
+        "target": 3,
+        "max": 6,
+        "baseFeeUpdateFraction": 3338477
+      },
+      "prague": {
+        "target": 6,
+        "max": 9,
+        "baseFeeUpdateFraction": 5007716
+      },
+      "osaka": {
+        "target": 9,
+        "max": 12,
+        "baseFeeUpdateFraction": 5007716
+      }
+    },
     "clique": {
       "period": 5,
       "epoch": 30000
