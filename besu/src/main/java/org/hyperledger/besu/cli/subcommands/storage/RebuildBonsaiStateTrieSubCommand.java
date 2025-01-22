@@ -39,6 +39,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import graphql.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -102,12 +103,12 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
         System.exit(-1);
       }
 
-      final BlockHeader headHeader =
-          controller.getProtocolContext().getBlockchain().getChainHeadHeader();
-
       BlockHashAndStateRoot blockHashAndStateRoot = BlockHashAndStateRoot.create(overrideHashes);
 
       if (blockHashAndStateRoot == null) {
+        final BlockHeader headHeader =
+            controller.getProtocolContext().getBlockchain().getChainHeadHeader();
+
         worldStateStorage
             .getWorldStateRootHash()
             // we want state root hash to either be empty or same the same as chain head
@@ -123,27 +124,33 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
         blockHashAndStateRoot =
             new BlockHashAndStateRoot(headHeader.getBlockHash(), headHeader.getStateRoot());
       }
-
-      // rebuild trie:
-      var newHash = rebuildTrie(worldStateStorage);
-
-      // write state root and block hash from the header:
-      if (!blockHashAndStateRoot.stateRoot().equals(newHash)) {
-        LOG.error(
-            "Catastrophic: calculated state root {} after state rebuild, was expecting {}.",
-            newHash,
-            blockHashAndStateRoot.stateRoot());
-        if (overrideHashes == null) {
-          LOG.error(
-              "Refusing to write mismatched block hash and state root.  Node needs manual intervention.");
-          System.exit(-1);
-        } else {
-          LOG.error(
-              "Writing the override block hash and state root, but node likely needs manual intervention.");
-        }
-      }
-      writeStateRootAndBlockHash(blockHashAndStateRoot, worldStateStorage);
+      verifyAndRebuild(blockHashAndStateRoot, worldStateStorage);
     }
+  }
+
+  @VisibleForTesting
+  protected void verifyAndRebuild(
+      final BlockHashAndStateRoot blockHashAndStateRoot,
+      final BonsaiWorldStateKeyValueStorage worldStateStorage) {
+    // rebuild trie:
+    var newHash = rebuildTrie(worldStateStorage);
+
+    // write state root and block hash from the header:
+    if (!blockHashAndStateRoot.stateRoot().equals(newHash)) {
+      LOG.error(
+          "Catastrophic: calculated state root {} after state rebuild, was expecting {}.",
+          newHash,
+          blockHashAndStateRoot.stateRoot());
+      if (overrideHashes == null) {
+        LOG.error(
+            "Refusing to write mismatched block hash and state root.  Node needs manual intervention.");
+        System.exit(-1);
+      } else {
+        LOG.error(
+            "Writing the override block hash and state root, but node likely needs manual intervention.");
+      }
+    }
+    writeStateRootAndBlockHash(blockHashAndStateRoot, worldStateStorage);
   }
 
   Hash rebuildTrie(final BonsaiWorldStateKeyValueStorage worldStateStorage) {
@@ -330,8 +337,8 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
       if (comboString != null) {
         var hashArray = comboString.split(":", 2);
         try {
-          return new BlockHashAndStateRoot(Hash.fromHexString(hashArray[0]),
-              Hash.fromHexString(hashArray[1]));
+          return new BlockHashAndStateRoot(
+              Hash.fromHexString(hashArray[0]), Hash.fromHexString(hashArray[1]));
         } catch (Exception ex) {
           System.err.println("failed parsing supplied block hash and stateroot " + ex.getMessage());
         }

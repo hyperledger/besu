@@ -77,9 +77,33 @@ public class RebuildBonsaiStateTrieSubCommandTest {
   }
 
   @Test
+  public void assertOverrideBlockHashAndStateRoot() {
+    var worldstate = (BonsaiWorldState) archive.getMutable();
+    var headRootHash = worldstate.rootHash();
+    var override = new BlockHashAndStateRoot(Hash.ZERO, headRootHash);
+
+    // rebuild the trie, should not complain about block hash mismatch:
+    command.verifyAndRebuild(override, worldstate.getWorldStateStorage());
+
+    // assert new storage:
+    var newStorage = worldstate.getWorldStateStorage();
+    var newRoot = newStorage.getWorldStateRootHash();
+    var newBlockHash = newStorage.getWorldStateBlockHash();
+
+    assertThat(newRoot).isPresent();
+    assertThat(newRoot.get()).isEqualTo(override.stateRoot());
+    assertThat(newBlockHash).isPresent();
+    assertThat(newBlockHash.get()).isEqualTo(override.blockHash());
+  }
+
+  @Test
   public void assertBlockHashAndStateRootParsing() {
 
     assertThat(BlockHashAndStateRoot.create("0xdeadbeef:0xdeadbeef")).isNull();
+    assertThat(BlockHashAndStateRoot.create(Hash.EMPTY + "::" + Hash.EMPTY_TRIE_HASH)).isNull();
+    assertThat(BlockHashAndStateRoot.create("" + Hash.EMPTY + Hash.EMPTY_TRIE_HASH)).isNull();
+    assertThat(BlockHashAndStateRoot.create(Hash.EMPTY + ":" + Hash.EMPTY_TRIE_HASH + ":"))
+        .isNull();
 
     var mockVal = BlockHashAndStateRoot.create(Hash.EMPTY + ":" + Hash.EMPTY_TRIE_HASH);
     assertThat(mockVal).isNotNull();
