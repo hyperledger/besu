@@ -53,7 +53,7 @@ public class EVMWorldUpdater implements WorldUpdater {
    *
    * @return the code delegation service
    */
-  public CodeDelegationService CodeDelegationService() {
+  public CodeDelegationService codeDelegationService() {
     return codeDelegationService;
   }
 

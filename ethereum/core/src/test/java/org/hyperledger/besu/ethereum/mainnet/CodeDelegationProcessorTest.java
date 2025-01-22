@@ -95,7 +95,7 @@ class CodeDelegationProcessorTest {
   @Test
   void shouldProcessValidDelegationForNewAccount() {
     // Arrange
-    when(worldUpdater.CodeDelegationService()).thenReturn(authorizedCodeService);
+    when(worldUpdater.codeDelegationService()).thenReturn(authorizedCodeService);
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 0L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
     when(worldUpdater.getAccount(any())).thenReturn(null);
@@ -115,7 +115,7 @@ class CodeDelegationProcessorTest {
   @Test
   void shouldProcessValidDelegationForExistingAccount() {
     // Arrange
-    when(worldUpdater.CodeDelegationService()).thenReturn(authorizedCodeService);
+    when(worldUpdater.codeDelegationService()).thenReturn(authorizedCodeService);
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 1L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
     when(worldUpdater.getAccount(any())).thenReturn(authority);
@@ -135,7 +135,7 @@ class CodeDelegationProcessorTest {
   @Test
   void shouldRejectDelegationWithInvalidNonce() {
     // Arrange
-    when(worldUpdater.CodeDelegationService()).thenReturn(authorizedCodeService);
+    when(worldUpdater.codeDelegationService()).thenReturn(authorizedCodeService);
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 2L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
     when(worldUpdater.getAccount(any())).thenReturn(authority);
@@ -207,7 +207,7 @@ class CodeDelegationProcessorTest {
   @Test
   void shouldRejectDelegationWhenCannotSetCodeDelegation() {
     // Arrange
-    when(worldUpdater.CodeDelegationService()).thenReturn(authorizedCodeService);
+    when(worldUpdater.codeDelegationService()).thenReturn(authorizedCodeService);
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 1L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
     when(worldUpdater.getAccount(any())).thenReturn(authority);
