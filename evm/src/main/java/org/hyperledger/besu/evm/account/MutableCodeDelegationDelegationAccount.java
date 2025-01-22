@@ -35,7 +35,7 @@ public class MutableCodeDelegationDelegationAccount extends AbstractCodeDelegati
   private final MutableAccount wrappedAccount;
 
   /**
-   * Creates a new MutableAuthorizedCodeAccount.
+   * Creates a new MutableCodeDelegationDelegationAccount.
    *
    * @param worldUpdater the world updater.
    * @param wrappedAccount the account that has delegated code to be loaded into it.

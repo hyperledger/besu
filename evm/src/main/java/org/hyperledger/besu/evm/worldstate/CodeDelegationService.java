@@ -47,9 +47,9 @@ public class CodeDelegationService {
    * @param account the account to which the delegated code is added.
    * @param codeDelegationAddress the address of the target of the authorization.
    */
-  public void processCodeDelegationAuthorization(
+  public void processCodeDelegation(
       final MutableAccount account, final Address codeDelegationAddress) {
-    // authorization to zero address removes any delegated code
+    // code delegation to zero address removes any delegated code
     if (codeDelegationAddress.equals(Address.ZERO)) {
       account.setCode(Bytes.EMPTY);
       return;

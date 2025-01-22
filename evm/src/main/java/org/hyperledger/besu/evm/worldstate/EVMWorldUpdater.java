@@ -26,7 +26,7 @@ import java.util.Optional;
 
 /**
  * The EVM world updater. This class is a wrapper around a WorldUpdater that provides an
- * AuthorizedCodeService to manage the authorized code for accounts.
+ * CodeDelegationService to manage the code delegations for accounts.
  */
 public class EVMWorldUpdater implements WorldUpdater {
   private final WorldUpdater rootWorldUpdater;
@@ -49,9 +49,9 @@ public class EVMWorldUpdater implements WorldUpdater {
   }
 
   /**
-   * Authorized code service.
+   * Code delegation service.
    *
-   * @return the authorized code service
+   * @return the code delegation service
    */
   public CodeDelegationService CodeDelegationService() {
     return codeDelegationService;

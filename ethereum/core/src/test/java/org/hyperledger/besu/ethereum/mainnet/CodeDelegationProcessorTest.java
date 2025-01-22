@@ -109,7 +109,7 @@ class CodeDelegationProcessorTest {
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(worldUpdater).createAccount(any());
     verify(authority).incrementNonce();
-    verify(authorizedCodeService).processCodeDelegationAuthorization(authority, DELEGATE_ADDRESS);
+    verify(authorizedCodeService).processCodeDelegation(authority, DELEGATE_ADDRESS);
   }
 
   @Test
@@ -129,7 +129,7 @@ class CodeDelegationProcessorTest {
     assertThat(result.alreadyExistingDelegators()).isEqualTo(1);
     verify(worldUpdater, never()).createAccount(any());
     verify(authority).incrementNonce();
-    verify(authorizedCodeService).processCodeDelegationAuthorization(authority, DELEGATE_ADDRESS);
+    verify(authorizedCodeService).processCodeDelegation(authority, DELEGATE_ADDRESS);
   }
 
   @Test
@@ -147,7 +147,7 @@ class CodeDelegationProcessorTest {
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(authority, never()).incrementNonce();
-    verify(authorizedCodeService, never()).processCodeDelegationAuthorization(any(), any());
+    verify(authorizedCodeService, never()).processCodeDelegation(any(), any());
   }
 
   @Test
@@ -163,7 +163,7 @@ class CodeDelegationProcessorTest {
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(authority, never()).incrementNonce();
-    verify(authorizedCodeService, never()).processCodeDelegationAuthorization(any(), any());
+    verify(authorizedCodeService, never()).processCodeDelegation(any(), any());
   }
 
   @Test
@@ -181,7 +181,7 @@ class CodeDelegationProcessorTest {
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(authority, never()).incrementNonce();
-    verify(authorizedCodeService, never()).processCodeDelegationAuthorization(any(), any());
+    verify(authorizedCodeService, never()).processCodeDelegation(any(), any());
   }
 
   @Test
@@ -201,7 +201,7 @@ class CodeDelegationProcessorTest {
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(authority, never()).incrementNonce();
-    verify(authorizedCodeService, never()).processCodeDelegationAuthorization(any(), any());
+    verify(authorizedCodeService, never()).processCodeDelegation(any(), any());
   }
 
   @Test
@@ -219,7 +219,7 @@ class CodeDelegationProcessorTest {
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(authority, never()).incrementNonce();
-    verify(authorizedCodeService, never()).processCodeDelegationAuthorization(any(), any());
+    verify(authorizedCodeService, never()).processCodeDelegation(any(), any());
   }
 
   private CodeDelegation createCodeDelegation(final BigInteger chainId, final long nonce) {

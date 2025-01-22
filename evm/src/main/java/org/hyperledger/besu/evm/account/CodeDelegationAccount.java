@@ -33,7 +33,7 @@ public class CodeDelegationAccount extends AbstractCodeDelegationAccount impleme
   private final Account wrappedAccount;
 
   /**
-   * Creates a new AuthorizedCodeAccount.
+   * Creates a new CodeDelegationAccount.
    *
    * @param worldUpdater the world updater.
    * @param wrappedAccount the account that has delegated code to be loaded into it.
