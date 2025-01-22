@@ -55,7 +55,7 @@ abstract class AbstractExtCodeOperation extends AbstractOperation {
       return Bytes.EMPTY;
     }
 
-    return account.hasCodeDelegation()
+    return account.hasDelegatedCode()
         ? CodeDelegationHelper.getCodeDelegationForRead()
         : account.getCode();
   }
@@ -68,7 +68,7 @@ abstract class AbstractExtCodeOperation extends AbstractOperation {
    * @return the code hash or the hash of the special 7702 designator
    */
   protected Hash getCodeHash(final Account account) {
-    if (account.hasCodeDelegation()) {
+    if (account.hasDelegatedCode()) {
       return Hash.hash(CodeDelegationHelper.getCodeDelegationForRead());
     }
 
