@@ -25,12 +25,11 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.worldstate.DelegateCodeHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code copy operation. */
-public class ExtCodeCopyOperation extends AbstractOperation {
+public class ExtCodeCopyOperation extends AbstractExtCodeOperation {
 
   /** This is the "code" legacy contracts see when copying code from an EOF contract. */
   public static final Bytes EOF_REPLACEMENT_CODE = Bytes.fromHexString("0xef00");
@@ -107,15 +106,5 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     }
 
     return new OperationResult(cost, null);
-  }
-
-  private static Bytes getCode(final Account account) {
-    if (account == null) {
-      return Bytes.EMPTY;
-    }
-
-    return account.hasDelegatedCode()
-        ? DelegateCodeHelper.getDelegatedCodeForRead()
-        : account.getCode();
   }
 }
