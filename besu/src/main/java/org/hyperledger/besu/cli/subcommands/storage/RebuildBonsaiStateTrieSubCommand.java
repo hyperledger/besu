@@ -67,7 +67,7 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
       description =
           "when rebuilding the state trie, force the usage of the specified blockhash:stateroot.  "
               + "This will bypass block header and worldstate checks.  "
-              + "e.g. --override-blockhash-and-stateroot=0xdeadbeef..deadbeef:0xc0ffee..coffee",
+              + "e.g. --override-blockhash-and-stateroot=0xdeadbeef..deadbeef:0xc0ffee..c0ffee",
       arity = "1..1")
   private String overrideHashes = null;
 
@@ -128,6 +128,12 @@ public class RebuildBonsaiStateTrieSubCommand implements Runnable {
     }
   }
 
+  /**
+   * entry point for testing, verify the block hash and state root and rebuild the trie.
+   *
+   * @param blockHashAndStateRoot record tuple for block hash and state root.
+   * @param worldStateStorage bonsai worldstate storage.
+   */
   @VisibleForTesting
   protected void verifyAndRebuild(
       final BlockHashAndStateRoot blockHashAndStateRoot,
