@@ -17,14 +17,12 @@ package org.hyperledger.besu.consensus.qbft.core.validation;
 import static com.google.common.collect.Iterables.toArray;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 import static org.hyperledger.besu.consensus.qbft.core.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.hyperledger.besu.consensus.qbft.core.validation.ValidationTestHelpers.createPreparedCertificate;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
@@ -43,8 +41,6 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -70,7 +66,6 @@ public class RoundChangeMessageValidatorTest {
   @Mock private QbftProtocolSpec protocolSpec;
   @Mock private BftExtraDataCodec bftExtraDataCodec;
   @Mock private QbftBlockCodec blockEncoder;
-  private ProtocolContext protocolContext;
 
   private RoundChangeMessageValidator messageValidator;
   private QbftNodeList validators;
@@ -83,12 +78,6 @@ public class RoundChangeMessageValidatorTest {
 
   @BeforeEach
   public void setup() {
-    protocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataCodec),
-            new BadBlockManager());
     validators = QbftNodeList.createNodes(VALIDATOR_COUNT, blockEncoder);
 
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);

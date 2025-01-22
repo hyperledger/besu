@@ -127,8 +127,7 @@ public class BftFinalState {
    * @return true if the local node is a validator, false otherwise
    */
   public boolean isLocalNodeValidator() {
-    final boolean isValidator = getValidators().contains(localAddress);
-    return isValidator;
+    return getValidators().contains(localAddress);
   }
 
   /**
