@@ -55,9 +55,9 @@ Instructions for how to get started with developing on the Besu codebase. Please
 
 ## Special thanks
 
-YourKit for providing us with a free profiler open source license. 
+YourKit for providing us with a free profiler open-source license. 
 
-YourKit supports open source projects with innovative and intelligent tools
+YourKit supports open-source projects with innovative and intelligent tools
 for monitoring and profiling Java and .NET applications.
 YourKit is the creator of <a href="https://www.yourkit.com/java/profiler/">YourKit Java Profiler</a>,
 <a href="https://www.yourkit.com/.net/profiler/">YourKit .NET Profiler</a>,
