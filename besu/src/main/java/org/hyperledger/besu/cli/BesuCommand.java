@@ -1603,7 +1603,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             this.commandLine,
             "--Xchain-pruning-blocks-retained must be >= epochlength("
                 + genesisConfigOptions.getQbftConfigOptions().getEpochLength()
-                + ") for QBFT networks");
+                + ") for POA(ibft,qbft,clique) networks");
       }
     }
   }
