@@ -35,6 +35,7 @@ import org.apache.tuweni.bytes.MutableBytes;
 public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 96;
+  public static final String PRECOMPILE_NAME = "AltBN128Mul";
 
   private static final BigInteger MAX_N =
       new BigInteger(
@@ -47,7 +48,7 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
 
   private AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(
-        "AltBN128Mul",
+        PRECOMPILE_NAME,
         gasCalculator,
         LibGnarkEIP196.EIP196_MUL_OPERATION_RAW_VALUE,
         PARAMETER_LENGTH);
@@ -85,10 +86,19 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
     PrecompileInputResultTuple res;
+    Integer cacheKey = null;
     if (enableResultCaching) {
-      res = bnMulCache.getIfPresent(input.hashCode());
-      if (res != null && res.cachedInput().equals(input)) {
-        return res.cachedResult();
+      cacheKey = Arrays.hashCode(input.toArrayUnsafe());
+      res = bnMulCache.getIfPresent(cacheKey);
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
       }
     }
 
@@ -102,8 +112,8 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     } else {
       res = new PrecompileInputResultTuple(input, computeDefault(input));
     }
-    if (enableResultCaching) {
-      bnMulCache.put(input.hashCode(), res);
+    if (cacheKey != null) {
+      bnMulCache.put(cacheKey, res);
     }
     return res.cachedResult();
   }

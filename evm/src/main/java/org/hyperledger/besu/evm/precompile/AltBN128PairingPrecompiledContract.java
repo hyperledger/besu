@@ -41,6 +41,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
 
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
+  public static final String PRECOMPILE_NAME = "AltBN128Pairing";
   private static final Cache<Integer, PrecompileInputResultTuple> bnPairingCache =
       Caffeine.newBuilder()
           .maximumWeight(16_000_000)
@@ -61,7 +62,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
   private AltBN128PairingPrecompiledContract(
       final GasCalculator gasCalculator, final long pairingGasCost, final long baseGasCost) {
     super(
-        "AltBN128Pairing",
+        PRECOMPILE_NAME,
         gasCalculator,
         LibGnarkEIP196.EIP196_PAIR_OPERATION_RAW_VALUE,
         Integer.MAX_VALUE / PARAMETER_LENGTH * PARAMETER_LENGTH);
@@ -107,10 +108,19 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
     PrecompileInputResultTuple res;
+    Integer cacheKey = null;
     if (enableResultCaching) {
-      res = bnPairingCache.getIfPresent(input.hashCode());
-      if (res != null && res.cachedInput().equals(input)) {
-        return res.cachedResult();
+      cacheKey = Arrays.hashCode(input.toArrayUnsafe());
+      res = bnPairingCache.getIfPresent(cacheKey);
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
       }
     }
     if (useNative) {
@@ -118,8 +128,8 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
     } else {
       res = new PrecompileInputResultTuple(input, computeDefault(input));
     }
-    if (enableResultCaching) {
-      bnPairingCache.put(input.hashCode(), res);
+    if (cacheKey != null) {
+      bnPairingCache.put(cacheKey, res);
     }
 
     return res.cachedResult();
