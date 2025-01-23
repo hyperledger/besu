@@ -23,7 +23,6 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt64;
 
 /** A block header capable of being processed. */
 public class ProcessableBlockHeader
@@ -47,8 +46,6 @@ public class ProcessableBlockHeader
   protected final Bytes32 mixHashOrPrevRandao;
   // parentBeaconBlockRoot is included for Cancun
   protected final Bytes32 parentBeaconBlockRoot;
-  // TODO SLD Quantity or UInt64Value<UInt64> instead?
-  protected final UInt64 targetBlobsPerBlock;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -59,8 +56,7 @@ public class ProcessableBlockHeader
       final long timestamp,
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
-      final Bytes32 parentBeaconBlockRoot,
-      final UInt64 targetBlobsPerBlock) {
+      final Bytes32 parentBeaconBlockRoot) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -70,7 +66,6 @@ public class ProcessableBlockHeader
     this.baseFee = baseFee;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
-    this.targetBlobsPerBlock = targetBlobsPerBlock;
   }
 
   /**
@@ -183,17 +178,25 @@ public class ProcessableBlockHeader
     return Optional.ofNullable(parentBeaconBlockRoot);
   }
 
-  /**
-   * Returns the target blobs per block if available.
-   *
-   * @return the target blobs per block if available.
-   */
-  @Override
-  public Optional<UInt64> getTargetBlobsPerBlock() {
-    return Optional.ofNullable(targetBlobsPerBlock);
-  }
-
   public String toLogString() {
     return getNumber() + " (time: " + getTimestamp() + ")";
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("ProcessableBlockHeader{");
+    sb.append("number=").append(number).append(", ");
+    sb.append("parentHash=").append(parentHash).append(", ");
+    sb.append("coinbase=").append(coinbase).append(", ");
+    sb.append("difficulty=").append(difficulty).append(", ");
+    sb.append("gasLimit=").append(gasLimit).append(", ");
+    sb.append("timestamp=").append(timestamp).append(", ");
+    sb.append("baseFee=").append(baseFee).append(", ");
+    sb.append("mixHashOrPrevRandao=").append(mixHashOrPrevRandao).append(", ");
+    if (parentBeaconBlockRoot != null) {
+      sb.append("parentBeaconBlockRoot=").append(parentBeaconBlockRoot).append(", ");
+    }
+    return sb.append("}").toString();
   }
 }

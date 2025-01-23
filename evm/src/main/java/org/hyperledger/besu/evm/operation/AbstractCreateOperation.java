@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
-import static org.hyperledger.besu.evm.operation.AbstractCallOperation.LEGACY_FAILURE_STACK_ITEM;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -158,12 +157,18 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    */
   protected abstract Code getInitCode(MessageFrame frame, EVM evm);
 
-  private void fail(final MessageFrame frame) {
+  /**
+   * Handles stack items when operation fails for validation reasons (noe enough ether, bad eof
+   * code)
+   *
+   * @param frame the current execution frame
+   */
+  protected void fail(final MessageFrame frame) {
     final long inputOffset = clampedToLong(frame.getStackItem(1));
     final long inputSize = clampedToLong(frame.getStackItem(2));
     frame.readMutableMemory(inputOffset, inputSize);
     frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
+    frame.pushStackItem(Bytes.EMPTY);
   }
 
   private void spawnChildMessage(final MessageFrame parent, final Code code, final EVM evm) {
@@ -227,12 +232,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       } else {
         frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
         frame.setReturnData(childFrame.getOutputData());
-        frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
+        frame.pushStackItem(Bytes.EMPTY);
         onInvalid(frame, (CodeInvalid) outputCode);
       }
     } else {
       frame.setReturnData(childFrame.getOutputData());
-      frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
+      frame.pushStackItem(Bytes.EMPTY);
       onFailure(frame, childFrame.getExceptionalHaltReason());
     }
 

@@ -15,11 +15,14 @@
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,13 +125,22 @@ public class NormalBlockAdapter extends BlockAdapterBase {
    *
    * <p>Each TransactionAdapter object is created by adapting a TransactionWithMetadata object.
    *
+   * @param environment the data fetching environment.
    * @return a list of TransactionAdapter objects for the transactions in the block.
    */
-  public List<TransactionAdapter> getTransactions() {
+  public List<TransactionAdapter> getTransactions(final DataFetchingEnvironment environment) {
+    final BlockchainQueries query = getBlockchainQueries(environment);
+    final Hash hash = blockWithMetaData.getHeader().getHash();
+    final ProtocolSchedule protocolSchedule =
+        environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
+
     final List<TransactionWithMetadata> trans = blockWithMetaData.getTransactions();
+    final List<TransactionReceiptWithMetadata> transReceipts =
+        query.transactionReceiptsByBlockHash(hash, protocolSchedule).get();
+
     final List<TransactionAdapter> results = new ArrayList<>();
-    for (final TransactionWithMetadata tran : trans) {
-      results.add(new TransactionAdapter(tran));
+    for (int i = 0; i < trans.size(); i++) {
+      results.add(new TransactionAdapter(trans.get(i), transReceipts.get(i)));
     }
     return results;
   }

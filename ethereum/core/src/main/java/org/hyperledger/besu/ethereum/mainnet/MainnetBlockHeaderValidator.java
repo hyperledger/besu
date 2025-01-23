@@ -33,9 +33,10 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.NoNonceRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ProofOfWorkValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
-import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -197,8 +198,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new IncrementalTimestampRule());
   }
 
-  public static BlockHeaderValidator.Builder cancunBlockHeaderValidator(final FeeMarket feeMarket) {
+  public static BlockHeaderValidator.Builder blobAwareBlockHeaderValidator(
+      final FeeMarket feeMarket, final Supplier<GasCalculator> gasCalculator) {
     return mergeBlockHeaderValidator(feeMarket)
-        .addRule(new BlobGasValidationRule(new CancunGasCalculator()));
+        .addRule(new BlobGasValidationRule(gasCalculator.get()));
   }
 }

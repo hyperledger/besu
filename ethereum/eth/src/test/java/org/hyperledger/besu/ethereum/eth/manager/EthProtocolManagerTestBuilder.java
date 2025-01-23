@@ -17,12 +17,13 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -47,7 +48,7 @@ public class EthProtocolManagerTestBuilder {
   private static final ProtocolSchedule DEFAULT_PROTOCOL_SCHEDULE = ProtocolScheduleFixture.MAINNET;
 
   private ProtocolSchedule protocolSchedule;
-  private GenesisConfigFile genesisConfigFile;
+  private GenesisConfig genesisConfig;
   private GenesisState genesisState;
   private Blockchain blockchain;
   private BigInteger networkId;
@@ -63,6 +64,7 @@ public class EthProtocolManagerTestBuilder {
   private List<PeerValidator> peerValidators;
   private Optional<MergePeerFilter> mergePeerFilter;
   private SynchronizerConfiguration synchronizerConfiguration;
+  private PeerTaskExecutor peerTaskExecutor;
 
   public static EthProtocolManagerTestBuilder builder() {
     return new EthProtocolManagerTestBuilder();
@@ -74,9 +76,8 @@ public class EthProtocolManagerTestBuilder {
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setGenesisConfigFile(
-      final GenesisConfigFile genesisConfigFile) {
-    this.genesisConfigFile = genesisConfigFile;
+  public EthProtocolManagerTestBuilder setGenesisConfigFile(final GenesisConfig genesisConfig) {
+    this.genesisConfig = genesisConfig;
     return this;
   }
 
@@ -159,15 +160,21 @@ public class EthProtocolManagerTestBuilder {
     return this;
   }
 
+  public EthProtocolManagerTestBuilder setPeerTaskExecutor(
+      final PeerTaskExecutor peerTaskExecutor) {
+    this.peerTaskExecutor = peerTaskExecutor;
+    return this;
+  }
+
   public EthProtocolManager build() {
     if (protocolSchedule == null) {
       protocolSchedule = DEFAULT_PROTOCOL_SCHEDULE;
     }
-    if (genesisConfigFile == null) {
-      genesisConfigFile = GenesisConfigFile.mainnet();
+    if (genesisConfig == null) {
+      genesisConfig = GenesisConfig.mainnet();
     }
     if (genesisState == null) {
-      genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
+      genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     }
     if (blockchain == null) {
       blockchain = createInMemoryBlockchain(genesisState.getBlock());
@@ -215,8 +222,12 @@ public class EthProtocolManagerTestBuilder {
       ethScheduler =
           new DeterministicEthScheduler(DeterministicEthScheduler.TimeoutPolicy.NEVER_TIMEOUT);
     }
+    if (peerTaskExecutor == null) {
+      peerTaskExecutor = mock(PeerTaskExecutor.class);
+    }
     if (ethContext == null) {
-      ethContext = new EthContext(ethPeers, ethMessages, snapMessages, ethScheduler);
+      ethContext =
+          new EthContext(ethPeers, ethMessages, snapMessages, ethScheduler, peerTaskExecutor);
     }
     if (peerValidators == null) {
       peerValidators = Collections.emptyList();
