@@ -68,15 +68,27 @@ public abstract class AbstractPrecompiledContract implements PrecompiledContract
     enableResultCaching = enablePrecompileCaching;
   }
 
+  /**
+   * enum for precompile cache metric
+   */
   public enum CacheMetric {
+    /** a successful cache hit metric */
     HIT,
+    /** a cache miss metric */
     MISS,
+    /** a false positive cache hit metric */
     FALSE_POSITIVE
   }
 
+  /**
+   *  record type used for cache event
+   * @param precompile precompile name
+   * @param cacheMetric cache metric type (hit, miss, false positive).
+   */
   public record CacheEvent(String precompile, CacheMetric cacheMetric) {}
 
-  public static Consumer<CacheEvent> cacheEventConsumer = __ -> {};
+
+  static Consumer<CacheEvent> cacheEventConsumer = __ -> {};
 
   /**
    * Set an optional cache event consumer, such as a metrics system logger.

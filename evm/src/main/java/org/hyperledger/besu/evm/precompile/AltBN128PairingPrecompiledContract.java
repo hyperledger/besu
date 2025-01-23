@@ -41,7 +41,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
 
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
-  public static final String PRECOMPILE_NAME = "AltBN128Pairing";
+  private static final String PRECOMPILE_NAME = "AltBN128Pairing";
   private static final Cache<Integer, PrecompileInputResultTuple> bnPairingCache =
       Caffeine.newBuilder()
           .maximumWeight(16_000_000)

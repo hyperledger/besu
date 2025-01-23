@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(BLAKE2BFPrecompileContract.class);
-  public static final String PRECOMPILE_NAME = "BLAKE2f";
+  private static final String PRECOMPILE_NAME = "BLAKE2f";
   private static final Cache<Integer, PrecompileInputResultTuple> blakeCache =
       Caffeine.newBuilder().maximumSize(1000).build();
 

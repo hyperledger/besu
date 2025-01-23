@@ -41,7 +41,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
   private static final Logger LOG = LoggerFactory.getLogger(ECRECPrecompiledContract.class);
   private static final int V_BASE = 27;
   final SignatureAlgorithm signatureAlgorithm;
-  public static final String PRECOMPILE_NAME = "ECREC";
+  private static final String PRECOMPILE_NAME = "ECREC";
   private static final Cache<Integer, PrecompileInputResultTuple> ecrecCache =
       Caffeine.newBuilder().maximumSize(1000).build();
 
