@@ -35,7 +35,7 @@ import org.apache.tuweni.bytes.MutableBytes;
 public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 96;
-  public static final String PRECOMPILE_NAME = "AltBN128Mul";
+  private static final String PRECOMPILE_NAME = "AltBN128Mul";
 
   private static final BigInteger MAX_N =
       new BigInteger(
