@@ -169,9 +169,11 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
           .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
           .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
           .inBatches(headerRequestSize)
-          .thenProcessAsync("downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
-          .thenProcessAsync("downloadReceipts", downloadSyncReceiptsStep, downloaderParallelism)
-          .thenProcessAsync("importBlock", importSyncBlocksStep, downloaderParallelism + 2)
+          .thenProcessAsyncOrdered(
+              "downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
+          .thenProcessAsyncOrdered(
+              "downloadReceipts", downloadSyncReceiptsStep, downloaderParallelism)
+          .thenProcessAsyncOrdered("importBlock", importSyncBlocksStep, downloaderParallelism + 2)
           .andFinishWith("logBlock", LOG::debug);
     } else {
       final DownloadBodiesStep downloadBodiesStep =
