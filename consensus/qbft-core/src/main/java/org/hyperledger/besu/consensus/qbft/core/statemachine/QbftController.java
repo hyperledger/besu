@@ -126,7 +126,7 @@ public class QbftController implements BftEventHandler {
       default:
         throw new IllegalArgumentException(
             String.format(
-                "Received message with messageCode=%d does not conform to any recognised QBFT errorMessage structure",
+                "Received message with messageCode=%d does not conform to any recognised QBFT message structure",
                 message.getData().getCode()));
     }
   }

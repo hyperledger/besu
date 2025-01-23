@@ -18,7 +18,7 @@ package org.hyperledger.besu.consensus.qbft.core.types;
 public interface QbftBlockInterface {
 
   /**
-   * Create a new block with the same data except for the round number replaced which is replaced.
+   * Create a new block using the supplied block with round number replaced.
    *
    * @param proposalBlock the proposal block
    * @param roundNumber the round number
