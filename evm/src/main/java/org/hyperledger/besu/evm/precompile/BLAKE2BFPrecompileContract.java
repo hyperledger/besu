@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(BLAKE2BFPrecompileContract.class);
+  public static final String PRECOMPILE_NAME = "BLAKE2f";
   private static final Cache<Integer, PrecompileInputResultTuple> blakeCache =
       Caffeine.newBuilder().maximumSize(1000).build();
 
@@ -46,7 +48,7 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
    * @param gasCalculator the gas calculator
    */
   public BLAKE2BFPrecompileContract(final GasCalculator gasCalculator) {
-    super("BLAKE2f", gasCalculator);
+    super(PRECOMPILE_NAME, gasCalculator);
   }
 
   @Override
@@ -82,10 +84,19 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
     PrecompileInputResultTuple res = null;
+    Integer cacheKey = null;
     if (enableResultCaching) {
-      res = blakeCache.getIfPresent(input.hashCode());
-      if (res != null && res.cachedInput().equals(input)) {
-        return res.cachedResult();
+      cacheKey = Arrays.hashCode(input.toArrayUnsafe());
+      res = blakeCache.getIfPresent(cacheKey);
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
       }
     }
 
@@ -93,7 +104,7 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
         new PrecompileInputResultTuple(
             input, PrecompileContractResult.success(Hash.blake2bf(input)));
 
-    if (enableResultCaching) {
+    if (cacheKey != null) {
       blakeCache.put(input.hashCode(), res);
     }
 

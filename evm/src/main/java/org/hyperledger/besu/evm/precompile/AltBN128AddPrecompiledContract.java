@@ -35,6 +35,7 @@ import org.apache.tuweni.bytes.MutableBytes;
 public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 128;
+  public static final String PRECOMPILE_NAME = "AltBN128Add";
 
   private final long gasCost;
   private static final Cache<Integer, PrecompileInputResultTuple> bnAddCache =
@@ -42,7 +43,7 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
 
   private AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(
-        "AltBN128Add",
+        PRECOMPILE_NAME,
         gasCalculator,
         LibGnarkEIP196.EIP196_ADD_OPERATION_RAW_VALUE,
         PARAMETER_LENGTH);
@@ -80,11 +81,20 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
     PrecompileInputResultTuple res;
+    Integer cacheKey = null;
 
     if (enableResultCaching) {
-      res = bnAddCache.getIfPresent(input.hashCode());
-      if (res != null && res.cachedInput().equals(input)) {
-        return res.cachedResult();
+      cacheKey = Arrays.hashCode(input.toArrayUnsafe());
+      res = bnAddCache.getIfPresent(cacheKey);
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
       }
     }
     if (useNative) {
@@ -92,8 +102,8 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
     } else {
       res = new PrecompileInputResultTuple(input, computeDefault(input));
     }
-    if (enableResultCaching) {
-      bnAddCache.put(input.hashCode(), res);
+    if (cacheKey != null) {
+      bnAddCache.put(cacheKey, res);
     }
     return res.cachedResult();
   }
