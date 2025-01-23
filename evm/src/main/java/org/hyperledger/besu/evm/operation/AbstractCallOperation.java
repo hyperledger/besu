@@ -26,7 +26,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -191,24 +191,24 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Account contract = frame.getWorldUpdater().get(to);
 
-    if (contract != null && contract.hasDelegatedCode()) {
-      if (contract.getDelegatedCode().isEmpty()) {
+    if (contract != null && contract.hasCodeDelegation()) {
+      if (contract.getCodeDelegationTargetCode().isEmpty()) {
         throw new RuntimeException("A delegated code account must have delegated code");
       }
 
-      if (contract.getDelegatedCodeHash().isEmpty()) {
+      if (contract.getCodeDelegationTargetHash().isEmpty()) {
         throw new RuntimeException("A delegated code account must have a delegated code hash");
       }
 
-      final long delegatedCodeResolutionGas =
-          DelegatedCodeGasCostHelper.delegatedCodeGasCost(frame, gasCalculator(), contract);
+      final long codeDelegationResolutionGas =
+          CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract);
 
-      if (frame.getRemainingGas() < delegatedCodeResolutionGas) {
+      if (frame.getRemainingGas() < codeDelegationResolutionGas) {
         return new Operation.OperationResult(
-            delegatedCodeResolutionGas, ExceptionalHaltReason.INSUFFICIENT_GAS);
+            codeDelegationResolutionGas, ExceptionalHaltReason.INSUFFICIENT_GAS);
       }
 
-      frame.decrementRemainingGas(delegatedCodeResolutionGas);
+      frame.decrementRemainingGas(codeDelegationResolutionGas);
     }
 
     final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
@@ -357,8 +357,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return CodeV0.EMPTY_CODE;
     }
 
-    if (account.hasDelegatedCode()) {
-      return evm.getCode(account.getDelegatedCodeHash().get(), account.getDelegatedCode().get());
+    if (account.hasCodeDelegation()) {
+      return evm.getCode(
+          account.getCodeDelegationTargetHash().get(), account.getCodeDelegationTargetCode().get());
     }
 
     return evm.getCode(account.getCodeHash(), account.getCode());

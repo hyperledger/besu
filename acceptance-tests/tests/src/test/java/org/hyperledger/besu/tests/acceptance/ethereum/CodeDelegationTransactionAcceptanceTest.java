@@ -87,7 +87,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
   public void shouldTransferAllEthOfAuthorizerToSponsor() throws IOException {
 
     // 7702 transaction
-    final CodeDelegation authorization =
+    final CodeDelegation codeDelegation =
         org.hyperledger.besu.ethereum.core.CodeDelegation.builder()
             .chainId(BigInteger.valueOf(20211))
             .address(SEND_ALL_ETH_CONTRACT_ADDRESS)
@@ -108,7 +108,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
             .value(Wei.ZERO)
             .payload(Bytes32.leftPad(Bytes.fromHexString(transactionSponsor.getAddress())))
             .accessList(List.of())
-            .codeDelegations(List.of(authorization))
+            .codeDelegations(List.of(codeDelegation))
             .signAndBuild(
                 secp256k1.createKeyPair(
                     secp256k1.createPrivateKey(
@@ -143,7 +143,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
     final long GAS_LIMIT = 1_000_000L;
     cluster.verify(authorizer.balanceEquals(Amount.ether(90_000)));
 
-    final CodeDelegation authorization =
+    final CodeDelegation codeDelegation =
         org.hyperledger.besu.ethereum.core.CodeDelegation.builder()
             .chainId(BigInteger.valueOf(20211))
             .nonce(
@@ -166,7 +166,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
             .value(Wei.ZERO)
             .payload(Bytes32.leftPad(Bytes.fromHexString(otherAccount.getAddress())))
             .accessList(List.of())
-            .codeDelegations(List.of(authorization))
+            .codeDelegations(List.of(codeDelegation))
             .signAndBuild(
                 secp256k1.createKeyPair(
                     secp256k1.createPrivateKey(AUTHORIZER_PRIVATE_KEY.toUnsignedBigInteger())));
