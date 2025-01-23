@@ -1,0 +1,56 @@
+{
+  "config": {
+    "chainId":20211,
+    "homesteadBlock":0,
+    "eip150Block":0,
+    "eip155Block":0,
+    "eip158Block":0,
+    "byzantiumBlock":0,
+    "constantinopleBlock":0,
+    "petersburgBlock":0,
+    "istanbulBlock":0,
+    "muirGlacierBlock":0,
+    "berlinBlock":0,
+    "londonBlock":0,
+    "terminalTotalDifficulty":0,
+    "cancunTime":0,
+    "pragueTime":0,
+    "blobSchedule": {
+      "cancun": {
+        "target": 3,
+        "max": 6,
+        "baseFeeUpdateFraction": 3338477
+      },
+      "prague": {
+        "target": 6,
+        "max": 9,
+        "baseFeeUpdateFraction": 5007716
+      },
+      "osaka": {
+        "target": 9,
+        "max": 12,
+        "baseFeeUpdateFraction": 5007716
+      }
+    },
+    "ethash": {
+    },
+    "depositContractAddress": "0x4242424242424242424242424242424242424242",
+    "withdrawalRequestContractAddress": "0x00A3ca265EBcb825B45F985A16CEFB49958cE017",
+    "consolidationRequestContractAddress": "0x00b42dbF2194e931E80326D950320f7d9Dbeac02"
+  },
+  "nonce":"0x42",
+  "timestamp":"0x0",
+  "gasLimit":"0x1C9C380",
+  "difficulty":"0x400000000",
+  "coinbase":"0x0000000000000000000000000000000000000000",
+  "alloc":{
+    "a05b21E5186Ce93d2a226722b85D6e550Ac7D6E3": {
+      "privateKey": "3a4ff6d22d7502ef2452368165422861c01a0f72f851793b372b87888dc3c453",
+      "balance": "90000000000000000000000"
+    }
+  },
+  "number":"0x0",
+  "gasUsed":"0x0",
+  "parentHash":"0x0000000000000000000000000000000000000000000000000000000000000000",
+  "baseFeePerGas":"0x7"
+}

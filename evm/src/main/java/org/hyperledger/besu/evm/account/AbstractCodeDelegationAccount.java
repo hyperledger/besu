@@ -23,20 +23,20 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-abstract class AbstractDelegatedCodeAccount implements Account {
+abstract class AbstractCodeDelegationAccount implements Account {
   private final WorldUpdater worldUpdater;
   private final GasCalculator gasCalculator;
 
   /** The address of the account that has delegated code to be loaded into it. */
-  protected final Address delegatedCodeAddress;
+  protected final Address codeDelegationAddress;
 
-  protected AbstractDelegatedCodeAccount(
+  protected AbstractCodeDelegationAccount(
       final WorldUpdater worldUpdater,
-      final Address delegatedCodeAddress,
+      final Address codeDelegationAddress,
       final GasCalculator gasCalculator) {
     this.worldUpdater = worldUpdater;
     this.gasCalculator = gasCalculator;
-    this.delegatedCodeAddress = delegatedCodeAddress;
+    this.codeDelegationAddress = codeDelegationAddress;
   }
 
   /**
@@ -45,8 +45,8 @@ abstract class AbstractDelegatedCodeAccount implements Account {
    * @return the delegated code.
    */
   @Override
-  public Optional<Bytes> getDelegatedCode() {
-    return resolveDelegatedCode();
+  public Optional<Bytes> getCodeDelegationTargetCode() {
+    return resolveCodeDelegationTargetCode();
   }
 
   /**
@@ -55,8 +55,8 @@ abstract class AbstractDelegatedCodeAccount implements Account {
    * @return the hash of the delegated code.
    */
   @Override
-  public Optional<Hash> getDelegatedCodeHash() {
-    return getDelegatedCode().map(Hash::hash);
+  public Optional<Hash> getCodeDelegationTargetHash() {
+    return getCodeDelegationTargetCode().map(Hash::hash);
   }
 
   /**
@@ -65,8 +65,8 @@ abstract class AbstractDelegatedCodeAccount implements Account {
    * @return the address of the delegated code.
    */
   @Override
-  public Optional<Address> delegatedCodeAddress() {
-    return Optional.of(delegatedCodeAddress);
+  public Optional<Address> codeDelegationAddress() {
+    return Optional.of(codeDelegationAddress);
   }
 
   @Override
@@ -75,13 +75,13 @@ abstract class AbstractDelegatedCodeAccount implements Account {
   }
 
   private Optional<Account> getDelegatedAccount() {
-    return Optional.ofNullable(worldUpdater.getAccount(delegatedCodeAddress));
+    return Optional.ofNullable(worldUpdater.getAccount(codeDelegationAddress));
   }
 
-  private Optional<Bytes> resolveDelegatedCode() {
+  private Optional<Bytes> resolveCodeDelegationTargetCode() {
     final Optional<Account> maybeDelegatedAccount = getDelegatedAccount();
 
-    if (gasCalculator.isPrecompile(delegatedCodeAddress) || maybeDelegatedAccount.isEmpty()) {
+    if (gasCalculator.isPrecompile(codeDelegationAddress) || maybeDelegatedAccount.isEmpty()) {
       return Optional.of(Bytes.EMPTY);
     }
 
