@@ -42,7 +42,6 @@ import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -70,7 +69,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 public class GraphQLHttpsServiceTest {
@@ -456,31 +454,31 @@ public class GraphQLHttpsServiceTest {
   }
 
   @Test
-public void ethGetBlockNumberByBlockHash() throws Exception {
-  final long blockNumber = 12345L;
-  final Hash blockHash = Hash.hash(Bytes.of(1));
-  @SuppressWarnings("unchecked")
-  final BlockWithMetadata<TransactionWithMetadata, Hash> block =
-          Mockito.mock(BlockWithMetadata.class);
-  @SuppressWarnings("unchecked")
-  final BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
+  public void ethGetBlockNumberByBlockHash() throws Exception {
+    final long blockNumber = 12345L;
+    final Hash blockHash = Hash.hash(Bytes.of(1));
+    @SuppressWarnings("unchecked")
+    final BlockWithMetadata<TransactionWithMetadata, Hash> block =
+        Mockito.mock(BlockWithMetadata.class);
+    @SuppressWarnings("unchecked")
+    final BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
 
-  Mockito.when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(block));
-  Mockito.when(block.getHeader()).thenReturn(blockHeader);
-  Mockito.when(blockHeader.getNumber()).thenReturn(blockNumber);
+    Mockito.when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(block));
+    Mockito.when(block.getHeader()).thenReturn(blockHeader);
+    Mockito.when(blockHeader.getNumber()).thenReturn(blockNumber);
 
-  final String query = "{block(hash:\"" + blockHash + "\") {number}}";
+    final String query = "{block(hash:\"" + blockHash + "\") {number}}";
 
-  final RequestBody body = RequestBody.create(query, GRAPHQL);
-  try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-    Assertions.assertThat(resp.code()).isEqualTo(200);
-    final String jsonStr = resp.body().string();
-    final JsonObject json = new JsonObject(jsonStr);
-    testHelper.assertValidGraphQLResult(json);
-    final String result = json.getJsonObject("data").getJsonObject("block").getString("number");
-    Assertions.assertThat(Integer.parseInt(result.substring(2),16)).isEqualTo(blockNumber);
+    final RequestBody body = RequestBody.create(query, GRAPHQL);
+    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+      Assertions.assertThat(resp.code()).isEqualTo(200);
+      final String jsonStr = resp.body().string();
+      final JsonObject json = new JsonObject(jsonStr);
+      testHelper.assertValidGraphQLResult(json);
+      final String result = json.getJsonObject("data").getJsonObject("block").getString("number");
+      Assertions.assertThat(Integer.parseInt(result.substring(2), 16)).isEqualTo(blockNumber);
+    }
   }
-}
 
   private Request buildPostRequest(final RequestBody body) {
     return new Request.Builder().post(body).url(baseUrl).build();
