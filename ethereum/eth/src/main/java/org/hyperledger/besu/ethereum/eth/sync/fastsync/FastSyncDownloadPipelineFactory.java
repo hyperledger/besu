@@ -171,8 +171,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
           .inBatches(headerRequestSize)
           .thenProcessAsync("downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
           .thenProcessAsync("downloadReceipts", downloadSyncReceiptsStep, downloaderParallelism)
-          .thenProcessAsync("importBlock", importSyncBlocksStep, downloaderParallelism)
-          .andFinishWith("importBlock", LOG::debug);
+          .thenProcessAsync("importBlock", importSyncBlocksStep, downloaderParallelism + 2)
+          .andFinishWith("logBlock", LOG::debug);
     } else {
       final DownloadBodiesStep downloadBodiesStep =
           new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
