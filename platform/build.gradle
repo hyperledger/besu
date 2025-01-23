@@ -30,7 +30,7 @@ dependencies {
   api platform('io.grpc:grpc-bom:1.68.0')
   api platform('io.netty:netty-bom:4.1.115.Final')
   api platform('io.opentelemetry:opentelemetry-bom:1.43.0')
-  api platform('io.prometheus:simpleclient_bom:0.16.0')
+  api platform('io.prometheus:prometheus-metrics-bom:1.3.4')
   api platform('io.vertx:vertx-stack-depchain:4.5.10')
   api platform('org.apache.logging.log4j:log4j-bom:2.24.1')
   api platform('org.assertj:assertj-bom:3.26.3')
@@ -110,7 +110,6 @@ dependencies {
     api 'io.tmio:tuweni-config:2.4.2'
     api 'io.tmio:tuweni-concurrent:2.4.2'
     api 'io.tmio:tuweni-crypto:2.4.2'
-    api 'io.tmio:tuweni-devp2p:2.4.2'
     api 'io.tmio:tuweni-io:2.4.2'
     api 'io.tmio:tuweni-net:2.4.2'
     api 'io.tmio:tuweni-rlp:2.4.2'
@@ -138,13 +137,12 @@ dependencies {
 
     api 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
 
-    api 'org.hyperledger.besu:arithmetic:0.9.7'
-    api 'org.hyperledger.besu:blake2bf:0.9.7'
-    api 'org.hyperledger.besu:bls12-381:0.9.7'
-    api 'org.hyperledger.besu:gnark:0.9.7'
-    api 'org.hyperledger.besu:ipa-multipoint:0.9.7'
-    api 'org.hyperledger.besu:secp256k1:0.9.7'
-    api 'org.hyperledger.besu:secp256r1:0.9.7'
+    api 'org.hyperledger.besu:arithmetic:1.1.1'
+    api 'org.hyperledger.besu:blake2bf:1.1.1'
+    api 'org.hyperledger.besu:gnark:1.1.1'
+    api 'org.hyperledger.besu:ipa-multipoint:1.1.1'
+    api 'org.hyperledger.besu:secp256k1:1.1.1'
+    api 'org.hyperledger.besu:secp256r1:1.1.1'
 
     api 'org.hyperledger.besu:besu-errorprone-checks:1.0.0'
 
@@ -163,7 +161,7 @@ dependencies {
 
     api 'org.owasp.encoder:encoder:1.3.1'
 
-    api 'org.rocksdb:rocksdbjni:8.3.2'
+    api 'org.rocksdb:rocksdbjni:9.7.3'
 
     api 'org.springframework.security:spring-security-crypto:6.3.3'
 
@@ -195,7 +193,7 @@ spotless {
 
 publishing {
   publications {
-    mavenPlatform(MavenPublication) {
+    mavenJavaPlatform(MavenPublication) {
       from components.javaPlatform
       groupId "org.hyperledger.besu"
       artifactId 'bom'

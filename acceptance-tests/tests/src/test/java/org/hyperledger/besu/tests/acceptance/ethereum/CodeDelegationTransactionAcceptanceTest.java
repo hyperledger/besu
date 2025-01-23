@@ -87,7 +87,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
   public void shouldTransferAllEthOfAuthorizerToSponsor() throws IOException {
 
     // 7702 transaction
-    final CodeDelegation authorization =
+    final CodeDelegation codeDelegation =
         org.hyperledger.besu.ethereum.core.CodeDelegation.builder()
             .chainId(BigInteger.valueOf(20211))
             .address(SEND_ALL_ETH_CONTRACT_ADDRESS)
@@ -108,7 +108,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
             .value(Wei.ZERO)
             .payload(Bytes32.leftPad(Bytes.fromHexString(transactionSponsor.getAddress())))
             .accessList(List.of())
-            .codeDelegations(List.of(authorization))
+            .codeDelegations(List.of(codeDelegation))
             .signAndBuild(
                 secp256k1.createKeyPair(
                     secp256k1.createPrivateKey(
@@ -140,10 +140,10 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
    */
   @Test
   public void shouldCheckNonceAfterNonceIncreaseOfSender() throws IOException {
-    final long GAS_LIMIT = 1000000L;
-    cluster.verify(authorizer.balanceEquals(Amount.ether(90000)));
+    final long GAS_LIMIT = 1_000_000L;
+    cluster.verify(authorizer.balanceEquals(Amount.ether(90_000)));
 
-    final CodeDelegation authorization =
+    final CodeDelegation codeDelegation =
         org.hyperledger.besu.ethereum.core.CodeDelegation.builder()
             .chainId(BigInteger.valueOf(20211))
             .nonce(
@@ -159,14 +159,14 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
             .type(TransactionType.DELEGATE_CODE)
             .chainId(BigInteger.valueOf(20211))
             .nonce(0)
-            .maxPriorityFeePerGas(Wei.of(1000000000))
+            .maxPriorityFeePerGas(Wei.of(1_000_000_000))
             .maxFeePerGas(Wei.fromHexString("0x02540BE400"))
             .gasLimit(GAS_LIMIT)
             .to(Address.fromHexStringStrict(authorizer.getAddress()))
             .value(Wei.ZERO)
             .payload(Bytes32.leftPad(Bytes.fromHexString(otherAccount.getAddress())))
             .accessList(List.of())
-            .codeDelegations(List.of(authorization))
+            .codeDelegations(List.of(codeDelegation))
             .signAndBuild(
                 secp256k1.createKeyPair(
                     secp256k1.createPrivateKey(AUTHORIZER_PRIVATE_KEY.toUnsignedBigInteger())));
@@ -209,7 +209,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
             .nonce(2)
             .maxPriorityFeePerGas(Wei.of(10))
             .maxFeePerGas(Wei.of(100))
-            .gasLimit(21000)
+            .gasLimit(21_000)
             .to(Address.fromHexStringStrict(otherAccount.getAddress()))
             .value(Wei.ONE)
             .payload(Bytes.EMPTY)

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -29,8 +29,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceTransacti
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Map;
 
@@ -38,19 +40,27 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
-
   private final ApiConfiguration apiConfiguration;
   private final ProtocolContext protocolContext;
+  private final TransactionSimulator transactionSimulator;
+  private final MetricsSystem metricsSystem;
+  private final EthScheduler ethScheduler;
 
   TraceJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final ApiConfiguration apiConfiguration) {
+      final ApiConfiguration apiConfiguration,
+      final TransactionSimulator transactionSimulator,
+      final MetricsSystem metricsSystem,
+      final EthScheduler ethScheduler) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.apiConfiguration = apiConfiguration;
+    this.transactionSimulator = transactionSimulator;
+    this.metricsSystem = metricsSystem;
+    this.ethScheduler = ethScheduler;
   }
 
   @Override
@@ -63,39 +73,20 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final BlockReplay blockReplay =
         new BlockReplay(protocolSchedule, protocolContext, blockchainQueries.getBlockchain());
     return mapOf(
-        new TraceReplayBlockTransactions(protocolSchedule, blockchainQueries),
+        new TraceReplayBlockTransactions(
+            protocolSchedule, blockchainQueries, metricsSystem, ethScheduler),
         new TraceFilter(
-            () -> new BlockTracer(blockReplay),
             protocolSchedule,
             blockchainQueries,
-            apiConfiguration.getMaxTraceFilterRange()),
+            apiConfiguration.getMaxTraceFilterRange(),
+            metricsSystem,
+            ethScheduler),
         new TraceGet(() -> new BlockTracer(blockReplay), blockchainQueries, protocolSchedule),
         new TraceTransaction(
             () -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
-        new TraceBlock(protocolSchedule, blockchainQueries),
-        new TraceCall(
-            blockchainQueries,
-            protocolSchedule,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())),
-        new TraceCallMany(
-            blockchainQueries,
-            protocolSchedule,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())),
-        new TraceRawTransaction(
-            protocolSchedule,
-            blockchainQueries,
-            new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                apiConfiguration.getGasCap())));
+        new TraceBlock(protocolSchedule, blockchainQueries, metricsSystem, ethScheduler),
+        new TraceCall(blockchainQueries, protocolSchedule, transactionSimulator),
+        new TraceCallMany(blockchainQueries, protocolSchedule, transactionSimulator),
+        new TraceRawTransaction(protocolSchedule, blockchainQueries, transactionSimulator));
   }
 }

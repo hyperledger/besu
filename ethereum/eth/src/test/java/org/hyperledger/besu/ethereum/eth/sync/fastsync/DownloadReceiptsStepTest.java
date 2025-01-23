@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
@@ -42,6 +43,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.HashMap;
 import java.util.List;
@@ -78,13 +80,15 @@ public class DownloadReceiptsStepTest {
     peerTaskExecutor = mock(PeerTaskExecutor.class);
     TransactionPool transactionPool = mock(TransactionPool.class);
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            ProtocolScheduleFixture.MAINNET,
-            blockchain,
-            () -> false,
-            protocolContext.getWorldStateArchive(),
-            transactionPool,
-            EthProtocolConfiguration.defaultConfig());
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(ProtocolScheduleFixture.MAINNET)
+            .setBlockchain(blockchain)
+            .setEthScheduler(new DeterministicEthScheduler(() -> false))
+            .setWorldStateArchive(protocolContext.getWorldStateArchive())
+            .setTransactionPool(transactionPool)
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setPeerTaskExecutor(peerTaskExecutor)
+            .build();
   }
 
   @Test
@@ -93,7 +97,6 @@ public class DownloadReceiptsStepTest {
         new DownloadReceiptsStep(
             protocolSchedule,
             ethProtocolManager.ethContext(),
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -119,7 +122,6 @@ public class DownloadReceiptsStepTest {
         new DownloadReceiptsStep(
             protocolSchedule,
             ethProtocolManager.ethContext(),
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             new NoOpMetricsSystem());
 
@@ -129,7 +131,7 @@ public class DownloadReceiptsStepTest {
         (b) -> receiptsMap.put(b.getHeader(), List.of(Mockito.mock(TransactionReceipt.class))));
     PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> peerTaskResult =
         new PeerTaskExecutorResult<>(
-            Optional.of(receiptsMap), PeerTaskExecutorResponseCode.SUCCESS);
+            Optional.of(receiptsMap), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
     Mockito.when(peerTaskExecutor.execute(Mockito.any(GetReceiptsFromPeerTask.class)))
         .thenReturn(peerTaskResult);
 

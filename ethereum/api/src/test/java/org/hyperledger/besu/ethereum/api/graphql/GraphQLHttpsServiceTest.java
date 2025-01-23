@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -331,7 +332,7 @@ public class GraphQLHttpsServiceTest {
       Assertions.assertThat(redirectUrl).isNotNull();
       final Request.Builder redirectBuilder = resp.request().newBuilder();
       redirectBuilder.get();
-      // resp.body().close();
+      resp.body().close();
       try (final Response redirectResp =
           client.newCall(redirectBuilder.url(redirectUrl).build()).execute()) {
         Assertions.assertThat(redirectResp.code()).isEqualTo(HttpResponseStatus.BAD_REQUEST.code());
@@ -455,85 +456,31 @@ public class GraphQLHttpsServiceTest {
   }
 
   @Test
-  public void ethGetUncleCountByBlockHash() throws Exception {
-    final int uncleCount = 4;
-    final Hash blockHash = Hash.hash(Bytes.of(1));
-    @SuppressWarnings("unchecked")
-    final BlockWithMetadata<TransactionWithMetadata, Hash> block =
-        Mockito.mock(BlockWithMetadata.class);
-    @SuppressWarnings("unchecked")
-    final List<Hash> list = Mockito.mock(List.class);
+public void ethGetBlockNumberByBlockHash() throws Exception {
+  final long blockNumber = 12345L;
+  final Hash blockHash = Hash.hash(Bytes.of(1));
+  @SuppressWarnings("unchecked")
+  final BlockWithMetadata<TransactionWithMetadata, Hash> block =
+          Mockito.mock(BlockWithMetadata.class);
+  @SuppressWarnings("unchecked")
+  final BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
 
-    Mockito.when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(block));
-    Mockito.when(block.getOmmers()).thenReturn(list);
-    Mockito.when(list.size()).thenReturn(uncleCount);
+  Mockito.when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(block));
+  Mockito.when(block.getHeader()).thenReturn(blockHeader);
+  Mockito.when(blockHeader.getNumber()).thenReturn(blockNumber);
 
-    final String query = "{block(hash:\"" + blockHash + "\") {ommerCount}}";
+  final String query = "{block(hash:\"" + blockHash + "\") {number}}";
 
-    final RequestBody body = RequestBody.create(query, GRAPHQL);
-    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      Assertions.assertThat(resp.code()).isEqualTo(200);
-      final String jsonStr = resp.body().string();
-      final JsonObject json = new JsonObject(jsonStr);
-      testHelper.assertValidGraphQLResult(json);
-      final String result =
-          json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
-      Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
-    }
+  final RequestBody body = RequestBody.create(query, GRAPHQL);
+  try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+    Assertions.assertThat(resp.code()).isEqualTo(200);
+    final String jsonStr = resp.body().string();
+    final JsonObject json = new JsonObject(jsonStr);
+    testHelper.assertValidGraphQLResult(json);
+    final String result = json.getJsonObject("data").getJsonObject("block").getString("number");
+    Assertions.assertThat(Integer.parseInt(result.substring(2),16)).isEqualTo(blockNumber);
   }
-
-  @Test
-  public void ethGetUncleCountByBlockNumber() throws Exception {
-    final int uncleCount = 5;
-    @SuppressWarnings("unchecked")
-    final BlockWithMetadata<TransactionWithMetadata, Hash> block =
-        Mockito.mock(BlockWithMetadata.class);
-    @SuppressWarnings("unchecked")
-    final List<Hash> list = Mockito.mock(List.class);
-    Mockito.when(blockchainQueries.blockByNumber(ArgumentMatchers.anyLong()))
-        .thenReturn(Optional.of(block));
-    Mockito.when(block.getOmmers()).thenReturn(list);
-    Mockito.when(list.size()).thenReturn(uncleCount);
-
-    final String query = "{block(number:\"3\") {ommerCount}}";
-
-    final RequestBody body = RequestBody.create(query, GRAPHQL);
-    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      Assertions.assertThat(resp.code()).isEqualTo(200);
-      final String jsonStr = resp.body().string();
-      final JsonObject json = new JsonObject(jsonStr);
-      testHelper.assertValidGraphQLResult(json);
-      final String result =
-          json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
-      Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
-    }
-  }
-
-  @Test
-  public void ethGetUncleCountByBlockLatest() throws Exception {
-    final int uncleCount = 5;
-    @SuppressWarnings("unchecked")
-    final BlockWithMetadata<TransactionWithMetadata, Hash> block =
-        Mockito.mock(BlockWithMetadata.class);
-    @SuppressWarnings("unchecked")
-    final List<Hash> list = Mockito.mock(List.class);
-    Mockito.when(blockchainQueries.latestBlock()).thenReturn(Optional.of(block));
-    Mockito.when(block.getOmmers()).thenReturn(list);
-    Mockito.when(list.size()).thenReturn(uncleCount);
-
-    final String query = "{block {ommerCount}}";
-
-    final RequestBody body = RequestBody.create(query, GRAPHQL);
-    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      Assertions.assertThat(resp.code()).isEqualTo(200);
-      final String jsonStr = resp.body().string();
-      final JsonObject json = new JsonObject(jsonStr);
-      testHelper.assertValidGraphQLResult(json);
-      final String result =
-          json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
-      Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
-    }
-  }
+}
 
   private Request buildPostRequest(final RequestBody body) {
     return new Request.Builder().post(body).url(baseUrl).build();

@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.function.Supplier;
 
@@ -69,7 +71,12 @@ public class TraceFilterTest {
             new JsonRpcRequest("2.0", "trace_filter", new Object[] {filterParameter}));
 
     method =
-        new TraceFilter(blockTracerSupplier, protocolSchedule, blockchainQueries, maxFilterRange);
+        new TraceFilter(
+            protocolSchedule,
+            blockchainQueries,
+            maxFilterRange,
+            new NoOpMetricsSystem(),
+            new DeterministicEthScheduler());
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);

@@ -59,4 +59,10 @@ public interface SynchronizationService extends BesuService {
 
   /** Disables the worldstate trie for update. */
   void disableWorldStateTrie();
+
+  /** Stops the synchronizer. */
+  void stop();
+
+  /** Starts the synchronizer. */
+  void start();
 }

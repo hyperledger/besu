@@ -25,7 +25,7 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -74,17 +74,21 @@ import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.mining.MiningService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
+import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
+import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.TransactionPoolServiceImpl;
 import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
@@ -151,8 +155,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     networkConfigBuilder.setBootNodes(bootnodes);
     node.getConfiguration()
         .getGenesisConfig()
-        .map(GenesisConfigFile::fromConfig)
-        .ifPresent(networkConfigBuilder::setGenesisConfigFile);
+        .map(GenesisConfig::fromConfig)
+        .ifPresent(networkConfigBuilder::setGenesisConfig);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
     final BesuControllerBuilder builder = component.besuControllerBuilder();
     builder.isRevertReasonEnabled(node.isRevertReasonEnabled());
@@ -162,9 +166,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     builder.nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))));
     builder.privacyParameters(node.getPrivacyParameters());
 
-    node.getGenesisConfig()
-        .map(GenesisConfigFile::fromConfig)
-        .ifPresent(builder::genesisConfigFile);
+    node.getGenesisConfig().map(GenesisConfig::fromConfig).ifPresent(builder::genesisConfig);
 
     final BesuController besuController = component.besuController();
 
@@ -193,7 +195,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .permissioningService(permissioningService)
         .metricsConfiguration(node.getMetricsConfiguration())
         .p2pEnabled(node.isP2pEnabled())
-        .p2pTLSConfiguration(node.getTLSConfiguration())
         .graphQLConfiguration(GraphQLConfiguration.createDefault())
         .staticNodes(node.getStaticNodes().stream().map(EnodeURLImpl::fromString).toList())
         .besuPluginContext(besuPluginContext)
@@ -215,6 +216,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             besuController.getTransactionPool(),
             besuController.getSyncState(),
             besuController.getProtocolContext().getBadBlockManager()));
+    besuPluginContext.addService(
+        TransactionPoolService.class,
+        new TransactionPoolServiceImpl(besuController.getTransactionPool()));
+    besuPluginContext.addService(
+        MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
 
     component.rpcEndpointService().init(runner.getInProcessRpcMethods());
 
@@ -327,7 +333,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     @Singleton
     BlockchainServiceImpl provideBlockchainService(final BesuController besuController) {
       BlockchainServiceImpl retval = new BlockchainServiceImpl();
-      retval.init(besuController.getProtocolContext(), besuController.getProtocolSchedule());
+      retval.init(
+          besuController.getProtocolContext().getBlockchain(),
+          besuController.getProtocolSchedule());
       return retval;
     }
 
@@ -386,9 +394,14 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final Blockchain blockchain,
         final WorldStateArchive worldStateArchive,
         final ProtocolSchedule protocolSchedule,
+        final MiningConfiguration miningConfiguration,
         final ApiConfiguration apiConfiguration) {
       return new TransactionSimulator(
-          blockchain, worldStateArchive, protocolSchedule, apiConfiguration.getGasCap());
+          blockchain,
+          worldStateArchive,
+          protocolSchedule,
+          miningConfiguration,
+          apiConfiguration.getGasCap());
     }
 
     @Provides
@@ -448,7 +461,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final BesuControllerBuilder builder,
         final MetricsSystem metricsSystem,
         final KeyValueStorageProvider storageProvider,
-        final MiningConfiguration miningConfiguration) {
+        final MiningConfiguration miningConfiguration,
+        final ApiConfiguration apiConfiguration) {
 
       builder
           .synchronizerConfiguration(synchronizerConfiguration)
@@ -463,6 +477,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           .maxRemotelyInitiatedPeers(15)
           .miningParameters(miningConfiguration)
           .randomPeerPriority(false)
+          .apiConfiguration(apiConfiguration)
           .besuComponent(null);
       return builder.build();
     }

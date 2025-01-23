@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.CodeDelegation;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -30,9 +32,12 @@ public class CodeDelegationProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(CodeDelegationProcessor.class);
 
   private final Optional<BigInteger> maybeChainId;
+  private final BigInteger halfCurveOrder;
 
-  public CodeDelegationProcessor(final Optional<BigInteger> maybeChainId) {
+  public CodeDelegationProcessor(
+      final Optional<BigInteger> maybeChainId, final BigInteger halfCurveOrder) {
     this.maybeChainId = maybeChainId;
+    this.halfCurveOrder = halfCurveOrder;
   }
 
   /**
@@ -65,7 +70,7 @@ public class CodeDelegationProcessor {
         .get()
         .forEach(
             codeDelegation ->
-                processAuthorization(
+                processCodeDelegation(
                     evmWorldUpdater,
                     (org.hyperledger.besu.ethereum.core.CodeDelegation) codeDelegation,
                     result));
@@ -73,7 +78,7 @@ public class CodeDelegationProcessor {
     return result;
   }
 
-  private void processAuthorization(
+  private void processCodeDelegation(
       final EVMWorldUpdater evmWorldUpdater,
       final CodeDelegation codeDelegation,
       final CodeDelegationResult result) {
@@ -86,6 +91,22 @@ public class CodeDelegationProcessor {
           "Invalid chain id for code delegation. Expected: {}, Actual: {}",
           maybeChainId.get(),
           codeDelegation.chainId());
+      return;
+    }
+
+    if (codeDelegation.nonce() == MAX_NONCE) {
+      LOG.trace("Nonce of code delegation must be less than 2^64-1");
+      return;
+    }
+
+    if (codeDelegation.signature().getS().compareTo(halfCurveOrder) > 0) {
+      LOG.trace(
+          "Invalid signature for code delegation. S value must be less or equal than the half curve order.");
+      return;
+    }
+
+    if (codeDelegation.signature().getRecId() != 0 && codeDelegation.signature().getRecId() != 1) {
+      LOG.trace("Invalid signature for code delegation. RecId must be 0 or 1.");
       return;
     }
 
@@ -109,7 +130,7 @@ public class CodeDelegationProcessor {
     } else {
       authority = maybeAuthorityAccount.get();
 
-      if (!evmWorldUpdater.authorizedCodeService().canSetDelegatedCode(authority)) {
+      if (!evmWorldUpdater.codeDelegationService().canSetCodeDelegation(authority)) {
         return;
       }
 
@@ -128,7 +149,9 @@ public class CodeDelegationProcessor {
       result.incremenentAlreadyExistingDelegators();
     }
 
-    evmWorldUpdater.authorizedCodeService().addDelegatedCode(authority, codeDelegation.address());
+    evmWorldUpdater
+        .codeDelegationService()
+        .processCodeDelegation(authority, codeDelegation.address());
     authority.incrementNonce();
   }
 }

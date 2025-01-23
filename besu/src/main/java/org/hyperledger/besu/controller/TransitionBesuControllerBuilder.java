@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
@@ -24,7 +24,6 @@ import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -120,6 +119,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         new TransitionBackwardSyncContext(
             protocolContext,
             transitionProtocolSchedule,
+            syncConfig,
             metricsSystem,
             ethProtocolManager.ethContext(),
             syncState,
@@ -193,11 +193,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory) {
+      final ConsensusContext consensusContext) {
     final ProtocolContext protocolContext =
-        super.createProtocolContext(
-            blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
+        super.createProtocolContext(blockchain, worldStateArchive, consensusContext);
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     return protocolContext;
   }
@@ -303,9 +301,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
-    super.genesisConfigFile(genesisConfig);
-    return propagateConfig(z -> z.genesisConfigFile(genesisConfig));
+  public BesuControllerBuilder genesisConfig(final GenesisConfig genesisConfig) {
+    super.genesisConfig(genesisConfig);
+    return propagateConfig(z -> z.genesisConfig(genesisConfig));
   }
 
   @Override

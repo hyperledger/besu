@@ -19,8 +19,6 @@ import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
-
 /**
  * A world state account.
  *
@@ -59,7 +57,7 @@ public interface Account extends AccountState {
    *
    * @return the address of the delegated code account if it has one otherwise empty.
    */
-  default Optional<Address> delegatedCodeAddress() {
+  default Optional<Address> codeDelegationAddress() {
     return Optional.empty();
   }
 
@@ -68,16 +66,7 @@ public interface Account extends AccountState {
    *
    * @return true if the account has delegated code otherwise false.
    */
-  default boolean hasDelegatedCode() {
+  default boolean hasCodeDelegation() {
     return false;
-  }
-
-  /**
-   * Returns the code as it is stored in the trie even if it's a delegated code account.
-   *
-   * @return the code as it is stored in the trie.
-   */
-  default Bytes getUnprocessedCode() {
-    return getCode();
   }
 }

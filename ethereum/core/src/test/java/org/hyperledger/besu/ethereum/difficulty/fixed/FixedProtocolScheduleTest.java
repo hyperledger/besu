@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.difficulty.fixed;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -34,7 +34,7 @@ public class FixedProtocolScheduleTest {
 
     final ProtocolSchedule schedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
+            GenesisConfig.fromResource("/dev.json").getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
@@ -49,21 +49,21 @@ public class FixedProtocolScheduleTest {
             schedule
                 .getByBlockHeader(blockHeader(0))
                 .getDifficultyCalculator()
-                .nextDifficulty(1, parentHeader, null))
+                .nextDifficulty(1, parentHeader))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
 
     assertThat(
             schedule
                 .getByBlockHeader(blockHeader(500))
                 .getDifficultyCalculator()
-                .nextDifficulty(1, parentHeader, null))
+                .nextDifficulty(1, parentHeader))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
 
     assertThat(
             schedule
                 .getByBlockHeader(blockHeader(500_000))
                 .getDifficultyCalculator()
-                .nextDifficulty(1, parentHeader, null))
+                .nextDifficulty(1, parentHeader))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
   }
 
