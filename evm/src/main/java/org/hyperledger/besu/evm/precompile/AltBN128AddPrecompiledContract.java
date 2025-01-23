@@ -35,7 +35,7 @@ import org.apache.tuweni.bytes.MutableBytes;
 public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 128;
-  public static final String PRECOMPILE_NAME = "AltBN128Add";
+  private static final String PRECOMPILE_NAME = "AltBN128Add";
 
   private final long gasCost;
   private static final Cache<Integer, PrecompileInputResultTuple> bnAddCache =
