@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.worldstate.DelegateCodeHelper.hasDelegatedCode;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -333,7 +333,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
   }
 
   private static boolean canSendTransaction(final Account sender, final Hash codeHash) {
-    return codeHash.equals(Hash.EMPTY) || hasDelegatedCode(sender.getCode());
+    return codeHash.equals(Hash.EMPTY) || hasCodeDelegation(sender.getCode());
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransactionSignature(
