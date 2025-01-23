@@ -87,6 +87,7 @@ public class DownloadReceiptsStepTest {
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
             .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setPeerTaskExecutor(peerTaskExecutor)
             .build();
   }
 
@@ -96,7 +97,6 @@ public class DownloadReceiptsStepTest {
         new DownloadReceiptsStep(
             protocolSchedule,
             ethProtocolManager.ethContext(),
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -122,7 +122,6 @@ public class DownloadReceiptsStepTest {
         new DownloadReceiptsStep(
             protocolSchedule,
             ethProtocolManager.ethContext(),
-            peerTaskExecutor,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             new NoOpMetricsSystem());
 
@@ -132,7 +131,7 @@ public class DownloadReceiptsStepTest {
         (b) -> receiptsMap.put(b.getHeader(), List.of(Mockito.mock(TransactionReceipt.class))));
     PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> peerTaskResult =
         new PeerTaskExecutorResult<>(
-            Optional.of(receiptsMap), PeerTaskExecutorResponseCode.SUCCESS);
+            Optional.of(receiptsMap), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
     Mockito.when(peerTaskExecutor.execute(Mockito.any(GetReceiptsFromPeerTask.class)))
         .thenReturn(peerTaskResult);
 

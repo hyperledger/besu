@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -128,7 +129,16 @@ public class GetReceiptsFromPeerTask
   }
 
   @Override
-  public boolean isSuccess(final Map<BlockHeader, List<TransactionReceipt>> result) {
-    return !result.isEmpty();
+  public PeerTaskValidationResponse validateResult(
+      final Map<BlockHeader, List<TransactionReceipt>> result) {
+    if (result.isEmpty()) {
+      return PeerTaskValidationResponse.NO_RESULTS_RETURNED;
+    }
+
+    return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
+  }
+
+  public Collection<BlockHeader> getBlockHeaders() {
+    return blockHeaders;
   }
 }

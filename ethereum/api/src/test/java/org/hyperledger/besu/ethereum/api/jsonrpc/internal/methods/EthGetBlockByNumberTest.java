@@ -106,14 +106,17 @@ public class EthGetBlockByNumberTest {
   @Test
   public void exceptionWhenNoParamsSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams()))
-        .isInstanceOf(InvalidJsonRpcParameters.class);
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasFieldOrPropertyWithValue("rpcErrorType", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
     verifyNoMoreInteractions(blockchainQueries);
   }
 
   @Test
   public void exceptionWhenNoNumberSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams("false")))
-        .isInstanceOf(InvalidJsonRpcParameters.class);
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasFieldOrPropertyWithValue("rpcErrorType", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
+
     verifyNoMoreInteractions(blockchainQueries);
   }
 
@@ -129,7 +132,8 @@ public class EthGetBlockByNumberTest {
   public void exceptionWhenNumberParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams("invalid", "true")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid block parameter (index 0)");
+        .hasMessage("Invalid block parameter (index 0)")
+        .hasFieldOrPropertyWithValue("rpcErrorType", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
     verifyNoMoreInteractions(blockchainQueries);
   }
 
