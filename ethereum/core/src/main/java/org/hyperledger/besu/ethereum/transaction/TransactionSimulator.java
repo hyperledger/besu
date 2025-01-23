@@ -402,8 +402,11 @@ public class TransactionSimulator {
     final long nonce =
         callParams
             .getNonce()
-            .orElse(
-                Optional.ofNullable(updater.get(senderAddress)).map(Account::getNonce).orElse(0L));
+            .orElseGet(
+                () ->
+                    Optional.ofNullable(updater.get(senderAddress))
+                        .map(Account::getNonce)
+                        .orElse(0L));
 
     final long simulationGasCap =
         calculateSimulationGasCap(callParams.getGasLimit(), blockHeaderToProcess.getGasLimit());
