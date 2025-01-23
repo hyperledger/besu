@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.BASIC_DATA_LEAF_KEY;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_HASH_LEAF_KEY;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
@@ -37,15 +36,13 @@ import org.apache.tuweni.units.bigints.UInt256;
  *   <LI>Gas costs for EIP-4762 (Stateless trie)
  * </UL>
  */
-public class Eip4762GasCalculator extends PragueGasCalculator {
+public class Eip4762GasCalculator extends CancunGasCalculator {
   private static final Address HISTORY_STORAGE_ADDRESS =
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
   private static final long CREATE_OPERATION_GAS_COST = 1_000L;
 
   /** Instantiates a new EIP-4762 Gas Calculator. */
-  public Eip4762GasCalculator() {
-    super(KZG_POINT_EVAL.toArrayUnsafe()[19]);
-  }
+  public Eip4762GasCalculator() {}
 
   @Override
   public long getColdSloadCost() {
