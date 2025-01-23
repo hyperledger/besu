@@ -220,7 +220,7 @@ public class PeerDiscoveryTestHelper {
     private final AtomicInteger nextAvailablePort;
 
     private List<EnodeURL> bootnodes = Collections.emptyList();
-    private boolean active = true;
+    private boolean enabled = true;
     private PeerPermissions peerPermissions = PeerPermissions.noop();
     private String advertisedHost = "127.0.0.1";
     private OptionalInt bindPort = OptionalInt.empty();
@@ -258,7 +258,7 @@ public class PeerDiscoveryTestHelper {
     }
 
     public AgentBuilder active(final boolean active) {
-      this.active = active;
+      this.enabled = active;
       return this;
     }
 
@@ -296,7 +296,7 @@ public class PeerDiscoveryTestHelper {
       config.setBootnodes(bootnodes);
       config.setAdvertisedHost(advertisedHost);
       config.setBindPort(port);
-      config.setActive(active);
+      config.setEnabled(enabled);
       config.setFilterOnEnrForkId(false);
 
       final ForkIdManager mockForkIdManager = mock(ForkIdManager.class);
