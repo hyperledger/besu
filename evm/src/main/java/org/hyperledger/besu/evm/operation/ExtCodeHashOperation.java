@@ -25,12 +25,11 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.worldstate.DelegateCodeHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code hash operation. */
-public class ExtCodeHashOperation extends AbstractOperation {
+public class ExtCodeHashOperation extends AbstractExtCodeOperation {
 
   // // 0x9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5
   static final Hash EOF_REPLACEMENT_HASH = Hash.hash(ExtCodeCopyOperation.EOF_REPLACEMENT_CODE);
@@ -93,7 +92,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
             && code.get(1) == 0) {
           frame.pushStackItem(EOF_REPLACEMENT_HASH);
         } else {
-          frame.pushStackItem(account.getCodeHash());
+          frame.pushStackItem(getCodeHash(account));
         }
       }
       return new OperationResult(cost, null);
@@ -103,13 +102,5 @@ public class ExtCodeHashOperation extends AbstractOperation {
     } catch (final OverflowException ofe) {
       return new OperationResult(cost(true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
-  }
-
-  private static Bytes getCode(final Account account) {
-    if (!account.hasDelegatedCode()) {
-      return account.getCode();
-    }
-
-    return DelegateCodeHelper.getDelegatedCodeForRead();
   }
 }

@@ -399,8 +399,14 @@ public class TransactionSimulator {
       }
     }
 
-    final Account sender = updater.get(senderAddress);
-    final long nonce = sender != null ? sender.getNonce() : 0L;
+    final long nonce =
+        callParams
+            .getNonce()
+            .orElseGet(
+                () ->
+                    Optional.ofNullable(updater.get(senderAddress))
+                        .map(Account::getNonce)
+                        .orElse(0L));
 
     final long simulationGasCap =
         calculateSimulationGasCap(callParams.getGasLimit(), blockHeaderToProcess.getGasLimit());
@@ -634,5 +640,9 @@ public class TransactionSimulator {
       return false;
     }
     return callParams.getBlobVersionedHashes().isPresent();
+  }
+
+  public WorldStateArchive getWorldStateArchive() {
+    return worldStateArchive;
   }
 }
