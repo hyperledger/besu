@@ -143,7 +143,7 @@ public final class RunnerBuilderTest {
   }
 
   @Test
-  public void enodeUrlShouldHaveAdvertisedHostWhenDiscoveryEnabled() {
+  public void enodeUrlShouldHaveAdvertisedHostWhenDiscoveryDisabled() {
     setupBlockchainAndBlock();
 
     final String p2pAdvertisedHost = "172.0.0.1";
