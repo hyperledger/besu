@@ -252,7 +252,10 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(
         qbftBlock -> ethProtocolManager.blockMined(BlockUtil.toBesuBlock(qbftBlock)));
-    minedBlockObservers.subscribe(qbftBlock -> blockLogger(transactionPool, localAddress));
+    minedBlockObservers.subscribe(
+        qbftBlock ->
+            blockLogger(transactionPool, localAddress)
+                .blockMined(BlockUtil.toBesuBlock(qbftBlock)));
 
     final FutureMessageBuffer futureMessageBuffer =
         new FutureMessageBuffer(
