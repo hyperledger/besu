@@ -317,7 +317,7 @@ public abstract class CommandTestAbstract {
 
     when(mockRunnerBuilder.vertx(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.besuController(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.discovery(anyBoolean())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.discoveryEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.ethNetworkConfig(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.networkingConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pAdvertisedHost(anyString())).thenReturn(mockRunnerBuilder);

@@ -464,7 +464,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public boolean isDiscoveryEnabled() {
-    return peerDiscoveryAgent.isActive();
+    return peerDiscoveryAgent.isEnabled();
+  }
+
+  @Override
+  public boolean isStopped() {
+    return peerDiscoveryAgent.isStopped();
   }
 
   @Override

@@ -215,7 +215,7 @@ public final class RunnerTest {
     final RunnerBuilder runnerBuilder =
         new RunnerBuilder()
             .vertx(vertx)
-            .discovery(true)
+            .discoveryEnabled(true)
             .p2pAdvertisedHost(listenHost)
             .p2pListenPort(0)
             .metricsSystem(noOpMetricsSystem)
