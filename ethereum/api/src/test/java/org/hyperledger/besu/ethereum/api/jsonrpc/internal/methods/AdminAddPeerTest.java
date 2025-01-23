@@ -254,7 +254,7 @@ public class AdminAddPeerTest {
   }
 
   @Test
-  public void requestReturnsErrorWhenDiscoveryDisabled() {
+  public void requestReturnsErrorWhenDiscoveryStopped() {
     when(p2pNetwork.isStopped()).thenReturn(true);
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
