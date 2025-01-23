@@ -252,7 +252,7 @@ public class GeneralStateReferenceTestTools {
               if (!storageEntries.isEmpty()) {
                 accountJson.set("storage", storageJson);
               }
-              worldStateJson.set(account.getAddress().orElse(Address.wrap(Bytes.EMPTY)).toHexString(), accountJson);
+              worldStateJson.set(account.getAddress().orElse(Address.ZERO).toHexString(), accountJson);
             });
     LOG.error("Calculated world state: \n{}", worldStateJson.toPrettyString());
   }
