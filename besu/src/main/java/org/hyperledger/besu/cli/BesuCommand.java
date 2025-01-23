@@ -1596,7 +1596,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             this.commandLine,
             "--Xchain-pruning-blocks-retained must be >= "
                 + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
-      } else if (genesisConfigOptions.isQbft()
+      } else if (genesisConfigOptions.isPoa()
           && unstableChainPruningOptions.getChainDataPruningBlocksRetained()
               < genesisConfigOptions.getQbftConfigOptions().getEpochLength()) {
         throw new ParameterException(
