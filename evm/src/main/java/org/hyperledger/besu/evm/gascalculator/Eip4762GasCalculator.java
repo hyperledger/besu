@@ -41,6 +41,9 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
   private static final long CREATE_OPERATION_GAS_COST = 1_000L;
 
+  /** Instantiates a new EIP-4762 Gas Calculator. */
+  public Eip4762GasCalculator() {}
+
   @Override
   public long getColdSloadCost() {
     return 0; // no cold gas cost after verkle
