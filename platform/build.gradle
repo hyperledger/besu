@@ -182,7 +182,7 @@ dependencies {
 
     api 'org.hyperledger.besu:ipa-multipoint:0.8.4-SNAPSHOT'
 
-    api 'org.hyperledger.besu:besu-verkle-trie:0.0.3-20241107.124625-9'
+    api 'org.hyperledger.besu:besu-verkle-trie:0.0.3-20250123.150439-12' //a5cac6cb8e5e927ac070ff8d3607c73c0301d3e6
   }
 }
 

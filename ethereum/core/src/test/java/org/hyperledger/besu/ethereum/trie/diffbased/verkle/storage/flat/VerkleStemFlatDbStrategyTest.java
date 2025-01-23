@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeHash
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.StemPreloader;
+import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
 import org.hyperledger.besu.ethereum.trie.verkle.node.LeafNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.StemNode;
 import org.hyperledger.besu.ethereum.trie.verkle.util.SuffixTreeEncoder;
@@ -194,7 +195,7 @@ class VerkleStemFlatDbStrategyTest {
       final Address address, final StorageSlotKey storageSlotKey, final Bytes keySuffix) {
     final Bytes stem = Bytes32.random();
     when(stemPreloader.preloadSlotStems(eq(address), eq(storageSlotKey))).thenReturn(stem);
-    when(stemPreloader.getStorageKeySuffix(eq(storageSlotKey.getSlotKey().get())))
+    when(TrieKeyUtils.getStorageKeySuffix(eq(storageSlotKey.getSlotKey().get())))
         .thenReturn(keySuffix);
     return stem;
   }

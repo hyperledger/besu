@@ -16,19 +16,14 @@ package org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyAdapter;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.CachedPedersenHasher;
+import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
 import org.hyperledger.besu.ethereum.trie.verkle.hasher.Hasher;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.PedersenHasher;
-import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
+import org.hyperledger.besu.ethereum.trie.verkle.hasher.StemHasher;
+import org.hyperledger.besu.ethereum.trie.verkle.hasher.builder.StemHasherBuilder;
+import org.hyperledger.besu.ethereum.trie.verkle.hasher.cache.InMemoryCacheStrategy;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
@@ -52,23 +47,18 @@ import org.apache.tuweni.units.bigints.UInt256;
  * through the {@code STEM_CACHE_SIZE} constant. The {@link Hasher} used for stem generation is
  * configurable, allowing for different hashing strategies (e.g., Pedersen hashing) to be employed.
  *
- * @see org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyAdapter
+ * @see org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyFactory
  * @see org.hyperledger.besu.ethereum.trie.verkle.hasher.Hasher
- * @see org.hyperledger.besu.ethereum.trie.verkle.hasher.CachedPedersenHasher
  */
 public class StemPreloader {
+  private static final int HASHER_CACHE_SIZE = 10_000;
   private static final int STEM_CACHE_SIZE = 10_000;
+  private static final int ADDRESS_COMMITMENT_CACHE_SIZE = 10_000;
 
-  // Cache of stem by address. The sub-map will contain the trie index as the key and the stem as
-  // the value.
-  private final Cache<Address, CachedPedersenHasher> pedersenHasherCache =
-      CacheBuilder.newBuilder().maximumSize(STEM_CACHE_SIZE).build();
+  private final Cache<Address, StemHasher> stemHasherByAddress =
+      CacheBuilder.newBuilder().maximumSize(HASHER_CACHE_SIZE).build();
 
-  private final TrieKeyAdapter trieKeyAdapter;
-
-  public StemPreloader() {
-    this.trieKeyAdapter = new TrieKeyAdapter(new PedersenHasher());
-  }
+  public StemPreloader() {}
 
   /**
    * Creates a preloaded hasher context for a given updated address, storage, and code. This method
@@ -83,44 +73,43 @@ public class StemPreloader {
    * @param keys a list of keys to use for stem generation
    * @return the preloaded stems
    */
-  public Map<Bytes32, Bytes> preloadStems(final Address address, final Set<Bytes32> keys) {
-    return getHasherByAddress(address).manyStems(address, new ArrayList<>(keys));
+  public Map<Bytes32, Bytes> preloadStems(final Address address, final List<Bytes32> keys) {
+    return getStemHasherByAddress(address).manyStems(address, keys);
   }
 
   public Bytes preloadAccountStem(final Address address) {
-    return getHasherByAddress(address).computeStem(address, UInt256.ZERO);
+    return getStemHasherByAddress(address).computeStem(address, UInt256.ZERO);
   }
 
   public Bytes preloadSlotStems(final Address address, final StorageSlotKey storageSlotKey) {
-    return getHasherByAddress(address)
-        .computeStem(
-            address,
-            trieKeyAdapter.getStorageKeyTrieIndex(storageSlotKey.getSlotKey().orElseThrow()));
+    final Bytes32 storageKeyTrieIndex =
+        TrieKeyUtils.getStorageKeyTrieIndex(storageSlotKey.getSlotKey().orElseThrow());
+    return getStemHasherByAddress(address).computeStem(address, storageKeyTrieIndex);
   }
 
   public Map<Bytes32, Bytes> preloadCodeChunckStems(final Address address, final Bytes codeUpdate) {
-    return getHasherByAddress(address).manyStems(address, generateCodeChunkKeyIds(codeUpdate));
+    return getStemHasherByAddress(address)
+        .manyStems(address, TrieKeyUtils.getCodeChunkKeyTrieIndexes(codeUpdate));
   }
 
   /**
-   * Retrieves the cache that maps account addresses to their corresponding cached stems.
+   * Retrieves the cache that maps account addresses to their corresponding stem hasher.
    *
-   * @return the cache mapping account addresses to trie stems
+   * @return the stem hasher linked to the address
    */
   @VisibleForTesting
-  public CachedPedersenHasher getHasherByAddress(final Address address) {
-    CachedPedersenHasher ifPresent = pedersenHasherCache.getIfPresent(address);
+  public StemHasher getStemHasherByAddress(final Address address) {
+    StemHasher ifPresent = stemHasherByAddress.getIfPresent(address);
     if (ifPresent != null) {
       return ifPresent;
     }
-    final CachedPedersenHasher defaultHasher =
-        new CachedPedersenHasher(STEM_CACHE_SIZE, new ConcurrentHashMap<>());
-    pedersenHasherCache.put(address, defaultHasher);
-    return defaultHasher;
-  }
-
-  public Bytes getStorageKeySuffix(final Bytes32 storageKey) {
-    return trieKeyAdapter.getStorageKeySuffix(storageKey);
+    final StemHasher stemHasher =
+        StemHasherBuilder.builder()
+            .withStemCache(new InMemoryCacheStrategy<>(STEM_CACHE_SIZE))
+            .withAddressCommitmentCache(new InMemoryCacheStrategy<>(ADDRESS_COMMITMENT_CACHE_SIZE))
+            .build();
+    stemHasherByAddress.put(address, stemHasher);
+    return stemHasher;
   }
 
   /**
@@ -129,25 +118,6 @@ public class StemPreloader {
    * with performance monitoring or testing.
    */
   public void reset() {
-    pedersenHasherCache.invalidateAll();
-  }
-
-  public Bytes32 generateAccountKeyId() {
-    return Parameters.BASIC_DATA_LEAF_KEY;
-  }
-
-  public List<Bytes32> generateCodeChunkKeyIds(final Bytes code) {
-    return IntStream.range(0, trieKeyAdapter.getNbChunk(code))
-        .mapToObj(UInt256::valueOf)
-        .collect(Collectors.toUnmodifiableList());
-  }
-
-  public List<Bytes32> generateStorageKeyIds(final Set<StorageSlotKey> storageSlotKeys) {
-    return storageSlotKeys.stream()
-        .map(
-            storageSlotKey ->
-                trieKeyAdapter.getStorageKeyTrieIndex(storageSlotKey.getSlotKey().orElseThrow()))
-        .map(Bytes32::wrap)
-        .toList();
+    stemHasherByAddress.invalidateAll();
   }
 }

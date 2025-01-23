@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbSt
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.StemPreloader;
+import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
 import org.hyperledger.besu.ethereum.trie.verkle.util.SuffixTreeDecoder;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -120,8 +121,7 @@ public class VerkleStemFlatDbStrategy extends FlatDbStrategy {
         stem.flatMap(
             values ->
                 values.get(
-                    stemPreloader
-                        .getStorageKeySuffix(storageSlotKey.getSlotKey().orElseThrow())
+                    TrieKeyUtils.getStorageKeySuffix(storageSlotKey.getSlotKey().orElseThrow())
                         .toInt()));
     if (storageFound.isPresent()) {
       getStorageValueFlatDatabaseCounter.inc();

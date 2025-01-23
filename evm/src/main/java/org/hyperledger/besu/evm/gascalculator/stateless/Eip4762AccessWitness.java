@@ -23,8 +23,7 @@ import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyAdapter;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.PedersenHasher;
+import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +39,6 @@ import org.slf4j.LoggerFactory;
 public class Eip4762AccessWitness implements AccessWitness {
 
   private static final Logger LOG = LoggerFactory.getLogger(Eip4762AccessWitness.class);
-  private static final TrieKeyAdapter TRIE_KEY_ADAPTER = new TrieKeyAdapter(new PedersenHasher());
 
   private static final UInt256 zeroTreeIndex = UInt256.ZERO;
   private final Map<LeafAccessKey, Integer> leaves;
@@ -264,8 +262,8 @@ public class Eip4762AccessWitness implements AccessWitness {
 
   private List<UInt256> getStorageSlotTreeIndexes(final UInt256 storageKey) {
     return List.of(
-        TRIE_KEY_ADAPTER.getStorageKeyTrieIndex(storageKey),
-        UInt256.fromBytes(TRIE_KEY_ADAPTER.getStorageKeySuffix(storageKey)));
+        UInt256.fromBytes(TrieKeyUtils.getStorageKeyTrieIndex(storageKey)),
+        UInt256.fromBytes(TrieKeyUtils.getStorageKeySuffix(storageKey)));
   }
 
   @Override
