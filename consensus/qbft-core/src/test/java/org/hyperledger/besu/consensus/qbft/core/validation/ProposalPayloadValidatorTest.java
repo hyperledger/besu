@@ -20,7 +20,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.core.QbftBlockTestFixture;
@@ -32,11 +31,9 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
 
@@ -50,9 +47,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class ProposalPayloadValidatorTest {
 
   @Mock private QbftBlockValidator blockValidator;
-  @Mock private MutableBlockchain blockChain;
-  @Mock private WorldStateArchive worldStateArchive;
-  @Mock private BftExtraDataCodec bftExtraDataCodec;
   @Mock private QbftBlockCodec blockEncoder;
 
   private static final int CHAIN_HEIGHT = 3;
