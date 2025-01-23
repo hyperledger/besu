@@ -26,14 +26,16 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 import java.util.OptionalLong;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts>> {
+public class ImportSyncBlocksStep
+    implements Function<List<SyncBlockWithReceipts>, CompletableFuture<String>> {
   private static final Logger LOG = LoggerFactory.getLogger(ImportSyncBlocksStep.class);
   private static final long PRINT_DELAY = TimeUnit.SECONDS.toMillis(30L);
 
@@ -58,7 +60,11 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   }
 
   @Override
-  public void accept(final List<SyncBlockWithReceipts> blocksWithReceipts) {
+  public CompletableFuture<String> apply(final List<SyncBlockWithReceipts> blocksWithReceipts) {
+    return CompletableFuture.supplyAsync(() -> importSyncBlocks(blocksWithReceipts));
+  }
+
+  public String importSyncBlocks(final List<SyncBlockWithReceipts> blocksWithReceipts) {
     final long startTime = System.nanoTime();
     long noOfTransactions = 0;
     long noOfReceipts = 0;
@@ -105,6 +111,10 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
       accumulatedTime = 0L;
       logStartBlock = OptionalLong.empty();
     }
+    return "Imported "
+        + blocksWithReceipts.size()
+        + " blocks, starting at block "
+        + blocksWithReceipts.getFirst().getNumber();
   }
 
   @VisibleForTesting
