@@ -23,7 +23,6 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -41,10 +40,8 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -59,12 +56,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class RoundChangeMessageValidatorTest {
 
   @Mock private RoundChangePayloadValidator payloadValidator;
-  @Mock private MutableBlockchain blockChain;
-  @Mock private WorldStateArchive worldStateArchive;
   @Mock private QbftProtocolSchedule protocolSchedule;
   @Mock private QbftBlockValidator blockValidator;
   @Mock private QbftProtocolSpec protocolSpec;
-  @Mock private BftExtraDataCodec bftExtraDataCodec;
   @Mock private QbftBlockCodec blockEncoder;
 
   private RoundChangeMessageValidator messageValidator;
@@ -81,7 +75,6 @@ public class RoundChangeMessageValidatorTest {
     validators = QbftNodeList.createNodes(VALIDATOR_COUNT, blockEncoder);
 
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-
     lenient().when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
   }
 
