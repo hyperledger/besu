@@ -1584,7 +1584,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateChainDataPruningParams() {
-    Long chainDataPruningBlocksRetained = unstableChainPruningOptions.getChainDataPruningBlocksRetained();
+    Long chainDataPruningBlocksRetained =
+        unstableChainPruningOptions.getChainDataPruningBlocksRetained();
     if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
       final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
       if (chainDataPruningBlocksRetained
@@ -1606,15 +1607,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           epochLength = genesisConfigOptions.getCliqueConfigOptions().getEpochLength();
           consensusMechanism = "Clique";
         }
-        if(chainDataPruningBlocksRetained < epochLength) {
+        if (chainDataPruningBlocksRetained < epochLength) {
           throw new ParameterException(
               this.commandLine,
               String.format(
-                "--Xchain-pruning-blocks-retained(%d) must be >= epochlength(%d) for %s",
-                chainDataPruningBlocksRetained,
-                epochLength,
-                consensusMechanism
-            ));
+                  "--Xchain-pruning-blocks-retained(%d) must be >= epochlength(%d) for %s",
+                  chainDataPruningBlocksRetained, epochLength, consensusMechanism));
         }
       }
     }
