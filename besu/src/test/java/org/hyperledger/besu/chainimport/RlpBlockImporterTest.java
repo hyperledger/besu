@@ -202,6 +202,6 @@ public final class RlpBlockImporterTest {
         rlpBlockImporter.importBlockchain(source, controller, true);
 
     // Don't count the Genesis block
-    assertThat(result.count).isEqualTo(22);
+    assertThat(result.count).isEqualTo(100);
   }
 }
