@@ -18,7 +18,9 @@ import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecificatio
 import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
+import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCoinbaseValidationRule;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCommitSealsValidationRule;
+import org.hyperledger.besu.consensus.qbft.headervalidationrules.QbftValidatorsValidationRule;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -66,8 +68,8 @@ public class QbftBlockHeaderValidationRulesetFactory {
             .addRule(
                 new ConstantFieldValidationRule<>(
                     "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
-            /*.addRule(new QbftValidatorsValidationRule(useValidatorContract))*/
-            /*.addRule(new BftCoinbaseValidationRule())*/
+            .addRule(new QbftValidatorsValidationRule(useValidatorContract))
+            .addRule(new BftCoinbaseValidationRule())
             .addRule(new BftCommitSealsValidationRule());
 
     // Currently the minimum acceptable time between blocks is 1 second. The timestamp of an

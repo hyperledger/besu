@@ -2,7 +2,7 @@
   "nonce": "0x0",
   "timestamp": "0x58ee40ba",
   "extraData": "0x0000000000000000000000000000000000000000000000000000000000000000f86df86994a18182ee8ca476f2f0fb8170a1d4620edb39c5e194065541903bf3bb8c088a18046b441f5d286288c994d1e106d68cac92668b100f6f43791ddcb2c7588094d156777a1e1539fe654fc82266f41fd5d4aa548494efbbd8900222d7b2f75d081c3e7446a1f4fe10ce80c0",
-  "gasLimit": "0xFFFFFF",
+  "gasLimit": "700000000",
   "gasUsed": "0x0",
   "number": "0x0",
   "difficulty": "0x1",
@@ -32,7 +32,7 @@
       "epochLength": 30000,
       "blockPeriodSeconds" : 1,
       "requestTimeoutSeconds": 10,
-      "startBlock": 23
+      "startBlock": 101
     },
     "txnSizeLimit": 64,
     "maxCodeSize": 0,
