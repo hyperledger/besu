@@ -829,7 +829,7 @@ public class PeerDiscoveryAgentTest {
     final AgentBuilder agentBuilder = helper.agentBuilder().active(true);
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(agentBuilder);
 
-    assertThat(agent.isActive()).isTrue();
+    assertThat(agent.isEnabled()).isTrue();
   }
 
   @Test
@@ -837,7 +837,7 @@ public class PeerDiscoveryAgentTest {
     final AgentBuilder agentBuilder = helper.agentBuilder().active(false);
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(agentBuilder);
 
-    assertThat(agent.isActive()).isFalse();
+    assertThat(agent.isEnabled()).isFalse();
   }
 
   @Test

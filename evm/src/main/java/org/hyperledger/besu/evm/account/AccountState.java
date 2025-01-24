@@ -78,7 +78,7 @@ public interface AccountState {
   /**
    * The optional EVM bytecode if the account has set a 7702 code delegation.
    *
-   * @return the code of the target account (which may be empty).
+   * @return the code of the target account that this account delegates to (which may be empty).
    */
   default Optional<Bytes> getCodeDelegationTargetCode() {
     return Optional.empty();

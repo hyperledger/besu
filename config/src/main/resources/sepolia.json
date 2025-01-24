@@ -15,6 +15,7 @@
     "terminalTotalDifficulty": 17000000000000000,
     "shanghaiTime": 1677557088,
     "cancunTime": 1706655072,
+    "pragueTime": 1739980128,
     "blobSchedule": {
       "cancun": {
         "target": 3,
