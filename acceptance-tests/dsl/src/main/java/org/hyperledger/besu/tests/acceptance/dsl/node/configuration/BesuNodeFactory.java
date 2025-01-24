@@ -458,34 +458,34 @@ public class BesuNodeFactory {
   }
 
   public BesuNode createQbftNode(
-          final String name, final boolean fixedPort, final DataStorageFormat storageFormat)
+      final String name, final boolean fixedPort, final DataStorageFormat storageFormat)
       throws IOException {
     JsonRpcConfiguration rpcConfig = node.createJsonRpcWithQbftEnabledConfig(false);
     rpcConfig.addRpcApi("ADMIN,TXPOOL");
     if (fixedPort) {
       rpcConfig.setPort(
-              Math.abs(name.hashCode() % 60000)
-                      + 1024); // Generate a consistent port for p2p based on node name
+          Math.abs(name.hashCode() % 60000)
+              + 1024); // Generate a consistent port for p2p based on node name
     }
 
     BesuNodeConfigurationBuilder builder =
-            new BesuNodeConfigurationBuilder()
-                    .name(name)
-                    .miningEnabled()
-                    .jsonRpcConfiguration(rpcConfig)
-                    .webSocketConfiguration(node.createWebSocketEnabledConfig())
-                    .devMode(false)
-                    .dataPath(Paths.get("/tmp/"+ name))
-                    .dataStorageConfiguration(
-                            storageFormat == DataStorageFormat.FOREST
-                                    ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
-                                    : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
-                    .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig);
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(rpcConfig)
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .dataPath(Paths.get("/tmp/" + name))
+            .dataStorageConfiguration(
+                storageFormat == DataStorageFormat.FOREST
+                    ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
+                    : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+            .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig);
     if (fixedPort) {
       builder.p2pPort(
-              Math.abs(name.hashCode() % 60000)
-                      + 1024
-                      + 500); // Generate a consistent port for p2p based on node name (+ 500 to avoid
+          Math.abs(name.hashCode() % 60000)
+              + 1024
+              + 500); // Generate a consistent port for p2p based on node name (+ 500 to avoid
       // clashing with RPC port or other nodes with a similar name)
     }
     return create(builder.build());

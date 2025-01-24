@@ -18,7 +18,6 @@ import static org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHeaderValidatio
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.IbftLegacyConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -60,9 +59,7 @@ public class IbftProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             Optional.of(DEFAULT_CHAIN_ID),
-            ProtocolSpecAdapters.create(
-                0,
-                builder -> applyIbftChanges(blockPeriod, builder)),
+            ProtocolSpecAdapters.create(0, builder -> applyIbftChanges(blockPeriod, builder)),
             privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
@@ -89,20 +86,18 @@ public class IbftProtocolSchedule {
   }
 
   private static ProtocolSpecBuilder applyIbftChanges(
-      final long secondsBetweenBlocks,
-      final ProtocolSpecBuilder builder) {
+      final long secondsBetweenBlocks, final ProtocolSpecBuilder builder) {
     return builder
-        .blockHeaderValidatorBuilder(
-            feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks))
-        .ommerHeaderValidatorBuilder(
-            feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks))
+        .blockHeaderValidatorBuilder(feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks))
+        .ommerHeaderValidatorBuilder(feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent) -> BigInteger.ONE)
         .blockReward(Wei.ZERO)
         .skipZeroBlockRewards(true)
-        .blockHeaderFunctions(new BftBlockHeaderFunctions(IbftBlockHashing::calculateHashOfIbftBlockOnchain,
-                ibftExtraDataCodec));
+        .blockHeaderFunctions(
+            new BftBlockHeaderFunctions(
+                IbftBlockHashing::calculateHashOfIbftBlockOnchain, ibftExtraDataCodec));
   }
 }

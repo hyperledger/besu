@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -63,7 +62,10 @@ public class IbftLegacyBlockInterface extends BftBlockInterface {
   @Override
   public Address getProposerOfBlock(final org.hyperledger.besu.plugin.data.BlockHeader header) {
     return getProposerOfBlock(
-        BlockHeader.convertPluginBlockHeader(header, new BftBlockHeaderFunctions(h -> new BftBlockHashing(ibftExtraDataCodec).calculateDataHashForCommittedSeal(h),
+        BlockHeader.convertPluginBlockHeader(
+            header,
+            new BftBlockHeaderFunctions(
+                h -> new BftBlockHashing(ibftExtraDataCodec).calculateDataHashForCommittedSeal(h),
                 ibftExtraDataCodec)));
   }
 
@@ -78,26 +80,6 @@ public class IbftLegacyBlockInterface extends BftBlockInterface {
       return Optional.of(new ValidatorVote(votePolarity, proposer, recipient));
     }
     return Optional.empty();
-  }
-
-  /**
-   * Insert vote to header builder and return block header builder.
-   *
-   * @param builder the builder
-   * @param vote the vote
-   * @return the block header builder
-   */
-  public static BlockHeaderBuilder insertVoteToHeaderBuilder(
-      final BlockHeaderBuilder builder, final Optional<ValidatorVote> vote) {
-    if (vote.isPresent()) {
-      final ValidatorVote voteToCast = vote.get();
-      builder.nonce(voteToValue.get(voteToCast.getVotePolarity()));
-      builder.coinbase(voteToCast.getRecipient());
-    } else {
-      builder.nonce(voteToValue.get(VoteType.DROP));
-      builder.coinbase(NO_VOTE_SUBJECT);
-    }
-    return builder;
   }
 
   @Override

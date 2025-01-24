@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.consensus.ibftlegacy;
 
-import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
-import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
-
 import org.hyperledger.besu.consensus.ibftlegacy.headervalidationrules.IbftExtraDataValidationRule;
 import org.hyperledger.besu.consensus.ibftlegacy.headervalidationrules.VoteValidationRule;
 import org.hyperledger.besu.datatypes.Hash;
@@ -24,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
@@ -48,7 +44,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
   }
 
   public static BlockHeaderValidator.Builder ibftBlockHeaderValidator(
-          final long secondsBetweenBlocks){
+      final long secondsBetweenBlocks) {
     return createValidator(secondsBetweenBlocks);
   }
 
@@ -71,8 +67,8 @@ public class IbftBlockHeaderValidationRulesetFactory {
     return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
-/*        .addRule(
-            new GasLimitRangeAndDeltaValidationRule(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT))*/
+        /*        .addRule(
+        new GasLimitRangeAndDeltaValidationRule(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT))*/
         .addRule(new TimestampBoundedByFutureParameter(1))
         .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
         .addRule(
@@ -88,24 +84,23 @@ public class IbftBlockHeaderValidationRulesetFactory {
         .addRule(new IbftExtraDataValidationRule(validateCommitSeals, ceil2nBy3Block));
   }
 
-  private static BlockHeaderValidator.Builder createValidator(
-          final long secondsBetweenBlocks) {
+  private static BlockHeaderValidator.Builder createValidator(final long secondsBetweenBlocks) {
     return new BlockHeaderValidator.Builder()
-            .addRule(new AncestryValidationRule())
-            .addRule(new GasUsageValidationRule())
-/*        .addRule(
-            new GasLimitRangeAndDeltaValidationRule(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT))*/
-            .addRule(new TimestampBoundedByFutureParameter(1))
-            .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
-            .addRule(
-                    new ConstantFieldValidationRule<>(
-                            "MixHash", BlockHeader::getMixHash, IbftHelpers.EXPECTED_MIX_HASH))
-            .addRule(
-                    new ConstantFieldValidationRule<>(
-                            "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
-            .addRule(
-                    new ConstantFieldValidationRule<>(
-                            "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
-            .addRule(new VoteValidationRule());
+        .addRule(new AncestryValidationRule())
+        .addRule(new GasUsageValidationRule())
+        /*        .addRule(
+        new GasLimitRangeAndDeltaValidationRule(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT))*/
+        .addRule(new TimestampBoundedByFutureParameter(1))
+        .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
+        .addRule(
+            new ConstantFieldValidationRule<>(
+                "MixHash", BlockHeader::getMixHash, IbftHelpers.EXPECTED_MIX_HASH))
+        .addRule(
+            new ConstantFieldValidationRule<>(
+                "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
+        .addRule(
+            new ConstantFieldValidationRule<>(
+                "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
+        .addRule(new VoteValidationRule());
   }
 }
