@@ -71,6 +71,8 @@ public interface MutableBlockchain extends Blockchain {
 
   Difficulty calculateTotalDifficulty(final BlockHeader blockHeader);
 
+  Difficulty calculateTotalDifficultyForSyncing(BlockHeader blockHeader);
+
   /**
    * Rolls back the canonical chainhead to the specified block number.
    *

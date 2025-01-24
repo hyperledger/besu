@@ -145,8 +145,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
           new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem);
       final DownloadSyncReceiptsStep downloadSyncReceiptsStep =
           new DownloadSyncReceiptsStep(protocolSchedule, ethContext);
-      final ImportSyncBlocksStep importSyncBlocksStep =
-          new ImportSyncBlocksStep(
+      final ImportSyncBlocksFinish importSyncBlocksStep =
+          new ImportSyncBlocksFinish(
               protocolSchedule,
               protocolContext,
               attachedValidationPolicy,
@@ -173,8 +173,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
               "downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
           .thenProcessAsyncOrdered(
               "downloadReceipts", downloadSyncReceiptsStep, downloaderParallelism)
-          .thenProcessAsyncOrdered("importBlock", importSyncBlocksStep, downloaderParallelism + 2)
-          .andFinishWith("logBlock", LOG::debug);
+          .andFinishWith("importBlock", importSyncBlocksStep);
     } else {
       final DownloadBodiesStep downloadBodiesStep =
           new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);

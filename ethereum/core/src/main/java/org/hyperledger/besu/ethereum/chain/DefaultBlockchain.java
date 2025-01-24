@@ -41,6 +41,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -490,7 +491,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final SyncBlock block, final List<TransactionReceipt> receipts) {
 
     final Hash hash = block.getHash();
-    final Difficulty td = calculateTotalDifficulty(block.getHeader());
+    final Difficulty td = calculateTotalDifficultyForSyncing(block.getHeader());
 
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
 
@@ -551,6 +552,25 @@ public class DefaultBlockchain implements MutableBlockchain {
             .orElseThrow(
                 () -> new IllegalStateException("Blockchain is missing total difficulty data."));
     return blockHeader.getDifficulty().add(parentTotalDifficulty);
+  }
+
+  Difficulty difficultyForSyncing = Difficulty.ZERO;
+
+  @Override
+  public Difficulty calculateTotalDifficultyForSyncing(final BlockHeader blockHeader) {
+    if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
+      difficultyForSyncing = blockHeader.getDifficulty();
+    } else if (difficultyForSyncing.equals(Difficulty.ZERO)) {
+      final Difficulty parentTotalDifficulty =
+          blockchainStorage
+              .getTotalDifficulty(blockHeader.getParentHash())
+              .orElseThrow(
+                  () -> new IllegalStateException("Blockchain is missing total difficulty data."));
+      difficultyForSyncing = parentTotalDifficulty.add(blockHeader.getDifficulty());
+    } else {
+      difficultyForSyncing = difficultyForSyncing.add(blockHeader.getDifficulty());
+    }
+    return difficultyForSyncing;
   }
 
   private BlockAddedEvent updateCanonicalChainData(
@@ -640,16 +660,18 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     updater.putBlockHash(newBlock.getHeader().getNumber(), newBlockHash);
     updater.setChainHead(newBlockHash);
-    final List<Hash> listOfTxHashes =
-        newBlock.getBody().getEncodedTransactions().stream().map(Hash::hash).toList();
-    indexTransactionsForBlock(updater, newBlockHash, listOfTxHashes);
+    //    final List<Hash> listOfTxHashes =
+    //        newBlock.getBody().getEncodedTransactions().stream().map(Hash::hash).toList();
+    //    indexTransactionsForBlock(updater, newBlockHash, listOfTxHashes);
     gasUsedCounter.inc(newBlock.getHeader().getGasUsed());
     numberOfTransactionsCounter.inc(receipts.size());
 
     return BlockAddedEvent.createForSyncHeadAdvancement(
         newBlock.getHeader(),
-        LogWithMetadata.generate(
-            newBlock.getHeader().getNumber(), newBlock.getHash(), listOfTxHashes, receipts, false),
+        Collections.emptyList(),
+        //        LogWithMetadata.generate(
+        //            newBlock.getHeader().getNumber(), newBlock.getHash(), listOfTxHashes,
+        // receipts, false),
         receipts);
   }
 

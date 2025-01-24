@@ -26,16 +26,14 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 import java.util.OptionalLong;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ImportSyncBlocksStep
-    implements Function<List<SyncBlockWithReceipts>, CompletableFuture<String>> {
+public class ImportSyncBlocksFinish implements Consumer<List<SyncBlockWithReceipts>> {
   private static final Logger LOG = LoggerFactory.getLogger(ImportSyncBlocksStep.class);
   private static final long PRINT_DELAY = TimeUnit.SECONDS.toMillis(30L);
 
@@ -46,7 +44,7 @@ public class ImportSyncBlocksStep
   private OptionalLong logStartBlock = OptionalLong.empty();
   private final BlockHeader pivotHeader;
 
-  public ImportSyncBlocksStep(
+  public ImportSyncBlocksFinish(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final ValidationPolicy headerValidationPolicy,
@@ -60,11 +58,7 @@ public class ImportSyncBlocksStep
   }
 
   @Override
-  public CompletableFuture<String> apply(final List<SyncBlockWithReceipts> blocksWithReceipts) {
-    return CompletableFuture.supplyAsync(() -> importSyncBlocks(blocksWithReceipts));
-  }
-
-  public String importSyncBlocks(final List<SyncBlockWithReceipts> blocksWithReceipts) {
+  public void accept(final List<SyncBlockWithReceipts> blocksWithReceipts) {
     final long startTime = System.nanoTime();
     long noOfTransactions = 0;
     long noOfReceipts = 0;
@@ -86,9 +80,9 @@ public class ImportSyncBlocksStep
         .addArgument(noOfReceipts)
         .log();
     if (logStartBlock.isEmpty()) {
-      logStartBlock = OptionalLong.of(blocksWithReceipts.getFirst().getNumber());
+      logStartBlock = OptionalLong.of(blocksWithReceipts.get(0).getNumber());
     }
-    final long lastBlock = blocksWithReceipts.getLast().getNumber();
+    final long lastBlock = blocksWithReceipts.get(blocksWithReceipts.size() - 1).getNumber();
     int peerCount = -1; // ethContext is not available in tests
     if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
       peerCount = ethContext.getEthPeers().peerCount();
@@ -111,10 +105,6 @@ public class ImportSyncBlocksStep
       accumulatedTime = 0L;
       logStartBlock = OptionalLong.empty();
     }
-    return "Imported "
-        + blocksWithReceipts.size()
-        + " blocks, starting at block "
-        + blocksWithReceipts.getFirst().getNumber();
   }
 
   @VisibleForTesting
