@@ -504,7 +504,6 @@ public class FlatTraceGenerator {
                     return exceptionalHaltReason.getDescription();
                   }
                 }));
-
     if (currentContext != null) {
       final Action.Builder actionBuilder = traceFrameBuilder.getActionBuilder();
       actionBuilder.value(Quantity.create(traceFrame.getValue()));

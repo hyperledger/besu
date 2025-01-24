@@ -144,7 +144,7 @@ public class PluginJsonRpcMethodTest extends JsonRpcHttpServiceTestBase {
       try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
         assertThat(resp.code()).isEqualTo(200);
         final JsonObject json = new JsonObject(resp.body().string());
-        testHelper.assertValidJsonRpcError(json, 1, -2, "Error with data: ABC", "abc");
+        testHelper.assertValidJsonRpcError(json, 1, -2, "Error with data (ABC)", "abc");
       }
     }
   }
