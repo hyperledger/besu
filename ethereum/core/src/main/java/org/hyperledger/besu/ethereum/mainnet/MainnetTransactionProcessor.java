@@ -477,7 +477,7 @@ public class MainnetTransactionProcessor {
           validationResult =
               ValidationResult.invalid(
                   TransactionInvalidReason.EXECUTION_HALTED,
-                  initialFrame.getExceptionalHaltReason().get().toString());
+                  initialFrame.getExceptionalHaltReason().get().getDescription());
         }
       }
 

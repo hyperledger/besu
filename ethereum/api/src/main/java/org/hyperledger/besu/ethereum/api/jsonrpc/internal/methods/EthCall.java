@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -107,11 +106,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
                                             request.getRequest().getId(),
                                             result.getOutput().toString())
                                         : errorResponse(request, result)),
-                                reason ->
-                                    errorResponse(
-                                        request,
-                                        JsonRpcErrorConverter.convertTransactionInvalidReason(
-                                            reason)))),
+                                reason -> errorResponse(request, result))),
             header)
         .orElse(errorResponse(request, INTERNAL_ERROR));
   }
@@ -134,14 +129,10 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
 
   private JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
-
     final ValidationResult<TransactionInvalidReason> validationResult =
         result.getValidationResult();
     if (validationResult != null && !validationResult.isValid()) {
-      return errorResponse(
-          request,
-          JsonRpcErrorConverter.convertTransactionInvalidReason(
-              validationResult.getInvalidReason()));
+      return errorResponse(request, JsonRpcError.from(validationResult));
     } else {
       final TransactionProcessingResult resultTrx = result.result();
       if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
