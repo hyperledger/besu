@@ -59,7 +59,7 @@ public class BlockHashOperation extends AbstractOperation {
 
     // If the current block is the genesis block or the sought block is
     // not within the lookback window, zero is returned.
-    if (currentBlockNumber == 0
+    if (soughtBlock < 0
         || soughtBlock >= currentBlockNumber
         || soughtBlock < (currentBlockNumber - blockHashLookup.getLookback())) {
       frame.pushStackItem(Bytes32.ZERO);
