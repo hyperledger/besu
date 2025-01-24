@@ -459,13 +459,11 @@ public class TransactionSimulator {
   }
 
   @VisibleForTesting
-  protected void applyOverrides(final MutableAccount account, final StateOverride override) {
+  protected static void applyOverrides(final MutableAccount account, final StateOverride override) {
     LOG.debug("applying overrides to state for account {}", account.getAddress());
     override.getNonce().ifPresent(account::setNonce);
-    if (override.getBalance().isPresent()) {
-      account.setBalance(override.getBalance().get());
-    }
-    override.getCode().ifPresent(n -> account.setCode(Bytes.fromHexString(n)));
+    override.getBalance().ifPresent(account::setBalance);
+    override.getCode().ifPresent(code -> account.setCode(Bytes.fromHexString(code)));
     override
         .getState()
         .ifPresent(

@@ -245,7 +245,7 @@ public class BlockSimulator {
     for (Address accountToOverride : stateOverrideMap.keySet()) {
       final StateOverride override = stateOverrideMap.get(accountToOverride);
       MutableAccount account = updater.getOrCreate(accountToOverride);
-      transactionSimulator.applyOverrides(account, override);
+      TransactionSimulator.applyOverrides(account, override);
     }
     updater.commit();
   }
