@@ -151,6 +151,24 @@ public class TransactionSimulatorTest {
   }
 
   @Test
+  public void testOverrides_whenStateOverrides_stateIsUpdated() {
+    MutableAccount mutableAccount = mock(MutableAccount.class);
+    when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM);
+    final String storageKey = "0x01a2";
+    final String storageValue = "0x00ff";
+    StateOverride.Builder builder =
+        new StateOverride.Builder().withState(Map.of(storageKey, storageValue));
+    StateOverride override = builder.build();
+    transactionSimulator.applyOverrides(mutableAccount, override);
+
+    verify(mutableAccount).clearStorage();
+
+    verify(mutableAccount)
+        .setStorageValue(
+            eq(UInt256.fromHexString(storageKey)), eq(UInt256.fromHexString(storageValue)));
+  }
+
+  @Test
   public void shouldReturnEmptyWhenBlockDoesNotExist() {
     when(blockchain.getBlockHeader(eq(1L))).thenReturn(Optional.empty());
 

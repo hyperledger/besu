@@ -467,6 +467,16 @@ public class TransactionSimulator {
     }
     override.getCode().ifPresent(n -> account.setCode(Bytes.fromHexString(n)));
     override
+        .getState()
+        .ifPresent(
+            d -> {
+              account.clearStorage();
+              d.forEach(
+                  (key, value) ->
+                      account.setStorageValue(
+                          UInt256.fromHexString(key), UInt256.fromHexString(value)));
+            });
+    override
         .getStateDiff()
         .ifPresent(
             d ->
