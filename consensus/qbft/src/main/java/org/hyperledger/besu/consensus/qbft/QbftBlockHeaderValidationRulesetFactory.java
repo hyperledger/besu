@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.consensus.qbft;
 
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
+
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
-import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCoinbaseValidationRule;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCommitSealsValidationRule;
-import org.hyperledger.besu.consensus.qbft.headervalidationrules.QbftValidatorsValidationRule;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -32,9 +33,6 @@ import java.time.Duration;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
-
-import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
-import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
 
 /** The Qbft block header validation ruleset factory. */
 public class QbftBlockHeaderValidationRulesetFactory {
@@ -58,9 +56,9 @@ public class QbftBlockHeaderValidationRulesetFactory {
         new BlockHeaderValidator.Builder()
             .addRule(new AncestryValidationRule())
             .addRule(new GasUsageValidationRule())
-           .addRule(
-            new GasLimitRangeAndDeltaValidationRule(
-                DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
+            .addRule(
+                new GasLimitRangeAndDeltaValidationRule(
+                    DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
             .addRule(new TimestampBoundedByFutureParameter(1))
             .addRule(
                 new ConstantFieldValidationRule<>(

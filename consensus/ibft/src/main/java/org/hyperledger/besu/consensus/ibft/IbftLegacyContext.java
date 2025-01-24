@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.ibft;
 
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
@@ -39,8 +38,8 @@ public class IbftLegacyContext extends BftContext {
       final ValidatorProvider validatorProvider,
       final EpochManager epochManager,
       final BftBlockInterface blockInterface) {
-      super(validatorProvider, epochManager, blockInterface);
-      this.validatorProvider = validatorProvider;
+    super(validatorProvider, epochManager, blockInterface);
+    this.validatorProvider = validatorProvider;
     this.epochManager = epochManager;
     this.blockInterface = blockInterface;
   }

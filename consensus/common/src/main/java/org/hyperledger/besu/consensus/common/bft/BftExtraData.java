@@ -61,10 +61,10 @@ public class BftExtraData implements ParsedExtraData {
   }
 
   public BftExtraData(
-          final Bytes vanityData,
-          final Collection<SECPSignature> seals,
-          final SECPSignature proposerSeal,
-          final Collection<Address> validators) {
+      final Bytes vanityData,
+      final Collection<SECPSignature> seals,
+      final SECPSignature proposerSeal,
+      final Collection<Address> validators) {
     checkNotNull(vanityData);
     checkNotNull(seals);
     checkNotNull(validators);

@@ -121,7 +121,7 @@ public class IbftBlockHashing {
   }
 
   private static Bytes encodeExtraDataWithoutCommittedSeals(
-          final BftExtraData ibftExtraData, final SECPSignature proposerSeal) {
+      final BftExtraData ibftExtraData, final SECPSignature proposerSeal) {
     final BytesValueRLPOutput extraDataEncoding = new BytesValueRLPOutput();
     extraDataEncoding.startList();
     extraDataEncoding.writeList(
@@ -156,7 +156,7 @@ public class IbftBlockHashing {
     out.writeBytes(header.getTransactionsRoot());
     out.writeBytes(header.getReceiptsRoot());
     out.writeBytes(header.getLogsBloom());
-    //out.writeBytes(header.getDifficulty());
+    // out.writeBytes(header.getDifficulty());
     out.writeBytes(Bytes.fromHexString("0x01"));
     out.writeLongScalar(header.getNumber());
     out.writeLongScalar(header.getGasLimit());

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.ibftlegacy;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
@@ -23,9 +22,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.Collection;
@@ -33,12 +30,10 @@ import java.util.Collection;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Represents the data structure stored in the extraData field of the BlockHeader used when
- * operating under an IBFT consensus mechanism.
+ * Represents encoder/decoder of the serialized data structure stored in the extraData field of the
+ * BlockHeader used when operating under an IBFT consensus mechanism.
  */
 public class IbftExtraDataCodec extends BftExtraDataCodec {
   // private static final Logger LOG = LoggerFactory.getLogger(IbftExtraDataCodec.class);
@@ -48,31 +43,6 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-
-
-  /**
-   * Instantiates a new Ibft extra data.
-   *
-   * @param vanityData the vanity data
-   * @param seals the seals
-   * @param proposerSeal the proposer seal
-   * @param validators the validators
-   */
-/*  public IbftExtraDataCodec(
-      final Bytes vanityData,
-      final Collection<SECPSignature> seals,
-      final SECPSignature proposerSeal,
-      final Collection<Address> validators) {
-
-    checkNotNull(vanityData);
-    checkNotNull(seals);
-    checkNotNull(validators);
-
-    this.vanityData = vanityData;
-    this.seals = seals;
-    this.proposerSeal = proposerSeal;
-    this.validators = validators;
-  }*/
 
   /**
    * Decode raw input and return ibft extra data.
@@ -113,6 +83,10 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
    */
   @Override
   public Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType) {
+    throw new UnsupportedOperationException("The encode method is not supported.");
+  }
+  /*  @Override
+  public Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType) {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeList(bftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
@@ -125,6 +99,6 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
     encoder.endList();
 
     return Bytes.wrap(bftExtraData.getVanityData(), encoder.encoded());
-  }
+  }*/
 
 }

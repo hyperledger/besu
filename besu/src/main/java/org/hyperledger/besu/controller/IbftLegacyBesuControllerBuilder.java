@@ -15,17 +15,14 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.IbftLegacyConfigOptions;
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
-import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.IbftLegacyContext;
+import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyBlockInterface;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
-import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul99Protocol;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
@@ -33,14 +30,10 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
-import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,22 +42,13 @@ import org.slf4j.LoggerFactory;
 public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(IbftLegacyBesuControllerBuilder.class);
-  private final BftBlockInterface blockInterface ;
+  private final BftBlockInterface blockInterface;
 
-  // TODO remove this warning once IBFT1 has been deprecated
   /** Default constructor */
   public IbftLegacyBesuControllerBuilder() {
     LOG.warn(
-        "IBFT1 is being deprecated and will be removed in a future release. Consider using QBFT instead of IBFT1 or using GoQuorum instead of Besu if you need to use IBFT1");
+        "IBFT1 is deprecated. This class should be used only while migrating to another consensus mechanism.");
     this.blockInterface = new IbftLegacyBlockInterface(new IbftExtraDataCodec());
-  }
-
-  @Override
-  protected SubProtocolConfiguration createSubProtocolConfiguration(
-      final EthProtocolManager ethProtocolManager,
-      final Optional<SnapProtocolManager> snapProtocolManage) {
-    return new SubProtocolConfiguration()
-        .withSubProtocol(Istanbul99Protocol.get(), ethProtocolManager);
   }
 
   @Override
@@ -112,36 +96,4 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
       LOG.warn("Genesis block contains no signers - chain will not progress.");
     }
   }
-
-  /* @Override
-  protected String getSupportedProtocol() {
-    return Istanbul99Protocol.get().getName();
-  }
-
-  @Override
-  protected EthProtocolManager createEthProtocolManager(
-      final ProtocolContext protocolContext,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-      final EthPeers ethPeers,
-      final EthContext ethContext,
-      final EthMessages ethMessages,
-      final EthScheduler scheduler,
-      final List<PeerValidator> peerValidators,
-      final Optional<MergePeerFilter> mergePeerFilter) {
-    LOG.info("Operating on IBFT-1.0 network.");
-    return new Istanbul99ProtocolManager(
-        protocolContext.getBlockchain(),
-        networkId,
-        protocolContext.getWorldStateArchive(),
-        transactionPool,
-        ethereumWireProtocolConfiguration,
-        ethPeers,
-        ethMessages,
-        ethContext,
-        peerValidators,
-        synchronizerConfiguration,
-        scheduler);
-  }*/
 }
