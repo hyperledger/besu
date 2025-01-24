@@ -63,16 +63,18 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0xfe3366e7L), 1735371L),
               new ForkId(Bytes.ofUnsignedInt(0xb96cbd13L), 1677557088L),
               new ForkId(Bytes.ofUnsignedInt(0xf7f9bc08L), 1706655072L),
-              new ForkId(Bytes.ofUnsignedInt(0x88cf81d9L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x88cf81d9L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x88cf81d9L), 1739980128L),
+              new ForkId(Bytes.ofUnsignedInt(0xbafd09c3L), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0xbafd09c3L), 0L))
         },
         new Object[] {
           NetworkName.HOLESKY,
           List.of(
               new ForkId(Bytes.ofUnsignedInt(0xc61a6098L), 1696000704L),
               new ForkId(Bytes.ofUnsignedInt(0xfd4f016bL), 1707305664L),
-              new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 1739352768L),
+              new ForkId(Bytes.ofUnsignedInt(0xf818a0d6L), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0xf818a0d6L), 0L))
         },
         new Object[] {
           NetworkName.MAINNET,
