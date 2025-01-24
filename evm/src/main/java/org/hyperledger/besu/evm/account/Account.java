@@ -66,7 +66,7 @@ public interface Account extends AccountState {
    *
    * @return true if the account has delegated code otherwise false.
    */
-  default boolean hasCodeDelegation() {
+  default boolean hasDelegatedCode() {
     return false;
   }
 }
