@@ -57,8 +57,8 @@ public class BlockHashOperation extends AbstractOperation {
     final long currentBlockNumber = blockValues.getNumber();
     final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
 
-    // If the current block is the genesis block or the sought block is
-    // not within the lookback window, zero is returned.
+    // If the sought block is negative, a future block, the current block, or not in the
+    // lookback window, zero is returned.
     if (soughtBlock < 0
         || soughtBlock >= currentBlockNumber
         || soughtBlock < (currentBlockNumber - blockHashLookup.getLookback())) {
