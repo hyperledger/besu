@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -76,21 +77,20 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
   }
 
   @Override
-  public Optional<MutableWorldState> getMutable(
-      final BlockHeader blockHeader, final boolean shouldPersistState) {
-    if (shouldPersistState) {
-      return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
+  public Optional<MutableWorldState> getWorldState(final WorldStateQueryParams queryParams) {
+    if (queryParams.shouldWorldStateUpdateHead()) {
+      return getFullWorldState(queryParams);
     } else {
       // If we are creating a world state for a historic/archive block, we have 2 options:
       // 1. Roll back and create a layered world state. We can do this as far back as 512 blocks by
       // default, and we end up with a full state trie & flat DB at the desired block
       // 2. Rely entirely on the flat DB, which is less safe because we can't check the world state
       // root is correct but at least gives us the ability to serve historic state. The rollback
-      // step
-      // in this case is minimal - take the chain head state and reset the block hash and number for
+      // step in this case is minimal - take the chain head state and reset the block hash and
+      // number for
       // archive flat DB queries
       final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
-      if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
+      if (chainHeadBlockHeader.getNumber() - queryParams.getBlockHeader().getNumber()
           >= trieLogManager.getMaxLayersToLoad()) {
         LOG.debug(
             "Returning archive state without verifying state root",
@@ -103,11 +103,12 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
                     worldState ->
                         rollMutableArchiveStateToBlockHash( // This is a tiny action for archive
                             // state
-                            (DiffBasedWorldState) worldState, blockHeader.getHash()))
-                .map(MutableWorldState::freeze);
+                            (DiffBasedWorldState) worldState,
+                            queryParams.getBlockHeader().getHash()))
+                .map(MutableWorldState::freezeStorage);
         return cachedWorldState;
       }
-      return super.getMutable(blockHeader, false);
+      return super.getWorldState(queryParams);
     }
   }
 

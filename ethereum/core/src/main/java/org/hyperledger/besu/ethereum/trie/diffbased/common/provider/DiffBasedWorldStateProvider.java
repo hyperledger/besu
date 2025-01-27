@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateC
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -54,8 +55,8 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
 
   protected final TrieLogManager trieLogManager;
   protected DiffBasedCachedWorldStorageManager cachedWorldStorageManager;
-  protected DiffBasedWorldState persistedState;
-
+  protected DiffBasedWorldState headWorldState;
+  protected EvmConfiguration evmConfiguration;
   protected final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   // Configuration that will be shared by all instances of world state at their creation
   protected final WorldStateConfig worldStateConfig;
@@ -144,21 +145,93 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     if (worldStateConfig.isStateful()) {
       return getFullWorldState(queryParams);
     } else {
-      final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
-      if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
-          >= trieLogManager.getMaxLayersToLoad()) {
-        LOG.warn(
-            "Exceeded the limit of historical blocks that can be loaded ({}). If you need to make older historical queries, configure your `--bonsai-historical-block-limit`.",
-            trieLogManager.getMaxLayersToLoad());
-        return Optional.empty();
-      }
-      return cachedWorldStorageManager
-          .getWorldState(blockHeader.getHash())
-          .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
-          .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
-          .flatMap(worldState -> rollMutableStateToBlockHash(worldState, blockHeader.getHash()))
-          .map(MutableWorldState::freeze);
+      throw new RuntimeException("stateless mode is not yet available");
     }
+  }
+
+  /**
+   * Gets the head world state.
+   *
+   * <p>This method returns the head world state, which is the most recent state of the world.
+   *
+   * @return the head world state
+   */
+  @Override
+  public MutableWorldState getWorldState() {
+    return headWorldState;
+  }
+
+  /**
+   * Gets the full world state based on the provided query parameters.
+   *
+   * <p>This method determines whether to retrieve the full world state from the head or from the
+   * cache based on the query parameters. If the query parameters indicate that the world state
+   * should update the head, the method retrieves the full world state from the head. Otherwise, it
+   * retrieves the full world state from the cache.
+   *
+   * <p>The method follows these steps: 1. Check if the query parameters indicate that the world
+   * state should update the head. 2. If true, call {@link #getFullWorldStateFromHead(Hash)} with
+   * the block hash from the query parameters. 3. If false, call {@link
+   * #getFullWorldStateFromCache(BlockHeader)} with the block header from the query parameters.
+   *
+   * @param queryParams the query parameters
+   * @return the stateful world state, if available
+   */
+  protected Optional<MutableWorldState> getFullWorldState(final WorldStateQueryParams queryParams) {
+    return queryParams.shouldWorldStateUpdateHead()
+        ? getFullWorldStateFromHead(queryParams.getBlockHash())
+        : getFullWorldStateFromCache(queryParams.getBlockHeader());
+  }
+
+  /**
+   * Gets the full world state from the head based on the provided block hash.
+   *
+   * <p>This method attempts to roll the head world state to the specified block hash. If the block
+   * hash matches the block hash of the head world state, the head world state is returned.
+   * Otherwise, the method attempts to roll the full world state to the specified block hash.
+   *
+   * <p>The method follows these steps: 1. Check if the block hash matches the block hash of the
+   * head world state. 2. If it matches, return the head world state. 3. If it does not match,
+   * attempt to roll the full world state to the specified block hash.
+   *
+   * @param blockHash the block hash
+   * @return the full world state, if available
+   */
+  private Optional<MutableWorldState> getFullWorldStateFromHead(final Hash blockHash) {
+    return rollFullWorldStateToBlockHash(headWorldState, blockHash);
+  }
+
+  /**
+   * Gets the full world state from the cache based on the provided block header.
+   *
+   * <p>This method attempts to retrieve the world state from the cache using the block header. If
+   * the block header is too old (i.e., the number of blocks between the chain head and the provided
+   * block header exceeds the maximum layers to load), a warning is logged and an empty Optional is
+   * returned.
+   *
+   * <p>The method follows these steps: 1. Check if the world state for the given block header is
+   * available in the cache. 2. If not, attempt to get the nearest world state from the cache. 3. If
+   * still not found, attempt to get the head world state. 4. If a world state is found, roll it to
+   * the block hash of the provided block header. 5. Freeze the world state and return it.
+   *
+   * @param blockHeader the block header
+   * @return the full world state, if available
+   */
+  private Optional<MutableWorldState> getFullWorldStateFromCache(final BlockHeader blockHeader) {
+    final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
+    if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
+        >= trieLogManager.getMaxLayersToLoad()) {
+      LOG.warn(
+          "Exceeded the limit of historical blocks that can be loaded ({}). If you need to make older historical queries, configure your `--bonsai-historical-block-limit`.",
+          trieLogManager.getMaxLayersToLoad());
+      return Optional.empty();
+    }
+    return cachedWorldStorageManager
+        .getWorldState(blockHeader.getHash())
+        .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
+        .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
+        .flatMap(worldState -> rollFullWorldStateToBlockHash(worldState, blockHeader.getHash()))
+        .map(MutableWorldState::freezeStorage);
   }
 
   private Optional<MutableWorldState> rollFullWorldStateToBlockHash(
