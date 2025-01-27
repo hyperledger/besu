@@ -12,7 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.diffbased.common;
+package org.hyperledger.besu.ethereum.trie.diffbased.common.provider;
+
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -26,11 +28,10 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCached
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -54,27 +55,24 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   protected final TrieLogManager trieLogManager;
   protected DiffBasedCachedWorldStorageManager cachedWorldStorageManager;
   protected DiffBasedWorldState persistedState;
-  protected EvmConfiguration evmConfiguration;
 
   protected final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
-  protected final DiffBasedWorldStateConfig defaultWorldStateConfig;
+  // Configuration that will be shared by all instances of world state at their creation
+  protected final WorldStateConfig worldStateConfig;
 
   public DiffBasedWorldStateProvider(
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final ServiceManager pluginContext) {
-
-    this.worldStateKeyValueStorage = worldStateKeyValueStorage;
-    // TODO: de-dup constructors
-    this.trieLogManager =
+    this(
+        worldStateKeyValueStorage,
+        blockchain,
         new TrieLogManager(
             blockchain,
             worldStateKeyValueStorage,
             maxLayersToLoad.orElse(DiffBasedCachedWorldStorageManager.RETAINED_LAYERS),
-            pluginContext);
-    this.blockchain = blockchain;
-    this.defaultWorldStateConfig = new DiffBasedWorldStateConfig();
+            pluginContext));
   }
 
   public DiffBasedWorldStateProvider(
@@ -83,10 +81,10 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
       final TrieLogManager trieLogManager) {
 
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
-    // TODO: de-dup constructors
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
-    this.defaultWorldStateConfig = new DiffBasedWorldStateConfig();
+    this.worldStateConfig = WorldStateConfig.newBuilder().build();
+    ;
   }
 
   protected void provideCachedWorldStorageManager(
@@ -94,14 +92,14 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     this.cachedWorldStorageManager = cachedWorldStorageManager;
   }
 
-  protected void loadPersistedState(final DiffBasedWorldState persistedState) {
-    this.persistedState = persistedState;
+  protected void loadHeadWorldState(final DiffBasedWorldState headWorldState) {
+    this.headWorldState = headWorldState;
     blockchain
-        .getBlockHeader(persistedState.getWorldStateBlockHash())
+        .getBlockHeader(headWorldState.getWorldStateBlockHash())
         .ifPresent(
             blockHeader ->
                 this.cachedWorldStorageManager.addCachedLayer(
-                    blockHeader, persistedState.getWorldStateRootHash(), persistedState));
+                    blockHeader, headWorldState.getWorldStateRootHash(), headWorldState));
   }
 
   @Override
@@ -110,8 +108,8 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
         .getWorldState(blockHash)
         .or(
             () -> {
-              if (blockHash.equals(persistedState.blockHash())) {
-                return Optional.of(persistedState);
+              if (blockHash.equals(headWorldState.blockHash())) {
+                return Optional.of(headWorldState);
               } else {
                 return Optional.empty();
               }
@@ -122,15 +120,29 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
     return cachedWorldStorageManager.contains(blockHash)
-        || persistedState.blockHash().equals(blockHash)
+        || headWorldState.blockHash().equals(blockHash)
         || worldStateKeyValueStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
+  /**
+   * Gets a mutable world state based on the provided query parameters.
+   *
+   * <p>This method checks if the world state is configured to be stateful. If it is, it retrieves
+   * the full world state using the provided query parameters. If the world state is not configured
+   * to be full, the stateless one will be returned.
+   *
+   * <p>The method follows these steps: 1. Check if the world state is configured to be stateful. 2.
+   * If true, call {@link #getFullWorldState(WorldStateQueryParams)} with the query parameters. 3.
+   * If false, throw a RuntimeException indicating that stateless mode is not yet available.
+   *
+   * @param queryParams the query parameters
+   * @return the mutable world state, if available
+   * @throws RuntimeException if the world state is not configured to be stateful
+   */
   @Override
-  public Optional<MutableWorldState> getMutable(
-      final BlockHeader blockHeader, final boolean shouldPersistState) {
-    if (shouldPersistState) {
-      return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
+  public Optional<MutableWorldState> getWorldState(final WorldStateQueryParams queryParams) {
+    if (worldStateConfig.isStateful()) {
+      return getFullWorldState(queryParams);
     } else {
       final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
       if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
@@ -143,19 +155,13 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
       return cachedWorldStorageManager
           .getWorldState(blockHeader.getHash())
           .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
-          .or(() -> cachedWorldStorageManager.getWorldState(chainHeadBlockHeader.getHash()))
+          .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
           .flatMap(worldState -> rollMutableStateToBlockHash(worldState, blockHeader.getHash()))
           .map(MutableWorldState::freeze);
     }
   }
 
-  @Override
-  public synchronized Optional<MutableWorldState> getMutable(
-      final Hash rootHash, final Hash blockHash) {
-    return rollMutableStateToBlockHash(persistedState, blockHash);
-  }
-
-  Optional<MutableWorldState> rollMutableStateToBlockHash(
+  private Optional<MutableWorldState> rollFullWorldStateToBlockHash(
       final DiffBasedWorldState mutableState, final Hash blockHash) {
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);
@@ -253,18 +259,8 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     }
   }
 
-  @Override
-  public MutableWorldState getMutable() {
-    return persistedState;
-  }
-
-  public DiffBasedWorldStateConfig getDefaultWorldStateConfig() {
-    return defaultWorldStateConfig;
-  }
-
-  public void disableTrie() {
-    defaultWorldStateConfig.setTrieDisabled(true);
-    worldStateKeyValueStorage.clearTrie();
+  public WorldStateConfig getWorldStateSharedSpec() {
+    return worldStateConfig;
   }
 
   public DiffBasedWorldStateKeyValueStorage getWorldStateKeyValueStorage() {
@@ -281,10 +277,10 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
 
   @Override
   public void resetArchiveStateTo(final BlockHeader blockHeader) {
-    persistedState.resetWorldStateTo(blockHeader);
+    headWorldState.resetWorldStateTo(blockHeader);
     this.cachedWorldStorageManager.reset();
     this.cachedWorldStorageManager.addCachedLayer(
-        blockHeader, persistedState.getWorldStateRootHash(), persistedState);
+        blockHeader, headWorldState.getWorldStateRootHash(), headWorldState);
   }
 
   @Override
@@ -294,7 +290,8 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
       final List<UInt256> accountStorageKeys,
       final Function<Optional<WorldStateProof>, ? extends Optional<U>> mapper) {
     try (DiffBasedWorldState ws =
-        (DiffBasedWorldState) getMutable(blockHeader, false).orElse(null)) {
+        (DiffBasedWorldState)
+            getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)).orElse(null)) {
       if (ws != null) {
         final WorldStateProofProvider worldStateProofProvider =
             new WorldStateProofProvider(
