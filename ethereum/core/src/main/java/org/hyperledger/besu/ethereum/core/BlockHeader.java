@@ -95,7 +95,7 @@ public class BlockHeader extends SealableBlockHeader
         Optional.empty());
   }
 
-  public BlockHeader(
+  private BlockHeader(
       final Hash parentHash,
       final Hash ommersHash,
       final Address coinbase,
