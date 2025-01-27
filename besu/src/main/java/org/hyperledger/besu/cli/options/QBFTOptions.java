@@ -16,8 +16,17 @@ package org.hyperledger.besu.cli.options.unstable;
 
 import picocli.CommandLine;
 
+/** Handles configuration options for QBFT consensus */
 public class QBFTOptions {
 
+  /** Default constructor */
+  private QBFTOptions() {}
+
+  /**
+   * Create a new instance of QBFTOptions
+   *
+   * @return a new instance of QBFTOptions
+   */
   public static QBFTOptions create() {
     return new QBFTOptions();
   }
@@ -29,6 +38,11 @@ public class QBFTOptions {
       hidden = true)
   private boolean enableEarlyRoundChange = false;
 
+  /**
+   * Is early round change enabled boolean.
+   *
+   * @return true if early round change is enabled
+   */
   public boolean isEarlyRoundChangeEnabled() {
     return enableEarlyRoundChange;
   }

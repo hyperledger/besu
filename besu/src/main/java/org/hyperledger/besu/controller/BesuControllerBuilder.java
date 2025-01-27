@@ -219,6 +219,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** The transaction simulator */
   protected TransactionSimulator transactionSimulator;
 
+  /** When enabled, round changes on f+1 RC messages from higher rounds */
   protected boolean isEarlyRoundChangeEnabled = false;
 
   /** Instantiates a new Besu controller builder. */
@@ -555,6 +556,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  /**
+   * check if early round change is enabled when f+1 RC messages from higher rounds are received
+   *
+   * @param isEarlyRoundChangeEnabled whether to enable early round change
+   * @return the besu controller
+   */
   public BesuControllerBuilder isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
     this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
     return this;

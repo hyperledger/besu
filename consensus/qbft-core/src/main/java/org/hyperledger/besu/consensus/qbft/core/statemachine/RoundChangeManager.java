@@ -170,6 +170,13 @@ public class RoundChangeManager {
     }
   }
 
+  /**
+   * Checks if a quorum of round change messages has been received for a round higher than the
+   * current round
+   *
+   * @param currentRoundIdentifier the current round identifier
+   * @return the next higher round number if quorum is reached, otherwise empty Optional
+   */
   public Optional<Integer> futureRCQuorumReceived(
       final ConsensusRoundIdentifier currentRoundIdentifier) {
     // Iterate through elements of round summary, identify ones with round number higher than

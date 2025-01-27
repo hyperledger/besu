@@ -76,6 +76,11 @@ public class QbftBlockHeightManagerFactory {
     }
   }
 
+  /**
+   * Sets early round change enabled.
+   *
+   * @param isEarlyRoundChangeEnabled the is early round change enabled
+   */
   public void isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
     this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
   }
