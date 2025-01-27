@@ -70,7 +70,7 @@ abstract class AbstractCodeDelegationAccount implements Account {
   }
 
   @Override
-  public boolean hasCodeDelegation() {
+  public boolean hasDelegatedCode() {
     return true;
   }
 

@@ -256,7 +256,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final ArgumentCaptor<EthNetworkConfig> ethNetworkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
-    verify(mockRunnerBuilder).discovery(eq(true));
+    verify(mockRunnerBuilder).discoveryEnabled(eq(true));
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(
@@ -784,7 +784,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void discoveryOptionValueTrueMustBeUsed() {
     parseCommand("--discovery-enabled", "true");
 
-    verify(mockRunnerBuilder).discovery(eq(true));
+    verify(mockRunnerBuilder).discoveryEnabled(eq(true));
     verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -795,7 +795,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void discoveryOptionValueFalseMustBeUsed() {
     parseCommand("--discovery-enabled", "false");
 
-    verify(mockRunnerBuilder).discovery(eq(false));
+    verify(mockRunnerBuilder).discoveryEnabled(eq(false));
     verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();

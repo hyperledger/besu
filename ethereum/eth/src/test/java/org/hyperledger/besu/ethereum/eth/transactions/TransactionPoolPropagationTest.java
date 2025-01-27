@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 
 class TransactionPoolPropagationTest {
 
-  final DiscoveryConfiguration noDiscovery = DiscoveryConfiguration.create().setActive(false);
+  final DiscoveryConfiguration noDiscovery = DiscoveryConfiguration.create().setEnabled(false);
 
   private Vertx vertx;
 
