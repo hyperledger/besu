@@ -84,7 +84,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // For archive we want <32-byte-hex>000000000000000n where n is the current archive block number
     Function<byte[], byte[]> flatDBArchiveKey =
         (key) ->
-            org.bouncycastle.util.Arrays.concatenate(key, Bytes.ofUnsignedLong(1).toArrayUnsafe());
+            org.bouncycastle.util.Arrays.concatenate(key, Bytes.ofUnsignedLong(2).toArrayUnsafe());
 
     return Stream.of(
         Arguments.of(FlatDbMode.FULL, flatDBKey),
@@ -414,6 +414,12 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater.putAccountInfoState(Hash.ZERO, Bytes32.random()).commit();
 
+    storage
+        .getWorldStateBlockNumber()
+        .ifPresent(
+            (currentBlock) ->
+                updateStorageArchiveBlock(
+                    storage.getComposedWorldStateStorage(), currentBlock + 1));
     assertThat(storage.getAccount(Hash.ZERO)).isNotEmpty();
 
     // clear
@@ -443,6 +449,13 @@ public class BonsaiWorldStateKeyValueStorageTest {
             Bytes.fromHexString(
                 "0xF84E823D98887B5E41A364EA8BFCA056E81F171BCC55A6FF8345E692C0F86E5B48E01B996CADC001622FB5E363B421A0C5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470"))
         .commit();
+
+    storage
+        .getWorldStateBlockNumber()
+        .ifPresent(
+            (currentBlock) ->
+                updateStorageArchiveBlock(
+                    storage.getComposedWorldStateStorage(), currentBlock + 1));
 
     assertThat(storage.getAccount(account.addressHash())).isNotEmpty();
 
