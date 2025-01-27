@@ -154,9 +154,6 @@ public abstract class FlatDbStrategyProvider {
     return flatDbMode;
   }
 
-  protected abstract FlatDbMode getRequestedFlatDbMode(
-      final DataStorageConfiguration dataStorageConfiguration);
-
   protected abstract FlatDbMode alternativeFlatDbModeForExistingDatabase();
 
   protected abstract FlatDbStrategy createFlatDbStrategy(

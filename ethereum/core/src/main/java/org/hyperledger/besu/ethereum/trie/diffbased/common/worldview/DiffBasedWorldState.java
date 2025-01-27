@@ -165,27 +165,16 @@ public abstract class DiffBasedWorldState
 
     boolean success = false;
 
-    // Bonsai archive uses context set in the world state storage for the specified block.
-    // Update the block context before putting entries to storage via calculateRootHash()
-    // TODO - rename calculateRootHash() to be clearer that it updates state, it doesn't just
-    // calculate a hash
-    DiffBasedWorldStateKeyValueStorage.Updater stateUpdater = worldStateKeyValueStorage.updater();
-    stateUpdater
-        .getWorldStateTransaction()
-        .put(
-            TRIE_BRANCH_STORAGE,
-            WORLD_BLOCK_NUMBER_KEY,
-            Long.toHexString(blockHeader == null ? 0L : blockHeader.getNumber())
-                .getBytes(StandardCharsets.UTF_8));
-    stateUpdater.commit();
-
-    stateUpdater = worldStateKeyValueStorage.updater();
+    final DiffBasedWorldStateKeyValueStorage.Updater stateUpdater =
+        worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
 
     try {
       final Hash calculatedRootHash;
 
       if (blockHeader == null || !worldStateConfig.isTrieDisabled()) {
+        // TODO - rename calculateRootHash() to be clearer that it updates state, it doesn't just
+        // calculate a hash
         calculatedRootHash =
             calculateRootHash(
                 worldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
@@ -228,6 +217,14 @@ public abstract class DiffBasedWorldState
       stateUpdater
           .getWorldStateTransaction()
           .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, calculatedRootHash.toArrayUnsafe());
+
+      stateUpdater
+          .getWorldStateTransaction()
+          .put(
+              TRIE_BRANCH_STORAGE,
+              WORLD_BLOCK_NUMBER_KEY,
+              Long.toHexString(blockHeader == null ? 0L : blockHeader.getNumber())
+                  .getBytes(StandardCharsets.UTF_8));
       worldStateRootHash = calculatedRootHash;
       success = true;
     } finally {

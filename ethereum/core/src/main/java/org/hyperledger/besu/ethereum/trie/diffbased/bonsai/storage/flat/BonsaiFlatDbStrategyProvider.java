@@ -39,17 +39,6 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
   }
 
   @Override
-  protected FlatDbMode getRequestedFlatDbMode(
-      final DataStorageConfiguration dataStorageConfiguration) {
-    return dataStorageConfiguration
-            .getDiffBasedSubStorageConfiguration()
-            .getUnstable()
-            .getFullFlatDbEnabled()
-        ? FlatDbMode.FULL
-        : FlatDbMode.PARTIAL;
-  }
-
-  @Override
   protected FlatDbMode alternativeFlatDbModeForExistingDatabase() {
     return FlatDbMode.PARTIAL;
   }
