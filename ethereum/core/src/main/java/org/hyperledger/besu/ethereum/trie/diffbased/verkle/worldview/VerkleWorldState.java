@@ -227,7 +227,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
   private void generateAccountValues(
       final Address accountKey,
-      final LeafBuilder verkleEntryFactory,
+      final LeafBuilder leafBuilder,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final VerkleWorldStateUpdateAccumulator worldStateUpdater) {
     var accountUpdate = worldStateUpdater.getAccountsToUpdate().get(accountKey);
@@ -235,18 +235,17 @@ public class VerkleWorldState extends DiffBasedWorldState {
       return;
     }
     if (accountUpdate.getUpdated() == null) {
-      verkleEntryFactory.generateAccountKeyForRemoval(accountKey);
+      leafBuilder.generateAccountKeyForRemoval(accountKey);
       final Hash addressHash = hashAndSavePreImage(accountKey);
       maybeStateUpdater.ifPresent(
           verkleUpdater -> verkleUpdater.removeAccountInfoState(addressHash));
       return;
     }
 
-    handleCoupledCodeAccountUpdates(
-        accountKey, verkleEntryFactory, accountUpdate, worldStateUpdater);
+    handleCoupledCodeAccountUpdates(accountKey, leafBuilder, accountUpdate, worldStateUpdater);
 
     final VerkleAccount updatedAcount = accountUpdate.getUpdated();
-    verkleEntryFactory.generateAccountKeyValueForUpdate(
+    leafBuilder.generateAccountKeyValueForUpdate(
         accountKey, updatedAcount.getNonce(), updatedAcount.getBalance());
     maybeStateUpdater.ifPresent(
         verkleUpdater ->
@@ -256,25 +255,24 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
   private void handleCoupledCodeAccountUpdates(
       final Address accountKey,
-      final LeafBuilder verkleEntryFactory,
+      final LeafBuilder leafBuilder,
       final DiffBasedValue<VerkleAccount> accountUpdate,
       final VerkleWorldStateUpdateAccumulator worldStateUpdater) {
     final VerkleAccount priorAccount = accountUpdate.getPrior();
     final VerkleAccount updatedAccount = accountUpdate.getUpdated();
     if (priorAccount == null) {
-      verkleEntryFactory.generateCodeHashKeyValueForUpdate(
-          accountKey, updatedAccount.getCodeHash());
+      leafBuilder.generateCodeHashKeyValueForUpdate(accountKey, updatedAccount.getCodeHash());
       return;
     }
     Optional<Bytes> currentCode =
         worldStateUpdater.getCode(accountKey, updatedAccount.getCodeHash());
     currentCode.ifPresent(
-        code -> verkleEntryFactory.generateCodeSizeKeyValueForUpdate(accountKey, code.size()));
+        code -> leafBuilder.generateCodeSizeKeyValueForUpdate(accountKey, code.size()));
   }
 
   private void generateCodeValues(
       final Address accountKey,
-      final LeafBuilder verkleEntryFactory,
+      final LeafBuilder leafBuilder,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final DiffBasedValue<Bytes> codeUpdate) {
     if (codeUpdate == null
@@ -284,7 +282,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
     }
     if (codeUpdate.getUpdated() == null) {
       final Hash priorCodeHash = Hash.hash(codeUpdate.getPrior());
-      verkleEntryFactory.generateCodeKeysForRemoval(accountKey, codeUpdate.getPrior());
+      leafBuilder.generateCodeKeysForRemoval(accountKey, codeUpdate.getPrior());
       final Hash accountHash = accountKey.addressHash();
       maybeStateUpdater.ifPresent(
           verkleUpdater -> verkleUpdater.removeCode(accountHash, priorCodeHash));
@@ -292,8 +290,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
     }
     final Hash accountHash = accountKey.addressHash();
     final Hash codeHash = Hash.hash(codeUpdate.getUpdated());
-    verkleEntryFactory.generateCodeKeyValuesForUpdate(
-        accountKey, codeUpdate.getUpdated(), codeHash);
+    leafBuilder.generateCodeKeyValuesForUpdate(accountKey, codeUpdate.getUpdated(), codeHash);
     if (codeUpdate.getUpdated().isEmpty()) {
       maybeStateUpdater.ifPresent(verkleUpdater -> verkleUpdater.removeCode(accountHash, codeHash));
     } else {
@@ -304,7 +301,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
   private void generateStorageValues(
       final Address accountKey,
-      final LeafBuilder verkleEntryFactory,
+      final LeafBuilder leafBuilder,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageAccountUpdate) {
     if (storageAccountUpdate == null || storageAccountUpdate.keySet().isEmpty()) {
@@ -318,12 +315,12 @@ public class VerkleWorldState extends DiffBasedWorldState {
       if (!storageUpdate.getValue().isUnchanged()) {
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
         if (updatedStorage == null) {
-          verkleEntryFactory.generateStorageKeyForRemoval(accountKey, storageUpdate.getKey());
+          leafBuilder.generateStorageKeyForRemoval(accountKey, storageUpdate.getKey());
           maybeStateUpdater.ifPresent(
               verkleUpdater ->
                   verkleUpdater.removeStorageValueBySlotHash(updatedAddressHash, slotHash));
         } else {
-          verkleEntryFactory.generateStorageKeyValueForUpdate(
+          leafBuilder.generateStorageKeyValueForUpdate(
               accountKey, storageUpdate.getKey(), updatedStorage);
           maybeStateUpdater.ifPresent(
               verkleUpdater ->
@@ -341,37 +338,37 @@ public class VerkleWorldState extends DiffBasedWorldState {
       final StemHasher stemHasher,
       final VerkleWorldStateUpdateAccumulator worldStateUpdater) {
 
-    final LeafBuilder verkleEntryFactory = new LeafBuilder(new TrieKeyFactory(stemHasher));
+    final LeafBuilder leafBuilder = new LeafBuilder(new TrieKeyFactory(stemHasher));
 
-    generateAccountValues(accountKey, verkleEntryFactory, maybeStateUpdater, worldStateUpdater);
+    generateAccountValues(accountKey, leafBuilder, maybeStateUpdater, worldStateUpdater);
 
     generateCodeValues(
         accountKey,
-        verkleEntryFactory,
+        leafBuilder,
         maybeStateUpdater,
         worldStateUpdater.getCodeToUpdate().get(accountKey));
 
     generateStorageValues(
         accountKey,
-        verkleEntryFactory,
+        leafBuilder,
         maybeStateUpdater,
         worldStateUpdater.getStorageToUpdate().get(accountKey));
 
-    verkleEntryFactory
+    leafBuilder
         .getKeysForRemoval()
         .forEach(
             key -> {
               System.out.println("remove key " + key);
               stateTrie.remove(key);
             });
-    verkleEntryFactory
+    leafBuilder
         .getNonStorageKeyValuesForUpdate()
         .forEach(
             (key, value) -> {
               System.out.println("add key " + key + " leaf value " + value);
               stateTrie.put(key, value);
             });
-    verkleEntryFactory
+    leafBuilder
         .getStorageKeyValuesForUpdate()
         .forEach(
             (storageSlotKey, pair) -> {
