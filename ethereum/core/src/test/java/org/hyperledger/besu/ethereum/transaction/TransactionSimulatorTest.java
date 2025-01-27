@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 import static org.hyperledger.besu.evm.tracing.OperationTracer.NO_TRACING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -812,7 +813,7 @@ public class TransactionSimulatorTest {
       final BlockHeader blockHeader, final Address address, final long nonce) {
     final Account account = mock(Account.class);
     when(account.getNonce()).thenReturn(nonce);
-    when(worldStateArchive.getMutable(eq(blockHeader), anyBoolean()))
+    when(worldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
         .thenReturn(Optional.of(worldState));
     final WorldUpdater updater = mock(WorldUpdater.class);
     when(updater.get(address)).thenReturn(account);
@@ -820,7 +821,7 @@ public class TransactionSimulatorTest {
   }
 
   private void mockWorldStateForAbsentAccount(final BlockHeader blockHeader) {
-    when(worldStateArchive.getMutable(eq(blockHeader), anyBoolean()))
+    when(worldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
         .thenReturn(Optional.of(worldState));
     final WorldUpdater updater = mock(WorldUpdater.class);
     when(updater.get(any())).thenReturn(null);
