@@ -29,20 +29,20 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Wraps an EOA account and includes delegated code to be run on behalf of it. */
-public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
+public class MutableCodeDelegationDelegationAccount extends AbstractCodeDelegationAccount
     implements MutableAccount {
 
   private final MutableAccount wrappedAccount;
 
   /**
-   * Creates a new MutableAuthorizedCodeAccount.
+   * Creates a new MutableCodeDelegationDelegationAccount.
    *
    * @param worldUpdater the world updater.
    * @param wrappedAccount the account that has delegated code to be loaded into it.
    * @param codeDelegationAddress the address of the delegated code.
    * @param gasCalculator the gas calculator to check for precompiles.
    */
-  public MutableDelegatedCodeAccount(
+  public MutableCodeDelegationDelegationAccount(
       final WorldUpdater worldUpdater,
       final MutableAccount wrappedAccount,
       final Address codeDelegationAddress,
@@ -62,8 +62,8 @@ public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
   }
 
   @Override
-  public Optional<Address> delegatedCodeAddress() {
-    return super.delegatedCodeAddress();
+  public Optional<Address> codeDelegationAddress() {
+    return super.codeDelegationAddress();
   }
 
   @Override
@@ -83,17 +83,12 @@ public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
 
   @Override
   public Bytes getCode() {
-    return super.getCode();
-  }
-
-  @Override
-  public Bytes getUnprocessedCode() {
     return wrappedAccount.getCode();
   }
 
   @Override
   public Hash getCodeHash() {
-    return super.getCodeHash();
+    return wrappedAccount.getCodeHash();
   }
 
   @Override
@@ -108,7 +103,7 @@ public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
 
   @Override
   public boolean isEmpty() {
-    return getDelegatedNonce() == 0 && getDelegatedBalance().isZero() && !hasCode();
+    return wrappedAccount.isEmpty();
   }
 
   @Override
@@ -155,10 +150,5 @@ public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
   @Override
   public void becomeImmutable() {
     wrappedAccount.becomeImmutable();
-  }
-
-  @Override
-  public boolean hasDelegatedCode() {
-    return true;
   }
 }

@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PER
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
@@ -351,22 +352,22 @@ public class MainnetTransactionProcessor {
         warmAddressList.add(miningBeneficiary);
       }
 
-      final long intrinsicGas =
-          gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
       final long codeDelegationGas =
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
-      final long gasAvailable =
-          transaction.getGasLimit() - intrinsicGas - accessListGas - codeDelegationGas;
+      final long intrinsicGas =
+          gasCalculator.transactionIntrinsicGasCost(
+              transaction.getPayload(),
+              transaction.isContractCreation(),
+              clampedAdd(accessListGas, codeDelegationGas));
+
+      final long gasAvailable = transaction.getGasLimit() - intrinsicGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - codeDelegation)",
+          "Gas available for execution {} = {} - {} (limit - intrinsic)",
           gasAvailable,
           transaction.getGasLimit(),
-          intrinsicGas,
-          accessListGas,
-          codeDelegationGas);
+          intrinsicGas);
 
       final WorldUpdater worldUpdater = evmWorldUpdater.updater();
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
@@ -427,7 +428,7 @@ public class MainnetTransactionProcessor {
         final Optional<Account> maybeContract = Optional.ofNullable(evmWorldUpdater.get(to));
 
         if (maybeContract.isPresent() && maybeContract.get().hasDelegatedCode()) {
-          warmAddressList.add(maybeContract.get().delegatedCodeAddress().get());
+          warmAddressList.add(maybeContract.get().codeDelegationAddress().get());
         }
 
         initialFrame =
@@ -438,7 +439,17 @@ public class MainnetTransactionProcessor {
                 .inputData(transaction.getPayload())
                 .code(
                     maybeContract
-                        .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
+                        .map(
+                            c -> {
+                              if (c.hasDelegatedCode()) {
+                                return messageCallProcessor.getCodeFromEVM(
+                                    c.getCodeDelegationTargetHash().get(),
+                                    c.getCodeDelegationTargetCode().get());
+                              }
+
+                              return messageCallProcessor.getCodeFromEVM(
+                                  c.getCodeHash(), c.getCode());
+                            })
                         .orElse(CodeV0.EMPTY_CODE))
                 .accessListWarmAddresses(warmAddressList)
                 .build();
@@ -466,7 +477,7 @@ public class MainnetTransactionProcessor {
           validationResult =
               ValidationResult.invalid(
                   TransactionInvalidReason.EXECUTION_HALTED,
-                  initialFrame.getExceptionalHaltReason().get().toString());
+                  initialFrame.getExceptionalHaltReason().get().getDescription());
         }
       }
 

@@ -26,28 +26,12 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
  * be executed when a contract has delegated code. This process is necessary to determine the
  * contract that will be executed and to ensure that the contract is warm in the cache.
  */
-public class DelegatedCodeGasCostHelper {
+public class CodeDelegationGasCostHelper {
 
   /** Private constructor to prevent instantiation. */
-  private DelegatedCodeGasCostHelper() {
+  private CodeDelegationGasCostHelper() {
     // empty constructor
   }
-
-  /** The status of the operation. */
-  public enum Status {
-    /** The operation failed due to insufficient gas. */
-    INSUFFICIENT_GAS,
-    /** The operation was successful. */
-    SUCCESS
-  }
-
-  /**
-   * The result of the operation.
-   *
-   * @param gasCost the gas cost
-   * @param status of the operation
-   */
-  public record Result(long gasCost, Status status) {}
 
   /**
    * Deducts the gas cost for delegated code resolution.
@@ -57,33 +41,25 @@ public class DelegatedCodeGasCostHelper {
    * @param account the account
    * @return the gas cost and result of the operation
    */
-  public static Result deductDelegatedCodeGasCost(
+  public static long codeDelegationGasCost(
       final MessageFrame frame, final GasCalculator gasCalculator, final Account account) {
     if (!account.hasDelegatedCode()) {
-      return new Result(0, Status.SUCCESS);
+      return 0;
     }
 
-    if (account.delegatedCodeAddress().isEmpty()) {
+    if (account.codeDelegationAddress().isEmpty()) {
       throw new RuntimeException("A delegated code account must have a delegated code address");
     }
 
-    final long delegatedCodeResolutionGas =
-        calculateDelegatedCodeResolutionGas(
-            frame, gasCalculator, account.delegatedCodeAddress().get());
-
-    if (frame.getRemainingGas() < delegatedCodeResolutionGas) {
-      return new Result(delegatedCodeResolutionGas, Status.INSUFFICIENT_GAS);
-    }
-
-    frame.decrementRemainingGas(delegatedCodeResolutionGas);
-    return new Result(delegatedCodeResolutionGas, Status.SUCCESS);
+    return calculateCodeDelegationResolutionGas(
+        frame, gasCalculator, account.codeDelegationAddress().get());
   }
 
-  private static long calculateDelegatedCodeResolutionGas(
+  private static long calculateCodeDelegationResolutionGas(
       final MessageFrame frame, final GasCalculator gasCalculator, final Address delegateeAddress) {
-    final boolean delegatedCodeIsWarm =
+    final boolean isWarm =
         frame.warmUpAddress(delegateeAddress) || gasCalculator.isPrecompile(delegateeAddress);
-    return delegatedCodeIsWarm
+    return isWarm
         ? gasCalculator.getWarmStorageReadCost()
         : gasCalculator.getColdAccountAccessCost();
   }

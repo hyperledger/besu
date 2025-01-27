@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper.deductDelegatedCodeGasCost;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
@@ -26,12 +24,11 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code size operation. */
-public class ExtCodeSizeOperation extends AbstractOperation {
+public class ExtCodeSizeOperation extends AbstractExtCodeOperation {
 
   static final Bytes EOF_SIZE = Bytes.of(2);
 
@@ -82,20 +79,11 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       } else {
         final Account account = frame.getWorldUpdater().get(address);
 
-        if (account != null) {
-          final DelegatedCodeGasCostHelper.Result result =
-              deductDelegatedCodeGasCost(frame, gasCalculator(), account);
-          if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-            return new Operation.OperationResult(
-                result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
-          }
-        }
-
         Bytes codeSize;
         if (account == null) {
           codeSize = Bytes.EMPTY;
         } else {
-          final Bytes code = account.getCode();
+          final Bytes code = getCode(account);
           if (enableEIP3540
               && code.size() >= 2
               && code.get(0) == EOFLayout.EOF_PREFIX_BYTE

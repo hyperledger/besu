@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
 
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
@@ -102,7 +103,9 @@ public class TraceTransactionIntegrationTest {
     final BlockHeader genesisBlockHeader = genesisBlock.getHeader();
     final MutableWorldState worldState =
         worldStateArchive
-            .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
+            .getWorldState(
+                withStateRootAndBlockHashAndUpdateNodeHead(
+                    genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .get();
     final WorldUpdater createTransactionUpdater = worldState.updater();
     TransactionProcessingResult result =
@@ -177,7 +180,9 @@ public class TraceTransactionIntegrationTest {
     final BlockHeader genesisBlockHeader = genesisBlock.getHeader();
     transactionProcessor.processTransaction(
         worldStateArchive
-            .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
+            .getWorldState(
+                withStateRootAndBlockHashAndUpdateNodeHead(
+                    genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .get()
             .updater(),
         genesisBlockHeader,

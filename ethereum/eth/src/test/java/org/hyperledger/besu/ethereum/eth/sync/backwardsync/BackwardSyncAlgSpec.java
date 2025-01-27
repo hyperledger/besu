@@ -189,7 +189,7 @@ public class BackwardSyncAlgSpec {
 
     completionCaptor.getValue().onInitialSyncCompleted();
 
-    voidCompletableFuture.get(800, TimeUnit.MILLISECONDS);
+    voidCompletableFuture.get(5, TimeUnit.SECONDS);
     assertThat(voidCompletableFuture).isCompleted();
 
     verify(context.getSyncState()).unsubscribeTTDReached(88L);

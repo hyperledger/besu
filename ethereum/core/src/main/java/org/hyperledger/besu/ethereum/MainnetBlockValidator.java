@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.ArrayList;
@@ -115,7 +116,7 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
-      final boolean shouldPersist,
+      final boolean shouldUpdateHead,
       final boolean shouldRecordBadBlock) {
 
     final BlockHeader header = block.getHeader();
@@ -148,8 +149,14 @@ public class MainnetBlockValidator implements BlockValidator {
       handleFailedBlockProcessing(block, retval, false);
       return retval;
     }
+
+    final WorldStateQueryParams worldStateQueryParams =
+        WorldStateQueryParams.newBuilder()
+            .withBlockHeader(parentHeader)
+            .withShouldWorldStateUpdateHead(shouldUpdateHead)
+            .build();
     try (final var worldState =
-        context.getWorldStateArchive().getMutable(parentHeader, shouldPersist).orElse(null)) {
+        context.getWorldStateArchive().getWorldState(worldStateQueryParams).orElse(null)) {
 
       if (worldState == null) {
         var retval =
