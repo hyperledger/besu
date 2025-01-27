@@ -108,9 +108,8 @@ public class AccessListTransactionEncoder {
             out.writeBytes(accessListEntry.address());
             out.writeList(
                 accessListEntry.storageKeys(),
-                (storageKeyBytes, storageKeyBytesRLPOutput) -> {
-                  storageKeyBytesRLPOutput.writeBytes(storageKeyBytes);
-                });
+                (storageKeyBytes, storageKeyBytesRLPOutput) ->
+                    storageKeyBytesRLPOutput.writeBytes(storageKeyBytes));
             accessListEntryRLPOutput.endList();
           });
     }
