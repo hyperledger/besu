@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.p
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_0;
 import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_0;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -313,7 +314,7 @@ public class PrivateStorageMigrationTest {
     when(blockchain.getBlockHeader(blockHash)).thenReturn(Optional.of(blockHeader));
     when(blockchain.getBlockBody(blockHash)).thenReturn(Optional.of(block.getBody()));
 
-    when(publicWorldStateArchive.getMutable(blockHeader.getStateRoot(), blockHash))
+    when(publicWorldStateArchive.getWorldState(withBlockHeaderAndUpdateNodeHead(blockHeader)))
         .thenReturn(Optional.of(publicMutableWorldState));
   }
 
