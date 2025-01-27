@@ -98,7 +98,9 @@ public abstract class PeerDiscoveryAgent {
   private Optional<DiscoveryPeer> localNode = Optional.empty();
 
   /* Is discovery enabled? */
-  private boolean isActive = false;
+  private boolean isEnabled = false;
+  protected boolean isStopped = false;
+
   private final VariablesStorage variablesStorage;
   private final Supplier<List<Bytes>> forkIdSupplier;
   private String advertisedAddress;
@@ -148,7 +150,7 @@ public abstract class PeerDiscoveryAgent {
   public abstract CompletableFuture<?> stop();
 
   public CompletableFuture<Integer> start(final int tcpPort) {
-    if (config.isActive()) {
+    if (config.isEnabled()) {
       final String host = config.getBindHost();
       final int port = config.getBindPort();
       LOG.info(
@@ -174,20 +176,20 @@ public abstract class PeerDiscoveryAgent {
                             .discoveryPort(discoveryPort)
                             .build());
                 this.localNode = Optional.of(ourNode);
-                isActive = true;
+                this.isEnabled = true;
                 LOG.info("P2P peer discovery agent started and listening on {}", localAddress);
                 updateNodeRecord();
                 startController(ourNode);
                 return discoveryPort;
               });
     } else {
-      this.isActive = false;
+      this.isEnabled = false;
       return CompletableFuture.completedFuture(0);
     }
   }
 
   public void updateNodeRecord() {
-    if (!config.isActive()) {
+    if (!config.isEnabled()) {
       return;
     }
 
@@ -411,8 +413,20 @@ public abstract class PeerDiscoveryAgent {
    *
    * @return true, if the {@link PeerDiscoveryAgent} is active on this node, false, otherwise.
    */
-  public boolean isActive() {
-    return isActive;
+  public boolean isEnabled() {
+    return isEnabled;
+  }
+
+  /**
+   * Returns the current state of the PeerDiscoveryAgent.
+   *
+   * <p>If true, the node is actively listening for new connections. If false, discovery has been
+   * turned off and the node is not listening for connections.
+   *
+   * @return true, if the {@link PeerDiscoveryAgent} is active on this node, false, otherwise.
+   */
+  public boolean isStopped() {
+    return isStopped;
   }
 
   public void bond(final Peer peer) {

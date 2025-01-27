@@ -57,7 +57,7 @@ public interface Account extends AccountState {
    *
    * @return the address of the delegated code account if it has one otherwise empty.
    */
-  default Optional<Address> delegatedCodeAddress() {
+  default Optional<Address> codeDelegationAddress() {
     return Optional.empty();
   }
 
