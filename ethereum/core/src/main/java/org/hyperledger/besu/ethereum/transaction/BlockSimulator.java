@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StateOverride;
@@ -91,7 +93,7 @@ public class BlockSimulator {
       final BlockHeader header, final List<? extends BlockStateCall> blockStateCalls) {
     try (final MutableWorldState ws =
         worldStateArchive
-            .getMutable(header, false)
+            .getWorldState(withBlockHeaderAndNoUpdateNodeHead(header))
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
