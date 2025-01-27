@@ -31,7 +31,7 @@ Please keep in mind that we do not accept non-code contributions like fixing com
 
 ### Other important information
 
-* [Roadmap](https://wiki.hyperledger.org/pages/viewpage.action?pageId=24781786)
+* [Roadmap](https://lf-hyperledger.atlassian.net/wiki/spaces/fabric/pages/22840386/Hyperledger+Fabric+Roadmap)
 * [Code of Conduct](https://wiki.hyperledger.org/display/BESU/Code+of+Conduct)
 * [Governance](https://wiki.hyperledger.org/display/BESU/Governance)
 
