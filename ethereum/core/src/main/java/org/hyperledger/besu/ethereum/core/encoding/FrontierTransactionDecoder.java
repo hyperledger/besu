@@ -52,7 +52,7 @@ public class FrontierTransactionDecoder {
             .to(transactionRlp.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
             .value(Wei.of(transactionRlp.readUInt256Scalar()))
             .payload(transactionRlp.readBytes())
-            .rawRlp(Optional.of(transactionRlp.raw()));
+            .rawRlp(transactionRlp.raw());
 
     final BigInteger v = transactionRlp.readBigIntegerScalar();
     final byte recId;

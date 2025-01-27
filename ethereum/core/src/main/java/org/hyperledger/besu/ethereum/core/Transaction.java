@@ -1203,7 +1203,7 @@ public class Transaction
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
-    protected Optional<Bytes> rawRlp = Optional.empty();
+    protected Bytes rawRlp = null;
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;
@@ -1309,7 +1309,7 @@ public class Transaction
       return this;
     }
 
-    public Builder rawRlp(final Optional<Bytes> rawRlp) {
+    public Builder rawRlp(final Bytes rawRlp) {
       this.rawRlp = rawRlp;
       return this;
     }
@@ -1354,7 +1354,7 @@ public class Transaction
           Optional.ofNullable(versionedHashes),
           Optional.ofNullable(blobsWithCommitments),
           codeDelegationAuthorizations,
-          rawRlp);
+          Optional.ofNullable(rawRlp));
     }
 
     public Transaction signAndBuild(final KeyPair keys) {

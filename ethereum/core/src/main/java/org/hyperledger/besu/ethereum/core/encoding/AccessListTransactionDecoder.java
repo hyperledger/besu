@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -52,7 +51,7 @@ class AccessListTransactionDecoder {
                     addressBytes -> addressBytes.isEmpty() ? null : Address.wrap(addressBytes)))
             .value(Wei.of(transactionRlp.readUInt256Scalar()))
             .payload(transactionRlp.readBytes())
-            .rawRlp(Optional.of(transactionRlp.raw()))
+            .rawRlp(transactionRlp.raw())
             .accessList(
                 transactionRlp.readList(
                     accessListEntryRLPInput -> {
