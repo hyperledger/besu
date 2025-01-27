@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import static java.util.Collections.emptyList;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.common.GenesisWorldStateProvider.createGenesisWorldState;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 
 import org.hyperledger.besu.config.GenesisAccount;
 import org.hyperledger.besu.config.GenesisConfig;
@@ -31,12 +33,15 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -151,6 +156,29 @@ public final class GenesisState {
     return block;
   }
 
+  private static void ensureGenesisArchiveContext(final MutableWorldState genesisState) {
+    if (genesisState instanceof DiffBasedWorldState) {
+      if (((DiffBasedWorldState) genesisState)
+          .getWorldStateStorage()
+          .getWorldStateBlockNumber()
+          .isEmpty()) {
+        // Bonsai archive nodes need the block number for the current state in order to persist flat
+        // DB keys. For every other block this is automatically set to the previous block number +
+        // 1. Since this is not possible for the genesis block we manually set it.
+        SegmentedKeyValueStorageTransaction genesisStateTX =
+            ((DiffBasedWorldState) genesisState)
+                .getWorldStateStorage()
+                .getComposedWorldStateStorage()
+                .startTransaction();
+        genesisStateTX.put(
+            TRIE_BRANCH_STORAGE,
+            WORLD_BLOCK_NUMBER_KEY,
+            Long.toHexString(0L).getBytes(StandardCharsets.UTF_8));
+        genesisStateTX.commit();
+      }
+    }
+  }
+
   /**
    * Writes the genesis block's world state to the given {@link MutableWorldState}.
    *
@@ -165,6 +193,7 @@ public final class GenesisState {
       final Stream<GenesisAccount> genesisAccounts,
       final BlockHeader rootHeader) {
     final WorldUpdater updater = target.updater();
+    ensureGenesisArchiveContext(target);
     genesisAccounts.forEach(
         genesisAccount -> {
           final MutableAccount account = updater.createAccount(genesisAccount.address());

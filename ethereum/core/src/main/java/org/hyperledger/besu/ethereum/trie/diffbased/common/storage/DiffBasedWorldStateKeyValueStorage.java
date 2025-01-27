@@ -136,6 +136,12 @@ public abstract class DiffBasedWorldStateKeyValueStorage
         .map(Hash::wrap);
   }
 
+  public Optional<Long> getWorldStateBlockNumber() {
+    return composedWorldStateStorage
+        .get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY)
+        .map(bytes -> Long.decode("0x" + new String(bytes, StandardCharsets.UTF_8)));
+  }
+
   public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
       final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
     return getFlatDbStrategy()

@@ -124,6 +124,11 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
+  public Optional<Long> getWorldStateBlockNumber() {
+    return isClosedGet() ? Optional.empty() : super.getWorldStateBlockNumber();
+  }
+
+  @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
       final Hash accountHash, final StorageSlotKey storageSlotKey) {
     return isClosedGet()
