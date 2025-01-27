@@ -428,7 +428,7 @@ public class MainnetTransactionProcessor {
         final Optional<Account> maybeContract = Optional.ofNullable(evmWorldUpdater.get(to));
 
         if (maybeContract.isPresent() && maybeContract.get().hasDelegatedCode()) {
-          warmAddressList.add(maybeContract.get().delegatedCodeAddress().get());
+          warmAddressList.add(maybeContract.get().codeDelegationAddress().get());
         }
 
         initialFrame =
@@ -443,7 +443,8 @@ public class MainnetTransactionProcessor {
                             c -> {
                               if (c.hasDelegatedCode()) {
                                 return messageCallProcessor.getCodeFromEVM(
-                                    c.getDelegatedCodeHash().get(), c.getDelegatedCode().get());
+                                    c.getCodeDelegationTargetHash().get(),
+                                    c.getCodeDelegationTargetCode().get());
                               }
 
                               return messageCallProcessor.getCodeFromEVM(
@@ -476,7 +477,7 @@ public class MainnetTransactionProcessor {
           validationResult =
               ValidationResult.invalid(
                   TransactionInvalidReason.EXECUTION_HALTED,
-                  initialFrame.getExceptionalHaltReason().get().toString());
+                  initialFrame.getExceptionalHaltReason().get().getDescription());
         }
       }
 

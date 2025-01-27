@@ -38,6 +38,7 @@ import org.hyperledger.besu.cli.options.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.EthstatsOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
+import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
@@ -316,7 +317,7 @@ public abstract class CommandTestAbstract {
 
     when(mockRunnerBuilder.vertx(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.besuController(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.discovery(anyBoolean())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.discoveryEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.ethNetworkConfig(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.networkingConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pAdvertisedHost(anyString())).thenReturn(mockRunnerBuilder);
@@ -568,8 +569,9 @@ public abstract class CommandTestAbstract {
     }
 
     @Override
-    protected void validateP2PInterface(final String p2pInterface) {
+    protected P2PDiscoveryOptions.NetworkInterfaceChecker getNetworkInterfaceChecker() {
       // For testing, don't actually query for networking interfaces to validate this option
+      return (networkInterface) -> true;
     }
 
     @Override

@@ -256,7 +256,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final ArgumentCaptor<EthNetworkConfig> ethNetworkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
-    verify(mockRunnerBuilder).discovery(eq(true));
+    verify(mockRunnerBuilder).discoveryEnabled(eq(true));
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(
@@ -784,7 +784,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void discoveryOptionValueTrueMustBeUsed() {
     parseCommand("--discovery-enabled", "true");
 
-    verify(mockRunnerBuilder).discovery(eq(true));
+    verify(mockRunnerBuilder).discoveryEnabled(eq(true));
     verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -795,7 +795,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void discoveryOptionValueFalseMustBeUsed() {
     parseCommand("--discovery-enabled", "false");
 
-    verify(mockRunnerBuilder).discovery(eq(false));
+    verify(mockRunnerBuilder).discoveryEnabled(eq(false));
     verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -1009,113 +1009,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String expectedErrorOutputStart =
         "Invalid ids supplied to '--banned-node-ids'. Expected 64 bytes in 0x10";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
-  }
-
-  @Test
-  public void p2pHostAndPortOptionsAreRespectedAndNotLeaked() {
-
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    parseCommand("--p2p-host", host, "--p2p-port", String.valueOf(port));
-
-    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
-    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
-    assertThat(intArgumentCaptor.getValue()).isEqualTo(port);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    // all other port values remain default
-    assertThat(metricsConfigArgumentCaptor.getValue().getPort()).isEqualTo(9545);
-    assertThat(metricsConfigArgumentCaptor.getValue().getPushPort()).isEqualTo(9001);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(8545);
-
-    // all other host values remain default
-    final String defaultHost = "127.0.0.1";
-    assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
-    assertThat(metricsConfigArgumentCaptor.getValue().getPushHost()).isEqualTo(defaultHost);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
-  }
-
-  @Test
-  public void p2pHostAndPortOptionsAreRespectedAndNotLeakedWithMetricsEnabled() {
-
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    parseCommand("--p2p-host", host, "--p2p-port", String.valueOf(port), "--metrics-enabled");
-
-    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
-    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
-    assertThat(intArgumentCaptor.getValue()).isEqualTo(port);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    // all other port values remain default
-    assertThat(metricsConfigArgumentCaptor.getValue().getPort()).isEqualTo(9545);
-    assertThat(metricsConfigArgumentCaptor.getValue().getPushPort()).isEqualTo(9001);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(8545);
-
-    // all other host values remain default
-    final String defaultHost = "127.0.0.1";
-    assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
-    assertThat(metricsConfigArgumentCaptor.getValue().getPushHost()).isEqualTo(defaultHost);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
-  }
-
-  @Test
-  public void p2pInterfaceOptionIsRespected() {
-
-    final String ip = "1.2.3.4";
-    parseCommand("--p2p-interface", ip);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    verify(mockRunnerBuilder).p2pListenInterface(stringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(stringArgumentCaptor.getValue()).isEqualTo(ip);
-  }
-
-  @Test
-  public void p2pHostMayBeLocalhost() {
-
-    final String host = "localhost";
-    parseCommand("--p2p-host", host);
-
-    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void p2pHostMayBeIPv6() {
-
-    final String host = "2600:DB8::8545";
-    parseCommand("--p2p-host", host);
-
-    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
