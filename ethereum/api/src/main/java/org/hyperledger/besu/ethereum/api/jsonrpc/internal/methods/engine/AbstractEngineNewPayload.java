@@ -600,13 +600,15 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final Bytes request = Bytes.fromHexString(requestParam);
 
       if (request.size() <= 1) {
-        throw new InvalidJsonRpcRequestException("Execution request length must be greater than 2 bytes");
+        throw new InvalidJsonRpcRequestException(
+            "Execution request length must be greater than 2 bytes");
       }
 
       final RequestType requestType = RequestType.of(request.get(0));
 
       if (requestType.ordinal() <= lastRequestType) {
-        throw new InvalidJsonRpcRequestException("Execution requests must be sorted by request type in ascending order and the request type must be unique");
+        throw new InvalidJsonRpcRequestException(
+            "Execution requests must be sorted by request type in ascending order and the request type must be unique");
       }
       lastRequestType = requestType.ordinal();
 

@@ -169,13 +169,14 @@ public class BlockResultFactory {
                 rqs ->
                     rqs.stream()
                         .sorted(Comparator.comparing(Request::getType))
-                      .peek(request -> {
-                          if (request.type().ordinal() <= lastRequestType.get()) {
-                            throw new RuntimeException("Execution requests must be sorted by request type in ascending order and the request type must be unique");
-                          }
-                          lastRequestType.set(request.type().ordinal());
-
-                      })
+                        .peek(
+                            request -> {
+                              if (request.type().ordinal() <= lastRequestType.get()) {
+                                throw new RuntimeException(
+                                    "Execution requests must be sorted by request type in ascending order and the request type must be unique");
+                              }
+                              lastRequestType.set(request.type().ordinal());
+                            })
                         .filter(r -> !r.getData().isEmpty())
                         .map(Request::getEncodedRequest)
                         .map(Bytes::toHexString)
