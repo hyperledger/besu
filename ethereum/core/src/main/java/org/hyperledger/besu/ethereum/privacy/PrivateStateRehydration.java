@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
@@ -156,7 +158,8 @@ public class PrivateStateRehydration {
               .getBlockHeader(blockHeader.getParentHash())
               .flatMap(
                   header ->
-                      publicWorldStateArchive.getMutable(header.getStateRoot(), header.getHash()))
+                      publicWorldStateArchive.getWorldState(
+                          withBlockHeaderAndUpdateNodeHead(header)))
               .orElseThrow(RuntimeException::new);
 
       privateGroupRehydrationBlockProcessor.processBlock(

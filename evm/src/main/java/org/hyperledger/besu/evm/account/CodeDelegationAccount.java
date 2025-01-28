@@ -28,19 +28,19 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Wraps an EOA account and includes delegated code to be run on behalf of it. */
-public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Account {
+public class CodeDelegationAccount extends AbstractCodeDelegationAccount implements Account {
 
   private final Account wrappedAccount;
 
   /**
-   * Creates a new AuthorizedCodeAccount.
+   * Creates a new CodeDelegationAccount.
    *
    * @param worldUpdater the world updater.
    * @param wrappedAccount the account that has delegated code to be loaded into it.
    * @param codeDelegationAddress the address of the delegated code.
    * @param gasCalculator the gas calculator to check for precompiles.
    */
-  public DelegatedCodeAccount(
+  public CodeDelegationAccount(
       final WorldUpdater worldUpdater,
       final Account wrappedAccount,
       final Address codeDelegationAddress,
@@ -60,8 +60,8 @@ public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Ac
   }
 
   @Override
-  public Optional<Address> delegatedCodeAddress() {
-    return super.delegatedCodeAddress();
+  public Optional<Address> codeDelegationAddress() {
+    return super.codeDelegationAddress();
   }
 
   @Override
@@ -81,17 +81,12 @@ public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Ac
 
   @Override
   public Bytes getCode() {
-    return super.getCode();
-  }
-
-  @Override
-  public Bytes getUnprocessedCode() {
     return wrappedAccount.getCode();
   }
 
   @Override
   public Hash getCodeHash() {
-    return super.getCodeHash();
+    return wrappedAccount.getCodeHash();
   }
 
   @Override
@@ -106,7 +101,7 @@ public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Ac
 
   @Override
   public boolean isEmpty() {
-    return getDelegatedNonce() == 0 && getDelegatedBalance().isZero() && !hasCode();
+    return wrappedAccount.isEmpty();
   }
 
   @Override
@@ -118,10 +113,5 @@ public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Ac
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
     return wrappedAccount.storageEntriesFrom(startKeyHash, limit);
-  }
-
-  @Override
-  public boolean hasDelegatedCode() {
-    return true;
   }
 }

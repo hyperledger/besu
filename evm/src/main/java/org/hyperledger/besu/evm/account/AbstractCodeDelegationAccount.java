@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.account;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -24,20 +23,20 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class BaseDelegatedCodeAccount {
+abstract class AbstractCodeDelegationAccount implements Account {
   private final WorldUpdater worldUpdater;
   private final GasCalculator gasCalculator;
 
   /** The address of the account that has delegated code to be loaded into it. */
-  protected final Address delegatedCodeAddress;
+  protected final Address codeDelegationAddress;
 
-  protected BaseDelegatedCodeAccount(
+  protected AbstractCodeDelegationAccount(
       final WorldUpdater worldUpdater,
-      final Address delegatedCodeAddress,
+      final Address codeDelegationAddress,
       final GasCalculator gasCalculator) {
     this.worldUpdater = worldUpdater;
     this.gasCalculator = gasCalculator;
-    this.delegatedCodeAddress = delegatedCodeAddress;
+    this.codeDelegationAddress = codeDelegationAddress;
   }
 
   /**
@@ -45,8 +44,9 @@ class BaseDelegatedCodeAccount {
    *
    * @return the delegated code.
    */
-  protected Bytes getCode() {
-    return resolveDelegatedCode();
+  @Override
+  public Optional<Bytes> getCodeDelegationTargetCode() {
+    return resolveCodeDelegationTargetCode();
   }
 
   /**
@@ -54,27 +54,9 @@ class BaseDelegatedCodeAccount {
    *
    * @return the hash of the delegated code.
    */
-  protected Hash getCodeHash() {
-    final Bytes code = getCode();
-    return (code == null || code.isEmpty()) ? Hash.EMPTY : Hash.hash(code);
-  }
-
-  /**
-   * Returns the balance of the delegated account.
-   *
-   * @return the balance of the delegated account.
-   */
-  protected Wei getDelegatedBalance() {
-    return getDelegatedAccount().map(Account::getBalance).orElse(Wei.ZERO);
-  }
-
-  /**
-   * Returns the nonce of the delegated account.
-   *
-   * @return the nonce of the delegated account.
-   */
-  protected long getDelegatedNonce() {
-    return getDelegatedAccount().map(Account::getNonce).orElse(Account.DEFAULT_NONCE);
+  @Override
+  public Optional<Hash> getCodeDelegationTargetHash() {
+    return getCodeDelegationTargetCode().map(Hash::hash);
   }
 
   /**
@@ -82,19 +64,27 @@ class BaseDelegatedCodeAccount {
    *
    * @return the address of the delegated code.
    */
-  protected Optional<Address> delegatedCodeAddress() {
-    return Optional.of(delegatedCodeAddress);
+  @Override
+  public Optional<Address> codeDelegationAddress() {
+    return Optional.of(codeDelegationAddress);
+  }
+
+  @Override
+  public boolean hasDelegatedCode() {
+    return true;
   }
 
   private Optional<Account> getDelegatedAccount() {
-    return Optional.ofNullable(worldUpdater.getAccount(delegatedCodeAddress));
+    return Optional.ofNullable(worldUpdater.getAccount(codeDelegationAddress));
   }
 
-  private Bytes resolveDelegatedCode() {
-    if (gasCalculator.isPrecompile(delegatedCodeAddress)) {
-      return Bytes.EMPTY;
+  private Optional<Bytes> resolveCodeDelegationTargetCode() {
+    final Optional<Account> maybeDelegatedAccount = getDelegatedAccount();
+
+    if (gasCalculator.isPrecompile(codeDelegationAddress) || maybeDelegatedAccount.isEmpty()) {
+      return Optional.of(Bytes.EMPTY);
     }
 
-    return getDelegatedAccount().map(Account::getUnprocessedCode).orElse(Bytes.EMPTY);
+    return Optional.of(maybeDelegatedAccount.get().getCode());
   }
 }

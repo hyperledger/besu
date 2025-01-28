@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.query;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -1002,7 +1003,10 @@ public class BlockchainQueries {
         .getBlockHeader(blockHash)
         .flatMap(
             blockHeader -> {
-              try (var ws = worldStateArchive.getMutable(blockHeader, false).orElse(null)) {
+              try (var ws =
+                  worldStateArchive
+                      .getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader))
+                      .orElse(null)) {
                 if (ws != null) {
                   return mapper.apply(ws);
                 }

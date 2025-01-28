@@ -35,6 +35,7 @@ import org.immutables.value.Value;
 @Value.Immutable
 @Value.Enclosing
 public abstract class MiningConfiguration {
+  public static final long DEFAULT_TARGET_GAS_LIMIT_HOLESKY = 36_000_000L;
   public static final PositiveNumber DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME =
       PositiveNumber.fromInt((int) Duration.ofSeconds(5).toMillis());
   public static final PositiveNumber DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME =

@@ -1,6 +1,14 @@
 # Changelog
 
 ## Unreleased
+### Breaking Changes
+### Upcoming Breaking Changes
+### Additions and Improvements
+- Adds timestamps to enable Prague hardfork on Sepolia and Holesky test networks. [#8163](https://github.com/hyperledger/besu/pull/8163)
+### Bug fixes
+
+
+## 25.1.0
 
 ### Breaking Changes
 - `--host-whitelist` has been deprecated since 2020 and this option is removed. Use the equivalent `--host-allowlist` instead. 
@@ -12,6 +20,10 @@
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
 - k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release. Use docker or none instead.
+- `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated, use `--Xbonsai-full-flat-db-enabled` instead.
+- `--Xbonsai-limit-trie-logs-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-log-pruning-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Tessera privacy
   - Smart-contract-based (onchain) permissioning
@@ -25,6 +37,10 @@
 - Allow gasPrice (legacy) and 1559 gasPrice params to be specified simultaneously for `eth_call`, `eth_createAccessList`, and `eth_estimateGas` [#8059](https://github.com/hyperledger/besu/pull/8059)
 - Improve debug_traceBlock calls performance and reduce output size [#8076](https://github.com/hyperledger/besu/pull/8076)
 - Add support for EIP-7702 transaction in the txpool [#8018](https://github.com/hyperledger/besu/pull/8018) [#7984](https://github.com/hyperledger/besu/pull/7984)
+- Add support for `movePrecompileToAddress` in `StateOverrides` (`eth_call`)[8115](https://github.com/hyperledger/besu/pull/8115)
+- Default target-gas-limit to 36M for holesky [#8125](https://github.com/hyperledger/besu/pull/8125)
+- Add EIP-7623 - Increase calldata cost [#8093](https://github.com/hyperledger/besu/pull/8093)
+- Add nonce to transaction call object [#8139](https://github.com/hyperledger/besu/pull/8139)
 
 ### Bug fixes
 - Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)

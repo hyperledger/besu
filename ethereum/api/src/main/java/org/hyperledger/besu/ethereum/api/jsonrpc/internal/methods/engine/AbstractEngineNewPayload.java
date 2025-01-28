@@ -109,7 +109,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     engineCallListener.executionEngineCalled();
-
     final EnginePayloadParameter blockParam;
     try {
       blockParam = requestContext.getRequiredParameter(0, EnginePayloadParameter.class);

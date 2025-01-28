@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper.deductDelegatedCodeGasCost;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
@@ -27,12 +25,11 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code hash operation. */
-public class ExtCodeHashOperation extends AbstractOperation {
+public class ExtCodeHashOperation extends AbstractExtCodeOperation {
 
   // // 0x9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5
   static final Hash EOF_REPLACEMENT_HASH = Hash.hash(ExtCodeCopyOperation.EOF_REPLACEMENT_CODE);
@@ -85,26 +82,17 @@ public class ExtCodeHashOperation extends AbstractOperation {
 
       final Account account = frame.getWorldUpdater().get(address);
 
-      if (account != null) {
-        final DelegatedCodeGasCostHelper.Result result =
-            deductDelegatedCodeGasCost(frame, gasCalculator(), account);
-        if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
-          return new Operation.OperationResult(
-              result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
-        }
-      }
-
       if (account == null || account.isEmpty()) {
         frame.pushStackItem(Bytes.EMPTY);
       } else {
-        final Bytes code = account.getCode();
+        final Bytes code = getCode(account);
         if (enableEIP3540
             && code.size() >= 2
             && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
             && code.get(1) == 0) {
           frame.pushStackItem(EOF_REPLACEMENT_HASH);
         } else {
-          frame.pushStackItem(account.getCodeHash());
+          frame.pushStackItem(getCodeHash(account));
         }
       }
       return new OperationResult(cost, null);

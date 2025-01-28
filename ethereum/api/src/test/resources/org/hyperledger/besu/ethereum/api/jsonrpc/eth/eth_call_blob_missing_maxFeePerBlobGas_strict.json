@@ -19,7 +19,7 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 4,
-    "error":{"code":-32009,"message":"blob gas price below current blob base fee"}
+    "error":{"code":-32009,"message":"blob gas price below current blob base fee (tx max fee per blob gas less than block blob gas fee: address 0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b blobGasFeeCap: 0 wei, blobBaseFee: 1 wei)"}
   },
   "statusCode": 200
 }
