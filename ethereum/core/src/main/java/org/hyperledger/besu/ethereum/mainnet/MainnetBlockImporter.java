@@ -63,11 +63,16 @@ public class MainnetBlockImporter implements BlockImporter {
       final List<TransactionReceipt> receipts,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
-      final BodyValidationMode bodyValidationMode) {
+      final BodyValidationMode bodyValidationMode,
+      final boolean importWithTxIndexing) {
 
     if (blockValidator.validateBlockForSyncing(
         context, block, receipts, headerValidationMode, ommerValidationMode, bodyValidationMode)) {
-      context.getBlockchain().appendBlockWithoutTxIndex(block, receipts);
+      if (importWithTxIndexing) {
+        context.getBlockchain().appendBlock(block, receipts);
+      } else {
+        context.getBlockchain().appendBlockWithoutTxIndex(block, receipts);
+      }
       return new BlockImportResult(true);
     }
 
