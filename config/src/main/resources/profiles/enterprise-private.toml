@@ -8,3 +8,4 @@ tx-pool-limit-by-account-percentage=0.15
 rpc-http-max-active-connections=300
 min-gas-price=0
 bonsai-limit-trie-logs-enabled=false
+snapsync-synchronizer-transaction-indexing-enabled=true
