@@ -157,10 +157,9 @@ class PrivacyBlockProcessorTest {
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(firstBlock.getHeader()));
     final ProtocolSpec protocolSpec = mockProtocolSpec();
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(publicWorldStateArchive.getMutable(any(), any()))
-        .thenReturn(Optional.of(mutableWorldState));
+    when(publicWorldStateArchive.getWorldState(any())).thenReturn(Optional.of(mutableWorldState));
     final MutableWorldState mockPrivateStateArchive = mockPrivateStateArchive();
-    when(privateWorldStateArchive.getMutable(any(), any()))
+    when(privateWorldStateArchive.getWorldState(any()))
         .thenReturn(Optional.of(mockPrivateStateArchive));
 
     final PrivacyGroupHeadBlockMap expected =

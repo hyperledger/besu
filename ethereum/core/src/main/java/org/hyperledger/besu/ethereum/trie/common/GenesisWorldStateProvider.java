@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.trie.common;
 
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
+
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
@@ -22,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoOpBonsaiCache
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -74,7 +75,7 @@ public class GenesisWorldStateProvider {
         new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
         new NoOpTrieLogManager(),
         EvmConfiguration.DEFAULT,
-        new DiffBasedWorldStateConfig());
+        createStatefulConfigWithTrie());
   }
 
   /**

@@ -181,7 +181,7 @@ public class BlockchainSetupUtil {
               : createInMemoryWorldStateArchive();
       final TransactionPool transactionPool = mock(TransactionPool.class);
 
-      genesisState.writeStateTo(worldArchive.getMutable());
+      genesisState.writeStateTo(worldArchive.getWorldState());
       final ProtocolContext protocolContext = protocolContextProvider.get(blockchain, worldArchive);
 
       final Path blocksPath = Path.of(chainResources.getBlocksURL().toURI());
