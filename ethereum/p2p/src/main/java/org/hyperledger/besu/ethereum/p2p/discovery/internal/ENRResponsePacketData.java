@@ -46,7 +46,10 @@ public class ENRResponsePacketData implements PacketData {
     in.enterList();
     final Bytes requestHash = in.readBytes();
     in.leaveListLenient();
-    final NodeRecord enr = NodeRecordFactory.DEFAULT.fromBytes(in.currentListAsBytes());
+
+    final Bytes rawEnrRlp = in.currentListAsBytes();
+    checkArgument(rawEnrRlp.size() <= 300, "enr must be no more than 300 bytes");
+    final NodeRecord enr = NodeRecordFactory.DEFAULT.fromBytes(rawEnrRlp);
 
     return new ENRResponsePacketData(requestHash, enr);
   }
