@@ -15,12 +15,12 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -98,20 +99,20 @@ public class BlockSimulatorTest {
 
   @Test
   public void shouldProcessWithValidWorldState() {
-    when(worldStateArchive.getMutable(any(BlockHeader.class), eq(false)))
+
+    when(worldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
         .thenReturn(Optional.of(mutableWorldState));
 
     List<BlockSimulationResult> results =
         blockSimulator.process(blockHeader, Collections.emptyList());
-
     assertNotNull(results);
-    verify(worldStateArchive).getMutable(any(BlockHeader.class), eq(false));
+    verify(worldStateArchive).getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader));
   }
 
   @Test
   public void shouldNotProcessWithInvalidWorldState() {
-    when(worldStateArchive.getMutable(any(BlockHeader.class), eq(false)))
-        .thenReturn(Optional.empty());
+    when(worldStateArchive.getWorldState(any(WorldStateQueryParams.class)))
+        .thenAnswer(invocation -> Optional.empty());
 
     IllegalArgumentException exception =
         assertThrows(

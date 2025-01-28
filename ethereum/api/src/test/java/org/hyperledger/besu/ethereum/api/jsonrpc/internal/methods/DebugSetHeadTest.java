@@ -90,7 +90,7 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
 
     // assert the chain moved, and the worldstate did not
     assertThat(newChainTip).isEqualTo(blockOne);
-    assertThat(archive.getMutable().rootHash()).isEqualTo(chainTip.getStateRoot());
+    assertThat(archive.getWorldState().rootHash()).isEqualTo(chainTip.getStateRoot());
   }
 
   @ParameterizedTest
@@ -116,7 +116,7 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
 
     // assert the chain moved, and the worldstate did not
     assertThat(newChainTip).isEqualTo(blockOne);
-    assertThat(archive.getMutable().rootHash()).isEqualTo(chainTip.getStateRoot());
+    assertThat(archive.getWorldState().rootHash()).isEqualTo(chainTip.getStateRoot());
   }
 
   @ParameterizedTest
@@ -142,7 +142,7 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
 
     // assert both the chain and worldstate moved to block one
     assertThat(newChainTip).isEqualTo(blockOne);
-    assertThat(archive.getMutable().rootHash()).isEqualTo(blockOne.getStateRoot());
+    assertThat(archive.getWorldState().rootHash()).isEqualTo(blockOne.getStateRoot());
   }
 
   @Test
@@ -167,7 +167,7 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
 
     // assert neither the chain nor the worldstate moved
     assertThat(newChainTip).isEqualTo(chainTip);
-    assertThat(archive.getMutable().rootHash()).isEqualTo(chainTip.getStateRoot());
+    assertThat(archive.getWorldState().rootHash()).isEqualTo(chainTip.getStateRoot());
   }
 
   private JsonRpcRequestContext debugSetHead(

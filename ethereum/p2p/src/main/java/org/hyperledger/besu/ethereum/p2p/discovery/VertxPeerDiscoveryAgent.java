@@ -198,6 +198,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
           if (ar.succeeded()) {
             controller.ifPresent(PeerDiscoveryController::stop);
             socket = null;
+            isStopped = true;
             completion.complete(null);
           } else {
             completion.completeExceptionally(ar.cause());

@@ -73,7 +73,7 @@ public class BlockchainReferenceTestCaseSpec {
       final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
-    final MutableWorldState worldState = worldStateArchive.getMutable();
+    final MutableWorldState worldState = worldStateArchive.getWorldState();
     final WorldUpdater updater = worldState.updater();
 
     for (final Map.Entry<String, ReferenceTestWorldState.AccountMock> entry : accounts.entrySet()) {
