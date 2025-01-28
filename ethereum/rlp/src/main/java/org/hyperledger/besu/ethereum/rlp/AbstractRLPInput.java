@@ -29,11 +29,8 @@ import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 abstract class AbstractRLPInput implements RLPInput {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractRLPInput.class);
   private static final String errorMessageSuffix = " (at bytes %d-%d: %s%s[%s]%s%s)";
 
   private final boolean lenient;
@@ -292,11 +289,9 @@ abstract class AbstractRLPInput implements RLPInput {
 
   @Override
   public long readLongScalar() {
-    LOG.trace("Reading long scalar, currentItem = {}", currentItem);
     checkScalar("long scalar", 8);
     long res = readGenericLongScalar();
     setTo(nextItem());
-    LOG.trace("Read long scalar, {}, currentItem = {}", res, currentItem);
     return res;
   }
 
@@ -331,11 +326,9 @@ abstract class AbstractRLPInput implements RLPInput {
 
   @Override
   public int readUnsignedByteScalar() {
-    LOG.trace("Reading unsigned byte scalar, currentItem = {}", currentItem);
     checkScalar("unsigned byte scalar", 1);
     int result = (currentPayloadSize == 0) ? 0 : payloadByte(0) & 0xff;
     setTo(nextItem());
-    LOG.trace("Read unsigned byte scalar {}, currentItem = {}", result, currentItem);
     return result;
   }
 
@@ -361,21 +354,16 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   private Bytes32 readBytes32Scalar() {
-    LOG.trace("Reading 32-bytes scalar");
     checkScalar("32-bytes scalar", 32);
     final MutableBytes32 res = MutableBytes32.create();
     payloadSlice().copyTo(res, res.size() - currentPayloadSize);
     setTo(nextItem());
-    LOG.trace("Read 32-bytes scalar {}", res);
     return res;
   }
 
   @Override
   public UInt256 readUInt256Scalar() {
-    LOG.trace("Reading UInt256 scalar, currentItem = {}", currentItem);
-    UInt256 res = UInt256.fromBytes(readBytes32Scalar());
-    LOG.trace("Read UInt256 scalar {}, currentItem = {}", res, currentItem);
-    return res;
+    return UInt256.fromBytes(readBytes32Scalar());
   }
 
   @Override
@@ -433,21 +421,17 @@ abstract class AbstractRLPInput implements RLPInput {
 
   @Override
   public Bytes readBytes() {
-    LOG.trace("Reading arbitrary bytes, currentItem = {}", currentItem);
     checkElt("arbitrary bytes value");
     final Bytes res = payloadSlice();
     setTo(nextItem());
-    LOG.trace("Read arbitrary bytes {}, currentItem = {}", res, currentItem);
     return res;
   }
 
   @Override
   public Bytes32 readBytes32() {
-    LOG.trace("Reading Bytes32, currentItem = {}", currentItem);
     checkElt("32 bytes value", 32);
     final Bytes32 res = inputSlice32(currentPayloadOffset);
     setTo(nextItem());
-    LOG.trace("Read Bytes32 {}, currentItem = {}", res, currentItem);
     return res;
   }
 
@@ -494,11 +478,6 @@ abstract class AbstractRLPInput implements RLPInput {
    * @return -1 if skipCount==true, otherwise, the number of item of the entered list.
    */
   public int enterList(final boolean skipCount) {
-    LOG.trace(
-        "Entering list (depth = {}, endOfListOffset = {}, currentItem = {})",
-        depth,
-        endOfListOffset,
-        currentItem);
     if (currentItem >= size) {
       throw error("Cannot enter a lists, input is fully consumed");
     }
@@ -541,13 +520,6 @@ abstract class AbstractRLPInput implements RLPInput {
 
     // And lastly reset on the list first element before returning
     setTo(listStart);
-    LOG.trace(
-        "Entered list (depth = {}, endOfListOffset = {}, currentItem = {}, listEnd = {}, elements = {})",
-        depth,
-        endOfListOffset,
-        currentItem,
-        listEnd,
-        count);
     return count;
   }
 
@@ -562,12 +534,6 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   private void leaveList(final boolean ignoreRest) {
-    LOG.trace(
-        "Leaving list (depth = {}, endOfListOffset = {}, ignoreRest = {}, currentItem = {}",
-        depth,
-        endOfListOffset,
-        ignoreRest,
-        currentItem);
     checkState(depth > 0, "Not within an RLP list");
 
     if (!ignoreRest) {
@@ -576,12 +542,6 @@ abstract class AbstractRLPInput implements RLPInput {
     }
 
     --depth;
-    LOG.trace(
-        "Left list (depth = {}, endOfListOffset = {}, ignoreRes = {}, currentItem = {}",
-        depth,
-        endOfListOffset,
-        ignoreRest,
-        currentItem);
   }
 
   @Override

@@ -23,11 +23,8 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 abstract class AbstractRLPOutput implements RLPOutput {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractRLPOutput.class);
   /*
    * The algorithm implemented works as follows:
    *
@@ -82,12 +79,10 @@ abstract class AbstractRLPOutput implements RLPOutput {
 
   @Override
   public void writeBytes(final Bytes v) {
-    LOG.trace("Writing bytes {}", v);
     checkState(
         stackSize > 1 || values.isEmpty(), "Terminated RLP output, cannot add more elements");
     values.add(v);
     payloadSizes[currentList()] += RLPEncodingHelpers.elementSize(v);
-    LOG.trace("Wrote bytes {}", v);
   }
 
   @Override
@@ -102,12 +97,6 @@ abstract class AbstractRLPOutput implements RLPOutput {
 
   @Override
   public void startList() {
-    LOG.trace(
-        "Starting list (stackSize = {}, listsCount = {}, payloadSizes = {}, parentListStack = {})",
-        stackSize,
-        listsCount,
-        payloadSizes,
-        parentListStack);
     values.add(LIST_MARKER);
     ++listsCount; // we'll add a new element to payloadSizes
     ++stackSize; // and to the list stack.
@@ -123,22 +112,10 @@ abstract class AbstractRLPOutput implements RLPOutput {
     // The new current list size is store in the slot we just made room for by incrementing
     // listsCount
     parentListStack[stackSize - 1] = listsCount - 1;
-    LOG.trace(
-        "Started list (stackSize = {}, listsCount = {}, payloadSizes = {}, parentListStack = {})",
-        stackSize,
-        listsCount,
-        payloadSizes,
-        parentListStack);
   }
 
   @Override
   public void endList() {
-    LOG.trace(
-        "Ending list (stackSize = {}, listsCount = {}, payloadSizes = {}, parentListStack = {})",
-        stackSize,
-        listsCount,
-        payloadSizes,
-        parentListStack);
     checkState(stackSize > 1, "LeaveList() called with no prior matching startList()");
 
     final int current = currentList();
@@ -148,12 +125,6 @@ abstract class AbstractRLPOutput implements RLPOutput {
     // We just finished an item of our parent list, add it to that parent list size now.
     final int newCurrent = currentList();
     payloadSizes[newCurrent] += finishedListSize;
-    LOG.trace(
-        "Ended list (stackSize = {}, listsCount = {}, payloadSizes = {}, parentListStack = {})",
-        stackSize,
-        listsCount,
-        payloadSizes,
-        parentListStack);
   }
 
   /**
