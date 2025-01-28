@@ -61,6 +61,7 @@ sync-mode="fast"
 fast-sync-min-peers=5
 network-id=303
 kzg-trusted-setup="/etc/besu/kzg-trusted-setup.txt"
+snapsync-synchronizer-transaction-indexing-enabled=true
 
 # JSON-RPC
 rpc-http-enabled=false
