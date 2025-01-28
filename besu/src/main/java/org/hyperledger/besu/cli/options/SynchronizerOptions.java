@@ -359,15 +359,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   }
 
   /**
-   * Flag to enable the transaction indexing during snap sync
-   *
-   * @return true if snap sync transaction indexing is enabled
-   */
-  public boolean isSnapTransactionIndexingEnabled() {
-    return snapTransactionIndexingEnabled;
-  }
-
-  /**
    * Create synchronizer options.
    *
    * @return the synchronizer options

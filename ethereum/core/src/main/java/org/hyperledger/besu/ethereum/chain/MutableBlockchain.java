@@ -38,7 +38,7 @@ public interface MutableBlockchain extends Blockchain {
   void appendBlock(Block block, List<TransactionReceipt> receipts);
 
   /**
-   * Adds a block to the blockchain.
+   * Adds a block to the blockchain without indexing transactions.
    *
    * <p>Block must be connected to the existing blockchain (its parent must already be stored),
    * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
