@@ -23,11 +23,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class FrontierTransactionEncoder {
   public static void encode(final Transaction transaction, final RLPOutput out) {
-    transaction
-        .getRawRlp()
-        .ifPresentOrElse(
-            out::writeRLPBytes,
-            () -> {
               out.startList();
               out.writeLongScalar(transaction.getNonce());
               out.writeUInt256Scalar(transaction.getGasPrice().orElseThrow());
@@ -37,6 +32,5 @@ public class FrontierTransactionEncoder {
               out.writeBytes(transaction.getPayload());
               writeSignatureAndV(transaction, out);
               out.endList();
-            });
   }
 }

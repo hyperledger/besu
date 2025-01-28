@@ -63,13 +63,6 @@ public class CodeDelegationTransactionEncoder {
   }
 
   public static void encode(final Transaction transaction, final RLPOutput out) {
-    transaction
-        .getRawRlp()
-        .ifPresentOrElse(
-            (rawRlp) ->
-                out.writeRLPBytes(
-                    Bytes.concatenate(Bytes.of(transaction.getType().getSerializedType()), rawRlp)),
-            () -> {
               out.startList();
               out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());
               out.writeLongScalar(transaction.getNonce());
@@ -90,6 +83,5 @@ public class CodeDelegationTransactionEncoder {
                   out);
               writeSignatureAndRecoveryId(transaction, out);
               out.endList();
-            });
   }
 }

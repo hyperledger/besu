@@ -31,13 +31,6 @@ import org.apache.tuweni.bytes.Bytes;
 public class AccessListTransactionEncoder {
 
   public static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
-    transaction
-        .getRawRlp()
-        .ifPresentOrElse(
-            (rawRlp) ->
-                rlpOutput.writeRLPBytes(
-                    Bytes.concatenate(Bytes.of(transaction.getType().getSerializedType()), rawRlp)),
-            () -> {
               rlpOutput.startList();
               encodeAccessListInner(
                   transaction.getChainId(),
@@ -57,7 +50,6 @@ public class AccessListTransactionEncoder {
               rlpOutput.writeIntScalar(transaction.getSignature().getRecId());
               writeSignature(transaction, rlpOutput);
               rlpOutput.endList();
-            });
   }
 
   public static void encodeAccessListInner(
