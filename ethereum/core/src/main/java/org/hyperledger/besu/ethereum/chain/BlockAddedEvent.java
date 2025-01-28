@@ -23,10 +23,11 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class BlockAddedEvent {
 
-  private final Block block;
+  private final Supplier<Block> blockSupplier;
   private final List<Transaction> addedTransactions;
   private final List<Transaction> removedTransactions;
   private final List<TransactionReceipt> transactionReceipts;
@@ -39,13 +40,12 @@ public class BlockAddedEvent {
     HEAD_ADVANCED,
     FORK,
     CHAIN_REORG,
-    STORED_ONLY,
-    HEAD_ADVANCED_DURING_SYNC
+    STORED_ONLY
   }
 
   private BlockAddedEvent(
       final EventType eventType,
-      final Block block,
+      final Supplier<Block> blockSupplier,
       final BlockHeader header,
       final List<Transaction> addedTransactions,
       final List<Transaction> removedTransactions,
@@ -53,7 +53,7 @@ public class BlockAddedEvent {
       final List<LogWithMetadata> logsWithMetadata,
       final Hash commonAncestorHash) {
     this.eventType = eventType;
-    this.block = block;
+    this.blockSupplier = blockSupplier;
     this.header = header;
     this.addedTransactions = addedTransactions;
     this.removedTransactions = removedTransactions;
@@ -64,11 +64,12 @@ public class BlockAddedEvent {
 
   public static BlockAddedEvent createForSyncHeadAdvancement(
       final BlockHeader blockHeader,
+      final Supplier<Block> blockSupplier,
       final List<LogWithMetadata> logsWithMetadata,
       final List<TransactionReceipt> transactionReceipts) {
     return new BlockAddedEvent(
-        EventType.HEAD_ADVANCED_DURING_SYNC,
-        null,
+        EventType.HEAD_ADVANCED,
+        blockSupplier,
         blockHeader,
         Collections.emptyList(),
         Collections.emptyList(),
@@ -83,7 +84,7 @@ public class BlockAddedEvent {
       final List<TransactionReceipt> transactionReceipts) {
     return new BlockAddedEvent(
         EventType.HEAD_ADVANCED,
-        block,
+        () -> block,
         block.getHeader(),
         block.getBody().getTransactions(),
         Collections.emptyList(),
@@ -101,7 +102,7 @@ public class BlockAddedEvent {
       final Hash commonAncestorHash) {
     return new BlockAddedEvent(
         EventType.CHAIN_REORG,
-        block,
+        () -> block,
         block.getHeader(),
         addedTransactions,
         removedTransactions,
@@ -113,7 +114,7 @@ public class BlockAddedEvent {
   public static BlockAddedEvent createForFork(final Block block) {
     return new BlockAddedEvent(
         EventType.FORK,
-        block,
+        () -> block,
         block.getHeader(),
         Collections.emptyList(),
         Collections.emptyList(),
@@ -125,7 +126,7 @@ public class BlockAddedEvent {
   public static BlockAddedEvent createForStoredOnly(final Block block) {
     return new BlockAddedEvent(
         EventType.STORED_ONLY,
-        block,
+        () -> block,
         block.getHeader(),
         Collections.emptyList(),
         Collections.emptyList(),
@@ -135,7 +136,7 @@ public class BlockAddedEvent {
   }
 
   public Block getBlock() {
-    return block;
+    return blockSupplier.get();
   }
 
   public BlockHeader getHeader() {
@@ -143,9 +144,7 @@ public class BlockAddedEvent {
   }
 
   public boolean isNewCanonicalHead() {
-    return eventType == EventType.HEAD_ADVANCED
-        || eventType == EventType.CHAIN_REORG
-        || eventType == EventType.HEAD_ADVANCED_DURING_SYNC;
+    return eventType == EventType.HEAD_ADVANCED || eventType == EventType.CHAIN_REORG;
   }
 
   public EventType getEventType() {
@@ -178,7 +177,7 @@ public class BlockAddedEvent {
         + "eventType="
         + eventType
         + ", block="
-        + block.toLogString()
+        + header.toLogString()
         + ", commonAncestorHash="
         + commonAncestorHash
         + ", addedTransactions count="

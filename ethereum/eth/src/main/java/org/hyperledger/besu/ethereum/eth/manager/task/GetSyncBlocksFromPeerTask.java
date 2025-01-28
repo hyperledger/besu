@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -47,14 +48,17 @@ public class GetSyncBlocksFromPeerTask extends AbstractPeerRequestTask<List<Sync
 
   private final List<BlockHeader> headers;
   private final Map<BodyIdentifier, List<BlockHeader>> bodyToHeaders = new HashMap<>();
+  private final ProtocolSchedule protocolSchedule;
 
   private GetSyncBlocksFromPeerTask(
       final EthContext ethContext,
       final List<BlockHeader> headers,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final ProtocolSchedule protocolSchedule) {
     super(ethContext, EthPV62.GET_BLOCK_BODIES, metricsSystem);
     checkArgument(!headers.isEmpty());
 
+    this.protocolSchedule = protocolSchedule;
     this.headers = headers;
     headers.forEach(
         (header) -> {
@@ -67,8 +71,9 @@ public class GetSyncBlocksFromPeerTask extends AbstractPeerRequestTask<List<Sync
   public static GetSyncBlocksFromPeerTask forHeaders(
       final EthContext ethContext,
       final List<BlockHeader> headers,
-      final MetricsSystem metricsSystem) {
-    return new GetSyncBlocksFromPeerTask(ethContext, headers, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final ProtocolSchedule protocolSchedule) {
+    return new GetSyncBlocksFromPeerTask(ethContext, headers, metricsSystem, protocolSchedule);
   }
 
   @Override
@@ -105,7 +110,7 @@ public class GetSyncBlocksFromPeerTask extends AbstractPeerRequestTask<List<Sync
     }
 
     final BlockBodiesMessage bodiesMessage = BlockBodiesMessage.readFrom(message);
-    final List<SyncBlockBody> bodies = bodiesMessage.syncBodies();
+    final List<SyncBlockBody> bodies = bodiesMessage.syncBodies(protocolSchedule);
     if (bodies.isEmpty()) {
       // Message contains no data - nothing to do
       LOG.debug("Message contains no data. Peer: {}", peer);

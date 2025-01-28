@@ -40,6 +40,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +60,7 @@ public class CompleteSyncBlocksTask extends AbstractRetryingPeerTask<List<SyncBl
   private final Map<Long, SyncBlock> blocks;
   private final MetricsSystem metricsSystem;
   private final Counter totalSyncBodiesDownloaded;
+  private final ProtocolSchedule protocolSchedule;
 
   private CompleteSyncBlocksTask(
       final ProtocolSchedule protocolSchedule,
@@ -70,6 +72,7 @@ public class CompleteSyncBlocksTask extends AbstractRetryingPeerTask<List<SyncBl
     checkArgument(!headers.isEmpty(), "Must supply a non-empty headers list");
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
+    this.protocolSchedule = protocolSchedule;
 
     this.headers = headers;
     this.blocks =
@@ -94,9 +97,15 @@ public class CompleteSyncBlocksTask extends AbstractRetryingPeerTask<List<SyncBl
   private SyncBlockBody createEmptyBodyBasedOnProtocolSchedule(
       final ProtocolSchedule protocolSchedule, final BlockHeader header) {
     if (isWithdrawalsEnabled(protocolSchedule, header)) {
-      return SyncBlockBody.EMPTY_SYNC_BLOCK_BODY_WITH_WITHDRAWLS_ENABLED;
+      return new SyncBlockBody(
+          Bytes.fromHexString("0xc3c0c0c0"),
+          emptyList(),
+          Bytes.EMPTY,
+          emptyList(),
+          protocolSchedule);
     } else {
-      return SyncBlockBody.EMPTY_SYNC_BLOCK_BODY_WITH_WITHDRAWLS_DISABLED;
+      return new SyncBlockBody(
+          Bytes.fromHexString("0xc2c0c0"), emptyList(), Bytes.EMPTY, emptyList(), protocolSchedule);
     }
   }
 
@@ -132,7 +141,8 @@ public class CompleteSyncBlocksTask extends AbstractRetryingPeerTask<List<SyncBl
     return executeSubTask(
         () -> {
           final GetSyncBlocksFromPeerTask task =
-              GetSyncBlocksFromPeerTask.forHeaders(ethContext, incompleteHeaders, metricsSystem);
+              GetSyncBlocksFromPeerTask.forHeaders(
+                  ethContext, incompleteHeaders, metricsSystem, protocolSchedule);
           assignedPeer.ifPresent(task::assignPeer);
           return task.run().thenApply(PeerTaskResult::getResult);
         });

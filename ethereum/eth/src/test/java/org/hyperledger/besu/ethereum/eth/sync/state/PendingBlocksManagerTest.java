@@ -66,7 +66,7 @@ public class PendingBlocksManagerTest {
   public void deregisterPendingBlock() {
     final Block block = gen.block();
     pendingBlocksManager.registerPendingBlock(block, NODE_ID_1);
-    pendingBlocksManager.deregisterPendingBlock(block);
+    pendingBlocksManager.deregisterPendingBlock(block.getHeader());
 
     assertThat(pendingBlocksManager.contains(block.getHash())).isFalse();
     final List<Block> pendingBlocksForParent =
@@ -103,7 +103,7 @@ public class PendingBlocksManagerTest {
 
     pendingBlocksManager.registerPendingBlock(childBlock, NODE_ID_1);
     pendingBlocksManager.registerPendingBlock(childBlock2, NODE_ID_1);
-    pendingBlocksManager.deregisterPendingBlock(childBlock);
+    pendingBlocksManager.deregisterPendingBlock(childBlock.getHeader());
 
     assertThat(pendingBlocksManager.contains(childBlock.getHash())).isFalse();
     assertThat(pendingBlocksManager.contains(childBlock2.getHash())).isTrue();

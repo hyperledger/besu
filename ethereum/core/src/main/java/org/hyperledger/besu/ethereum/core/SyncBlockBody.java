@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -25,44 +28,44 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SyncBlockBody {
 
-  public static final SyncBlockBody EMPTY_SYNC_BLOCK_BODY_WITH_WITHDRAWLS_ENABLED =
-      new SyncBlockBody(
-          Bytes.fromHexString("0xc3c0c0c0"),
-          Collections.emptyList(),
-          Bytes.EMPTY,
-          Collections.emptyList());
-  public static final SyncBlockBody EMPTY_SYNC_BLOCK_BODY_WITH_WITHDRAWLS_DISABLED =
-      new SyncBlockBody(
-          Bytes.fromHexString("0xc2c0c0"),
-          Collections.emptyList(),
-          Bytes.EMPTY,
-          Collections.emptyList());
+  private static final Logger LOG = LoggerFactory.getLogger(SyncBlockBody.class);
 
   private final Bytes bytesOfWrappedRlpInput;
   private final List<Bytes> transactionBytes;
   private final Bytes ommersListBytes;
   private final Optional<List<Bytes>> withdrawalBytes;
+  private final BlockHeaderFunctions blockHeaderFunctions;
 
   public SyncBlockBody(
       final Bytes bytesOfWrappedRlpInput,
       final List<Bytes> transactionBytes,
       final Bytes ommersListBytes,
-      final List<Bytes> withdrawalBytes) {
+      final List<Bytes> withdrawalBytes,
+      final ProtocolSchedule protocolSchedule) {
     this.bytesOfWrappedRlpInput = bytesOfWrappedRlpInput;
     this.transactionBytes = transactionBytes;
     this.ommersListBytes = ommersListBytes;
     this.withdrawalBytes = Optional.ofNullable(withdrawalBytes);
+    this.blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 
-  public static SyncBlockBody empty() {
-    return SyncBlockBody.EMPTY_SYNC_BLOCK_BODY_WITH_WITHDRAWLS_DISABLED;
+  public static SyncBlockBody empty(final ProtocolSchedule protocolSchedule) {
+    return new SyncBlockBody(
+        Bytes.fromHexString("0xc2c0c0"),
+        Collections.emptyList(),
+        Bytes.EMPTY,
+        Collections.emptyList(),
+        protocolSchedule);
   }
 
   /**
@@ -75,13 +78,13 @@ public class SyncBlockBody {
    * @return the decoded BlockBody from the RLP
    */
   public static SyncBlockBody readWrappedBodyFrom(
-      final RLPInput input, final boolean allowEmptyBody) {
+      final RLPInput input, final boolean allowEmptyBody, final ProtocolSchedule protocolSchedule) {
     final Bytes bytesCurrentBody = input.currentListAsBytesNoCopy(false);
     input.enterList();
     if (input.isEndOfCurrentList() && allowEmptyBody) {
       // empty block [] -> Return empty body.
       input.leaveList();
-      return empty();
+      return empty(protocolSchedule);
     }
     // get a list of Bytes for the transactions
     final ArrayList<Bytes> transactionBytes = new ArrayList<>();
@@ -107,7 +110,8 @@ public class SyncBlockBody {
       input.leaveList();
     }
     final SyncBlockBody body =
-        new SyncBlockBody(bytesCurrentBody, transactionBytes, ommersListBytes, withdrawalBytes);
+        new SyncBlockBody(
+            bytesCurrentBody, transactionBytes, ommersListBytes, withdrawalBytes, protocolSchedule);
     input.leaveList();
     return body;
   }
@@ -147,6 +151,14 @@ public class SyncBlockBody {
 
   public int getTransactionCount() {
     return transactionBytes.size();
+  }
+
+  public Supplier<BlockBody> getBodySupplier() {
+    return () -> {
+      LOG.info("STEFAN: Creating block body from sync block body");
+      return BlockBody.readWrappedBodyFrom(
+          new BytesValueRLPInput(bytesOfWrappedRlpInput, false), blockHeaderFunctions, false);
+    };
   }
 
   private Hash getRootFromListOfBytes(final List<Bytes> bytes) {

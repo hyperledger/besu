@@ -243,7 +243,7 @@ public interface Blockchain {
     return observeBlockAdded(
         event -> {
           final List<LogWithMetadata> logsWithMetadata = event.getLogsWithMetadata();
-          // TDOD: No logsWithMetadata available during syncing when SyncBlock is used during
+          // TDOD: Stefan No logsWithMetadata available during syncing when SyncBlock is used during
           // syncing. Is that OK?
           if (logsWithMetadata != null) {
             logsWithMetadata.forEach(logObserver);

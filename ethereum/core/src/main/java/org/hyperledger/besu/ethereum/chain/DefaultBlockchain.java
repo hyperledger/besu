@@ -41,7 +41,6 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -660,18 +659,17 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     updater.putBlockHash(newBlock.getHeader().getNumber(), newBlockHash);
     updater.setChainHead(newBlockHash);
-    //    final List<Hash> listOfTxHashes =
-    //        newBlock.getBody().getEncodedTransactions().stream().map(Hash::hash).toList();
-    //    indexTransactionsForBlock(updater, newBlockHash, listOfTxHashes);
+    final List<Hash> listOfTxHashes =
+        newBlock.getBody().getEncodedTransactions().stream().map(Hash::hash).toList();
+    indexTransactionsForBlock(updater, newBlockHash, listOfTxHashes);
     gasUsedCounter.inc(newBlock.getHeader().getGasUsed());
     numberOfTransactionsCounter.inc(receipts.size());
 
     return BlockAddedEvent.createForSyncHeadAdvancement(
         newBlock.getHeader(),
-        Collections.emptyList(),
-        //        LogWithMetadata.generate(
-        //            newBlock.getHeader().getNumber(), newBlock.getHash(), listOfTxHashes,
-        // receipts, false),
+        () -> new Block(newBlock.getHeader(), newBlock.getBody().getBodySupplier().get()),
+        LogWithMetadata.generate(
+            newBlock.getHeader().getNumber(), newBlock.getHash(), listOfTxHashes, receipts, false),
         receipts);
   }
 

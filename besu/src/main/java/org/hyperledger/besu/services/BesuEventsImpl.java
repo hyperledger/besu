@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -86,14 +85,12 @@ public class BesuEventsImpl implements BesuEvents {
   @Override
   public long addBlockAddedListener(final BlockAddedListener listener) {
     return blockchain.observeBlockAdded(
-        event -> {
-          if (event.getEventType() != BlockAddedEvent.EventType.HEAD_ADVANCED_DURING_SYNC) {
-            // TODO: No body available when SyncBlock is used for syncing. Is that OK?
+        event ->
             listener.onBlockAdded(
                 blockAddedContext(
-                    event::getHeader, event.getBlock()::getBody, event::getTransactionReceipts));
-          }
-        });
+                    event::getHeader,
+                    () -> event.getBlock().getBody(),
+                    event::getTransactionReceipts)));
   }
 
   @Override
