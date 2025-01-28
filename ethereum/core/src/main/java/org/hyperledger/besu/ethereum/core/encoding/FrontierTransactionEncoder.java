@@ -23,14 +23,14 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class FrontierTransactionEncoder {
   public static void encode(final Transaction transaction, final RLPOutput out) {
-              out.startList();
-              out.writeLongScalar(transaction.getNonce());
-              out.writeUInt256Scalar(transaction.getGasPrice().orElseThrow());
-              out.writeLongScalar(transaction.getGasLimit());
-              out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-              out.writeUInt256Scalar(transaction.getValue());
-              out.writeBytes(transaction.getPayload());
-              writeSignatureAndV(transaction, out);
-              out.endList();
+    out.startList();
+    out.writeLongScalar(transaction.getNonce());
+    out.writeUInt256Scalar(transaction.getGasPrice().orElseThrow());
+    out.writeLongScalar(transaction.getGasLimit());
+    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    out.writeUInt256Scalar(transaction.getValue());
+    out.writeBytes(transaction.getPayload());
+    writeSignatureAndV(transaction, out);
+    out.endList();
   }
 }

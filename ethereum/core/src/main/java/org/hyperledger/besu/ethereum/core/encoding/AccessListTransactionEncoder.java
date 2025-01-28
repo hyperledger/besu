@@ -31,25 +31,25 @@ import org.apache.tuweni.bytes.Bytes;
 public class AccessListTransactionEncoder {
 
   public static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
-              rlpOutput.startList();
-              encodeAccessListInner(
-                  transaction.getChainId(),
-                  transaction.getNonce(),
-                  transaction.getGasPrice().orElseThrow(),
-                  transaction.getGasLimit(),
-                  transaction.getTo(),
-                  transaction.getValue(),
-                  transaction.getPayload(),
-                  transaction
-                      .getAccessList()
-                      .orElseThrow(
-                          () ->
-                              new IllegalStateException(
-                                  "Developer error: access list should be guaranteed to be present")),
-                  rlpOutput);
-              rlpOutput.writeIntScalar(transaction.getSignature().getRecId());
-              writeSignature(transaction, rlpOutput);
-              rlpOutput.endList();
+    rlpOutput.startList();
+    encodeAccessListInner(
+        transaction.getChainId(),
+        transaction.getNonce(),
+        transaction.getGasPrice().orElseThrow(),
+        transaction.getGasLimit(),
+        transaction.getTo(),
+        transaction.getValue(),
+        transaction.getPayload(),
+        transaction
+            .getAccessList()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Developer error: access list should be guaranteed to be present")),
+        rlpOutput);
+    rlpOutput.writeIntScalar(transaction.getSignature().getRecId());
+    writeSignature(transaction, rlpOutput);
+    rlpOutput.endList();
   }
 
   public static void encodeAccessListInner(

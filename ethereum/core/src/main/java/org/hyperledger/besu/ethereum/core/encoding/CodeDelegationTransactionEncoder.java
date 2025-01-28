@@ -63,25 +63,25 @@ public class CodeDelegationTransactionEncoder {
   }
 
   public static void encode(final Transaction transaction, final RLPOutput out) {
-              out.startList();
-              out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());
-              out.writeLongScalar(transaction.getNonce());
-              out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
-              out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());
-              out.writeLongScalar(transaction.getGasLimit());
-              out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-              out.writeUInt256Scalar(transaction.getValue());
-              out.writeBytes(transaction.getPayload());
-              writeAccessList(out, transaction.getAccessList());
-              encodeCodeDelegationInner(
-                  transaction
-                      .getCodeDelegationList()
-                      .orElseThrow(
-                          () ->
-                              new IllegalStateException(
-                                  "Developer error: the transaction should be guaranteed to have a code delegation authorizations here")),
-                  out);
-              writeSignatureAndRecoveryId(transaction, out);
-              out.endList();
+    out.startList();
+    out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());
+    out.writeLongScalar(transaction.getNonce());
+    out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
+    out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());
+    out.writeLongScalar(transaction.getGasLimit());
+    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    out.writeUInt256Scalar(transaction.getValue());
+    out.writeBytes(transaction.getPayload());
+    writeAccessList(out, transaction.getAccessList());
+    encodeCodeDelegationInner(
+        transaction
+            .getCodeDelegationList()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Developer error: the transaction should be guaranteed to have a code delegation authorizations here")),
+        out);
+    writeSignatureAndRecoveryId(transaction, out);
+    out.endList();
   }
 }
