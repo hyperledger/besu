@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -160,6 +161,7 @@ public class BlockResultFactory {
                     TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
+    final AtomicInteger lastRequestType = new AtomicInteger(-1);
     final Optional<List<String>> requestsWithoutRequestId =
         payload
             .requests()
@@ -167,6 +169,13 @@ public class BlockResultFactory {
                 rqs ->
                     rqs.stream()
                         .sorted(Comparator.comparing(Request::getType))
+                      .peek(request -> {
+                          if (request.type().ordinal() <= lastRequestType.get()) {
+                            throw new RuntimeException("Execution requests must be sorted by request type in ascending order and the request type must be unique");
+                          }
+                          lastRequestType.set(request.type().ordinal());
+
+                      })
                         .filter(r -> !r.getData().isEmpty())
                         .map(Request::getEncodedRequest)
                         .map(Bytes::toHexString)

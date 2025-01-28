@@ -592,15 +592,28 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return Optional.empty();
     }
 
-    return maybeRequestsParam.map(
-        requests ->
-            requests.stream()
-                .map(
-                    s -> {
-                      final Bytes request = Bytes.fromHexString(s);
-                      return new Request(RequestType.of(request.get(0)), request.slice(1));
-                    })
-                .collect(Collectors.toList()));
+    final List<String> requestsParam = maybeRequestsParam.get();
+    final List<Request> extractedRequests = new ArrayList<>();
+    int lastRequestType = -1;
+
+    for (String requestParam : requestsParam) {
+      final Bytes request = Bytes.fromHexString(requestParam);
+
+      if (request.size() <= 1) {
+        throw new InvalidJsonRpcRequestException("Execution request length must be greater than 2 bytes");
+      }
+
+      final RequestType requestType = RequestType.of(request.get(0));
+
+      if (requestType.ordinal() <= lastRequestType) {
+        throw new InvalidJsonRpcRequestException("Execution requests must be sorted by request type in ascending order and the request type must be unique");
+      }
+      lastRequestType = requestType.ordinal();
+
+      extractedRequests.add(new Request(requestType, request.slice(1)));
+    }
+
+    return Optional.of(extractedRequests);
   }
 
   private void logImportedBlockInfo(
