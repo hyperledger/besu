@@ -76,6 +76,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -182,7 +183,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     worldStateUpdater.createAccount(sender, 0, Wei.of(1_000_000_000L));
     worldStateUpdater.commit();
 
-    when(protocolContext.getWorldStateArchive().getMutable(any(), anyBoolean()))
+    when(protocolContext.getWorldStateArchive().getWorldState(any(WorldStateQueryParams.class)))
         .thenReturn(Optional.of(worldState));
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
     when(ethScheduler.scheduleBlockCreationTask(any(Runnable.class)))

@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
+
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -105,7 +108,7 @@ public class PrivateTransactionSimulator {
     }
 
     final MutableWorldState publicWorldState =
-        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
+        worldStateArchive.getWorldState(withBlockHeaderAndUpdateNodeHead(header)).orElse(null);
     if (publicWorldState == null) {
       return Optional.empty();
     }
@@ -118,7 +121,8 @@ public class PrivateTransactionSimulator {
     final MutableWorldState disposablePrivateState =
         privacyParameters
             .getPrivateWorldStateArchive()
-            .getMutable(lastRootHash, header.getHash())
+            .getWorldState(
+                withStateRootAndBlockHashAndUpdateNodeHead(lastRootHash, header.getHash()))
             .get();
 
     final PrivateTransaction transaction =

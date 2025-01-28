@@ -405,7 +405,6 @@ public class ForestMutableWorldState implements MutableWorldState {
 
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
         final WorldStateAccount origin = updated.getWrappedAccount();
-
         // Save the code in key-value storage ...
         Hash codeHash = origin == null ? Hash.EMPTY : origin.getCodeHash();
         if (updated.codeWasUpdated()) {
