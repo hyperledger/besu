@@ -165,7 +165,7 @@ public class RunnerBuilder {
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
   private boolean p2pEnabled = true;
-  private boolean discovery;
+  private boolean discoveryEnabled;
   private String p2pAdvertisedHost;
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
@@ -237,11 +237,11 @@ public class RunnerBuilder {
   /**
    * Enable Discovery.
    *
-   * @param discovery the discovery
+   * @param discoveryEnabled the discoveryEnabled
    * @return the runner builder
    */
-  public RunnerBuilder discovery(final boolean discovery) {
-    this.discovery = discovery;
+  public RunnerBuilder discoveryEnabled(final boolean discoveryEnabled) {
+    this.discoveryEnabled = discoveryEnabled;
     return this;
   }
 
@@ -618,7 +618,7 @@ public class RunnerBuilder {
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
             .setAdvertisedHost(p2pAdvertisedHost);
-    if (discovery) {
+    if (discoveryEnabled) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.bootNodes() == null) {
         bootstrap = EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET).bootNodes();
@@ -636,7 +636,7 @@ public class RunnerBuilder {
       discoveryConfiguration.setFilterOnEnrForkId(
           networkingConfiguration.getDiscovery().isFilterOnEnrForkIdEnabled());
     } else {
-      discoveryConfiguration.setActive(false);
+      discoveryConfiguration.setEnabled(false);
     }
 
     final NodeKey nodeKey = besuController.getNodeKey();

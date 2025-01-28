@@ -212,10 +212,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.net.SocketException;
 import java.net.URI;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.GroupPrincipal;
@@ -1433,7 +1431,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validateOptions() {
     issueOptionWarnings();
-    validateP2PInterface(p2PDiscoveryOptions.p2pInterface);
+    validateP2POptions();
     validateMiningParams();
     validateNatParams();
     validateNetStatsParams();
@@ -1488,20 +1486,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         commandLine, genesisConfigOptionsSupplier.get(), isMergeEnabled(), logger);
   }
 
+  private void validateP2POptions() {
+    p2PDiscoveryOptions.validate(commandLine, getNetworkInterfaceChecker());
+  }
+
   /**
-   * Validates P2P interface IP address/host name. Visible for testing.
+   * Returns a network interface checker that can be used to validate P2P options.
    *
-   * @param p2pInterface IP Address/host name
+   * @return A {@link P2PDiscoveryOptions.NetworkInterfaceChecker} that checks if a network
+   *     interface is available.
    */
-  protected void validateP2PInterface(final String p2pInterface) {
-    final String failMessage = "The provided --p2p-interface is not available: " + p2pInterface;
-    try {
-      if (!NetworkUtility.isNetworkInterfaceAvailable(p2pInterface)) {
-        throw new ParameterException(commandLine, failMessage);
-      }
-    } catch (final UnknownHostException | SocketException e) {
-      throw new ParameterException(commandLine, failMessage, e);
-    }
+  protected P2PDiscoveryOptions.NetworkInterfaceChecker getNetworkInterfaceChecker() {
+    return NetworkUtility::isNetworkInterfaceAvailable;
   }
 
   private void validateGraphQlOptions() {
@@ -2242,7 +2238,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .natMethod(natMethod)
             .natManagerServiceName(unstableNatOptions.getNatManagerServiceName())
             .natMethodFallbackEnabled(unstableNatOptions.getNatMethodFallbackEnabled())
-            .discovery(peerDiscoveryEnabled)
+            .discoveryEnabled(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
             .permissioningConfiguration(permissioningConfiguration)
             .p2pAdvertisedHost(p2pAdvertisedHost)

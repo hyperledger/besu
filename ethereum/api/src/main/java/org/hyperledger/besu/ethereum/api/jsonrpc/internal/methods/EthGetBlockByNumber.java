@@ -69,7 +69,7 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
       return request.getRequiredParameter(0, BlockParameter.class);
     } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
-          "Invalid block parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block parameter (index 0)", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS, e);
     }
   }
 

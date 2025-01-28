@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
@@ -476,7 +477,7 @@ public class TransactionPool implements BlockAddedObserver {
     try (final var worldState =
         protocolContext
             .getWorldStateArchive()
-            .getMutable(chainHeadBlockHeader, false)
+            .getWorldState(withBlockHeaderAndNoUpdateNodeHead(chainHeadBlockHeader))
             .orElseThrow()) {
       final Account senderAccount = worldState.get(transaction.getSender());
       return new ValidationResultAndAccount(

@@ -70,7 +70,7 @@ public class CodeDelegationProcessor {
         .get()
         .forEach(
             codeDelegation ->
-                processAuthorization(
+                processCodeDelegation(
                     evmWorldUpdater,
                     (org.hyperledger.besu.ethereum.core.CodeDelegation) codeDelegation,
                     result));
@@ -78,7 +78,7 @@ public class CodeDelegationProcessor {
     return result;
   }
 
-  private void processAuthorization(
+  private void processCodeDelegation(
       final EVMWorldUpdater evmWorldUpdater,
       final CodeDelegation codeDelegation,
       final CodeDelegationResult result) {
@@ -130,7 +130,7 @@ public class CodeDelegationProcessor {
     } else {
       authority = maybeAuthorityAccount.get();
 
-      if (!evmWorldUpdater.authorizedCodeService().canSetDelegatedCode(authority)) {
+      if (!evmWorldUpdater.codeDelegationService().canSetCodeDelegation(authority)) {
         return;
       }
 
@@ -150,8 +150,8 @@ public class CodeDelegationProcessor {
     }
 
     evmWorldUpdater
-        .authorizedCodeService()
-        .processDelegatedCodeAuthorization(authority, codeDelegation.address());
+        .codeDelegationService()
+        .processCodeDelegation(authority, codeDelegation.address());
     authority.incrementNonce();
   }
 }

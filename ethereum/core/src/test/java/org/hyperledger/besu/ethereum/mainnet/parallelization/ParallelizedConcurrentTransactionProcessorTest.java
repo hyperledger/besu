@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -39,7 +40,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoopBonsaiCache
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -88,7 +88,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
             new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
             new NoOpTrieLogManager(),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
     when(transactionCollisionDetector.hasCollision(any(), any(), any(), any())).thenReturn(false);
   }
 

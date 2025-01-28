@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
@@ -50,6 +51,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 
 public class MainnetBlockValidatorTest {
 
@@ -91,11 +93,9 @@ public class MainnetBlockValidatorTest {
 
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
-    when(worldStateArchive.getMutable(any(BlockHeader.class), anyBoolean()))
-        .thenReturn(Optional.of(worldState));
-    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
-        .thenReturn(Optional.of(worldState));
-    when(worldStateArchive.getMutable()).thenReturn(worldState);
+    when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(worldState));
+    when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(worldState));
+    when(worldStateArchive.getWorldState()).thenReturn(worldState);
     when(blockHeaderValidator.validateHeader(any(), any(), any())).thenReturn(true);
     when(blockHeaderValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
     when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any()))
@@ -182,8 +182,17 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void validateAndProcessBlock_whenParentWorldStateNotAvailable() {
-    when(worldStateArchive.getMutable(eq(blockParent.getHeader()), anyBoolean()))
-        .thenReturn(Optional.empty());
+    final ArgumentCaptor<WorldStateQueryParams> captor =
+        ArgumentCaptor.forClass(WorldStateQueryParams.class);
+    when(worldStateArchive.getWorldState(captor.capture()))
+        .thenAnswer(
+            invocation -> {
+              WorldStateQueryParams capturedParams = captor.getValue();
+              if (capturedParams.getBlockHeader().equals(blockParent.getHeader())) {
+                return Optional.empty();
+              }
+              return null;
+            });
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
@@ -258,7 +267,9 @@ public class MainnetBlockValidatorTest {
   public void validateAndProcessBlock_whenStorageExceptionThrownGettingWorldState(
       final String caseName, final Exception storageException) {
     final BlockHeader parentHeader = blockParent.getHeader();
-    doThrow(storageException).when(worldStateArchive).getMutable(eq(parentHeader), anyBoolean());
+    doThrow(storageException)
+        .when(worldStateArchive)
+        .getWorldState(eq(withBlockHeaderAndUpdateNodeHead(parentHeader)));
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(

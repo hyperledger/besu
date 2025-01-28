@@ -85,7 +85,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
 
   @BeforeEach
   public void setUp() {
-    var mutable = worldStateArchive.getMutable();
+    var mutable = worldStateArchive.getWorldState();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
     mergeContext.setTerminalTotalDifficulty(Difficulty.of(1001));
