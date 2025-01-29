@@ -18,6 +18,8 @@ import org.hyperledger.besu.datatypes.Hash;
 
 /** The Ibft helpers utility class. */
 public class IbftHelpers {
+  /** Default constructor */
+  public IbftHelpers() {}
 
   /** The constant EXPECTED_MIX_HASH. */
   public static final Hash EXPECTED_MIX_HASH =

@@ -49,6 +49,11 @@ public class IbftLegacyBlockInterface extends BftBlockInterface {
 
   private static final IbftExtraDataCodec ibftExtraDataCodec = new IbftExtraDataCodec();
 
+  /**
+   * Constructor for IbftLegacyBlockInterface.
+   *
+   * @param bftExtraDataCodec the codec for BFT extra data
+   */
   public IbftLegacyBlockInterface(final BftExtraDataCodec bftExtraDataCodec) {
     super(bftExtraDataCodec);
   }

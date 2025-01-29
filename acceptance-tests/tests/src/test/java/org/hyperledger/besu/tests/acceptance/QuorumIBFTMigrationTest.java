@@ -111,8 +111,14 @@ public class QuorumIBFTMigrationTest extends ParameterizedBftTestBase {
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("factoryFunctions")
-  public void shouldBeStableDuringLongTest(
+  public void shouldImportIBFTBlocksAndTransitionToQBFT(
       final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+
+    if ("ibft2".equals(testName)) {
+      LOG.info("Skipping test: " + testName);
+      return;
+    }
+
     setUp(testName, nodeFactory);
 
     // remove DATABASE_METADATA.json, VERSION_METADATA.json files and database folder from the

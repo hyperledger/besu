@@ -36,6 +36,10 @@ import java.util.Optional;
 /** Defines the protocol behaviours for a blockchain using IBFT. */
 public class IbftProtocolSchedule {
 
+  // Default constructor
+  /** Default constructor */
+  public IbftProtocolSchedule() {}
+
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
   private static final IbftExtraDataCodec ibftExtraDataCodec = new IbftExtraDataCodec();
 

@@ -31,6 +31,9 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Ibft block hashing. */
 public class IbftBlockHashing {
 
+  /** Default constructor */
+  public IbftBlockHashing() {}
+
   private static final Bytes COMMIT_MSG_CODE = Bytes.wrap(new byte[] {2});
   private static final IbftExtraDataCodec ibftExtraDataCodec = new IbftExtraDataCodec();
 

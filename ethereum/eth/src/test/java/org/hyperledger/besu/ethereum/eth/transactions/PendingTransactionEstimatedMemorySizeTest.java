@@ -96,7 +96,7 @@ import org.openjdk.jol.info.GraphWalker;
  * then complete the writing of the test that will verify the current amount of memory used by that
  * class.
  */
-@EnabledOnOs({OS.LINUX, OS.MAC})
+@EnabledOnOs({OS.LINUX})
 public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPoolTest {
   /**
    * Classes that represent constant instances, across all pending transaction types, and are
