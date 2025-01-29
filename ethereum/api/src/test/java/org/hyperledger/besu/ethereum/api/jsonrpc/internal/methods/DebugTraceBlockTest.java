@@ -154,7 +154,9 @@ public class DebugTraceBlockTest {
           .when(
               () ->
                   Tracer.processTracing(
-                      eq(blockchainQueries), eq(block.getHash()), any(Function.class)))
+                      eq(blockchainQueries),
+                      eq(Optional.of(block.getHeader())),
+                      any(Function.class)))
           .thenReturn(Optional.of(resultList));
 
       final JsonRpcResponse jsonRpcResponse = debugTraceBlock.response(request);
