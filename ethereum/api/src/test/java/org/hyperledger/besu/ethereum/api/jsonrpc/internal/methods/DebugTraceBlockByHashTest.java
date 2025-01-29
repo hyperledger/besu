@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -33,6 +32,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTran
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
@@ -59,10 +60,7 @@ public class DebugTraceBlockByHashTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private ObservableMetricsSystem metricsSystem;
   @Mock private Blockchain blockchain;
-  @Mock private Block block;
   private DebugTraceBlockByHash debugTraceBlockByHash;
-  private final Hash blockHash =
-      Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
   @BeforeEach
   public void setUp() {
@@ -79,13 +77,18 @@ public class DebugTraceBlockByHashTest {
   @SuppressWarnings("unchecked")
   @Test
   public void shouldReturnCorrectResponse() {
-    final Object[] params = new Object[] {blockHash};
+    final Block block =
+        new BlockDataGenerator()
+            .block(
+                BlockDataGenerator.BlockOptions.create()
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+
+    final Object[] params = new Object[] {block.getHash()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlockByHash", params));
 
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchain.getBlockByHash(blockHash)).thenReturn(Optional.of(block));
-    when(block.getHash()).thenReturn(blockHash);
+    when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
 
     DebugTraceTransactionResult result1 = mock(DebugTraceTransactionResult.class);
     DebugTraceTransactionResult result2 = mock(DebugTraceTransactionResult.class);
@@ -96,7 +99,10 @@ public class DebugTraceBlockByHashTest {
       mockedTracer
           .when(
               () ->
-                  Tracer.processTracing(eq(blockchainQueries), eq(blockHash), any(Function.class)))
+                  Tracer.processTracing(
+                      eq(blockchainQueries),
+                      eq(Optional.of(block.getHeader())),
+                      any(Function.class)))
           .thenReturn(Optional.of(resultList));
 
       final JsonRpcResponse jsonRpcResponse = debugTraceBlockByHash.response(request);
