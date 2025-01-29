@@ -44,6 +44,9 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
+  /** Default constructor */
+  public IbftExtraDataCodec() {}
+
   /**
    * Decode raw input and return ibft extra data.
    *

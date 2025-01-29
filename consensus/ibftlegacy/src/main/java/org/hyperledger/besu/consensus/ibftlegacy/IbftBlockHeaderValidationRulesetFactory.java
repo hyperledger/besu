@@ -34,6 +34,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** The Ibft block header validation ruleset factory. */
 public class IbftBlockHeaderValidationRulesetFactory {
 
+  /** Default constructor */
+  public IbftBlockHeaderValidationRulesetFactory() {}
+
   /**
    * Produces a BlockHeaderValidator configured for assessing ibft block headers which are to form
    * part of the BlockChain (i.e. not proposed blocks, which do not contain commit seals)
@@ -47,6 +50,12 @@ public class IbftBlockHeaderValidationRulesetFactory {
     return createValidator(secondsBetweenBlocks, true, ceil2nBy3Block);
   }
 
+  /**
+   * Creates a builder for the IBFT block header validator.
+   *
+   * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
+   * @return a builder for the IBFT block header validator
+   */
   public static BlockHeaderValidator.Builder ibftBlockHeaderValidator(
       final long secondsBetweenBlocks) {
     return createValidator(secondsBetweenBlocks);

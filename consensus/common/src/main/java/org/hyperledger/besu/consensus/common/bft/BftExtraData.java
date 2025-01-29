@@ -60,6 +60,14 @@ public class BftExtraData implements ParsedExtraData {
     this.proposerSeal = null;
   }
 
+  /**
+   * Instantiates a new Bft extra data.
+   *
+   * @param vanityData the vanity data
+   * @param seals the seals
+   * @param validators the validators
+   * @param proposerSeal the proposer seal
+   */
   public BftExtraData(
       final Bytes vanityData,
       final Collection<SECPSignature> seals,
@@ -94,6 +102,11 @@ public class BftExtraData implements ParsedExtraData {
     return seals;
   }
 
+  /**
+   * Gets proposer seal.
+   *
+   * @return the proposer seal
+   */
   public SECPSignature getProposerSeal() {
     return proposerSeal;
   }
