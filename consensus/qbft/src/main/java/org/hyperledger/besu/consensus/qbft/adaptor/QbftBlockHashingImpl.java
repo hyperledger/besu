@@ -14,28 +14,31 @@
  */
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
+import org.hyperledger.besu.datatypes.Hash;
 
 /**
- * Adaptor class to allow a {@link BftExtraDataCodec} to be used as a {@link QbftExtraDataProvider}.
+ * Besu implementation of QbftBlockHasher which calculates the hash of a block for QBFT consensus.
  */
-public class QbftExtraDataProviderAdaptor implements QbftExtraDataProvider {
-  private final BftExtraDataCodec bftExtraDataCodec;
+public class QbftBlockHashingImpl implements QbftBlockHashing {
+  private final BftBlockHashing bftBlockHashing;
 
   /**
-   * Constructs a new QbftExtraDataProvider
+   * Construct a new Qbft BlockHasher
    *
-   * @param bftExtraDataCodec the bftExtraDataCodec used to decode the extra data from the header
+   * @param bftBlockHashing the BFT BlockHashing
    */
-  public QbftExtraDataProviderAdaptor(final BftExtraDataCodec bftExtraDataCodec) {
-    this.bftExtraDataCodec = bftExtraDataCodec;
+  public QbftBlockHashingImpl(final BftBlockHashing bftBlockHashing) {
+    this.bftBlockHashing = bftBlockHashing;
   }
 
   @Override
-  public BftExtraData getExtraData(final QbftBlockHeader header) {
-    return bftExtraDataCodec.decode(BlockUtil.toBesuBlockHeader(header));
+  public Hash calculateDataHashForCommittedSeal(
+      final QbftBlockHeader header, final BftExtraData extraData) {
+    return bftBlockHashing.calculateDataHashForCommittedSeal(
+        BlockUtil.toBesuBlockHeader(header), extraData);
   }
 }

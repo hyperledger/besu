@@ -15,15 +15,20 @@
 package org.hyperledger.besu.consensus.qbft.core.types;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.datatypes.Hash;
 
-/** Provides the extra data for a block. */
-public interface QbftExtraDataProvider {
+/** Provides hashing for QBFT block headers. */
+public interface QbftBlockHashing {
 
   /**
-   * Returns the extra data for the supplied block header.
+   * Constructs a hash of the block header suitable for signing as a committed seal. The extra data
+   * in the hash uses an empty list for the committed seals.
    *
-   * @param header the block header to retrieve the extra data from
-   * @return the extra data
+   * @param header The header for which a proposer seal is to be calculated (with or without extra
+   *     data)
+   * @param extraData The extra data block which is to be inserted to the header once seal is
+   *     calculated
+   * @return the hash of the header including the validator and proposer seal in the extra data
    */
-  BftExtraData getExtraData(QbftBlockHeader header);
+  Hash calculateDataHashForCommittedSeal(QbftBlockHeader header, BftExtraData extraData);
 }

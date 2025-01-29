@@ -19,7 +19,6 @@ import static org.hyperledger.besu.consensus.qbft.core.support.IntegrationTestHe
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
@@ -29,6 +28,7 @@ import org.hyperledger.besu.consensus.qbft.core.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftNewChainHead;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -138,7 +138,7 @@ public class LocalNodeIsProposerTest {
 
     context
         .getController()
-        .handleNewBlockEvent(new NewChainHead(expectedProposedBlock.getHeader()));
+        .handleNewBlockEvent(new QbftNewChainHead(expectedProposedBlock.getHeader()));
     peers.verifyNoMessagesReceived();
   }
 
