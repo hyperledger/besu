@@ -58,6 +58,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -370,6 +371,7 @@ public class QbftRoundTest {
         .thenReturn(proposedBlock);
     when(blockCreator.createSealedBlock(eq(qbftExtraDataProvider), eq(proposedBlock), eq(0), any()))
         .thenReturn(proposedBlock);
+    when(blockHashing.calculateDataHashForCommittedSeal(any(), any())).thenReturn(Hash.ZERO);
 
     round.handleCommitMessage(
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
@@ -405,6 +407,7 @@ public class QbftRoundTest {
         .thenReturn(proposedBlock);
     when(blockCreator.createSealedBlock(eq(qbftExtraDataProvider), eq(proposedBlock), eq(0), any()))
         .thenReturn(proposedBlock);
+    when(blockHashing.calculateDataHashForCommittedSeal(any(), any())).thenReturn(Hash.ZERO);
 
     round.handleCommitMessage(
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));

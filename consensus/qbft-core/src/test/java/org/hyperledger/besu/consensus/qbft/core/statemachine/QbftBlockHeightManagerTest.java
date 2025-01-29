@@ -410,6 +410,7 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getQuorum()).thenReturn(1);
     when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2), any()))
         .thenReturn(createdBlock);
+    when(blockHashing.calculateDataHashForCommittedSeal(any(), any())).thenReturn(Hash.ZERO);
     when(blockCreator.createSealedBlock(any(), any(), anyInt(), any())).thenReturn(createdBlock);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
@@ -460,6 +461,7 @@ public class QbftBlockHeightManagerTest {
     when(blockTimer.checkEmptyBlockExpired(any(), eq(0L))).thenReturn(true);
     when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(0), any()))
         .thenReturn(createdBlock);
+    when(blockHashing.calculateDataHashForCommittedSeal(any(), any())).thenReturn(Hash.ZERO);
     when(blockCreator.createSealedBlock(any(), any(), anyInt(), any())).thenReturn(createdBlock);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
