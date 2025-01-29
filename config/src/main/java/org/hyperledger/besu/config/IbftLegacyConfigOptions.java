@@ -28,8 +28,8 @@ public class IbftLegacyConfigOptions {
 
   private static final long DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 1;
-  private static final int DEFAULT_ROUND_EXPIRY_SECONDS = 1;
-  private static final long DEFAULT_CEIL_2N_BY_3_BLOCK = 0L;
+  // private static final int DEFAULT_ROUND_EXPIRY_SECONDS = 1;
+  // private static final long DEFAULT_CEIL_2N_BY_3_BLOCK = 0L;
 
   private final ObjectNode ibftConfigRoot;
 
@@ -42,6 +42,8 @@ public class IbftLegacyConfigOptions {
     this.ibftConfigRoot = ibftConfigRoot;
   }
 
+  /*
+   */
   /**
    * Gets epoch length.
    *
@@ -62,43 +64,12 @@ public class IbftLegacyConfigOptions {
   }
 
   /**
-   * Gets request timeout seconds.
-   *
-   * @return the request timeout seconds
-   */
-  public int getRequestTimeoutSeconds() {
-    return JsonUtil.getInt(ibftConfigRoot, "requesttimeoutseconds", DEFAULT_ROUND_EXPIRY_SECONDS);
-  }
-
-  /**
-   * Gets ceil 2N by 3 block.
-   *
-   * @return the ceil 2N by 3 block
-   */
-  public long getCeil2Nby3Block() {
-    return JsonUtil.getLong(ibftConfigRoot, "ceil2nby3block", DEFAULT_CEIL_2N_BY_3_BLOCK);
-  }
-
-  /**
    * As map.
    *
    * @return the map
    */
   Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-    if (ibftConfigRoot.has("epochlength")) {
-      builder.put("epochLength", getEpochLength());
-    }
-    if (ibftConfigRoot.has("blockperiodseconds")) {
-      builder.put("blockPeriodSeconds", getBlockPeriodSeconds());
-    }
-    if (ibftConfigRoot.has("requesttimeoutseconds")) {
-      builder.put("requestTimeoutSeconds", getRequestTimeoutSeconds());
-    }
-    if (ibftConfigRoot.has("ceil2nby3block")) {
-      builder.put("ceil2nby3block", getCeil2Nby3Block());
-    }
-
     return builder.build();
   }
 }
