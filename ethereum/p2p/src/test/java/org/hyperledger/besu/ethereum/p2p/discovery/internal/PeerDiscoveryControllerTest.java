@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -313,7 +314,7 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldNotRespondToExpiredPingRequest() {
+  public void shouldNotRespondToExpiredPingRequest() throws InterruptedException {
     final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
 
     final DiscoveryPeer discoPeer = peers.get(0);
@@ -333,9 +334,10 @@ public class PeerDiscoveryControllerTest {
         PingPacketData.create(
             Optional.ofNullable(localEndpoint),
             discoPeer.getEndpoint(),
-            Instant.now().getEpochSecond() - PacketData.DEFAULT_EXPIRATION_PERIOD_SEC,
+            Instant.now().getEpochSecond() + 1,
             UInt64.ONE);
-    final Packet discoPeerPing = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(0));
+    Thread.sleep(Duration.ofSeconds(2));
+    final Packet discoPeerPing = Packet.create(PacketType.PING, pingPacketData, nodeKeys.getFirst());
     mockPingPacketCreation(discoPeer, discoPeerPing);
 
     controller.onMessage(discoPeerPing, discoPeer);
@@ -949,7 +951,7 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldNotRespondToExpiredNeighborsRequest() {
+  public void shouldNotRespondToExpiredNeighborsRequest() throws InterruptedException {
     final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
 
     final DiscoveryPeer discoPeer = peers.get(0);
@@ -983,7 +985,8 @@ public class PeerDiscoveryControllerTest {
 
     final Packet findNeighborsPacket =
         MockPacketDataFactory.mockFindNeighborsPacket(
-            discoPeer, Instant.now().getEpochSecond() - PacketData.DEFAULT_EXPIRATION_PERIOD_SEC);
+            discoPeer, Instant.now().getEpochSecond() + 1);
+    Thread.sleep(Duration.ofSeconds(2));
     controller.onMessage(findNeighborsPacket, discoPeer);
 
     verify(outboundMessageHandler, times(0))
