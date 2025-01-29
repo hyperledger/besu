@@ -41,20 +41,24 @@ public class MainnetRequestsValidator implements RequestsValidator {
    */
   @Override
   public boolean validate(final Optional<List<Request>> maybeRequests) {
-    if (maybeRequests.isEmpty()) {
-      LOG.warn("Must contain requests (even if empty list)");
+    if (containsRequestWithEmptyData(maybeRequests.get())) {
+      LOG.warn("Request must not be empty");
       return false;
     }
 
-    if (!isRequestOrderValid(maybeRequests.get())) {
-      LOG.warn("Ordering across requests must be ascending by type");
+    if (!areRequestTypesUniqueAndOrderValid(maybeRequests.get())) {
+      LOG.warn("Ordering across request types must be unique and ascending by type");
       return false;
     }
 
     return true;
   }
 
-  private static boolean isRequestOrderValid(final List<Request> requests) {
-    return Ordering.natural().onResultOf(Request::getType).isOrdered(requests);
+  private static boolean areRequestTypesUniqueAndOrderValid(final List<Request> requests) {
+    return Ordering.natural().onResultOf(Request::getType).isStrictlyOrdered(requests);
+  }
+
+  private static boolean containsRequestWithEmptyData(final List<Request> requests) {
+    return requests.stream().anyMatch(request -> request.getData().isEmpty());
   }
 }
