@@ -19,6 +19,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import java.util.Objects;
+
 /** Besu implementation of QbftBlockHeader which provides access to the block header fields. */
 public class QbftBlockHeaderImpl implements QbftBlockHeader {
 
@@ -60,5 +62,16 @@ public class QbftBlockHeaderImpl implements QbftBlockHeader {
    */
   public BlockHeader getBesuBlockHeader() {
     return blockHeader;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (!(o instanceof QbftBlockHeaderImpl that)) return false;
+    return Objects.equals(blockHeader, that.blockHeader);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(blockHeader);
   }
 }
