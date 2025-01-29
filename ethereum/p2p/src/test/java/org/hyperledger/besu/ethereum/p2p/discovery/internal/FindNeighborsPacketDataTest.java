@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
+import java.time.Clock;
 import java.time.Instant;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -35,7 +36,7 @@ public class FindNeighborsPacketDataTest {
     final FindNeighborsPacketData packet = FindNeighborsPacketData.create(target);
     final Bytes serialized = RLP.encode(packet::writeTo);
     final FindNeighborsPacketData deserialized =
-        FindNeighborsPacketData.readFrom(RLP.input(serialized));
+        FindNeighborsPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getTarget()).isEqualTo(target);
     assertThat(deserialized.getExpiration()).isGreaterThan(timeSec);
@@ -54,7 +55,7 @@ public class FindNeighborsPacketDataTest {
     final Bytes encoded = out.encoded();
 
     final FindNeighborsPacketData deserialized =
-        FindNeighborsPacketData.readFrom(RLP.input(encoded));
+        FindNeighborsPacketData.readFrom(RLP.input(encoded), Clock.systemUTC());
     assertThat(deserialized.getTarget()).isEqualTo(target);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
   }
@@ -74,7 +75,7 @@ public class FindNeighborsPacketDataTest {
     final Bytes encoded = out.encoded();
 
     final FindNeighborsPacketData deserialized =
-        FindNeighborsPacketData.readFrom(RLP.input(encoded));
+        FindNeighborsPacketData.readFrom(RLP.input(encoded), Clock.systemUTC());
     assertThat(deserialized.getTarget()).isEqualTo(target);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
   }
@@ -92,7 +93,7 @@ public class FindNeighborsPacketDataTest {
     final Bytes encoded = out.encoded();
 
     Assertions.assertThatThrownBy(
-        () -> FindNeighborsPacketData.readFrom(RLP.input(encoded)),
+        () -> FindNeighborsPacketData.readFrom(RLP.input(encoded), Clock.systemUTC()),
         "Should throw IllegalArgumentException for expired message");
   }
 }

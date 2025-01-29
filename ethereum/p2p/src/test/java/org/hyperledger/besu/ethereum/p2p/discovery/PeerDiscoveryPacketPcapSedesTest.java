@@ -26,7 +26,9 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PongPacketData;
 import org.hyperledger.besu.util.NetworkUtility;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 
 import com.google.common.net.InetAddresses;
 import io.vertx.core.buffer.Buffer;
@@ -65,11 +67,12 @@ public class PeerDiscoveryPacketPcapSedesTest {
           + "d1d4c5bc4ea289940c0d38f2ff8e72522e33e39bf884b8407098ad865b00a582051940cb9cf36836572411a47278783077011599ed5cd1"
           + "6b76f2635f4e234738f30813a89eb9137e3e3df5266e3a1f11df72ecf1145ccb9c01826964827634826970847f00000189736563703235"
           + "366b31a103ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd31388375647082765f";
+  private static final Clock clock = Clock.fixed(Instant.ofEpochSecond(1), ZoneId.of("UTC"));
 
   @Test
   public void testUDPPingSerializeDeserialize() {
     final byte[] data = Hex.decode(pingHexData);
-    final Packet packet = Packet.decode(Buffer.buffer(data));
+    final Packet packet = Packet.decode(Buffer.buffer(data), clock);
     assertThat(packet.getType()).isNotNull();
     assertThat(packet.getNodeId()).isNotNull();
     assertThat(packet.getNodeId().toArray()).hasSize(64);
@@ -99,7 +102,7 @@ public class PeerDiscoveryPacketPcapSedesTest {
   @Test
   public void testUDPPongSerializeDeserialize() {
     final byte[] data = Hex.decode(pongHexData);
-    final Packet packet = Packet.decode(Buffer.buffer(data));
+    final Packet packet = Packet.decode(Buffer.buffer(data), clock);
     assertThat(packet.getType()).isNotNull();
     assertThat(packet.getNodeId()).isNotNull();
     assertThat(packet.getNodeId().toArray()).hasSize(64);
@@ -124,7 +127,7 @@ public class PeerDiscoveryPacketPcapSedesTest {
   @Test
   public void testUDPFindNeighborsSerializeDeserialize() {
     final byte[] data = Hex.decode(findNeighborsHexData);
-    final Packet packet = Packet.decode(Buffer.buffer(data));
+    final Packet packet = Packet.decode(Buffer.buffer(data), clock);
     final Instant timestamp = Instant.ofEpochSecond(1608127678L);
     assertThat(packet.getType()).isNotNull();
     assertThat(packet.getNodeId()).isNotNull();
@@ -147,7 +150,7 @@ public class PeerDiscoveryPacketPcapSedesTest {
   @Test
   public void testUDPNeighborsSerializeDeserialize() {
     final byte[] data = Hex.decode(neighborsHexData);
-    final Packet packet = Packet.decode(Buffer.buffer(data));
+    final Packet packet = Packet.decode(Buffer.buffer(data), clock);
     assertThat(packet.getType()).isNotNull();
     assertThat(packet.getNodeId()).isNotNull();
     assertThat(packet.getNodeId().toArray()).hasSize(64);
@@ -173,7 +176,7 @@ public class PeerDiscoveryPacketPcapSedesTest {
   @Test
   public void testUDPENRRequestSerializeDeserialize() {
     final byte[] data = Hex.decode(enrResquestHexData);
-    final Packet packet = Packet.decode(Buffer.buffer(data));
+    final Packet packet = Packet.decode(Buffer.buffer(data), clock);
     assertThat(packet.getType()).isNotNull();
     assertThat(packet.getNodeId()).isNotNull();
     assertThat(packet.getNodeId().toArray()).hasSize(64);
@@ -191,7 +194,7 @@ public class PeerDiscoveryPacketPcapSedesTest {
   @Test
   public void testUDPENRResponseSerializeDeserialize() {
     final byte[] data = Hex.decode(enrResponseHexData);
-    final Packet packet = Packet.decode(Buffer.buffer(data));
+    final Packet packet = Packet.decode(Buffer.buffer(data), clock);
     assertThat(packet.getType()).isNotNull();
     assertThat(packet.getNodeId()).isNotNull();
     assertThat(packet.getNodeId().toArray()).hasSize(64);

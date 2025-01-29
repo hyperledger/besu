@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
+import java.time.Clock;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.crypto.SECP256K1;
@@ -66,7 +68,7 @@ public class ENRResponsePacketDataTest {
     final ENRResponsePacketData packet = ENRResponsePacketData.create(requestHash, nodeRecord);
     final Bytes serialized = RLP.encode(packet::writeTo);
     final ENRResponsePacketData deserialized =
-        ENRResponsePacketData.readFrom(RLP.input(serialized));
+        ENRResponsePacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getRequestHash()).isEqualTo(requestHash);
     assertThat(deserialized.getEnr()).isEqualTo(nodeRecord);
@@ -107,7 +109,8 @@ public class ENRResponsePacketDataTest {
     out.endList();
     final Bytes encoded = out.encoded();
 
-    final ENRResponsePacketData deserialized = ENRResponsePacketData.readFrom(RLP.input(encoded));
+    final ENRResponsePacketData deserialized =
+        ENRResponsePacketData.readFrom(RLP.input(encoded), Clock.systemUTC());
     assertThat(deserialized.getRequestHash()).isEqualTo(requestHash);
     assertThat(deserialized.getEnr()).isEqualTo(nodeRecord);
   }
@@ -145,7 +148,8 @@ public class ENRResponsePacketDataTest {
     packet.writeTo(out);
     final Bytes encoded = out.encoded();
 
-    final ENRResponsePacketData deserialized = ENRResponsePacketData.readFrom(RLP.input(encoded));
+    final ENRResponsePacketData deserialized =
+        ENRResponsePacketData.readFrom(RLP.input(encoded), Clock.systemUTC());
     assertThat(deserialized.getRequestHash()).isEqualTo(requestHash);
     assertThat(deserialized.getEnr()).isEqualTo(nodeRecord);
   }
@@ -188,7 +192,8 @@ public class ENRResponsePacketDataTest {
     out.endList();
     final Bytes encoded = out.encoded();
 
-    final ENRResponsePacketData deserialized = ENRResponsePacketData.readFrom(RLP.input(encoded));
+    final ENRResponsePacketData deserialized =
+        ENRResponsePacketData.readFrom(RLP.input(encoded), Clock.systemUTC());
     assertThat(deserialized.getRequestHash()).isEqualTo(requestHash);
     assertThat(deserialized.getEnr()).isEqualTo(nodeRecord);
   }
@@ -220,7 +225,8 @@ public class ENRResponsePacketDataTest {
     out.endList();
     final Bytes encoded = out.encoded();
 
-    final ENRResponsePacketData deserialized = ENRResponsePacketData.readFrom(RLP.input(encoded));
+    final ENRResponsePacketData deserialized =
+        ENRResponsePacketData.readFrom(RLP.input(encoded), Clock.systemUTC());
     assertThat(deserialized.getRequestHash()).isEqualTo(requestHash);
     assertThat(deserialized.getEnr()).isEqualTo(nodeRecord);
     assertThat(deserialized.getEnr().isValid()).isFalse();

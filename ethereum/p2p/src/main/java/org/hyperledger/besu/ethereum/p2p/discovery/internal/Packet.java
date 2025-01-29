@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.math.BigInteger;
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -99,7 +100,7 @@ public class Packet {
     return new Packet(packetType, packetData, nodeKey);
   }
 
-  public static Packet decode(final Buffer message) {
+  public static Packet decode(final Buffer message, final Clock clock) {
     checkGuard(
         message.length() >= PACKET_DATA_INDEX,
         PeerDiscoveryPacketDecodingException::new,
@@ -122,7 +123,8 @@ public class Packet {
           deserializer.deserialize(
               RLP.input(
                   Bytes.wrapBuffer(
-                      message, PACKET_DATA_INDEX, message.length() - PACKET_DATA_INDEX)));
+                      message, PACKET_DATA_INDEX, message.length() - PACKET_DATA_INDEX)),
+              clock);
       return new Packet(packetType, packetData, Bytes.wrapBuffer(message));
     } catch (final RLPException e) {
       throw new PeerDiscoveryPacketDecodingException("Malformed packet of type: " + packetType, e);

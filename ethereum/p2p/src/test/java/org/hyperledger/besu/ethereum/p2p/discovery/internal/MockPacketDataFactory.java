@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -33,7 +34,8 @@ class MockPacketDataFactory {
   static Packet mockNeighborsPacket(final DiscoveryPeer from, final DiscoveryPeer... neighbors) {
     final Packet packet = mock(Packet.class);
 
-    final NeighborsPacketData packetData = NeighborsPacketData.create(Arrays.asList(neighbors));
+    final NeighborsPacketData packetData =
+        NeighborsPacketData.create(Arrays.asList(neighbors), Clock.systemUTC());
 
     when(packet.getPacketData(any())).thenReturn(Optional.of(packetData));
     final Bytes id = from.getId();
@@ -68,7 +70,8 @@ class MockPacketDataFactory {
         Bytes.fromHexString(
             "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40");
 
-    final FindNeighborsPacketData packetData = FindNeighborsPacketData.create(target, exparationMs);
+    final FindNeighborsPacketData packetData =
+        FindNeighborsPacketData.create(target, exparationMs, Clock.systemUTC());
     when(packet.getPacketData(any())).thenReturn(Optional.of(packetData));
     final Bytes id = from.getId();
     when(packet.getNodeId()).thenReturn(id);

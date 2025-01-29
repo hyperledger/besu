@@ -33,6 +33,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -684,7 +685,7 @@ public class PeerDiscoveryController {
     // 88 * 13 = 1144 bytes
     // To fit under 1280 bytes, we must return just 13 peers maximum.
     final List<DiscoveryPeer> peers = peerTable.nearestBondedPeers(packetData.getTarget(), 13);
-    final PacketData data = NeighborsPacketData.create(peers);
+    final PacketData data = NeighborsPacketData.create(peers, Clock.systemUTC());
     sendPacket(sender, PacketType.NEIGHBORS, data);
   }
 

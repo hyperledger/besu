@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -40,7 +41,8 @@ public class PingPacketDataTest {
     final UInt64 enrSeq = UInt64.ONE;
     final PingPacketData packet = PingPacketData.create(Optional.of(from), to, enrSeq);
     final Bytes serialized = RLP.encode(packet::writeTo);
-    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+    final PingPacketData deserialized =
+        PingPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getFrom()).contains(from);
     assertThat(deserialized.getTo()).isEqualTo(to);
@@ -67,7 +69,8 @@ public class PingPacketDataTest {
     out.endList();
 
     final Bytes serialized = out.encoded();
-    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+    final PingPacketData deserialized =
+        PingPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getFrom()).contains(from);
     assertThat(deserialized.getTo()).isEqualTo(to);
@@ -92,7 +95,8 @@ public class PingPacketDataTest {
     out.endList();
 
     final Bytes serialized = out.encoded();
-    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+    final PingPacketData deserialized =
+        PingPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getFrom()).contains(from);
     assertThat(deserialized.getTo()).isEqualTo(to);
@@ -118,7 +122,8 @@ public class PingPacketDataTest {
     out.endList();
 
     final Bytes serialized = out.encoded();
-    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+    final PingPacketData deserialized =
+        PingPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getFrom()).contains(from);
     assertThat(deserialized.getTo()).isEqualTo(to);
@@ -134,13 +139,15 @@ public class PingPacketDataTest {
     final long time = Instant.now().getEpochSecond();
     final UInt64 enrSeq = UInt64.ONE;
 
-    final PingPacketData anon = PingPacketData.create(Optional.empty(), to, time, enrSeq);
+    final PingPacketData anon =
+        PingPacketData.create(Optional.empty(), to, time, enrSeq, Clock.systemUTC());
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     anon.writeTo(out);
     final Bytes serialized = out.encoded();
     System.out.println(serialized.toHexString());
-    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+    final PingPacketData deserialized =
+        PingPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getFrom()).isEmpty();
     assertThat(deserialized.getTo()).isEqualTo(to);
@@ -171,7 +178,8 @@ public class PingPacketDataTest {
     out.endList();
 
     final Bytes serialized = out.encoded();
-    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+    final PingPacketData deserialized =
+        PingPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getFrom()).isPresent();
     assertThat(deserialized.getFrom().get().getUdpPort()).isEqualTo(30303);
@@ -223,7 +231,8 @@ public class PingPacketDataTest {
     out.endList();
 
     final Bytes serialized = out.encoded();
-    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+    final PingPacketData deserialized =
+        PingPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getFrom()).contains(from);
     assertThat(deserialized.getTo()).isEqualTo(to);
@@ -250,7 +259,8 @@ public class PingPacketDataTest {
     out.endList();
 
     final Bytes serialized = out.encoded();
-    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+    final PingPacketData deserialized =
+        PingPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getFrom()).contains(from);
     assertThat(deserialized.getTo()).isEqualTo(to);
@@ -277,7 +287,8 @@ public class PingPacketDataTest {
     out.endList();
 
     final Bytes serialized = out.encoded();
-    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+    final PingPacketData deserialized =
+        PingPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getFrom()).contains(from);
     assertThat(deserialized.getTo()).isEqualTo(to);
@@ -305,7 +316,7 @@ public class PingPacketDataTest {
 
     final Bytes serialized = out.encoded();
     Assertions.assertThatThrownBy(
-        () -> PingPacketData.readFrom(RLP.input(serialized)),
+        () -> PingPacketData.readFrom(RLP.input(serialized), Clock.systemUTC()),
         "Should throw IllegalArgumentException for expired message");
   }
 }

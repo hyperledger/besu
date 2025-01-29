@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
+import java.time.Clock;
 import java.time.Instant;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -31,7 +32,8 @@ public class ENRRequestPacketDataTest {
     final long currentTimeSec = Instant.now().getEpochSecond();
     final ENRRequestPacketData packet = ENRRequestPacketData.create();
     final Bytes serialized = RLP.encode(packet::writeTo);
-    final ENRRequestPacketData deserialized = ENRRequestPacketData.readFrom(RLP.input(serialized));
+    final ENRRequestPacketData deserialized =
+        ENRRequestPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getExpiration()).isGreaterThan(currentTimeSec);
   }
@@ -46,7 +48,8 @@ public class ENRRequestPacketDataTest {
     out.endList();
 
     final Bytes serialized = out.encoded();
-    final ENRRequestPacketData deserialized = ENRRequestPacketData.readFrom(RLP.input(serialized));
+    final ENRRequestPacketData deserialized =
+        ENRRequestPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getExpiration()).isEqualTo(time);
   }
@@ -63,7 +66,8 @@ public class ENRRequestPacketDataTest {
     out.endList();
 
     final Bytes serialized = out.encoded();
-    final ENRRequestPacketData deserialized = ENRRequestPacketData.readFrom(RLP.input(serialized));
+    final ENRRequestPacketData deserialized =
+        ENRRequestPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getExpiration()).isEqualTo(time);
   }
@@ -79,7 +83,7 @@ public class ENRRequestPacketDataTest {
 
     final Bytes serialized = out.encoded();
     Assertions.assertThatThrownBy(
-        () -> ENRRequestPacketData.readFrom(RLP.input(serialized)),
+        () -> ENRRequestPacketData.readFrom(RLP.input(serialized), Clock.systemUTC()),
         "Should throw IllegalArgumentException for expired message");
   }
 }

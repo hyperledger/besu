@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -40,7 +41,8 @@ public class PongPacketDataTest {
 
     final PongPacketData packet = PongPacketData.create(to, hash, enrSeq);
     final Bytes serialized = RLP.encode(packet::writeTo);
-    final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(serialized));
+    final PongPacketData deserialized =
+        PongPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getPingHash()).isEqualTo(hash);
@@ -65,7 +67,8 @@ public class PongPacketDataTest {
     out.endList();
     final Bytes encoded = out.encoded();
 
-    final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(encoded));
+    final PongPacketData deserialized =
+        PongPacketData.readFrom(RLP.input(encoded), Clock.systemUTC());
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getPingHash()).isEqualTo(hash);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
@@ -89,7 +92,8 @@ public class PongPacketDataTest {
     out.endList();
     final Bytes encoded = out.encoded();
 
-    final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(encoded));
+    final PongPacketData deserialized =
+        PongPacketData.readFrom(RLP.input(encoded), Clock.systemUTC());
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getPingHash()).isEqualTo(hash);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
@@ -133,7 +137,8 @@ public class PongPacketDataTest {
     out.endList();
     final Bytes encoded = out.encoded();
 
-    final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(encoded));
+    final PongPacketData deserialized =
+        PongPacketData.readFrom(RLP.input(encoded), Clock.systemUTC());
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getPingHash()).isEqualTo(hash);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
@@ -159,7 +164,8 @@ public class PongPacketDataTest {
     out.endList();
     final Bytes encoded = out.encoded();
 
-    final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(encoded));
+    final PongPacketData deserialized =
+        PongPacketData.readFrom(RLP.input(encoded), Clock.systemUTC());
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getPingHash()).isEqualTo(hash);
     assertThat(deserialized.getExpiration()).isEqualTo(expiration);
@@ -184,7 +190,7 @@ public class PongPacketDataTest {
     final Bytes encoded = out.encoded();
 
     Assertions.assertThatThrownBy(
-        () -> PongPacketData.readFrom(RLP.input(encoded)),
+        () -> PongPacketData.readFrom(RLP.input(encoded), Clock.systemUTC()),
         "Should throw IllegalArgumentException for expired message");
   }
 }

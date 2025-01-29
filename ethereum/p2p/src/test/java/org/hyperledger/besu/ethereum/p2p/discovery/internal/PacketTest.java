@@ -20,6 +20,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import io.vertx.core.buffer.Buffer;
@@ -73,6 +76,8 @@ public class PacketTest {
   }
 
   private Packet decode(final String hexData) {
-    return Packet.decode(Buffer.buffer(Hex.decode(hexData)));
+    return Packet.decode(
+        Buffer.buffer(Hex.decode(hexData)),
+        Clock.fixed(Instant.ofEpochSecond(1), ZoneId.of("UTC")));
   }
 }

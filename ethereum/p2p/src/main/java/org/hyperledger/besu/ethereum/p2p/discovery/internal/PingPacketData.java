@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.MalformedRLPInputException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.time.Instant;
+import java.time.Clock;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt64;
@@ -51,9 +51,6 @@ public class PingPacketData implements PacketData {
       final Endpoint to,
       final long expiration,
       final UInt64 enrSeq) {
-    checkArgument(to != null, "destination endpoint cannot be null");
-    checkArgument(expiration >= 0, "expiration cannot be negative");
-    checkArgument(expiration >= Instant.now().getEpochSecond(), "expiration cannot be in the past");
 
     this.maybeFrom = maybeFrom;
     this.to = to;
@@ -63,22 +60,22 @@ public class PingPacketData implements PacketData {
 
   public static PingPacketData create(
       final Optional<Endpoint> from, final Endpoint to, final UInt64 enrSeq) {
-    checkArgument(
-        enrSeq != null && UInt64.ZERO.compareTo(enrSeq) < 0, "enrSeq cannot be null or negative");
-    return create(from, to, PacketData.defaultExpiration(), enrSeq);
+    return create(from, to, PacketData.defaultExpiration(), enrSeq, Clock.systemUTC());
   }
 
   static PingPacketData create(
       final Optional<Endpoint> from,
       final Endpoint to,
       final long expirationSec,
-      final UInt64 enrSeq) {
+      final UInt64 enrSeq,
+      final Clock clock) {
     checkArgument(
         enrSeq != null && UInt64.ZERO.compareTo(enrSeq) < 0, "enrSeq cannot be null or negative");
+    validateParameters(Optional.ofNullable(to), expirationSec, clock);
     return new PingPacketData(from, to, expirationSec, enrSeq);
   }
 
-  public static PingPacketData readFrom(final RLPInput in) {
+  public static PingPacketData readFrom(final RLPInput in, final Clock clock) {
     in.enterList();
     // The first element signifies the "version", but this value is ignored as of EIP-8
     in.readBigIntegerScalar();
@@ -107,7 +104,16 @@ public class PingPacketData implements PacketData {
       }
     }
     in.leaveListLenient();
+    validateParameters(to, expiration, clock);
     return new PingPacketData(from, to.get(), expiration, enrSeq);
+  }
+
+  private static void validateParameters(
+      final Optional<Endpoint> to, final long expiration, final Clock clock) {
+    checkArgument(to.isPresent(), "destination endpoint cannot be null");
+    checkArgument(expiration >= 0, "expiration cannot be negative");
+    checkArgument(
+        expiration >= clock.instant().getEpochSecond(), "expiration cannot be in the past");
   }
 
   /**

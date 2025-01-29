@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -37,9 +38,10 @@ public class NeighborsPacketDataTest {
     final List<DiscoveryPeer> peers =
         Arrays.asList(DiscoveryPeer.fromEnode(enode()), DiscoveryPeer.fromEnode(enode()));
 
-    final NeighborsPacketData packet = NeighborsPacketData.create(peers);
+    final NeighborsPacketData packet = NeighborsPacketData.create(peers, Clock.systemUTC());
     final Bytes serialized = RLP.encode(packet::writeTo);
-    final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(serialized));
+    final NeighborsPacketData deserialized =
+        NeighborsPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
 
     assertThat(deserialized.getNodes()).isEqualTo(peers);
     assertThat(deserialized.getExpiration()).isGreaterThan(timeSec);
@@ -58,7 +60,8 @@ public class NeighborsPacketDataTest {
     out.endList();
     Bytes encoded = out.encoded();
 
-    final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(encoded));
+    final NeighborsPacketData deserialized =
+        NeighborsPacketData.readFrom(RLP.input(encoded), Clock.systemUTC());
     assertThat(deserialized.getNodes()).isEqualTo(peers);
     assertThat(deserialized.getExpiration()).isEqualTo(timeSec);
   }
@@ -76,7 +79,8 @@ public class NeighborsPacketDataTest {
     out.endList();
     Bytes encoded = out.encoded();
 
-    final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(encoded));
+    final NeighborsPacketData deserialized =
+        NeighborsPacketData.readFrom(RLP.input(encoded), Clock.systemUTC());
     assertThat(deserialized.getNodes()).isEqualTo(peers);
     assertThat(deserialized.getExpiration()).isEqualTo(expiry);
   }
@@ -95,7 +99,7 @@ public class NeighborsPacketDataTest {
     Bytes encoded = out.encoded();
 
     Assertions.assertThatThrownBy(
-        () -> NeighborsPacketData.readFrom(RLP.input(encoded)),
+        () -> NeighborsPacketData.readFrom(RLP.input(encoded), Clock.systemUTC()),
         "Should throw IllegalArgumentException for expired message");
   }
 }

@@ -28,6 +28,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.nat.NatService;
 
 import java.net.InetSocketAddress;
+import java.time.Clock;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
@@ -71,7 +72,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   public void processIncomingPacket(final MockPeerDiscoveryAgent fromAgent, final Packet packet) {
     // Cycle packet through encode / decode to make clone of any data
     // This ensures that any data passed between agents is not shared
-    final Packet packetClone = Packet.decode(packet.encode());
+    final Packet packetClone = Packet.decode(packet.encode(), Clock.systemUTC());
     incomingPackets.add(new IncomingPacket(fromAgent, packetClone));
     handleIncomingPacket(fromAgent.getAdvertisedPeer().get().getEndpoint(), packetClone);
   }

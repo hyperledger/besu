@@ -19,32 +19,37 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.time.Instant;
+import java.time.Clock;
 
 public class ENRRequestPacketData implements PacketData {
   /* In seconds after epoch. */
   private final long expiration;
 
   private ENRRequestPacketData(final long expiration) {
-    checkArgument(expiration >= 0, "expiration cannot be negative");
-    checkArgument(expiration >= Instant.now().getEpochSecond(), "expiration cannot be in the past");
-
     this.expiration = expiration;
   }
 
   public static ENRRequestPacketData create() {
-    return create(PacketData.defaultExpiration());
+    return create(PacketData.defaultExpiration(), Clock.systemUTC());
   }
 
-  static ENRRequestPacketData create(final long expirationSec) {
+  static ENRRequestPacketData create(final long expirationSec, final Clock clock) {
+    validateParameters(expirationSec, clock);
     return new ENRRequestPacketData(expirationSec);
   }
 
-  public static ENRRequestPacketData readFrom(final RLPInput in) {
+  public static ENRRequestPacketData readFrom(final RLPInput in, final Clock clock) {
     in.enterList();
     final long expiration = in.readLongScalar();
     in.leaveListLenient();
+    validateParameters(expiration, clock);
     return new ENRRequestPacketData(expiration);
+  }
+
+  private static void validateParameters(final long expiration, final Clock clock) {
+    checkArgument(expiration >= 0, "expiration cannot be negative");
+    checkArgument(
+        expiration >= clock.instant().getEpochSecond(), "expiration cannot be in the past");
   }
 
   @Override

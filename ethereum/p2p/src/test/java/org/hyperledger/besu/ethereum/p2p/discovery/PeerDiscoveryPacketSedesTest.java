@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Random;
 
@@ -52,7 +53,7 @@ public class PeerDiscoveryPacketSedesTest {
     final Buffer encoded = packet.encode();
     assertThat(encoded).isNotNull();
 
-    final Packet decoded = Packet.decode(encoded);
+    final Packet decoded = Packet.decode(encoded, Clock.systemUTC());
     assertThat(decoded.getType()).isEqualTo(PacketType.FIND_NEIGHBORS);
     assertThat(decoded.getNodeId()).isEqualTo(nodeKey.getPublicKey().getEncodedBytes());
     assertThat(decoded.getPacketData(NeighborsPacketData.class)).isNotPresent();
@@ -70,7 +71,7 @@ public class PeerDiscoveryPacketSedesTest {
     assertThat(serialized).isNotNull();
 
     final FindNeighborsPacketData deserialized =
-        FindNeighborsPacketData.readFrom(RLP.input(serialized));
+        FindNeighborsPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
     assertThat(deserialized.getTarget()).isEqualTo(target);
     // Fuzziness: allow a skew of 2 seconds between the time the message was generated until the
     // assertion.
@@ -81,11 +82,12 @@ public class PeerDiscoveryPacketSedesTest {
   public void neighborsPacketData() {
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
 
-    final NeighborsPacketData packet = NeighborsPacketData.create(peers);
+    final NeighborsPacketData packet = NeighborsPacketData.create(peers, Clock.systemUTC());
     final Bytes serialized = RLP.encode(packet::writeTo);
     assertThat(serialized).isNotNull();
 
-    final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(serialized));
+    final NeighborsPacketData deserialized =
+        NeighborsPacketData.readFrom(RLP.input(serialized), Clock.systemUTC());
     assertThat(deserialized.getNodes()).isEqualTo(peers);
     // Fuzziness: allow a skew of 2 seconds between the time the message was generated until the
     // assertion.
@@ -103,7 +105,8 @@ public class PeerDiscoveryPacketSedesTest {
     assertThat(serialized).isNotNull();
 
     final RLPInput input = RLP.input(serialized);
-    assertThatThrownBy(() -> NeighborsPacketData.readFrom(input)).isInstanceOf(RLPException.class);
+    assertThatThrownBy(() -> NeighborsPacketData.readFrom(input, Clock.systemUTC()))
+        .isInstanceOf(RLPException.class);
   }
 
   @Test
@@ -124,7 +127,7 @@ public class PeerDiscoveryPacketSedesTest {
     // any longer.
     garbled.set(i, (byte) (garbled.get(i) + 0x01));
     final Buffer input = Buffer.buffer(garbled.toArray());
-    assertThatThrownBy(() -> Packet.decode(input))
+    assertThatThrownBy(() -> Packet.decode(input, Clock.systemUTC()))
         .isInstanceOf(PeerDiscoveryPacketDecodingException.class);
   }
 }

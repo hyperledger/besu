@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.MalformedRLPInputException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.time.Instant;
+import java.time.Clock;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -46,9 +46,6 @@ public class PongPacketData implements PacketData {
 
   private PongPacketData(
       final Endpoint to, final Bytes pingHash, final long expiration, final UInt64 enrSeq) {
-    checkArgument(expiration >= 0, "expiration cannot be negative");
-    checkArgument(expiration >= Instant.now().getEpochSecond(), "expiration cannot be in the past");
-
     this.to = to;
     this.pingHash = pingHash;
     this.expiration = expiration;
@@ -60,7 +57,7 @@ public class PongPacketData implements PacketData {
     return new PongPacketData(to, pingHash, PacketData.defaultExpiration(), enrSeq);
   }
 
-  public static PongPacketData readFrom(final RLPInput in) {
+  public static PongPacketData readFrom(final RLPInput in, final Clock clock) {
     in.enterList();
     final Endpoint to = Endpoint.decodeStandalone(in);
     final Bytes hash = in.readBytes();
@@ -76,7 +73,14 @@ public class PongPacketData implements PacketData {
       }
     }
     in.leaveListLenient();
+    validateParameters(expiration, clock);
     return new PongPacketData(to, hash, expiration, enrSeq);
+  }
+
+  private static void validateParameters(final long expiration, final Clock clock) {
+    checkArgument(expiration >= 0, "expiration cannot be negative");
+    checkArgument(
+        expiration >= clock.instant().getEpochSecond(), "expiration cannot be in the past");
   }
 
   @Override

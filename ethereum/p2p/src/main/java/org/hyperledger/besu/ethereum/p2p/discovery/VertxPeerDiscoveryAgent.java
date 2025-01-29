@@ -39,6 +39,7 @@ import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.channels.UnsupportedAddressTypeException;
+import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.IntSupplier;
@@ -290,7 +291,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     vertx.<Packet>executeBlocking(
         future -> {
           try {
-            future.complete(Packet.decode(datagram.data()));
+            future.complete(Packet.decode(datagram.data(), Clock.systemUTC()));
           } catch (final Throwable t) {
             future.fail(t);
           }

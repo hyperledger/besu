@@ -19,6 +19,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.time.Clock;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
@@ -42,7 +44,7 @@ public class ENRResponsePacketData implements PacketData {
     return new ENRResponsePacketData(requestHash, enr);
   }
 
-  public static ENRResponsePacketData readFrom(final RLPInput in) {
+  public static ENRResponsePacketData readFrom(final RLPInput in, final Clock unused) {
     in.enterList();
     final Bytes requestHash = in.readBytes();
     in.leaveListLenient();

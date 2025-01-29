@@ -48,6 +48,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Clock;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -177,7 +178,7 @@ public class PeerDiscoveryAgentTest {
 
     // Generate an out-of-band NEIGHBORS message.
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
-    final NeighborsPacketData data = NeighborsPacketData.create(peers);
+    final NeighborsPacketData data = NeighborsPacketData.create(peers, Clock.systemUTC());
     final Packet packet = Packet.create(PacketType.NEIGHBORS, data, otherNode.getNodeKey());
     helper.sendMessageBetweenAgents(otherNode, agent, packet);
 

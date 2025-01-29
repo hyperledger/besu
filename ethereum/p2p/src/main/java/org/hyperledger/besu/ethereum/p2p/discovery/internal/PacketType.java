@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.Optional;
 import javax.annotation.concurrent.Immutable;
@@ -63,6 +64,6 @@ public enum PacketType {
   @FunctionalInterface
   @Immutable
   public interface Deserializer<T extends PacketData> {
-    T deserialize(RLPInput in);
+    T deserialize(RLPInput in, Clock clock);
   }
 }

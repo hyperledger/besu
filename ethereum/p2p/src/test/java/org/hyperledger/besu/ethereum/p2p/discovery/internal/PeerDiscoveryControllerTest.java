@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -335,7 +336,8 @@ public class PeerDiscoveryControllerTest {
             Optional.ofNullable(localEndpoint),
             discoPeer.getEndpoint(),
             Instant.now().getEpochSecond() + 1,
-            UInt64.ONE);
+            UInt64.ONE,
+            Clock.systemUTC());
     Thread.sleep(Duration.ofSeconds(2));
     final Packet discoPeerPing =
         Packet.create(PacketType.PING, pingPacketData, nodeKeys.getFirst());
@@ -636,7 +638,7 @@ public class PeerDiscoveryControllerTest {
 
     // Simulate a NEIGHBORS message from peer[0] listing peer[2].
     final NeighborsPacketData neighbors0 =
-        NeighborsPacketData.create(Collections.singletonList(peers.get(2)));
+        NeighborsPacketData.create(Collections.singletonList(peers.get(2)), Clock.systemUTC());
     final Packet neighborsPacket0 =
         Packet.create(PacketType.NEIGHBORS, neighbors0, nodeKeys.get(0));
     controller.onMessage(neighborsPacket0, peers.get(0));
@@ -650,7 +652,7 @@ public class PeerDiscoveryControllerTest {
     // Simulate bonding and neighbors packet from the second bootstrap peer, with peer[2] reported
     // in the peer list.
     final NeighborsPacketData neighbors1 =
-        NeighborsPacketData.create(Collections.singletonList(peers.get(2)));
+        NeighborsPacketData.create(Collections.singletonList(peers.get(2)), Clock.systemUTC());
     final Packet neighborsPacket1 =
         Packet.create(PacketType.NEIGHBORS, neighbors1, nodeKeys.get(1));
     controller.onMessage(neighborsPacket1, peers.get(1));

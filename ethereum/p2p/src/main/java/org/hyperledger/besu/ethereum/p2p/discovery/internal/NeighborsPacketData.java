@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.time.Instant;
+import java.time.Clock;
 import java.util.List;
 
 public class NeighborsPacketData implements PacketData {
@@ -31,24 +31,31 @@ public class NeighborsPacketData implements PacketData {
   private final long expiration;
 
   private NeighborsPacketData(final List<DiscoveryPeer> peers, final long expiration) {
-    checkArgument(peers != null, "peer list cannot be null");
-    checkArgument(expiration >= 0, "expiration cannot be negative");
-    checkArgument(expiration >= Instant.now().getEpochSecond(), "expiration cannot be in the past");
-
     this.peers = peers;
     this.expiration = expiration;
   }
 
-  public static NeighborsPacketData create(final List<DiscoveryPeer> peers) {
-    return new NeighborsPacketData(peers, PacketData.defaultExpiration());
+  public static NeighborsPacketData create(final List<DiscoveryPeer> peers, final Clock clock) {
+    final long expiration = PacketData.defaultExpiration();
+    validateParameters(peers, expiration, clock);
+    return new NeighborsPacketData(peers, expiration);
   }
 
-  public static NeighborsPacketData readFrom(final RLPInput in) {
+  public static NeighborsPacketData readFrom(final RLPInput in, final Clock clock) {
     in.enterList();
     final List<DiscoveryPeer> peers = in.readList(DiscoveryPeer::readFrom);
     final long expiration = in.readLongScalar();
     in.leaveListLenient();
+    validateParameters(peers, expiration, clock);
     return new NeighborsPacketData(peers, expiration);
+  }
+
+  private static void validateParameters(
+      final List<DiscoveryPeer> peers, final long expiration, final Clock clock) {
+    checkArgument(peers != null, "peer list cannot be null");
+    checkArgument(expiration >= 0, "expiration cannot be negative");
+    checkArgument(
+        expiration >= clock.instant().getEpochSecond(), "expiration cannot be in the past");
   }
 
   @Override
