@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class NeighborsPacketDataTest {
@@ -64,7 +65,7 @@ public class NeighborsPacketDataTest {
 
   @Test
   public void readFrom_extraFields() {
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
     final List<DiscoveryPeer> peers =
         Arrays.asList(DiscoveryPeer.fromEnode(enode()), DiscoveryPeer.fromEnode(enode()));
 
@@ -78,5 +79,23 @@ public class NeighborsPacketDataTest {
     final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(encoded));
     assertThat(deserialized.getNodes()).isEqualTo(peers);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
+  }
+
+  @Test
+  public void readFrom_expired() {
+    final long expiry = 1234;
+    final List<DiscoveryPeer> peers =
+        Arrays.asList(DiscoveryPeer.fromEnode(enode()), DiscoveryPeer.fromEnode(enode()));
+
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeList(peers, DiscoveryPeer::writeTo);
+    out.writeLongScalar(expiry);
+    out.endList();
+    Bytes encoded = out.encoded();
+
+    Assertions.assertThatThrownBy(
+        () -> NeighborsPacketData.readFrom(RLP.input(encoded)),
+        "Should throw IllegalArgumentException for expired message");
   }
 }

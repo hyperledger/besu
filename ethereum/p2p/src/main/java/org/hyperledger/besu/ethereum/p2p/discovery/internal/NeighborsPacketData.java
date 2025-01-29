@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.time.Instant;
 import java.util.List;
 
 public class NeighborsPacketData implements PacketData {
@@ -31,7 +32,8 @@ public class NeighborsPacketData implements PacketData {
 
   private NeighborsPacketData(final List<DiscoveryPeer> peers, final long expiration) {
     checkArgument(peers != null, "peer list cannot be null");
-    checkArgument(expiration >= 0, "expiration must be positive");
+    checkArgument(expiration >= 0, "expiration cannot be negative");
+    checkArgument(expiration >= Instant.now().getEpochSecond(), "expiration cannot be in the past");
 
     this.peers = peers;
     this.expiration = expiration;

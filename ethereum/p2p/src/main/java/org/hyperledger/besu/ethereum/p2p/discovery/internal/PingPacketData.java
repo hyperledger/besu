@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.MalformedRLPInputException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt64;
@@ -52,6 +53,7 @@ public class PingPacketData implements PacketData {
       final UInt64 enrSeq) {
     checkArgument(to != null, "destination endpoint cannot be null");
     checkArgument(expiration >= 0, "expiration cannot be negative");
+    checkArgument(expiration >= Instant.now().getEpochSecond(), "expiration cannot be in the past");
 
     this.maybeFrom = maybeFrom;
     this.to = to;

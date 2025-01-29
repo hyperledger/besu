@@ -26,6 +26,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class PingPacketDataTest {
@@ -53,7 +54,7 @@ public class PingPacketDataTest {
     final int version = 4;
     final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
     final UInt64 enrSeq = UInt64.ONE;
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -80,7 +81,7 @@ public class PingPacketDataTest {
     final int version = 4;
     final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
@@ -104,7 +105,7 @@ public class PingPacketDataTest {
     final int version = 4;
     final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
     final UInt64 enrSeq = UInt64.ONE;
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -130,7 +131,7 @@ public class PingPacketDataTest {
   public void handleOptionalSourceIP() {
 
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
     final UInt64 enrSeq = UInt64.ONE;
 
     final PingPacketData anon = PingPacketData.create(Optional.empty(), to, time, enrSeq);
@@ -153,7 +154,7 @@ public class PingPacketDataTest {
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     final UInt64 enrSeq = UInt64.MAX_VALUE;
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
 
     out.startList();
     out.writeIntScalar(4);
@@ -195,6 +196,7 @@ public class PingPacketDataTest {
 
     final PingPacketData legacyPing = PingPacketData.legacyReadFrom(RLP.input(out.encoded()));
 
+    assertThat(legacyPing.getFrom().isPresent()).isTrue();
     assertThat(legacyPing.getFrom().get()).isEqualTo(from);
     assertThat(legacyPing.getTo()).isEqualTo(to);
     assertThat(legacyPing.getEnrSeq().isPresent()).isTrue();
@@ -206,7 +208,7 @@ public class PingPacketDataTest {
     final int version = 4;
     final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
     final UInt64 enrSeq = UInt64.ONE;
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -235,7 +237,7 @@ public class PingPacketDataTest {
     final int version = 99;
     final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
     final UInt64 enrSeq = UInt64.ONE;
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -262,7 +264,7 @@ public class PingPacketDataTest {
     final int version = 4;
     final Endpoint from = new Endpoint("0.1.2.1", 1, Optional.of(1));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
     final UInt64 enrSeq = UInt64.ONE;
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -282,5 +284,28 @@ public class PingPacketDataTest {
     assertThat(deserialized.getExpiration()).isEqualTo(time);
     assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
     assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
+  public void readFrom_expired() {
+    final int version = 4;
+    final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final long expiry = 1234;
+    final UInt64 enrSeq = UInt64.ONE;
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeIntScalar(version);
+    from.encodeStandalone(out);
+    to.encodeStandalone(out);
+    out.writeLongScalar(expiry);
+    out.writeLongScalar(enrSeq.toLong());
+    out.endList();
+
+    final Bytes serialized = out.encoded();
+    Assertions.assertThatThrownBy(
+        () -> PingPacketData.readFrom(RLP.input(serialized)),
+        "Should throw IllegalArgumentException for expired message");
   }
 }

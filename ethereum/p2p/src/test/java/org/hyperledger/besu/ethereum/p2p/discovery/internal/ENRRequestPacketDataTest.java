@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import java.time.Instant;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ENRRequestPacketDataTest {
@@ -37,7 +38,7 @@ public class ENRRequestPacketDataTest {
 
   @Test
   public void readFrom() {
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
@@ -52,7 +53,7 @@ public class ENRRequestPacketDataTest {
 
   @Test
   public void readFrom_withExtraFields() {
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
@@ -65,5 +66,20 @@ public class ENRRequestPacketDataTest {
     final ENRRequestPacketData deserialized = ENRRequestPacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getExpiration()).isEqualTo(time);
+  }
+
+  @Test
+  public void readFrom_expired() {
+    final long expiry = 1234;
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeLongScalar(expiry);
+    out.endList();
+
+    final Bytes serialized = out.encoded();
+    Assertions.assertThatThrownBy(
+        () -> ENRRequestPacketData.readFrom(RLP.input(serialized)),
+        "Should throw IllegalArgumentException for expired message");
   }
 }

@@ -19,12 +19,15 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.time.Instant;
+
 public class ENRRequestPacketData implements PacketData {
   /* In seconds after epoch. */
   private final long expiration;
 
   private ENRRequestPacketData(final long expiration) {
     checkArgument(expiration >= 0, "expiration cannot be negative");
+    checkArgument(expiration >= Instant.now().getEpochSecond(), "expiration cannot be in the past");
 
     this.expiration = expiration;
   }

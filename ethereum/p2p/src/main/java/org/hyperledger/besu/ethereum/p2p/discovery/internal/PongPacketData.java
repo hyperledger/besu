@@ -14,11 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.MalformedRLPInputException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -43,6 +46,9 @@ public class PongPacketData implements PacketData {
 
   private PongPacketData(
       final Endpoint to, final Bytes pingHash, final long expiration, final UInt64 enrSeq) {
+    checkArgument(expiration >= 0, "expiration cannot be negative");
+    checkArgument(expiration >= Instant.now().getEpochSecond(), "expiration cannot be in the past");
+
     this.to = to;
     this.pingHash = pingHash;
     this.expiration = expiration;

@@ -19,6 +19,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.time.Instant;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class FindNeighborsPacketData implements PacketData {
@@ -32,7 +34,8 @@ public class FindNeighborsPacketData implements PacketData {
 
   private FindNeighborsPacketData(final Bytes target, final long expiration) {
     checkArgument(target != null && target.size() == TARGET_SIZE, "target must be a valid node id");
-    checkArgument(expiration >= 0, "expiration must be positive");
+    checkArgument(expiration >= 0, "expiration cannot be negative");
+    checkArgument(expiration >= Instant.now().getEpochSecond(), "expiration cannot be in the past");
 
     this.target = target;
     this.expiration = expiration;

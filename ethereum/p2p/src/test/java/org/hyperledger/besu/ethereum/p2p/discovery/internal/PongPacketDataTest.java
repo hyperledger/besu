@@ -26,6 +26,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class PongPacketDataTest {
@@ -50,7 +51,7 @@ public class PongPacketDataTest {
 
   @Test
   public void readFrom() {
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
     final UInt64 enrSeq = UInt64.ONE;
@@ -74,7 +75,7 @@ public class PongPacketDataTest {
 
   @Test
   public void handlesLegacyENREncode() {
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
     final UInt64 enrSeq = UInt64.ONE;
@@ -98,7 +99,6 @@ public class PongPacketDataTest {
 
   @Test
   public void legacyHandlesScalar() {
-
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final UInt64 enrSeq = UInt64.MAX_VALUE;
     final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
@@ -117,7 +117,7 @@ public class PongPacketDataTest {
 
   @Test
   public void readFrom_withExtraFields() {
-    final long time = System.currentTimeMillis();
+    final long time = Instant.now().getEpochSecond();
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
     final UInt64 enrSeq = UInt64.ONE;
@@ -143,7 +143,7 @@ public class PongPacketDataTest {
 
   @Test
   public void readFrom_fixedWidthSeq() {
-    final long time = System.currentTimeMillis();
+    final long expiration = PacketData.defaultExpiration();
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
     final UInt64 enrSeq = UInt64.ONE;
@@ -152,7 +152,7 @@ public class PongPacketDataTest {
     out.startList();
     to.encodeStandalone(out);
     out.writeBytes(hash);
-    out.writeLongScalar(time);
+    out.writeLongScalar(expiration);
     out.writeLongScalar(enrSeq.toLong());
     // Add random fields
     out.writeLong(1234L);
@@ -162,8 +162,29 @@ public class PongPacketDataTest {
     final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(encoded));
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getPingHash()).isEqualTo(hash);
-    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getExpiration()).isEqualTo(expiration);
     assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
     assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
+  public void readFrom_expired() {
+    final long expiry = 1234;
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
+    final UInt64 enrSeq = UInt64.ONE;
+
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    to.encodeStandalone(out);
+    out.writeBytes(hash);
+    out.writeLongScalar(expiry);
+    out.writeLongScalar(enrSeq.toLong());
+    out.endList();
+    final Bytes encoded = out.encoded();
+
+    Assertions.assertThatThrownBy(
+        () -> PongPacketData.readFrom(RLP.input(encoded)),
+        "Should throw IllegalArgumentException for expired message");
   }
 }
