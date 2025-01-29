@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
+
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
@@ -172,7 +175,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
               new EngineGetBlobsV1(
                   consensusEngineServer, protocolContext, engineQosTimer, transactionPool)));
 
-      if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("cancun"))) {
+      if (protocolSchedule.milestoneFor(CANCUN).isPresent()) {
         executionEngineApisSupported.add(
             new EngineGetPayloadV3(
                 consensusEngineServer,
@@ -183,7 +186,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 protocolSchedule));
       }
 
-      if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("prague"))) {
+      if (protocolSchedule.milestoneFor(PRAGUE).isPresent()) {
         executionEngineApisSupported.add(
             new EngineGetPayloadV4(
                 consensusEngineServer,

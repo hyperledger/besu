@@ -221,43 +221,44 @@ public class T8nExecutor {
                 continue;
               }
 
-              List<CodeDelegation> authorizations = new ArrayList<>(authorizationList.size());
+              List<CodeDelegation> codeDelegations = new ArrayList<>(authorizationList.size());
               for (JsonNode entryAsJson : authorizationList) {
-                final BigInteger authorizationChainId =
+                final BigInteger codeDelegationChainId =
                     Bytes.fromHexStringLenient(entryAsJson.get("chainId").textValue())
                         .toUnsignedBigInteger();
-                final Address authorizationAddress =
+                final Address codeDelegationAddress =
                     Address.fromHexString(entryAsJson.get("address").textValue());
 
-                final long authorizationNonce =
+                final long codeDelegationNonce =
                     Bytes.fromHexStringLenient(entryAsJson.get("nonce").textValue()).toLong();
 
-                final BigInteger authorizationV =
+                final BigInteger codeDelegationV =
                     Bytes.fromHexStringLenient(entryAsJson.get("v").textValue())
                         .toUnsignedBigInteger();
-                if (authorizationV.compareTo(BigInteger.valueOf(256)) >= 0) {
+                if (codeDelegationV.compareTo(BigInteger.valueOf(256)) >= 0) {
                   throw new IllegalArgumentException(
-                      "Invalid authorizationV value. Must be less than 256");
+                      "Invalid codeDelegationV value. Must be less than 256");
                 }
 
-                final BigInteger authorizationR =
+                final BigInteger codeDelegationR =
                     Bytes.fromHexStringLenient(entryAsJson.get("r").textValue())
                         .toUnsignedBigInteger();
-                final BigInteger authorizationS =
+                final BigInteger codeDelegationS =
                     Bytes.fromHexStringLenient(entryAsJson.get("s").textValue())
                         .toUnsignedBigInteger();
 
-                final SECPSignature authorizationSignature =
-                    new SECPSignature(authorizationR, authorizationS, authorizationV.byteValue());
+                final SECPSignature codeDelegationSignature =
+                    new SECPSignature(
+                        codeDelegationR, codeDelegationS, codeDelegationV.byteValue());
 
-                authorizations.add(
+                codeDelegations.add(
                     new org.hyperledger.besu.ethereum.core.CodeDelegation(
-                        authorizationChainId,
-                        authorizationAddress,
-                        authorizationNonce,
-                        authorizationSignature));
+                        codeDelegationChainId,
+                        codeDelegationAddress,
+                        codeDelegationNonce,
+                        codeDelegationSignature));
               }
-              builder.codeDelegations(authorizations);
+              builder.codeDelegations(codeDelegations);
             }
 
             if (txNode.has("blobVersionedHashes")) {

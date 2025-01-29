@@ -25,7 +25,7 @@ def create_artifact_paths(version):
         # besu/internal/config
         f"{artifacts_base_path}/internal/config/{version}/config-{version}.module",
         f"{artifacts_base_path}/internal/config/{version}/config-{version}.pom",
-        f"{artifacts_base_path}/internal/config/{version}/config-{version}.jar"
+        f"{artifacts_base_path}/internal/config/{version}/config-{version}.jar",
         # bom
         f"{artifacts_base_path}/bom/{version}/bom-{version}.module",
         f"{artifacts_base_path}/bom/{version}/bom-{version}.pom",
@@ -42,11 +42,11 @@ def check_url(url):
 
 def main():
     parser = argparse.ArgumentParser(description='Check besu artifacts')
-    parser.add_argument('--besu_{version}', action="store", dest='besu_{version}', default="")
+    parser.add_argument('--besu_version', action="store", dest='besu_version', default="")
     args = parser.parse_args()
-    print(args.besu_{version})
+    print(args.besu_version)
 
-    artifacts = create_artifact_paths(args.besu_{version})
+    artifacts = create_artifact_paths(args.besu_version)
     print(artifacts)
     for url in artifacts:
         check_url(url)

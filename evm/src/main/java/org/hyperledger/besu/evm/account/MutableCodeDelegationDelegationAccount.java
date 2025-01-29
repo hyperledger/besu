@@ -29,20 +29,20 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Wraps an EOA account and includes delegated code to be run on behalf of it. */
-public class MutableDelegatedCodeAccount extends AbstractDelegatedCodeAccount
+public class MutableCodeDelegationDelegationAccount extends AbstractCodeDelegationAccount
     implements MutableAccount {
 
   private final MutableAccount wrappedAccount;
 
   /**
-   * Creates a new MutableAuthorizedCodeAccount.
+   * Creates a new MutableCodeDelegationDelegationAccount.
    *
    * @param worldUpdater the world updater.
    * @param wrappedAccount the account that has delegated code to be loaded into it.
    * @param codeDelegationAddress the address of the delegated code.
    * @param gasCalculator the gas calculator to check for precompiles.
    */
-  public MutableDelegatedCodeAccount(
+  public MutableCodeDelegationDelegationAccount(
       final WorldUpdater worldUpdater,
       final MutableAccount wrappedAccount,
       final Address codeDelegationAddress,
@@ -62,8 +62,8 @@ public class MutableDelegatedCodeAccount extends AbstractDelegatedCodeAccount
   }
 
   @Override
-  public Optional<Address> delegatedCodeAddress() {
-    return super.delegatedCodeAddress();
+  public Optional<Address> codeDelegationAddress() {
+    return super.codeDelegationAddress();
   }
 
   @Override

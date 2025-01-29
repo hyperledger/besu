@@ -621,7 +621,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             worldStateHealerSupplier::get);
 
     if (maybeStoredGenesisBlockHash.isEmpty()) {
-      genesisState.writeStateTo(worldStateArchive.getMutable());
+      genesisState.writeStateTo(worldStateArchive.getWorldState());
     }
 
     transactionSimulator =
@@ -717,7 +717,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             transactionPoolConfiguration,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
-            miningConfiguration);
+            miningConfiguration,
+            syncConfig.isPeerTaskSystemEnabled());
 
     final List<PeerValidator> peerValidators =
         createPeerValidators(protocolSchedule, peerTaskExecutor);

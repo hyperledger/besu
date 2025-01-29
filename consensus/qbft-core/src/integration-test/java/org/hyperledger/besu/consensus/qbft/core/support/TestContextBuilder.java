@@ -264,7 +264,7 @@ public class TestContextBuilder {
             createInMemoryBlockchain(
                 genesisState.getBlock(),
                 BftBlockHeaderFunctions.forOnchainBlock(BFT_EXTRA_DATA_ENCODER));
-        genesisState.writeStateTo(worldStateArchive.getMutable());
+        genesisState.writeStateTo(worldStateArchive.getWorldState());
       } catch (IOException e) {
         throw new IllegalStateException(e);
       }
