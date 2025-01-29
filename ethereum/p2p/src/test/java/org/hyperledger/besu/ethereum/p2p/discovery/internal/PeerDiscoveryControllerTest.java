@@ -337,7 +337,8 @@ public class PeerDiscoveryControllerTest {
             Instant.now().getEpochSecond() + 1,
             UInt64.ONE);
     Thread.sleep(Duration.ofSeconds(2));
-    final Packet discoPeerPing = Packet.create(PacketType.PING, pingPacketData, nodeKeys.getFirst());
+    final Packet discoPeerPing =
+        Packet.create(PacketType.PING, pingPacketData, nodeKeys.getFirst());
     mockPingPacketCreation(discoPeer, discoPeerPing);
 
     controller.onMessage(discoPeerPing, discoPeer);
