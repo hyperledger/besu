@@ -45,14 +45,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class QbftBlockCreatorAdaptorTest {
   @Mock private BlockCreator blockCreator;
-  @Mock private QbftBlockHeader parentHeader;
-  @Mock private BlockHeader besuParentHeader;
   @Mock private Block besuBlock;
   @Mock private QbftExtraDataProvider qbftExtraDataProvider;
   private final QbftExtraDataCodec qbftExtraDataCodec = new QbftExtraDataCodec();
 
   @Test
   void createsBlockUsingBesuBlockCreator() {
+    BlockHeader besuParentHeader = new BlockHeaderTestFixture().buildHeader();
+    QbftBlockHeader parentHeader = new QbftBlockHeaderImpl(besuParentHeader);
+
     when(blockCreator.createBlock(10, besuParentHeader))
         .thenReturn(new BlockCreator.BlockCreationResult(besuBlock, null, null));
 
