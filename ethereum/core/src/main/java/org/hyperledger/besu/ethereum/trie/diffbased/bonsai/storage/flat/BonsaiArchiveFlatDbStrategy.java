@@ -171,6 +171,43 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     return accountFound;
   }
 
+  /*
+   * Retrieves the account data for the given account hash, using the world state root hash supplier and node loader.
+   */
+  @Override
+  public Optional<Bytes> getFlatAccountTrieNode(
+      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
+      final NodeLoader nodeLoader,
+      final Bytes location,
+      final Bytes32 nodeHash,
+      final SegmentedKeyValueStorage storage) {
+    // TODO - metrics?
+
+    Optional<Bytes> accountFound;
+
+    // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
+    Bytes keyNearest =
+        calculateArchiveKeyWithMaxSuffix(
+            getStateArchiveContextForRead(storage), location.toArrayUnsafe());
+
+    // Find the nearest account state for this address and block context
+    Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccount =
+        storage
+            .getNearestBefore(TRIE_BRANCH_STORAGE, keyNearest)
+            .filter(found -> location.commonPrefixLength(found.key()) >= location.size())
+                .filter(found -> found.key().size() == (location.size() + 16)); // TODO - change for CONST
+
+    // TODO - getFlatAccount does extra checks for the delete case. Do we need to do anything in
+    // that respect here?
+    accountFound = nearestAccount.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+    return accountFound;
+
+    /*return storage
+    .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
+    .map(Bytes::wrap)
+    .filter(b -> Hash.hash(b).equals(nodeHash));*/
+  }
+
   @Override
   protected Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
       final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
@@ -285,6 +322,23 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
             getStateArchiveContextForWrite(storage).get(), accountHash.toArrayUnsafe());
 
     transaction.put(ACCOUNT_INFO_STATE, keySuffixed, accountValue.toArrayUnsafe());
+  }
+
+  @Override
+  public void putFlatAccountTrieNode(
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Bytes location,
+      final Bytes32 nodeHash,
+      final Bytes node) {
+
+    // key suffixed with block context, or MIN_BLOCK_SUFFIX if we have no context:
+    byte[] keySuffixed =
+        calculateArchiveKeyWithMinSuffix(
+            getStateArchiveContextForWrite(storage).get(), location.toArrayUnsafe());
+
+    transaction.put(TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
+    transaction.put(TRIE_BRANCH_STORAGE, keySuffixed, node.toArrayUnsafe());
   }
 
   @Override

@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.proof;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
-import org.assertj.core.api.Assertions;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -26,27 +26,25 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class WorldStateBonsaiProofProviderTest {
@@ -55,10 +53,10 @@ public class WorldStateBonsaiProofProviderTest {
       Address.fromHexString("0x1234567890123456789012345678901234567890");
 
   private final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
-          new BonsaiWorldStateKeyValueStorage(
-                  new InMemoryKeyValueStorageProvider(),
-                  new NoOpMetricsSystem(),
-                  DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+      new BonsaiWorldStateKeyValueStorage(
+          new InMemoryKeyValueStorageProvider(),
+          new NoOpMetricsSystem(),
+          DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
 
   private WorldStateProofProvider worldStateProofProvider;
 
@@ -89,7 +87,9 @@ public class WorldStateBonsaiProofProviderTest {
     writeStorageValue(storageTrie, UInt256.valueOf(2L), UInt256.valueOf(4L));
     writeStorageValue(storageTrie, UInt256.valueOf(3L), UInt256.valueOf(6L));
     // Save to Storage
-    storageTrie.commit((location, hash, value) -> updater.putAccountStorageTrieNode(addressHash, location, hash, value));
+    storageTrie.commit(
+        (location, hash, value) ->
+            updater.putAccountStorageTrieNode(addressHash, location, hash, value));
 
     // Define account value
     final Hash codeHash = Hash.hash(Bytes.fromHexString("0x1122"));
@@ -98,7 +98,8 @@ public class WorldStateBonsaiProofProviderTest {
             1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
     // Save to storage
     worldStateTrie.put(addressHash, RLP.encode(accountValue::writeTo));
-    worldStateTrie.commit((location, hash, value) -> updater.putAccountStateTrieNode(location, hash, value));
+    worldStateTrie.commit(
+        (location, hash, value) -> updater.putAccountStateTrieNode(location, hash, value));
 
     SegmentedKeyValueStorageTransaction tx = updater.getWorldStateTransaction();
     tx.put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, worldStateTrie.getRootHash().toArrayUnsafe());
@@ -165,7 +166,8 @@ public class WorldStateBonsaiProofProviderTest {
 
   private MerkleTrie<Bytes32, Bytes> emptyWorldStateTrie() {
     return new StoredMerklePatriciaTrie<>(
-        (location, hash) -> worldStateKeyValueStorage.getAccountStorageTrieNode(Hash.EMPTY, location, hash),
+        (location, hash) ->
+            worldStateKeyValueStorage.getAccountStorageTrieNode(Hash.EMPTY, location, hash),
         b -> b,
         b -> b);
   }
