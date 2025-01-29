@@ -65,20 +65,20 @@ public class NeighborsPacketDataTest {
 
   @Test
   public void readFrom_extraFields() {
-    final long time = Instant.now().getEpochSecond();
+    final long expiry = PacketData.defaultExpiration();
     final List<DiscoveryPeer> peers =
         Arrays.asList(DiscoveryPeer.fromEnode(enode()), DiscoveryPeer.fromEnode(enode()));
 
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     out.writeList(peers, DiscoveryPeer::writeTo);
-    out.writeLongScalar(time);
+    out.writeLongScalar(expiry);
     out.endList();
     Bytes encoded = out.encoded();
 
     final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(encoded));
     assertThat(deserialized.getNodes()).isEqualTo(peers);
-    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getExpiration()).isEqualTo(expiry);
   }
 
   @Test
