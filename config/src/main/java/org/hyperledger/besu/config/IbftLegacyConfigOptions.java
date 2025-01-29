@@ -28,8 +28,6 @@ public class IbftLegacyConfigOptions {
 
   private static final long DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 1;
-  // private static final int DEFAULT_ROUND_EXPIRY_SECONDS = 1;
-  // private static final long DEFAULT_CEIL_2N_BY_3_BLOCK = 0L;
 
   private final ObjectNode ibftConfigRoot;
 
