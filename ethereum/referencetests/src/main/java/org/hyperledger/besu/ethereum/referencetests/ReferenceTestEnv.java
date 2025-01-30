@@ -247,6 +247,10 @@ public class ReferenceTestEnv extends BlockHeader {
     return blockHashes;
   }
 
+  public String getParentExcessBlobGas() {
+    return parentExcessBlobGas;
+  }
+
   public boolean isStateTest() {
     return isStateTest;
   }
