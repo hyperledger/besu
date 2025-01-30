@@ -69,8 +69,7 @@ public class MainnetBlockValidatorTest {
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);
 
   private final MainnetBlockValidator mainnetBlockValidator =
-      new MainnetBlockValidator(
-          blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+      new MainnetBlockValidator(blockHeaderValidator, blockBodyValidator, blockProcessor);
 
   public static Stream<Arguments> getStorageExceptions() {
     return Stream.of(
@@ -92,6 +91,7 @@ public class MainnetBlockValidatorTest {
         new BlockProcessingResult(Optional.empty(), false);
 
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
     when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(worldState));
     when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(worldState));
