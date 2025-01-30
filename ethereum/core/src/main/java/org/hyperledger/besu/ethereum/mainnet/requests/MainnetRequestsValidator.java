@@ -58,7 +58,7 @@ public class MainnetRequestsValidator implements RequestsValidator {
     Set<Bytes> uniqueRequests = new HashSet<>();
     for (Request request : requests) {
       if (!uniqueRequests.add(request.getEncodedRequest())) {
-        LOG.warn("Duplicate request detected for request: {}", request);
+        LOG.warn("Duplicate request: {}", request);
         return false;
       }
       if (request.getData().isEmpty()) {
