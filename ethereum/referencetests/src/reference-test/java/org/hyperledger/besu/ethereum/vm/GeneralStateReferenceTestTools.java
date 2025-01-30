@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.DelegatingBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.SoftAssertions;
 import org.hyperledger.besu.datatypes.Address;
@@ -252,7 +253,7 @@ public class GeneralStateReferenceTestTools {
               if (!storageEntries.isEmpty()) {
                 accountJson.set("storage", storageJson);
               }
-              worldStateJson.set(account.getAddress().orElse(Address.wrap(Bytes.EMPTY)).toHexString(), accountJson);
+              worldStateJson.set(account.getAddress().map(DelegatingBytes::toHexString).orElse(Bytes.EMPTY.toHexString()), accountJson);
             });
     LOG.error("Calculated world state: \n{}", worldStateJson.toPrettyString());
   }
