@@ -85,7 +85,7 @@ public class JsonRpcTestMethodsFactory {
     this.importer = importer;
     this.blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
     this.stateArchive = createInMemoryWorldStateArchive();
-    this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
+    this.importer.getGenesisState().writeStateTo(stateArchive.getWorldState());
     this.context =
         new ProtocolContext(
             blockchain, stateArchive, mock(ConsensusContext.class), new BadBlockManager());

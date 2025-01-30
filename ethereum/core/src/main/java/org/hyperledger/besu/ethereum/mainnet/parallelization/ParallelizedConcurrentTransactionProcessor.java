@@ -139,7 +139,7 @@ public class ParallelizedConcurrentTransactionProcessor {
     try (final DiffBasedWorldState roundWorldState =
         new BonsaiWorldState(
             (BonsaiWorldState) worldState, new NoopBonsaiCachedMerkleTrieLoader())) {
-      roundWorldState.freeze(); // make the clone frozen
+      roundWorldState.freezeStorage(); // make the clone frozen
       final ParallelizedTransactionContext.Builder contextBuilder =
           new ParallelizedTransactionContext.Builder();
       final DiffBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =

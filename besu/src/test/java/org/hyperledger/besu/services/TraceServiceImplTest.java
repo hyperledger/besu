@@ -92,7 +92,7 @@ class TraceServiceImplTest {
         Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");
 
     final long persistedNonceForAccount =
-        worldStateArchive.getMutable().get(addressToVerify).getNonce();
+        worldStateArchive.getWorldState().get(addressToVerify).getNonce();
 
     final long blockNumber = 2;
 
@@ -109,7 +109,7 @@ class TraceServiceImplTest {
         },
         opTracer);
 
-    assertThat(worldStateArchive.getMutable().get(addressToVerify).getNonce())
+    assertThat(worldStateArchive.getWorldState().get(addressToVerify).getNonce())
         .isEqualTo(persistedNonceForAccount);
 
     final Block tracedBlock = blockchain.getBlockByNumber(blockNumber).get();
@@ -139,7 +139,7 @@ class TraceServiceImplTest {
         Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");
 
     final long persistedNonceForAccount =
-        worldStateArchive.getMutable().get(addressToVerify).getNonce();
+        worldStateArchive.getWorldState().get(addressToVerify).getNonce();
 
     final long startBlock = 1;
     final long endBlock = 32;
@@ -157,7 +157,7 @@ class TraceServiceImplTest {
         },
         opTracer);
 
-    assertThat(worldStateArchive.getMutable().get(addressToVerify).getNonce())
+    assertThat(worldStateArchive.getWorldState().get(addressToVerify).getNonce())
         .isEqualTo(persistedNonceForAccount);
 
     LongStream.rangeClosed(startBlock, endBlock)

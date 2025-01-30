@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -173,7 +174,7 @@ public class TransactionSimulator {
           operationTracer,
           pendingBlockHeader,
           updater,
-          Address.ZERO);
+          pendingBlockHeader.getCoinbase());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -210,7 +211,7 @@ public class TransactionSimulator {
 
     final Hash parentStateRoot = parentHeader.getStateRoot();
     return worldStateArchive
-        .getMutable(parentHeader, false)
+        .getWorldState(withBlockHeaderAndNoUpdateNodeHead(parentHeader))
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
@@ -337,7 +338,7 @@ public class TransactionSimulator {
 
   private MutableWorldState getWorldState(final BlockHeader header) {
     return worldStateArchive
-        .getMutable(header, false)
+        .getWorldState(withBlockHeaderAndNoUpdateNodeHead(header))
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
@@ -586,7 +587,7 @@ public class TransactionSimulator {
   public Optional<Boolean> doesAddressExistAtHead(final Address address) {
     final BlockHeader header = blockchain.getChainHeadHeader();
     try (final MutableWorldState worldState =
-        worldStateArchive.getMutable(header, false).orElseThrow()) {
+        worldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(header)).orElseThrow()) {
       return doesAddressExist(worldState, address, header);
     } catch (final Exception ex) {
       return Optional.empty();
