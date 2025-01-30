@@ -72,7 +72,6 @@ public class DebugTraceTransactionIntegrationTest {
     DebugTraceTransactionResult debugTraceTransactionResult =
         (DebugTraceTransactionResult) ((JsonRpcSuccessResponse) response).getResult();
 
-    ;
     final DebugTraceTransactionDetails debugTraceTransactionDetails =
         debugTraceTransactionResult.getResult();
     assertThat(debugTraceTransactionResult.getTxHash()).isEqualTo(trxHash.toHexString());
