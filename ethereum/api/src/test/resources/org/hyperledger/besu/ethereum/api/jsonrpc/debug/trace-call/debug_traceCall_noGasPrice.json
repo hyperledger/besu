@@ -17,19 +17,24 @@
     "id": 1
   },
   "response": {
-    "jsonrpc": "2.0",
-    "id": 1,
-    "result": {
-      "gas" : 21164,
-      "failed" : false,
-      "returnValue" : "",
-      "structLogs" : [ {
-        "pc" : 0,
-        "op" : "STOP",
-        "gas" : 17592186023252,
-        "gasCost" : 0,
-        "depth" : 1
-      } ]
+    "jsonrpc":"2.0",
+    "id":1,
+    "result":{
+      "txHash":"0x49f505ed122c398287e1558275ccfcaa2d22df98df5b55e6c70635e6aa3a6ecc",
+      "result":{
+        "gas":21164,
+        "failed":false,
+        "returnValue":"",
+        "structLogs":[
+          {
+            "pc":0,
+            "op":"STOP",
+            "gas":17592186023252,
+            "gasCost":0,
+            "depth":1
+          }
+        ]
+      }
     }
   },
   "statusCode": 200

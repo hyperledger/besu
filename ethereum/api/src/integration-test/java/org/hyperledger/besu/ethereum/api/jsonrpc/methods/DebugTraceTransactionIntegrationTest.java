@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
@@ -70,8 +70,8 @@ public class DebugTraceTransactionIntegrationTest {
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
-    DebugTraceTransactionResult debugTraceTransactionResult =
-        (DebugTraceTransactionResult) ((JsonRpcSuccessResponse) response).getResult();
+    DebugTraceTransactionDetails debugTraceTransactionResult =
+        (DebugTraceTransactionDetails) ((JsonRpcSuccessResponse) response).getResult();
     assertThat(debugTraceTransactionResult.getGas()).isEqualTo(23705L);
     assertThat(debugTraceTransactionResult.getReturnValue()).isEmpty();
     assertThat(debugTraceTransactionResult.failed()).isFalse();
