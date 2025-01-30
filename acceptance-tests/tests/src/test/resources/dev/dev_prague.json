@@ -60,8 +60,8 @@
     "0x0000000000000000000000000000000000000666": {
       "comment": "Contract reverts immediately when called",
       "balance": "0",
-      "code": "EF",
-      "codeDecompiled": "INVALID OP CODE",
+      "code": "FD",
+      "codeDecompiled": "REVERT",
       "storage": {}
     },
     "0x0000000000000000000000000000000000009999": {
