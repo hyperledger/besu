@@ -25,9 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -38,59 +36,34 @@ public class QuorumIBFTMigrationTest extends ParameterizedBftTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(QuorumIBFTMigrationTest.class);
 
-  public static void removeDatabaseFilesAndFolder(final String... nodeNames) throws IOException {
-    for (final String nodeName : nodeNames) {
-      final Path dataDir = Paths.get("/tmp", nodeName);
-      Files.deleteIfExists(dataDir.resolve("DATABASE_METADATA.json"));
-      Files.deleteIfExists(dataDir.resolve("VERSION_METADATA.json"));
-      final Path databaseDir = dataDir.resolve("database");
-      try (Stream<Path> paths = Files.walk(databaseDir)) {
-        paths
-            .sorted(
-                (path1, path2) ->
-                    path2.compareTo(
-                        path1)) // Sort in reverse order to delete files before directories
-            .forEach(
-                path -> {
-                  try {
-                    Files.delete(path);
-                  } catch (final IOException e) {
-                    LOG.info("Failed to delete file: " + path, e);
-                  }
-                });
-      }
-      LOG.info("Deleted blockchain data for node : " + nodeName);
+  public static void copyKeyFilesToNodeDataDirs(final BesuNode... nodes) throws IOException {
+    for (BesuNode node : nodes) {
+      copyKeyFile(node, "key");
+      copyKeyFile(node, "key.pub");
     }
   }
 
-  public static void copyKeyFilesToNodeDataDirs(final String... nodeNames) throws IOException {
-    for (String nodeName : nodeNames) {
-      copyKeyFile(nodeName, "key");
-      copyKeyFile(nodeName, "key.pub");
-    }
-  }
-
-  private static void copyKeyFile(final String nodeName, final String keyFileName)
+  private static void copyKeyFile(final BesuNode node, final String keyFileName)
       throws IOException {
-    String resourceFileName = nodeName + keyFileName;
+    String resourceFileName = node.getName() + keyFileName;
     try (InputStream keyFileStream = getClassLoader().getResourceAsStream(resourceFileName)) {
       if (keyFileStream == null) {
         throw new IOException("Resource not found: " + resourceFileName);
       }
-      Path targetPath = Paths.get("/tmp", nodeName, keyFileName);
+      Path targetPath = node.homeDirectory().resolve(keyFileName);
       Files.createDirectories(targetPath.getParent());
       Files.copy(keyFileStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
     }
   }
 
-  public static void runBesuCommand() throws IOException, InterruptedException {
+  public static void runBesuCommand(final Path dataPath) throws IOException, InterruptedException {
     ProcessBuilder processBuilder =
         new ProcessBuilder(
             "../../build/install/besu/bin/besu",
             "--genesis-file",
             "src/test/resources/qbft/qbft.json",
             "--data-path",
-            "/tmp/miner1",
+            dataPath.toString(),
             "--data-storage-format",
             "FOREST",
             "blocks",
@@ -121,14 +94,6 @@ public class QuorumIBFTMigrationTest extends ParameterizedBftTestBase {
 
     setUp(testName, nodeFactory);
 
-    // remove DATABASE_METADATA.json, VERSION_METADATA.json files and database folder from the
-    // datadirs
-    try {
-      removeDatabaseFilesAndFolder("miner1", "miner2", "miner3", "miner4", "miner5");
-    } catch (IOException e) {
-      LOG.info("Failed to remove database files and folder", e);
-    }
-
     // Create a mix of Bonsai and Forest DB nodes
     final BesuNode minerNode1 = nodeFactory.createForestNodeFixedPort(besu, "miner1");
     final BesuNode minerNode2 = nodeFactory.createForestNodeFixedPort(besu, "miner2");
@@ -136,15 +101,14 @@ public class QuorumIBFTMigrationTest extends ParameterizedBftTestBase {
     final BesuNode minerNode4 = nodeFactory.createForestNodeFixedPort(besu, "miner4");
     final BesuNode minerNode5 = nodeFactory.createForestNodeFixedPort(besu, "miner5");
 
-    // Copy key files to the node datadirs -  /tmp/miner1, /tmp/miner2, /tmp/miner3, /tmp/miner4,
-    // /tmp/miner5
+    // Copy key files to the node datadirs
     // Use the key files saved in resources directory
-    copyKeyFilesToNodeDataDirs("miner1", "miner2", "miner3", "miner4", "miner5");
+    copyKeyFilesToNodeDataDirs(minerNode1, minerNode2, minerNode3, minerNode4, minerNode5);
 
     // start one node and import blocks from import file
     // Use import file, genesis saved in resources directory
 
-    runBesuCommand();
+    runBesuCommand(minerNode1.homeDirectory());
 
     // After the import is done, start the rest of the nodes using the same genesis and respective
     // node keys
