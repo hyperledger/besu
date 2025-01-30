@@ -253,7 +253,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
     final CodeDelegation codeDelegation =
         org.hyperledger.besu.ethereum.core.CodeDelegation.builder()
             .chainId(BigInteger.valueOf(20211))
-            .nonce(1L)
+            .nonce(0L)
             .address(SEND_ALL_ETH_CONTRACT_ADDRESS)
             .signAndBuild(
                 secp256k1.createKeyPair(
