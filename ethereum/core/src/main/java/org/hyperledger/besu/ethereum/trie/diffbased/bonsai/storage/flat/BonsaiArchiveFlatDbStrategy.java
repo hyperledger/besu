@@ -77,17 +77,15 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   private Optional<BonsaiContext> getStateArchiveContextForWrite(
       final SegmentedKeyValueStorage storage) {
     // For Bonsai archive get the flat DB context to use for writing archive entries. We add one
-    // because
-    // we're working with the latest world state so putting new flat DB keys requires us to +1 to it
+    // because we're working with the latest world state so putting new flat DB keys requires us to
+    // +1 to it
     Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
     if (archiveContext.isPresent()) {
       try {
         return Optional.of(
             // The context for flat-DB PUTs is the block number recorded in the specified world
             // state, + 1
-            new BonsaiContext(
-                Long.decode("0x" + (new String(archiveContext.get(), StandardCharsets.UTF_8)))
-                    + 1));
+            new BonsaiContext(Bytes.wrap(archiveContext.get()).toLong() + 1));
       } catch (NumberFormatException e) {
         throw new IllegalStateException(
             "World state archive context invalid format: "
@@ -108,8 +106,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
         return Optional.of(
             // The context for flat-DB PUTs is the block number recorded in the specified world
             // state
-            new BonsaiContext(
-                Long.decode("0x" + (new String(archiveContext.get(), StandardCharsets.UTF_8)))));
+            new BonsaiContext(Bytes.wrap(archiveContext.get()).toLong()));
       } catch (NumberFormatException e) {
         throw new IllegalStateException(
             "World state archive context invalid format: "

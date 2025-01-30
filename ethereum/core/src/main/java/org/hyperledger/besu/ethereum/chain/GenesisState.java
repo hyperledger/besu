@@ -41,7 +41,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -171,9 +170,7 @@ public final class GenesisState {
                 .getComposedWorldStateStorage()
                 .startTransaction();
         genesisStateTX.put(
-            TRIE_BRANCH_STORAGE,
-            WORLD_BLOCK_NUMBER_KEY,
-            Long.toHexString(0L).getBytes(StandardCharsets.UTF_8));
+            TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY, Bytes.ofUnsignedLong(0).toArrayUnsafe());
         genesisStateTX.commit();
       }
     }
