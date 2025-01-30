@@ -139,7 +139,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   public Optional<Long> getWorldStateBlockNumber() {
     return composedWorldStateStorage
         .get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY)
-        .map(bytes -> Long.decode("0x" + new String(bytes, StandardCharsets.UTF_8)));
+        .map(bytes -> Bytes.wrap(bytes).toLong());
   }
 
   public NavigableMap<Bytes32, Bytes> streamFlatAccounts(

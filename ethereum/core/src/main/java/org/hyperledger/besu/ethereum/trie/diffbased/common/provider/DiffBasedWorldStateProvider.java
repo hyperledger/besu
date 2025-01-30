@@ -288,19 +288,19 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
             (DiffBasedWorldStateUpdateAccumulator<?>) mutableState.updater();
         try {
           for (final TrieLog rollBack : rollBacks) {
-            LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
+            LOG.info("Attempting Rollback of {}", rollBack.getBlockHash());
             diffBasedUpdater.rollBack(rollBack);
           }
           for (int i = rollForwards.size() - 1; i >= 0; i--) {
             final var forward = rollForwards.get(i);
-            LOG.debug("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
+            LOG.info("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
             diffBasedUpdater.rollForward(forward);
           }
           diffBasedUpdater.commit();
 
           mutableState.persist(blockchain.getBlockHeader(blockHash).get());
 
-          LOG.debug(
+          LOG.info(
               "Archive rolling finished, {} now at {}",
               mutableState.getWorldStateStorage().getClass().getSimpleName(),
               blockHash);
@@ -371,7 +371,10 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
                 new WorldStateStorageCoordinator(ws.getWorldStateStorage()));
         return mapper.apply(
             worldStateProofProvider.getAccountProof(
-                ws.getWorldStateRootHash(), accountAddress, accountStorageKeys));
+                // ws.getWorldStateRootHash(), accountAddress, accountStorageKeys)); // MRW TODO -
+                // do we need to store world state root has every N blocks as well, or can we
+                // reference the block header like FOREST does?
+                blockHeader.getStateRoot(), accountAddress, accountStorageKeys));
       }
     } catch (Exception ex) {
       LOG.error("failed proof query for " + blockHeader.getBlockHash().toShortHexString(), ex);

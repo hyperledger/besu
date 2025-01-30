@@ -102,7 +102,6 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   }
 
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    System.out.println("Get Bonsai account state trie node");
     if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
@@ -113,10 +112,6 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
               location,
               nodeHash,
               composedWorldStateStorage);
-      /*return composedWorldStateStorage
-      .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
-      .map(Bytes::wrap)
-      .filter(b -> Hash.hash(b).equals(nodeHash));*/
     }
   }
 
@@ -274,11 +269,6 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
         // Don't save empty nodes
         return this;
       }
-      System.out.println(
-          "Putting Bonsai account state trie node - location = "
-              + Bytes.wrap(location).toHexString()
-              + ", node = "
-              + Bytes.wrap(node).toHexString());
       flatDbStrategy.putFlatAccountTrieNode(
           worldStorage, composedWorldStateTransaction, location, nodeHash, node);
       composedWorldStateTransaction.put(

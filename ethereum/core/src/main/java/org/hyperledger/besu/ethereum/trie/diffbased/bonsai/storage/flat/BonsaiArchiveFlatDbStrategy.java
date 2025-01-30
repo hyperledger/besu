@@ -74,20 +74,50 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   public static final byte[] DELETED_CODE_VALUE = new byte[0];
   public static final byte[] DELETED_STORAGE_VALUE = new byte[0];
 
+  private static final int CHECKPOINT_INTERVAL = 50;
+
+  private Optional<BonsaiContext> getStateTrieArchiveContextForWrite(
+      final SegmentedKeyValueStorage storage) {
+    // For Bonsai archive get the flat DB context to use for writing archive entries. We add one
+    // because we're working with the latest world state so putting new flat DB keys requires us to
+    // +1 to it
+    Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
+    if (archiveContext.isPresent()) {
+      try {
+        // MRW We need to round down to the nearest N
+        long trieContext =
+            (((Bytes.wrap(archiveContext.get()).toLong() + 1) / CHECKPOINT_INTERVAL)
+                * CHECKPOINT_INTERVAL);
+        trieContext = trieContext == 0 ? 1 : trieContext;
+        // MRW TODO - quirk of rocksdb that key searches for "0x0000000..." seem to be returned in
+        // reverse order to other keys
+        return Optional.of(
+            // The context for flat-DB PUTs is the block number recorded in the specified world
+            // state, + 1
+            new BonsaiContext(trieContext));
+      } catch (NumberFormatException e) {
+        throw new IllegalStateException(
+            "World state archive context invalid format: "
+                + new String(archiveContext.get(), StandardCharsets.UTF_8));
+      }
+    } else {
+      // Archive flat-db entries cannot be PUT if we don't have block context
+      throw new IllegalStateException("World state missing archive context");
+    }
+  }
+
   private Optional<BonsaiContext> getStateArchiveContextForWrite(
       final SegmentedKeyValueStorage storage) {
     // For Bonsai archive get the flat DB context to use for writing archive entries. We add one
-    // because
-    // we're working with the latest world state so putting new flat DB keys requires us to +1 to it
+    // because we're working with the latest world state so putting new flat DB keys requires us to
+    // +1 to it
     Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
     if (archiveContext.isPresent()) {
       try {
         return Optional.of(
             // The context for flat-DB PUTs is the block number recorded in the specified world
             // state, + 1
-            new BonsaiContext(
-                Long.decode("0x" + (new String(archiveContext.get(), StandardCharsets.UTF_8)))
-                    + 1));
+            new BonsaiContext(Bytes.wrap(archiveContext.get()).toLong() + 1));
       } catch (NumberFormatException e) {
         throw new IllegalStateException(
             "World state archive context invalid format: "
@@ -108,8 +138,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
         return Optional.of(
             // The context for flat-DB PUTs is the block number recorded in the specified world
             // state
-            new BonsaiContext(
-                Long.decode("0x" + (new String(archiveContext.get(), StandardCharsets.UTF_8)))));
+            new BonsaiContext(Bytes.wrap(archiveContext.get()).toLong()));
       } catch (NumberFormatException e) {
         throw new IllegalStateException(
             "World state archive context invalid format: "
@@ -182,7 +211,6 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
       final Bytes32 nodeHash,
       final SegmentedKeyValueStorage storage) {
     // TODO - metrics?
-
     Optional<Bytes> accountFound;
 
     // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
@@ -195,17 +223,16 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
         storage
             .getNearestBefore(TRIE_BRANCH_STORAGE, keyNearest)
             .filter(found -> location.commonPrefixLength(found.key()) >= location.size())
-                .filter(found -> found.key().size() == (location.size() + 16)); // TODO - change for CONST
+            .filter(
+                found ->
+                    found.key().size() == (location.size() + 8)) // TODO - change for CONST length
+            .filter(found -> Hash.hash(Bytes.wrap(found.value().get())).equals(nodeHash));
 
     // TODO - getFlatAccount does extra checks for the delete case. Do we need to do anything in
     // that respect here?
     accountFound = nearestAccount.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
-    return accountFound;
 
-    /*return storage
-    .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
-    .map(Bytes::wrap)
-    .filter(b -> Hash.hash(b).equals(nodeHash));*/
+    return accountFound;
   }
 
   @Override
@@ -335,9 +362,8 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     // key suffixed with block context, or MIN_BLOCK_SUFFIX if we have no context:
     byte[] keySuffixed =
         calculateArchiveKeyWithMinSuffix(
-            getStateArchiveContextForWrite(storage).get(), location.toArrayUnsafe());
+            getStateTrieArchiveContextForWrite(storage).get(), location.toArrayUnsafe());
 
-    transaction.put(TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
     transaction.put(TRIE_BRANCH_STORAGE, keySuffixed, node.toArrayUnsafe());
   }
 

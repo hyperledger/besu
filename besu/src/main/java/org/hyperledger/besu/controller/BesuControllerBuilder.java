@@ -86,7 +86,7 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiArchiveWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiArchiveProofsWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -1186,7 +1186,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
             worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
 
-        yield new BonsaiArchiveWorldStateProvider(
+        // MRW TODO - config options to choose between archive and archive w/proofs
+        yield new BonsaiArchiveProofsWorldStateProvider(
             worldStateKeyValueStorage,
             blockchain,
             Optional.of(

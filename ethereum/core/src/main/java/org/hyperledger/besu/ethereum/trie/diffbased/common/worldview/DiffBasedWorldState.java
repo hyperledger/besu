@@ -39,7 +39,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -177,10 +176,7 @@ public abstract class DiffBasedWorldState
   @Override
   public void persist(final BlockHeader blockHeader) {
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
-    LOG.atDebug()
-        .setMessage("Persist world state for block {}")
-        .addArgument(maybeBlockHeader)
-        .log();
+    LOG.atInfo().setMessage("Persist world state for block {}").addArgument(maybeBlockHeader).log();
 
     final DiffBasedWorldStateUpdateAccumulator<?> localCopy = accumulator.copy();
 
@@ -243,8 +239,8 @@ public abstract class DiffBasedWorldState
           .put(
               TRIE_BRANCH_STORAGE,
               WORLD_BLOCK_NUMBER_KEY,
-              Long.toHexString(blockHeader == null ? 0L : blockHeader.getNumber())
-                  .getBytes(StandardCharsets.UTF_8));
+              Bytes.ofUnsignedLong(blockHeader == null ? 0L : blockHeader.getNumber())
+                  .toArrayUnsafe());
       worldStateRootHash = calculatedRootHash;
       success = true;
     } finally {
