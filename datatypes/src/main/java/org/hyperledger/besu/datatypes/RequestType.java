@@ -52,8 +52,14 @@ public enum RequestType {
       case 0x01 -> WITHDRAWAL;
       case 0x02 -> CONSOLIDATION;
       default ->
-          throw new IllegalArgumentException(
+          throw new InvalidRequestTypeException(
               String.format("Unsupported request type: 0x%02X", serializedTypeValue));
     };
+  }
+
+  public static class InvalidRequestTypeException extends IllegalArgumentException {
+    public InvalidRequestTypeException(final String message) {
+      super(message);
+    }
   }
 }
