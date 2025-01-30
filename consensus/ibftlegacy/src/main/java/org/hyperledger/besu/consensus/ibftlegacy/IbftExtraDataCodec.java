@@ -88,20 +88,5 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
   public Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType) {
     throw new UnsupportedOperationException("The encode method is not supported.");
   }
-  /*  @Override
-  public Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType) {
-    final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
-    encoder.startList();
-    encoder.writeList(bftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
-    if (bftExtraData.getProposerSeal() != null) {
-      encoder.writeBytes(bftExtraData.getProposerSeal().encodedBytes());
-    } else {
-      encoder.writeNull();
-    }
-    encoder.writeList(bftExtraData.getSeals(), (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
-    encoder.endList();
-
-    return Bytes.wrap(bftExtraData.getVanityData(), encoder.encoded());
-  }*/
 
 }
