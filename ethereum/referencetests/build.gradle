@@ -221,6 +221,7 @@ dependencies {
 
 tasks.register('referenceTests', Test) {
   useJUnitPlatform()
+  systemProperty 'root.log.level', 'TRACE'
   doFirst {
     if (!file("src/reference-test/external-resources/README.md").exists()) {
       throw new GradleException("ethereum/referencetest/src/reference-test/external-resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
