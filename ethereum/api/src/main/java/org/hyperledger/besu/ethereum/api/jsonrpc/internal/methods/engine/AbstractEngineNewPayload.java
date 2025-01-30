@@ -68,10 +68,8 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -204,13 +202,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final Optional<List<Request>> maybeRequests;
     try {
       maybeRequests = extractRequests(maybeRequestsParam);
-    } catch (RuntimeException ex) {
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-          INVALID,
-          "Invalid execution requests");
+    } catch (Exception ex) {
+      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
     }
 
     if (!getRequestsValidator(
@@ -594,24 +587,14 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return Optional.empty();
     }
     return maybeRequestsParam.map(
-        requests -> {
-          Set<Bytes> uniqueRequests = new HashSet<>();
-          return requests.stream()
-              .map(Bytes::fromHexString)
-              .map(
-                  request -> {
-                    if (!uniqueRequests.add(request)) {
-                      throw new InvalidParameterException(
-                          "Duplicate request detected for request: " + request);
-                    }
-                    Bytes requestBytes = request.slice(1);
-                    if (requestBytes.isEmpty()) {
-                      throw new InvalidParameterException("Execution request cannot be empty");
-                    }
-                    return new Request(RequestType.of(request.get(0)), requestBytes);
-                  })
-              .collect(Collectors.toList());
-        });
+        requests ->
+            requests.stream()
+                .map(
+                    s -> {
+                      final Bytes request = Bytes.fromHexString(s);
+                      return new Request(RequestType.of(request.get(0)), request.slice(1));
+                    })
+                .collect(Collectors.toList()));
   }
 
   private void logImportedBlockInfo(

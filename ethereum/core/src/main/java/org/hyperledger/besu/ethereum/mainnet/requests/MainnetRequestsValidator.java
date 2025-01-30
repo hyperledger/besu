@@ -16,10 +16,13 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.ethereum.core.Request;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import com.google.common.collect.Ordering;
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,11 +49,23 @@ public class MainnetRequestsValidator implements RequestsValidator {
       return false;
     }
 
-    if (!isRequestOrderValid(maybeRequests.get())) {
+    List<Request> requests = maybeRequests.get();
+    if (!isRequestOrderValid(requests)) {
       LOG.warn("Ordering across requests must be ascending by type");
       return false;
     }
 
+    Set<Bytes> uniqueRequests = new HashSet<>();
+    for (Request request : requests) {
+      if (!uniqueRequests.add(request.getEncodedRequest())) {
+        LOG.warn("Duplicate request detected for request: {}", request);
+        return false;
+      }
+      if (request.getData().isEmpty()) {
+        LOG.warn("Execution request cannot be empty");
+        return false;
+      }
+    }
     return true;
   }
 
