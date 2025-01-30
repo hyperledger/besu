@@ -57,7 +57,18 @@ public enum RequestType {
     };
   }
 
+  /**
+   * Exception thrown when an invalid request type is encountered.
+   *
+   * <p>This exception is thrown when a serialized type value does not correspond to any {@link
+   * RequestType}.
+   */
   public static class InvalidRequestTypeException extends IllegalArgumentException {
+    /**
+     * Constructs an {@link InvalidRequestTypeException} with the specified detail message.
+     *
+     * @param message the detail message.
+     */
     public InvalidRequestTypeException(final String message) {
       super(message);
     }
