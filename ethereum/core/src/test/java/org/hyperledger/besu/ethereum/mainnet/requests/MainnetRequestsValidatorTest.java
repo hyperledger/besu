@@ -29,6 +29,12 @@ import org.junit.jupiter.api.Test;
 class MainnetRequestsValidatorTest {
 
   @Test
+  void validateFalseWhenNoRequests() {
+    MainnetRequestsValidator validator = new MainnetRequestsValidator();
+    assertFalse(validator.validate(Optional.empty()));
+  }
+
+  @Test
   void validateFalseWhenRequestsNotInOrder() {
     MainnetRequestsValidator validator = new MainnetRequestsValidator();
     List<Request> requests =

@@ -97,7 +97,9 @@ public final class BodyValidation {
    */
   public static Hash requestsHash(final List<Request> requests) {
     List<Bytes> requestHashes = new ArrayList<>();
-    requests.forEach(request -> requestHashes.add(sha256(request.getEncodedRequest())));
+    requests.stream()
+        .filter(request -> !request.getData().isEmpty())
+        .forEach(request -> requestHashes.add(sha256(request.getEncodedRequest())));
     return Hash.wrap(sha256(Bytes.wrap(requestHashes)));
   }
 

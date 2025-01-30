@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.Ordering;
+import com.google.common.collect.Comparators;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,13 +43,18 @@ public class MainnetRequestsValidator implements RequestsValidator {
    */
   @Override
   public boolean validate(final Optional<List<Request>> maybeRequests) {
+    if (maybeRequests.isEmpty()) {
+      LOG.warn("Must contain requests (even if empty list)");
+      return false;
+    }
+
     if (containsRequestWithEmptyData(maybeRequests.get())) {
       LOG.warn("Request must not be empty");
       return false;
     }
 
     if (!areRequestTypesUniqueAndOrderValid(maybeRequests.get())) {
-      LOG.warn("Ordering across request types must be unique and ascending by type");
+      LOG.warn("Request types must be unique and ordering must be ascending by type");
       return false;
     }
 
@@ -55,7 +62,8 @@ public class MainnetRequestsValidator implements RequestsValidator {
   }
 
   private static boolean areRequestTypesUniqueAndOrderValid(final List<Request> requests) {
-    return Ordering.natural().onResultOf(Request::getType).isStrictlyOrdered(requests);
+    final List<RequestType> requestTypes = requests.stream().map(Request::type).toList();
+    return Comparators.isInStrictOrder(requestTypes, Comparator.naturalOrder());
   }
 
   private static boolean containsRequestWithEmptyData(final List<Request> requests) {
