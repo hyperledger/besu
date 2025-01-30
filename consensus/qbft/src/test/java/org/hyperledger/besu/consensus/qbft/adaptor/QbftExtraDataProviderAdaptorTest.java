@@ -27,7 +27,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-class QbftExtraDataProviderImplTest {
+class QbftExtraDataProviderAdaptorTest {
 
   @Test
   void retrievesExtraDataFromBlockHeader() {
@@ -38,8 +38,8 @@ class QbftExtraDataProviderImplTest {
     final BlockHeader header =
         new BlockHeaderTestFixture().number(1).extraData(encoded).buildHeader();
 
-    final QbftExtraDataProviderImpl qbftExtraDataProvider =
-        new QbftExtraDataProviderImpl(new QbftExtraDataCodec());
+    final QbftExtraDataProviderAdaptor qbftExtraDataProvider =
+        new QbftExtraDataProviderAdaptor(new QbftExtraDataCodec());
     final BftExtraData retrievedExtraData = qbftExtraDataProvider.getExtraData(header);
     assertThat(retrievedExtraData).isEqualToComparingFieldByField(bftExtraData);
   }

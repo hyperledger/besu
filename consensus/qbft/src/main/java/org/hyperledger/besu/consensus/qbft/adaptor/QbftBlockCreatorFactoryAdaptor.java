@@ -14,33 +14,37 @@
  */
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
+import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreatorFactory;
 
-/** Besu implementation of QbftBlockCreatorFactory used for creating QBFT block creators. */
-public class QbftBlockCreatorFactoryImpl implements QbftBlockCreatorFactory {
+/**
+ * Adaptor class to allow a {@link BftBlockCreatorFactory} to be used as a {@link
+ * QbftBlockCreatorFactory}.
+ */
+public class QbftBlockCreatorFactoryAdaptor implements QbftBlockCreatorFactory {
 
-  private final org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory
-      qbftBlockCreatorFactory;
+  private final BftBlockCreatorFactory<QbftConfigOptions> qbftBlockCreatorFactory;
   private final BftExtraDataCodec bftExtraDataCodec;
 
   /**
    * Constructs a new QbftBlockCreatorFactory
    *
-   * @param qbftBlockCreatorFactory The Besu QBFT block creator factory
+   * @param bftBlockCreatorFactory The Besu QBFT block creator factory
    * @param bftExtraDataCodec the bftExtraDataCodec used to encode extra data for the new header
    */
-  public QbftBlockCreatorFactoryImpl(
-      final org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory
-          qbftBlockCreatorFactory,
+  public QbftBlockCreatorFactoryAdaptor(
+      final BftBlockCreatorFactory<QbftConfigOptions> bftBlockCreatorFactory,
       final BftExtraDataCodec bftExtraDataCodec) {
-    this.qbftBlockCreatorFactory = qbftBlockCreatorFactory;
+    this.qbftBlockCreatorFactory = bftBlockCreatorFactory;
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   @Override
   public QbftBlockCreator create(final int roundNumber) {
-    return new QbftBlockCreatorImpl(qbftBlockCreatorFactory.create(roundNumber), bftExtraDataCodec);
+    return new QbftBlockCreatorAdaptor(
+        qbftBlockCreatorFactory.create(roundNumber), bftExtraDataCodec);
   }
 }

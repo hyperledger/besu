@@ -30,8 +30,8 @@ public class BlockUtil {
    * @return the Besu block
    */
   public static Block toBesuBlock(final QbftBlock block) {
-    if (block instanceof QbftBlockImpl) {
-      return ((QbftBlockImpl) block).getBesuBlock();
+    if (block instanceof QbftBlockAdaptor) {
+      return ((QbftBlockAdaptor) block).getBesuBlock();
     } else {
       throw new IllegalArgumentException("Unsupported block type");
     }

@@ -32,11 +32,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class QbftBlockValidatorImplTest {
+class QbftBlockValidatorAdaptorTest {
   @Mock private BlockValidator blockValidator;
   @Mock private ProtocolContext protocolContext;
   @Mock private Block besuBlock;
-  @Mock private QbftBlockImpl qbftBlock;
+  @Mock private QbftBlockAdaptor qbftBlock;
 
   @Test
   void validateSuccessfullyWhenBesuValidatorSuccessful() {
@@ -49,8 +49,8 @@ class QbftBlockValidatorImplTest {
             false))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
 
-    QbftBlockValidatorImpl qbftBlockValidator =
-        new QbftBlockValidatorImpl(blockValidator, protocolContext);
+    QbftBlockValidatorAdaptor qbftBlockValidator =
+        new QbftBlockValidatorAdaptor(blockValidator, protocolContext);
     QbftBlockValidator.ValidationResult validationResult =
         qbftBlockValidator.validateBlock(qbftBlock);
     assertThat(validationResult.success()).isTrue();
@@ -68,8 +68,8 @@ class QbftBlockValidatorImplTest {
             false))
         .thenReturn(new BlockProcessingResult("failed"));
 
-    QbftBlockValidatorImpl qbftBlockValidator =
-        new QbftBlockValidatorImpl(blockValidator, protocolContext);
+    QbftBlockValidatorAdaptor qbftBlockValidator =
+        new QbftBlockValidatorAdaptor(blockValidator, protocolContext);
     QbftBlockValidator.ValidationResult validationResult =
         qbftBlockValidator.validateBlock(qbftBlock);
     assertThat(validationResult.success()).isFalse();

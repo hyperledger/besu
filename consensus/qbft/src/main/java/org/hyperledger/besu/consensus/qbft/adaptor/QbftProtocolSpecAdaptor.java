@@ -20,11 +20,8 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
-/**
- * Besu implementation of the QbftProtocolSpeck which provides the ability to select the appropriate
- * QbftProtocolSpec containing the validation and import for the supplied block header.
- */
-public class QbftProtocolSpecImpl implements QbftProtocolSpec {
+/** Adaptor class to allow a {@link ProtocolSpec} to be used as a {@link QbftProtocolSpec}. */
+public class QbftProtocolSpecAdaptor implements QbftProtocolSpec {
   private final ProtocolSpec besuProtocolSpec;
   private final ProtocolContext context;
 
@@ -34,18 +31,19 @@ public class QbftProtocolSpecImpl implements QbftProtocolSpec {
    * @param besuProtocolSpec The Besu protocol spec.
    * @param context The protocol context.
    */
-  public QbftProtocolSpecImpl(final ProtocolSpec besuProtocolSpec, final ProtocolContext context) {
+  public QbftProtocolSpecAdaptor(
+      final ProtocolSpec besuProtocolSpec, final ProtocolContext context) {
     this.besuProtocolSpec = besuProtocolSpec;
     this.context = context;
   }
 
   @Override
   public QbftBlockImporter getBlockImporter() {
-    return new QbftBlockImporterImpl(besuProtocolSpec.getBlockImporter(), context);
+    return new QbftBlockImporterAdaptor(besuProtocolSpec.getBlockImporter(), context);
   }
 
   @Override
   public QbftBlockValidator getBlockValidator() {
-    return new QbftBlockValidatorImpl(besuProtocolSpec.getBlockValidator(), context);
+    return new QbftBlockValidatorAdaptor(besuProtocolSpec.getBlockValidator(), context);
   }
 }

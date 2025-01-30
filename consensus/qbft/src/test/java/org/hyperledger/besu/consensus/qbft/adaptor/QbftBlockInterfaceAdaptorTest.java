@@ -17,42 +17,43 @@ package org.hyperledger.besu.consensus.qbft.adaptor;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-class QbftBlockCodecImplTest {
+@ExtendWith(MockitoExtension.class)
+class QbftBlockInterfaceAdaptorTest {
+  private final BftBlockInterface bftBlockInterface =
+      new BftBlockInterface(new QbftExtraDataCodec());
 
-  @ParameterizedTest
-  @EnumSource(QbftHashMode.class)
-  void canRoundTripBlock(final QbftHashMode hashMode) {
+  @Test
+  void replacesRoundInBlockHeader() {
+    QbftExtraDataCodec qbftExtraDataCodec = new QbftExtraDataCodec();
     BftExtraData bftExtraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, emptyList());
-    Bytes encodedExtraData = new QbftExtraDataCodec().encode(bftExtraData);
+    Bytes encodedExtraData = qbftExtraDataCodec.encode(bftExtraData);
     BlockHeader header = new BlockHeaderTestFixture().extraData(encodedExtraData).buildHeader();
     Block besuBlock = new Block(header, BlockBody.empty());
-    QbftBlock block = new QbftBlockImpl(besuBlock);
+    QbftBlock block = new QbftBlockAdaptor(besuBlock);
 
-    BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    QbftBlockCodecImpl qbftBlockCodec = new QbftBlockCodecImpl(new QbftExtraDataCodec());
-    qbftBlockCodec.writeTo(block, rlpOutput);
-
-    RLPInput rlpInput = new BytesValueRLPInput(rlpOutput.encoded(), false);
-    QbftBlock decodedBlock = qbftBlockCodec.readFrom(rlpInput, hashMode);
-    assertThat(decodedBlock).isEqualTo(block);
+    QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
+    QbftBlock updatedBlock =
+        qbftBlockInterface.replaceRoundInBlock(block, 1, QbftHashMode.COMMITTED_SEAL);
+    BftExtraData extraData = qbftExtraDataCodec.decode(updatedBlock.getHeader());
+    assertThat(extraData.getRound()).isEqualTo(1);
   }
 }

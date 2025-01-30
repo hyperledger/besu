@@ -21,11 +21,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Objects;
 
-/**
- * Besu Implementation of a QbftBlock which represents a block for consensus in the QBFT consensus
- * mechanism.
- */
-public class QbftBlockImpl implements QbftBlock {
+/** Adaptor class to allow a {@link Block} to be used as a {@link QbftBlock}. */
+public class QbftBlockAdaptor implements QbftBlock {
 
   private final BlockHeader header;
   private final Block block;
@@ -35,7 +32,7 @@ public class QbftBlockImpl implements QbftBlock {
    *
    * @param block the Besu Block
    */
-  public QbftBlockImpl(final Block block) {
+  public QbftBlockAdaptor(final Block block) {
     this.block = block;
     this.header = block.getHeader();
   }
@@ -62,7 +59,7 @@ public class QbftBlockImpl implements QbftBlock {
 
   @Override
   public boolean equals(final Object o) {
-    if (!(o instanceof QbftBlockImpl qbftBlock)) return false;
+    if (!(o instanceof QbftBlockAdaptor qbftBlock)) return false;
     return Objects.equals(header, qbftBlock.header) && Objects.equals(block, qbftBlock.block);
   }
 

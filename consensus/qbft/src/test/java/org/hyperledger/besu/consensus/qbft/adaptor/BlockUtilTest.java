@@ -30,7 +30,7 @@ class BlockUtilTest {
   void canConvertQbftBlockToBesuBlock() {
     BlockHeader header = new BlockHeaderTestFixture().buildHeader();
     Block besuBlock = new Block(header, BlockBody.empty());
-    QbftBlock qbftBlock = new QbftBlockImpl(besuBlock);
+    QbftBlock qbftBlock = new QbftBlockAdaptor(besuBlock);
 
     assertThat(BlockUtil.toBesuBlock(qbftBlock)).isSameAs(besuBlock);
   }

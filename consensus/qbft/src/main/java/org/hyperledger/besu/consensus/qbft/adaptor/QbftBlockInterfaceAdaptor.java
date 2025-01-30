@@ -25,8 +25,10 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 
-/** Besu implementation of the QbftBlockInterface providing utility functions for Qbft Blocks */
-public class QbftBlockInterfaceImpl implements QbftBlockInterface {
+/**
+ * Adaptor class to allow a {@link BftBlockInterface} to be used as a {@link QbftBlockInterface}.
+ */
+public class QbftBlockInterfaceAdaptor implements QbftBlockInterface {
   private final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
   private final BftBlockInterface bftBlockInterface;
 
@@ -35,7 +37,7 @@ public class QbftBlockInterfaceImpl implements QbftBlockInterface {
    *
    * @param bftBlockInterface the BFT block interface
    */
-  public QbftBlockInterfaceImpl(final BftBlockInterface bftBlockInterface) {
+  public QbftBlockInterfaceAdaptor(final BftBlockInterface bftBlockInterface) {
     this.bftBlockInterface = bftBlockInterface;
   }
 
@@ -47,6 +49,6 @@ public class QbftBlockInterfaceImpl implements QbftBlockInterface {
         getBlockHeaderFunctions(bftExtraDataCodec, hashMode);
     final Block updatedRoundBlock =
         bftBlockInterface.replaceRoundInBlock(besuBlock, roundNumber, blockHeaderFunctions);
-    return new QbftBlockImpl(updatedRoundBlock);
+    return new QbftBlockAdaptor(updatedRoundBlock);
   }
 }

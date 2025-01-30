@@ -42,7 +42,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class QbftBlockCreatorImplTest {
+class QbftBlockCreatorAdaptorTest {
   @Mock private BlockCreator blockCreator;
   @Mock private BlockHeader parentHeader;
   @Mock private Block besuBlock;
@@ -54,10 +54,10 @@ class QbftBlockCreatorImplTest {
     when(blockCreator.createBlock(10, parentHeader))
         .thenReturn(new BlockCreator.BlockCreationResult(besuBlock, null, null));
 
-    QbftBlockCreatorImpl qbftBlockCreator =
-        new QbftBlockCreatorImpl(blockCreator, qbftExtraDataCodec);
+    QbftBlockCreatorAdaptor qbftBlockCreator =
+        new QbftBlockCreatorAdaptor(blockCreator, qbftExtraDataCodec);
     QbftBlock qbftBlock = qbftBlockCreator.createBlock(10, parentHeader);
-    assertThat(((QbftBlockImpl) qbftBlock).getBesuBlock()).isEqualTo(besuBlock);
+    assertThat(((QbftBlockAdaptor) qbftBlock).getBesuBlock()).isEqualTo(besuBlock);
   }
 
   @Test
@@ -71,12 +71,12 @@ class QbftBlockCreatorImplTest {
             List.of(Address.ZERO));
     BlockHeader header = new BlockHeaderTestFixture().buildHeader();
     Block besuBlock = new Block(header, BlockBody.empty());
-    QbftBlock block = new QbftBlockImpl(besuBlock);
+    QbftBlock block = new QbftBlockAdaptor(besuBlock);
     SECPSignature seal = new SECPSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1);
     when(qbftExtraDataProvider.getExtraData(header)).thenReturn(bftExtraData);
 
-    QbftBlockCreatorImpl qbftBlockCreator =
-        new QbftBlockCreatorImpl(blockCreator, qbftExtraDataCodec);
+    QbftBlockCreatorAdaptor qbftBlockCreator =
+        new QbftBlockCreatorAdaptor(blockCreator, qbftExtraDataCodec);
     QbftBlock sealedBlock =
         qbftBlockCreator.createSealedBlock(qbftExtraDataProvider, block, 1, List.of(seal));
     BftExtraData sealedExtraData = qbftExtraDataCodec.decode(sealedBlock.getHeader());

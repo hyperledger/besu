@@ -34,19 +34,19 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class QbftBlockImporterImplTest {
+class QbftBlockImporterAdaptorTest {
   @Mock private BlockImporter blockImporter;
   @Mock private ProtocolContext protocolContext;
   private final Block besuBlock = new BlockDataGenerator().block();
-  private final QbftBlock block = new QbftBlockImpl(besuBlock);
+  private final QbftBlock block = new QbftBlockAdaptor(besuBlock);
 
   @Test
   void importsBlockSuccessfullyWhenBesuBlockImports() {
     when(blockImporter.importBlock(protocolContext, besuBlock, HeaderValidationMode.FULL))
         .thenReturn(new BlockImportResult(IMPORTED));
 
-    QbftBlockImporterImpl qbftBlockImporter =
-        new QbftBlockImporterImpl(blockImporter, protocolContext);
+    QbftBlockImporterAdaptor qbftBlockImporter =
+        new QbftBlockImporterAdaptor(blockImporter, protocolContext);
     assertThat(qbftBlockImporter.importBlock(block)).isEqualTo(true);
   }
 
@@ -55,8 +55,8 @@ class QbftBlockImporterImplTest {
     when(blockImporter.importBlock(protocolContext, besuBlock, HeaderValidationMode.FULL))
         .thenReturn(new BlockImportResult(ALREADY_IMPORTED));
 
-    QbftBlockImporterImpl qbftBlockImporter =
-        new QbftBlockImporterImpl(blockImporter, protocolContext);
+    QbftBlockImporterAdaptor qbftBlockImporter =
+        new QbftBlockImporterAdaptor(blockImporter, protocolContext);
     assertThat(qbftBlockImporter.importBlock(block)).isEqualTo(true);
   }
 
@@ -65,8 +65,8 @@ class QbftBlockImporterImplTest {
     when(blockImporter.importBlock(protocolContext, besuBlock, HeaderValidationMode.FULL))
         .thenReturn(new BlockImportResult(NOT_IMPORTED));
 
-    QbftBlockImporterImpl qbftBlockImporter =
-        new QbftBlockImporterImpl(blockImporter, protocolContext);
+    QbftBlockImporterAdaptor qbftBlockImporter =
+        new QbftBlockImporterAdaptor(blockImporter, protocolContext);
     assertThat(qbftBlockImporter.importBlock(block)).isEqualTo(false);
   }
 }

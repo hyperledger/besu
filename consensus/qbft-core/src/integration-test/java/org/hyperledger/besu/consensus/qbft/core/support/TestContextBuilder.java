@@ -62,12 +62,12 @@ import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleAdaptor;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
@@ -263,7 +263,7 @@ public class TestContextBuilder {
       networkNodes = new NetworkLayout(localNode, addressKeyMap);
     }
 
-    final QbftBlockCodec blockEncoder = new QbftBlockCodecImpl(BFT_EXTRA_DATA_ENCODER);
+    final QbftBlockCodec blockEncoder = new QbftBlockCodecAdaptor(BFT_EXTRA_DATA_ENCODER);
     final MutableBlockchain blockChain;
     final ForestWorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
@@ -440,7 +440,7 @@ public class TestContextBuilder {
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);
 
     final BftBlockInterface bftBlockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
-    final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceImpl(bftBlockInterface);
+    final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
 
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(genesisConfigOptions);
@@ -535,13 +535,13 @@ public class TestContextBuilder {
             multicaster,
             new RoundTimer(bftEventQueue, Duration.ofSeconds(ROUND_TIMER_SEC), bftExecutors),
             new BlockTimer(bftEventQueue, forksSchedule, bftExecutors, TestClock.fixed()),
-            new QbftBlockCreatorFactoryImpl(blockCreatorFactory, BFT_EXTRA_DATA_ENCODER),
+            new QbftBlockCreatorFactoryAdaptor(blockCreatorFactory, BFT_EXTRA_DATA_ENCODER),
             clock);
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey, blockEncoder);
 
-    final QbftProtocolScheduleImpl qbftProtocolSchedule =
-        new QbftProtocolScheduleImpl(protocolSchedule, bftProtocolContext);
+    final QbftProtocolScheduleAdaptor qbftProtocolSchedule =
+        new QbftProtocolScheduleAdaptor(protocolSchedule, bftProtocolContext);
     final MessageValidatorFactory messageValidatorFactory =
         new MessageValidatorFactory(proposerSelector, qbftProtocolSchedule, qbftProtocolContext);
 
@@ -554,7 +554,7 @@ public class TestContextBuilder {
             FUTURE_MESSAGES_LIMIT,
             blockChain.getChainHeadBlockNumber());
     final QbftExtraDataProvider qbftExtraDataProvider =
-        new QbftExtraDataProviderImpl(BFT_EXTRA_DATA_ENCODER);
+        new QbftExtraDataProviderAdaptor(BFT_EXTRA_DATA_ENCODER);
 
     final QbftController qbftController =
         new QbftController(

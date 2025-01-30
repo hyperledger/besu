@@ -28,7 +28,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class QbftBlockCreatorFactoryImplTest {
+class QbftBlockCreatorFactoryAdaptorTest {
   @Mock private QbftBlockCreatorFactory qbftBlockCreatorFactory;
   @Mock private BlockCreator blockCreator;
 
@@ -36,9 +36,9 @@ class QbftBlockCreatorFactoryImplTest {
   void createsQbftBlockCreatorFactory() {
     when(qbftBlockCreatorFactory.create(1)).thenReturn(blockCreator);
 
-    QbftBlockCreatorFactoryImpl qbftBlockCreatorFactoryImpl =
-        new QbftBlockCreatorFactoryImpl(qbftBlockCreatorFactory, new QbftExtraDataCodec());
-    QbftBlockCreator qbftBlockCreator = qbftBlockCreatorFactoryImpl.create(1);
+    QbftBlockCreatorFactoryAdaptor qbftBlockCreatorFactoryAdaptor =
+        new QbftBlockCreatorFactoryAdaptor(qbftBlockCreatorFactory, new QbftExtraDataCodec());
+    QbftBlockCreator qbftBlockCreator = qbftBlockCreatorFactoryAdaptor.create(1);
     assertThat(qbftBlockCreator).hasFieldOrPropertyWithValue("besuBlockCreator", blockCreator);
   }
 }

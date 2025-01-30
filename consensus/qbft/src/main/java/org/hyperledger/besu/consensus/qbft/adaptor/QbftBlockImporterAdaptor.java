@@ -21,8 +21,8 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
-/** Besu implementation of QbftBlockimport which imports a block onto the chain. */
-public class QbftBlockImporterImpl implements QbftBlockImporter {
+/** Adaptor class to allow a {@link BlockImporter} to be used as a {@link QbftBlockImporter}. */
+public class QbftBlockImporterAdaptor implements QbftBlockImporter {
 
   private final BlockImporter blockImporter;
   private final ProtocolContext context;
@@ -33,7 +33,8 @@ public class QbftBlockImporterImpl implements QbftBlockImporter {
    * @param blockImporter The Besu block importer
    * @param context The protocol context
    */
-  public QbftBlockImporterImpl(final BlockImporter blockImporter, final ProtocolContext context) {
+  public QbftBlockImporterAdaptor(
+      final BlockImporter blockImporter, final ProtocolContext context) {
     this.blockImporter = blockImporter;
     this.context = context;
   }

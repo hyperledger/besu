@@ -31,7 +31,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class QbftProtocolSpecImplTest {
+class QbftProtocolSpecAdaptorTest {
   @Mock private ProtocolSpec besuProtocolSpec;
   @Mock private ProtocolContext besuProtocolContext;
 
@@ -40,8 +40,8 @@ class QbftProtocolSpecImplTest {
     final BlockImporter besuBlockImporter = Mockito.mock(BlockImporter.class);
     when(besuProtocolSpec.getBlockImporter()).thenReturn(besuBlockImporter);
 
-    final QbftProtocolSpecImpl qbftProtocolSpec =
-        new QbftProtocolSpecImpl(besuProtocolSpec, besuProtocolContext);
+    final QbftProtocolSpecAdaptor qbftProtocolSpec =
+        new QbftProtocolSpecAdaptor(besuProtocolSpec, besuProtocolContext);
     final QbftBlockImporter qbftBlockImporter = qbftProtocolSpec.getBlockImporter();
     assertThat(qbftBlockImporter).hasFieldOrPropertyWithValue("blockImporter", besuBlockImporter);
   }
@@ -51,8 +51,8 @@ class QbftProtocolSpecImplTest {
     final BlockValidator besuBlockValidator = Mockito.mock(BlockValidator.class);
     when(besuProtocolSpec.getBlockValidator()).thenReturn(besuBlockValidator);
 
-    final QbftProtocolSpecImpl qbftProtocolSpec =
-        new QbftProtocolSpecImpl(besuProtocolSpec, besuProtocolContext);
+    final QbftProtocolSpecAdaptor qbftProtocolSpec =
+        new QbftProtocolSpecAdaptor(besuProtocolSpec, besuProtocolContext);
     final QbftBlockValidator qbftBlockValidator = qbftProtocolSpec.getBlockValidator();
     assertThat(qbftBlockValidator)
         .hasFieldOrPropertyWithValue("blockValidator", besuBlockValidator);

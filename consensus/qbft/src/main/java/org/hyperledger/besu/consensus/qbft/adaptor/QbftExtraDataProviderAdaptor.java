@@ -20,10 +20,9 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 /**
- * Besu implementation of the QbftExtraDataProvider which provides the BftExtraData for an
- * associated BlockHeader
+ * Adaptor class to allow a {@link BftExtraDataCodec} to be used as a {@link QbftExtraDataProvider}.
  */
-public class QbftExtraDataProviderImpl implements QbftExtraDataProvider {
+public class QbftExtraDataProviderAdaptor implements QbftExtraDataProvider {
   private final BftExtraDataCodec bftExtraDataCodec;
 
   /**
@@ -31,7 +30,7 @@ public class QbftExtraDataProviderImpl implements QbftExtraDataProvider {
    *
    * @param bftExtraDataCodec the bftExtraDataCodec used to decode the extra data from the header
    */
-  public QbftExtraDataProviderImpl(final BftExtraDataCodec bftExtraDataCodec) {
+  public QbftExtraDataProviderAdaptor(final BftExtraDataCodec bftExtraDataCodec) {
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 

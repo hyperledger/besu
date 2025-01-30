@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -21,30 +24,25 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
-/**
- * Besu implementation of QbftProtocolSchedule for selecting the appropriate protocol spec based on
- * a block header.
- */
-public class QbftProtocolScheduleImpl implements QbftProtocolSchedule {
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-  private final ProtocolSchedule besuProtocolSchedule;
-  private final ProtocolContext context;
+@ExtendWith(MockitoExtension.class)
+class QbftProtocolScheduleAdaptorTest {
+  @Mock private ProtocolSchedule besuProtocolSchedule;
+  @Mock private ProtocolSpec besuProtocolSpec;
+  @Mock private ProtocolContext besuProtocolContext;
+  @Mock private BlockHeader blockHeader;
 
-  /**
-   * Constructs a new Qbft protocol schedule.
-   *
-   * @param besuProtocolSchedule The Besu protocol schedule.
-   * @param context The protocol context.
-   */
-  public QbftProtocolScheduleImpl(
-      final ProtocolSchedule besuProtocolSchedule, final ProtocolContext context) {
-    this.besuProtocolSchedule = besuProtocolSchedule;
-    this.context = context;
-  }
+  @Test
+  void createsAProtocolSpecUsingBesuProtocolSpec() {
+    when(besuProtocolSchedule.getByBlockHeader(blockHeader)).thenReturn(besuProtocolSpec);
 
-  @Override
-  public QbftProtocolSpec getByBlockHeader(final BlockHeader header) {
-    final ProtocolSpec protocolSpec = besuProtocolSchedule.getByBlockHeader(header);
-    return new QbftProtocolSpecImpl(protocolSpec, context);
+    final QbftProtocolSchedule qbftProtocolSchedule =
+        new QbftProtocolScheduleAdaptor(besuProtocolSchedule, besuProtocolContext);
+    final QbftProtocolSpec protocolSpec = qbftProtocolSchedule.getByBlockHeader(blockHeader);
+    assertThat(protocolSpec).hasFieldOrPropertyWithValue("besuProtocolSpec", besuProtocolSpec);
   }
 }

@@ -28,8 +28,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 
 import java.util.Collection;
 
-/** Besu implementation of a QbftBlockCreator which is responsible for creating QBFT blocks. */
-public class QbftBlockCreatorImpl implements QbftBlockCreator {
+/** Adaptor class to allow a {@link BlockCreator} to be used as a {@link QbftBlockCreator}. */
+public class QbftBlockCreatorAdaptor implements QbftBlockCreator {
 
   private final BlockCreator besuBlockCreator;
   private final BftExtraDataCodec bftExtraDataCodec;
@@ -40,7 +40,7 @@ public class QbftBlockCreatorImpl implements QbftBlockCreator {
    * @param besuBftBlockCreator the Besu BFT block creator
    * @param bftExtraDataCodec the bftExtraDataCodec used to encode extra data for the new header
    */
-  public QbftBlockCreatorImpl(
+  public QbftBlockCreatorAdaptor(
       final BlockCreator besuBftBlockCreator, final BftExtraDataCodec bftExtraDataCodec) {
     this.besuBlockCreator = besuBftBlockCreator;
     this.bftExtraDataCodec = bftExtraDataCodec;
@@ -49,7 +49,7 @@ public class QbftBlockCreatorImpl implements QbftBlockCreator {
   @Override
   public QbftBlock createBlock(final long headerTimeStampSeconds, final BlockHeader parentHeader) {
     var blockResult = besuBlockCreator.createBlock(headerTimeStampSeconds, parentHeader);
-    return new QbftBlockImpl(blockResult.getBlock());
+    return new QbftBlockAdaptor(blockResult.getBlock());
   }
 
   @Override
@@ -76,6 +76,6 @@ public class QbftBlockCreatorImpl implements QbftBlockCreator {
             .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
             .buildBlockHeader();
     final Block sealedBesuBlock = new Block(sealedHeader, besuBlock.getBody());
-    return new QbftBlockImpl(sealedBesuBlock);
+    return new QbftBlockAdaptor(sealedBesuBlock);
   }
 }

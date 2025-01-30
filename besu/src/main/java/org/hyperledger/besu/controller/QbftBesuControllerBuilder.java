@@ -47,12 +47,12 @@ import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleAdaptor;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
@@ -190,12 +190,12 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     final BftExecutors bftExecutors =
         BftExecutors.create(metricsSystem, BftExecutors.ConsensusType.QBFT);
-    final QbftBlockCodec blockEncoder = new QbftBlockCodecImpl(qbftExtraDataCodec);
+    final QbftBlockCodec blockEncoder = new QbftBlockCodecAdaptor(qbftExtraDataCodec);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftProtocolSchedule bftProtocolSchedule = (BftProtocolSchedule) protocolSchedule;
     QbftProtocolSchedule qbftProtocolSchedule =
-        new QbftProtocolScheduleImpl(bftProtocolSchedule, protocolContext);
+        new QbftProtocolScheduleAdaptor(bftProtocolSchedule, protocolContext);
     final QbftBlockCreatorFactory blockCreatorFactory =
         new QbftBlockCreatorFactory(
             transactionPool,
@@ -210,7 +210,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
 
-    final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceImpl(bftBlockInterface);
+    final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
     final QbftContext qbftContext = new QbftContext(validatorProvider, qbftBlockInterface);
     final ProtocolContext qbftProtocolContext =
         new ProtocolContext(
@@ -243,7 +243,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                 Duration.ofSeconds(qbftConfig.getRequestTimeoutSeconds()),
                 bftExecutors),
             new BlockTimer(bftEventQueue, qbftForksSchedule, bftExecutors, clock),
-            new QbftBlockCreatorFactoryImpl(blockCreatorFactory, qbftExtraDataCodec),
+            new QbftBlockCreatorFactoryAdaptor(blockCreatorFactory, qbftExtraDataCodec),
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
@@ -279,7 +279,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                 Duration.ofSeconds(qbftConfig.getRequestTimeoutSeconds()),
                 bftExecutors),
             new BlockTimer(bftEventQueue, qbftForksSchedule, bftExecutors, clock),
-            new QbftBlockCreatorFactoryImpl(blockCreatorFactory, qbftExtraDataCodec),
+            new QbftBlockCreatorFactoryAdaptor(blockCreatorFactory, qbftExtraDataCodec),
             clock);
 
     final BftEventHandler qbftController =
@@ -296,7 +296,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                     messageValidatorFactory,
                     messageFactory,
                     qbftExtraDataCodec,
-                    new QbftExtraDataProviderImpl(qbftExtraDataCodec)),
+                    new QbftExtraDataProviderAdaptor(qbftExtraDataCodec)),
                 messageValidatorFactory,
                 messageFactory,
                 new ValidatorModeTransitionLogger(qbftForksSchedule)),

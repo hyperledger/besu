@@ -21,8 +21,8 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
-/** Besu implementation of QbftBlockValidator for validating QBFT blocks. */
-public class QbftBlockValidatorImpl implements QbftBlockValidator {
+/** Adaptor class to allow a {@link BlockValidator} to be used as a {@link QbftBlockValidator}. */
+public class QbftBlockValidatorAdaptor implements QbftBlockValidator {
 
   private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
@@ -33,7 +33,7 @@ public class QbftBlockValidatorImpl implements QbftBlockValidator {
    * @param blockValidator The Besu block validator
    * @param protocolContext The protocol context
    */
-  public QbftBlockValidatorImpl(
+  public QbftBlockValidatorAdaptor(
       final BlockValidator blockValidator, final ProtocolContext protocolContext) {
     this.blockValidator = blockValidator;
     this.protocolContext = protocolContext;

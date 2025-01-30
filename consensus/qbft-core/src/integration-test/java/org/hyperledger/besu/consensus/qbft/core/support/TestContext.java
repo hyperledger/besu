@@ -25,7 +25,7 @@ import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockAdaptor;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
@@ -154,7 +154,7 @@ public class TestContext {
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();
     final Block newBlock =
         new Block(newHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
-    return new QbftBlockImpl(newBlock);
+    return new QbftBlockAdaptor(newBlock);
   }
 
   public QbftBlock createBlockForProposal(
@@ -170,7 +170,7 @@ public class TestContext {
     final Block sealedBlock =
         BftHelpers.createSealedBlock(
             bftExtraDataCodec, BlockUtil.toBesuBlock(block), roundNumber, commitSeals);
-    return new QbftBlockImpl(sealedBlock);
+    return new QbftBlockAdaptor(sealedBlock);
   }
 
   public RoundSpecificPeers roundSpecificPeers(final ConsensusRoundIdentifier roundId) {

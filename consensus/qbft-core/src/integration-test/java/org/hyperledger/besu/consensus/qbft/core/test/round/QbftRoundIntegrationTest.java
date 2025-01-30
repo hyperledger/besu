@@ -29,8 +29,8 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftRound;
@@ -129,7 +129,7 @@ public class QbftRoundIntegrationTest {
     headerTestFixture.number(1);
     final BlockHeader header = headerTestFixture.buildHeader();
     final Block block = new Block(header, new BlockBody(emptyList(), emptyList()));
-    proposedBlock = new QbftBlockImpl(block);
+    proposedBlock = new QbftBlockAdaptor(block);
     when(qbftExtraDataProvider.getExtraData(header)).thenReturn(proposedExtraData);
 
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
@@ -142,7 +142,7 @@ public class QbftRoundIntegrationTest {
             blockChain,
             worldStateArchive,
             new QbftContext(
-                null, new QbftBlockInterfaceImpl(new BftBlockInterface(qbftExtraDataEncoder))),
+                null, new QbftBlockInterfaceAdaptor(new BftBlockInterface(qbftExtraDataEncoder))),
             new BadBlockManager());
   }
 
@@ -180,7 +180,7 @@ public class QbftRoundIntegrationTest {
   public void failuresToSignStillAllowBlockToBeImported() {
     final BlockHeader header = new BlockHeaderTestFixture().number(1).buildHeader();
     final Block sealedBesuBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
-    final QbftBlock sealedBlock = new QbftBlockImpl(sealedBesuBlock);
+    final QbftBlock sealedBlock = new QbftBlockAdaptor(sealedBesuBlock);
     when(blockCreator.createSealedBlock(
             qbftExtraDataProvider,
             proposedBlock,
