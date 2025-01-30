@@ -31,6 +31,7 @@ public class %%TESTS_NAME%% {
   @MethodSource("getTestParametersForConfig")
   public void execution(
       final String name, final GeneralStateTestCaseEipSpec spec, final boolean runTest) {
+    System.out.println(name);
     assumeTrue(runTest, "Test " + name + " was ignored");
     executeTest(spec);
   }
