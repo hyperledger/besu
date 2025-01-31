@@ -272,4 +272,20 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
       return new CodeDelegation(chainId, address, nonce, signature);
     }
   }
+
+  @Override
+  public String toString() {
+    return "CodeDelegation{"
+        + "chainId="
+        + chainId
+        + ", address="
+        + address
+        + ", nonce="
+        + nonce
+        + ", signature="
+        + signature
+        + ", authorizerSupplier="
+        + authorizerSupplier
+        + '}';
+  }
 }

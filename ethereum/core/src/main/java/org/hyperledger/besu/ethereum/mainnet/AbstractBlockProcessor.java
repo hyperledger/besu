@@ -192,6 +192,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
 
       blockUpdater.commit();
+      blockUpdater.markTransactionBoundary();
 
       currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
       if (transaction.getVersionedHashes().isPresent()) {
