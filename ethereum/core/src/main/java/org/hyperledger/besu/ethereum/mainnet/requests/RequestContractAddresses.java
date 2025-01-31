@@ -22,7 +22,6 @@ public class RequestContractAddresses {
   private final Address depositContractAddress;
   private final Address consolidationRequestContractAddress;
 
-  // EIP 2935
   public static final Address DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS =
       Address.fromHexString("0x00000961ef480eb55e80d19ad83579a64c007002");
   public static final Address DEFAULT_CONSOLIDATION_REQUEST_CONTRACT_ADDRESS =
