@@ -45,8 +45,9 @@ class BlockHashProcessorTest {
     mutableWorldState = mock(MutableWorldState.class);
     worldUpdater = mock(WorldUpdater.class);
     account = mock(MutableAccount.class);
+    when(account.getNonce()).thenReturn(1L);
     when(mutableWorldState.updater()).thenReturn(worldUpdater);
-    when(worldUpdater.getOrCreate(PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS))
+    when(worldUpdater.getAccount(PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS))
         .thenReturn(account);
   }
 
@@ -72,7 +73,7 @@ class BlockHashProcessorTest {
     mockAncestorHeaders(currentBlockHeader, 0);
 
     processor.processBlockHashes(mutableWorldState, currentBlockHeader);
-    verifyNoInteractions(account);
+    verify(account, times(0)).setStorageValue(any(), any());
   }
 
   @Test
@@ -87,6 +88,20 @@ class BlockHashProcessorTest {
     processor.processBlockHashes(mutableWorldState, currentBlockHeader);
     verify(account, times(1)).setStorageValue(any(), any());
     verifyAccount(0, historicalWindow);
+  }
+
+  @Test
+  void shouldNotStoreBlockHashIfContractIsNotDeployed() {
+    when(worldUpdater.getAccount(PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS))
+        .thenReturn(null);
+
+    long currentBlock = 1;
+    processor = new PragueBlockHashProcessor();
+    BlockHeader currentBlockHeader = mockBlockHeader(currentBlock);
+    mockAncestorHeaders(currentBlockHeader, 0);
+
+    processor.processBlockHashes(mutableWorldState, currentBlockHeader);
+    verifyNoInteractions(account);
   }
 
   @Test
