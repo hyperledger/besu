@@ -412,19 +412,30 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     int index = 0;
     for (final var codeDelegation : codeDelegations) {
       final var constIndex = index++;
-      mergeCoordinator
-          .getEthScheduler()
-          .scheduleTxWorkerTask(
-              () -> {
-                final var authority = codeDelegation.authorizer();
-                LOG.atTrace()
-                    .setMessage(
-                        "The code delegation authority at index {} for transaction {} is calculated : {}")
-                    .addArgument(constIndex)
-                    .addArgument(transaction::getHash)
-                    .addArgument(authority)
-                    .log();
-              });
+      final byte recId = codeDelegation.signature().getRecId();
+      if (recId < 0 || recId > 3) {
+        LOG.atTrace()
+            .setMessage(
+                "The code delegation authority at index {} for transaction {} is skipped because recId : {}")
+            .addArgument(constIndex)
+            .addArgument(transaction::getHash)
+            .addArgument(recId)
+            .log();
+      } else {
+        mergeCoordinator
+            .getEthScheduler()
+            .scheduleTxWorkerTask(
+                () -> {
+                  final var authority = codeDelegation.authorizer();
+                  LOG.atTrace()
+                      .setMessage(
+                          "The code delegation authority at index {} for transaction {} is calculated : {}")
+                      .addArgument(constIndex)
+                      .addArgument(transaction::getHash)
+                      .addArgument(authority)
+                      .log();
+                });
+      }
     }
   }
 

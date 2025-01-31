@@ -45,11 +45,6 @@ public class CodeDelegationSignature extends SECPSignature {
       final BigInteger r, final BigInteger s, final byte yParity) {
     checkNotNull(r);
     checkNotNull(s);
-    final byte recId = yParity;
-    if (recId != 0 && recId != 1) {
-      throw new IllegalArgumentException(
-          "Invalid 'recId' value, should be 0 or 1 but got " + recId);
-    }
 
     if (r.compareTo(TWO_POW_256) >= 0) {
       throw new IllegalArgumentException(
