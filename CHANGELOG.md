@@ -1,6 +1,16 @@
 # Changelog
 
 ## Unreleased
+### Breaking Changes
+### Upcoming Breaking Changes
+### Additions and Improvements
+- Adds timestamps to enable Prague hardfork on Sepolia and Holesky test networks. [#8163](https://github.com/hyperledger/besu/pull/8163)
+- Extend simulate transaction on pending block plugin API [#8174](https://github.com/hyperledger/besu/pull/8174)
+
+### Bug fixes
+
+
+## 25.1.0
 
 ### Breaking Changes
 - `--host-whitelist` has been deprecated since 2020 and this option is removed. Use the equivalent `--host-allowlist` instead. 

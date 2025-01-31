@@ -183,7 +183,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .vertx(Vertx.vertx())
         .besuController(besuController)
         .ethNetworkConfig(ethNetworkConfig)
-        .discovery(node.isDiscoveryEnabled())
+        .discoveryEnabled(node.isDiscoveryEnabled())
         .p2pAdvertisedHost(node.getHostName())
         .p2pListenPort(0)
         .networkingConfiguration(node.getNetworkingConfiguration())
