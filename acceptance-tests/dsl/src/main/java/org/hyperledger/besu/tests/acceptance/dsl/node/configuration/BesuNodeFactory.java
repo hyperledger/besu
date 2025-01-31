@@ -532,6 +532,7 @@ public class BesuNodeFactory {
             .jsonRpcTxPool()
             .engineRpcEnabled(true)
             .jsonRpcDebug()
+            .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
             .build());
   }
 
