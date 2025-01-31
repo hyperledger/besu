@@ -412,7 +412,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     int index = 0;
     for (final var codeDelegation : codeDelegations) {
       final var constIndex = index++;
-
       mergeCoordinator
           .getEthScheduler()
           .scheduleTxWorkerTask(
