@@ -280,6 +280,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.isRevertReasonEnabled(false)).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.isParallelTxProcessingEnabled(false))
         .thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.isEarlyRoundChangeEnabled(false)).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.storageProvider(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.gasLimitCalculator(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.requiredBlocks(any())).thenReturn(mockControllerBuilder);
