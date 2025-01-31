@@ -202,13 +202,15 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final Optional<List<Request>> maybeRequests;
     try {
       maybeRequests = extractRequests(maybeRequestsParam);
-    } catch (RuntimeException ex) {
+    } catch (RequestType.InvalidRequestTypeException ex) {
       return respondWithInvalid(
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
           INVALID,
           "Invalid execution requests");
+    } catch (Exception ex) {
+      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
     }
 
     if (!getRequestsValidator(
@@ -591,14 +593,17 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (maybeRequestsParam.isEmpty()) {
       return Optional.empty();
     }
-
     return maybeRequestsParam.map(
         requests ->
             requests.stream()
                 .map(
                     s -> {
                       final Bytes request = Bytes.fromHexString(s);
-                      return new Request(RequestType.of(request.get(0)), request.slice(1));
+                      final Bytes requestData = request.slice(1);
+                      if (requestData.isEmpty()) {
+                        throw new IllegalArgumentException("Request data cannot be empty");
+                      }
+                      return new Request(RequestType.of(request.get(0)), requestData);
                     })
                 .collect(Collectors.toList()));
   }
