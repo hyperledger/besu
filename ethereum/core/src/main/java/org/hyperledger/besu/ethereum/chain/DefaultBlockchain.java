@@ -20,6 +20,7 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.BLOCKCHAIN;
+import static org.hyperledger.besu.metrics.BesuMetricCategory.NETWORK;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage.Updater;
@@ -832,12 +833,22 @@ public class DefaultBlockchain implements MutableBlockchain {
         throw new IllegalStateException("Blockchain is missing genesis block data.");
       }
       if (!genesisHash.get().equals(genesisBlock.getHash())) {
-        throw new InvalidConfigurationException(
-            "Supplied genesis block does not match chain data stored in "
-                + dataDirectory
-                + ".\n"
-                + "Please specify a different data directory with --data-path, specify the original genesis file with "
-                + "--genesis-file or supply a testnet/mainnet option with --network.");
+        if (NETWORK.getName().equals("Ephemery")) {
+          throw new InvalidConfigurationException(
+              "Supplied genesis block does not match chain data stored in "
+                  + dataDirectory
+                  + ".\n"
+                  + "This is expected when the Ephemery network has rolled over to a new genesis. "
+                  + "Please reset your data directory by removing or renaming: "
+                  + dataDirectory);
+        } else {
+          throw new InvalidConfigurationException(
+              "Supplied genesis block does not match chain data stored in "
+                  + dataDirectory
+                  + ".\n"
+                  + "Please specify a different data directory with --data-path, specify the original genesis file with "
+                  + "--genesis-file or supply a testnet/mainnet option with --network.");
+        }
       }
     }
   }
