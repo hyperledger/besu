@@ -27,6 +27,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -348,10 +349,12 @@ public class T8nExecutor {
     Blockchain blockchain = new T8nBlockchain(referenceTestEnv, protocolSpec);
     final BlockHeader blockHeader = referenceTestEnv.parentBlockHeader(protocolSpec);
     final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
-    final Wei blobGasPrice =
-        protocolSpec
-            .getFeeMarket()
-            .blobGasPricePerGas(calculateExcessBlobGasForParent(protocolSpec, blockHeader));
+    final BlobGas excessBlobGas =
+        Optional.ofNullable(referenceTestEnv.getParentExcessBlobGas())
+            .map(
+                __ -> calculateExcessBlobGasForParent(protocolSpec, blockHeader)) // blockchain-test
+            .orElse(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO)); // state-test
+    final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(excessBlobGas);
     long blobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
 
     if (!referenceTestEnv.isStateTest()) {

@@ -130,8 +130,9 @@ public class TransactionCompleteResult implements TransactionResult {
       this.yParity = Quantity.create(transaction.getYParity());
       this.v =
           (transactionType == TransactionType.ACCESS_LIST
-                      || transactionType == TransactionType.EIP1559)
+                  || transactionType == TransactionType.EIP1559
                   || transactionType == TransactionType.DELEGATE_CODE
+                  || transactionType == TransactionType.BLOB)
               ? Quantity.create(transaction.getYParity())
               : null;
     }
