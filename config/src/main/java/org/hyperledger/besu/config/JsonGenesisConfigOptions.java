@@ -129,7 +129,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public boolean isEthHash() {
-    return configRoot.has(ETHASH_CONFIG_KEY);
+    return isKeyPresent(ETHASH_CONFIG_KEY);
   }
 
   @Override
@@ -549,6 +549,14 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
 
     return builder.build();
+  }
+
+  private boolean isKeyPresent(final String key) {
+    if (configOverrides.containsKey(key)) {
+      return true;
+    }
+
+    return JsonUtil.getObjectNode(configRoot, key).isPresent();
   }
 
   private OptionalLong getOptionalLong(final String key) {
