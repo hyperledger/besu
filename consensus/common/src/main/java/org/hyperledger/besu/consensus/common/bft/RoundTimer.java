@@ -83,8 +83,7 @@ public class RoundTimer {
     // Once we are up to round 2 start logging round expiries
     if (round.getRoundNumber() >= 2) {
       LOG.info(
-          "BFT round {} expired. Moved to round {} which will expire in {} seconds",
-          round.getRoundNumber() - 1,
+          "Moved to round {} which will expire in {} seconds",
           round.getRoundNumber(),
           (expiryTime / 1000));
     }
