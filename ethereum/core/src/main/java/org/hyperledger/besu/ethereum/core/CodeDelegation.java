@@ -95,7 +95,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
         Bytes.fromHexStringLenient(nonce).toLong(),
         SIGNATURE_ALGORITHM
             .get()
-            .createSignature(
+            .createCodeDelegationSignature(
                 Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
                 Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
                 Bytes.fromHexStringLenient(v).get(0)));
