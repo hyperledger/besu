@@ -14,15 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import com.google.common.collect.Ordering;
-import org.apache.tuweni.bytes.Bytes;
+import com.google.common.collect.Comparators;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,26 +49,24 @@ public class MainnetRequestsValidator implements RequestsValidator {
     }
 
     List<Request> requests = maybeRequests.get();
-    if (!isRequestOrderValid(requests)) {
-      LOG.warn("Ordering across requests must be ascending by type");
+    if (!areRequestTypesUniqueAndOrderValid(requests)) {
+      LOG.warn("Request types must be unique and ordering must be ascending by type");
       return false;
     }
 
-    Set<Bytes> uniqueRequests = new HashSet<>();
-    for (Request request : requests) {
-      if (!uniqueRequests.add(request.getEncodedRequest())) {
-        LOG.warn("Duplicate request: {}", request);
-        return false;
-      }
-      if (request.getData().isEmpty()) {
-        LOG.warn("Execution request cannot be empty");
-        return false;
-      }
+    if (containsRequestWithEmptyData(requests)) {
+      LOG.warn("Request must not be empty");
+      return false;
     }
     return true;
   }
 
-  private static boolean isRequestOrderValid(final List<Request> requests) {
-    return Ordering.natural().onResultOf(Request::getType).isOrdered(requests);
+  private static boolean areRequestTypesUniqueAndOrderValid(final List<Request> requests) {
+    final List<RequestType> requestTypes = requests.stream().map(Request::type).toList();
+    return Comparators.isInStrictOrder(requestTypes, Comparator.naturalOrder());
+  }
+
+  private static boolean containsRequestWithEmptyData(final List<Request> requests) {
+    return requests.stream().anyMatch(request -> request.getData().isEmpty());
   }
 }
