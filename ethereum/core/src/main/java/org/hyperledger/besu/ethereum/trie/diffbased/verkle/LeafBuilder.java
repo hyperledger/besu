@@ -12,14 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.verkletrie;
+package org.hyperledger.besu.ethereum.trie.diffbased.verkle;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyBatchAdapter;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.Hasher;
+import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyFactory;
+import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
 import org.hyperledger.besu.ethereum.trie.verkle.util.SuffixTreeEncoder;
 
 import java.util.HashMap;
@@ -33,38 +33,38 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class VerkleEntryFactory {
+public class LeafBuilder {
 
-  private final TrieKeyBatchAdapter trieKeyAdapter;
+  private final TrieKeyFactory trieKeyFactory;
   private final HashSet<Bytes32> keysForRemoval = new HashSet<>();
   private final HashMap<Bytes32, Bytes32> nonStorageKeyValuesForUpdate = new HashMap<>();
   private final HashMap<StorageSlotKey, Pair<Bytes32, Bytes32>> storageKeyValuesForUpdate =
       new HashMap<>();
 
-  public VerkleEntryFactory(final Hasher hasher) {
-    trieKeyAdapter = new TrieKeyBatchAdapter(hasher);
+  public LeafBuilder(final TrieKeyFactory trieKeyFactory) {
+    this.trieKeyFactory = trieKeyFactory;
   }
 
   public void generateAccountKeyForRemoval(final Address address) {
-    keysForRemoval.add(trieKeyAdapter.basicDataKey(address));
+    keysForRemoval.add(trieKeyFactory.basicDataKey(address));
   }
 
   public void generateCodeKeysForRemoval(final Address address, final Bytes code) {
-    keysForRemoval.add(trieKeyAdapter.basicDataKey(address));
-    keysForRemoval.add(trieKeyAdapter.codeHashKey(address));
-    List<UInt256> codeChunks = trieKeyAdapter.chunkifyCode(code);
+    keysForRemoval.add(trieKeyFactory.basicDataKey(address));
+    keysForRemoval.add(trieKeyFactory.codeHashKey(address));
+    List<UInt256> codeChunks = TrieKeyUtils.chunkifyCode(code);
     for (int i = 0; i < codeChunks.size(); i++) {
-      keysForRemoval.add(trieKeyAdapter.codeChunkKey(address, UInt256.valueOf(i)));
+      keysForRemoval.add(trieKeyFactory.codeChunkKey(address, UInt256.valueOf(i)));
     }
   }
 
   public void generateStorageKeyForRemoval(final Address address, final StorageSlotKey storageKey) {
-    keysForRemoval.add(trieKeyAdapter.storageKey(address, storageKey.getSlotKey().orElseThrow()));
+    keysForRemoval.add(trieKeyFactory.storageKey(address, storageKey.getSlotKey().orElseThrow()));
   }
 
   public void generateAccountKeyValueForUpdate(
       final Address address, final long nonce, final Wei balance) {
-    Bytes32 basicDataKey = trieKeyAdapter.basicDataKey(address);
+    Bytes32 basicDataKey = trieKeyFactory.basicDataKey(address);
     Bytes32 basicDataValue;
     if ((basicDataValue = nonStorageKeyValuesForUpdate.get(basicDataKey)) == null) {
       basicDataValue = Bytes32.ZERO;
@@ -81,7 +81,7 @@ public class VerkleEntryFactory {
   }
 
   public void generateCodeSizeKeyValueForUpdate(final Address address, final int size) {
-    Bytes32 basicDataKey = trieKeyAdapter.basicDataKey(address);
+    Bytes32 basicDataKey = trieKeyFactory.basicDataKey(address);
     Bytes32 basicDataValue;
     if ((basicDataValue = nonStorageKeyValuesForUpdate.get(basicDataKey)) == null) {
       basicDataValue = Bytes32.ZERO;
@@ -96,7 +96,7 @@ public class VerkleEntryFactory {
   }
 
   public void generateCodeHashKeyValueForUpdate(final Address address, final Hash codeHash) {
-    nonStorageKeyValuesForUpdate.put(trieKeyAdapter.codeHashKey(address), codeHash);
+    nonStorageKeyValuesForUpdate.put(trieKeyFactory.codeHashKey(address), codeHash);
   }
 
   public void generateCodeKeyValuesForUpdate(
@@ -104,10 +104,10 @@ public class VerkleEntryFactory {
     generateCodeSizeKeyValueForUpdate(address, code.size());
     generateCodeHashKeyValueForUpdate(address, codeHash);
 
-    List<UInt256> codeChunks = trieKeyAdapter.chunkifyCode(code);
+    List<UInt256> codeChunks = TrieKeyUtils.chunkifyCode(code);
     for (int i = 0; i < codeChunks.size(); i++) {
       nonStorageKeyValuesForUpdate.put(
-          trieKeyAdapter.codeChunkKey(address, UInt256.valueOf(i)), codeChunks.get(i));
+          trieKeyFactory.codeChunkKey(address, UInt256.valueOf(i)), codeChunks.get(i));
     }
   }
 
@@ -116,7 +116,7 @@ public class VerkleEntryFactory {
     storageKeyValuesForUpdate.put(
         storageSlotKey,
         new Pair<>(
-            trieKeyAdapter.storageKey(address, storageSlotKey.getSlotKey().orElseThrow()), value));
+            trieKeyFactory.storageKey(address, storageSlotKey.getSlotKey().orElseThrow()), value));
   }
 
   public Set<Bytes32> getKeysForRemoval() {

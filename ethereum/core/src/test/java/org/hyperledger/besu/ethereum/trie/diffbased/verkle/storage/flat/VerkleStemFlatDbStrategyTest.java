@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.StemPreloader;
 import org.hyperledger.besu.ethereum.trie.verkle.node.LeafNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.StemNode;
+import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 import org.hyperledger.besu.ethereum.trie.verkle.util.SuffixTreeEncoder;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -89,7 +90,7 @@ class VerkleStemFlatDbStrategyTest {
     final Bytes codeSize = Bytes.repeat((byte) 0x1, 3);
 
     final Bytes32 suffix = encodeAccountProperties(nonce, balance, codeSize);
-    mockStorageWithStemNode(stem, suffix);
+    mockStorageWithStemNode(stem, (byte) Parameters.BASIC_DATA_LEAF_KEY.toInt(), suffix);
 
     final Optional<VerkleAccount> result =
         strategy.getFlatAccount(address, context, stemPreloader, storage);
@@ -117,10 +118,10 @@ class VerkleStemFlatDbStrategyTest {
   void testGetFlatStorageValueByStorageSlotKeyFound() {
     final Address address = Address.fromHexString("0x1");
     final StorageSlotKey slotKey = createSlotKey();
-    final Bytes stem = prepareStemForSlot(address, slotKey, Bytes.of(0));
+    final Bytes stem = prepareStemForSlot(address, slotKey);
     final Bytes expectedValue = Bytes32.fromHexString("0x1234");
 
-    mockStorageWithStemNode(stem, Bytes.EMPTY, expectedValue);
+    mockStorageWithStemNode(stem, (byte) Parameters.HEADER_STORAGE_OFFSET.toInt(), expectedValue);
 
     final Optional<Bytes> result =
         strategy.getFlatStorageValueByStorageSlotKey(address, slotKey, stemPreloader, storage);
@@ -134,7 +135,7 @@ class VerkleStemFlatDbStrategyTest {
   void testGetFlatStorageValueByStorageSlotKeyNotFound() {
     final Address address = Address.fromHexString("0x1");
     final StorageSlotKey slotKey = createSlotKey();
-    final Bytes stem = prepareStemForSlot(address, slotKey, Bytes.of(0));
+    final Bytes stem = prepareStemForSlot(address, slotKey);
     when(storage.get(eq(TRIE_BRANCH_STORAGE), eq(stem.toArrayUnsafe())))
         .thenReturn(Optional.empty());
 
@@ -168,17 +169,16 @@ class VerkleStemFlatDbStrategyTest {
     return SuffixTreeEncoder.setCodeSizeInValue(suffix, codeSize);
   }
 
-  private void mockStorageWithStemNode(final Bytes stem, final Bytes... children) {
-    final StemNode<Object> stemNode = createStemNode(stem, children);
+  private void mockStorageWithStemNode(final Bytes stem, final byte index, final Bytes children) {
+    final StemNode<Object> stemNode = createStemNode(stem, index, children);
     when(storage.get(eq(TRIE_BRANCH_STORAGE), eq(stem.toArrayUnsafe())))
         .thenReturn(Optional.of(stemNode.getEncodedValue().toArrayUnsafe()));
   }
 
-  private StemNode<Object> createStemNode(final Bytes stem, final Bytes... children) {
+  private StemNode<Object> createStemNode(
+      final Bytes stem, final byte index, final Bytes children) {
     final StemNode<Object> stemNode = new StemNode<>(Bytes.EMPTY, stem);
-    for (Bytes child : children) {
-      stemNode.replaceChild((byte) 0, new LeafNode<>(Bytes.EMPTY, child));
-    }
+    stemNode.replaceChild(index, new LeafNode<>(Bytes.EMPTY, children));
     stemNode.replaceHash(
         Bytes32.ZERO, Bytes.EMPTY, Bytes32.ZERO, Bytes.EMPTY, Bytes32.ZERO, Bytes.EMPTY);
     return stemNode;
@@ -190,17 +190,14 @@ class VerkleStemFlatDbStrategyTest {
     return stem;
   }
 
-  private Bytes prepareStemForSlot(
-      final Address address, final StorageSlotKey storageSlotKey, final Bytes keySuffix) {
+  private Bytes prepareStemForSlot(final Address address, final StorageSlotKey storageSlotKey) {
     final Bytes stem = Bytes32.random();
     when(stemPreloader.preloadSlotStems(eq(address), eq(storageSlotKey))).thenReturn(stem);
-    when(stemPreloader.getStorageKeySuffix(eq(storageSlotKey.getSlotKey().get())))
-        .thenReturn(keySuffix);
     return stem;
   }
 
   private StorageSlotKey createSlotKey() {
-    return new StorageSlotKey(UInt256.fromBytes(Bytes32.random()));
+    return new StorageSlotKey(UInt256.valueOf(0x00));
   }
 
   private void assertAccountProperties(
