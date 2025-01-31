@@ -43,6 +43,10 @@ public class EthTransactions {
     return new EthGetBalanceTransaction(account);
   }
 
+  public EthGetCodeTransaction getCode(final Account account) {
+    return new EthGetCodeTransaction(account);
+  }
+
   public EthGetBalanceAtBlockTransaction getBalanceAtBlock(
       final Account account, final BigInteger block) {
     return new EthGetBalanceAtBlockTransaction(account, block);
