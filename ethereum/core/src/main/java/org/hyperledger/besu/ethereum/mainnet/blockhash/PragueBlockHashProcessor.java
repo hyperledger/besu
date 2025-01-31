@@ -70,7 +70,9 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
     WorldUpdater worldUpdater = mutableWorldState.updater();
     final MutableAccount historyStorageAccount = worldUpdater.getAccount(historyStorageAddress);
 
-    if (historyStorageAccount != null && historyStorageAccount.getNonce() > 0 && currentBlockHeader.getNumber() > 0) {
+    if (historyStorageAccount != null
+        && historyStorageAccount.getNonce() > 0
+        && currentBlockHeader.getNumber() > 0) {
       storeParentHash(historyStorageAccount, currentBlockHeader);
     }
     worldUpdater.commit();

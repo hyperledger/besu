@@ -93,7 +93,7 @@ class BlockHashProcessorTest {
   @Test
   void shouldNotStoreBlockHashIfContractIsNotDeployed() {
     when(worldUpdater.getAccount(PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS))
-      .thenReturn(null);
+        .thenReturn(null);
 
     long currentBlock = 1;
     processor = new PragueBlockHashProcessor();
