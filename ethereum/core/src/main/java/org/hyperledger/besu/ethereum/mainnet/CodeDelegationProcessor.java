@@ -126,6 +126,10 @@ public class CodeDelegationProcessor {
     MutableAccount authority;
     boolean authorityDoesAlreadyExist = false;
     if (maybeAuthorityAccount.isEmpty()) {
+      // only create an account if nonce is valid
+      if (codeDelegation.nonce() != 0) {
+        return;
+      }
       authority = evmWorldUpdater.createAccount(authorizer.get());
     } else {
       authority = maybeAuthorityAccount.get();
@@ -146,7 +150,7 @@ public class CodeDelegationProcessor {
     }
 
     if (authorityDoesAlreadyExist) {
-      result.incremenentAlreadyExistingDelegators();
+      result.incrementAlreadyExistingDelegators();
     }
 
     evmWorldUpdater
