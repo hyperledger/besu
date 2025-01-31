@@ -174,7 +174,7 @@ public class TransactionSimulator {
           operationTracer,
           pendingBlockHeader,
           updater,
-          Address.ZERO);
+          pendingBlockHeader.getCoinbase());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
