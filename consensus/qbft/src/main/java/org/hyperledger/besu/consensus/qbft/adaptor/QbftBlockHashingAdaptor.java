@@ -20,10 +20,8 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.datatypes.Hash;
 
-/**
- * Besu implementation of QbftBlockHasher which calculates the hash of a block for QBFT consensus.
- */
-public class QbftBlockHashingImpl implements QbftBlockHashing {
+/** Adaptor to allow a {linkBftBlockHashing} to be used as a {@link QbftBlockHashing}. */
+public class QbftBlockHashingAdaptor implements QbftBlockHashing {
   private final BftBlockHashing bftBlockHashing;
 
   /**
@@ -31,7 +29,7 @@ public class QbftBlockHashingImpl implements QbftBlockHashing {
    *
    * @param bftBlockHashing the BFT BlockHashing
    */
-  public QbftBlockHashingImpl(final BftBlockHashing bftBlockHashing) {
+  public QbftBlockHashingAdaptor(final BftBlockHashing bftBlockHashing) {
     this.bftBlockHashing = bftBlockHashing;
   }
 

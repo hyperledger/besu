@@ -21,8 +21,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Objects;
 
-/** Besu implementation of QbftBlockHeader which provides access to the block header fields. */
-public class QbftBlockHeaderImpl implements QbftBlockHeader {
+/** Adaptor class to allow a {@link BlockHeader} to be used as a {@link QbftBlockHeader}. */
+public class QbftBlockHeaderAdaptor implements QbftBlockHeader {
 
   private final BlockHeader blockHeader;
 
@@ -31,7 +31,7 @@ public class QbftBlockHeaderImpl implements QbftBlockHeader {
    *
    * @param blockHeader the Besu block header
    */
-  public QbftBlockHeaderImpl(final BlockHeader blockHeader) {
+  public QbftBlockHeaderAdaptor(final BlockHeader blockHeader) {
     this.blockHeader = blockHeader;
   }
 
@@ -66,7 +66,7 @@ public class QbftBlockHeaderImpl implements QbftBlockHeader {
 
   @Override
   public boolean equals(final Object o) {
-    if (!(o instanceof QbftBlockHeaderImpl that)) return false;
+    if (!(o instanceof QbftBlockHeaderAdaptor that)) return false;
     return Objects.equals(blockHeader, that.blockHeader);
   }
 

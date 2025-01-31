@@ -22,7 +22,7 @@ import org.hyperledger.besu.consensus.qbft.validator.ValidatorModeTransitionLogg
  * Adaptor class to allow the {@link ValidatorModeTransitionLogger} to be used as a {@link
  * QbftValidatorModeTransitionLogger}.
  */
-public class QbftValidatorModeTransitionLoggerImpl implements QbftValidatorModeTransitionLogger {
+public class QbftValidatorModeTransitionLoggerAdaptor implements QbftValidatorModeTransitionLogger {
 
   private final ValidatorModeTransitionLogger validatorModeTransitionLogger;
 
@@ -31,7 +31,7 @@ public class QbftValidatorModeTransitionLoggerImpl implements QbftValidatorModeT
    *
    * @param validatorModeTransitionLogger the {@link ValidatorModeTransitionLogger} to adapt.
    */
-  public QbftValidatorModeTransitionLoggerImpl(
+  public QbftValidatorModeTransitionLoggerAdaptor(
       final ValidatorModeTransitionLogger validatorModeTransitionLogger) {
     this.validatorModeTransitionLogger = validatorModeTransitionLogger;
   }

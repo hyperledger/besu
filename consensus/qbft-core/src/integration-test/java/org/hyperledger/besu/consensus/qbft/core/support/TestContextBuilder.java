@@ -65,14 +65,14 @@ import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.qbft.adaptor.BftEventHandlerAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryAdaptor;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHashingImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHashingAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockchainImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockchainAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleAdaptor;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorModeTransitionLoggerImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorProviderImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorModeTransitionLoggerAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
@@ -479,7 +479,7 @@ public class TestContextBuilder {
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, transactionValidatorProvider);
     final QbftValidatorProvider qbftValidatorProvider =
-        new QbftValidatorProviderImpl(validatorProvider);
+        new QbftValidatorProviderAdaptor(validatorProvider);
 
     final ProtocolContext bftProtocolContext =
         new ProtocolContext(
@@ -566,13 +566,14 @@ public class TestContextBuilder {
     final QbftExtraDataProvider qbftExtraDataProvider =
         new QbftExtraDataProviderAdaptor(BFT_EXTRA_DATA_ENCODER);
     final QbftBlockHashing blockHashing =
-        new QbftBlockHashingImpl(new BftBlockHashing(BFT_EXTRA_DATA_ENCODER));
-    final QbftValidatorModeTransitionLoggerImpl validatorModeTransitionLogger =
-        new QbftValidatorModeTransitionLoggerImpl(new ValidatorModeTransitionLogger(forksSchedule));
+        new QbftBlockHashingAdaptor(new BftBlockHashing(BFT_EXTRA_DATA_ENCODER));
+    final QbftValidatorModeTransitionLoggerAdaptor validatorModeTransitionLogger =
+        new QbftValidatorModeTransitionLoggerAdaptor(
+            new ValidatorModeTransitionLogger(forksSchedule));
 
     final QbftController qbftController =
         new QbftController(
-            new QbftBlockchainImpl(blockChain),
+            new QbftBlockchainAdaptor(blockChain),
             finalState,
             new QbftBlockHeightManagerFactory(
                 finalState,

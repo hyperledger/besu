@@ -38,7 +38,7 @@ class QbftExtraDataProviderAdaptorTest {
     final Bytes encoded = qbftExtraDataCodec.encode(bftExtraData);
     final BlockHeader besuHeader =
         new BlockHeaderTestFixture().number(1).extraData(encoded).buildHeader();
-    final QbftBlockHeader qbftHeader = new QbftBlockHeaderImpl(besuHeader);
+    final QbftBlockHeader qbftHeader = new QbftBlockHeaderAdaptor(besuHeader);
 
     final QbftExtraDataProviderAdaptor qbftExtraDataProvider =
         new QbftExtraDataProviderAdaptor(new QbftExtraDataCodec());

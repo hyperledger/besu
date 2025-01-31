@@ -27,7 +27,7 @@ import java.util.Optional;
  * Adaptor class to allow the {@link ValidatorProvider} to be used as a {@link
  * QbftValidatorProvider}.
  */
-public class QbftValidatorProviderImpl implements QbftValidatorProvider {
+public class QbftValidatorProviderAdaptor implements QbftValidatorProvider {
 
   private final ValidatorProvider validatorProvider;
 
@@ -36,7 +36,7 @@ public class QbftValidatorProviderImpl implements QbftValidatorProvider {
    *
    * @param validatorProvider the {@link ValidatorProvider} to adapt.
    */
-  public QbftValidatorProviderImpl(final ValidatorProvider validatorProvider) {
+  public QbftValidatorProviderAdaptor(final ValidatorProvider validatorProvider) {
     this.validatorProvider = validatorProvider;
   }
 

@@ -30,7 +30,7 @@ import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockAdaptor;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHeaderImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHeaderAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
@@ -133,7 +133,7 @@ public class QbftRoundIntegrationTest {
     headerTestFixture.number(1);
     final BlockHeader header = headerTestFixture.buildHeader();
     final Block block = new Block(header, new BlockBody(emptyList(), emptyList()));
-    final QbftBlockHeader qbftBlockHeader = new QbftBlockHeaderImpl(header);
+    final QbftBlockHeader qbftBlockHeader = new QbftBlockHeaderAdaptor(header);
     proposedBlock = new QbftBlockAdaptor(block);
     when(qbftExtraDataProvider.getExtraData(qbftBlockHeader)).thenReturn(proposedExtraData);
 

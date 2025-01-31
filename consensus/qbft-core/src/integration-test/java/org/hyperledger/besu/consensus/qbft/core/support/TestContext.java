@@ -24,10 +24,10 @@ import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHeaderAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockchainAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockAdaptor;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHeaderImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockchainImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorProviderImpl;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
@@ -103,7 +103,7 @@ public class TestContext {
   }
 
   public QbftBlockchain getBlockchain() {
-    return new QbftBlockchainImpl(blockchain);
+    return new QbftBlockchainAdaptor(blockchain);
   }
 
   public QbftEventHandler getController() {
@@ -136,14 +136,17 @@ public class TestContext {
       final long timestamp, final Address proposer) {
     // this implies that EVERY block will have this node as the proposer :/
     return createBlockForProposal(
-        new QbftBlockHeaderImpl(blockchain.getChainHeadHeader()), timestamp, proposer, 0);
+        new QbftBlockHeaderAdaptor(blockchain.getChainHeadHeader()), timestamp, proposer, 0);
   }
 
   public QbftBlock createBlockForProposalFromChainHead(
       final long timestamp, final Address proposer, final int roundNumber) {
     // this implies that EVERY block will have this node as the proposer :/
     return createBlockForProposal(
-        new QbftBlockHeaderImpl(blockchain.getChainHeadHeader()), timestamp, proposer, roundNumber);
+        new QbftBlockHeaderAdaptor(blockchain.getChainHeadHeader()),
+        timestamp,
+        proposer,
+        roundNumber);
   }
 
   public QbftBlock createBlockForProposal(
@@ -201,7 +204,7 @@ public class TestContext {
   }
 
   public QbftValidatorProvider getValidatorProvider() {
-    return new QbftValidatorProviderImpl(validatorProvider);
+    return new QbftValidatorProviderAdaptor(validatorProvider);
   }
 
   public void appendBlock(final QbftBlock signedCurrentHeightBlock) {
@@ -210,6 +213,6 @@ public class TestContext {
   }
 
   public QbftBlockHeader getBlockHeader(final int blockNumber) {
-    return new QbftBlockHeaderImpl(blockchain.getBlockHeader(blockNumber).get());
+    return new QbftBlockHeaderAdaptor(blockchain.getBlockHeader(blockNumber).get());
   }
 }

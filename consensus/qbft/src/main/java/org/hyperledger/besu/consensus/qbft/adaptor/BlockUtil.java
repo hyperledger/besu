@@ -46,8 +46,8 @@ public class BlockUtil {
    * @return the Besu block header
    */
   public static BlockHeader toBesuBlockHeader(final QbftBlockHeader header) {
-    if (header instanceof QbftBlockHeaderImpl) {
-      return ((QbftBlockHeaderImpl) header).getBesuBlockHeader();
+    if (header instanceof QbftBlockHeaderAdaptor) {
+      return ((QbftBlockHeaderAdaptor) header).getBesuBlockHeader();
     } else {
       throw new IllegalArgumentException("Unsupported block header type");
     }

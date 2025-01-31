@@ -19,8 +19,8 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockchain;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-/** Adaptor class to allow the {@link Blockchain} to be used as a {@link QbftBlockchain}. */
-public class QbftBlockchainImpl implements QbftBlockchain {
+/** Adaptor class to allow a {@link Blockchain} to be used as a {@link QbftBlockchain}. */
+public class QbftBlockchainAdaptor implements QbftBlockchain {
   private final Blockchain blockchain;
 
   /**
@@ -28,14 +28,14 @@ public class QbftBlockchainImpl implements QbftBlockchain {
    *
    * @param blockchain The {@link Blockchain} to adapt.
    */
-  public QbftBlockchainImpl(final Blockchain blockchain) {
+  public QbftBlockchainAdaptor(final Blockchain blockchain) {
     this.blockchain = blockchain;
   }
 
   @Override
   public QbftBlockHeader getChainHeadHeader() {
     BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
-    return new QbftBlockHeaderImpl(chainHeadHeader);
+    return new QbftBlockHeaderAdaptor(chainHeadHeader);
   }
 
   @Override

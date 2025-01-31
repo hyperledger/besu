@@ -23,7 +23,7 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftNewChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-/** Adaptor class to allow the {@link QbftEventHandler} to be used as a {@link BftEventHandler}. */
+/** Adaptor class to allow a {@link QbftEventHandler} to be used as a {@link BftEventHandler}. */
 public class BftEventHandlerAdaptor implements BftEventHandler {
   private final QbftEventHandler qbftEventHandler;
 
@@ -49,7 +49,7 @@ public class BftEventHandlerAdaptor implements BftEventHandler {
   @Override
   public void handleNewBlockEvent(final NewChainHead newChainHead) {
     BlockHeader besuNewChainHeadHeader = newChainHead.getNewChainHeadHeader();
-    var qbftChainHead = new QbftNewChainHead(new QbftBlockHeaderImpl(besuNewChainHeadHeader));
+    var qbftChainHead = new QbftNewChainHead(new QbftBlockHeaderAdaptor(besuNewChainHeadHeader));
     qbftEventHandler.handleNewBlockEvent(qbftChainHead);
   }
 
