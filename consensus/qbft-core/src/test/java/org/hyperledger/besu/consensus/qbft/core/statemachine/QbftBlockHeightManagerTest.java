@@ -53,6 +53,7 @@ import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
+import org.hyperledger.besu.consensus.qbft.core.validation.RoundChangeMessageValidator;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -138,7 +139,7 @@ public class QbftBlockHeightManagerTest {
 
   @BeforeEach
   public void setup() {
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i <= 3; i++) {
       final NodeKey nodeKey = NodeKeyUtils.generate();
       validators.add(Util.publicKeyToAddress(nodeKey.getPublicKey()));
       validatorMessageFactory.add(new MessageFactory(nodeKey));
@@ -601,5 +602,43 @@ public class QbftBlockHeightManagerTest {
 
     verify(blockTimer, times(0)).getEmptyBlockPeriodSeconds();
     verify(blockTimer, times(0)).getBlockPeriodSeconds();
+  }
+
+  @Test
+  public void roundChangeTriggeredUponReceivingFPlusOneRoundChanges() {
+    final ConsensusRoundIdentifier futureRoundIdentifier1 = createFrom(roundIdentifier, 0, +2);
+    final ConsensusRoundIdentifier futureRoundIdentifier2 = createFrom(roundIdentifier, 0, +3);
+
+    final RoundChange roundChange1 =
+        validatorMessageFactory.get(0).createRoundChange(futureRoundIdentifier1, Optional.empty());
+    final RoundChange roundChange2 =
+        validatorMessageFactory.get(1).createRoundChange(futureRoundIdentifier2, Optional.empty());
+
+    RoundChangeMessageValidator roundChangeMessageValidator =
+        mock(RoundChangeMessageValidator.class);
+    when(roundChangeMessageValidator.validate(any())).thenReturn(true);
+
+    // Instantiate the real RoundChangeManager
+    final RoundChangeManager roundChangeManager =
+        new RoundChangeManager(3, 2, roundChangeMessageValidator, validators.get(2));
+
+    when(finalState.isLocalNodeProposerForRound(any())).thenReturn(false);
+
+    final QbftBlockHeightManager manager =
+        new QbftBlockHeightManager(
+            headerTestFixture.buildHeader(),
+            finalState,
+            roundChangeManager,
+            roundFactory,
+            clock,
+            messageValidatorFactory,
+            validatorMessageFactory.get(2),
+            true); // Enable early round change
+
+    manager.handleRoundChangePayload(roundChange1);
+    manager.handleRoundChangePayload(roundChange2);
+
+    verify(roundFactory, times(1))
+        .createNewRound(any(), eq(futureRoundIdentifier1.getRoundNumber()));
   }
 }
