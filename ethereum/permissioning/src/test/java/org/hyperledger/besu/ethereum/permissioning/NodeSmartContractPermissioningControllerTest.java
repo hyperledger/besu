@@ -68,7 +68,7 @@ public class NodeSmartContractPermissioningControllerTest {
     final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
     final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();
 
-    genesisState.writeStateTo(worldArchive.getMutable());
+    genesisState.writeStateTo(worldArchive.getWorldState());
 
     final TransactionSimulator ts =
         new TransactionSimulator(

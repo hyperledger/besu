@@ -299,7 +299,7 @@ public class EthCallTest {
     final JsonRpcErrorResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
 
     assertThat(expectedResponse.getError().getMessage())
-        .isEqualTo("Execution reverted: ABI decode error");
+        .isEqualTo("Execution reverted (ABI decode error)");
 
     mockTransactionProcessorSuccessResult(expectedResponse);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -325,7 +325,7 @@ public class EthCallTest {
 
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
-        .isEqualTo("Execution reverted: ABI decode error");
+        .isEqualTo("Execution reverted (ABI decode error)");
   }
 
   @Test
@@ -340,7 +340,7 @@ public class EthCallTest {
     final JsonRpcErrorResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
 
     assertThat(expectedResponse.getError().getMessage())
-        .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
+        .isEqualTo("Execution reverted (ERC20: transfer from the zero address)");
 
     mockTransactionProcessorSuccessResult(expectedResponse);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -368,7 +368,7 @@ public class EthCallTest {
 
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
-        .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
+        .isEqualTo("Execution reverted (ERC20: transfer from the zero address)");
   }
 
   @Test
