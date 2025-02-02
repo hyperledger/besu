@@ -499,8 +499,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                 tracked.setStorageWasCleared(false); // storage already cleared for this transaction
               }
             });
-    getUpdatedAccounts().clear();
-    getDeletedAccounts().clear();
   }
 
   @Override
@@ -596,6 +594,21 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
           (key, value) -> results.put(key.getSlotHash(), value.getUpdated()));
     }
     return results;
+  }
+
+  /**
+   * Marks the boundary of a transaction by clearing tracking collections.
+   *
+   * <p>These tracking collections store changes made during the transaction. After committing the
+   * transaction, they become unnecessary and can be safely cleared.
+   *
+   * <p>Note: If the transaction is not committed before this method is called, any uncommitted
+   * changes will be lost.
+   */
+  @Override
+  public void markTransactionBoundary() {
+    getUpdatedAccounts().clear();
+    getDeletedAccounts().clear();
   }
 
   @Override

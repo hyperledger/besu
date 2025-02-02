@@ -69,6 +69,7 @@ import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
 import org.hyperledger.besu.cli.options.storage.DiffBasedSubStorageOptions;
+import org.hyperledger.besu.cli.options.unstable.QBFTOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
@@ -301,6 +302,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
+  private final QBFTOptions unstableQbftOptions = QBFTOptions.create();
 
   // stable CLI options
   final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -1162,6 +1164,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
+            .put("QBFT Options", unstableQbftOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1794,6 +1797,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .clock(Clock.systemUTC())
             .isRevertReasonEnabled(isRevertReasonEnabled)
             .storageProvider(storageProvider)
+            .isEarlyRoundChangeEnabled(unstableQbftOptions.isEarlyRoundChangeEnabled())
             .gasLimitCalculator(
                 miningParametersSupplier.get().getTargetGasLimit().isPresent()
                     ? new FrontierTargetingGasLimitCalculator()

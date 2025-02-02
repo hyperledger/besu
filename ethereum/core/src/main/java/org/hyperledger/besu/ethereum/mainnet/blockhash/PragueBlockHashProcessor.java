@@ -35,7 +35,7 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(PragueBlockHashProcessor.class);
 
   public static final Address HISTORY_STORAGE_ADDRESS =
-      Address.fromHexString("0x0F792be4B0c0cb4DAE440Ef133E90C0eCD48CCCC");
+      Address.fromHexString("0x0000f90827f1c53a10cb7a02335b175320002935");
 
   /** The HISTORY_SERVE_WINDOW */
   private static final long HISTORY_SERVE_WINDOW = 8191;
@@ -68,9 +68,11 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
     super.processBlockHashes(mutableWorldState, currentBlockHeader);
 
     WorldUpdater worldUpdater = mutableWorldState.updater();
-    final MutableAccount historyStorageAccount = worldUpdater.getOrCreate(historyStorageAddress);
+    final MutableAccount historyStorageAccount = worldUpdater.getAccount(historyStorageAddress);
 
-    if (currentBlockHeader.getNumber() > 0) {
+    if (historyStorageAccount != null
+        && historyStorageAccount.getNonce() > 0
+        && currentBlockHeader.getNumber() > 0) {
       storeParentHash(historyStorageAccount, currentBlockHeader);
     }
     worldUpdater.commit();
