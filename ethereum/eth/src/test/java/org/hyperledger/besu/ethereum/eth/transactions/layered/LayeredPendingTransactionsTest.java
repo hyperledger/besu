@@ -537,7 +537,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.selectTransactions(
         pendingTx -> {
           parsedTransactions.add(pendingTx);
-          return TransactionSelectionResult.invalidTransient(
+          return TransactionSelectionResult.invalidPenalized(
               GAS_PRICE_BELOW_CURRENT_BASE_FEE.name());
         });
 
