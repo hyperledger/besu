@@ -12,13 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.ethereum.mainnet.systemcall;
 
 import static org.hyperledger.besu.evm.frame.MessageFrame.DEFAULT_MAX_STACK_SIZE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
@@ -48,37 +49,34 @@ public class SystemCallProcessor {
   }
 
   /**
-   * Processes a system call to a specified address, using the provided world state, block header,
-   * operation tracer, and block hash lookup.
+   * Processes a system call.
    *
-   * @param callAddress the address to call.
-   * @param worldState the current world state.
-   * @param blockHeader the current block header.
-   * @param operationTracer the operation tracer for tracing EVM operations.
-   * @param blockHashLookup the block hash lookup function.
-   * @return the output data from the call. If no code exists at the callAddress then an empty Bytes
-   *     is returned.
+   * @param callAddress The address to call.
+   * @param context The system call context. The input data to the system call.
+   * @return The output of the system call.
    */
   public Bytes process(
-      final Address callAddress,
-      final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
-      final OperationTracer operationTracer,
-      final BlockHashLookup blockHashLookup) {
-
+      final Address callAddress, final BlockProcessingContext context, final Bytes inputData) {
     // if no code exists at CALL_ADDRESS, the call must fail silently
-    final Account maybeContract = worldState.get(callAddress);
+    final Account maybeContract = context.getWorldState().get(callAddress);
     if (maybeContract == null) {
       LOG.trace("System call address not found {}", callAddress);
       return Bytes.EMPTY;
     }
 
+    WorldUpdater worldUpdater = context.getWorldState().updater();
     final AbstractMessageProcessor messageProcessor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
     final MessageFrame initialFrame =
-        createCallFrame(callAddress, worldState, blockHeader, blockHashLookup);
+        createCallFrame(
+            callAddress,
+            worldUpdater,
+            context.getBlockHeader(),
+            context.getBlockHashLookup(),
+            inputData);
 
-    return processFrame(initialFrame, messageProcessor, operationTracer, worldState);
+    worldUpdater.commit();
+    return processFrame(initialFrame, messageProcessor, context.getOperationTracer(), worldUpdater);
   }
 
   private Bytes processFrame(
@@ -109,7 +107,8 @@ public class SystemCallProcessor {
       final Address callAddress,
       final WorldUpdater worldUpdater,
       final ProcessableBlockHeader blockHeader,
-      final BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup,
+      final Bytes inputData) {
 
     final Optional<Account> maybeContract = Optional.ofNullable(worldUpdater.get(callAddress));
     final AbstractMessageProcessor processor =
@@ -130,7 +129,7 @@ public class SystemCallProcessor {
         .type(MessageFrame.Type.MESSAGE_CALL)
         .address(callAddress)
         .contract(callAddress)
-        .inputData(Bytes.EMPTY)
+        .inputData(inputData)
         .sender(SYSTEM_ADDRESS)
         .blockHashLookup(blockHashLookup)
         .code(

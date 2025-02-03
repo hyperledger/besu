@@ -17,12 +17,14 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.mainnet.SystemCallProcessor;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockContextProcessor;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /** Processes system call requests. */
-public class SystemCallRequestProcessor implements RequestProcessor {
+public class SystemCallRequestProcessor
+    implements RequestProcessor, BlockContextProcessor<Request, ProcessRequestContext> {
 
   private final Address callAddress;
   private final RequestType requestType;
@@ -41,16 +43,10 @@ public class SystemCallRequestProcessor implements RequestProcessor {
   @Override
   public Request process(final ProcessRequestContext context) {
 
-    SystemCallProcessor systemCallProcessor =
-        new SystemCallProcessor(context.protocolSpec().getTransactionProcessor());
+    final SystemCallProcessor systemCallProcessor =
+        new SystemCallProcessor(context.getProtocolSpec().getTransactionProcessor());
 
-    Bytes systemCallOutput =
-        systemCallProcessor.process(
-            callAddress,
-            context.mutableWorldState().updater(),
-            context.blockHeader(),
-            context.operationTracer(),
-            context.blockHashLookup());
+    Bytes systemCallOutput = systemCallProcessor.process(callAddress, context, Bytes.EMPTY);
 
     return new Request(requestType, systemCallOutput);
   }

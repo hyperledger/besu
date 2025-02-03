@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -126,10 +127,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     long currentBlobGasUsed = 0;
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
-
-    protocolSpec.getBlockHashProcessor().processBlockHashes(worldState, blockHeader);
     final BlockHashLookup blockHashLookup =
         protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader);
+    final BlockProcessingContext context =
+        new BlockProcessingContext(
+            worldState, blockHeader, OperationTracer.NO_TRACING, blockHashLookup, protocolSpec);
+    protocolSpec.getBlockHashProcessor().process(context);
 
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
@@ -240,16 +243,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         protocolSpec.getRequestProcessorCoordinator();
     Optional<List<Request>> maybeRequests = Optional.empty();
     if (requestProcessor.isPresent()) {
-      ProcessRequestContext context =
-          new ProcessRequestContext(
-              blockHeader,
-              worldState,
-              protocolSpec,
-              receipts,
-              blockHashLookup,
-              OperationTracer.NO_TRACING);
-
-      maybeRequests = Optional.of(requestProcessor.get().process(context));
+      ProcessRequestContext requestContext = new ProcessRequestContext(context, receipts);
+      maybeRequests = Optional.of(requestProcessor.get().process(requestContext));
     }
 
     if (maybeRequests.isPresent() && blockHeader.getRequestsHash().isPresent()) {
