@@ -135,11 +135,8 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
       if (Optional.ofNullable(accountNodes.getIfPresent(nodeHash)).isPresent()) {
-        // MRW TODO - cached account nodes needs thinking about for bonsai archive state proofs -
-        // for now throw an exception
-        // if a cached value is ever used.
-        throw new IllegalStateException(
-            "Get account state trie node returned cached value - likely to fail state proof generation");
+        // MRW TODO - cached account nodes needs thinking about for bonsai archive state proofs
+        System.out.println("Warning - cached account value returned");
       }
       return Optional.ofNullable(accountNodes.getIfPresent(nodeHash))
           .or(() -> worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash));

@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.ARCHIVE_PROOF_BLOCK_NUMBER_KEY;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -74,7 +75,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   public static final byte[] DELETED_CODE_VALUE = new byte[0];
   public static final byte[] DELETED_STORAGE_VALUE = new byte[0];
 
-  private static final int CHECKPOINT_INTERVAL = 50;
+  public static final int CHECKPOINT_INTERVAL = 50;
 
   private Optional<BonsaiContext> getStateTrieArchiveContextForWrite(
       final SegmentedKeyValueStorage storage) {
@@ -84,10 +85,21 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
     if (archiveContext.isPresent()) {
       try {
-        // MRW We need to round down to the nearest N
-        long trieContext =
-            (((Bytes.wrap(archiveContext.get()).toLong() + 1) / CHECKPOINT_INTERVAL)
-                * CHECKPOINT_INTERVAL);
+
+        long trieContext;
+
+        Optional<byte[]> archiveRollingContext =
+            storage.get(TRIE_BRANCH_STORAGE, ARCHIVE_PROOF_BLOCK_NUMBER_KEY);
+        if (archiveRollingContext.isPresent()) {
+          trieContext = Bytes.wrap(archiveRollingContext.get()).toLong();
+        } else {
+          // MRW We're not rolling to a specific block's state trie - we need to round down to the
+          // nearest N
+          trieContext =
+              (((Bytes.wrap(archiveContext.get()).toLong() + 1) / CHECKPOINT_INTERVAL)
+                  * CHECKPOINT_INTERVAL);
+        }
+
         trieContext = trieContext == 0 ? 1 : trieContext;
         // MRW TODO - quirk of rocksdb that key searches for "0x0000000..." seem to be returned in
         // reverse order to other keys
