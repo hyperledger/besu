@@ -14,7 +14,7 @@
 - Extend simulate transaction on pending block plugin API [#8174](https://github.com/hyperledger/besu/pull/8174)
 
 ### Bug fixes
-
+- Fix the simulation of txs with a future nonce [#8215](https://github.com/hyperledger/besu/pull/8215)
 
 ## 25.1.0
 
