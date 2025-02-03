@@ -71,7 +71,7 @@ public class MainnetBlockImporter implements BlockImporter {
       if (importWithTxIndexing) {
         context.getBlockchain().appendBlock(block, receipts);
       } else {
-        context.getBlockchain().appendBlockWithoutTxIndex(block, receipts);
+        context.getBlockchain().appendBlockWithoutIndexingTransactions(block, receipts);
       }
       return new BlockImportResult(true);
     }

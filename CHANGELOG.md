@@ -2,6 +2,8 @@
 
 ## Unreleased
 ### Breaking Changes
+- Transaction indexing is now disabled by default for snap sync and checkpoint sync modes. This will break RPCs that use transaction hash for historical queries. To enable transaction indexing use the `--snapshot-transaction-index-enabled=true`.
+
 ### Upcoming Breaking Changes
 ### Additions and Improvements
 - Adds timestamps to enable Prague hardfork on Sepolia and Holesky test networks. [#8163](https://github.com/hyperledger/besu/pull/8163)
@@ -17,7 +19,6 @@
 - Changed tracer API to include the mining beneficiary in BlockAwareOperationTracer::traceStartBlock [#8096](https://github.com/hyperledger/besu/pull/8096)
 - Change the input defaults on debug_trace* calls to not trace memory by default ("disableMemory": true, "disableStack": false,  "disableStorage": false)
 - Change the output format of debug_trace* and trace_* calls to match Geth behaviour
-- Transaction indexing is now disabled by default for snap sync and checkpoint sync modes. This will break RPCs that use transaction hash for historical queries. To enable transaction indexing use the `--snapshot-transaction-index-enabled=true`.
 
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`

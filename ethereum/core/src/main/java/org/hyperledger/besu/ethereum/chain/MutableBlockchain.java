@@ -47,7 +47,7 @@ public interface MutableBlockchain extends Blockchain {
    * @param block The block to append.
    * @param receipts The list of receipts associated with this block's transactions.
    */
-  void appendBlockWithoutTxIndex(Block block, List<TransactionReceipt> receipts);
+  void appendBlockWithoutIndexingTransactions(Block block, List<TransactionReceipt> receipts);
 
   /**
    * Adds a block to the blockchain, without updating the chain state.

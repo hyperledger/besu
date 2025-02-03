@@ -421,7 +421,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public synchronized void appendBlockWithoutTxIndex(
+  public synchronized void appendBlockWithoutIndexingTransactions(
       final Block block, final List<TransactionReceipt> receipts) {
     if (numberOfBlocksToCache != 0) cacheBlockData(block, receipts);
     appendBlockHelper(new BlockWithReceipts(block, receipts), false, false);

@@ -73,7 +73,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-trienode-count-per-request";
   private static final String SNAP_TRANSACTION_INDEXING_ENABLED_FLAG =
-      "--snapsync-synchronizer-transaction-indexing-enabled";
+      "--Xsnapsync-synchronizer-transaction-indexing-enabled";
 
   private static final String SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-flat-account-healed-count-per-request";
@@ -323,6 +323,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   @CommandLine.Option(
       names = SNAP_TRANSACTION_INDEXING_ENABLED_FLAG,
+      hidden = true,
       paramLabel = "<Boolean>",
       arity = "0..1",
       description = "Enable transaction indexing during snap sync. (default: ${DEFAULT-VALUE})")
