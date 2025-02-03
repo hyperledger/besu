@@ -9,7 +9,7 @@ env:
 
 jobs:
   hadolint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -35,7 +35,7 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - ubuntu-22.04
+          - ubuntu-24.04
           - besu-arm64
     runs-on: ${{ matrix.platform }}
     steps:
@@ -43,7 +43,7 @@ jobs:
         id: prep
         run: |
           platform=${{ matrix.platform }}
-          if [ "$platform" = 'ubuntu-22.04' ]; then 
+          if [ "$platform" = 'ubuntu-24.04' ]; then 
             echo "PLATFORM_PAIR=linux-amd64" >> $GITHUB_OUTPUT
             echo "ARCH=amd64" >> $GITHUB_OUTPUT
           else
@@ -95,7 +95,7 @@ jobs:
         run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
   multiArch:
     needs: buildDocker
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write

@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   referenceTestEthereum:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       statuses: write
       checks: write
@@ -65,7 +65,7 @@ jobs:
           path: '**/build/test-results/referenceTests/TEST-*.xml'
   reftests-passed:
     name: "reftests-passed"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [ referenceTestEthereum ]
     permissions:
       checks: write

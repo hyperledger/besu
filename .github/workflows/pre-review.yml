@@ -18,7 +18,7 @@ env:
 jobs:
   repolint:
     name: "Repository Linting"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     container: ghcr.io/todogroup/repolinter:v0.11.2
     steps:
     - name: Checkout Code
@@ -29,14 +29,14 @@ jobs:
       run: bundle exec /app/bin/repolinter.js --rulesetUrl https://raw.githubusercontent.com/hyperledger-labs/hyperledger-community-management-tools/main/repo_structure/repolint.json --format markdown
   gradle-wrapper:
     name: "Gradle Wrapper Validation"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
       - uses: gradle/wrapper-validation-action@56b90f209b02bf6d1deae490e9ef18b21a389cd4
   spotless:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -54,7 +54,7 @@ jobs:
       - name: run spotless
         run: ./gradlew spotlessCheck
   compile:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     needs: [spotless, gradle-wrapper, repolint]
     steps:
@@ -76,7 +76,7 @@ jobs:
   unitTests:
     env:
         GRADLEW_UNIT_TEST_ARGS: ${{matrix.gradle_args}}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [spotless, gradle-wrapper, repolint]
     permissions:
       checks: write
@@ -150,7 +150,7 @@ jobs:
           path: '**/build/reports/tests/test/**'
   unittests-passed:
     name: "unittests-passed"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [compile, unitTests]
     permissions:
       checks: write
