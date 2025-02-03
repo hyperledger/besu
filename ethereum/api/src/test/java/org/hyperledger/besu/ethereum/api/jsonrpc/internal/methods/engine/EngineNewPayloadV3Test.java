@@ -153,8 +153,26 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             payload,
             Optional.of(List.of()),
             Optional.of("0x0000000000000000000000000000000000000000000000000000000000000000"),
-            Optional.of(emptyList()));
+            Optional.empty());
     assertThat(res.isValid()).isTrue();
+  }
+
+  @Test
+  public void shouldReject_whenExecutionRequestsPresent() {
+    final BlockHeader mockHeader =
+        setupValidPayload(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty());
+    final EnginePayloadParameter payload = mockEnginePayload(mockHeader, emptyList(), null);
+
+    ValidationResult<RpcErrorType> res =
+        method.validateParameters(
+            payload,
+            Optional.of(List.of()),
+            Optional.of("0x0000000000000000000000000000000000000000000000000000000000000000"),
+            Optional.of(emptyList()));
+    assertThat(res.isValid()).isFalse();
+    assertThat(res.getInvalidReason()).isEqualTo(RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
   }
 
   @Override
