@@ -9,6 +9,7 @@
 | Name             | Github           | LFID             |
 | ---------------- | ---------------- | ---------------- |
 | Ameziane Hamlat   | ahamlat         | ahamlat          |
+| Bhanu Pulluri    | pullurib         | bpulluri         |
 | Chaminda Divitotawela | cdivitotawela    | cdivitotawela    |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
