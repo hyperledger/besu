@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.util.RLPTestUtil;
 import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class RLPTest {
@@ -176,7 +177,7 @@ public class RLPTest {
     //  ["0x02"]
     // ]
     Bytes validRlp = Bytes.fromHexString("c4c101c102");
-    RLP.validate(validRlp);
+    Assertions.assertThatCode(() -> RLP.validate(validRlp)).doesNotThrowAnyException();
   }
 
   private static Bytes h(final String hex) {
