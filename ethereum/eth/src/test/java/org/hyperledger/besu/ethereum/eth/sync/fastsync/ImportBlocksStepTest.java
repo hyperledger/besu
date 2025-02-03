@@ -100,6 +100,15 @@ public class ImportBlocksStepTest {
 
     for (final BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       verify(protocolSchedule).getByBlockHeader(blockWithReceipts.getHeader());
+      verify(blockImporter)
+          .importBlockForSyncing(
+              protocolContext,
+              blockWithReceipts.getBlock(),
+              blockWithReceipts.getReceipts(),
+              FULL,
+              LIGHT,
+              BodyValidationMode.LIGHT,
+              true);
     }
     verify(validationPolicy, times(blocks.size())).getValidationModeForNextBlock();
   }
@@ -151,5 +160,14 @@ public class ImportBlocksStepTest {
 
     verify(protocolSchedule).getByBlockHeader(blockWithReceipts.getHeader());
     verify(validationPolicy, times(1)).getValidationModeForNextBlock();
+    verify(blockImporter)
+        .importBlockForSyncing(
+            protocolContext,
+            blockWithReceipts.getBlock(),
+            blockWithReceipts.getReceipts(),
+            FULL,
+            LIGHT,
+            BodyValidationMode.LIGHT,
+            false);
   }
 }
