@@ -14,10 +14,15 @@
  */
 package org.hyperledger.besu.tests.acceptance.bft;
 
+import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.provider.Arguments;
 
@@ -28,6 +33,30 @@ public abstract class ParameterizedBftTestBase extends AcceptanceTestBase {
 
   public static Stream<Arguments> factoryFunctions() {
     return BftAcceptanceTestParameterization.getFactories();
+  }
+
+  protected static void updateGenesisConfigToLondon(
+      final BesuNode minerNode, final boolean zeroBaseFeeEnabled) {
+    final Optional<String> genesisConfig =
+        minerNode.getGenesisConfigProvider().create(List.of(minerNode));
+    final ObjectNode genesisConfigNode = JsonUtil.objectNodeFromString(genesisConfig.orElseThrow());
+    final ObjectNode config = (ObjectNode) genesisConfigNode.get("config");
+    config.remove("berlinBlock");
+    config.put("londonBlock", 0);
+    config.put("zeroBaseFee", zeroBaseFeeEnabled);
+    minerNode.setGenesisConfig(genesisConfigNode.toString());
+  }
+
+  static void updateGenesisConfigToShanghai(
+      final BesuNode minerNode, final boolean zeroBaseFeeEnabled) {
+    final Optional<String> genesisConfig =
+        minerNode.getGenesisConfigProvider().create(List.of(minerNode));
+    final ObjectNode genesisConfigNode = JsonUtil.objectNodeFromString(genesisConfig.orElseThrow());
+    final ObjectNode config = (ObjectNode) genesisConfigNode.get("config");
+    config.remove("berlinBlock");
+    config.put("shanghaiTime", 100);
+    config.put("zeroBaseFee", zeroBaseFeeEnabled);
+    minerNode.setGenesisConfig(genesisConfigNode.toString());
   }
 
   protected void setUp(final String bftType, final BftAcceptanceTestParameterization input) {
