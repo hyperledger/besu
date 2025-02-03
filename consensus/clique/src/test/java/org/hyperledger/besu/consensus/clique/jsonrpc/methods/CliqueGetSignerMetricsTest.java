@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.LongStream;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -80,7 +81,7 @@ public class CliqueGetSignerMetricsTest {
 
   @Test
   public void exceptionWhenInvalidEndBlockSupplied() {
-    assertThatThrownBy(() -> method.response(requestWithParams("1", "INVALID")))
+    assertThatThrownBy(() -> method.response(requestWithParams("0x1", "INVALID")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessageContaining("Invalid end block parameter (index 1)");
   }
@@ -184,7 +185,8 @@ public class CliqueGetSignerMetricsTest {
 
     signerMetricResultList.add(new SignerMetricResult(VALIDATORS[0])); // missing validator
 
-    final JsonRpcRequestContext request = requestWithParams(String.valueOf(startBlock), "latest");
+    final JsonRpcRequestContext request =
+        requestWithParams(UInt256.valueOf(startBlock).toHexString(), "latest");
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -208,7 +210,8 @@ public class CliqueGetSignerMetricsTest {
 
     signerMetricResultList.add(new SignerMetricResult(VALIDATORS[0])); // missing validator
 
-    final JsonRpcRequestContext request = requestWithParams(String.valueOf(startBlock), "pending");
+    final JsonRpcRequestContext request =
+        requestWithParams(UInt256.valueOf(startBlock).toHexString(), "pending");
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -230,7 +233,8 @@ public class CliqueGetSignerMetricsTest {
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
-    final JsonRpcRequestContext request = requestWithParams("earliest", String.valueOf(endBlock));
+    final JsonRpcRequestContext request =
+        requestWithParams("earliest", UInt256.valueOf(endBlock).toHexString());
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
