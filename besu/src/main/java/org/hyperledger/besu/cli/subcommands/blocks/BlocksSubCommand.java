@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
@@ -206,6 +207,7 @@ public class BlocksSubCommand implements Runnable {
       }
       LOG.info("Import {} block data from {} files", format, blockImportFiles.size());
       final Optional<MetricsService> metricsService = initMetrics(parentCommand);
+      KZGPointEvalPrecompiledContract.init();
 
       try (final BesuController controller = createController()) {
         for (final Path path : blockImportFiles) {
