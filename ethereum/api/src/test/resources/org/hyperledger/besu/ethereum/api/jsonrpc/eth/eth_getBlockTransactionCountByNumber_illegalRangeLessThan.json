@@ -10,7 +10,7 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 210,
-    "message" : "Invalid block, unable to parse RLP"
+    "message" : "Invalid block parameter"
   },
   "statusCode": 200
 }

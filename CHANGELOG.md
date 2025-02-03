@@ -2,6 +2,8 @@
 
 ## Unreleased
 ### Breaking Changes
+- BlockParameter now enforces hex 0x prefix for numerical values
+
 ### Upcoming Breaking Changes
 ### Additions and Improvements
 #### Prague
