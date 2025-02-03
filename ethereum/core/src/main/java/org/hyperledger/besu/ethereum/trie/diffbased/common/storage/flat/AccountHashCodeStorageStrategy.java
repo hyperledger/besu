@@ -36,6 +36,7 @@ public class AccountHashCodeStorageStrategy implements CodeStorageStrategy {
 
   @Override
   public void putFlatCode(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash codeHash,
@@ -45,6 +46,7 @@ public class AccountHashCodeStorageStrategy implements CodeStorageStrategy {
 
   @Override
   public void removeFlatCode(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash codeHash) {

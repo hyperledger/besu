@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateC
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -55,6 +56,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   protected final TrieLogManager trieLogManager;
   protected DiffBasedCachedWorldStorageManager cachedWorldStorageManager;
   protected DiffBasedWorldState headWorldState;
+  protected EvmConfiguration evmConfiguration;
   protected final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   // Configuration that will be shared by all instances of world state at their creation
   protected final WorldStateConfig worldStateConfig;
@@ -175,7 +177,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
    * @param queryParams the query parameters
    * @return the stateful world state, if available
    */
-  private Optional<MutableWorldState> getFullWorldState(final WorldStateQueryParams queryParams) {
+  protected Optional<MutableWorldState> getFullWorldState(final WorldStateQueryParams queryParams) {
     return queryParams.shouldWorldStateUpdateHead()
         ? getFullWorldStateFromHead(queryParams.getBlockHash())
         : getFullWorldStateFromCache(queryParams.getBlockHeader());

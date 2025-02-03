@@ -32,4 +32,9 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
     // no op
     throw new UnsupportedOperationException("cannot freeze");
   }
+
+  default MutableWorldState disableTrie() {
+    // no op
+    throw new UnsupportedOperationException("cannot disable trie");
+  }
 }
