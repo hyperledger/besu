@@ -88,5 +88,4 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
   public Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType) {
     throw new UnsupportedOperationException("The encode method is not supported.");
   }
-
 }
