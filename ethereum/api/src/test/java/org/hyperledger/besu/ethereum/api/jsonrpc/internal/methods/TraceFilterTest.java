@@ -31,6 +31,7 @@ import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.function.Supplier;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -54,10 +55,11 @@ public class TraceFilterTest {
   })
   public void shouldFailIfParamsExceedMaxRange(
       final long fromBlock, final long toBlock, final long maxFilterRange) {
+    // parameterized inputs are longs but convert to hex for block params
     final FilterParameter filterParameter =
         new FilterParameter(
-            new BlockParameter(fromBlock),
-            new BlockParameter(toBlock),
+            new BlockParameter(UInt256.valueOf(fromBlock).toHexString()),
+            new BlockParameter(UInt256.valueOf(toBlock).toHexString()),
             null,
             null,
             null,

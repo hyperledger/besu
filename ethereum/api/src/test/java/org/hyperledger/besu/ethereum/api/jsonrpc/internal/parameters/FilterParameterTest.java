@@ -151,7 +151,7 @@ public class FilterParameterTest {
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
-    assertThat(parsedFilterParameter.getFromBlock()).isEqualTo(new BlockParameter(0));
+    assertThat(parsedFilterParameter.getFromBlock()).isEqualTo(new BlockParameter("0x0"));
     assertThat(parsedFilterParameter.getToBlock()).isEqualTo(BlockParameter.PENDING);
   }
 

@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.apache.tuweni.units.bigints.UInt256;
 
 // Represents a block parameter that can be a special value ("pending", "earliest", "latest",
 // "finalized", "safe") or a number formatted as a hex string.
@@ -63,15 +64,14 @@ public class BlockParameter {
         number = Optional.empty();
         break;
       default:
+        // Otherwise, expect hex number and insist on 0x prefix
         type = BlockParameterType.NUMERIC;
-        number = Optional.of(Long.decode(value));
+        if (!normalizedValue.startsWith("0x")) {
+          throw new IllegalArgumentException("Invalid hex number: " + normalizedValue);
+        }
+        number = Optional.of(UInt256.fromHexString(normalizedValue).toLong());
         break;
     }
-  }
-
-  public BlockParameter(final long value) {
-    type = BlockParameterType.NUMERIC;
-    number = Optional.of(value);
   }
 
   public Optional<Long> getNumber() {

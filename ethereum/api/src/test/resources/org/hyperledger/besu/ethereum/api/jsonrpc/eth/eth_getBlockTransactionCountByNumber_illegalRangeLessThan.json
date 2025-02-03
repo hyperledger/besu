@@ -4,13 +4,13 @@
     "jsonrpc": "2.0",
     "method": "eth_getBlockTransactionCountByNumber",
     "params": [
-      "-0x10"
+      "-10"
     ]
   },
   "response": {
     "jsonrpc": "2.0",
     "id": 210,
-    "result": null
+    "message" : "Invalid block, unable to parse RLP"
   },
   "statusCode": 200
 }
