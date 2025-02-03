@@ -102,7 +102,7 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
             block ->
                 Tracer.processTracing(
                     getBlockchainQueries(),
-                    block.getHash(),
+                    Optional.of(block.getHeader()),
                     traceableState -> {
                       List<DebugTraceTransactionResult> tracesList =
                           Collections.synchronizedList(new ArrayList<>());

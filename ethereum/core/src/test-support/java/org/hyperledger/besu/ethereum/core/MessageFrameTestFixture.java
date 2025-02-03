@@ -191,7 +191,7 @@ public class MessageFrameTestFixture {
   }
 
   private WorldUpdater createDefaultWorldUpdater() {
-    return getOrCreateExecutionContextTestFixture().getStateArchive().getMutable().updater();
+    return getOrCreateExecutionContextTestFixture().getStateArchive().getWorldState().updater();
   }
 
   private Blockchain createDefaultBlockchain() {
