@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.IbftLegacyConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
@@ -68,7 +69,7 @@ public class IbftProtocolSchedule {
             isRevertReasonEnabled,
             evmConfiguration,
             null,
-            null,
+            new BadBlockManager(),
             false,
             null)
         .createProtocolSchedule();

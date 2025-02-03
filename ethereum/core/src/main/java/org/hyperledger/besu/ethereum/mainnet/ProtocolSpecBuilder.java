@@ -321,7 +321,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(protocolSchedule, "Missing protocol schedule");
     checkNotNull(privacyParameters, "Missing privacy parameters");
     checkNotNull(feeMarket, "Missing fee market");
-    // checkNotNull(badBlockManager, "Missing bad blocks manager");
+    checkNotNull(badBlockManager, "Missing bad blocks manager");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
     final GasLimitCalculator gasLimitCalculator = gasLimitCalculatorBuilder.apply(feeMarket);
