@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
@@ -191,6 +192,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
 
       blockUpdater.commit();
+      blockUpdater.markTransactionBoundary();
 
       currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
       if (transaction.getVersionedHashes().isPresent()) {
@@ -248,6 +250,19 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               OperationTracer.NO_TRACING);
 
       maybeRequests = Optional.of(requestProcessor.get().process(context));
+    }
+
+    if (maybeRequests.isPresent() && blockHeader.getRequestsHash().isPresent()) {
+      Hash calculatedRequestHash = BodyValidation.requestsHash(maybeRequests.get());
+      Hash headerRequestsHash = blockHeader.getRequestsHash().get();
+      if (!calculatedRequestHash.equals(headerRequestsHash)) {
+        return new BlockProcessingResult(
+            Optional.empty(),
+            "Requests hash mismatch, calculated: "
+                + calculatedRequestHash.toHexString()
+                + " header: "
+                + headerRequestsHash.toHexString());
+      }
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
