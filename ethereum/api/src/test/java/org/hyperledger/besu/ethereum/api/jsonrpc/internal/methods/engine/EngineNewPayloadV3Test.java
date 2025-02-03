@@ -141,7 +141,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   }
 
   @Test
-  public void shouldValidVersionedHash_whenListIsEmpty() {
+  public void validateVersionedHash_whenListIsPresentAndEmpty() {
     final BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
@@ -158,7 +158,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   }
 
   @Test
-  public void shouldReject_whenExecutionRequestsPresent() {
+  public void validateExecutionRequests_whenPresent() {
     final BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
