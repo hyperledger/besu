@@ -24,6 +24,7 @@ import java.io.IOException;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled("flaky see https://github.com/hyperledger/besu/issues/7973")
 public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
 
   @Test
