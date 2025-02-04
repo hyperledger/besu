@@ -357,7 +357,7 @@ public class T8nExecutor {
             .orElse(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO)); // state-test
     final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(excessBlobGas);
     long blobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
-    BlockProcessingContext context =
+    BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
             worldState,
             referenceTestEnv,
@@ -368,7 +368,7 @@ public class T8nExecutor {
             protocolSpec);
 
     if (!referenceTestEnv.isStateTest()) {
-      protocolSpec.getBlockHashProcessor().process(context);
+      protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
     }
 
     final WorldUpdater rootWorldStateUpdater = worldState.updater();
@@ -546,7 +546,8 @@ public class T8nExecutor {
     if (requestProcessorCoordinator.isPresent()) {
       var rpc = requestProcessorCoordinator.get();
 
-      RequestProcessingContext requestContext = new RequestProcessingContext(context, receipts);
+      RequestProcessingContext requestContext =
+          new RequestProcessingContext(blockProcessingContext, receipts);
       Optional<List<Request>> maybeRequests = Optional.of(rpc.process(requestContext));
       Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
 

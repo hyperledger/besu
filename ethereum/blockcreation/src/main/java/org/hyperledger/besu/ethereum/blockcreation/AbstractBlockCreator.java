@@ -261,11 +261,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       // EIP-7685: process EL requests
       final Optional<RequestProcessorCoordinator> requestProcessor =
           newProtocolSpec.getRequestProcessorCoordinator();
-      RequestProcessingContext context =
+      RequestProcessingContext requestProcessingContext =
           new RequestProcessingContext(blockProcessingContext, transactionResults.getReceipts());
 
       Optional<List<Request>> maybeRequests =
-          requestProcessor.map(processor -> processor.process(context));
+          requestProcessor.map(processor -> processor.process(requestProcessingContext));
 
       throwIfStopped();
 

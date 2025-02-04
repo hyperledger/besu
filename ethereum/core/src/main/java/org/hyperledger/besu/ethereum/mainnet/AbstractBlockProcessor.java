@@ -129,10 +129,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
     final BlockHashLookup blockHashLookup =
         protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader);
-    final BlockProcessingContext context =
+    final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
             worldState, blockHeader, OperationTracer.NO_TRACING, blockHashLookup, protocolSpec);
-    protocolSpec.getBlockHashProcessor().process(context);
+    protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
 
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
@@ -243,8 +243,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         protocolSpec.getRequestProcessorCoordinator();
     Optional<List<Request>> maybeRequests = Optional.empty();
     if (requestProcessor.isPresent()) {
-      RequestProcessingContext requestContext = new RequestProcessingContext(context, receipts);
-      maybeRequests = Optional.of(requestProcessor.get().process(requestContext));
+      RequestProcessingContext requestProcessingContext =
+          new RequestProcessingContext(blockProcessingContext, receipts);
+      maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
     }
 
     if (maybeRequests.isPresent() && blockHeader.getRequestsHash().isPresent()) {
