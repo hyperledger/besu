@@ -35,11 +35,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
@@ -129,6 +131,42 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Override
+  @Test
+  public void validateVersionedHash_whenListIsPresentAndEmpty() {
+    final BlockHeader mockHeader =
+        setupValidPayload(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty());
+    final EnginePayloadParameter payload = mockEnginePayload(mockHeader, emptyList(), null);
+
+    ValidationResult<RpcErrorType> res =
+        method.validateParameters(
+            payload,
+            Optional.of(List.of()),
+            Optional.of("0x0000000000000000000000000000000000000000000000000000000000000000"),
+            Optional.of(List.of()));
+    assertThat(res.isValid()).isTrue();
+  }
+
+  @Override
+  @Test
+  public void validateExecutionRequests_whenPresent() {
+    final BlockHeader mockHeader =
+        setupValidPayload(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty());
+    final EnginePayloadParameter payload = mockEnginePayload(mockHeader, emptyList(), null);
+
+    ValidationResult<RpcErrorType> res =
+        method.validateParameters(
+            payload,
+            Optional.of(List.of()),
+            Optional.of("0x0000000000000000000000000000000000000000000000000000000000000000"),
+            Optional.of(emptyList()));
+    assertThat(res.isValid()).isTrue();
   }
 
   private BlockHeader createValidBlockHeaderForV4(
