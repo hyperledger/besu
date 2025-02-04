@@ -15,8 +15,8 @@
 package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
-import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.validator.ValidatorModeTransitionLogger;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -30,10 +30,11 @@ public class QbftBlockHeightManagerFactory {
   private static final Logger LOG = LoggerFactory.getLogger(QbftBlockHeightManagerFactory.class);
 
   private final QbftRoundFactory roundFactory;
-  private final BftFinalState finalState;
+  private final QbftFinalState finalState;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
   private final ValidatorModeTransitionLogger validatorModeTransitionLogger;
+  private boolean isEarlyRoundChangeEnabled = false;
 
   /**
    * Instantiates a new Qbft block height manager factory.
@@ -45,7 +46,7 @@ public class QbftBlockHeightManagerFactory {
    * @param validatorModeTransitionLogger the validator mode transition logger
    */
   public QbftBlockHeightManagerFactory(
-      final BftFinalState finalState,
+      final QbftFinalState finalState,
       final QbftRoundFactory roundFactory,
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,
@@ -75,22 +76,60 @@ public class QbftBlockHeightManagerFactory {
     }
   }
 
+  /**
+   * Sets early round change enabled.
+   *
+   * @param isEarlyRoundChangeEnabled the is early round change enabled
+   */
+  public void isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
+    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
+  }
+
   private BaseQbftBlockHeightManager createNoOpBlockHeightManager(final BlockHeader parentHeader) {
     return new NoOpBlockHeightManager(parentHeader);
   }
 
   private BaseQbftBlockHeightManager createFullBlockHeightManager(final BlockHeader parentHeader) {
-    return new QbftBlockHeightManager(
-        parentHeader,
-        finalState,
-        new RoundChangeManager(
-            BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
-            messageValidatorFactory.createRoundChangeMessageValidator(
-                parentHeader.getNumber() + 1L, parentHeader),
-            finalState.getLocalAddress()),
-        roundFactory,
-        finalState.getClock(),
-        messageValidatorFactory,
-        messageFactory);
+
+    QbftBlockHeightManager qbftBlockHeightManager;
+    RoundChangeManager roundChangeManager;
+
+    if (isEarlyRoundChangeEnabled) {
+      roundChangeManager =
+          new RoundChangeManager(
+              BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
+              BftHelpers.calculateRequiredFutureRCQuorum(finalState.getValidators().size()),
+              messageValidatorFactory.createRoundChangeMessageValidator(
+                  parentHeader.getNumber() + 1L, parentHeader),
+              finalState.getLocalAddress());
+      qbftBlockHeightManager =
+          new QbftBlockHeightManager(
+              parentHeader,
+              finalState,
+              roundChangeManager,
+              roundFactory,
+              finalState.getClock(),
+              messageValidatorFactory,
+              messageFactory,
+              true);
+    } else {
+      roundChangeManager =
+          new RoundChangeManager(
+              BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
+              messageValidatorFactory.createRoundChangeMessageValidator(
+                  parentHeader.getNumber() + 1L, parentHeader),
+              finalState.getLocalAddress());
+      qbftBlockHeightManager =
+          new QbftBlockHeightManager(
+              parentHeader,
+              finalState,
+              roundChangeManager,
+              roundFactory,
+              finalState.getClock(),
+              messageValidatorFactory,
+              messageFactory);
+    }
+
+    return qbftBlockHeightManager;
   }
 }

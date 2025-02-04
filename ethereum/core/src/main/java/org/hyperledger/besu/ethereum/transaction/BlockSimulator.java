@@ -54,7 +54,6 @@ import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * Simulates the execution of a block, processing transactions and applying state overrides. This
@@ -248,19 +247,7 @@ public class BlockSimulator {
     for (Address accountToOverride : stateOverrideMap.keySet()) {
       final StateOverride override = stateOverrideMap.get(accountToOverride);
       MutableAccount account = updater.getOrCreate(accountToOverride);
-      override.getNonce().ifPresent(account::setNonce);
-      if (override.getBalance().isPresent()) {
-        account.setBalance(override.getBalance().get());
-      }
-      override.getCode().ifPresent(n -> account.setCode(Bytes.fromHexString(n)));
-      override
-          .getStateDiff()
-          .ifPresent(
-              d ->
-                  d.forEach(
-                      (key, value) ->
-                          account.setStorageValue(
-                              UInt256.fromHexString(key), UInt256.fromHexString(value))));
+      TransactionSimulator.applyOverrides(account, override);
     }
     updater.commit();
   }

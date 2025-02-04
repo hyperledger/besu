@@ -95,7 +95,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
         Bytes.fromHexStringLenient(nonce).toLong(),
         SIGNATURE_ALGORITHM
             .get()
-            .createSignature(
+            .createCodeDelegationSignature(
                 Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
                 Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
                 Bytes.fromHexStringLenient(v).get(0)));
@@ -121,6 +121,12 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
 
   @Override
   public Optional<Address> authorizer() {
+    // recId needs to be between 0 and 3, otherwise the signature is invalid
+    // which means we can't recover the authorizer.
+    if (signature.getRecId() < 0 || signature.getRecId() > 3) {
+      return Optional.empty();
+    }
+
     return authorizerSupplier.get();
   }
 

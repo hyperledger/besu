@@ -105,11 +105,6 @@ public class CodeDelegationProcessor {
       return;
     }
 
-    if (codeDelegation.signature().getRecId() != 0 && codeDelegation.signature().getRecId() != 1) {
-      LOG.trace("Invalid signature for code delegation. RecId must be 0 or 1.");
-      return;
-    }
-
     final Optional<Address> authorizer = codeDelegation.authorizer();
     if (authorizer.isEmpty()) {
       LOG.trace("Invalid signature for code delegation");
