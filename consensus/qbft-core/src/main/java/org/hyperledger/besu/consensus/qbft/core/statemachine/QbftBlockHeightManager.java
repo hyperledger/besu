@@ -156,13 +156,11 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
     final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
     final QbftBlock block = qbftRound.createBlock(headerTimeStampSeconds);
-    final boolean blockIsEmpty = block.isEmpty();
-    if (!blockIsEmpty) {
+    if (!block.isEmpty()) {
       LOG.trace(
           "Block is not empty and this node is a proposer so it will send a proposal: "
               + roundIdentifier);
       qbftRound.updateStateWithProposalAndTransmit(block);
-
     } else {
       // handle the block times period
       final long currentTimeInMillis = finalState.getClock().millis();

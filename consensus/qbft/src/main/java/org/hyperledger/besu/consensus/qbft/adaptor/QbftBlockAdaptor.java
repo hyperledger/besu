@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -44,7 +43,7 @@ public class QbftBlockAdaptor implements QbftBlock {
 
   @Override
   public boolean isEmpty() {
-    return header.getTransactionsRoot().equals(Hash.EMPTY_TRIE_HASH);
+    return block.getBody().getTransactions().isEmpty();
   }
 
   /**
