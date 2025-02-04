@@ -22,19 +22,21 @@ import java.util.Optional;
 
 public class ForkSupportHelper {
   public static ValidationResult<RpcErrorType> validateForkSupported(
-      final HardforkId hardforkId,
+      final HardforkId firstSupportedHardforkId,
       final Optional<Long> maybeForkMilestone,
       final long blockTimestamp) {
     if (maybeForkMilestone.isEmpty()) {
       return ValidationResult.invalid(
           RpcErrorType.UNSUPPORTED_FORK,
-          "Configuration error, no schedule for " + hardforkId.name() + " fork set");
+          "Configuration error, no schedule for " + firstSupportedHardforkId.name() + " fork set");
     }
 
     if (Long.compareUnsigned(blockTimestamp, maybeForkMilestone.get()) < 0) {
       return ValidationResult.invalid(
           RpcErrorType.UNSUPPORTED_FORK,
-          hardforkId.name() + " configured to start at timestamp: " + maybeForkMilestone.get());
+          firstSupportedHardforkId.name()
+              + " configured to start at timestamp: "
+              + maybeForkMilestone.get());
     }
 
     return ValidationResult.valid();

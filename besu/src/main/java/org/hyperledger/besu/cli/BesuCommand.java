@@ -1587,13 +1587,37 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateChainDataPruningParams() {
-    if (unstableChainPruningOptions.getChainDataPruningEnabled()
-        && unstableChainPruningOptions.getChainDataPruningBlocksRetained()
-            < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
-      throw new ParameterException(
-          this.commandLine,
-          "--Xchain-pruning-blocks-retained must be >= "
-              + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
+    Long chainDataPruningBlocksRetained =
+        unstableChainPruningOptions.getChainDataPruningBlocksRetained();
+    if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
+      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
+      if (chainDataPruningBlocksRetained
+          < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
+        throw new ParameterException(
+            this.commandLine,
+            "--Xchain-pruning-blocks-retained must be >= "
+                + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
+      } else if (genesisConfigOptions.isPoa()) {
+        Long epochLength = 0L;
+        String consensusMechanism = "";
+        if (genesisConfigOptions.isIbft2()) {
+          epochLength = genesisConfigOptions.getBftConfigOptions().getEpochLength();
+          consensusMechanism = "IBFT2";
+        } else if (genesisConfigOptions.isQbft()) {
+          epochLength = genesisConfigOptions.getQbftConfigOptions().getEpochLength();
+          consensusMechanism = "QBFT";
+        } else if (genesisConfigOptions.isClique()) {
+          epochLength = genesisConfigOptions.getCliqueConfigOptions().getEpochLength();
+          consensusMechanism = "Clique";
+        }
+        if (chainDataPruningBlocksRetained < epochLength) {
+          throw new ParameterException(
+              this.commandLine,
+              String.format(
+                  "--Xchain-pruning-blocks-retained(%d) must be >= epochlength(%d) for %s",
+                  chainDataPruningBlocksRetained, epochLength, consensusMechanism));
+        }
+      }
     }
   }
 
