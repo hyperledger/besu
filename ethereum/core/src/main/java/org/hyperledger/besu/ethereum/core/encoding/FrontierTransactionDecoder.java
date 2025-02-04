@@ -41,18 +41,20 @@ public class FrontierTransactionDecoder {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   public static Transaction decode(final RLPInput input) {
-    input.enterList();
+    RLPInput transactionRlp = input.readAsRlp();
+    transactionRlp.enterList();
     final Transaction.Builder builder =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
-            .nonce(input.readLongScalar())
-            .gasPrice(Wei.of(input.readUInt256Scalar()))
-            .gasLimit(input.readLongScalar())
-            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
-            .value(Wei.of(input.readUInt256Scalar()))
-            .payload(input.readBytes());
+            .nonce(transactionRlp.readLongScalar())
+            .gasPrice(Wei.of(transactionRlp.readUInt256Scalar()))
+            .gasLimit(transactionRlp.readLongScalar())
+            .to(transactionRlp.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .value(Wei.of(transactionRlp.readUInt256Scalar()))
+            .payload(transactionRlp.readBytes())
+            .rawRlp(transactionRlp.raw());
 
-    final BigInteger v = input.readBigIntegerScalar();
+    final BigInteger v = transactionRlp.readBigIntegerScalar();
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
     if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
@@ -64,11 +66,11 @@ public class FrontierTransactionDecoder {
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
     }
-    final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
-    final BigInteger s = input.readUInt256Scalar().toUnsignedBigInteger();
+    final BigInteger r = transactionRlp.readUInt256Scalar().toUnsignedBigInteger();
+    final BigInteger s = transactionRlp.readUInt256Scalar().toUnsignedBigInteger();
     final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
 
-    input.leaveList();
+    transactionRlp.leaveList();
 
     chainId.ifPresent(builder::chainId);
     return builder.signature(signature).build();

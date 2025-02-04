@@ -22,12 +22,10 @@ import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.BlockValidator;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collection;
 import java.util.List;
@@ -46,8 +44,7 @@ public class RoundChangeMessageValidator {
   private final long quorumMessageCount;
   private final long chainHeight;
   private final Collection<Address> validators;
-  private final ProtocolContext protocolContext;
-  private final ProtocolSchedule protocolSchedule;
+  private final QbftProtocolSchedule protocolSchedule;
 
   /**
    * Instantiates a new Round change message validator.
@@ -56,7 +53,6 @@ public class RoundChangeMessageValidator {
    * @param quorumMessageCount the quorum message count
    * @param chainHeight the chain height
    * @param validators the validators
-   * @param protocolContext the protocol context
    * @param protocolSchedule the protocol context
    */
   public RoundChangeMessageValidator(
@@ -64,13 +60,11 @@ public class RoundChangeMessageValidator {
       final long quorumMessageCount,
       final long chainHeight,
       final Collection<Address> validators,
-      final ProtocolContext protocolContext,
-      final ProtocolSchedule protocolSchedule) {
+      final QbftProtocolSchedule protocolSchedule) {
     this.roundChangePayloadValidator = roundChangePayloadValidator;
     this.quorumMessageCount = quorumMessageCount;
     this.chainHeight = chainHeight;
     this.validators = validators;
-    this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
   }
 
@@ -94,20 +88,18 @@ public class RoundChangeMessageValidator {
     return msg.getPreparedRoundMetadata().isEmpty();
   }
 
-  private boolean validateBlock(final Block block) {
+  private boolean validateBlock(final QbftBlock block) {
 
-    final BlockValidator blockValidator =
+    final QbftBlockValidator blockValidator =
         protocolSchedule.getByBlockHeader(block.getHeader()).getBlockValidator();
 
-    final var validationResult =
-        blockValidator.validateAndProcessBlock(
-            protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
+    final var validationResult = blockValidator.validateBlock(block);
 
-    if (!validationResult.isSuccessful()) {
+    if (!validationResult.success()) {
       LOG.info(
           "{}: block did not pass validation. Reason {}",
           ERROR_PREFIX,
-          validationResult.errorMessage);
+          validationResult.errorMessage());
       return false;
     }
 
@@ -115,7 +107,7 @@ public class RoundChangeMessageValidator {
   }
 
   private boolean validateWithBlock(final RoundChange msg) {
-    final Block block = msg.getProposedBlock().get();
+    final QbftBlock block = msg.getProposedBlock().get();
 
     if (!validateBlock(block)) {
       return false;

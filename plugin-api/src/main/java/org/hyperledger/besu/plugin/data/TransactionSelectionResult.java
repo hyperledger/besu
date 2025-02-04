@@ -176,6 +176,13 @@ public class TransactionSelectionResult {
   public static final TransactionSelectionResult PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN =
       TransactionSelectionResult.invalidTransient("PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN");
 
+  /**
+   * The transaction has not been selected since its sender already had a previous transaction not
+   * selected
+   */
+  public static final TransactionSelectionResult SENDER_WITH_PREVIOUS_TX_NOT_SELECTED =
+      TransactionSelectionResult.invalidTransient("SENDER_WITH_PREVIOUS_TX_NOT_SELECTED");
+
   private final Status status;
   private final Optional<String> maybeInvalidReason;
 
