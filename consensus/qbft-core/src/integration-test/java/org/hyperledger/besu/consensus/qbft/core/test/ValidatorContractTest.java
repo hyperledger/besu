@@ -25,7 +25,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.core.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
@@ -69,7 +69,7 @@ public class ValidatorContractTest {
   private TestClock clock;
 
   private final QbftExtraDataProvider extraDataProvider =
-      new QbftExtraDataProviderImpl(new QbftExtraDataCodec());
+      new QbftExtraDataProviderAdaptor(new QbftExtraDataCodec());
 
   @BeforeEach
   public void setup() {

@@ -14,8 +14,14 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.support;
 
-import com.google.common.collect.Iterables;
-import org.apache.tuweni.bytes.Bytes;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
@@ -142,13 +148,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.google.common.collect.Iterables;
+import org.apache.tuweni.bytes.Bytes;
 
 public class TestContextBuilder {
   @SuppressWarnings(

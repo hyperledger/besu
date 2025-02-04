@@ -19,9 +19,9 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHashingImpl;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.core.payload.CommitPayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
@@ -49,7 +49,7 @@ public class IntegrationTestHelpers {
     final QbftBlockHashing blockHashing =
         new QbftBlockHashingImpl(new BftBlockHashing(qbftExtraDataEncoder));
     final QbftExtraDataProvider extraDataProvider =
-        new QbftExtraDataProviderImpl(qbftExtraDataEncoder);
+        new QbftExtraDataProviderAdaptor(qbftExtraDataEncoder);
     final SECPSignature commitSeal =
         nodeKey.sign(
             blockHashing.calculateDataHashForCommittedSeal(

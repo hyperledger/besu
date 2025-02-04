@@ -130,7 +130,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
    * @param isEarlyRoundChangeEnabled enable round change when f+1 RC messages are received
    */
   public QbftBlockHeightManager(
-      final BlockHeader parentHeader,
+      final QbftBlockHeader parentHeader,
       final QbftFinalState finalState,
       final RoundChangeManager roundChangeManager,
       final QbftRoundFactory qbftRoundFactory,
