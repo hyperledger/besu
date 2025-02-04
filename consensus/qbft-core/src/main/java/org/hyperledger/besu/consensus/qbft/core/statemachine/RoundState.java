@@ -18,9 +18,9 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator;
 import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -83,7 +83,7 @@ public class RoundState {
    */
   public boolean setProposedBlock(final Proposal msg) {
 
-    if (!proposalMessage.isPresent()) {
+    if (proposalMessage.isEmpty()) {
       if (validator.validateProposal(msg)) {
         proposalMessage = Optional.of(msg);
         prepareMessages.removeIf(p -> !validator.validatePrepare(p));
@@ -102,7 +102,7 @@ public class RoundState {
    * @param msg the msg
    */
   public void addPrepareMessage(final Prepare msg) {
-    if (!proposalMessage.isPresent() || validator.validatePrepare(msg)) {
+    if (proposalMessage.isEmpty() || validator.validatePrepare(msg)) {
       prepareMessages.add(msg);
       LOG.trace("Round state added prepare message prepare={}", msg);
     }
@@ -115,7 +115,7 @@ public class RoundState {
    * @param msg the msg
    */
   public void addCommitMessage(final Commit msg) {
-    if (!proposalMessage.isPresent() || validator.validateCommit(msg)) {
+    if (proposalMessage.isEmpty() || validator.validateCommit(msg)) {
       commitMessages.add(msg);
       LOG.trace("Round state added commit message commit={}", msg);
     }
@@ -141,7 +141,7 @@ public class RoundState {
    *
    * @return the proposed block
    */
-  public Optional<Block> getProposedBlock() {
+  public Optional<QbftBlock> getProposedBlock() {
     return proposalMessage.map(p -> p.getSignedPayload().getPayload().getProposedBlock());
   }
 

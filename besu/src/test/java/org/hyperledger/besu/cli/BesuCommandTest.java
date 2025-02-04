@@ -2598,4 +2598,91 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(errorOutputString).isEmpty();
   }
+
+  @Test
+  void chainPruningEnabledWithPOAShouldFailWhenChainPruningBlocksRetainedValueLessThanEpochLength()
+      throws IOException {
+    JsonObject genesis = GENESIS_VALID_JSON;
+
+    // for QBFT
+    genesis.getJsonObject("config").put("qbft", new JsonObject().put("epochlength", 25000));
+    final Path genesisFileQBFT = createFakeGenesisFile(genesis);
+    parseCommand(
+        "--genesis-file",
+        genesisFileQBFT.toString(),
+        "--Xchain-pruning-enabled=true",
+        "--Xchain-pruning-blocks-retained=7200",
+        "--version-compatibility-protection=false");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--Xchain-pruning-blocks-retained(7200) must be >= epochlength(25000) for QBFT");
+    commandErrorOutput.reset();
+
+    // for IBFT2
+    genesis.getJsonObject("config").put("ibft2", new JsonObject().put("epochlength", 20000));
+    genesis.getJsonObject("config").remove("qbft");
+    final Path genesisFileIBFT = createFakeGenesisFile(genesis);
+    parseCommand(
+        "--genesis-file",
+        genesisFileIBFT.toString(),
+        "--Xchain-pruning-enabled=true",
+        "--Xchain-pruning-blocks-retained=7200",
+        "--version-compatibility-protection=false");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--Xchain-pruning-blocks-retained(7200) must be >= epochlength(20000) for IBFT2");
+    commandErrorOutput.reset();
+
+    // for Clique
+    genesis.getJsonObject("config").put("clique", new JsonObject().put("epochlength", 10000));
+    genesis.getJsonObject("config").remove("ibft2");
+    final Path genesisFileClique = createFakeGenesisFile(genesis);
+    parseCommand(
+        "--genesis-file",
+        genesisFileClique.toString(),
+        "--Xchain-pruning-enabled=true",
+        "--Xchain-pruning-blocks-retained=7200",
+        "--version-compatibility-protection=false");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--Xchain-pruning-blocks-retained(7200) must be >= epochlength(10000) for Clique");
+  }
+
+  @Test
+  void chainPruningEnabledWithPOA() throws IOException {
+    JsonObject genesis = GENESIS_VALID_JSON;
+    // for QBFT
+    genesis.getJsonObject("config").put("qbft", new JsonObject().put("epochlength", 25000));
+    final Path genesisFileForQBFT = createFakeGenesisFile(genesis);
+    parseCommand(
+        "--genesis-file",
+        genesisFileForQBFT.toString(),
+        "--Xchain-pruning-enabled=true",
+        "--Xchain-pruning-blocks-retained=25000",
+        "--version-compatibility-protection=false");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    // for IBFT2
+    genesis.getJsonObject("config").put("ibft2", new JsonObject().put("epochlength", 20000));
+    genesis.getJsonObject("config").remove("qbft");
+    final Path genesisFileIBFT = createFakeGenesisFile(genesis);
+    parseCommand(
+        "--genesis-file",
+        genesisFileIBFT.toString(),
+        "--Xchain-pruning-enabled=true",
+        "--Xchain-pruning-blocks-retained=20000",
+        "--version-compatibility-protection=false");
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    // for Clique
+    genesis.getJsonObject("config").put("clique", new JsonObject().put("epochlength", 10000));
+    genesis.getJsonObject("config").remove("ibft2");
+    final Path genesisFileClique = createFakeGenesisFile(genesis);
+    parseCommand(
+        "--genesis-file",
+        genesisFileClique.toString(),
+        "--Xchain-pruning-enabled=true",
+        "--Xchain-pruning-blocks-retained=10000",
+        "--version-compatibility-protection=false");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
 }
