@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import org.hyperledger.besu.consensus.merge.PostMergeContext;
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -47,10 +47,13 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
    *
    * @param miningCoordinator the mining coordinator
    * @param mergeCoordinator the merge coordinator
+   * @param mergeContext the merge context
    */
   public TransitionCoordinator(
-      final MiningCoordinator miningCoordinator, final MiningCoordinator mergeCoordinator) {
-    super(miningCoordinator, mergeCoordinator, PostMergeContext.get());
+      final MiningCoordinator miningCoordinator,
+      final MiningCoordinator mergeCoordinator,
+      final MergeContext mergeContext) {
+    super(miningCoordinator, mergeCoordinator, mergeContext);
     this.miningCoordinator = miningCoordinator;
     this.mergeCoordinator = (MergeMiningCoordinator) mergeCoordinator;
   }

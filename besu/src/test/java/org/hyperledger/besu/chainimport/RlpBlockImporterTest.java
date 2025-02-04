@@ -22,6 +22,7 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -82,6 +83,7 @@ public final class RlpBlockImporterTest {
             .networkConfiguration(NetworkingConfiguration.create())
             .besuComponent(mock(BesuComponent.class))
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
+            .postMergeContext(new PostMergeContext())
             .build();
     final RlpBlockImporter.ImportResult result =
         rlpBlockImporter.importBlockchain(source, targetController, false);
@@ -117,6 +119,7 @@ public final class RlpBlockImporterTest {
             .networkConfiguration(NetworkingConfiguration.create())
             .besuComponent(mock(BesuComponent.class))
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
+            .postMergeContext(new PostMergeContext())
             .build();
 
     assertThatThrownBy(
@@ -149,6 +152,7 @@ public final class RlpBlockImporterTest {
             .networkConfiguration(NetworkingConfiguration.create())
             .besuComponent(mock(BesuComponent.class))
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
+            .postMergeContext(new PostMergeContext())
             .build();
 
     final RlpBlockImporter.ImportResult result =

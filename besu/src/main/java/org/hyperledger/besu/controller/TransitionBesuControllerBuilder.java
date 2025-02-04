@@ -147,7 +147,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionMiningConfiguration,
                 syncState,
                 transitionBackwardsSyncContext,
-                ethProtocolManager.ethContext().getScheduler()));
+                ethProtocolManager.ethContext().getScheduler()),
+            preMergeBesuControllerBuilder.postMergeContext);
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
   }
@@ -185,7 +186,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         new TransitionProtocolSchedule(
             preMergeBesuControllerBuilder.createProtocolSchedule(),
             mergeBesuControllerBuilder.createProtocolSchedule(),
-            PostMergeContext.get());
+            postMergeContext);
     return transitionProtocolSchedule;
   }
 
@@ -205,6 +206,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
+    preMergeBesuControllerBuilder.postMergeContext(postMergeContext);
+    mergeBesuControllerBuilder.postMergeContext(postMergeContext);
     return new TransitionContext(
         preMergeBesuControllerBuilder.createConsensusContext(
             blockchain, worldStateArchive, protocolSchedule),
@@ -290,7 +293,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     final BesuController controller = super.build();
-    PostMergeContext.get().setSyncState(controller.getSyncState());
+    super.postMergeContext.setSyncState(controller.getSyncState());
     return controller;
   }
 

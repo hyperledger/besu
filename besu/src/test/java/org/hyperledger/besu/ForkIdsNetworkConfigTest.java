@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
@@ -189,10 +190,8 @@ public class ForkIdsNetworkConfigTest {
                     new BadBlockManager(),
                     false,
                     new NoOpMetricsSystem()));
-    final MilestoneStreamingTransitionProtocolSchedule schedule =
-        new MilestoneStreamingTransitionProtocolSchedule(
-            preMergeProtocolSchedule, postMergeProtocolSchedule);
-    return schedule;
+    return new MilestoneStreamingTransitionProtocolSchedule(
+        preMergeProtocolSchedule, postMergeProtocolSchedule, new PostMergeContext());
   }
 
   public static class MilestoneStreamingTransitionProtocolSchedule
@@ -202,11 +201,11 @@ public class ForkIdsNetworkConfigTest {
 
     public MilestoneStreamingTransitionProtocolSchedule(
         final MilestoneStreamingProtocolSchedule preMergeProtocolSchedule,
-        final MilestoneStreamingProtocolSchedule postMergeProtocolSchedule) {
-      super(preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
+        final MilestoneStreamingProtocolSchedule postMergeProtocolSchedule,
+        final MergeContext mergeContext) {
+      super(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
       transitionUtils =
-          new TransitionUtils<>(
-              preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
+          new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
     }
 
     public Stream<Long> streamMilestoneBlocks() {

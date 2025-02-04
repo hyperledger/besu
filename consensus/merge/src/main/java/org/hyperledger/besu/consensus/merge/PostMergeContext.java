@@ -40,7 +40,6 @@ public class PostMergeContext implements MergeContext {
   /** The Max blocks in progress. */
   static final int MAX_BLOCKS_IN_PROGRESS = 12;
 
-  private static final AtomicReference<PostMergeContext> singleton = new AtomicReference<>();
   private final AtomicReference<SyncState> syncState;
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
   // initial postMerge state is indeterminate until it is set:
@@ -62,8 +61,7 @@ public class PostMergeContext implements MergeContext {
   private boolean isPostMergeAtGenesis;
 
   /** Instantiates a new Post merge context. */
-  @VisibleForTesting
-  PostMergeContext() {
+  public PostMergeContext() {
     this(Difficulty.ZERO);
   }
 
@@ -76,18 +74,6 @@ public class PostMergeContext implements MergeContext {
   PostMergeContext(final Difficulty difficulty) {
     this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
     this.syncState = new AtomicReference<>();
-  }
-
-  /**
-   * Get post merge context.
-   *
-   * @return the post merge context
-   */
-  public static PostMergeContext get() {
-    if (singleton.get() == null) {
-      singleton.compareAndSet(null, new PostMergeContext());
-    }
-    return singleton.get();
   }
 
   @Override

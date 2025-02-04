@@ -28,6 +28,7 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
@@ -193,7 +194,8 @@ public class MergeBesuControllerBuilderTest {
             .networkConfiguration(NetworkingConfiguration.create())
             .besuComponent(mock(BesuComponent.class))
             .networkId(networkId)
-            .apiConfiguration(ImmutableApiConfiguration.builder().build());
+            .apiConfiguration(ImmutableApiConfiguration.builder().build())
+            .postMergeContext(new PostMergeContext());
   }
 
   @Test

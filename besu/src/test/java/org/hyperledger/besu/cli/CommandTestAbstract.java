@@ -299,6 +299,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.genesisStateHashCacheEnabled(any()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.apiConfiguration(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.postMergeContext(any())).thenReturn(mockControllerBuilder);
 
     when(mockControllerBuilder.build()).thenReturn(mockController);
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);

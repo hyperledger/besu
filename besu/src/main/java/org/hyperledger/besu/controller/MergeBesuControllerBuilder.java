@@ -16,7 +16,6 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
-import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBestPeerComparator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.datatypes.Address;
@@ -196,38 +195,36 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfigOptions.getTerminalTotalDifficulty().isPresent()
             && genesisConfigOptions.getTerminalTotalDifficulty().get().isZero()
             && blockchain.getGenesisBlockHeader().getDifficulty().isZero();
-
-    final MergeContext mergeContext =
-        PostMergeContext.get()
-            .setSyncState(syncState.get())
-            .setTerminalTotalDifficulty(
-                genesisConfigOptions
-                    .getTerminalTotalDifficulty()
-                    .map(Difficulty::of)
-                    .orElse(Difficulty.ZERO))
-            .setPostMergeAtGenesis(isPostMergeAtGenesis);
+    postMergeContext
+        .setSyncState(syncState.get())
+        .setTerminalTotalDifficulty(
+            genesisConfigOptions
+                .getTerminalTotalDifficulty()
+                .map(Difficulty::of)
+                .orElse(Difficulty.ZERO))
+        .setPostMergeAtGenesis(isPostMergeAtGenesis);
 
     blockchain
         .getFinalized()
         .flatMap(blockchain::getBlockHeader)
-        .ifPresent(mergeContext::setFinalized);
+        .ifPresent(postMergeContext::setFinalized);
 
     blockchain
         .getSafeBlock()
         .flatMap(blockchain::getBlockHeader)
-        .ifPresent(mergeContext::setSafeBlock);
+        .ifPresent(postMergeContext::setSafeBlock);
 
     if (terminalBlockNumber.isPresent() && terminalBlockHash.isPresent()) {
       Optional<BlockHeader> termBlock = blockchain.getBlockHeader(terminalBlockNumber.getAsLong());
-      mergeContext.setTerminalPoWBlock(termBlock);
+      postMergeContext.setTerminalPoWBlock(termBlock);
     }
     blockchain.observeBlockAdded(
         blockAddedEvent ->
             blockchain
                 .getTotalDifficultyByHash(blockAddedEvent.getBlock().getHeader().getHash())
-                .ifPresent(mergeContext::setIsPostMerge));
+                .ifPresent(postMergeContext::setIsPostMerge));
 
-    return mergeContext;
+    return postMergeContext;
   }
 
   @Override
@@ -261,7 +258,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     final BesuController controller = super.build();
-    PostMergeContext.get().setSyncState(controller.getSyncState());
+    super.postMergeContext.setSyncState(controller.getSyncState());
     return controller;
   }
 }

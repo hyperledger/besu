@@ -26,6 +26,7 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -158,13 +159,15 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .map(GenesisConfig::fromConfig)
         .ifPresent(networkConfigBuilder::setGenesisConfig);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
-    final BesuControllerBuilder builder = component.besuControllerBuilder();
-    builder.isRevertReasonEnabled(node.isRevertReasonEnabled());
-    builder.networkConfiguration(node.getNetworkingConfiguration());
-
-    builder.dataDirectory(dataDir);
-    builder.nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))));
-    builder.privacyParameters(node.getPrivacyParameters());
+    final BesuControllerBuilder builder =
+        component
+            .besuControllerBuilder()
+            .dataDirectory(dataDir)
+            .isRevertReasonEnabled(node.isRevertReasonEnabled())
+            .networkConfiguration(node.getNetworkingConfiguration())
+            .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
+            .privacyParameters(node.getPrivacyParameters())
+            .postMergeContext(new PostMergeContext());
 
     node.getGenesisConfig().map(GenesisConfig::fromConfig).ifPresent(builder::genesisConfig);
 
@@ -176,10 +179,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         besuPluginContextMap.computeIfAbsent(node, n -> component.getBesuPluginContext());
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
-    runnerBuilder.permissioningConfiguration(node.getPermissioningConfiguration());
-    runnerBuilder.apiConfiguration(node.getApiConfiguration());
-
     runnerBuilder
+        .permissioningConfiguration(node.getPermissioningConfiguration())
+        .apiConfiguration(node.getApiConfiguration())
         .vertx(Vertx.vertx())
         .besuController(besuController)
         .ethNetworkConfig(ethNetworkConfig)
@@ -449,7 +451,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
       final BesuControllerBuilder builder =
           new BesuController.Builder()
-              .fromEthNetworkConfig(ethNetworkConfig, synchronizerConfiguration.getSyncMode());
+              .fromEthNetworkConfig(ethNetworkConfig, synchronizerConfiguration.getSyncMode())
+              .postMergeContext(new PostMergeContext());
       builder.transactionPoolConfiguration(transactionPoolConfiguration);
       return builder;
     }

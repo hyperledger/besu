@@ -21,6 +21,7 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceSupplier;
 import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
 import org.hyperledger.besu.cryptoservices.NodeKey;
@@ -221,6 +222,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** When enabled, round changes on f+1 RC messages from higher rounds */
   protected boolean isEarlyRoundChangeEnabled = false;
+
+  /** PostMergeContext, responsible for managing the switch from pre-merge to post merge */
+  protected PostMergeContext postMergeContext;
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -564,6 +568,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    */
   public BesuControllerBuilder isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
     this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
+    return this;
+  }
+
+  /**
+   * sets the postMergeContext in the builder
+   *
+   * @param postMergeContext the post merge context
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder postMergeContext(final PostMergeContext postMergeContext) {
+    this.postMergeContext = postMergeContext;
     return this;
   }
 

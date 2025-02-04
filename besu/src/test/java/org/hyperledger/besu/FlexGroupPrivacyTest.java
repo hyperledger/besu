@@ -23,6 +23,7 @@ import org.hyperledger.besu.components.MockBesuCommandModule;
 import org.hyperledger.besu.components.NoOpMetricsSystemModule;
 import org.hyperledger.besu.components.PrivacyTestModule;
 import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -164,6 +165,7 @@ class FlexGroupPrivacyTest {
           .networkConfiguration(NetworkingConfiguration.create())
           .besuComponent(context)
           .apiConfiguration(ImmutableApiConfiguration.builder().build())
+          .postMergeContext(new PostMergeContext())
           .build();
     }
   }

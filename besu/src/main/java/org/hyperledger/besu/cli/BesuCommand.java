@@ -89,6 +89,7 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.Blake2bfMessageDigest;
@@ -1836,6 +1837,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .cacheLastBlocks(numberOfblocksToCache)
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
             .apiConfiguration(apiConfigurationSupplier.get())
+            .postMergeContext(new PostMergeContext())
             .besuComponent(besuComponent);
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
       final DiffBasedSubStorageConfiguration subStorageConfiguration =

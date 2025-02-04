@@ -61,41 +61,6 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   }
 
   /**
-   * Create a Proof-of-Stake protocol schedule from a config object
-   *
-   * @param genesisConfigOptions {@link GenesisConfigOptions} containing the config options for the
-   *     milestone starting points
-   * @param miningConfiguration the mining parameters
-   * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
-   * @return an initialised TransitionProtocolSchedule using post-merge defaults
-   */
-  public static TransitionProtocolSchedule fromConfig(
-      final GenesisConfigOptions genesisConfigOptions,
-      final MiningConfiguration miningConfiguration,
-      final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
-    ProtocolSchedule preMergeProtocolSchedule =
-        MainnetProtocolSchedule.fromConfig(
-            genesisConfigOptions,
-            miningConfiguration,
-            badBlockManager,
-            isParallelTxProcessingEnabled,
-            metricsSystem);
-    ProtocolSchedule postMergeProtocolSchedule =
-        MergeProtocolSchedule.create(
-            genesisConfigOptions,
-            false,
-            miningConfiguration,
-            badBlockManager,
-            isParallelTxProcessingEnabled,
-            metricsSystem);
-    return new TransitionProtocolSchedule(
-        preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
-  }
-
-  /**
    * Gets pre merge schedule.
    *
    * @return the pre merge schedule
