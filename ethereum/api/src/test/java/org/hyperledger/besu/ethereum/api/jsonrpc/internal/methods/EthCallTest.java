@@ -514,6 +514,7 @@ public class EthCallTest {
         ImmutableTransactionValidationParams.builder()
             .from(TransactionValidationParams.transactionSimulator())
             .isAllowExceedingBalance(isAllowedExceedingBalance)
+            .isAllowFutureNonce(true)
             .build();
 
     verify(transactionSimulator)
