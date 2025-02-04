@@ -211,18 +211,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
 
-      BlockProcessingContext blockProcessingContext =
-          new BlockProcessingContext(
-              disposableWorldState,
-              processableBlockHeader,
-              BlockAwareOperationTracer.NO_TRACING,
-              newProtocolSpec
-                  .getBlockHashProcessor()
-                  .createBlockHashLookup(protocolContext.getBlockchain(), processableBlockHeader),
-              newProtocolSpec);
-
-      newProtocolSpec.getBlockHashProcessor().process(blockProcessingContext);
-
       throwIfStopped();
 
       final PluginTransactionSelector pluginTransactionSelector =
@@ -232,6 +220,17 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           pluginTransactionSelector.getOperationTracer();
 
       operationTracer.traceStartBlock(processableBlockHeader, miningBeneficiary);
+      BlockProcessingContext blockProcessingContext =
+          new BlockProcessingContext(
+              processableBlockHeader,
+              disposableWorldState,
+              newProtocolSpec,
+              newProtocolSpec
+                  .getBlockHashProcessor()
+                  .createBlockHashLookup(protocolContext.getBlockchain(), processableBlockHeader),
+              operationTracer);
+      newProtocolSpec.getBlockHashProcessor().process(blockProcessingContext);
+
       timings.register("preTxsSelection");
       final TransactionSelectionResults transactionResults =
           selectTransactions(

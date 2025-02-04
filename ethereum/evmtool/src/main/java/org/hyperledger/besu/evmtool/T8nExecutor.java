@@ -359,13 +359,13 @@ public class T8nExecutor {
     long blobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
     BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
-            worldState,
             referenceTestEnv,
-            OperationTracer.NO_TRACING,
+            worldState,
+            protocolSpec,
             protocolSpec
                 .getBlockHashProcessor()
                 .createBlockHashLookup(blockchain, referenceTestEnv),
-            protocolSpec);
+            OperationTracer.NO_TRACING);
 
     if (!referenceTestEnv.isStateTest()) {
       protocolSpec.getBlockHashProcessor().process(blockProcessingContext);

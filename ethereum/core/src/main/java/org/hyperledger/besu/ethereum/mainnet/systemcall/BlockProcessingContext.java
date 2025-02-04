@@ -29,16 +29,16 @@ public class BlockProcessingContext {
   private final ProtocolSpec protocolSpec;
 
   public BlockProcessingContext(
-      final MutableWorldState worldState,
       final ProcessableBlockHeader blockHeader,
-      final OperationTracer operationTracer,
+      final MutableWorldState worldState,
+      final ProtocolSpec protocolSpec,
       final BlockHashLookup blockHashLookup,
-      final ProtocolSpec protocolSpec) {
-    this.worldState = worldState;
+      final OperationTracer operationTracer) {
     this.blockHeader = blockHeader;
-    this.operationTracer = operationTracer;
-    this.blockHashLookup = blockHashLookup;
+    this.worldState = worldState;
     this.protocolSpec = protocolSpec;
+    this.blockHashLookup = blockHashLookup;
+    this.operationTracer = operationTracer;
   }
 
   public MutableWorldState getWorldState() {

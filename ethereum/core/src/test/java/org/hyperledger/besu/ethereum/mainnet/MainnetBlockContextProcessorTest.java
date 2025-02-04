@@ -101,11 +101,11 @@ public class MainnetBlockContextProcessorTest {
 
     BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
-            worldState,
             mockBlockHeader,
-            OperationTracer.NO_TRACING,
+            worldState,
+            mock(ProtocolSpec.class),
             mockBlockHashLookup,
-            mock(ProtocolSpec.class));
+            OperationTracer.NO_TRACING);
 
     when(mockBlockHashLookup.apply(any(), any())).thenReturn(Hash.EMPTY);
     return systemCallProcessor.process(CALL_ADDRESS, blockProcessingContext, Bytes.EMPTY);
