@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
@@ -50,10 +51,12 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -62,6 +65,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   public EngineNewPayloadV4Test() {}
+
+  @Override
+  protected Set<ScheduledProtocolSpec.Hardfork> supportedHardforks() {
+    return Set.of(pragueHardfork);
+  }
 
   private static final List<Request> VALID_REQUESTS =
       List.of(
@@ -91,6 +99,12 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   @Override
   public void shouldReturnExpectedMethodName() {
     assertThat(method.getName()).isEqualTo("engine_newPayloadV4");
+  }
+
+  @Override
+  @Disabled
+  public void invalidWhenBlockIsPrague() {
+    // Only relevant for EngineNewPayloadV3
   }
 
   @Test

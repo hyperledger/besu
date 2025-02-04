@@ -18,6 +18,7 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.UNSUPPORTED_FORK;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -52,6 +53,7 @@ import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -59,6 +61,8 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -77,6 +81,11 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   protected static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
   public EngineNewPayloadV3Test() {}
+
+  @Override
+  protected Set<ScheduledProtocolSpec.Hardfork> supportedHardforks() {
+    return Set.of(cancunHardfork);
+  }
 
   @Override
   @Test
@@ -102,6 +111,19 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
     lenient()
         .when(protocolSpec.getGasLimitCalculator())
         .thenReturn(mock(CancunTargetingGasLimitCalculator.class));
+  }
+
+  @Test
+  public void invalidWhenBlockIsPrague() {
+    final BlockHeader pragueHeader =
+        createBlockHeaderFixture(Optional.of(emptyList()))
+            .timestamp(pragueHardfork.milestone())
+            .buildHeader();
+
+    var resp = resp(mockEnginePayload(pragueHeader, emptyList(), null));
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -213,6 +235,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
     // V3 must return error if null blobGasUsed
     BlockHeader blockHeader =
         createBlockHeaderFixture(Optional.of(emptyList()))
+            .timestamp(getTimestampForSupportedFork())
             .excessBlobGas(BlobGas.MAX_BLOB_GAS)
             .blobGasUsed(null)
             .buildHeader();
@@ -231,6 +254,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
     // V3 must return error if null excessBlobGas
     BlockHeader blockHeader =
         createBlockHeaderFixture(Optional.of(emptyList()))
+            .timestamp(getTimestampForSupportedFork())
             .excessBlobGas(null)
             .blobGasUsed(100L)
             .buildHeader();
@@ -294,5 +318,10 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .orElseGet(() -> new Object[] {payload});
     return method.response(
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
+  }
+
+  protected long getTimestampForSupportedFork() {
+    final int index = new Random().nextInt(supportedHardforks().size());
+    return supportedHardforks().stream().toList().get(index).milestone();
   }
 }
