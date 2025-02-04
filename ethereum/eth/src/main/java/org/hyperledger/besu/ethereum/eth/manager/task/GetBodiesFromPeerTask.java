@@ -20,14 +20,11 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
-import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -37,11 +34,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,55 +139,5 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
         .addArgument(() -> blocks.stream().map(Block::toLogString).toList())
         .log();
     return Optional.of(blocks);
-  }
-
-  static class BodyIdentifier {
-    private final Bytes32 transactionsRoot;
-    private final Bytes32 ommersHash;
-    private final Bytes32 withdrawalsRoot;
-
-    // TODO should requestsHash be included in this?
-    public BodyIdentifier(
-        final Bytes32 transactionsRoot, final Bytes32 ommersHash, final Bytes32 withdrawalsRoot) {
-      this.transactionsRoot = transactionsRoot;
-      this.ommersHash = ommersHash;
-      this.withdrawalsRoot = withdrawalsRoot;
-    }
-
-    public BodyIdentifier(final BlockBody body) {
-      this(body.getTransactions(), body.getOmmers(), body.getWithdrawals());
-    }
-
-    public BodyIdentifier(
-        final List<Transaction> transactions,
-        final List<BlockHeader> ommers,
-        final Optional<List<Withdrawal>> withdrawals) {
-      this(
-          BodyValidation.transactionsRoot(transactions),
-          BodyValidation.ommersHash(ommers),
-          withdrawals.map(BodyValidation::withdrawalsRoot).orElse(null));
-    }
-
-    public BodyIdentifier(final BlockHeader header) {
-      this(
-          header.getTransactionsRoot(),
-          header.getOmmersHash(),
-          header.getWithdrawalsRoot().orElse(null));
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      BodyIdentifier that = (BodyIdentifier) o;
-      return Objects.equals(transactionsRoot, that.transactionsRoot)
-          && Objects.equals(ommersHash, that.ommersHash)
-          && Objects.equals(withdrawalsRoot, that.withdrawalsRoot);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(transactionsRoot, ommersHash, withdrawalsRoot);
-    }
   }
 }

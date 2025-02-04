@@ -240,15 +240,7 @@ public interface Blockchain {
    * @return the observer ID that can be used to remove it later.
    */
   default long observeLogs(final Consumer<LogWithMetadata> logObserver) {
-    return observeBlockAdded(
-        event -> {
-          final List<LogWithMetadata> logsWithMetadata = event.getLogsWithMetadata();
-          // TDOD: Stefan No logsWithMetadata available during syncing when SyncBlock is used during
-          // syncing. Is that OK?
-          if (logsWithMetadata != null) {
-            logsWithMetadata.forEach(logObserver);
-          }
-        });
+    return observeBlockAdded((event -> event.getLogsWithMetadata().forEach(logObserver)));
   }
 
   /**

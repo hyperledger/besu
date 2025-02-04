@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,10 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,10 +26,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +59,7 @@ public class SyncBlockBody {
         Bytes.fromHexString("0xc2c0c0"),
         Collections.emptyList(),
         Bytes.EMPTY,
-        Collections.emptyList(),
+        null,
         protocolSchedule);
   }
 
@@ -116,25 +111,16 @@ public class SyncBlockBody {
     return body;
   }
 
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SyncBlockBody blockBody = (SyncBlockBody) o;
-    return Objects.equals(bytesOfWrappedRlpInput, blockBody.bytesOfWrappedRlpInput);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(bytesOfWrappedRlpInput);
+  public List<Bytes> getEncodedTransactions() {
+    return transactionBytes;
   }
 
   public Hash getTransactionsRoot() {
-    return getRootFromListOfBytes(transactionBytes);
+    return Util.getRootFromListOfBytes(transactionBytes);
   }
 
-  public List<Bytes> getEncodedTransactions() {
-    return transactionBytes;
+  public int getTransactionCount() {
+    return transactionBytes.size();
   }
 
   public Hash getOmmersHash() {
@@ -146,11 +132,11 @@ public class SyncBlockBody {
       return null;
     }
     final List<Bytes> bytes = withdrawalBytes.get();
-    return getRootFromListOfBytes(bytes);
+    return Util.getRootFromListOfBytes(bytes);
   }
 
-  public int getTransactionCount() {
-    return transactionBytes.size();
+  public Bytes getRlp() {
+    return bytesOfWrappedRlpInput;
   }
 
   public Supplier<BlockBody> getBodySupplier() {
@@ -161,18 +147,17 @@ public class SyncBlockBody {
     };
   }
 
-  private Hash getRootFromListOfBytes(final List<Bytes> bytes) {
-    final MerkleTrie<Bytes, Bytes> trie = new SimpleMerklePatriciaTrie<>(b -> b);
-    IntStream.range(0, bytes.size())
-        .forEach(
-            i -> {
-              trie.put(indexKey(i), bytes.get(i));
-            });
-    return Hash.wrap(trie.getRootHash());
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    SyncBlockBody blockBody = (SyncBlockBody) o;
+    return Objects.equals(bytesOfWrappedRlpInput, blockBody.bytesOfWrappedRlpInput);
   }
 
-  private static Bytes indexKey(final int i) {
-    return RLP.encodeOne(UInt256.valueOf(i).trimLeadingZeros());
+  @Override
+  public int hashCode() {
+    return Objects.hash(bytesOfWrappedRlpInput);
   }
 
   @Override
@@ -187,9 +172,5 @@ public class SyncBlockBody {
         + ", withdrawalBytes="
         + withdrawalBytes
         + '}';
-  }
-
-  public Bytes getRlp() {
-    return bytesOfWrappedRlpInput;
   }
 }

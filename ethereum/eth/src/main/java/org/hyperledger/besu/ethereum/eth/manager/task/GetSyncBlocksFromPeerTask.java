@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -34,11 +34,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,56 +150,5 @@ public class GetSyncBlocksFromPeerTask extends AbstractPeerRequestTask<List<Sync
                     .toList())
         .log();
     return Optional.of(syncBlocks);
-  }
-
-  static class BodyIdentifier {
-    private final Bytes32 transactionsRoot;
-    private final Bytes32 ommersHash;
-    private final Bytes32 withdrawalsRoot;
-
-    public BodyIdentifier(
-        final Bytes32 transactionsRoot, final Bytes32 ommersHash, final Bytes32 withdrawalsRoot) {
-      this.transactionsRoot = transactionsRoot;
-      this.ommersHash = ommersHash;
-      this.withdrawalsRoot = withdrawalsRoot;
-    }
-
-    public BodyIdentifier(final BlockHeader header) {
-      this(
-          header.getTransactionsRoot(),
-          header.getOmmersHash(),
-          header.getWithdrawalsRoot().orElse(null));
-    }
-
-    public BodyIdentifier(final SyncBlockBody syncBody) {
-      this(syncBody.getTransactionsRoot(), syncBody.getOmmersHash(), syncBody.getWithdrawalsRoot());
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      BodyIdentifier that = (BodyIdentifier) o;
-      return Objects.equals(transactionsRoot, that.transactionsRoot)
-          && Objects.equals(ommersHash, that.ommersHash)
-          && Objects.equals(withdrawalsRoot, that.withdrawalsRoot);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(transactionsRoot, ommersHash, withdrawalsRoot);
-    }
-
-    @Override
-    public String toString() {
-      return "BodyIdentifier{"
-          + "transactionsRoot="
-          + transactionsRoot
-          + ", ommersHash="
-          + ommersHash
-          + ", withdrawalsRoot="
-          + withdrawalsRoot
-          + '}';
-    }
   }
 }

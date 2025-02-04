@@ -75,7 +75,6 @@ public class DefaultBlockchain implements MutableBlockchain {
   private volatile BlockHeader chainHeader;
   private volatile Difficulty totalDifficulty;
   private volatile int chainHeadTransactionCount;
-  private volatile int chainHeadOmmerCount;
 
   private Comparator<BlockHeader> blockChoiceRule;
 
@@ -87,6 +86,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private Counter gasUsedCounter = NoOpMetricsSystem.NO_OP_COUNTER;
   private Counter numberOfTransactionsCounter = NoOpMetricsSystem.NO_OP_COUNTER;
+  private Difficulty difficultyForSyncing = Difficulty.ZERO;
 
   private DefaultBlockchain(
       final Optional<Block> genesisBlock,
@@ -115,7 +115,6 @@ public class DefaultBlockchain implements MutableBlockchain {
     totalDifficulty = blockchainStorage.getTotalDifficulty(chainHead).get();
     final BlockBody chainHeadBody = blockchainStorage.getBlockBody(chainHead).get();
     chainHeadTransactionCount = chainHeadBody.getTransactions().size();
-    chainHeadOmmerCount = chainHeadBody.getOmmers().size();
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
     this.blockChoiceRule = heaviestChainBlockChoiceRule;
@@ -211,12 +210,6 @@ public class DefaultBlockchain implements MutableBlockchain {
         "chain_head_transaction_count",
         "Number of transactions in the current chain head block",
         () -> chainHeadTransactionCount);
-
-    metricsSystem.createIntegerGauge(
-        BLOCKCHAIN,
-        "chain_head_ommer_count",
-        "Number of ommers in the current chain head block",
-        () -> chainHeadOmmerCount);
   }
 
   public static MutableBlockchain createMutable(
@@ -553,8 +546,6 @@ public class DefaultBlockchain implements MutableBlockchain {
     return blockHeader.getDifficulty().add(parentTotalDifficulty);
   }
 
-  Difficulty difficultyForSyncing = Difficulty.ZERO;
-
   @Override
   public Difficulty calculateTotalDifficultyForSyncing(final BlockHeader blockHeader) {
     if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
@@ -888,14 +879,12 @@ public class DefaultBlockchain implements MutableBlockchain {
     chainHeader = block.getHeader();
     totalDifficulty = uInt256;
     chainHeadTransactionCount = block.getBody().getTransactions().size();
-    chainHeadOmmerCount = block.getBody().getOmmers().size();
   }
 
   private void updateCacheForNewCanonicalHead(final SyncBlock block, final Difficulty uInt256) {
     chainHeader = block.getHeader();
     totalDifficulty = uInt256;
     chainHeadTransactionCount = block.getBody().getTransactionCount();
-    chainHeadOmmerCount = 0; // TODO: we could work this out in SyncBlockBody if we wanted to
   }
 
   private static void indexTransactionsForBlock(
