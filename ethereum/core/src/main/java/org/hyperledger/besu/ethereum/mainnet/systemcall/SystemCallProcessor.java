@@ -57,26 +57,25 @@ public class SystemCallProcessor {
    */
   public Bytes process(
       final Address callAddress, final BlockProcessingContext context, final Bytes inputData) {
+    WorldUpdater updater = context.getWorldState().updater();
+
     // if no code exists at CALL_ADDRESS, the call must fail silently
-    final Account maybeContract = context.getWorldState().get(callAddress);
+    final Account maybeContract = updater.get(callAddress);
     if (maybeContract == null) {
       LOG.trace("System call address not found {}", callAddress);
       return Bytes.EMPTY;
     }
 
-    WorldUpdater worldUpdater = context.getWorldState().updater();
-    final AbstractMessageProcessor messageProcessor =
+    final AbstractMessageProcessor processor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
     final MessageFrame initialFrame =
         createCallFrame(
             callAddress,
-            worldUpdater,
+            updater,
             context.getBlockHeader(),
             context.getBlockHashLookup(),
             inputData);
-
-    worldUpdater.commit();
-    return processFrame(initialFrame, messageProcessor, context.getOperationTracer(), worldUpdater);
+    return processFrame(initialFrame, processor, context.getOperationTracer(), updater);
   }
 
   private Bytes processFrame(
