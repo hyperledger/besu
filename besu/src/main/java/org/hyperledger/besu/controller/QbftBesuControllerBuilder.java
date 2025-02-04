@@ -56,6 +56,7 @@ import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockchainAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorModeTransitionLoggerAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
