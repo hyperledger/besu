@@ -267,28 +267,13 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey, blockEncoder);
 
-    final QbftFinalState qbftFinalState =
-        new QbftFinalStateImpl(
-            validatorProvider,
-            nodeKey,
-            Util.publicKeyToAddress(nodeKey.getPublicKey()),
-            proposerSelector,
-            uniqueMessageMulticaster,
-            new RoundTimer(
-                bftEventQueue,
-                Duration.ofSeconds(qbftConfig.getRequestTimeoutSeconds()),
-                bftExecutors),
-            new BlockTimer(bftEventQueue, qbftForksSchedule, bftExecutors, clock),
-            new QbftBlockCreatorFactoryAdaptor(blockCreatorFactory, qbftExtraDataCodec),
-            clock);
-
     QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory =
         new QbftBlockHeightManagerFactory(
             finalState,
             new QbftRoundFactory(
                 finalState,
                 protocolContext,
-                bftProtocolSchedule,
+                qbftProtocolSchedule,
                 minedBlockObservers,
                 messageValidatorFactory,
                 messageFactory,
