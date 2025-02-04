@@ -292,8 +292,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                 minedBlockObservers,
                 messageValidatorFactory,
                 messageFactory,
-                    qbftExtraDataCodec,
-                    new QbftExtraDataProviderAdaptor(qbftExtraDataCodec)),
+                qbftExtraDataCodec,
+                new QbftExtraDataProviderAdaptor(qbftExtraDataCodec)),
             messageValidatorFactory,
             messageFactory,
             new ValidatorModeTransitionLogger(qbftForksSchedule));
@@ -304,7 +304,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
         new QbftController(
             blockchain,
             finalState,
-                qbftBlockHeightManagerFactory,
+            qbftBlockHeightManagerFactory,
             gossiper,
             duplicateMessageTracker,
             futureMessageBuffer,

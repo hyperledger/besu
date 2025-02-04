@@ -131,7 +131,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
    */
   public QbftBlockHeightManager(
       final BlockHeader parentHeader,
-      final BftFinalState finalState,
+      final QbftFinalState finalState,
       final RoundChangeManager roundChangeManager,
       final QbftRoundFactory qbftRoundFactory,
       final Clock clock,
