@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.qbft.core.test;
 
 import static java.util.Collections.emptyList;
 
-import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
@@ -30,8 +29,8 @@ import org.hyperledger.besu.consensus.qbft.core.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.qbft.core.support.ValidatorPeer;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.core.Block;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -60,7 +59,7 @@ public class GossipTest {
 
   private final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(1, 0);
   private final RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
-  private Block block;
+  private QbftBlock block;
   private ValidatorPeer sender;
   private MessageFactory msgFactory;
 
@@ -120,7 +119,8 @@ public class GossipTest {
 
   @Test
   public void messageWithUnknownValidatorIsNotGossiped() {
-    final MessageFactory unknownMsgFactory = new MessageFactory(NodeKeyUtils.generate());
+    final MessageFactory unknownMsgFactory =
+        new MessageFactory(NodeKeyUtils.generate(), context.getBlockEncoder());
     final Proposal unknownProposal =
         unknownMsgFactory.createProposal(roundId, block, emptyList(), emptyList());
 
@@ -159,16 +159,15 @@ public class GossipTest {
 
   @Test
   public void futureMessageGetGossipedLater() {
-    final Block signedCurrentHeightBlock =
-        BftHelpers.createSealedBlock(
-            new QbftExtraDataCodec(), block, 0, peers.sign(block.getHash()));
+    final QbftBlock signedCurrentHeightBlock =
+        context.createSealedBlock(new QbftExtraDataCodec(), block, 0, peers.sign(block.getHash()));
 
     final ConsensusRoundIdentifier futureRoundId = new ConsensusRoundIdentifier(2, 0);
     final Prepare futurePrepare = sender.injectPrepare(futureRoundId, block.getHash());
     peers.verifyNoMessagesReceivedNonProposing();
 
     // add block to chain so we can move to next block height
-    context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList());
+    context.appendBlock(signedCurrentHeightBlock);
     context
         .getController()
         .handleNewBlockEvent(new NewChainHead(signedCurrentHeightBlock.getHeader()));
