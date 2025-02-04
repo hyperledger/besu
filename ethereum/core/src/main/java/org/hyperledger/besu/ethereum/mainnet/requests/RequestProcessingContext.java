@@ -25,11 +25,11 @@ public final class RequestProcessingContext extends BlockProcessingContext {
   public RequestProcessingContext(
       final BlockProcessingContext context, final List<TransactionReceipt> transactionReceipts) {
     super(
-        context.getWorldState(),
         context.getBlockHeader(),
-        context.getOperationTracer(),
+        context.getWorldState(),
+        context.getProtocolSpec(),
         context.getBlockHashLookup(),
-        context.getProtocolSpec());
+        context.getOperationTracer());
     this.transactionReceipts = transactionReceipts;
   }
 
