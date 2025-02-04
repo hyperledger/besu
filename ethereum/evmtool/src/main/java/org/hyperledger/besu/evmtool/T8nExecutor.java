@@ -43,7 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldState;
@@ -546,7 +546,7 @@ public class T8nExecutor {
     if (requestProcessorCoordinator.isPresent()) {
       var rpc = requestProcessorCoordinator.get();
 
-      ProcessRequestContext requestContext = new ProcessRequestContext(context, receipts);
+      RequestProcessingContext requestContext = new RequestProcessingContext(context, receipts);
       Optional<List<Request>> maybeRequests = Optional.of(rpc.process(requestContext));
       Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
 

@@ -48,7 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
-import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -261,8 +261,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       // EIP-7685: process EL requests
       final Optional<RequestProcessorCoordinator> requestProcessor =
           newProtocolSpec.getRequestProcessorCoordinator();
-      ProcessRequestContext context =
-          new ProcessRequestContext(blockProcessingContext, transactionResults.getReceipts());
+      RequestProcessingContext context =
+          new RequestProcessingContext(blockProcessingContext, transactionResults.getReceipts());
 
       Optional<List<Request>> maybeRequests =
           requestProcessor.map(processor -> processor.process(context));

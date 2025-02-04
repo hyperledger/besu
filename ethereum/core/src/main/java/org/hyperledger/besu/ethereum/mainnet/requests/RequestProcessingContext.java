@@ -19,10 +19,10 @@ import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 
 import java.util.List;
 
-public final class ProcessRequestContext extends BlockProcessingContext {
+public final class RequestProcessingContext extends BlockProcessingContext {
   private final List<TransactionReceipt> transactionReceipts;
 
-  public ProcessRequestContext(
+  public RequestProcessingContext(
       final BlockProcessingContext context, final List<TransactionReceipt> transactionReceipts) {
     super(
         context.getWorldState(),

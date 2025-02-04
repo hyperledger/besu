@@ -24,7 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** Processes system call requests. */
 public class SystemCallRequestProcessor
-    implements RequestProcessor, BlockContextProcessor<Request, ProcessRequestContext> {
+    implements RequestProcessor, BlockContextProcessor<Request, RequestProcessingContext> {
 
   private final Address callAddress;
   private final RequestType requestType;
@@ -41,7 +41,7 @@ public class SystemCallRequestProcessor
    * @return A {@link Request} request
    */
   @Override
-  public Request process(final ProcessRequestContext context) {
+  public Request process(final RequestProcessingContext context) {
 
     final SystemCallProcessor systemCallProcessor =
         new SystemCallProcessor(context.getProtocolSpec().getTransactionProcessor());
