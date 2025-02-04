@@ -37,21 +37,23 @@ class AccessListTransactionDecoder {
   }
 
   public static Transaction decode(final RLPInput rlpInput) {
-    rlpInput.enterList();
+    RLPInput transactionRlp = rlpInput.readAsRlp();
+    transactionRlp.enterList();
     final Transaction.Builder preSignatureTransactionBuilder =
         Transaction.builder()
             .type(TransactionType.ACCESS_LIST)
-            .chainId(BigInteger.valueOf(rlpInput.readLongScalar()))
-            .nonce(rlpInput.readLongScalar())
-            .gasPrice(Wei.of(rlpInput.readUInt256Scalar()))
-            .gasLimit(rlpInput.readLongScalar())
+            .chainId(BigInteger.valueOf(transactionRlp.readLongScalar()))
+            .nonce(transactionRlp.readLongScalar())
+            .gasPrice(Wei.of(transactionRlp.readUInt256Scalar()))
+            .gasLimit(transactionRlp.readLongScalar())
             .to(
-                rlpInput.readBytes(
+                transactionRlp.readBytes(
                     addressBytes -> addressBytes.isEmpty() ? null : Address.wrap(addressBytes)))
-            .value(Wei.of(rlpInput.readUInt256Scalar()))
-            .payload(rlpInput.readBytes())
+            .value(Wei.of(transactionRlp.readUInt256Scalar()))
+            .payload(transactionRlp.readBytes())
+            .rawRlp(transactionRlp.raw())
             .accessList(
-                rlpInput.readList(
+                transactionRlp.readList(
                     accessListEntryRLPInput -> {
                       accessListEntryRLPInput.enterList();
                       final AccessListEntry accessListEntry =
@@ -61,18 +63,18 @@ class AccessListTransactionDecoder {
                       accessListEntryRLPInput.leaveList();
                       return accessListEntry;
                     }));
-    final byte recId = (byte) rlpInput.readUnsignedByteScalar();
+    final byte recId = (byte) transactionRlp.readUnsignedByteScalar();
     final Transaction transaction =
         preSignatureTransactionBuilder
             .signature(
                 SIGNATURE_ALGORITHM
                     .get()
                     .createSignature(
-                        rlpInput.readUInt256Scalar().toUnsignedBigInteger(),
-                        rlpInput.readUInt256Scalar().toUnsignedBigInteger(),
+                        transactionRlp.readUInt256Scalar().toUnsignedBigInteger(),
+                        transactionRlp.readUInt256Scalar().toUnsignedBigInteger(),
                         recId))
             .build();
-    rlpInput.leaveList();
+    transactionRlp.leaveList();
     return transaction;
   }
 }

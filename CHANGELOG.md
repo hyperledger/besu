@@ -4,11 +4,17 @@
 ### Breaking Changes
 ### Upcoming Breaking Changes
 ### Additions and Improvements
-- Adds timestamps to enable Prague hardfork on Sepolia and Holesky test networks. [#8163](https://github.com/hyperledger/besu/pull/8163)
+- Add a tx selector to skip txs from the same sender after the first not selected [#8216](https://github.com/hyperledger/besu/pull/8216)
+
+#### Prague
+- Add timestamps to enable Prague hardfork on Sepolia and Holesky test networks [#8163](https://github.com/hyperledger/besu/pull/8163)
+- Update system call addresses to match [devnet-6](https://github.com/ethereum/execution-spec-tests/releases/) values [#8209](https://github.com/hyperledger/besu/issues/8209) 
+
+#### Plugins
 - Extend simulate transaction on pending block plugin API [#8174](https://github.com/hyperledger/besu/pull/8174)
 
 ### Bug fixes
-
+- Fix the simulation of txs with a future nonce [#8215](https://github.com/hyperledger/besu/pull/8215)
 
 ## 25.1.0
 

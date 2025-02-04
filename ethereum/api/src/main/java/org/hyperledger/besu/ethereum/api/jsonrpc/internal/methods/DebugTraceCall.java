@@ -39,6 +39,13 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import java.util.Optional;
 
 public class DebugTraceCall extends AbstractTraceCall {
+  private static final TransactionValidationParams TRANSACTION_VALIDATION_PARAMS =
+      ImmutableTransactionValidationParams.builder()
+          .from(TransactionValidationParams.transactionSimulator())
+          .isAllowFutureNonce(true)
+          .isAllowExceedingBalance(true)
+          .allowUnderpriced(true)
+          .build();
 
   public DebugTraceCall(
       final BlockchainQueries blockchainQueries,
@@ -103,10 +110,6 @@ public class DebugTraceCall extends AbstractTraceCall {
 
   @Override
   protected TransactionValidationParams buildTransactionValidationParams() {
-    return ImmutableTransactionValidationParams.builder()
-        .from(TransactionValidationParams.transactionSimulator())
-        .isAllowExceedingBalance(true)
-        .allowUnderpriced(true)
-        .build();
+    return TRANSACTION_VALIDATION_PARAMS;
   }
 }

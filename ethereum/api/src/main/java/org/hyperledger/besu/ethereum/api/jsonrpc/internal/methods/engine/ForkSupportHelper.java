@@ -31,7 +31,7 @@ public class ForkSupportHelper {
           "Configuration error, no schedule for " + hardforkId.name() + " fork set");
     }
 
-    if (blockTimestamp < maybeForkMilestone.get()) {
+    if (Long.compareUnsigned(blockTimestamp, maybeForkMilestone.get()) < 0) {
       return ValidationResult.invalid(
           RpcErrorType.UNSUPPORTED_FORK,
           hardforkId.name() + " configured to start at timestamp: " + maybeForkMilestone.get());

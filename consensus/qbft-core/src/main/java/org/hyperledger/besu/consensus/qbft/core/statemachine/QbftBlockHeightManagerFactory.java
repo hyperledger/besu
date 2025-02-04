@@ -34,6 +34,7 @@ public class QbftBlockHeightManagerFactory {
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
   private final ValidatorModeTransitionLogger validatorModeTransitionLogger;
+  private boolean isEarlyRoundChangeEnabled = false;
 
   /**
    * Instantiates a new Qbft block height manager factory.
@@ -75,22 +76,60 @@ public class QbftBlockHeightManagerFactory {
     }
   }
 
+  /**
+   * Sets early round change enabled.
+   *
+   * @param isEarlyRoundChangeEnabled the is early round change enabled
+   */
+  public void isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
+    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
+  }
+
   private BaseQbftBlockHeightManager createNoOpBlockHeightManager(final BlockHeader parentHeader) {
     return new NoOpBlockHeightManager(parentHeader);
   }
 
   private BaseQbftBlockHeightManager createFullBlockHeightManager(final BlockHeader parentHeader) {
-    return new QbftBlockHeightManager(
-        parentHeader,
-        finalState,
-        new RoundChangeManager(
-            BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
-            messageValidatorFactory.createRoundChangeMessageValidator(
-                parentHeader.getNumber() + 1L, parentHeader),
-            finalState.getLocalAddress()),
-        roundFactory,
-        finalState.getClock(),
-        messageValidatorFactory,
-        messageFactory);
+
+    QbftBlockHeightManager qbftBlockHeightManager;
+    RoundChangeManager roundChangeManager;
+
+    if (isEarlyRoundChangeEnabled) {
+      roundChangeManager =
+          new RoundChangeManager(
+              BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
+              BftHelpers.calculateRequiredFutureRCQuorum(finalState.getValidators().size()),
+              messageValidatorFactory.createRoundChangeMessageValidator(
+                  parentHeader.getNumber() + 1L, parentHeader),
+              finalState.getLocalAddress());
+      qbftBlockHeightManager =
+          new QbftBlockHeightManager(
+              parentHeader,
+              finalState,
+              roundChangeManager,
+              roundFactory,
+              finalState.getClock(),
+              messageValidatorFactory,
+              messageFactory,
+              true);
+    } else {
+      roundChangeManager =
+          new RoundChangeManager(
+              BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
+              messageValidatorFactory.createRoundChangeMessageValidator(
+                  parentHeader.getNumber() + 1L, parentHeader),
+              finalState.getLocalAddress());
+      qbftBlockHeightManager =
+          new QbftBlockHeightManager(
+              parentHeader,
+              finalState,
+              roundChangeManager,
+              roundFactory,
+              finalState.getClock(),
+              messageValidatorFactory,
+              messageFactory);
+    }
+
+    return qbftBlockHeightManager;
   }
 }

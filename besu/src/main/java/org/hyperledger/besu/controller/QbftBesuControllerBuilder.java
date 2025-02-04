@@ -282,24 +282,29 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             new QbftBlockCreatorFactoryAdaptor(blockCreatorFactory, qbftExtraDataCodec),
             clock);
 
+    QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory =
+        new QbftBlockHeightManagerFactory(
+            finalState,
+            new QbftRoundFactory(
+                finalState,
+                protocolContext,
+                bftProtocolSchedule,
+                minedBlockObservers,
+                messageValidatorFactory,
+                messageFactory,
+                    qbftExtraDataCodec,
+                    new QbftExtraDataProviderAdaptor(qbftExtraDataCodec)),
+            messageValidatorFactory,
+            messageFactory,
+            new ValidatorModeTransitionLogger(qbftForksSchedule));
+
+    qbftBlockHeightManagerFactory.isEarlyRoundChangeEnabled(isEarlyRoundChangeEnabled);
+
     final BftEventHandler qbftController =
         new QbftController(
             blockchain,
             finalState,
-            new QbftBlockHeightManagerFactory(
-                finalState,
-                new QbftRoundFactory(
-                    qbftFinalState,
-                    qbftProtocolContext,
-                    qbftProtocolSchedule,
-                    minedBlockObservers,
-                    messageValidatorFactory,
-                    messageFactory,
-                    qbftExtraDataCodec,
-                    new QbftExtraDataProviderAdaptor(qbftExtraDataCodec)),
-                messageValidatorFactory,
-                messageFactory,
-                new ValidatorModeTransitionLogger(qbftForksSchedule)),
+                qbftBlockHeightManagerFactory,
             gossiper,
             duplicateMessageTracker,
             futureMessageBuffer,
