@@ -14,13 +14,12 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.validation;
 
-import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator.SubsequentMessageValidator;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -32,9 +31,8 @@ import java.util.Collection;
 public class MessageValidatorFactory {
 
   private final ProposerSelector proposerSelector;
-  private final BftProtocolSchedule protocolSchedule;
+  private final QbftProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
-  private final BftExtraDataCodec bftExtraDataCodec;
 
   /**
    * Instantiates a new Message validator factory.
@@ -42,17 +40,14 @@ public class MessageValidatorFactory {
    * @param proposerSelector the proposer selector
    * @param protocolSchedule the protocol schedule
    * @param protocolContext the protocol context
-   * @param bftExtraDataCodec the bft extra data codec
    */
   public MessageValidatorFactory(
       final ProposerSelector proposerSelector,
-      final BftProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final QbftProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext) {
     this.proposerSelector = proposerSelector;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
-    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   /**
@@ -65,7 +60,7 @@ public class MessageValidatorFactory {
   public static Collection<Address> getValidatorsAfterBlock(
       final ProtocolContext protocolContext, final BlockHeader parentHeader) {
     return protocolContext
-        .getConsensusContext(BftContext.class)
+        .getConsensusContext(QbftContext.class)
         .getValidatorProvider()
         .getValidatorsAfterBlock(parentHeader);
   }
@@ -80,7 +75,7 @@ public class MessageValidatorFactory {
   public static Collection<Address> getValidatorsForBlock(
       final ProtocolContext protocolContext, final BlockHeader parentHeader) {
     return protocolContext
-        .getConsensusContext(BftContext.class)
+        .getConsensusContext(QbftContext.class)
         .getValidatorProvider()
         .getValidatorsForBlock(parentHeader);
   }
@@ -106,7 +101,6 @@ public class MessageValidatorFactory {
         BftHelpers.calculateRequiredValidatorQuorum(validatorsForHeight.size()),
         chainHeight,
         validatorsForHeight,
-        protocolContext,
         protocolSchedule);
   }
 
@@ -129,15 +123,14 @@ public class MessageValidatorFactory {
             BftHelpers.calculateRequiredValidatorQuorum(validatorsForHeight.size()),
             validatorsForHeight,
             roundIdentifier,
-            proposerSelector.selectProposerForRound(roundIdentifier),
-            bftExtraDataCodec);
+            proposerSelector.selectProposerForRound(roundIdentifier));
 
-    final BftBlockInterface blockInterface =
-        protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
+    final QbftBlockInterface blockInterface =
+        protocolContext.getConsensusContext(QbftContext.class).getBlockInterface();
     return new MessageValidator(
         block ->
             new SubsequentMessageValidator(
-                validatorsForHeight, roundIdentifier, block, blockInterface, bftExtraDataCodec),
+                validatorsForHeight, roundIdentifier, block, blockInterface),
         proposalValidator);
   }
 
