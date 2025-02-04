@@ -272,7 +272,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             finalState,
             new QbftRoundFactory(
                 finalState,
-                protocolContext,
+                qbftProtocolContext,
                 qbftProtocolSchedule,
                 minedBlockObservers,
                 messageValidatorFactory,
