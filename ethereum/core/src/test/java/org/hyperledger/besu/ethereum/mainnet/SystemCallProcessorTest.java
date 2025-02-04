@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_TESTNET;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -100,7 +101,8 @@ public class SystemCallProcessorTest {
         worldState.updater(),
         mockBlockHeader,
         OperationTracer.NO_TRACING,
-        mockBlockHashLookup);
+        mockBlockHashLookup,
+        DEFAULT_TARGET_GAS_LIMIT_TESTNET);
   }
 
   private MutableWorldState createWorldState(final Address address) {

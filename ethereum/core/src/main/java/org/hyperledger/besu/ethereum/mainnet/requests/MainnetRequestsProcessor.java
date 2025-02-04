@@ -19,18 +19,20 @@ import org.hyperledger.besu.datatypes.RequestType;
 public class MainnetRequestsProcessor {
 
   public static RequestProcessorCoordinator pragueRequestsProcessors(
-      final RequestContractAddresses requestContractAddresses) {
+      final RequestContractAddresses requestContractAddresses, final long targetGasLimit) {
     return new RequestProcessorCoordinator.Builder()
         .addProcessor(
             RequestType.WITHDRAWAL,
             new SystemCallRequestProcessor(
                 requestContractAddresses.getWithdrawalRequestContractAddress(),
-                RequestType.WITHDRAWAL))
+                RequestType.WITHDRAWAL,
+                targetGasLimit))
         .addProcessor(
             RequestType.CONSOLIDATION,
             new SystemCallRequestProcessor(
                 requestContractAddresses.getConsolidationRequestContractAddress(),
-                RequestType.CONSOLIDATION))
+                RequestType.CONSOLIDATION,
+                targetGasLimit))
         .addProcessor(
             RequestType.DEPOSIT,
             new DepositRequestProcessor(requestContractAddresses.getDepositContractAddress()))

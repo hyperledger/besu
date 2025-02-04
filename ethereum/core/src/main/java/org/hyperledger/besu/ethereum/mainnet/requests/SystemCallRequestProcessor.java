@@ -26,10 +26,13 @@ public class SystemCallRequestProcessor implements RequestProcessor {
 
   private final Address callAddress;
   private final RequestType requestType;
+  private final long targetGasLimit;
 
-  public SystemCallRequestProcessor(final Address callAddress, final RequestType requestType) {
+  public SystemCallRequestProcessor(
+      final Address callAddress, final RequestType requestType, final long targetGasLimit) {
     this.callAddress = callAddress;
     this.requestType = requestType;
+    this.targetGasLimit = targetGasLimit;
   }
 
   /**
@@ -50,7 +53,8 @@ public class SystemCallRequestProcessor implements RequestProcessor {
             context.mutableWorldState().updater(),
             context.blockHeader(),
             context.operationTracer(),
-            context.blockHashLookup());
+            context.blockHashLookup(),
+            targetGasLimit);
 
     return new Request(requestType, systemCallOutput);
   }

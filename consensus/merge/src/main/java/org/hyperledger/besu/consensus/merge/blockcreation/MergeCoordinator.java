@@ -79,7 +79,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    */
   private static final double TRY_FILL_BLOCK = 1.0;
 
-  private static final long DEFAULT_TARGET_GAS_LIMIT = 30000000L;
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 36_000_000L;
 
   /** The Mining parameters. */
   protected final MiningConfiguration miningConfiguration;

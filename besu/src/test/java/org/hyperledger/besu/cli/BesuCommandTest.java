@@ -51,7 +51,6 @@ import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -283,7 +282,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).nodeKey(isNotNull());
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
-    verify(mockControllerBuilder).gasLimitCalculator(eq(GasLimitCalculator.constant()));
     verify(mockControllerBuilder).maxPeers(eq(maxPeers));
     verify(mockControllerBuilder).maxRemotelyInitiatedPeers(eq((int) Math.floor(0.6 * maxPeers)));
     verify(mockControllerBuilder).build();
@@ -294,6 +292,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
+    assertThat(miningArg.getValue().getTargetGasLimit()).isPresent();
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
+        .isEqualTo(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_TESTNET);
+
     assertThat(ethNetworkArg.getValue().networkId()).isEqualTo(1);
     assertThat(ethNetworkArg.getValue().bootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
   }
@@ -497,16 +499,22 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void testGenesisPathMainnetEthConfig() {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
 
     parseCommand("--network", "mainnet");
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.bootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
     assertThat(config.dnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(1));
+    assertThat(miningArg.getValue().getTargetGasLimit()).isPresent();
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
+        .isEqualTo(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_TESTNET);
 
     verify(mockLogger, never()).warn(contains("Mainnet is deprecated and will be shutdown"));
   }
@@ -1774,14 +1782,20 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(SEPOLIA));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(miningArg.getValue().getTargetGasLimit()).isPresent();
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
+        .isEqualTo(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_TESTNET);
 
     verify(mockLogger, never()).warn(contains("Sepolia is deprecated and will be shutdown"));
   }
@@ -1824,7 +1838,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
     assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
-        .isEqualTo(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_HOLESKY);
+        .isEqualTo(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_TESTNET);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

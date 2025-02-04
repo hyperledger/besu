@@ -64,7 +64,8 @@ public class SystemCallProcessor {
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final OperationTracer operationTracer,
-      final BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup,
+      final long targetGasLimit) {
 
     // if no code exists at CALL_ADDRESS, the call must fail silently
     final Account maybeContract = worldState.get(callAddress);
@@ -76,7 +77,7 @@ public class SystemCallProcessor {
     final AbstractMessageProcessor messageProcessor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
     final MessageFrame initialFrame =
-        createCallFrame(callAddress, worldState, blockHeader, blockHashLookup);
+        createCallFrame(callAddress, worldState, blockHeader, blockHashLookup, targetGasLimit);
 
     return processFrame(initialFrame, messageProcessor, operationTracer, worldState);
   }
@@ -109,7 +110,8 @@ public class SystemCallProcessor {
       final Address callAddress,
       final WorldUpdater worldUpdater,
       final ProcessableBlockHeader blockHeader,
-      final BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup,
+      final long targetGasLimit) {
 
     final Optional<Account> maybeContract = Optional.ofNullable(worldUpdater.get(callAddress));
     final AbstractMessageProcessor processor =
@@ -118,7 +120,7 @@ public class SystemCallProcessor {
     return MessageFrame.builder()
         .maxStackSize(DEFAULT_MAX_STACK_SIZE)
         .worldUpdater(worldUpdater)
-        .initialGas(30_000_000L)
+        .initialGas(targetGasLimit)
         .originator(SYSTEM_ADDRESS)
         .gasPrice(Wei.ZERO)
         .blobGasPrice(Wei.ZERO)
