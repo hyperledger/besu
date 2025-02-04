@@ -25,7 +25,6 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -69,40 +68,32 @@ public class SystemCallProcessor {
     final AbstractMessageProcessor processor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
     final MessageFrame initialFrame =
-        createCallFrame(
+        createMessageFrame(
             callAddress,
             updater,
             context.getBlockHeader(),
             context.getBlockHashLookup(),
             inputData);
-    return processFrame(initialFrame, processor, context.getOperationTracer(), updater);
-  }
 
-  private Bytes processFrame(
-      final MessageFrame frame,
-      final AbstractMessageProcessor processor,
-      final OperationTracer tracer,
-      final WorldUpdater updater) {
-
-    if (!frame.getCode().isValid()) {
+    if (!initialFrame.getCode().isValid()) {
       throw new RuntimeException("System call did not execute to completion - opcode invalid");
     }
 
-    Deque<MessageFrame> stack = frame.getMessageFrameStack();
+    Deque<MessageFrame> stack = initialFrame.getMessageFrameStack();
     while (!stack.isEmpty()) {
-      processor.process(stack.peekFirst(), tracer);
+      processor.process(stack.peekFirst(), context.getOperationTracer());
     }
 
-    if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+    if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       updater.commit();
-      return frame.getOutputData();
+      return initialFrame.getOutputData();
     }
 
     // the call must execute to completion
     throw new RuntimeException("System call did not execute to completion");
   }
 
-  private MessageFrame createCallFrame(
+  private MessageFrame createMessageFrame(
       final Address callAddress,
       final WorldUpdater worldUpdater,
       final ProcessableBlockHeader blockHeader,
