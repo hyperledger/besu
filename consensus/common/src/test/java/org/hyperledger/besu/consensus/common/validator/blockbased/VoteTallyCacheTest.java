@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.common.validator.blockbased;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -26,12 +27,14 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.consensus.common.validator.VoteType;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Arrays;
 import java.util.Optional;
 
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -63,7 +66,7 @@ public class VoteTallyCacheTest extends VoteTallyCacheTestBase {
     verifyNoInteractions(tallyUpdater);
   }
 
-  /*  @Test
+  @Test
   public void exceptionThrownIfNoParentBlockExists() {
     final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
     final VoteTallyCache cache =
@@ -75,7 +78,7 @@ public class VoteTallyCacheTest extends VoteTallyCacheTestBase {
         .isThrownBy(() -> cache.getVoteTallyAfterBlock(orphanBlock.getHeader()))
         .withMessageContaining(
             "Supplied block was on a orphaned chain, unable to generate " + "VoteTally.");
-  }*/
+  }
 
   @Test
   public void walkBackStopsWhenACachedVoteTallyIsFound() {

@@ -29,7 +29,6 @@ import java.util.concurrent.ExecutionException;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 
 class VoteTallyCache {
 
@@ -77,8 +76,6 @@ class VoteTallyCache {
       return voteTallyCache.get(header.getHash(), () -> populateCacheUptoAndIncluding(header));
     } catch (final ExecutionException ex) {
       throw new RuntimeException("Unable to determine a VoteTally object for the requested block.");
-    } catch (final UncheckedExecutionException ex) {
-      return new VoteTally(blockInterface.validatorsInBlock(header));
     }
   }
 
@@ -88,11 +85,11 @@ class VoteTallyCache {
     VoteTally voteTally = null;
 
     while (true) { // Will run into an epoch block (and thus a VoteTally) to break loop.
-      intermediateBlocks.push(header);
       voteTally = getValidatorsAfter(header);
       if (voteTally != null) {
         break;
       }
+      intermediateBlocks.push(header);
 
       header =
           blockchain
@@ -106,7 +103,7 @@ class VoteTallyCache {
   }
 
   protected VoteTally getValidatorsAfter(final BlockHeader header) {
-    if (epochManager.isEpochBlock(header.getNumber())) {
+    if (header.getNumber() == 0 || epochManager.isEpochBlock(header.getNumber() + 1)) {
       return new VoteTally(blockInterface.validatorsInBlock(header));
     }
 

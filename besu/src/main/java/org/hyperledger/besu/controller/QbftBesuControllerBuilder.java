@@ -139,7 +139,9 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private ValidatorProvider createReadOnlyValidatorProvider(final Blockchain blockchain) {
     checkNotNull(
         transactionValidatorProvider, "transactionValidatorProvider should have been initialised");
-    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
+    final long startBlock =
+        qbftConfig.getStartBlock().isPresent() ? qbftConfig.getStartBlock().getAsLong() : 0;
+    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength(), startBlock);
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
     final BlockValidatorProvider readOnlyBlockValidatorProvider =
         BlockValidatorProvider.nonForkingValidatorProvider(
@@ -390,7 +392,9 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
+    final long startBlock =
+        qbftConfig.getStartBlock().isPresent() ? qbftConfig.getStartBlock().getAsLong() : 0;
+    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength(), startBlock);
 
     final BftValidatorOverrides validatorOverrides =
         convertBftForks(genesisConfigOptions.getTransitions().getQbftForks());
