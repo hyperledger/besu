@@ -67,7 +67,7 @@ public class SystemCallProcessor {
 
     final AbstractMessageProcessor processor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
-    final MessageFrame initialFrame =
+    final MessageFrame frame =
         createMessageFrame(
             callAddress,
             updater,
@@ -75,18 +75,18 @@ public class SystemCallProcessor {
             context.getBlockHashLookup(),
             inputData);
 
-    if (!initialFrame.getCode().isValid()) {
+    if (!frame.getCode().isValid()) {
       throw new RuntimeException("System call did not execute to completion - opcode invalid");
     }
 
-    Deque<MessageFrame> stack = initialFrame.getMessageFrameStack();
+    Deque<MessageFrame> stack = frame.getMessageFrameStack();
     while (!stack.isEmpty()) {
       processor.process(stack.peekFirst(), context.getOperationTracer());
     }
 
-    if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+    if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       updater.commit();
-      return initialFrame.getOutputData();
+      return frame.getOutputData();
     }
 
     // the call must execute to completion
