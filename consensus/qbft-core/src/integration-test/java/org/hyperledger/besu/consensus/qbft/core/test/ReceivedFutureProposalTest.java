@@ -29,7 +29,7 @@ import org.hyperledger.besu.consensus.qbft.core.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.qbft.core.support.ValidatorPeer;
-import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +64,7 @@ public class ReceivedFutureProposalTest {
         peers.createSignedRoundChangePayload(targetRound);
 
     final ValidatorPeer nextProposer = context.roundSpecificPeers(targetRound).getProposer();
-    final Block blockToPropose =
+    final QbftBlock blockToPropose =
         context.createBlockForProposalFromChainHead(15, nextProposer.getNodeAddress());
 
     nextProposer.injectProposalForFutureRound(
@@ -79,7 +79,7 @@ public class ReceivedFutureProposalTest {
   @Test
   public void proposalFromIllegalSenderIsDiscardedAndNoPrepareForNewRoundIsSent() {
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
-    final Block blockToPropose =
+    final QbftBlock blockToPropose =
         context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
 
     final List<SignedData<RoundChangePayload>> roundChanges =
@@ -96,9 +96,9 @@ public class ReceivedFutureProposalTest {
 
   @Test
   public void proposalWithPrepareCertificateResultsInNewRoundStartingWithExpectedBlock() {
-    final Block initialBlock =
+    final QbftBlock initialBlock =
         context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
-    final Block reproposedBlock =
+    final QbftBlock reproposedBlock =
         context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
@@ -121,9 +121,9 @@ public class ReceivedFutureProposalTest {
 
   @Test
   public void futureProposalWithInsufficientPreparesDoesNotTriggerNextRound() {
-    final Block initialBlock =
+    final QbftBlock initialBlock =
         context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
-    final Block reproposedBlock =
+    final QbftBlock reproposedBlock =
         context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
@@ -146,9 +146,9 @@ public class ReceivedFutureProposalTest {
 
   @Test
   public void futureProposalWithInvalidPrepareDoesNotTriggerNextRound() {
-    final Block initialBlock =
+    final QbftBlock initialBlock =
         context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
-    final Block reproposedBlock = context.createBlockForProposalFromChainHead(15);
+    final QbftBlock reproposedBlock = context.createBlockForProposalFromChainHead(15);
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
     final PreparedCertificate preparedRoundArtifacts =
@@ -205,7 +205,7 @@ public class ReceivedFutureProposalTest {
 
   @Test
   public void receiveRoundStateIsNotLostIfASecondProposalMessageIsReceivedForCurrentRound() {
-    final Block block =
+    final QbftBlock block =
         context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
@@ -238,7 +238,10 @@ public class ReceivedFutureProposalTest {
     final Commit expectedCommit =
         new Commit(
             IntegrationTestHelpers.createSignedCommitPayload(
-                nextRoundId, block, context.getLocalNodeParams().getNodeKey()));
+                nextRoundId,
+                block,
+                context.getLocalNodeParams().getNodeKey(),
+                context.getBlockEncoder()));
 
     peers.verifyMessagesReceived(expectedCommit);
   }

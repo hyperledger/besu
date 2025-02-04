@@ -15,8 +15,8 @@
 package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
-import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.validator.ValidatorModeTransitionLogger;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -30,7 +30,7 @@ public class QbftBlockHeightManagerFactory {
   private static final Logger LOG = LoggerFactory.getLogger(QbftBlockHeightManagerFactory.class);
 
   private final QbftRoundFactory roundFactory;
-  private final BftFinalState finalState;
+  private final QbftFinalState finalState;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
   private final ValidatorModeTransitionLogger validatorModeTransitionLogger;
@@ -46,7 +46,7 @@ public class QbftBlockHeightManagerFactory {
    * @param validatorModeTransitionLogger the validator mode transition logger
    */
   public QbftBlockHeightManagerFactory(
-      final BftFinalState finalState,
+      final QbftFinalState finalState,
       final QbftRoundFactory roundFactory,
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,

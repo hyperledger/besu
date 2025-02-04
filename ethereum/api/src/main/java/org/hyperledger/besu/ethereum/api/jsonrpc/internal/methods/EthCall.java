@@ -169,8 +169,8 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
       isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
     }
     return isAllowExceedingBalance
-        ? TransactionValidationParams.transactionSimulatorAllowExceedingBalance()
-        : TransactionValidationParams.transactionSimulator();
+        ? TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce()
+        : TransactionValidationParams.transactionSimulatorAllowFutureNonce();
   }
 
   private boolean isAllowExceedingBalanceAutoSelection(
