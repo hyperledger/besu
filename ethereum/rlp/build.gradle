@@ -36,7 +36,6 @@ dependencies {
   implementation 'io.tmio:tuweni-units'
   implementation 'com.google.guava:guava'
 
-
   jmh project(':util')
 
   testImplementation project(':testutil')
