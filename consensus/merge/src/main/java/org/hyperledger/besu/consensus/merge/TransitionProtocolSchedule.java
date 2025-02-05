@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,7 @@ import org.slf4j.LoggerFactory;
 public class TransitionProtocolSchedule implements ProtocolSchedule {
   private final TransitionUtils<ProtocolSchedule> transitionUtils;
   private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
-  private final Supplier<MergeContext> mergeContext;
+  private final MergeContext mergeContext;
   private ProtocolContext protocolContext;
 
   /**
@@ -50,7 +49,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   public TransitionProtocolSchedule(
       final ProtocolSchedule preMergeProtocolSchedule,
       final ProtocolSchedule postMergeProtocolSchedule,
-      final Supplier<MergeContext> mergeContext) {
+      final MergeContext mergeContext) {
     this.mergeContext = mergeContext;
     transitionUtils =
         new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
@@ -95,10 +94,10 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   public ProtocolSpec getByBlockHeaderWithTransitionReorgHandling(
       final ProcessableBlockHeader blockHeader) {
     // if we do not have a finalized block we might return pre or post merge protocol schedule:
-    if (mergeContext.get().getFinalized().isEmpty()) {
+    if (mergeContext.getFinalized().isEmpty()) {
 
       // if head is not post-merge, return pre-merge schedule:
-      if (!mergeContext.get().isPostMerge()) {
+      if (!mergeContext.isPostMerge()) {
         LOG.atDebug()
             .setMessage("for {} returning a pre-merge schedule because we are not post-merge")
             .addArgument(blockHeader::toLogString)
@@ -113,7 +112,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
               .getTotalDifficultyByHash(blockHeader.getParentHash())
               .orElse(Difficulty.ZERO);
       Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
-      Difficulty terminalDifficulty = mergeContext.get().getTerminalTotalDifficulty();
+      Difficulty terminalDifficulty = mergeContext.getTerminalTotalDifficulty();
       LOG.atDebug()
           .setMessage(" block {} ttd is: {}, parent total diff is: {}, this total diff is: {}")
           .addArgument(blockHeader::toLogString)
@@ -205,7 +204,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public Optional<Long> milestoneFor(final HardforkId hardforkId) {
-    return mergeContext.get().isPostMerge()
+    return mergeContext.isPostMerge()
         ? transitionUtils.getPostMergeObject().milestoneFor(hardforkId)
         : transitionUtils.getPreMergeObject().milestoneFor(hardforkId);
   }

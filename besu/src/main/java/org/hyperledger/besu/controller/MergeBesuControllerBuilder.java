@@ -59,6 +59,7 @@ import org.slf4j.LoggerFactory;
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   private final AtomicReference<SyncState> syncState = new AtomicReference<>();
   private static final Logger LOG = LoggerFactory.getLogger(MergeBesuControllerBuilder.class);
+  private final PostMergeContext postMergeContext = new PostMergeContext();
 
   /** Default constructor. */
   public MergeBesuControllerBuilder() {}
@@ -198,7 +199,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             && blockchain.getGenesisBlockHeader().getDifficulty().isZero();
 
     final MergeContext mergeContext =
-        new PostMergeContext()
+        postMergeContext
             .setSyncState(syncState.get())
             .setTerminalTotalDifficulty(
                 genesisConfigOptions
@@ -266,5 +267,9 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         .getConsensusContext(MergeContext.class)
         .setSyncState(syncState.get());
     return controller;
+  }
+
+  public PostMergeContext getPostMergeContext() {
+    return postMergeContext;
   }
 }

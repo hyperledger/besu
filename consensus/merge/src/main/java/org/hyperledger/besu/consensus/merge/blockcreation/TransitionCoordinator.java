@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -53,7 +52,7 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   public TransitionCoordinator(
       final MiningCoordinator miningCoordinator,
       final MiningCoordinator mergeCoordinator,
-      final Supplier<MergeContext> postMergeContext) {
+      final PostMergeContext postMergeContext) {
     super(miningCoordinator, mergeCoordinator, postMergeContext);
     this.miningCoordinator = miningCoordinator;
     this.mergeCoordinator = (MergeMiningCoordinator) mergeCoordinator;

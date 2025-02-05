@@ -54,7 +54,7 @@ public class TransitionProtocolScheduleTest {
 
     transitionProtocolSchedule =
         new TransitionProtocolSchedule(
-            preMergeProtocolSchedule, postMergeProtocolSchedule, () -> mergeContext);
+            preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
     transitionProtocolSchedule.setProtocolContext(protocolContext);
   }
 

@@ -76,7 +76,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransitionBesuControllerBuilder.class);
   private TransitionProtocolSchedule transitionProtocolSchedule;
-  private ProtocolContext protocolContext;
 
   /**
    * Instantiates a new Transition besu controller builder.
@@ -126,8 +125,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             syncState,
             storageProvider);
 
-    final PostMergeContext postMergeContext =
-        protocolContext.getConsensusContext(PostMergeContext.class);
     final TransitionCoordinator composedCoordinator =
         new TransitionCoordinator(
             preMergeBesuControllerBuilder.createMiningCoordinator(
@@ -151,7 +148,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 syncState,
                 transitionBackwardsSyncContext,
                 ethProtocolManager.ethContext().getScheduler()),
-            () -> postMergeContext);
+            mergeBesuControllerBuilder.getPostMergeContext());
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
   }
@@ -189,7 +186,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         new TransitionProtocolSchedule(
             preMergeBesuControllerBuilder.createProtocolSchedule(),
             mergeBesuControllerBuilder.createProtocolSchedule(),
-            () -> protocolContext.getConsensusContext(MergeContext.class));
+            mergeBesuControllerBuilder.getPostMergeContext());
     return transitionProtocolSchedule;
   }
 
@@ -201,7 +198,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     final ProtocolContext protocolContext =
         super.createProtocolContext(blockchain, worldStateArchive, consensusContext);
     transitionProtocolSchedule.setProtocolContext(protocolContext);
-    this.protocolContext = protocolContext;
     return protocolContext;
   }
 
@@ -260,7 +256,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   private void initTransitionWatcher(
       final ProtocolContext protocolContext, final TransitionCoordinator composedCoordinator) {
 
-    PostMergeContext postMergeContext = protocolContext.getConsensusContext(PostMergeContext.class);
+    PostMergeContext postMergeContext = mergeBesuControllerBuilder.getPostMergeContext();
     postMergeContext.observeNewIsPostMergeState(
         (isPoS, priorState, difficultyStoppedAt) -> {
           if (isPoS) {
@@ -295,10 +291,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     final BesuController controller = super.build();
-    controller
-        .getProtocolContext()
-        .getConsensusContext(PostMergeContext.class)
-        .setSyncState(controller.getSyncState());
+    mergeBesuControllerBuilder.getPostMergeContext().setSyncState(controller.getSyncState());
     return controller;
   }
 
