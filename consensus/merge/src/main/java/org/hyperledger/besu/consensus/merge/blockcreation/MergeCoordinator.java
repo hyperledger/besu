@@ -522,7 +522,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         .map(BlockHeader::getHash)
         .map(finalizedHash::equals)
         .orElse(Boolean.FALSE)) {
-      LOG.debug("Finalized block already set to {}, nothing to do", finalizedHash);
+            LOG.atDebug()
+            .setMessage("Finalized block already set to {}, nothing to do")
+            .addArgument(finalizedHash)
+            .log();
       return;
     }
 
@@ -530,7 +533,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     Optional<BlockHeader> maybeFinalizedHeader = protocolContext.getBlockchain().getBlockHeader(finalizedHash);
 
     if (maybeFinalizedHeader.isPresent()) {
-        LOG.debug("Setting finalized block header to {}", maybeFinalizedHeader.get().toLogString());
+        LOG.atDebug()
+            .setMessage("Setting finalized block header to {}")
+            .addArgument(maybeFinalizedHeader.get()::toLogString)
+            .log();
+
         mergeContext.setFinalized(maybeFinalizedHeader.get());
     } else {
         LOG.warn("Backward sync completed but failed to import finalized block {}", finalizedHash);
