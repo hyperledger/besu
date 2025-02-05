@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
@@ -35,6 +36,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,16 +57,10 @@ public class ClusterThreadNodeRunnerAcceptanceTest extends AcceptanceTestBase {
         besu.createMinerNode(
             "miner",
             (builder) -> {
-              KeyValueStorageFactory persistentStorageFactory =
-                  new RocksDBKeyValueStorageFactory(
-                      () ->
-                          new RocksDBFactoryConfiguration(
-                              DEFAULT_MAX_OPEN_FILES,
-                              DEFAULT_BACKGROUND_THREAD_COUNT,
-                              DEFAULT_CACHE_CAPACITY,
-                              DEFAULT_IS_HIGH_SPEC),
-                      Arrays.asList(KeyValueSegmentIdentifier.values()),
-                      RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS);
+              KeyValueStorageFactory persistentStorageFactory = new RocksDBKeyValueStorageFactory(
+                      RocksDBCLIOptions.create()::toDomainObject,
+                      List.of(KeyValueSegmentIdentifier.values()),
+                      RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
               builder.storageImplementation(persistentStorageFactory);
               return builder;
             });
