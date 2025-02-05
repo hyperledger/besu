@@ -27,7 +27,7 @@ import org.apache.tuweni.bytes.Bytes;
  * historical block hash access in smart contracts.
  */
 public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
-  public static final Address HISTORY_STORAGE_ADDRESS =
+  private static final Address HISTORY_STORAGE_ADDRESS =
       Address.fromHexString("0x0000f90827f1c53a10cb7a02335b175320002935");
 
   protected final Address historyStorageAddress;

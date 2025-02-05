@@ -52,6 +52,7 @@ public class SystemCallProcessor {
    *
    * @param callAddress The address to call.
    * @param context The system call context. The input data to the system call.
+   * @param inputData The input data to the system call.
    * @return The output of the system call.
    */
   public Bytes process(
