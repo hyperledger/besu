@@ -68,7 +68,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   // 0x776f726c64426c6f636b4e756d626572
   public static final byte[] WORLD_BLOCK_NUMBER_KEY =
       "worldBlockNumber".getBytes(StandardCharsets.UTF_8);
-  // 6172636869766550726f6f66426c6f636b4e756d626572
+  // 0x6172636869766550726f6f66426c6f636b4e756d626572
   public static final byte[] ARCHIVE_PROOF_BLOCK_NUMBER_KEY =
       "archiveProofBlockNumber".getBytes(StandardCharsets.UTF_8);
 
@@ -176,7 +176,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     return composedWorldStateStorage
         .get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)
         .map(Bytes32::wrap)
-        .map(hash -> hash.equals(rootHash) || trieLogStorage.containsKey(blockHash.toArrayUnsafe()))
+        .map(hash -> hash.equals(rootHash) || (blockHash != null && trieLogStorage.containsKey(blockHash.toArrayUnsafe())))
         .orElse(false);
   }
 

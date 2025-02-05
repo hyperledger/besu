@@ -67,6 +67,9 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       final Bytes location,
       final Bytes32 nodeHash,
       final SegmentedKeyValueStorage storage) {
+    System.out.println("ERROR - using flat account trie access");
+    new Exception().printStackTrace();
+    System.exit(0);
     // TODO - metrics?
     return storage
         .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
@@ -123,6 +126,9 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       final Bytes location,
       final Bytes32 nodeHash,
       final Bytes node) {
+    System.err.println("Error - we shouldn't be putting using regular flat DB call");
+    new Exception().printStackTrace();
+    System.exit(1);
     transaction.put(TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
   }
 

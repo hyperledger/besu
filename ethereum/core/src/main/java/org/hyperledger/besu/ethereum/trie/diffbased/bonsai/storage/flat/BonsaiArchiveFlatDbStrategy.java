@@ -230,19 +230,47 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
         calculateArchiveKeyWithMaxSuffix(
             getStateArchiveContextForRead(storage), location.toArrayUnsafe());
 
+    // System.out.println("Getting archive flat account trie using key-nearest " + keyNearest.toHexString());
+
     // Find the nearest account state for this address and block context
-    Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccount =
+    Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccountPreSizeCheck =
         storage
-            .getNearestBefore(TRIE_BRANCH_STORAGE, keyNearest)
-            .filter(found -> location.commonPrefixLength(found.key()) >= location.size())
-            .filter(
-                found ->
-                    found.key().size() == (location.size() + 8)) // TODO - change for CONST length
-            .filter(found -> Hash.hash(Bytes.wrap(found.value().get())).equals(nodeHash));
+            .getNearestBeforeMod(TRIE_BRANCH_STORAGE, keyNearest);
+            //.filter(found -> location.commonPrefixLength(found.key()) >= location.size());
+
+    if (nearestAccountPreSizeCheck.isEmpty()) {
+      System.out.println("We were looking for " + location + " using key-nearest value " + keyNearest.toHexString() + " with expected hash " + nodeHash + " and expected size " + (location.size() + 8));
+      // System.out.println("We were looking for " + location + " using key-nearest value " + keyNearest.toHexString() + " with expected hash " + nodeHash);
+      // new Exception().printStackTrace();
+      return Optional.empty();
+    }
+
+    // Find the nearest account state for this address and block context
+    Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccountPreHashCheck = nearestAccountPreSizeCheck
+                    .filter(
+                            found ->
+                                    found.key().size() == (location.size() + 8)); // TODO - change for CONST length
+
+    if (nearestAccountPreHashCheck.isEmpty()) {
+      System.out.println("Account not found pre-hash check. Size of found key " + nearestAccountPreSizeCheck.get().key() + " is " + nearestAccountPreSizeCheck.get().key().size() + ". We expected " + (location.size() + 8));
+      System.out.println("We were looking for " + location + " using key-nearest value " + keyNearest.toHexString() + " with expected hash " + nodeHash);
+      new Exception().printStackTrace();
+    }
+
+    Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccount2 =
+            nearestAccountPreHashCheck.filter(found -> Hash.hash(Bytes.wrap(found.value().get())).equals(nodeHash));
+
+    if (nearestAccount2.isEmpty()) {
+      System.out.println("Account not found post-hash check. We were checking in storage instance " + storage);
+      System.out.println("We were looking for " + location + " using key-nearest value " + keyNearest.toHexString() + " with expected hash " + nodeHash);
+      System.out.println("We found value " + Bytes.wrap(nearestAccountPreHashCheck.get().value().get()).toHexString() + " from key " + nearestAccountPreHashCheck.get().key().toHexString());
+      new Exception().printStackTrace();
+      System.exit(0);
+    }
 
     // TODO - getFlatAccount does extra checks for the delete case. Do we need to do anything in
     // that respect here?
-    accountFound = nearestAccount.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+    accountFound = nearestAccountPreSizeCheck.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
 
     return accountFound;
   }
@@ -375,6 +403,11 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     byte[] keySuffixed =
         calculateArchiveKeyWithMinSuffix(
             getStateTrieArchiveContextForWrite(storage).get(), location.toArrayUnsafe());
+
+    // if (location.toHexString().equalsIgnoreCase("0x07")) {
+      // System.out.println("Put archive trie: location = " + location + ", archive key = " + Bytes.wrap(keySuffixed).toHexString() + ", node hash = " + nodeHash.toHexString() + ", node value = " + node.toHexString() + ". Storage instance is " + storage);
+      // new Exception().printStackTrace();
+    // }
 
     transaction.put(TRIE_BRANCH_STORAGE, keySuffixed, node.toArrayUnsafe());
   }

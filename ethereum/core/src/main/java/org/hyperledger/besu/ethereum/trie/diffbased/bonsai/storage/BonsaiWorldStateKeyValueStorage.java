@@ -271,12 +271,13 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       }
       flatDbStrategy.putFlatAccountTrieNode(
           worldStorage, composedWorldStateTransaction, location, nodeHash, node);
-      composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
+      //composedWorldStateTransaction.put(
+      //    TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
 
     public Updater removeAccountStateTrieNode(final Bytes location) {
+      System.err.println("REMOVING STATE TRIE NODE - DON'T DO THIS!");
       composedWorldStateTransaction.remove(TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
       return this;
     }

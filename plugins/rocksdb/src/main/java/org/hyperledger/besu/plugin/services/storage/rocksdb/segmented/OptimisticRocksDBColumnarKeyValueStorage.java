@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransactionValidatorDecorator;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.RocksDB;

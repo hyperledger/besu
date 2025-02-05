@@ -139,11 +139,14 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
                   storageTrie.getPath(location);
                 } catch (Exception eA) {
                   LOG.warn("Invalid slot found for account {} at location {}", address, location);
+                  eA.printStackTrace();
                   // ignore
                 }
               });
     } catch (Exception eA) {
       LOG.warn("Invalid node for account {} at location {}", address, location);
+      eA.printStackTrace();
+      System.exit(0);
       // ignore
     }
     keysToDelete.forEach(updater::removeAccountStateTrieNode);

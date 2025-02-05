@@ -157,6 +157,19 @@ public class SegmentedInMemoryKeyValueStorage
   }
 
   @Override
+  public Optional<NearestKeyValue> getNearestBeforeMod(
+          final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+    return getNearest(
+            segmentIdentifier,
+            e ->
+                    compareKeyLeftToRight(e.getKey(), key) <= 0
+                            && e.getKey().size() == key.size(),
+            e -> compareKeyLeftToRight(e.getKey(), key) < 0,
+            false);
+    // return getNearestBefore(segmentIdentifier, key);
+  }
+
+  @Override
   public Optional<NearestKeyValue> getNearestAfter(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
     return getNearest(
@@ -178,6 +191,11 @@ public class SegmentedInMemoryKeyValueStorage
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
+      /*for (Map.Entry<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>> a : this.hashValueStore.entrySet()) {
+        NavigableMap<Bytes, Optional<byte[]>> nextEntry = a.getValue();
+        System.out.println(nextEntry);
+      }*/
+
       final Map<Bytes, Optional<byte[]>> segmentMap =
           this.hashValueStore.computeIfAbsent(segmentIdentifier, s -> newSegmentMap());
 
@@ -201,6 +219,7 @@ public class SegmentedInMemoryKeyValueStorage
       // First, attempt to find a key-value pair that matches the same prefix
       final Optional<NearestKeyValue> withSamePrefix = findNearest.apply(samePrefixPredicate);
       if (withSamePrefix.isPresent()) {
+        // System.out.println("Segmented kv found same prefix, length = " + withSamePrefix.get().key().size());
         return withSamePrefix;
       }
       // If a matching entry with a common prefix is not found, the next step is to search for the

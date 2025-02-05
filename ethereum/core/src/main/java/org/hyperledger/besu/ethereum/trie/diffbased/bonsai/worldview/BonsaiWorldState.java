@@ -177,6 +177,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       final MerkleTrie<Bytes, Bytes> accountTrie) {
     for (final Map.Entry<Address, DiffBasedValue<BonsaiAccount>> accountUpdate :
         worldStateUpdater.getAccountsToUpdate().entrySet()) {
+      // System.out.println("UPDATE ACCOUNT " + accountUpdate.getKey().toHexString() + " to " + accountUpdate.getValue());
       final Bytes accountKey = accountUpdate.getKey();
       final DiffBasedValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
@@ -195,6 +196,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
           accountTrie.put(addressHash, accountValue);
         }
       } catch (MerkleTrieException e) {
+        e.printStackTrace();
         // need to throw to trigger the heal
         throw new MerkleTrieException(
             e.getMessage(), Optional.of(Address.wrap(accountKey)), e.getHash(), e.getLocation());
