@@ -76,6 +76,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransitionBesuControllerBuilder.class);
   private TransitionProtocolSchedule transitionProtocolSchedule;
+  private ProtocolContext protocolContext;
 
   /**
    * Instantiates a new Transition besu controller builder.
@@ -150,7 +151,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 syncState,
                 transitionBackwardsSyncContext,
                 ethProtocolManager.ethContext().getScheduler()),
-            postMergeContext);
+            () -> postMergeContext);
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
   }
@@ -188,7 +189,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         new TransitionProtocolSchedule(
             preMergeBesuControllerBuilder.createProtocolSchedule(),
             mergeBesuControllerBuilder.createProtocolSchedule(),
-            PostMergeContext.get());
+            () -> protocolContext.getConsensusContext(MergeContext.class));
     return transitionProtocolSchedule;
   }
 
@@ -200,6 +201,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     final ProtocolContext protocolContext =
         super.createProtocolContext(blockchain, worldStateArchive, consensusContext);
     transitionProtocolSchedule.setProtocolContext(protocolContext);
+    this.protocolContext = protocolContext;
     return protocolContext;
   }
 
@@ -293,7 +295,10 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     final BesuController controller = super.build();
-    PostMergeContext.get().setSyncState(controller.getSyncState());
+    controller
+        .getProtocolContext()
+        .getConsensusContext(PostMergeContext.class)
+        .setSyncState(controller.getSyncState());
     return controller;
   }
 

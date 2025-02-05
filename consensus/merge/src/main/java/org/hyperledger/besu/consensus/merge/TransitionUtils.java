@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,7 @@ public class TransitionUtils<SwitchingObject> {
   private static final Logger LOG = LoggerFactory.getLogger(TransitionUtils.class);
 
   /** The Merge context. */
-  protected final MergeContext mergeContext;
+  protected final Supplier<MergeContext> mergeContext;
 
   private final SwitchingObject preMergeObject;
   private final SwitchingObject postMergeObject;
@@ -49,7 +50,7 @@ public class TransitionUtils<SwitchingObject> {
   public TransitionUtils(
       final SwitchingObject preMergeObject,
       final SwitchingObject postMergeObject,
-      final MergeContext mergeContext) {
+      final Supplier<MergeContext> mergeContext) {
     this.preMergeObject = preMergeObject;
     this.postMergeObject = postMergeObject;
     this.mergeContext = mergeContext;
@@ -61,7 +62,7 @@ public class TransitionUtils<SwitchingObject> {
    * @param consumer the consumer
    */
   void dispatchConsumerAccordingToMergeState(final Consumer<SwitchingObject> consumer) {
-    consumer.accept(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
+    consumer.accept(mergeContext.get().isPostMerge() ? postMergeObject : preMergeObject);
   }
 
   /**
@@ -72,7 +73,7 @@ public class TransitionUtils<SwitchingObject> {
    * @return the t
    */
   public <T> T dispatchFunctionAccordingToMergeState(final Function<SwitchingObject, T> function) {
-    return function.apply(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
+    return function.apply(mergeContext.get().isPostMerge() ? postMergeObject : preMergeObject);
   }
 
   /**

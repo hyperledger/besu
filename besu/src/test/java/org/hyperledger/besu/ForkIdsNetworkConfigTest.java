@@ -204,10 +204,10 @@ public class ForkIdsNetworkConfigTest {
     public MilestoneStreamingTransitionProtocolSchedule(
         final MilestoneStreamingProtocolSchedule preMergeProtocolSchedule,
         final MilestoneStreamingProtocolSchedule postMergeProtocolSchedule) {
-      super(preMergeProtocolSchedule, postMergeProtocolSchedule, postMergeContext);
+      super(preMergeProtocolSchedule, postMergeProtocolSchedule, () -> postMergeContext);
       transitionUtils =
           new TransitionUtils<>(
-              preMergeProtocolSchedule, postMergeProtocolSchedule, postMergeContext);
+              preMergeProtocolSchedule, postMergeProtocolSchedule, () -> postMergeContext);
     }
 
     public Stream<Long> streamMilestoneBlocks() {
