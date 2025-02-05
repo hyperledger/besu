@@ -852,7 +852,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsOnly(
             entry(
                 futureTransaction,
-                TransactionSelectionResult.invalidTransient(
+                TransactionSelectionResult.invalidPenalized(
                     TransactionInvalidReason.NONCE_TOO_HIGH.name())));
   }
 
@@ -1035,13 +1035,13 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 try {
                   Thread.sleep(t);
                 } catch (final InterruptedException e) {
-                  return TransactionSelectionResult.invalidTransient(EXECUTION_INTERRUPTED.name());
+                  return TransactionSelectionResult.invalidPenalized(EXECUTION_INTERRUPTED.name());
                 }
               } else {
                 try {
                   Thread.sleep(fastProcessingTxTime);
                 } catch (final InterruptedException e) {
-                  return TransactionSelectionResult.invalidTransient(EXECUTION_INTERRUPTED.name());
+                  return TransactionSelectionResult.invalidPenalized(EXECUTION_INTERRUPTED.name());
                 }
               }
               return SELECTED;
@@ -1190,13 +1190,13 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 try {
                   Thread.sleep(t);
                 } catch (final InterruptedException e) {
-                  return TransactionSelectionResult.invalidTransient(EXECUTION_INTERRUPTED.name());
+                  return TransactionSelectionResult.invalidPenalized(EXECUTION_INTERRUPTED.name());
                 }
               } else {
                 try {
                   Thread.sleep(fastProcessingTxTime);
                 } catch (final InterruptedException e) {
-                  return TransactionSelectionResult.invalidTransient(EXECUTION_INTERRUPTED.name());
+                  return TransactionSelectionResult.invalidPenalized(EXECUTION_INTERRUPTED.name());
                 }
               }
               return invalidSelectionResult;

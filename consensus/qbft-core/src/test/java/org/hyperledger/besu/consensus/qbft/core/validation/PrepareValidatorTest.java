@@ -19,19 +19,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.datatypes.Hash;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class PrepareValidatorTest {
 
   private static final int VALIDATOR_COUNT = 4;
 
-  private final QbftNodeList validators = QbftNodeList.createNodes(VALIDATOR_COUNT);
   private final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
   private final Hash expectedHash = Hash.fromHexStringLenient("0x1");
-  private final PrepareValidator validator =
-      new PrepareValidator(validators.getNodeAddresses(), round, expectedHash);
+  @Mock private QbftBlockCodec blockEncoder;
+  private QbftNodeList validators;
+  private PrepareValidator validator;
+
+  @BeforeEach
+  public void setup() {
+    validators = QbftNodeList.createNodes(VALIDATOR_COUNT, blockEncoder);
+    validator = new PrepareValidator(validators.getNodeAddresses(), round, expectedHash);
+  }
 
   @Test
   public void prepareIsValidIfItMatchesExpectedValues() {
@@ -43,7 +52,7 @@ public class PrepareValidatorTest {
 
   @Test
   public void prepareSignedByANonValidatorFails() {
-    final QbftNode nonValidator = QbftNode.create();
+    final QbftNode nonValidator = QbftNode.create(blockEncoder);
 
     final Prepare msg = nonValidator.getMessageFactory().createPrepare(round, expectedHash);
     assertThat(validator.validate(msg)).isFalse();
