@@ -22,9 +22,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
@@ -36,7 +39,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class SystemCallProcessorTest {
+public class MainnetBlockContextProcessorTest {
   private static final Address CALL_ADDRESS = Address.fromHexString("0x1");
   private static final Bytes EXPECTED_OUTPUT = Bytes.fromHexString("0x01");
   private ProcessableBlockHeader mockBlockHeader;
@@ -95,12 +98,17 @@ public class SystemCallProcessorTest {
 
   Bytes processSystemCall(final MutableWorldState worldState) {
     SystemCallProcessor systemCallProcessor = new SystemCallProcessor(mockTransactionProcessor);
-    return systemCallProcessor.process(
-        CALL_ADDRESS,
-        worldState.updater(),
-        mockBlockHeader,
-        OperationTracer.NO_TRACING,
-        mockBlockHashLookup);
+
+    BlockProcessingContext blockProcessingContext =
+        new BlockProcessingContext(
+            mockBlockHeader,
+            worldState,
+            mock(ProtocolSpec.class),
+            mockBlockHashLookup,
+            OperationTracer.NO_TRACING);
+
+    when(mockBlockHashLookup.apply(any(), any())).thenReturn(Hash.EMPTY);
+    return systemCallProcessor.process(CALL_ADDRESS, blockProcessingContext, Bytes.EMPTY);
   }
 
   private MutableWorldState createWorldState(final Address address) {

@@ -35,7 +35,7 @@ public class RequestProcessorCoordinator {
     this.processors = processors;
   }
 
-  public List<Request> process(final ProcessRequestContext context) {
+  public List<Request> process(final RequestProcessingContext context) {
     return processors.values().stream()
         .map(requestProcessor -> requestProcessor.process(context))
         .toList();
