@@ -269,6 +269,11 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     return controller;
   }
 
+  /**
+   * Gets post merge context.
+   *
+   * @return the post merge context
+   */
   public PostMergeContext getPostMergeContext() {
     return postMergeContext;
   }
