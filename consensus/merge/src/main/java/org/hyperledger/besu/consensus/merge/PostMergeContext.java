@@ -28,7 +28,6 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.EvictingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +60,6 @@ public class PostMergeContext implements MergeContext {
   private boolean isPostMergeAtGenesis;
 
   /** Instantiates a new Post merge context. */
-  @VisibleForTesting
   public PostMergeContext() {
     this(Difficulty.ZERO);
   }
@@ -71,7 +69,7 @@ public class PostMergeContext implements MergeContext {
    *
    * @param difficulty the difficulty
    */
-  PostMergeContext(final Difficulty difficulty) {
+  private PostMergeContext(final Difficulty difficulty) {
     this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
     this.syncState = new AtomicReference<>();
   }
