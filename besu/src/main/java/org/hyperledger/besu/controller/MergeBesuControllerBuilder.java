@@ -262,10 +262,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     final BesuController controller = super.build();
-    controller
-        .getProtocolContext()
-        .getConsensusContext(MergeContext.class)
-        .setSyncState(syncState.get());
+    postMergeContext.setSyncState(syncState.get());
     return controller;
   }
 
