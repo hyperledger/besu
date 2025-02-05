@@ -75,6 +75,7 @@ import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.mining.MiningService;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
@@ -283,6 +284,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   }
 
   @Module
+  @SuppressWarnings("CloseableProvides")
   static class BesuNodeProviderModule {
 
     private final BesuNode toProvide;
@@ -414,8 +416,15 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
+    KeyValueStorageFactory provideKeyValueStorageFactory() {
+      return toProvide
+          .getStorageFactory()
+          .orElse(new InMemoryStoragePlugin.InMemoryKeyValueStorageFactory("memory"));
+    }
+
+    @Provides
     @Singleton
-    MetricCategoryRegistryImpl provideMetricCategoryRegistry() {
+    MetricCategoryRegistryImpl provide() {
       return new MetricCategoryRegistryImpl();
     }
   }
@@ -565,14 +574,16 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     @Provides
     public KeyValueStorageProvider provideKeyValueStorageProvider(
-        final BesuConfiguration commonPluginConfiguration, final MetricsSystem metricsSystem) {
+        final BesuConfiguration commonPluginConfiguration,
+        final MetricsSystem metricsSystem,
+        final KeyValueStorageFactory keyValueStorageFactory) {
 
       final StorageServiceImpl storageService = new StorageServiceImpl();
-      storageService.registerKeyValueStorage(
-          new InMemoryStoragePlugin.InMemoryKeyValueStorageFactory("memory"));
+      final KeyValueStorageFactory storageFactory = keyValueStorageFactory;
+      storageService.registerKeyValueStorage(storageFactory);
       final KeyValueStorageProvider storageProvider =
           new KeyValueStorageProviderBuilder()
-              .withStorageFactory(storageService.getByName("memory").get())
+              .withStorageFactory(storageFactory)
               .withCommonConfiguration(commonPluginConfiguration)
               .withMetricsSystem(metricsSystem)
               .build();
