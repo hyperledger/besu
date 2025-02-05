@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.UNSUPPORTED_FORK;
 import static org.mockito.Mockito.lenient;
@@ -69,7 +70,6 @@ import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -113,14 +113,32 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
         .thenReturn(mock(CancunTargetingGasLimitCalculator.class));
   }
 
+  @Override
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterCancunMilestone() {
+    // only relevant for v2
+  }
+
   @Test
-  public void invalidWhenBlockIsPrague() {
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterPragueMilestone() {
     final BlockHeader pragueHeader =
         createBlockHeaderFixture(Optional.of(emptyList()))
             .timestamp(pragueHardfork.milestone())
             .buildHeader();
 
     var resp = resp(mockEnginePayload(pragueHeader, emptyList(), null));
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsBeforeCancunMilestone() {
+    final BlockHeader shanghaiHeader =
+        createBlockHeaderFixture(Optional.of(emptyList()))
+            .timestamp(cancunHardfork.milestone() - 1)
+            .buildHeader();
+
+    var resp = resp(mockEnginePayload(shanghaiHeader, emptyList(), null));
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -302,12 +320,6 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
         .blobsWithCommitments(Optional.of(bwc))
         .versionedHashes(Optional.of(bwc.getVersionedHashes()))
         .createTransaction(senderKeys);
-  }
-
-  @Override
-  @Disabled
-  public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterCancunMilestone() {
-    // only relevant for v2
   }
 
   @Override

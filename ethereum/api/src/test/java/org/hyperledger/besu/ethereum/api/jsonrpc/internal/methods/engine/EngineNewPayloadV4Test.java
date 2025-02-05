@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLError.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.UNSUPPORTED_FORK;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -56,7 +58,6 @@ import java.util.Set;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -102,9 +103,19 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   }
 
   @Override
-  @Disabled
-  public void invalidWhenBlockIsPrague() {
-    // Only relevant for EngineNewPayloadV3
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterPragueMilestone() {
+    // Only relevant for V3
+  }
+
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsBeforePragueMilestone() {
+    final BlockHeader cancunHeader = createBlockHeaderFixtureForV3(Optional.empty()).buildHeader();
+
+    var resp = resp(mockEnginePayload(cancunHeader, emptyList()));
+
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -187,6 +198,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
       final Optional<List<Withdrawal>> maybeWithdrawals) {
     return createBlockHeaderFixtureForV3(maybeWithdrawals)
         .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS))
+        .timestamp(pragueHardfork.milestone())
         .buildHeader();
   }
 
@@ -195,7 +207,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
-            .timestamp(pragueHardfork.milestone())
+            .timestamp(pragueHardfork.milestone() - 2) // cancun parent
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .buildHeader();
