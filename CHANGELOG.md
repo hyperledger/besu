@@ -2,9 +2,22 @@
 
 ## Unreleased
 ### Breaking Changes
+- `rpc-gas-cap` default value has changed from 0 (unlimited) to 50M. If you require `rpc-gas-cap` greater than 50M, you'll need to set that explicitly. [#8251](https://github.com/hyperledger/besu/issues/8251)
 ### Upcoming Breaking Changes
+- `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
+- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release. Use docker or none instead.
+- `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated, use `--Xbonsai-full-flat-db-enabled` instead.
+- `--Xbonsai-limit-trie-logs-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-log-pruning-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - Tessera privacy
+    - Smart-contract-based (onchain) permissioning
+    - Proof of Work consensus
+    - Fast Sync
 ### Additions and Improvements
 - Add a tx selector to skip txs from the same sender after the first not selected [#8216](https://github.com/hyperledger/besu/pull/8216)
+- `rpc-gas-cap` default value has changed from 0 (unlimited) to 50M [#8251](https://github.com/hyperledger/besu/issues/8251)
 
 #### Prague
 - Add timestamps to enable Prague hardfork on Sepolia and Holesky test networks [#8163](https://github.com/hyperledger/besu/pull/8163)
@@ -20,7 +33,7 @@
 
 ### Breaking Changes
 - `--host-whitelist` has been deprecated since 2020 and this option is removed. Use the equivalent `--host-allowlist` instead. 
-- Changed tracer API to include the mining beneficiary in BlockAwareOperationTracer::traceStartBlock [#8096](https://github.com/hyperledger/besu/pull/8096)
+- Change tracer API to include the mining beneficiary in BlockAwareOperationTracer::traceStartBlock [#8096](https://github.com/hyperledger/besu/pull/8096)
 - Change the input defaults on debug_trace* calls to not trace memory by default ("disableMemory": true, "disableStack": false,  "disableStorage": false)
 - Change the output format of debug_trace* and trace_* calls to match Geth behaviour
 

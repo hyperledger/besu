@@ -141,7 +141,24 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   }
 
   @Test
-  public void shouldValidVersionedHash_whenListIsEmpty() {
+  public void validateVersionedHash_whenListIsPresentAndEmpty() {
+    final BlockHeader mockHeader =
+        setupValidPayload(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty());
+    final EnginePayloadParameter payload = mockEnginePayload(mockHeader, emptyList(), null);
+
+    ValidationResult<RpcErrorType> res =
+        method.validateParameters(
+            payload,
+            Optional.of(List.of()),
+            Optional.of("0x0000000000000000000000000000000000000000000000000000000000000000"),
+            Optional.empty());
+    assertThat(res.isValid()).isTrue();
+  }
+
+  @Test
+  public void validateExecutionRequests_whenPresent() {
     final BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
@@ -154,7 +171,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             Optional.of(List.of()),
             Optional.of("0x0000000000000000000000000000000000000000000000000000000000000000"),
             Optional.of(emptyList()));
-    assertThat(res.isValid()).isTrue();
+    assertThat(res.isValid()).isFalse();
+    assertThat(res.getInvalidReason()).isEqualTo(RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
   }
 
   @Override
