@@ -63,7 +63,7 @@ public class PostMergeContext implements MergeContext {
 
   /** Instantiates a new Post merge context. */
   @VisibleForTesting
-  PostMergeContext() {
+  public PostMergeContext() {
     this(Difficulty.ZERO);
   }
 

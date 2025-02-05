@@ -198,7 +198,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             && blockchain.getGenesisBlockHeader().getDifficulty().isZero();
 
     final MergeContext mergeContext =
-        PostMergeContext.get()
+        new PostMergeContext()
             .setSyncState(syncState.get())
             .setTerminalTotalDifficulty(
                 genesisConfigOptions
@@ -261,7 +261,10 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     final BesuController controller = super.build();
-    PostMergeContext.get().setSyncState(controller.getSyncState());
+    controller
+        .getProtocolContext()
+        .getConsensusContext(MergeContext.class)
+        .setSyncState(syncState.get());
     return controller;
   }
 }

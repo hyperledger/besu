@@ -125,6 +125,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             syncState,
             storageProvider);
 
+    final PostMergeContext postMergeContext =
+        protocolContext.getConsensusContext(PostMergeContext.class);
     final TransitionCoordinator composedCoordinator =
         new TransitionCoordinator(
             preMergeBesuControllerBuilder.createMiningCoordinator(
@@ -147,7 +149,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionMiningConfiguration,
                 syncState,
                 transitionBackwardsSyncContext,
-                ethProtocolManager.ethContext().getScheduler()));
+                ethProtocolManager.ethContext().getScheduler()),
+            postMergeContext);
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
   }
