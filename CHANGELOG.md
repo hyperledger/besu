@@ -10,6 +10,7 @@
 - Update system call addresses to match [devnet-6](https://github.com/ethereum/execution-spec-tests/releases/) values [#8209](https://github.com/hyperledger/besu/issues/8209) 
 #### Plugins
 - Extend simulate transaction on pending block plugin API [#8174](https://github.com/hyperledger/besu/pull/8174)
+
 ### Bug fixes
 
 
@@ -45,7 +46,6 @@
 - Default target-gas-limit to 36M for holesky [#8125](https://github.com/hyperledger/besu/pull/8125)
 - Add EIP-7623 - Increase calldata cost [#8093](https://github.com/hyperledger/besu/pull/8093)
 - Add nonce to transaction call object [#8139](https://github.com/hyperledger/besu/pull/8139)
-- Add TLS/mTLS options and configure the GraphQL HTTP service[#7910](https://github.com/hyperledger/besu/pull/7910)
 
 ### Bug fixes
 - Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
