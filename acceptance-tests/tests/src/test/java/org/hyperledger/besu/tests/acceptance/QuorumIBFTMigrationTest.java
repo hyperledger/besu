@@ -116,7 +116,7 @@ public class QuorumIBFTMigrationTest extends ParameterizedBftTestBase {
     cluster.start(minerNode1, minerNode2, minerNode3, minerNode4, minerNode5);
 
     // Check that the chain is progressing as expected
-    cluster.verify(blockchain.reachesHeight(minerNode2, 1, 45));
+    cluster.verify(blockchain.reachesHeight(minerNode2, 1, 120));
   }
 
   @Override

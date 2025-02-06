@@ -85,11 +85,12 @@ class VoteTallyCache {
     VoteTally voteTally = null;
 
     while (true) { // Will run into an epoch block (and thus a VoteTally) to break loop.
+
+      intermediateBlocks.push(header);
       voteTally = getValidatorsAfter(header);
       if (voteTally != null) {
         break;
       }
-      intermediateBlocks.push(header);
 
       header =
           blockchain

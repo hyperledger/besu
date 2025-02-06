@@ -47,4 +47,10 @@ public class MigratingProtocolContext extends ProtocolContext {
     final long chainHeadBlockNumber = getBlockchain().getChainHeadBlockNumber();
     return consensusContextSchedule.getFork(chainHeadBlockNumber + 1).getValue().as(klass);
   }
+
+  @Override
+  public <C extends ConsensusContext> C getConsensusContext(
+      final Class<C> klass, final long blockNumber) {
+    return consensusContextSchedule.getFork(blockNumber).getValue().as(klass);
+  }
 }

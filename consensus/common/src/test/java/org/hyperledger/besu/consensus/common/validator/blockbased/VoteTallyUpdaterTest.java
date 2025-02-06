@@ -62,7 +62,7 @@ public class VoteTallyUpdaterTest {
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, proposerAddress, subject)));
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-    headerBuilder.number(EPOCH_LENGTH - 1);
+    headerBuilder.number(EPOCH_LENGTH);
     final BlockHeader header = headerBuilder.buildHeader();
 
     updater.updateForBlock(header, voteTally);
@@ -75,7 +75,7 @@ public class VoteTallyUpdaterTest {
     when(serialiser.extractVoteFromHeader(any())).thenReturn(Optional.empty());
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-    headerBuilder.number(EPOCH_LENGTH - 1);
+    headerBuilder.number(EPOCH_LENGTH);
     final BlockHeader header = headerBuilder.buildHeader();
 
     updater.updateForBlock(header, voteTally);
@@ -88,7 +88,7 @@ public class VoteTallyUpdaterTest {
     when(serialiser.extractVoteFromHeader(any())).thenReturn(Optional.empty());
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-    headerBuilder.number(EPOCH_LENGTH);
+    headerBuilder.number(EPOCH_LENGTH - 1);
     final BlockHeader header = headerBuilder.buildHeader();
 
     updater.updateForBlock(header, voteTally);
