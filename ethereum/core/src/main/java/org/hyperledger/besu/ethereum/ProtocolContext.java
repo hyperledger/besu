@@ -90,6 +90,19 @@ public class ProtocolContext {
   }
 
   /**
+   * Gets the consensus context of the protocol context.
+   *
+   * @param <C> the type of the consensus context
+   * @param klass the klass
+   * @param blockNumber the block number
+   * @return the consensus context of the protocol context
+   */
+  public <C extends ConsensusContext> C getConsensusContext(
+      final Class<C> klass, final long blockNumber) {
+    return consensusContext.as(klass);
+  }
+
+  /**
    * Gets the safe consensus context of the protocol context.
    *
    * @param <C> the type of the consensus context

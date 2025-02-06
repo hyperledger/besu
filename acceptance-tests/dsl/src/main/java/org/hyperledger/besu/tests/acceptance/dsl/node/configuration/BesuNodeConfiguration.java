@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.nio.file.Path;
@@ -73,7 +72,6 @@ public class BesuNodeConfiguration {
   private final Optional<KeyPair> keyPair;
   private final boolean strictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
-  private final Optional<KeyValueStorageFactory> storageFactory;
 
   BesuNodeConfiguration(
       final String name,
@@ -110,8 +108,7 @@ public class BesuNodeConfiguration {
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
       final boolean strictTxReplayProtectionEnabled,
-      final Map<String, String> environment,
-      final Optional<KeyValueStorageFactory> storageFactory) {
+      final Map<String, String> environment) {
     this.name = name;
     this.miningConfiguration = miningConfiguration;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
@@ -147,7 +144,6 @@ public class BesuNodeConfiguration {
     this.keyPair = keyPair;
     this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
     this.environment = environment;
-    this.storageFactory = storageFactory;
   }
 
   public String getName() {
@@ -288,9 +284,5 @@ public class BesuNodeConfiguration {
 
   public Map<String, String> getEnvironment() {
     return environment;
-  }
-
-  public Optional<KeyValueStorageFactory> storageImplementation() {
-    return storageFactory;
   }
 }

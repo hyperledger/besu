@@ -71,7 +71,7 @@ class VoteTallyUpdater {
    * @param voteTally the vote tally to update
    */
   void updateForBlock(final BlockHeader header, final VoteTally voteTally) {
-    if (epochManager.isEpochBlock(header.getNumber())) {
+    if (epochManager.isEpochBlock(header.getNumber() + 1)) {
       voteTally.discardOutstandingVotes();
       return;
     }

@@ -85,6 +85,7 @@ class VoteTallyCache {
     VoteTally voteTally = null;
 
     while (true) { // Will run into an epoch block (and thus a VoteTally) to break loop.
+
       intermediateBlocks.push(header);
       voteTally = getValidatorsAfter(header);
       if (voteTally != null) {
@@ -103,7 +104,7 @@ class VoteTallyCache {
   }
 
   protected VoteTally getValidatorsAfter(final BlockHeader header) {
-    if (epochManager.isEpochBlock(header.getNumber())) {
+    if (header.getNumber() == 0 || epochManager.isEpochBlock(header.getNumber() + 1)) {
       return new VoteTally(blockInterface.validatorsInBlock(header));
     }
 

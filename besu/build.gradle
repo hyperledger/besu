@@ -23,7 +23,7 @@ jar {
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion(),
-      'Commit-Hash': getGitCommitDetails(40).hash
+      'Commit-Hash': 'UNKNOWN'
       )
   }
 }
@@ -37,6 +37,7 @@ dependencies {
   implementation project(':consensus:clique')
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
+  implementation project(':consensus:ibftlegacy')
   implementation project(':consensus:merge')
   implementation project(':consensus:qbft')
   implementation project(':consensus:qbft-core')

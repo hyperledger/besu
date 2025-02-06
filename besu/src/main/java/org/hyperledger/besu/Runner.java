@@ -176,6 +176,7 @@ public class Runner implements AutoCloseable {
       if (networkRunner.getNetwork().isP2pEnabled()) {
         besuController.getSynchronizer().start();
       }
+      besuController.getMiningCoordinator().subscribe();
       besuController.getMiningCoordinator().start();
       transactionPoolEvictionService.start();
 

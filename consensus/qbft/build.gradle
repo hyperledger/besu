@@ -31,7 +31,13 @@ jar {
 dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
+<<<<<<< HEAD
   implementation project(':consensus:qbft-core')
+  implementation project(':consensus:ibftlegacy')
+=======
+  implementation project(':consensus:ibftlegacy')
+  implementation project(':consensus:qbft-core')
+>>>>>>> 65f1a71cff9d2d2682e92e82d3711230842b1767
   implementation project(':crypto:services')
   implementation project(':datatypes')
   implementation project(':ethereum:api')

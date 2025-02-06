@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.io.File;
@@ -96,7 +95,6 @@ public class BesuNodeConfigurationBuilder {
   private Optional<KeyPair> keyPair = Optional.empty();
   private Boolean strictTxReplayProtectionEnabled = false;
   private Map<String, String> environment = new HashMap<>();
-  private Optional<KeyValueStorageFactory> storageImplementation = Optional.empty();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -461,12 +459,6 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder storageImplementation(
-      final KeyValueStorageFactory storageFactory) {
-    this.storageImplementation = Optional.of(storageFactory);
-    return this;
-  }
-
   public BesuNodeConfiguration build() {
     return new BesuNodeConfiguration(
         name,
@@ -503,7 +495,6 @@ public class BesuNodeConfigurationBuilder {
         runCommand,
         keyPair,
         strictTxReplayProtectionEnabled,
-        environment,
-        storageImplementation);
+        environment);
   }
 }
