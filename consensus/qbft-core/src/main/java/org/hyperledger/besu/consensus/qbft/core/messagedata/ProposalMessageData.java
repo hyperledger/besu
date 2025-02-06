@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.messagedata;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.messagedata.AbstractBftMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -44,11 +44,11 @@ public class ProposalMessageData extends AbstractBftMessageData {
   /**
    * Decode.
    *
-   * @param bftExtraDataCodec the bft extra data codec
+   * @param blockEncoder the qbft block encoder
    * @return the proposal
    */
-  public Proposal decode(final BftExtraDataCodec bftExtraDataCodec) {
-    return Proposal.decode(data, bftExtraDataCodec);
+  public Proposal decode(final QbftBlockCodec blockEncoder) {
+    return Proposal.decode(data, blockEncoder);
   }
 
   /**

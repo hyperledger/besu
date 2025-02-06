@@ -59,6 +59,12 @@ public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
       return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
     }
 
+    ValidationResult<RpcErrorType> forkValidationResult =
+        validateForkSupported(payloadAttributes.getTimestamp());
+    if (!forkValidationResult.isValid()) {
+      return Optional.of(new JsonRpcErrorResponse(requestId, forkValidationResult));
+    }
+
     return Optional.empty();
   }
 
