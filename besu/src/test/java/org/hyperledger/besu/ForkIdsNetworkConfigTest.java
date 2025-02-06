@@ -54,6 +54,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class ForkIdsNetworkConfigTest {
+  private static final PostMergeContext postMergeContext = new PostMergeContext();
 
   public static Collection<Object[]> parameters() {
     return List.of(
@@ -203,10 +204,10 @@ public class ForkIdsNetworkConfigTest {
     public MilestoneStreamingTransitionProtocolSchedule(
         final MilestoneStreamingProtocolSchedule preMergeProtocolSchedule,
         final MilestoneStreamingProtocolSchedule postMergeProtocolSchedule) {
-      super(preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
+      super(preMergeProtocolSchedule, postMergeProtocolSchedule, postMergeContext);
       transitionUtils =
           new TransitionUtils<>(
-              preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
+              preMergeProtocolSchedule, postMergeProtocolSchedule, postMergeContext);
     }
 
     public Stream<Long> streamMilestoneBlocks() {
