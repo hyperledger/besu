@@ -653,8 +653,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             new PluginTransactionSelector() {
               @Override
               public TransactionSelectionResult evaluateTransactionPreProcessing(
-                  final TransactionEvaluationContext<? extends PendingTransaction>
-                      evaluationContext) {
+                  final TransactionEvaluationContext evaluationContext) {
                 if (evaluationContext
                     .getPendingTransaction()
                     .getTransaction()
@@ -670,8 +669,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
               @Override
               public TransactionSelectionResult evaluateTransactionPostProcessing(
-                  final TransactionEvaluationContext<? extends PendingTransaction>
-                      evaluationContext,
+                  final TransactionEvaluationContext evaluationContext,
                   final org.hyperledger.besu.plugin.data.TransactionProcessingResult
                       processingResult) {
                 return SELECTED;
@@ -727,15 +725,13 @@ public abstract class AbstractBlockTransactionSelectorTest {
             new PluginTransactionSelector() {
               @Override
               public TransactionSelectionResult evaluateTransactionPreProcessing(
-                  final TransactionEvaluationContext<? extends PendingTransaction>
-                      evaluationContext) {
+                  final TransactionEvaluationContext evaluationContext) {
                 return SELECTED;
               }
 
               @Override
               public TransactionSelectionResult evaluateTransactionPostProcessing(
-                  final TransactionEvaluationContext<? extends PendingTransaction>
-                      evaluationContext,
+                  final TransactionEvaluationContext evaluationContext,
                   final org.hyperledger.besu.plugin.data.TransactionProcessingResult
                       processingResult) {
                 // the transaction with max gas +1 should fail
@@ -808,7 +804,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     selector.buildTransactionListForBlock();
 
     @SuppressWarnings("unchecked")
-    ArgumentCaptor<TransactionEvaluationContext<PendingTransaction>> argumentCaptor =
+    ArgumentCaptor<TransactionEvaluationContext> argumentCaptor =
         ArgumentCaptor.forClass(TransactionEvaluationContext.class);
 
     // selected transaction must be notified to the selector
