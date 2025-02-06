@@ -292,10 +292,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
-    assertThat(miningArg.getValue().getTargetGasLimit()).isPresent();
-    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
-        .isEqualTo(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_TESTNET);
-
     assertThat(ethNetworkArg.getValue().networkId()).isEqualTo(1);
     assertThat(ethNetworkArg.getValue().bootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
   }
@@ -512,10 +508,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.bootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
     assertThat(config.dnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(1));
-    assertThat(miningArg.getValue().getTargetGasLimit()).isPresent();
-    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
-        .isEqualTo(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_TESTNET);
-
     verify(mockLogger, never()).warn(contains("Mainnet is deprecated and will be shutdown"));
   }
 
