@@ -424,7 +424,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     @Provides
     @Singleton
-    MetricCategoryRegistryImpl provideMetricCategoryRegistryImpl() {
+    MetricCategoryRegistryImpl provideMetricCategoryRegistry() {
       return new MetricCategoryRegistryImpl();
     }
   }
