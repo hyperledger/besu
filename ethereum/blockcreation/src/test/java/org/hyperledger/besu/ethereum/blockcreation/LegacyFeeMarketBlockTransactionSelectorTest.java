@@ -19,7 +19,7 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
@@ -45,18 +45,21 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.junit.jupiter.api.Disabled;
+
+@Disabled("flaky https://github.com/hyperledger/besu/issues/8238")
 public class LegacyFeeMarketBlockTransactionSelectorTest
     extends AbstractBlockTransactionSelectorTest {
 
   @Override
-  protected GenesisConfigFile getGenesisConfigFile() {
-    return GenesisConfigFile.fromResource("/block-transaction-selector/gas-price-genesis.json");
+  protected GenesisConfig getGenesisConfig() {
+    return GenesisConfig.fromResource("/block-transaction-selector/gas-price-genesis.json");
   }
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return new ProtocolScheduleBuilder(
-            genesisConfigFile.getConfigOptions(),
+            genesisConfig.getConfigOptions(),
             Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),

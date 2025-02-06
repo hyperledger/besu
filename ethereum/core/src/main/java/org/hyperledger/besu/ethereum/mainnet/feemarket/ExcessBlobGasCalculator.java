@@ -24,7 +24,7 @@ public class ExcessBlobGasCalculator {
    * public class ExcessBlobGasCalculator { /** Calculates the excess blob gas for a parent block
    * header.
    *
-   * @param protocolSpec The protocol specification.
+   * @param protocolSpec The protocol specification of the current block.
    * @param parentHeader The parent block header.
    * @return The excess blob gas.
    */
@@ -36,8 +36,7 @@ public class ExcessBlobGasCalculator {
             .getGasCalculator()
             .computeExcessBlobGas(
                 parentHeader.getExcessBlobGas().map(BlobGas::toLong).orElse(0L),
-                parentHeader.getBlobGasUsed().orElse(0L),
-                parentHeader.getTargetBlobsPerBlock());
+                parentHeader.getBlobGasUsed().orElse(0L));
     return BlobGas.of(headerExcess);
   }
 }

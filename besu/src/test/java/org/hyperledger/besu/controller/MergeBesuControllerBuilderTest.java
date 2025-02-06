@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.cryptoservices.NodeKey;
@@ -49,7 +49,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
@@ -89,7 +89,7 @@ public class MergeBesuControllerBuilderTest {
   private MergeBesuControllerBuilder besuControllerBuilder;
   private static final NodeKey nodeKey = NodeKeyUtils.generate();
 
-  @Mock GenesisConfigFile genesisConfigFile;
+  @Mock GenesisConfig genesisConfig;
   @Mock GenesisConfigOptions genesisConfigOptions;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
@@ -106,7 +106,7 @@ public class MergeBesuControllerBuilderTest {
 
   BigInteger networkId = BigInteger.ONE;
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
-  private final BaseFeeMarket feeMarket = new LondonFeeMarket(0, Optional.of(Wei.of(42)));
+  private final BaseFeeMarket feeMarket = FeeMarket.london(0, Optional.of(Wei.of(42)));
   private final TransactionPoolConfiguration poolConfiguration =
       TransactionPoolConfiguration.DEFAULT;
   private final ObservableMetricsSystem observableMetricsSystem = new NoOpMetricsSystem();
@@ -121,12 +121,12 @@ public class MergeBesuControllerBuilderTest {
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
-    lenient().when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
-    lenient().when(genesisConfigFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
-    lenient().when(genesisConfigFile.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
-    lenient().when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
-    lenient().when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
-    lenient().when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
+    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfig.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
+    lenient().when(genesisConfig.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
+    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfig.getNonce()).thenReturn(Long.toHexString(1));
+    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(genesisConfigOptions.getTerminalTotalDifficulty())
         .thenReturn((Optional.of(UInt256.valueOf(100L))));
@@ -177,7 +177,7 @@ public class MergeBesuControllerBuilderTest {
     return (MergeBesuControllerBuilder)
         builder
             .gasLimitCalculator(gasLimitCalculator)
-            .genesisConfigFile(genesisConfigFile)
+            .genesisConfig(genesisConfig)
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .miningParameters(miningConfiguration)
@@ -227,8 +227,7 @@ public class MergeBesuControllerBuilderTest {
   @Test
   public void assertBuiltContextMonitorsTTD() {
     final GenesisState genesisState =
-        GenesisState.fromConfig(
-            genesisConfigFile, this.besuControllerBuilder.createProtocolSchedule());
+        GenesisState.fromConfig(genesisConfig, this.besuControllerBuilder.createProtocolSchedule());
     final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
     final MergeContext mergeContext =
         spy(

@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.hyperledger.besu.ethereum.blockcreation.AbstractBlockTransactionSelectorTest.Sender.SENDER1;
+import static org.hyperledger.besu.ethereum.blockcreation.AbstractBlockTransactionSelectorTest.Sender.SENDER2;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
@@ -60,14 +62,14 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     extends AbstractBlockTransactionSelectorTest {
 
   @Override
-  protected GenesisConfigFile getGenesisConfigFile() {
-    return GenesisConfigFile.fromResource("/block-transaction-selector/london-genesis.json");
+  protected GenesisConfig getGenesisConfig() {
+    return GenesisConfig.fromResource("/block-transaction-selector/london-genesis.json");
   }
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return new ProtocolScheduleBuilder(
-            genesisConfigFile.getConfigOptions(),
+            genesisConfig.getConfigOptions(),
             Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
@@ -246,19 +248,23 @@ public class LondonFeeMarketBlockTransactionSelectorTest
         ImmutableMiningConfiguration.builder().from(defaultTestMiningConfiguration).build();
     miningConfiguration.setMinPriorityFeePerGas(Wei.of(7));
 
-    final Transaction txSelected1 = createEIP1559Transaction(1, Wei.of(8), Wei.of(8), 100_000);
+    final Transaction txSelected1 =
+        createEIP1559Transaction(0, Wei.of(8), Wei.of(8), 100_000, SENDER1);
     ensureTransactionIsValid(txSelected1);
 
     // transaction txNotSelected1 should not be selected
-    final Transaction txNotSelected1 = createEIP1559Transaction(2, Wei.of(7), Wei.of(7), 100_000);
+    final Transaction txNotSelected1 =
+        createEIP1559Transaction(1, Wei.of(7), Wei.of(7), 100_000, SENDER1);
     ensureTransactionIsValid(txNotSelected1);
 
     // transaction txSelected2 should be selected
-    final Transaction txSelected2 = createEIP1559Transaction(3, Wei.of(8), Wei.of(8), 100_000);
+    final Transaction txSelected2 =
+        createEIP1559Transaction(0, Wei.of(8), Wei.of(8), 100_000, SENDER2);
     ensureTransactionIsValid(txSelected2);
 
     // transaction txNotSelected2 should not be selected
-    final Transaction txNotSelected2 = createEIP1559Transaction(4, Wei.of(8), Wei.of(6), 100_000);
+    final Transaction txNotSelected2 =
+        createEIP1559Transaction(1, Wei.of(8), Wei.of(6), 100_000, SENDER2);
     ensureTransactionIsValid(txNotSelected2);
 
     final BlockTransactionSelector selector =

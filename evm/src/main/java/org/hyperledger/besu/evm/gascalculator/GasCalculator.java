@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -40,12 +41,10 @@ import org.hyperledger.besu.evm.precompile.SHA256PrecompiledContract;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.apache.tuweni.units.bigints.UInt64;
 
 /**
  * Provides various gas cost lookups and calculations used during block processing.
@@ -544,10 +543,21 @@ public interface GasCalculator {
    * encoded binary representation when stored on-chain.
    *
    * @param transactionPayload The encoded transaction, as bytes
-   * @param isContractCreate Is this transaction a contract creation transaction?
+   * @param isContractCreation Is this transaction a contract creation transaction?
+   * @param baselineGas The gas used by access lists and code delegation authorizations
    * @return the transaction's intrinsic gas cost
    */
-  long transactionIntrinsicGasCost(Bytes transactionPayload, boolean isContractCreate);
+  long transactionIntrinsicGasCost(
+      Bytes transactionPayload, boolean isContractCreation, long baselineGas);
+
+  /**
+   * Returns the floor gas cost of a transaction payload, i.e. the minimum gas cost that a
+   * transaction will be charged based on its calldata. Introduced in EIP-7623 in Prague.
+   *
+   * @param transactionPayload The encoded transaction, as bytes
+   * @return the transaction's floor gas cost
+   */
+  long transactionFloorCost(final Bytes transactionPayload);
 
   /**
    * Returns the gas cost of the explicitly declared access list.
@@ -580,15 +590,6 @@ public interface GasCalculator {
   default long getMaxRefundQuotient() {
     return 2;
   }
-
-  /**
-   * Maximum Cost of a Transaction of a certain length.
-   *
-   * @param size the length of the transaction, in bytes
-   * @return the maximum gas cost
-   */
-  // what would be the gas for a PMT with hash of all non-zeros
-  long getMaximumTransactionCost(int size);
 
   /**
    * Minimum gas cost of a transaction.
@@ -636,30 +637,14 @@ public interface GasCalculator {
   }
 
   /**
-   * Compute the new value for the excess blob gas, given the parent value, the parent blob gas used
-   * and the parent target blobs per block, if present. Used from Cancun onwards. Presence of
-   * parentTargetBlobsPerBlock implies EIP-7442/Prague enabled. Default to Cancun constant target
-   * gas value if parentTargetBlobsPerBlock is not present.
+   * Compute the new value for the excess blob gas, given the parent value and the blob gas used
    *
    * @param parentExcessBlobGas excess blob gas from the parent
-   * @param parentBlobGasUsed blob gas used from the parent
-   * @param parentTargetBlobsPerBlock the optional target blobs per block from the parent
+   * @param blobGasUsed blob gas used
    * @return the new excess blob gas value
    */
-  default long computeExcessBlobGas(
-      final long parentExcessBlobGas,
-      final long parentBlobGasUsed,
-      final Optional<UInt64> parentTargetBlobsPerBlock) {
-    final long parentTargetBlobGas =
-        parentTargetBlobsPerBlock
-            .map(blobCount -> blobGasCost(blobCount.toLong()))
-            .orElse(CancunGasCalculator.TARGET_BLOB_GAS_PER_BLOCK);
-    final long currentExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed;
-
-    if (currentExcessBlobGas < parentTargetBlobGas) {
-      return 0L;
-    }
-    return currentExcessBlobGas - parentTargetBlobGas;
+  default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
+    return 0L;
   }
 
   /**
@@ -673,8 +658,8 @@ public interface GasCalculator {
   }
 
   /**
-   * Calculates the refund for proessing the 7702 code delegation list if an delegater account
-   * already exist in the trie.
+   * Calculates the refund for processing the 7702 code delegation list if a delegator account
+   * already exists in the trie.
    *
    * @param alreadyExistingAccountSize The number of accounts already in the trie
    * @return the gas refund
@@ -682,4 +667,15 @@ public interface GasCalculator {
   default long calculateDelegateCodeGasRefund(final long alreadyExistingAccountSize) {
     return 0L;
   }
+
+  /**
+   * Calculate the gas refund for a transaction.
+   *
+   * @param transaction the transaction
+   * @param initialFrame the initial frame
+   * @param codeDelegationRefund the code delegation refund
+   * @return the gas refund
+   */
+  long calculateGasRefund(
+      Transaction transaction, MessageFrame initialFrame, long codeDelegationRefund);
 }

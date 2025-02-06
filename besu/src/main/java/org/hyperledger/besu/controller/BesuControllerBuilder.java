@@ -18,7 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceSupplier;
@@ -127,7 +127,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
   /** The genesis file */
-  protected GenesisConfigFile genesisConfigFile;
+  protected GenesisConfig genesisConfig;
 
   /** The genesis config options; */
   protected GenesisConfigOptions genesisConfigOptions;
@@ -219,6 +219,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** The transaction simulator */
   protected TransactionSimulator transactionSimulator;
 
+  /** When enabled, round changes on f+1 RC messages from higher rounds */
+  protected boolean isEarlyRoundChangeEnabled = false;
+
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
 
@@ -250,8 +253,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param genesisConfig the genesis config
    * @return the besu controller builder
    */
-  public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
-    this.genesisConfigFile = genesisConfig;
+  public BesuControllerBuilder genesisConfig(final GenesisConfig genesisConfig) {
+    this.genesisConfig = genesisConfig;
     this.genesisConfigOptions = genesisConfig.getConfigOptions();
     return this;
   }
@@ -554,12 +557,23 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * check if early round change is enabled when f+1 RC messages from higher rounds are received
+   *
+   * @param isEarlyRoundChangeEnabled whether to enable early round change
+   * @return the besu controller
+   */
+  public BesuControllerBuilder isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
+    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
+    return this;
+  }
+
+  /**
    * Build besu controller.
    *
    * @return the besu controller
    */
   public BesuController build() {
-    checkNotNull(genesisConfigFile, "Missing genesis config file");
+    checkNotNull(genesisConfig, "Missing genesis config file");
     checkNotNull(genesisConfigOptions, "Missing genesis config options");
     checkNotNull(syncConfig, "Missing sync config");
     checkNotNull(ethereumWireProtocolConfiguration, "Missing ethereum protocol configuration");
@@ -621,7 +635,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             worldStateHealerSupplier::get);
 
     if (maybeStoredGenesisBlockHash.isEmpty()) {
-      genesisState.writeStateTo(worldStateArchive.getMutable());
+      genesisState.writeStateTo(worldStateArchive.getWorldState());
     }
 
     transactionSimulator =
@@ -717,7 +731,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             transactionPoolConfiguration,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
-            miningConfiguration);
+            miningConfiguration,
+            syncConfig.isPeerTaskSystemEnabled());
 
     final List<PeerValidator> peerValidators =
         createPeerValidators(protocolSchedule, peerTaskExecutor);
@@ -840,11 +855,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return maybeGenesisStateRoot
         .map(
             genesisStateRoot ->
-                GenesisState.fromStorage(genesisStateRoot, genesisConfigFile, protocolSchedule))
+                GenesisState.fromStorage(genesisStateRoot, genesisConfig, protocolSchedule))
         .orElseGet(
             () ->
-                GenesisState.fromConfig(
-                    dataStorageConfiguration, genesisConfigFile, protocolSchedule));
+                GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule));
   }
 
   private TrieLogPruner createTrieLogPruner(
@@ -924,7 +938,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           ethContext,
           syncConfig,
           syncState,
-          metricsSystem,
           protocolContext,
           nodeKey,
           blockchain.getChainHeadHeader());
@@ -954,7 +967,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           unsubscribeForkchoiceListener);
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
-      return new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem);
+      return new PivotSelectorFromPeers(ethContext, syncConfig, syncState);
     }
   }
 

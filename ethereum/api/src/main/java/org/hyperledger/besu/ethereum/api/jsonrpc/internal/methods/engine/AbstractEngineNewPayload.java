@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getRequestsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
+import static org.hyperledger.besu.metrics.BesuMetricCategory.BLOCK_PROCESSING;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.BlobGas;
@@ -61,6 +62,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.security.InvalidParameterException;
@@ -69,7 +71,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -85,6 +86,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
   private final MergeMiningCoordinator mergeCoordinator;
   private final EthPeers ethPeers;
+  private long lastExecutionTime = 0L;
 
   public AbstractEngineNewPayload(
       final Vertx vertx,
@@ -92,16 +94,21 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EthPeers ethPeers,
-      final EngineCallListener engineCallListener) {
+      final EngineCallListener engineCallListener,
+      final MetricsSystem metricsSystem) {
     super(vertx, protocolSchedule, protocolContext, engineCallListener);
     this.mergeCoordinator = mergeCoordinator;
     this.ethPeers = ethPeers;
+    metricsSystem.createLongGauge(
+        BLOCK_PROCESSING,
+        "execution_time_head",
+        "The execution time of the last block (head)",
+        this::getLastExecutionTime);
   }
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     engineCallListener.executionEngineCalled();
-
     final EnginePayloadParameter blockParam;
     try {
       blockParam = requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
@@ -146,6 +153,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           e);
     }
 
+    final ValidationResult<RpcErrorType> forkValidationResult =
+        validateForkSupported(blockParam.getTimestamp());
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(reqId, forkValidationResult);
+    }
+
     final ValidationResult<RpcErrorType> parameterValidationResult =
         validateParameters(
             blockParam,
@@ -154,12 +167,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             maybeRequestsParam);
     if (!parameterValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, parameterValidationResult);
-    }
-
-    final ValidationResult<RpcErrorType> forkValidationResult =
-        validateForkSupported(blockParam.getTimestamp());
-    if (!forkValidationResult.isValid()) {
-      return new JsonRpcErrorResponse(reqId, forkValidationResult);
     }
 
     final Optional<List<VersionedHash>> maybeVersionedHashes;
@@ -195,13 +202,15 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final Optional<List<Request>> maybeRequests;
     try {
       maybeRequests = extractRequests(maybeRequestsParam);
-    } catch (RuntimeException ex) {
+    } catch (RequestType.InvalidRequestTypeException ex) {
       return respondWithInvalid(
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
           INVALID,
           "Invalid execution requests");
+    } catch (Exception ex) {
+      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
     }
 
     if (!getRequestsValidator(
@@ -266,7 +275,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsHash).orElse(null),
-            null, // TODO SLD EIP-7742 wiring in future PR
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -348,8 +356,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     // execute block and return result response
     final long startTimeMs = System.currentTimeMillis();
     final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
-
     if (executionResult.isSuccessful()) {
+      lastExecutionTime = System.currentTimeMillis() - startTimeMs;
       logImportedBlockInfo(
           block,
           blobTransactions.stream()
@@ -357,8 +365,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .flatMap(Optional::stream)
               .mapToInt(List::size)
               .sum(),
-          (System.currentTimeMillis() - startTimeMs) / 1000.0,
-          executionResult.getNbParallelizedTransations());
+          lastExecutionTime / 1000.0,
+          executionResult.getNbParallelizedTransactions());
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
       if (executionResult.causedBy().isPresent()) {
@@ -585,11 +593,18 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (maybeRequestsParam.isEmpty()) {
       return Optional.empty();
     }
-
     return maybeRequestsParam.map(
         requests ->
-            IntStream.range(0, requests.size())
-                .mapToObj(i -> new Request(RequestType.of(i), Bytes.fromHexString(requests.get(i))))
+            requests.stream()
+                .map(
+                    s -> {
+                      final Bytes request = Bytes.fromHexString(s);
+                      final Bytes requestData = request.slice(1);
+                      if (requestData.isEmpty()) {
+                        throw new IllegalArgumentException("Request data cannot be empty");
+                      }
+                      return new Request(RequestType.of(request.get(0)), requestData);
+                    })
                 .collect(Collectors.toList()));
   }
 
@@ -597,7 +612,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final Block block,
       final int blobCount,
       final double timeInS,
-      final Optional<Integer> nbParallelizedTransations) {
+      final Optional<Integer> nbParallelizedTransactions) {
     final StringBuilder message = new StringBuilder();
     final int nbTransactions = block.getBody().getTransactions().size();
     message.append("Imported #%,d  (%s)|%5d tx");
@@ -620,14 +635,18 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
             timeInS,
             mgasPerSec));
-    if (nbParallelizedTransations.isPresent()) {
+    if (nbParallelizedTransactions.isPresent()) {
       double parallelizedTxPercentage =
-          (double) (nbParallelizedTransations.get() * 100) / nbTransactions;
+          (double) (nbParallelizedTransactions.get() * 100) / nbTransactions;
       message.append("| parallel txs %5.1f%%");
       messageArgs.add(parallelizedTxPercentage);
     }
     message.append("| peers: %2d");
     messageArgs.add(ethPeers.peerCount());
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
+  }
+
+  private long getLastExecutionTime() {
+    return this.lastExecutionTime;
   }
 }

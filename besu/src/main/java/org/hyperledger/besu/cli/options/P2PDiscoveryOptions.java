@@ -25,18 +25,37 @@ import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.net.InetAddresses;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
 /** Command line options for configuring P2P discovery on the node. */
 public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration> {
+
+  /** Functional interface for checking if a network interface is available. */
+  @FunctionalInterface
+  public interface NetworkInterfaceChecker {
+
+    /**
+     * Checks if the provided network interface is available.
+     *
+     * @param p2pInterface The network interface to check.
+     * @return True if the network interface is available, false otherwise.
+     * @throws UnknownHostException If the host is unknown.
+     * @throws SocketException If there is an error with the socket.
+     */
+    boolean isNetworkInterfaceAvailable(final String p2pInterface)
+        throws UnknownHostException, SocketException;
+  }
 
   /** Default constructor */
   public P2PDiscoveryOptions() {}
@@ -215,6 +234,37 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
         poaDiscoveryRetryBootnodes,
         bootNodes,
         discoveryDnsUrl);
+  }
+
+  /**
+   * Validates the provided P2P discovery options.
+   *
+   * @param commandLine The command line object used for parsing and error reporting.
+   * @param networkInterfaceChecker The checker used to validate the network interface.
+   */
+  public void validate(
+      final CommandLine commandLine, final NetworkInterfaceChecker networkInterfaceChecker) {
+    validateP2PHost(commandLine);
+    validateP2PInterface(commandLine, networkInterfaceChecker);
+  }
+
+  private void validateP2PInterface(
+      final CommandLine commandLine, final NetworkInterfaceChecker networkInterfaceChecker) {
+    final String failMessage = "The provided --p2p-interface is not available: " + p2pInterface;
+    try {
+      if (!networkInterfaceChecker.isNetworkInterfaceAvailable(p2pInterface)) {
+        throw new CommandLine.ParameterException(commandLine, failMessage);
+      }
+    } catch (final UnknownHostException | SocketException e) {
+      throw new CommandLine.ParameterException(commandLine, failMessage, e);
+    }
+  }
+
+  private void validateP2PHost(final CommandLine commandLine) {
+    final String failMessage = "The provided --p2p-host is invalid: " + p2pHost;
+    if (!InetAddresses.isInetAddress(p2pHost)) {
+      throw new CommandLine.ParameterException(commandLine, failMessage);
+    }
   }
 
   @Override

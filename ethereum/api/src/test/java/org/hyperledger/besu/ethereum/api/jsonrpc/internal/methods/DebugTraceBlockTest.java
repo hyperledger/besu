@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,53 +14,114 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
+import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
+import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.function.Function;
 
-import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class DebugTraceBlockTest {
+  @Mock private BlockchainQueries blockchainQueries;
+  @Mock private Blockchain blockchain;
+  @Mock private ObservableMetricsSystem metricsSystem;
+  @Mock private WithdrawalsProcessor withdrawalsProcessor;
+  @Mock private TransactionValidatorFactory alwaysValidTransactionValidatorFactory;
+  private DebugTraceBlock debugTraceBlock;
 
-  private final BlockTracer blockTracer = mock(BlockTracer.class);
-  private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
-  private final DebugTraceBlock debugTraceBlock =
-      new DebugTraceBlock(() -> blockTracer, new MainnetBlockHeaderFunctions(), blockchainQueries);
+  @BeforeEach
+  public void setUp() {
+    // As we build the block from RLP in DebugTraceBlock, we need to have non mocked
+    // protocolSchedule (and ProtocolSpec)
+    // to be able to get the hash of the block
+    final var genesisConfig =
+        GenesisConfig.fromResource(
+            "/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data/genesis.json");
+    final ProtocolSpecAdapters protocolSpecAdapters =
+        ProtocolSpecAdapters.create(
+            0,
+            specBuilder -> {
+              specBuilder.isReplayProtectionSupported(true);
+              specBuilder.withdrawalsProcessor(withdrawalsProcessor);
+              specBuilder.transactionValidatorFactoryBuilder(
+                  (evm, gasLimitCalculator, feeMarket) -> alwaysValidTransactionValidatorFactory);
+              return specBuilder;
+            });
+    final ExecutionContextTestFixture executionContextTestFixture =
+        ExecutionContextTestFixture.builder(genesisConfig)
+            .protocolSchedule(
+                new ProtocolScheduleBuilder(
+                        genesisConfig.getConfigOptions(),
+                        Optional.of(BigInteger.valueOf(42)),
+                        protocolSpecAdapters,
+                        PrivacyParameters.DEFAULT,
+                        false,
+                        EvmConfiguration.DEFAULT,
+                        MiningConfiguration.MINING_DISABLED,
+                        new BadBlockManager(),
+                        false,
+                        new NoOpMetricsSystem())
+                    .createProtocolSchedule())
+            .build();
+    debugTraceBlock =
+        new DebugTraceBlock(
+            executionContextTestFixture.getProtocolSchedule(),
+            blockchainQueries,
+            metricsSystem,
+            new DeterministicEthScheduler());
+  }
 
   @Test
   public void nameShouldBeDebugTraceBlock() {
     assertThat(debugTraceBlock.getName()).isEqualTo("debug_traceBlock");
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void shouldReturnCorrectResponse() {
     final Block parentBlock =
@@ -79,71 +140,40 @@ public class DebugTraceBlockTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", params));
 
-    final TraceFrame traceFrame =
-        new TraceFrame(
-            12,
-            Optional.of("NONE"),
-            Integer.MAX_VALUE,
-            45L,
-            OptionalLong.of(56L),
-            0L,
-            2,
-            Optional.empty(),
-            null,
-            Wei.ZERO,
-            Bytes.EMPTY,
-            Bytes.EMPTY,
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            null,
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            0,
-            Optional.empty(),
-            false,
-            Optional.empty(),
-            Optional.empty());
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getBlockByHash(block.getHeader().getParentHash()))
+        .thenReturn(Optional.of(parentBlock));
 
-    final TransactionProcessingResult transaction1Result = mock(TransactionProcessingResult.class);
-    final TransactionProcessingResult transaction2Result = mock(TransactionProcessingResult.class);
+    DebugTraceTransactionDetails result1 = mock(DebugTraceTransactionDetails.class);
+    DebugTraceTransactionDetails result2 = mock(DebugTraceTransactionDetails.class);
 
-    final TransactionTrace transaction1Trace = mock(TransactionTrace.class);
-    final TransactionTrace transaction2Trace = mock(TransactionTrace.class);
+    List<DebugTraceTransactionDetails> resultList = Arrays.asList(result1, result2);
 
-    final BlockTrace blockTrace = new BlockTrace(asList(transaction1Trace, transaction2Trace));
+    try (MockedStatic<Tracer> mockedTracer = mockStatic(Tracer.class)) {
+      mockedTracer
+          .when(
+              () ->
+                  Tracer.processTracing(
+                      eq(blockchainQueries),
+                      eq(Optional.of(block.getHeader())),
+                      any(Function.class)))
+          .thenReturn(Optional.of(resultList));
 
-    when(transaction1Trace.getTraceFrames()).thenReturn(singletonList(traceFrame));
-    when(transaction2Trace.getTraceFrames()).thenReturn(singletonList(traceFrame));
-    when(transaction1Trace.getResult()).thenReturn(transaction1Result);
-    when(transaction2Trace.getResult()).thenReturn(transaction2Result);
-    when(transaction1Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
-    when(transaction2Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
-    when(blockTracer.trace(any(Tracer.TraceableState.class), eq(block), any()))
-        .thenReturn(Optional.of(blockTrace));
+      final JsonRpcResponse jsonRpcResponse = debugTraceBlock.response(request);
+      assertThat(jsonRpcResponse).isInstanceOf(JsonRpcSuccessResponse.class);
+      JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) jsonRpcResponse;
 
-    when(blockchainQueries.blockByHash(parentBlock.getHash()))
-        .thenReturn(
-            Optional.of(
-                new BlockWithMetadata<>(
-                    parentBlock.getHeader(),
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    parentBlock.getHeader().getDifficulty(),
-                    parentBlock.calculateSize())));
-    when(blockchainQueries.getAndMapWorldState(eq(parentBlock.getHash()), any()))
-        .thenAnswer(
-            invocationOnMock -> {
-              Function<Tracer.TraceableState, ? extends Optional<BlockTracer>> mapper =
-                  invocationOnMock.getArgument(1);
-              return mapper.apply(mock(Tracer.TraceableState.class));
-            });
+      final Collection<DebugTraceTransactionDetails> traceResult = getResult(response);
+      assertThat(traceResult).isNotEmpty();
+      assertThat(traceResult).isInstanceOf(Collection.class).hasSize(2);
+      assertThat(traceResult).containsExactly(result1, result2);
+    }
+  }
 
-    final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) debugTraceBlock.response(request);
-    final Collection<?> result = (Collection<?>) response.getResult();
-    assertThat(result).hasSize(2);
+  @SuppressWarnings("unchecked")
+  private Collection<DebugTraceTransactionDetails> getResult(
+      final JsonRpcSuccessResponse response) {
+    return (Collection<DebugTraceTransactionDetails>) response.getResult();
   }
 
   @Test
@@ -158,9 +188,26 @@ public class DebugTraceBlockTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", params));
 
-    when(blockchainQueries.blockByHash(any())).thenReturn(Optional.empty());
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getBlockByHash(block.getHeader().getParentHash())).thenReturn(Optional.empty());
 
+    final JsonRpcResponse jsonRpcResponse = debugTraceBlock.response(request);
+    assertThat(jsonRpcResponse).isInstanceOf(JsonRpcErrorResponse.class);
     final JsonRpcErrorResponse response = (JsonRpcErrorResponse) debugTraceBlock.response(request);
+
     assertThat(response.getErrorType()).isEqualByComparingTo(RpcErrorType.PARENT_BLOCK_NOT_FOUND);
+  }
+
+  @Test
+  public void shouldHandleInvalidParametersGracefully() {
+    final Object[] invalidParams = new Object[] {"invalid RLP"};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", invalidParams));
+
+    final JsonRpcResponse jsonRpcResponse = debugTraceBlock.response(request);
+    assertThat(jsonRpcResponse).isInstanceOf(JsonRpcErrorResponse.class);
+    final JsonRpcErrorResponse response = (JsonRpcErrorResponse) debugTraceBlock.response(request);
+
+    assertThat(response.getError().getMessage()).contains("Invalid block, unable to parse RLP");
   }
 }

@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSi
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.MinPriorityFeePerGasTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.ProcessingResultTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.SkipSenderTransactionSelector;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -45,9 +46,8 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
@@ -152,6 +152,7 @@ public class BlockTransactionSelector {
   private List<AbstractTransactionSelector> createTransactionSelectors(
       final BlockSelectionContext context) {
     return List.of(
+        new SkipSenderTransactionSelector(context),
         new BlockSizeTransactionSelector(context),
         new BlobSizeTransactionSelector(context),
         new PriceTransactionSelector(context),
@@ -289,7 +290,7 @@ public class BlockTransactionSelector {
 
     final WorldUpdater txWorldStateUpdater = blockWorldStateUpdater.updater();
     final TransactionProcessingResult processingResult =
-        processTransaction(pendingTransaction, txWorldStateUpdater);
+        processTransaction(evaluationContext.getTransaction(), txWorldStateUpdater);
 
     var postProcessingSelectionResult = evaluatePostProcessing(evaluationContext, processingResult);
 
@@ -369,18 +370,20 @@ public class BlockTransactionSelector {
   /**
    * Processes a transaction
    *
-   * @param pendingTransaction The transaction to be processed.
+   * @param transaction The transaction to be processed.
    * @param worldStateUpdater The world state updater.
    * @return The result of the transaction processing.
    */
   private TransactionProcessingResult processTransaction(
-      final PendingTransaction pendingTransaction, final WorldUpdater worldStateUpdater) {
+      final Transaction transaction, final WorldUpdater worldStateUpdater) {
     final BlockHashLookup blockHashLookup =
-        new CachingBlockHashLookup(blockSelectionContext.pendingBlockHeader(), blockchain);
+        blockSelectionContext
+            .blockHashProcessor()
+            .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
     return transactionProcessor.processTransaction(
         worldStateUpdater,
         blockSelectionContext.pendingBlockHeader(),
-        pendingTransaction.getTransaction(),
+        transaction,
         blockSelectionContext.miningBeneficiary(),
         operationTracer,
         blockHashLookup,
@@ -441,7 +444,8 @@ public class BlockTransactionSelector {
           evaluationContext, BLOCK_SELECTION_TIMEOUT, txWorldStateUpdater);
     }
 
-    pluginTransactionSelector.onTransactionSelected(evaluationContext, processingResult);
+    notifySelected(evaluationContext, processingResult);
+
     blockWorldStateUpdater = worldState.updater();
     LOG.atTrace()
         .setMessage("Selected {} for block creation, evaluated in {}")
@@ -474,7 +478,7 @@ public class BlockTransactionSelector {
             : selectionResult;
 
     transactionSelectionResults.updateNotSelected(evaluationContext.getTransaction(), actualResult);
-    pluginTransactionSelector.onTransactionNotSelected(evaluationContext, actualResult);
+    notifyNotSelected(evaluationContext, actualResult);
     LOG.atTrace()
         .setMessage(
             "Not selected {} for block creation with result {} (original result {}), evaluated in {}")
@@ -524,7 +528,7 @@ public class BlockTransactionSelector {
           .setMessage(
               "Transaction {} is too late for inclusion, with result {}, evaluated in {} that is over the max limit of {}ms"
                   + ", {}")
-          .addArgument(evaluationContext.getPendingTransaction()::getHash)
+          .addArgument(evaluationContext.getTransaction()::getHash)
           .addArgument(selectionResult)
           .addArgument(evaluationTimer)
           .addArgument(blockTxsSelectionMaxTime)
@@ -547,6 +551,26 @@ public class BlockTransactionSelector {
       final WorldUpdater txWorldStateUpdater) {
     txWorldStateUpdater.revert();
     return handleTransactionNotSelected(evaluationContext, selectionResult);
+  }
+
+  private void notifySelected(
+      final TransactionEvaluationContext evaluationContext,
+      final TransactionProcessingResult processingResult) {
+
+    for (var selector : transactionSelectors) {
+      selector.onTransactionSelected(evaluationContext, processingResult);
+    }
+    pluginTransactionSelector.onTransactionSelected(evaluationContext, processingResult);
+  }
+
+  private void notifyNotSelected(
+      final TransactionEvaluationContext evaluationContext,
+      final TransactionSelectionResult selectionResult) {
+
+    for (var selector : transactionSelectors) {
+      selector.onTransactionNotSelected(evaluationContext, selectionResult);
+    }
+    pluginTransactionSelector.onTransactionNotSelected(evaluationContext, selectionResult);
   }
 
   private void checkCancellation() {

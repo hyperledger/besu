@@ -27,10 +27,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.AccountOverride;
-import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateOverride;
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -55,6 +55,7 @@ import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -96,31 +97,79 @@ public class EthCallTest {
   }
 
   @Test
-  public void noAccountOverrides() {
+  public void noStateOverrides() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
-    Optional<AccountOverrideMap> overrideMap = method.getAddressAccountOverrideMap(request);
+    Optional<StateOverrideMap> overrideMap = method.getAddressStateOverrideMap(request);
     assertThat(overrideMap.isPresent()).isFalse();
   }
 
   @Test
-  public void someAccountOverrides() {
-    AccountOverrideMap expectedOverrides = new AccountOverrideMap();
-    AccountOverride override =
-        new AccountOverride.Builder().withNonce(new UnsignedLongParameter("0x9e")).build();
+  public void someStateOverrides() {
+    StateOverrideMap expectedOverrides = new StateOverrideMap();
+    StateOverride override =
+        new StateOverride.Builder().withNonce(new UnsignedLongParameter("0x9e")).build();
     final Address address = Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3");
     expectedOverrides.put(address, override);
 
     final JsonRpcRequestContext request =
         ethCallRequestWithStateOverrides(callParameter(), "latest", expectedOverrides);
 
-    Optional<AccountOverrideMap> maybeOverrideMap = method.getAddressAccountOverrideMap(request);
+    Optional<StateOverrideMap> maybeOverrideMap = method.getAddressStateOverrideMap(request);
     assertThat(maybeOverrideMap.isPresent()).isTrue();
-    AccountOverrideMap overrideMap = maybeOverrideMap.get();
+    StateOverrideMap overrideMap = maybeOverrideMap.get();
     assertThat(overrideMap.keySet()).hasSize(1);
     assertThat(overrideMap.values()).hasSize(1);
 
     assertThat(overrideMap).containsKey(address);
     assertThat(overrideMap).containsValue(override);
+  }
+
+  @Test
+  public void stateOverridesWithState() {
+    StateOverrideMap expectedOverrides = new StateOverrideMap();
+    StateOverride override =
+        new StateOverride.Builder().withState(Map.of("0x1234", "0x5678")).build();
+    final Address address = Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3");
+    expectedOverrides.put(address, override);
+
+    final JsonRpcRequestContext request =
+        ethCallRequestWithStateOverrides(callParameter(), "latest", expectedOverrides);
+
+    Optional<StateOverrideMap> maybeOverrideMap = method.getAddressStateOverrideMap(request);
+    assertThat(maybeOverrideMap.isPresent()).isTrue();
+    StateOverrideMap overrideMap = maybeOverrideMap.get();
+    assertThat(overrideMap.keySet()).hasSize(1);
+    assertThat(overrideMap.values()).hasSize(1);
+
+    assertThat(overrideMap).containsKey(address);
+    assertThat(overrideMap).containsValue(override);
+  }
+
+  @Test
+  public void fullStateOverrides() {
+    StateOverrideMap suppliedOverrides = new StateOverrideMap();
+    StateOverride override =
+        new StateOverride.Builder()
+            .withNonce(new UnsignedLongParameter("0x9e"))
+            .withBalance(Wei.of(100))
+            .withCode("0x1234")
+            .withStateDiff(Map.of("0x1234", "0x5678"))
+            .withMovePrecompileToAddress(Address.fromHexString("0x1234"))
+            .build();
+    final Address address = Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3");
+    suppliedOverrides.put(address, override);
+
+    final JsonRpcRequestContext request =
+        ethCallRequestWithStateOverrides(callParameter(), "latest", suppliedOverrides);
+
+    Optional<StateOverrideMap> maybeOverrideMap = method.getAddressStateOverrideMap(request);
+    assertThat(maybeOverrideMap.isPresent()).isTrue();
+    StateOverrideMap actualOverrideMap = maybeOverrideMap.get();
+    assertThat(actualOverrideMap.keySet()).hasSize(1);
+    assertThat(actualOverrideMap.values()).hasSize(1);
+
+    assertThat(actualOverrideMap).containsKey(address);
+    assertThat(actualOverrideMap).containsValue(override);
   }
 
   @Test
@@ -250,7 +299,7 @@ public class EthCallTest {
     final JsonRpcErrorResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
 
     assertThat(expectedResponse.getError().getMessage())
-        .isEqualTo("Execution reverted: ABI decode error");
+        .isEqualTo("Execution reverted (ABI decode error)");
 
     mockTransactionProcessorSuccessResult(expectedResponse);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -276,7 +325,7 @@ public class EthCallTest {
 
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
-        .isEqualTo("Execution reverted: ABI decode error");
+        .isEqualTo("Execution reverted (ABI decode error)");
   }
 
   @Test
@@ -291,7 +340,7 @@ public class EthCallTest {
     final JsonRpcErrorResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
 
     assertThat(expectedResponse.getError().getMessage())
-        .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
+        .isEqualTo("Execution reverted (ERC20: transfer from the zero address)");
 
     mockTransactionProcessorSuccessResult(expectedResponse);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -319,7 +368,7 @@ public class EthCallTest {
 
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
-        .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
+        .isEqualTo("Execution reverted (ERC20: transfer from the zero address)");
   }
 
   @Test
@@ -465,6 +514,7 @@ public class EthCallTest {
         ImmutableTransactionValidationParams.builder()
             .from(TransactionValidationParams.transactionSimulator())
             .isAllowExceedingBalance(isAllowedExceedingBalance)
+            .isAllowFutureNonce(true)
             .build();
 
     verify(transactionSimulator)
@@ -498,7 +548,7 @@ public class EthCallTest {
   private JsonRpcRequestContext ethCallRequestWithStateOverrides(
       final CallParameter callParameter,
       final String blockNumberInHex,
-      final AccountOverrideMap overrides) {
+      final StateOverrideMap overrides) {
     return new JsonRpcRequestContext(
         new JsonRpcRequest(
             "2.0", "eth_call", new Object[] {callParameter, blockNumberInHex, overrides}));

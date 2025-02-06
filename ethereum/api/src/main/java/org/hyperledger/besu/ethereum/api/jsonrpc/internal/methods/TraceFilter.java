@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -74,8 +73,9 @@ public class TraceFilter extends TraceBlock {
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
       final Long maxRange,
-      final MetricsSystem metricsSystem) {
-    super(protocolSchedule, blockchainQueries, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final EthScheduler ethScheduler) {
+    super(protocolSchedule, blockchainQueries, metricsSystem, ethScheduler);
     this.maxRange = maxRange;
     this.outputCounter =
         metricsSystem.createLabelledCounter(
@@ -196,14 +196,7 @@ public class TraceFilter extends TraceBlock {
                               traceStream -> traceStream.forEachOrdered(buildArrayNodeStep));
 
                   try {
-                    Optional<EthScheduler> ethSchedulerOpt =
-                        getBlockchainQueries().getEthScheduler();
-
-                    ethSchedulerOpt
-                        .orElse(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
-                        .startPipeline(traceBlockPipeline)
-                        .get();
-
+                    ethScheduler.startPipeline(traceBlockPipeline).get();
                   } catch (InterruptedException | ExecutionException e) {
                     throw new RuntimeException(e);
                   }

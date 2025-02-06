@@ -93,6 +93,15 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
     assertThat(method.getName()).isEqualTo("engine_getPayloadV4");
   }
 
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsBeforePragueMilestone() {
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), mockPid);
+
+    assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
+    assertThat(((JsonRpcErrorResponse) resp).getErrorType())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
+  }
+
   @Override
   @Test
   public void shouldReturnBlockForKnownPayloadId() {
@@ -147,7 +156,8 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
     final List<String> requestsWithoutRequestId =
         requests.stream()
             .sorted(Comparator.comparing(Request::getType))
-            .map(r -> r.getData().toHexString())
+            .map(Request::getEncodedRequest)
+            .map(Bytes::toHexString)
             .toList();
     Optional.of(resp)
         .map(JsonRpcSuccessResponse.class::cast)
@@ -173,12 +183,50 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
   }
 
   @Test
-  public void shouldReturnUnsupportedFork() {
-    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), mockPid);
+  public void shouldExcludeEmptyRequestsInRequestsList() {
 
-    assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
-    assertThat(((JsonRpcErrorResponse) resp).getErrorType())
-        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
+    BlockHeader header =
+        new BlockHeaderTestFixture().timestamp(pragueHardfork.milestone() + 1).buildHeader();
+    PayloadIdentifier payloadIdentifier =
+        PayloadIdentifier.forPayloadParams(
+            Hash.ZERO,
+            pragueHardfork.milestone(),
+            Bytes32.random(),
+            Address.fromHexString("0x42"),
+            Optional.empty(),
+            Optional.empty());
+
+    BlockWithReceipts block =
+        new BlockWithReceipts(
+            new Block(header, new BlockBody(emptyList(), emptyList(), Optional.of(emptyList()))),
+            emptyList());
+    final List<Request> unorderedRequests =
+        List.of(
+            new Request(RequestType.CONSOLIDATION, Bytes.of(1)),
+            new Request(RequestType.DEPOSIT, Bytes.of(1)),
+            new Request(RequestType.WITHDRAWAL, Bytes.EMPTY));
+    PayloadWrapper payload =
+        new PayloadWrapper(payloadIdentifier, block, Optional.of(unorderedRequests));
+
+    when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
+
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), payloadIdentifier);
+    assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
+
+    final List<String> expectedRequests =
+        List.of(
+            Bytes.concatenate(Bytes.of(RequestType.DEPOSIT.getSerializedType()), Bytes.of(1))
+                .toHexString(),
+            Bytes.concatenate(Bytes.of(RequestType.CONSOLIDATION.getSerializedType()), Bytes.of(1))
+                .toHexString());
+    Optional.of(resp)
+        .map(JsonRpcSuccessResponse.class::cast)
+        .ifPresent(
+            r -> {
+              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV4.class);
+              final EngineGetPayloadResultV4 res = (EngineGetPayloadResultV4) r.getResult();
+              assertThat(res.getExecutionRequests()).isEqualTo(expectedRequests);
+            });
   }
 
   @Override

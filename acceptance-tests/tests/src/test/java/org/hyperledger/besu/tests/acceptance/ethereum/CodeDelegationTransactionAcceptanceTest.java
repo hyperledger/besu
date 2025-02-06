@@ -46,6 +46,9 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
   public static final Address SEND_ALL_ETH_CONTRACT_ADDRESS =
       Address.fromHexStringStrict("0000000000000000000000000000000000009999");
 
+  public static final Address ALWAYS_REVERT_CONTRACT_ADDRESS =
+      Address.fromHexStringStrict("0000000000000000000000000000000000000666");
+
   private final Account authorizer =
       accounts.createAccount(
           Address.fromHexStringStrict("8da48afC965480220a3dB9244771bd3afcB5d895"));
@@ -87,7 +90,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
   public void shouldTransferAllEthOfAuthorizerToSponsor() throws IOException {
 
     // 7702 transaction
-    final CodeDelegation authorization =
+    final CodeDelegation codeDelegation =
         org.hyperledger.besu.ethereum.core.CodeDelegation.builder()
             .chainId(BigInteger.valueOf(20211))
             .address(SEND_ALL_ETH_CONTRACT_ADDRESS)
@@ -108,7 +111,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
             .value(Wei.ZERO)
             .payload(Bytes32.leftPad(Bytes.fromHexString(transactionSponsor.getAddress())))
             .accessList(List.of())
-            .codeDelegations(List.of(authorization))
+            .codeDelegations(List.of(codeDelegation))
             .signAndBuild(
                 secp256k1.createKeyPair(
                     secp256k1.createPrivateKey(
@@ -140,10 +143,10 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
    */
   @Test
   public void shouldCheckNonceAfterNonceIncreaseOfSender() throws IOException {
-    final long GAS_LIMIT = 1000000L;
-    cluster.verify(authorizer.balanceEquals(Amount.ether(90000)));
+    final long GAS_LIMIT = 1_000_000L;
+    cluster.verify(authorizer.balanceEquals(Amount.ether(90_000)));
 
-    final CodeDelegation authorization =
+    final CodeDelegation codeDelegation =
         org.hyperledger.besu.ethereum.core.CodeDelegation.builder()
             .chainId(BigInteger.valueOf(20211))
             .nonce(
@@ -159,14 +162,14 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
             .type(TransactionType.DELEGATE_CODE)
             .chainId(BigInteger.valueOf(20211))
             .nonce(0)
-            .maxPriorityFeePerGas(Wei.of(1000000000))
+            .maxPriorityFeePerGas(Wei.of(1_000_000_000))
             .maxFeePerGas(Wei.fromHexString("0x02540BE400"))
             .gasLimit(GAS_LIMIT)
             .to(Address.fromHexStringStrict(authorizer.getAddress()))
             .value(Wei.ZERO)
             .payload(Bytes32.leftPad(Bytes.fromHexString(otherAccount.getAddress())))
             .accessList(List.of())
-            .codeDelegations(List.of(authorization))
+            .codeDelegations(List.of(codeDelegation))
             .signAndBuild(
                 secp256k1.createKeyPair(
                     secp256k1.createPrivateKey(AUTHORIZER_PRIVATE_KEY.toUnsignedBigInteger())));
@@ -209,7 +212,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
             .nonce(2)
             .maxPriorityFeePerGas(Wei.of(10))
             .maxFeePerGas(Wei.of(100))
-            .gasLimit(21000)
+            .gasLimit(21_000)
             .to(Address.fromHexStringStrict(otherAccount.getAddress()))
             .value(Wei.ONE)
             .payload(Bytes.EMPTY)
@@ -231,5 +234,125 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
         besuNode.execute(ethTransactions.getBalance(otherAccount));
     assertThat(otherAccountBalanceAfterFirstTx.add(BigInteger.ONE))
         .isEqualTo(otherAccountBalanceAfterSecondTx);
+  }
+
+  /**
+   * EIP-7702 code delegation should be persisted even if the transaction that contains the
+   * authorization is reverted.
+   */
+  @Test
+  public void shouldPersistCodeDelegationAfterRevert() throws IOException {
+    final long GAS_LIMIT = 1_000_000L;
+
+    // check the authorizer has no code before the transaction
+    final Bytes authorizerCodeBeforeCodeDelegation =
+        besuNode.execute(ethTransactions.getCode(authorizer));
+    assertThat(authorizerCodeBeforeCodeDelegation).isEqualTo(Bytes.EMPTY);
+
+    // valid 7702 code delegation to SEND_ALL_ETH_CONTRACT_ADDRESS
+    final CodeDelegation codeDelegation =
+        org.hyperledger.besu.ethereum.core.CodeDelegation.builder()
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(0L)
+            .address(SEND_ALL_ETH_CONTRACT_ADDRESS)
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(AUTHORIZER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    // the transaction will revert, because the to address is a contract that always reverts
+    final Transaction tx =
+        Transaction.builder()
+            .type(TransactionType.DELEGATE_CODE)
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(1_000_000_000))
+            .maxFeePerGas(Wei.fromHexString("0x02540BE400"))
+            .gasLimit(GAS_LIMIT)
+            .to(ALWAYS_REVERT_CONTRACT_ADDRESS)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY)
+            .codeDelegations(List.of(codeDelegation))
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(
+                        TRANSACTION_SPONSOR_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    // include the tx in the next block
+    final String txHash =
+        besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
+    testHelper.buildNewBlock();
+
+    // check that the transaction was included and has indeed reverted
+    Optional<TransactionReceipt> maybeTransactionReceipt =
+        besuNode.execute(ethTransactions.getTransactionReceipt(txHash));
+    assertThat(maybeTransactionReceipt).isPresent();
+    assertThat(maybeTransactionReceipt.get().getStatus()).isEqualTo("0x0");
+
+    // check the authorizer has the code delegation after the transaction even though it has
+    // reverted
+    final Bytes expectedCode =
+        Bytes.concatenate(Bytes.fromHexString("ef0100"), SEND_ALL_ETH_CONTRACT_ADDRESS);
+    final Bytes authorizerCode = besuNode.execute(ethTransactions.getCode(authorizer));
+    assertThat(authorizerCode).isEqualTo(expectedCode);
+  }
+
+  /**
+   * EIP-7702 code delegation should be persisted even if the transaction that contains the
+   * authorization is reverted and the transaction sender is the same as the code delegation
+   * authorizer.
+   */
+  @Test
+  public void shouldPersistCodeDelegationAfterRevertWhenSelfSponsored() throws IOException {
+    final long GAS_LIMIT = 1_000_000L;
+
+    // check the authorizer has no code before the transaction
+    final Bytes authorizerCodeBeforeCodeDelegation =
+        besuNode.execute(ethTransactions.getCode(authorizer));
+    assertThat(authorizerCodeBeforeCodeDelegation).isEqualTo(Bytes.EMPTY);
+
+    // valid 7702 code delegation to SEND_ALL_ETH_CONTRACT_ADDRESS
+    final CodeDelegation codeDelegation =
+        org.hyperledger.besu.ethereum.core.CodeDelegation.builder()
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(1L)
+            .address(SEND_ALL_ETH_CONTRACT_ADDRESS)
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(AUTHORIZER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    // the transaction will revert, because the to address is a contract that always reverts
+    final Transaction tx =
+        Transaction.builder()
+            .type(TransactionType.DELEGATE_CODE)
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(1_000_000_000))
+            .maxFeePerGas(Wei.fromHexString("0x02540BE400"))
+            .gasLimit(GAS_LIMIT)
+            .to(ALWAYS_REVERT_CONTRACT_ADDRESS)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY)
+            .codeDelegations(List.of(codeDelegation))
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(AUTHORIZER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    // include the tx in the next block
+    final String txHash =
+        besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
+    testHelper.buildNewBlock();
+
+    // check that the transaction was included and has indeed reverted
+    Optional<TransactionReceipt> maybeTransactionReceipt =
+        besuNode.execute(ethTransactions.getTransactionReceipt(txHash));
+    assertThat(maybeTransactionReceipt).isPresent();
+    assertThat(maybeTransactionReceipt.get().getStatus()).isEqualTo("0x0");
+
+    // check the authorizer has the code delegation after the transaction even though it has
+    // reverted
+    final Bytes expectedCode =
+        Bytes.concatenate(Bytes.fromHexString("ef0100"), SEND_ALL_ETH_CONTRACT_ADDRESS);
+    final Bytes authorizerCode = besuNode.execute(ethTransactions.getCode(authorizer));
+    assertThat(authorizerCode).isEqualTo(expectedCode);
   }
 }

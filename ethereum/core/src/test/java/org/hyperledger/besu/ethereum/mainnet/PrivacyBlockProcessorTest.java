@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -156,10 +157,9 @@ class PrivacyBlockProcessorTest {
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(firstBlock.getHeader()));
     final ProtocolSpec protocolSpec = mockProtocolSpec();
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(publicWorldStateArchive.getMutable(any(), any()))
-        .thenReturn(Optional.of(mutableWorldState));
+    when(publicWorldStateArchive.getWorldState(any())).thenReturn(Optional.of(mutableWorldState));
     final MutableWorldState mockPrivateStateArchive = mockPrivateStateArchive();
-    when(privateWorldStateArchive.getMutable(any(), any()))
+    when(privateWorldStateArchive.getWorldState(any()))
         .thenReturn(Optional.of(mockPrivateStateArchive));
 
     final PrivacyGroupHeadBlockMap expected =
@@ -221,6 +221,8 @@ class PrivacyBlockProcessorTest {
     when(protocolSpec.getMiningBeneficiaryCalculator())
         .thenReturn(mock(MiningBeneficiaryCalculator.class));
     when(protocolSpec.isSkipZeroBlockRewards()).thenReturn(true);
+    final BlockHashProcessor blockHashProcessor = mock(BlockHashProcessor.class);
+    when(protocolSpec.getBlockHashProcessor()).thenReturn(blockHashProcessor);
     return protocolSpec;
   }
 }

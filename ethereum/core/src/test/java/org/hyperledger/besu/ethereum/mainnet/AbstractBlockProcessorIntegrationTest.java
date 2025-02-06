@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -87,7 +87,7 @@ class AbstractBlockProcessorIntegrationTest {
   public void setUp() {
     final ExecutionContextTestFixture contextTestFixture =
         ExecutionContextTestFixture.builder(
-                GenesisConfigFile.fromResource(
+                GenesisConfig.fromResource(
                     "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
             .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();
@@ -100,7 +100,7 @@ class AbstractBlockProcessorIntegrationTest {
   private static Stream<Arguments> blockProcessorProvider() {
     final ExecutionContextTestFixture contextTestFixture =
         ExecutionContextTestFixture.builder(
-                GenesisConfigFile.fromResource(
+                GenesisConfig.fromResource(
                     "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
             .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();
@@ -216,7 +216,7 @@ class AbstractBlockProcessorIntegrationTest {
         createTransferTransaction(
             0, 2_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_3, ACCOUNT_GENESIS_2_KEYPAIR);
 
-    MutableWorldState worldState = worldStateArchive.getMutable();
+    MutableWorldState worldState = worldStateArchive.getWorldState();
     BonsaiAccount senderAccount1 = (BonsaiAccount) worldState.get(transactionTransfer1.getSender());
     BonsaiAccount senderAccount2 = (BonsaiAccount) worldState.get(transactionTransfer2.getSender());
 
@@ -258,7 +258,7 @@ class AbstractBlockProcessorIntegrationTest {
         createTransferTransaction(
             2, 3_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_6, ACCOUNT_GENESIS_1_KEYPAIR);
 
-    MutableWorldState worldState = worldStateArchive.getMutable();
+    MutableWorldState worldState = worldStateArchive.getWorldState();
     BonsaiAccount senderAccount = (BonsaiAccount) worldState.get(transferTransaction1.getSender());
 
     Block blockWithTransactions =
@@ -311,7 +311,7 @@ class AbstractBlockProcessorIntegrationTest {
             ACCOUNT_2,
             ACCOUNT_GENESIS_2_KEYPAIR); // ACCOUNT_GENESIS_2 -> ACCOUNT_2
 
-    MutableWorldState worldState = worldStateArchive.getMutable();
+    MutableWorldState worldState = worldStateArchive.getWorldState();
     BonsaiAccount transferTransaction1Sender =
         (BonsaiAccount) worldState.get(transferTransaction1.getSender());
 
@@ -370,7 +370,7 @@ class AbstractBlockProcessorIntegrationTest {
             coinbase.toHexString(),
             ACCOUNT_GENESIS_2_KEYPAIR); // ACCOUNT_GENESIS_2 -> COINBASE
 
-    MutableWorldState worldState = worldStateArchive.getMutable();
+    MutableWorldState worldState = worldStateArchive.getWorldState();
     BonsaiAccount transferTransaction1Sender =
         (BonsaiAccount) worldState.get(transferTransaction1.getSender());
     Block blockWithTransactions =
@@ -427,7 +427,7 @@ class AbstractBlockProcessorIntegrationTest {
             setSlot3Transaction,
             setSlot4Transaction);
 
-    MutableWorldState worldState = worldStateArchive.getMutable();
+    MutableWorldState worldState = worldStateArchive.getWorldState();
     BlockProcessingResult blockProcessingResult =
         blockProcessor.processBlock(blockchain, worldState, blockWithTransactions);
 
@@ -462,7 +462,7 @@ class AbstractBlockProcessorIntegrationTest {
             setSlot1Transaction,
             setSlo2Transaction,
             setSlot3Transaction);
-    MutableWorldState worldState = worldStateArchive.getMutable();
+    MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
         blockProcessor.processBlock(blockchain, worldState, blockWithTransactions);
@@ -505,7 +505,7 @@ class AbstractBlockProcessorIntegrationTest {
             transactionTransfer,
             getcontractBalanceTransaction,
             sendEthFromContractTransaction);
-    MutableWorldState worldState = worldStateArchive.getMutable();
+    MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
         blockProcessor.processBlock(blockchain, worldState, blockWithTransactions);
@@ -551,7 +551,7 @@ class AbstractBlockProcessorIntegrationTest {
             transactionTransfer,
             sendEthFromContractTransaction,
             getcontractBalanceTransaction);
-    MutableWorldState worldState = worldStateArchive.getMutable();
+    MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
         blockProcessor.processBlock(blockchain, worldState, blockWithTransactions);
@@ -596,7 +596,7 @@ class AbstractBlockProcessorIntegrationTest {
             transactionTransfer,
             getcontractBalanceTransaction,
             sendEthFromContractTransaction);
-    MutableWorldState worldState = worldStateArchive.getMutable();
+    MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
         blockProcessor.processBlock(blockchain, worldState, blockWithTransactions);
@@ -642,7 +642,7 @@ class AbstractBlockProcessorIntegrationTest {
             transactionTransfer,
             sendEthFromContractTransaction,
             getcontractBalanceTransaction);
-    MutableWorldState worldState = worldStateArchive.getMutable();
+    MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
         blockProcessor.processBlock(blockchain, worldState, blockWithTransactions);

@@ -136,6 +136,10 @@ public class PeerTaskExecutor {
           MessageData responseMessageData =
               requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
 
+          if (responseMessageData == null) {
+            throw new InvalidPeerTaskResponseException();
+          }
+
           result = peerTask.processResponse(responseMessageData);
         } finally {
           inflightRequestCountForThisTaskClass.decrementAndGet();

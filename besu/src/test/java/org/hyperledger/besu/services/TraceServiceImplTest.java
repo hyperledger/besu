@@ -92,7 +92,7 @@ class TraceServiceImplTest {
         Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");
 
     final long persistedNonceForAccount =
-        worldStateArchive.getMutable().get(addressToVerify).getNonce();
+        worldStateArchive.getWorldState().get(addressToVerify).getNonce();
 
     final long blockNumber = 2;
 
@@ -109,12 +109,14 @@ class TraceServiceImplTest {
         },
         opTracer);
 
-    assertThat(worldStateArchive.getMutable().get(addressToVerify).getNonce())
+    assertThat(worldStateArchive.getWorldState().get(addressToVerify).getNonce())
         .isEqualTo(persistedNonceForAccount);
 
     final Block tracedBlock = blockchain.getBlockByNumber(blockNumber).get();
 
-    verify(opTracer).traceStartBlock(tracedBlock.getHeader(), tracedBlock.getBody());
+    verify(opTracer)
+        .traceStartBlock(
+            tracedBlock.getHeader(), tracedBlock.getBody(), tracedBlock.getHeader().getCoinbase());
 
     tracedBlock
         .getBody()
@@ -137,7 +139,7 @@ class TraceServiceImplTest {
         Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");
 
     final long persistedNonceForAccount =
-        worldStateArchive.getMutable().get(addressToVerify).getNonce();
+        worldStateArchive.getWorldState().get(addressToVerify).getNonce();
 
     final long startBlock = 1;
     final long endBlock = 32;
@@ -155,7 +157,7 @@ class TraceServiceImplTest {
         },
         opTracer);
 
-    assertThat(worldStateArchive.getMutable().get(addressToVerify).getNonce())
+    assertThat(worldStateArchive.getWorldState().get(addressToVerify).getNonce())
         .isEqualTo(persistedNonceForAccount);
 
     LongStream.rangeClosed(startBlock, endBlock)
@@ -163,7 +165,11 @@ class TraceServiceImplTest {
         .map(Optional::get)
         .forEach(
             tracedBlock -> {
-              verify(opTracer).traceStartBlock(tracedBlock.getHeader(), tracedBlock.getBody());
+              verify(opTracer)
+                  .traceStartBlock(
+                      tracedBlock.getHeader(),
+                      tracedBlock.getBody(),
+                      tracedBlock.getHeader().getCoinbase());
               tracedBlock
                   .getBody()
                   .getTransactions()
@@ -312,7 +318,8 @@ class TraceServiceImplTest {
     }
 
     @Override
-    public void traceStartBlock(final BlockHeader blockHeader, final BlockBody blockBody) {
+    public void traceStartBlock(
+        final BlockHeader blockHeader, final BlockBody blockBody, final Address miningBeneficiary) {
       if (!traceStartBlockCalled.add(blockHeader.getBlockHash())) {
         fail("traceStartBlock already called for block " + blockHeader);
       }
