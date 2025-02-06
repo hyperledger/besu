@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLError.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.UNSUPPORTED_FORK;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -41,6 +43,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
@@ -50,6 +53,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -62,6 +66,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   public EngineNewPayloadV4Test() {}
+
+  @Override
+  protected Set<ScheduledProtocolSpec.Hardfork> supportedHardforks() {
+    return Set.of(pragueHardfork);
+  }
 
   private static final List<Request> VALID_REQUESTS =
       List.of(
@@ -91,6 +100,22 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   @Override
   public void shouldReturnExpectedMethodName() {
     assertThat(method.getName()).isEqualTo("engine_newPayloadV4");
+  }
+
+  @Override
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterPragueMilestone() {
+    // Only relevant for V3
+  }
+
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsBeforePragueMilestone() {
+    final BlockHeader cancunHeader = createBlockHeaderFixtureForV3(Optional.empty()).buildHeader();
+
+    var resp = resp(mockEnginePayload(cancunHeader, emptyList()));
+
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -173,6 +198,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
       final Optional<List<Withdrawal>> maybeWithdrawals) {
     return createBlockHeaderFixtureForV3(maybeWithdrawals)
         .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS))
+        .timestamp(pragueHardfork.milestone())
         .buildHeader();
   }
 
@@ -181,7 +207,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
-            .timestamp(pragueHardfork.milestone())
+            .timestamp(pragueHardfork.milestone() - 2) // cancun parent
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .buildHeader();
