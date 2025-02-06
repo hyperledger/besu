@@ -290,7 +290,7 @@ public class BesuNodeConfiguration {
     return environment;
   }
 
-  public Optional<KeyValueStorageFactory> storageImplemetation() {
+  public Optional<KeyValueStorageFactory> storageImplementation() {
     return storageFactory;
   }
 }
