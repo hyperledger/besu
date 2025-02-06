@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_TESTNET;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsProcessor.pragueRequestsProcessors;
 
 import org.hyperledger.besu.config.BlobScheduleOptions;
@@ -868,11 +867,7 @@ public abstract class MainnetProtocolSpecs {
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestsValidator(new MainnetRequestsValidator())
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
-        .requestProcessorCoordinator(
-            pragueRequestsProcessors(
-                requestContractAddresses,
-                miningConfiguration.getTargetGasLimit().orElse(DEFAULT_TARGET_GAS_LIMIT_TESTNET)))
-
+        .requestProcessorCoordinator(pragueRequestsProcessors(requestContractAddresses))
         // change to accept EIP-7702 transactions
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->

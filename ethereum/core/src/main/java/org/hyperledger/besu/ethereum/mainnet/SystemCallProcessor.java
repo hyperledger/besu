@@ -37,6 +37,13 @@ import org.slf4j.LoggerFactory;
 public class SystemCallProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(SystemCallProcessor.class);
 
+  /**
+   * The gas limit as defined in <a
+   * href="https://eips.ethereum.org/EIPS/eip-2935#block-processing">EIP-2935</a> This value is
+   * independent of the gas limit of the block
+   */
+  private static final long SYSTEM_CALL_GAS_LIMIT = 30_000_000L;
+
   /** The system address */
   static final Address SYSTEM_ADDRESS =
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
@@ -64,8 +71,7 @@ public class SystemCallProcessor {
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final OperationTracer operationTracer,
-      final BlockHashLookup blockHashLookup,
-      final long targetGasLimit) {
+      final BlockHashLookup blockHashLookup) {
 
     // if no code exists at CALL_ADDRESS, the call must fail silently
     final Account maybeContract = worldState.get(callAddress);
@@ -77,7 +83,7 @@ public class SystemCallProcessor {
     final AbstractMessageProcessor messageProcessor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
     final MessageFrame initialFrame =
-        createCallFrame(callAddress, worldState, blockHeader, blockHashLookup, targetGasLimit);
+        createCallFrame(callAddress, worldState, blockHeader, blockHashLookup);
 
     return processFrame(initialFrame, messageProcessor, operationTracer, worldState);
   }
@@ -110,8 +116,7 @@ public class SystemCallProcessor {
       final Address callAddress,
       final WorldUpdater worldUpdater,
       final ProcessableBlockHeader blockHeader,
-      final BlockHashLookup blockHashLookup,
-      final long targetGasLimit) {
+      final BlockHashLookup blockHashLookup) {
 
     final Optional<Account> maybeContract = Optional.ofNullable(worldUpdater.get(callAddress));
     final AbstractMessageProcessor processor =
@@ -120,7 +125,7 @@ public class SystemCallProcessor {
     return MessageFrame.builder()
         .maxStackSize(DEFAULT_MAX_STACK_SIZE)
         .worldUpdater(worldUpdater)
-        .initialGas(targetGasLimit)
+        .initialGas(SYSTEM_CALL_GAS_LIMIT)
         .originator(SYSTEM_ADDRESS)
         .gasPrice(Wei.ZERO)
         .blobGasPrice(Wei.ZERO)
