@@ -38,6 +38,9 @@ public abstract class ApiConfiguration {
    */
   public static final long DEFAULT_UPPER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT = Long.MAX_VALUE;
 
+  /** The default gas cap used for transaction simulation */
+  public static final long DEFAULT_GAS_CAP = 50_000_000L;
+
   /** Constructs a new ApiConfiguration with default values. */
   protected ApiConfiguration() {}
 
@@ -93,13 +96,13 @@ public abstract class ApiConfiguration {
   }
 
   /**
-   * Returns the gas cap. Default value is 0.
+   * Returns the gas cap. Default value is 50M.
    *
    * @return the gas cap
    */
   @Value.Default
   public Long getGasCap() {
-    return 0L;
+    return DEFAULT_GAS_CAP;
   }
 
   /**
