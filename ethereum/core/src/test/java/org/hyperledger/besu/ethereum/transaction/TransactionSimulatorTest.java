@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 import static org.hyperledger.besu.evm.tracing.OperationTracer.NO_TRACING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -120,7 +121,7 @@ public class TransactionSimulatorTest {
     when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM); // called from logging
     StateOverride.Builder builder = new StateOverride.Builder();
     StateOverride override = builder.build();
-    transactionSimulator.applyOverrides(mutableAccount, override);
+    TransactionSimulator.applyOverrides(mutableAccount, override);
     verify(mutableAccount).getAddress();
     verifyNoMoreInteractions(mutableAccount);
   }
@@ -131,7 +132,7 @@ public class TransactionSimulatorTest {
     when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM);
     StateOverride.Builder builder = new StateOverride.Builder().withBalance(Wei.of(99));
     StateOverride override = builder.build();
-    transactionSimulator.applyOverrides(mutableAccount, override);
+    TransactionSimulator.applyOverrides(mutableAccount, override);
     verify(mutableAccount).setBalance(eq(Wei.of(99)));
   }
 
@@ -144,7 +145,25 @@ public class TransactionSimulatorTest {
     StateOverride.Builder builder =
         new StateOverride.Builder().withStateDiff(Map.of(storageKey, storageValue));
     StateOverride override = builder.build();
-    transactionSimulator.applyOverrides(mutableAccount, override);
+    TransactionSimulator.applyOverrides(mutableAccount, override);
+    verify(mutableAccount)
+        .setStorageValue(
+            eq(UInt256.fromHexString(storageKey)), eq(UInt256.fromHexString(storageValue)));
+  }
+
+  @Test
+  public void testOverrides_whenStateOverrides_stateIsUpdated() {
+    MutableAccount mutableAccount = mock(MutableAccount.class);
+    when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM);
+    final String storageKey = "0x01a2";
+    final String storageValue = "0x00ff";
+    StateOverride.Builder builder =
+        new StateOverride.Builder().withState(Map.of(storageKey, storageValue));
+    StateOverride override = builder.build();
+    TransactionSimulator.applyOverrides(mutableAccount, override);
+
+    verify(mutableAccount).clearStorage();
+
     verify(mutableAccount)
         .setStorageValue(
             eq(UInt256.fromHexString(storageKey)), eq(UInt256.fromHexString(storageValue)));
@@ -812,7 +831,7 @@ public class TransactionSimulatorTest {
       final BlockHeader blockHeader, final Address address, final long nonce) {
     final Account account = mock(Account.class);
     when(account.getNonce()).thenReturn(nonce);
-    when(worldStateArchive.getMutable(eq(blockHeader), anyBoolean()))
+    when(worldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
         .thenReturn(Optional.of(worldState));
     final WorldUpdater updater = mock(WorldUpdater.class);
     when(updater.get(address)).thenReturn(account);
@@ -820,7 +839,7 @@ public class TransactionSimulatorTest {
   }
 
   private void mockWorldStateForAbsentAccount(final BlockHeader blockHeader) {
-    when(worldStateArchive.getMutable(eq(blockHeader), anyBoolean()))
+    when(worldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
         .thenReturn(Optional.of(worldState));
     final WorldUpdater updater = mock(WorldUpdater.class);
     when(updater.get(any())).thenReturn(null);

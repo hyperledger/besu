@@ -19,7 +19,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -77,6 +79,20 @@ class TransactionRLPDecoderTest {
         decodeRLP(RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getNonce()).isEqualTo(MAX_NONCE - 1);
+  }
+
+  @Test
+  void testForAccessListTransaction() {
+    BlockDataGenerator gen = new BlockDataGenerator();
+    Transaction accessListTransaction = gen.transaction(TransactionType.ACCESS_LIST);
+    Bytes encodedBytes =
+        TransactionEncoder.encodeOpaqueBytes(accessListTransaction, EncodingContext.BLOCK_BODY);
+    Transaction decodedTransaction =
+        TransactionDecoder.decodeOpaqueBytes(encodedBytes, EncodingContext.BLOCK_BODY);
+    assertThat(accessListTransaction).isEqualTo(decodedTransaction);
+    Bytes reencodedBytes =
+        TransactionEncoder.encodeOpaqueBytes(decodedTransaction, EncodingContext.BLOCK_BODY);
+    assertThat(encodedBytes).isEqualTo(reencodedBytes);
   }
 
   private static Collection<Object[]> dataTransactionSize() {

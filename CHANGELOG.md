@@ -4,8 +4,12 @@
 ### Breaking Changes
 ### Upcoming Breaking Changes
 ### Additions and Improvements
-- Adds timestamps to enable Prague hardfork on Sepolia and Holesky test networks. [#8163](https://github.com/hyperledger/besu/pull/8163)
 - Add TLS/mTLS options and configure the GraphQL HTTP service[#7910](https://github.com/hyperledger/besu/pull/7910)
+#### Prague
+- Add timestamps to enable Prague hardfork on Sepolia and Holesky test networks [#8163](https://github.com/hyperledger/besu/pull/8163)
+- Update system call addresses to match [devnet-6](https://github.com/ethereum/execution-spec-tests/releases/) values [#8209](https://github.com/hyperledger/besu/issues/8209) 
+#### Plugins
+- Extend simulate transaction on pending block plugin API [#8174](https://github.com/hyperledger/besu/pull/8174)
 ### Bug fixes
 
 
@@ -41,6 +45,7 @@
 - Default target-gas-limit to 36M for holesky [#8125](https://github.com/hyperledger/besu/pull/8125)
 - Add EIP-7623 - Increase calldata cost [#8093](https://github.com/hyperledger/besu/pull/8093)
 - Add nonce to transaction call object [#8139](https://github.com/hyperledger/besu/pull/8139)
+- Add TLS/mTLS options and configure the GraphQL HTTP service[#7910](https://github.com/hyperledger/besu/pull/7910)
 
 ### Bug fixes
 - Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
