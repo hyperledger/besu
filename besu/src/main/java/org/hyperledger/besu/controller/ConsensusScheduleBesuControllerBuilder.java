@@ -199,7 +199,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
     return besuControllerBuilderSchedule
-        .get(0L)
+        .get(besuControllerBuilderSchedule.keySet().stream().skip(1).findFirst().orElseThrow())
         .createAdditionalPluginServices(blockchain, protocolContext);
   }
 
@@ -209,7 +209,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final ProtocolSchedule protocolSchedule,
       final MiningConfiguration miningConfiguration) {
     return besuControllerBuilderSchedule
-        .get(0L)
+        .get(besuControllerBuilderSchedule.keySet().stream().skip(1).findFirst().orElseThrow())
         .createAdditionalJsonRpcMethodFactory(
             protocolContext, protocolSchedule, miningConfiguration);
   }
@@ -242,7 +242,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final Optional<MergePeerFilter> mergePeerFilter,
       final ForkIdManager forkIdManager) {
     return besuControllerBuilderSchedule
-        .get(0L)
+        .get(besuControllerBuilderSchedule.keySet().stream().skip(1).findFirst().orElseThrow())
         .createEthProtocolManager(
             protocolContext,
             synchronizerConfiguration,

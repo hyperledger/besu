@@ -21,7 +21,7 @@
     "petersburgBlock": 70,
     "istanbulBlock": 80,
     "ibft": {
-      "epochlength": 1000,
+      "epochlength": 100,
       "blockperiodseconds": 5,
       "requesttimeoutseconds": 10,
       "policy": 0,
