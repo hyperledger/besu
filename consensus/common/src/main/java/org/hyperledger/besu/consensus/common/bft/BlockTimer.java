@@ -115,13 +115,14 @@ public class BlockTimer {
   /**
    * Checks if the empty block timer is expired
    *
-   * @param getTimestamp Function to get the chain head timestamp
+   * @param headerTimestamp Function to get the chain head timestamp
    * @param currentTimeInMillis The current time
    * @return a boolean value
    */
   public synchronized boolean checkEmptyBlockExpired(
-      final Supplier<Long> getTimestamp, final long currentTimeInMillis) {
-    final long emptyBlockPeriodExpiryTime = (getTimestamp.get() + emptyBlockPeriodSeconds) * 1000;
+      final Supplier<Long> headerTimestamp, final long currentTimeInMillis) {
+    final long emptyBlockPeriodExpiryTime =
+        (headerTimestamp.get() + emptyBlockPeriodSeconds) * 1000;
 
     if (currentTimeInMillis > emptyBlockPeriodExpiryTime) {
       LOG.debug("Empty Block expired");
@@ -135,14 +136,15 @@ public class BlockTimer {
    * Resets the empty block timer
    *
    * @param roundIdentifier The current round identifier
-   * @param getTimestamp Function to get timestamp from the header of the chain head
+   * @param headerTimestamp Function to get timestamp from the header of the chain head
    * @param currentTimeInMillis The current time
    */
   public void resetTimerForEmptyBlock(
       final ConsensusRoundIdentifier roundIdentifier,
-      final Supplier<Long> getTimestamp,
+      final Supplier<Long> headerTimestamp,
       final long currentTimeInMillis) {
-    final long emptyBlockPeriodExpiryTime = (getTimestamp.get() + emptyBlockPeriodSeconds) * 1000;
+    final long emptyBlockPeriodExpiryTime =
+        (headerTimestamp.get() + emptyBlockPeriodSeconds) * 1000;
     final long nextBlockPeriodExpiryTime = currentTimeInMillis + blockPeriodSeconds * 1000;
 
     startTimer(roundIdentifier, Math.min(emptyBlockPeriodExpiryTime, nextBlockPeriodExpiryTime));
