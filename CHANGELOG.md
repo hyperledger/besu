@@ -28,6 +28,7 @@
 
 ### Bug fixes
 - Fix the simulation of txs with a future nonce [#8215](https://github.com/hyperledger/besu/pull/8215)
+- Bump to besu-native 1.1.2 for ubuntu 20.04 native support
 
 ## 25.1.0
 
