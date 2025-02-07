@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -42,8 +42,9 @@ public class QbftProtocolScheduleAdaptor implements QbftProtocolSchedule {
   }
 
   @Override
-  public QbftProtocolSpec getByBlockHeader(final BlockHeader header) {
-    final ProtocolSpec protocolSpec = besuProtocolSchedule.getByBlockHeader(header);
+  public QbftProtocolSpec getByBlockHeader(final QbftBlockHeader header) {
+    final ProtocolSpec protocolSpec =
+        besuProtocolSchedule.getByBlockHeader(BlockUtil.toBesuBlockHeader(header));
     return new QbftProtocolSpecAdaptor(protocolSpec, context);
   }
 }

@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.qbft.core.test;
 import static java.util.Collections.emptyList;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
@@ -30,6 +29,7 @@ import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.qbft.core.support.ValidatorPeer;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftNewChainHead;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 
 import java.time.Clock;
@@ -170,7 +170,7 @@ public class GossipTest {
     context.appendBlock(signedCurrentHeightBlock);
     context
         .getController()
-        .handleNewBlockEvent(new NewChainHead(signedCurrentHeightBlock.getHeader()));
+        .handleNewBlockEvent(new QbftNewChainHead(signedCurrentHeightBlock.getHeader()));
 
     peers.verifyMessagesReceivedNonProposing(futurePrepare);
   }

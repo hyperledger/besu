@@ -20,13 +20,14 @@ import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.util.Subscribers;
 
 /** The Qbft round factory. */
@@ -41,6 +42,7 @@ public class QbftRoundFactory {
   private final MessageFactory messageFactory;
   private final BftExtraDataCodec bftExtraDataCodec;
   private final QbftExtraDataProvider qbftExtraDataProvider;
+  private final QbftBlockHashing blockHashing;
 
   /**
    * Instantiates a new Qbft round factory.
@@ -53,6 +55,7 @@ public class QbftRoundFactory {
    * @param messageFactory the message factory
    * @param bftExtraDataCodec the bft extra data codec
    * @param qbftExtraDataProvider the bft extra data codec
+   * @param blockHashing the block hashing
    */
   public QbftRoundFactory(
       final QbftFinalState finalState,
@@ -62,7 +65,8 @@ public class QbftRoundFactory {
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,
       final BftExtraDataCodec bftExtraDataCodec,
-      final QbftExtraDataProvider qbftExtraDataProvider) {
+      final QbftExtraDataProvider qbftExtraDataProvider,
+      final QbftBlockHashing blockHashing) {
     this.finalState = finalState;
     this.blockCreatorFactory = finalState.getBlockCreatorFactory();
     this.protocolContext = protocolContext;
@@ -72,6 +76,7 @@ public class QbftRoundFactory {
     this.messageFactory = messageFactory;
     this.bftExtraDataCodec = bftExtraDataCodec;
     this.qbftExtraDataProvider = qbftExtraDataProvider;
+    this.blockHashing = blockHashing;
   }
 
   /**
@@ -81,7 +86,7 @@ public class QbftRoundFactory {
    * @param round the round
    * @return the qbft round
    */
-  public QbftRound createNewRound(final BlockHeader parentHeader, final int round) {
+  public QbftRound createNewRound(final QbftBlockHeader parentHeader, final int round) {
     long nextBlockHeight = parentHeader.getNumber() + 1;
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(nextBlockHeight, round);
@@ -103,7 +108,7 @@ public class QbftRoundFactory {
    * @return the qbft round
    */
   public QbftRound createNewRoundWithState(
-      final BlockHeader parentHeader, final RoundState roundState) {
+      final QbftBlockHeader parentHeader, final RoundState roundState) {
     final QbftBlockCreator blockCreator =
         blockCreatorFactory.create(roundState.getRoundIdentifier().getRoundNumber());
 
@@ -123,6 +128,7 @@ public class QbftRoundFactory {
         finalState.getRoundTimer(),
         bftExtraDataCodec,
         qbftExtraDataProvider,
+        blockHashing,
         parentHeader);
   }
 }

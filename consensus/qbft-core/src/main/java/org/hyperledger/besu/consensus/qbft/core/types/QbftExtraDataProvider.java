@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.core.types;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 /** Provides the extra data for a block. */
 public interface QbftExtraDataProvider {
@@ -26,5 +25,5 @@ public interface QbftExtraDataProvider {
    * @param header the block header to retrieve the extra data from
    * @return the extra data
    */
-  BftExtraData getExtraData(BlockHeader header);
+  BftExtraData getExtraData(QbftBlockHeader header);
 }

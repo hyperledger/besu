@@ -22,6 +22,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
@@ -44,14 +45,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class QbftBlockCreatorAdaptorTest {
   @Mock private BlockCreator blockCreator;
-  @Mock private BlockHeader parentHeader;
   @Mock private Block besuBlock;
   @Mock private QbftExtraDataProvider qbftExtraDataProvider;
   private final QbftExtraDataCodec qbftExtraDataCodec = new QbftExtraDataCodec();
 
   @Test
   void createsBlockUsingBesuBlockCreator() {
-    when(blockCreator.createBlock(10, parentHeader))
+    BlockHeader besuParentHeader = new BlockHeaderTestFixture().buildHeader();
+    QbftBlockHeader parentHeader = new QbftBlockHeaderAdaptor(besuParentHeader);
+
+    when(blockCreator.createBlock(10, besuParentHeader))
         .thenReturn(new BlockCreator.BlockCreationResult(besuBlock, null, null));
 
     QbftBlockCreatorAdaptor qbftBlockCreator =
@@ -73,13 +76,15 @@ class QbftBlockCreatorAdaptorTest {
     Block besuBlock = new Block(header, BlockBody.empty());
     QbftBlock block = new QbftBlockAdaptor(besuBlock);
     SECPSignature seal = new SECPSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1);
-    when(qbftExtraDataProvider.getExtraData(header)).thenReturn(bftExtraData);
+    when(qbftExtraDataProvider.getExtraData(new QbftBlockHeaderAdaptor(header)))
+        .thenReturn(bftExtraData);
 
     QbftBlockCreatorAdaptor qbftBlockCreator =
         new QbftBlockCreatorAdaptor(blockCreator, qbftExtraDataCodec);
     QbftBlock sealedBlock =
         qbftBlockCreator.createSealedBlock(qbftExtraDataProvider, block, 1, List.of(seal));
-    BftExtraData sealedExtraData = qbftExtraDataCodec.decode(sealedBlock.getHeader());
+    BftExtraData sealedExtraData =
+        qbftExtraDataCodec.decode(BlockUtil.toBesuBlockHeader(sealedBlock.getHeader()));
     assertThat(sealedExtraData.getVanityData()).isEqualTo(Bytes.wrap(new byte[32]));
     assertThat(sealedExtraData.getVote()).contains(Vote.authVote(Address.ZERO));
     assertThat(sealedExtraData.getValidators()).isEqualTo(List.of(Address.ZERO));
