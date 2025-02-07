@@ -81,10 +81,10 @@ public class BlockTimer {
    * Starts a timer for the supplied round cancelling any previously active block timer
    *
    * @param round The round identifier which this timer is tracking
-   * @param getTimestamp The header of the chain head
+   * @param headerTimestamp The timestamp from the of the chain head header
    */
   public synchronized void startTimer(
-      final ConsensusRoundIdentifier round, final Supplier<Long> getTimestamp) {
+      final ConsensusRoundIdentifier round, final Supplier<Long> headerTimestamp) {
     cancelTimer();
 
     final long expiryTime;
@@ -104,7 +104,7 @@ public class BlockTimer {
       final int currentBlockPeriodSeconds =
           forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
       final long minimumTimeBetweenBlocksMillis = currentBlockPeriodSeconds * 1000L;
-      expiryTime = getTimestamp.get() * 1_000 + minimumTimeBetweenBlocksMillis;
+      expiryTime = headerTimestamp.get() * 1_000 + minimumTimeBetweenBlocksMillis;
     }
 
     setBlockTimes(round);

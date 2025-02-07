@@ -188,7 +188,7 @@ public class QbftController implements QbftEventHandler {
 
   @Override
   public void handleNewBlockEvent(final QbftNewChainHead newChainHead) {
-    final QbftBlockHeader newBlockHeader = newChainHead.getNewChainHeadHeader();
+    final QbftBlockHeader newBlockHeader = newChainHead.newChainHeadHeader();
     final QbftBlockHeader currentMiningParent = getCurrentHeightManager().getParentBlockHeader();
     LOG.debug(
         "New chain head detected (block number={})," + " currently mining on top of {}.",

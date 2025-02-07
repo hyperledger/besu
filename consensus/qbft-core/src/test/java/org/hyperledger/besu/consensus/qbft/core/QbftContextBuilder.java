@@ -37,9 +37,9 @@ public class QbftContextBuilder {
     final T bftContext = mock(contextClazz, withSettings().strictness(Strictness.LENIENT));
     final QbftValidatorProvider mockValidatorProvider =
         mock(QbftValidatorProvider.class, withSettings().strictness(Strictness.LENIENT));
-    when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
+    when(bftContext.validatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
-    when(bftContext.getBlockInterface()).thenReturn(bftBlockInterface);
+    when(bftContext.blockInterface()).thenReturn(bftBlockInterface);
     when(bftContext.as(any())).thenReturn(bftContext);
 
     return bftContext;

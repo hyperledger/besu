@@ -80,7 +80,7 @@ class BftEventHandlerAdaptorTest {
         .handleNewBlockEvent(
             argThat(
                 argument ->
-                    ((QbftBlockHeaderAdaptor) argument.getNewChainHeadHeader())
+                    ((QbftBlockHeaderAdaptor) argument.newChainHeadHeader())
                         .getBesuBlockHeader()
                         .equals(header)));
   }

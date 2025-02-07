@@ -17,50 +17,16 @@ package org.hyperledger.besu.consensus.qbft.core.types;
 import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 
-import java.util.Objects;
-
-import com.google.common.base.MoreObjects;
-
-/** Event indicating that new chain head has been received */
-public final class QbftNewChainHead implements BftEvent {
-  private final QbftBlockHeader newChainHeadHeader;
-
-  /**
-   * Constructor for a NewChainHead event
-   *
-   * @param newChainHeadHeader The header of the current blockchain head
-   */
-  public QbftNewChainHead(final QbftBlockHeader newChainHeadHeader) {
-    this.newChainHeadHeader = newChainHeadHeader;
-  }
+/**
+ * Event indicating that new chain head has been received
+ *
+ * @param newChainHeadHeader the new chain head header
+ */
+public record QbftNewChainHead(QbftBlockHeader newChainHeadHeader) implements BftEvent {
 
   @Override
   public BftEvents.Type getType() {
     return BftEvents.Type.NEW_CHAIN_HEAD;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("New Chain Head Header", newChainHeadHeader)
-        .toString();
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    final QbftNewChainHead that = (QbftNewChainHead) o;
-    return Objects.equals(newChainHeadHeader, that.newChainHeadHeader);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(newChainHeadHeader);
   }
 
   /**
@@ -68,7 +34,8 @@ public final class QbftNewChainHead implements BftEvent {
    *
    * @return the new chain head header
    */
-  public QbftBlockHeader getNewChainHeadHeader() {
+  @Override
+  public QbftBlockHeader newChainHeadHeader() {
     return newChainHeadHeader;
   }
 }

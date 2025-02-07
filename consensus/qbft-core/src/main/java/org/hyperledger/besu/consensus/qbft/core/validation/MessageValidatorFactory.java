@@ -61,7 +61,7 @@ public class MessageValidatorFactory {
       final ProtocolContext protocolContext, final QbftBlockHeader parentHeader) {
     return protocolContext
         .getConsensusContext(QbftContext.class)
-        .getValidatorProvider()
+        .validatorProvider()
         .getValidatorsAfterBlock(parentHeader);
   }
 
@@ -76,7 +76,7 @@ public class MessageValidatorFactory {
       final ProtocolContext protocolContext, final QbftBlockHeader parentHeader) {
     return protocolContext
         .getConsensusContext(QbftContext.class)
-        .getValidatorProvider()
+        .validatorProvider()
         .getValidatorsForBlock(parentHeader);
   }
 
@@ -126,7 +126,7 @@ public class MessageValidatorFactory {
             proposerSelector.selectProposerForRound(roundIdentifier));
 
     final QbftBlockInterface blockInterface =
-        protocolContext.getConsensusContext(QbftContext.class).getBlockInterface();
+        protocolContext.getConsensusContext(QbftContext.class).blockInterface();
     return new MessageValidator(
         block ->
             new SubsequentMessageValidator(

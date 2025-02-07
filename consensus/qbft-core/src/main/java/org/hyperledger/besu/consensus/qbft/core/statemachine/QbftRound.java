@@ -170,7 +170,7 @@ public class QbftRound {
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
       QbftBlock preparedBlock = bestPreparedCertificate.get().getBlock();
       final QbftBlockInterface bftBlockInterface =
-          protocolContext.getConsensusContext(QbftContext.class).getBlockInterface();
+          protocolContext.getConsensusContext(QbftContext.class).blockInterface();
       blockToPublish =
           bftBlockInterface.replaceRoundInBlock(
               preparedBlock,
@@ -404,7 +404,7 @@ public class QbftRound {
 
   private QbftBlock createCommitBlock(final QbftBlock block) {
     final QbftBlockInterface bftBlockInterface =
-        protocolContext.getConsensusContext(QbftContext.class).getBlockInterface();
+        protocolContext.getConsensusContext(QbftContext.class).blockInterface();
     return bftBlockInterface.replaceRoundInBlock(
         block, getRoundIdentifier().getRoundNumber(), QbftHashMode.COMMITTED_SEAL);
   }
