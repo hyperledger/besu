@@ -32,6 +32,7 @@ import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -74,6 +75,8 @@ public class BlockSimulatorTest {
   @Mock private TransactionSimulator transactionSimulator;
   @Mock private MiningConfiguration miningConfiguration;
   @Mock private MutableWorldState mutableWorldState;
+  @Mock private Blockchain blockchain;
+
   private BlockHeader blockHeader;
 
   private BlockSimulator blockSimulator;
@@ -82,7 +85,11 @@ public class BlockSimulatorTest {
   public void setUp() {
     blockSimulator =
         new BlockSimulator(
-            worldStateArchive, protocolSchedule, transactionSimulator, miningConfiguration);
+            worldStateArchive,
+            protocolSchedule,
+            transactionSimulator,
+            miningConfiguration,
+            blockchain);
     blockHeader = BlockHeaderBuilder.createDefault().buildBlockHeader();
     ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
     when(miningConfiguration.getCoinbase())
@@ -135,7 +142,14 @@ public class BlockSimulatorTest {
         .thenReturn(Optional.of("Invalid Transaction"));
 
     when(transactionSimulator.processWithWorldUpdater(
-            any(), any(), any(), any(), any(), any(), any(MiningBeneficiaryCalculator.class)))
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(MiningBeneficiaryCalculator.class),
+            any()))
         .thenReturn(Optional.of(transactionSimulatorResult));
 
     BlockSimulationException exception =
@@ -154,7 +168,14 @@ public class BlockSimulatorTest {
     BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null, true);
 
     when(transactionSimulator.processWithWorldUpdater(
-            any(), any(), any(), any(), any(), any(), any(MiningBeneficiaryCalculator.class)))
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(MiningBeneficiaryCalculator.class),
+            any()))
         .thenReturn(Optional.empty());
 
     BlockSimulationException exception =
