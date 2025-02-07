@@ -17,13 +17,13 @@ package org.hyperledger.besu.consensus.qbft.core.validation;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator.SubsequentMessageValidator;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
 
@@ -58,10 +58,10 @@ public class MessageValidatorFactory {
    * @return the list of validators
    */
   public static Collection<Address> getValidatorsAfterBlock(
-      final ProtocolContext protocolContext, final BlockHeader parentHeader) {
+      final ProtocolContext protocolContext, final QbftBlockHeader parentHeader) {
     return protocolContext
         .getConsensusContext(QbftContext.class)
-        .getValidatorProvider()
+        .validatorProvider()
         .getValidatorsAfterBlock(parentHeader);
   }
 
@@ -73,10 +73,10 @@ public class MessageValidatorFactory {
    * @return the list of validators
    */
   public static Collection<Address> getValidatorsForBlock(
-      final ProtocolContext protocolContext, final BlockHeader parentHeader) {
+      final ProtocolContext protocolContext, final QbftBlockHeader parentHeader) {
     return protocolContext
         .getConsensusContext(QbftContext.class)
-        .getValidatorProvider()
+        .validatorProvider()
         .getValidatorsForBlock(parentHeader);
   }
 
@@ -88,7 +88,7 @@ public class MessageValidatorFactory {
    * @return the round change message validator
    */
   public RoundChangeMessageValidator createRoundChangeMessageValidator(
-      final long chainHeight, final BlockHeader parentHeader) {
+      final long chainHeight, final QbftBlockHeader parentHeader) {
 
     final Collection<Address> validatorsForHeight =
         getValidatorsAfterBlock(protocolContext, parentHeader);
@@ -112,7 +112,7 @@ public class MessageValidatorFactory {
    * @return the message validator
    */
   public MessageValidator createMessageValidator(
-      final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
+      final ConsensusRoundIdentifier roundIdentifier, final QbftBlockHeader parentHeader) {
     final Collection<Address> validatorsForHeight =
         getValidatorsAfterBlock(protocolContext, parentHeader);
 
@@ -126,7 +126,7 @@ public class MessageValidatorFactory {
             proposerSelector.selectProposerForRound(roundIdentifier));
 
     final QbftBlockInterface blockInterface =
-        protocolContext.getConsensusContext(QbftContext.class).getBlockInterface();
+        protocolContext.getConsensusContext(QbftContext.class).blockInterface();
     return new MessageValidator(
         block ->
             new SubsequentMessageValidator(
@@ -142,7 +142,7 @@ public class MessageValidatorFactory {
    * @return the future round proposal message validator
    */
   public FutureRoundProposalMessageValidator createFutureRoundProposalMessageValidator(
-      final long chainHeight, final BlockHeader parentHeader) {
+      final long chainHeight, final QbftBlockHeader parentHeader) {
     return new FutureRoundProposalMessageValidator(this, chainHeight, parentHeader);
   }
 }

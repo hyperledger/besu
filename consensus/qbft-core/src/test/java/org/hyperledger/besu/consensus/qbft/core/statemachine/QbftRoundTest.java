@@ -42,6 +42,8 @@ import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
@@ -51,15 +53,15 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator;
+import org.hyperledger.besu.consensus.qbft.core.validation.QbftBlockHeaderTestFixture;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
@@ -102,11 +104,12 @@ public class QbftRoundTest {
   @Mock private RoundTimer roundTimer;
   @Mock private QbftProtocolSpec protocolSpec;
   @Mock private QbftBlockImporter blockImporter;
-  @Mock private org.hyperledger.besu.ethereum.core.BlockHeader parentHeader;
+  @Mock private QbftBlockHeader parentHeader;
   @Mock private BftExtraDataCodec bftExtraDataCodec;
   @Mock private QbftBlockInterface blockInteface;
   @Mock private QbftBlockCodec blockEncoder;
   @Mock private QbftExtraDataProvider qbftExtraDataProvider;
+  @Mock private QbftBlockHashing blockHashing;
 
   @Captor private ArgumentCaptor<QbftBlock> blockCaptor;
 
@@ -132,7 +135,7 @@ public class QbftRoundTest {
     when(messageValidator.validatePrepare(any())).thenReturn(true);
     when(messageValidator.validateCommit(any())).thenReturn(true);
 
-    final BlockHeader header = new BlockHeaderTestFixture().number(1).buildHeader();
+    final QbftBlockHeader header = new QbftBlockHeaderTestFixture().number(1).buildHeader();
 
     proposedBlock = new QbftBlockTestFixture().blockHeader(header).build();
 
@@ -168,6 +171,7 @@ public class QbftRoundTest {
         roundTimer,
         bftExtraDataCodec,
         qbftExtraDataProvider,
+        blockHashing,
         parentHeader);
     verify(roundTimer, times(1)).startTimer(roundIdentifier);
   }
@@ -188,6 +192,7 @@ public class QbftRoundTest {
             roundTimer,
             bftExtraDataCodec,
             qbftExtraDataProvider,
+            blockHashing,
             parentHeader);
 
     when(blockInteface.replaceRoundInBlock(eq(proposedBlock), eq(0), any()))
@@ -202,7 +207,7 @@ public class QbftRoundTest {
 
   @Test
   public void aProposalWithAnewBlockIsSentUponReceptionOfARoundChangeWithNoCertificate() {
-    final BlockHeader header = new BlockHeaderTestFixture().number(0).buildHeader();
+    final QbftBlockHeader header = new QbftBlockHeaderTestFixture().number(0).buildHeader();
 
     final QbftBlock commitBlock = new QbftBlockTestFixture().blockHeader(header).build();
     when(blockInteface.replaceRoundInBlock(proposedBlock, 0, QbftHashMode.COMMITTED_SEAL))
@@ -222,6 +227,7 @@ public class QbftRoundTest {
             roundTimer,
             bftExtraDataCodec,
             qbftExtraDataProvider,
+            blockHashing,
             parentHeader);
 
     round.startRoundWith(new RoundChangeArtifacts(emptyList(), Optional.empty()), 15);
@@ -234,11 +240,11 @@ public class QbftRoundTest {
   public void aProposalMessageWithTheSameBlockIsSentUponReceptionOfARoundChangeWithCertificate() {
     final QbftBlock publishBlock =
         new QbftBlockTestFixture()
-            .blockHeader(new BlockHeaderTestFixture().number(0).buildHeader())
+            .blockHeader(new QbftBlockHeaderTestFixture().number(0).buildHeader())
             .build();
     final QbftBlock commitBlock =
         new QbftBlockTestFixture()
-            .blockHeader(new BlockHeaderTestFixture().number(0).buildHeader())
+            .blockHeader(new QbftBlockHeaderTestFixture().number(0).buildHeader())
             .build();
     when(blockInteface.replaceRoundInBlock(proposedBlock, 0, QbftHashMode.COMMITTED_SEAL))
         .thenReturn(publishBlock);
@@ -260,6 +266,7 @@ public class QbftRoundTest {
             roundTimer,
             bftExtraDataCodec,
             qbftExtraDataProvider,
+            blockHashing,
             parentHeader);
 
     final SignedData<PreparePayload> preparedPayload =
@@ -294,7 +301,7 @@ public class QbftRoundTest {
   public void creatingNewBlockFromEmptyPreparedCertificateUpdatesInternalState() {
     final QbftBlock commitBlock =
         new QbftBlockTestFixture()
-            .blockHeader(new BlockHeaderTestFixture().number(0).buildHeader())
+            .blockHeader(new QbftBlockHeaderTestFixture().number(0).buildHeader())
             .build();
     when(blockInteface.replaceRoundInBlock(proposedBlock, 0, QbftHashMode.COMMITTED_SEAL))
         .thenReturn(commitBlock);
@@ -313,6 +320,7 @@ public class QbftRoundTest {
             roundTimer,
             bftExtraDataCodec,
             qbftExtraDataProvider,
+            blockHashing,
             parentHeader);
 
     final RoundChange roundChange =
@@ -356,12 +364,14 @@ public class QbftRoundTest {
             roundTimer,
             bftExtraDataCodec,
             qbftExtraDataProvider,
+            blockHashing,
             parentHeader);
 
     when(blockInteface.replaceRoundInBlock(proposedBlock, 0, QbftHashMode.COMMITTED_SEAL))
         .thenReturn(proposedBlock);
     when(blockCreator.createSealedBlock(eq(qbftExtraDataProvider), eq(proposedBlock), eq(0), any()))
         .thenReturn(proposedBlock);
+    when(blockHashing.calculateDataHashForCommittedSeal(any(), any())).thenReturn(Hash.ZERO);
 
     round.handleCommitMessage(
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
@@ -390,12 +400,14 @@ public class QbftRoundTest {
             roundTimer,
             bftExtraDataCodec,
             qbftExtraDataProvider,
+            blockHashing,
             parentHeader);
 
     when(blockInteface.replaceRoundInBlock(eq(proposedBlock), eq(0), any()))
         .thenReturn(proposedBlock);
     when(blockCreator.createSealedBlock(eq(qbftExtraDataProvider), eq(proposedBlock), eq(0), any()))
         .thenReturn(proposedBlock);
+    when(blockHashing.calculateDataHashForCommittedSeal(any(), any())).thenReturn(Hash.ZERO);
 
     round.handleCommitMessage(
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
@@ -428,6 +440,7 @@ public class QbftRoundTest {
             roundTimer,
             bftExtraDataCodec,
             qbftExtraDataProvider,
+            blockHashing,
             parentHeader);
 
     when(blockInteface.replaceRoundInBlock(eq(proposedBlock), eq(0), any()))

@@ -14,39 +14,41 @@
  */
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
-import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class QbftProtocolScheduleAdaptorTest {
-  @Mock private ProtocolSchedule besuProtocolSchedule;
-  @Mock private ProtocolSpec besuProtocolSpec;
-  @Mock private ProtocolContext besuProtocolContext;
+class QbftBlockHashingAdaptorTest {
+  @Mock private BftBlockHashing bftBlockHashing;
 
   @Test
-  void createsAProtocolSpecUsingBesuProtocolSpec() {
-    final BlockHeader besuHeader = new BlockHeaderTestFixture().number(1).buildHeader();
-    final QbftBlockHeader qbftHeader = new QbftBlockHeaderAdaptor(besuHeader);
+  void calculatesHashForCommittedSeal() {
+    BlockHeader header = new BlockHeaderTestFixture().buildHeader();
+    QbftBlockHeader qbftBlockHeader = new QbftBlockHeaderAdaptor(header);
+    final BftExtraData bftExtraData =
+        new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, emptyList());
+    when(bftBlockHashing.calculateDataHashForCommittedSeal(header, bftExtraData))
+        .thenReturn(Hash.EMPTY);
 
-    when(besuProtocolSchedule.getByBlockHeader(besuHeader)).thenReturn(besuProtocolSpec);
-
-    final QbftProtocolSchedule qbftProtocolSchedule =
-        new QbftProtocolScheduleAdaptor(besuProtocolSchedule, besuProtocolContext);
-    final QbftProtocolSpec protocolSpec = qbftProtocolSchedule.getByBlockHeader(qbftHeader);
-    assertThat(protocolSpec).hasFieldOrPropertyWithValue("besuProtocolSpec", besuProtocolSpec);
+    QbftBlockHashingAdaptor qbftBlockHashingAdaptor = new QbftBlockHashingAdaptor(bftBlockHashing);
+    Hash hash =
+        qbftBlockHashingAdaptor.calculateDataHashForCommittedSeal(qbftBlockHeader, bftExtraData);
+    assertThat(hash).isEqualTo(Hash.EMPTY);
   }
 }

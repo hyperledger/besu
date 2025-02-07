@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
 import static java.util.Collections.emptyList;
 
-import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -31,6 +30,8 @@ import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
@@ -42,7 +43,6 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -81,7 +81,8 @@ public class QbftRound {
   /** The Bft extra data provider */
   protected final QbftExtraDataProvider qbftExtraDataProvider;
 
-  private final BlockHeader parentHeader;
+  private final QbftBlockHashing blockHashing;
+  private final QbftBlockHeader parentHeader;
 
   /**
    * Instantiates a new Qbft round.
@@ -97,6 +98,7 @@ public class QbftRound {
    * @param roundTimer the round timer
    * @param bftExtraDataCodec the bft extra data codec
    * @param qbftExtraDataProvider the qbft extra data provider
+   * @param blockHashing the block hashing
    * @param parentHeader the parent header
    */
   public QbftRound(
@@ -111,7 +113,8 @@ public class QbftRound {
       final RoundTimer roundTimer,
       final BftExtraDataCodec bftExtraDataCodec,
       final QbftExtraDataProvider qbftExtraDataProvider,
-      final BlockHeader parentHeader) {
+      final QbftBlockHashing blockHashing,
+      final QbftBlockHeader parentHeader) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -122,6 +125,7 @@ public class QbftRound {
     this.transmitter = transmitter;
     this.bftExtraDataCodec = bftExtraDataCodec;
     this.qbftExtraDataProvider = qbftExtraDataProvider;
+    this.blockHashing = blockHashing;
     this.parentHeader = parentHeader;
     roundTimer.startTimer(getRoundIdentifier());
   }
@@ -166,7 +170,7 @@ public class QbftRound {
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
       QbftBlock preparedBlock = bestPreparedCertificate.get().getBlock();
       final QbftBlockInterface bftBlockInterface =
-          protocolContext.getConsensusContext(QbftContext.class).getBlockInterface();
+          protocolContext.getConsensusContext(QbftContext.class).blockInterface();
       blockToPublish =
           bftBlockInterface.replaceRoundInBlock(
               preparedBlock,
@@ -391,17 +395,16 @@ public class QbftRound {
 
   private SECPSignature createCommitSeal(final QbftBlock block) {
     final QbftBlock commitBlock = createCommitBlock(block);
-    final BlockHeader proposedHeader = commitBlock.getHeader();
+    final QbftBlockHeader proposedHeader = commitBlock.getHeader();
     final BftExtraData extraData = qbftExtraDataProvider.getExtraData(proposedHeader);
     final Hash commitHash =
-        new BftBlockHashing(bftExtraDataCodec)
-            .calculateDataHashForCommittedSeal(proposedHeader, extraData);
+        blockHashing.calculateDataHashForCommittedSeal(proposedHeader, extraData);
     return nodeKey.sign(commitHash);
   }
 
   private QbftBlock createCommitBlock(final QbftBlock block) {
     final QbftBlockInterface bftBlockInterface =
-        protocolContext.getConsensusContext(QbftContext.class).getBlockInterface();
+        protocolContext.getConsensusContext(QbftContext.class).blockInterface();
     return bftBlockInterface.replaceRoundInBlock(
         block, getRoundIdentifier().getRoundNumber(), QbftHashMode.COMMITTED_SEAL);
   }

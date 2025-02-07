@@ -27,12 +27,11 @@ import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Optional;
@@ -68,8 +67,8 @@ public class ProposalPayloadValidatorTest {
   public void validationPassesWhenProposerAndRoundMatchAndBlockIsValid() {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator);
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
@@ -85,8 +84,8 @@ public class ProposalPayloadValidatorTest {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
@@ -104,8 +103,8 @@ public class ProposalPayloadValidatorTest {
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator);
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
@@ -120,8 +119,8 @@ public class ProposalPayloadValidatorTest {
   public void validationFailsWhenExpectedProposerDoesNotMatchPayloadsAuthor() {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(Address.fromHexString("0x1"), roundIdentifier, blockValidator);
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
@@ -135,8 +134,8 @@ public class ProposalPayloadValidatorTest {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(
@@ -154,8 +153,8 @@ public class ProposalPayloadValidatorTest {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(
@@ -172,8 +171,10 @@ public class ProposalPayloadValidatorTest {
   public void validationFailsForBlockWithIncorrectHeight() {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator);
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber() + 1).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture()
+            .number(roundIdentifier.getSequenceNumber() + 1)
+            .buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
