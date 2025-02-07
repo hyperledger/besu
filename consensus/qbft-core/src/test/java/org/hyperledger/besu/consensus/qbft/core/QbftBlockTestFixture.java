@@ -15,15 +15,15 @@
 package org.hyperledger.besu.consensus.qbft.core;
 
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
-import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.validation.QbftBlockHeaderTestFixture;
 
 public class QbftBlockTestFixture {
 
-  private BlockHeader blockHeader = new BlockDataGenerator().header();
+  private QbftBlockHeader blockHeader = new QbftBlockHeaderTestFixture().buildHeader();
   private boolean isEmpty = true;
 
-  public QbftBlockTestFixture blockHeader(final BlockHeader blockHeader) {
+  public QbftBlockTestFixture blockHeader(final QbftBlockHeader blockHeader) {
     this.blockHeader = blockHeader;
     return this;
   }
@@ -40,7 +40,7 @@ public class QbftBlockTestFixture {
   class TestQbftBlock implements QbftBlock {
 
     @Override
-    public BlockHeader getHeader() {
+    public QbftBlockHeader getHeader() {
       return blockHeader;
     }
 

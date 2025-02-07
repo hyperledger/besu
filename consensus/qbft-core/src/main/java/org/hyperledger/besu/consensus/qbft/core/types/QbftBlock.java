@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.core.types;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 /** Represents a block in the context of the QBFT consensus mechanism. */
 public interface QbftBlock {
@@ -25,7 +24,7 @@ public interface QbftBlock {
    *
    * @return the block header.
    */
-  BlockHeader getHeader();
+  QbftBlockHeader getHeader();
 
   /**
    * Whether the block is considered empty, generally this means that the block has no transactions.

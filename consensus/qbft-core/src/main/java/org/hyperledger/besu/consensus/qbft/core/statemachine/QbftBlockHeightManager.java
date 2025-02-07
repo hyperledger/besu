@@ -25,11 +25,11 @@ import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.time.Clock;
@@ -57,7 +57,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
   private final QbftRoundFactory roundFactory;
   private final RoundChangeManager roundChangeManager;
-  private final BlockHeader parentHeader;
+  private final QbftBlockHeader parentHeader;
   private final QbftMessageTransmitter transmitter;
   private final MessageFactory messageFactory;
   private final Map<Integer, RoundState> futureRoundStateBuffer = Maps.newHashMap();
@@ -82,7 +82,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
    * @param messageFactory the message factory
    */
   public QbftBlockHeightManager(
-      final BlockHeader parentHeader,
+      final QbftBlockHeader parentHeader,
       final QbftFinalState finalState,
       final RoundChangeManager roundChangeManager,
       final QbftRoundFactory qbftRoundFactory,
@@ -113,7 +113,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(nextBlockHeight, 0);
 
-    finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader);
+    finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader::getTimestamp);
   }
 
   /**
@@ -130,7 +130,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
    * @param isEarlyRoundChangeEnabled enable round change when f+1 RC messages are received
    */
   public QbftBlockHeightManager(
-      final BlockHeader parentHeader,
+      final QbftBlockHeader parentHeader,
       final QbftFinalState finalState,
       final RoundChangeManager roundChangeManager,
       final QbftRoundFactory qbftRoundFactory,
@@ -199,7 +199,9 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       // handle the block times period
       final long currentTimeInMillis = finalState.getClock().millis();
       boolean emptyBlockExpired =
-          finalState.getBlockTimer().checkEmptyBlockExpired(parentHeader, currentTimeInMillis);
+          finalState
+              .getBlockTimer()
+              .checkEmptyBlockExpired(parentHeader::getTimestamp, currentTimeInMillis);
       if (emptyBlockExpired) {
         LOG.trace(
             "Block has no transactions and this node is a proposer so it will send a proposal: "
@@ -211,7 +213,8 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
                 + roundIdentifier);
         finalState
             .getBlockTimer()
-            .resetTimerForEmptyBlock(roundIdentifier, parentHeader, currentTimeInMillis);
+            .resetTimerForEmptyBlock(
+                roundIdentifier, parentHeader::getTimestamp, currentTimeInMillis);
         finalState.getRoundTimer().cancelTimer();
         currentRound = Optional.empty();
       }
@@ -452,7 +455,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   }
 
   @Override
-  public BlockHeader getParentBlockHeader() {
+  public QbftBlockHeader getParentBlockHeader() {
     return parentHeader;
   }
 

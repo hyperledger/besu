@@ -14,16 +14,13 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-
-/** Provides the extra data for a block. */
-public interface QbftExtraDataProvider {
+/** Provides logging for QBFT transition changes */
+public interface QbftValidatorModeTransitionLogger {
 
   /**
-   * Returns the extra data for the supplied block header.
+   * Logs the transition change
    *
-   * @param header the block header to retrieve the extra data from
-   * @return the extra data
+   * @param parentHeader the parent header
    */
-  BftExtraData getExtraData(QbftBlockHeader header);
+  void logTransitionChange(QbftBlockHeader parentHeader);
 }

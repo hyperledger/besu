@@ -14,16 +14,28 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
+import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 
-/** Provides the extra data for a block. */
-public interface QbftExtraDataProvider {
+/**
+ * Event indicating that new chain head has been received
+ *
+ * @param newChainHeadHeader the new chain head header
+ */
+public record QbftNewChainHead(QbftBlockHeader newChainHeadHeader) implements BftEvent {
+
+  @Override
+  public BftEvents.Type getType() {
+    return BftEvents.Type.NEW_CHAIN_HEAD;
+  }
 
   /**
-   * Returns the extra data for the supplied block header.
+   * Gets new chain head header.
    *
-   * @param header the block header to retrieve the extra data from
-   * @return the extra data
+   * @return the new chain head header
    */
-  BftExtraData getExtraData(QbftBlockHeader header);
+  @Override
+  public QbftBlockHeader newChainHeadHeader() {
+    return newChainHeadHeader;
+  }
 }

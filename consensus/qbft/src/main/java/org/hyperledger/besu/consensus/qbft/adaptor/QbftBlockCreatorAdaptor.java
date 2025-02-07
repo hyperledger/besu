@@ -19,6 +19,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
@@ -47,8 +48,11 @@ public class QbftBlockCreatorAdaptor implements QbftBlockCreator {
   }
 
   @Override
-  public QbftBlock createBlock(final long headerTimeStampSeconds, final BlockHeader parentHeader) {
-    var blockResult = besuBlockCreator.createBlock(headerTimeStampSeconds, parentHeader);
+  public QbftBlock createBlock(
+      final long headerTimeStampSeconds, final QbftBlockHeader parentHeader) {
+    var blockResult =
+        besuBlockCreator.createBlock(
+            headerTimeStampSeconds, BlockUtil.toBesuBlockHeader(parentHeader));
     return new QbftBlockAdaptor(blockResult.getBlock());
   }
 
@@ -59,8 +63,8 @@ public class QbftBlockCreatorAdaptor implements QbftBlockCreator {
       final int roundNumber,
       final Collection<SECPSignature> commitSeals) {
     final Block besuBlock = BlockUtil.toBesuBlock(block);
-    final BlockHeader initialBesuHeader = besuBlock.getHeader();
-    final BftExtraData initialExtraData = bftQbftExtraDataProvider.getExtraData(initialBesuHeader);
+    final QbftBlockHeader initialHeader = block.getHeader();
+    final BftExtraData initialExtraData = bftQbftExtraDataProvider.getExtraData(initialHeader);
 
     final BftExtraData sealedExtraData =
         new BftExtraData(
@@ -71,7 +75,7 @@ public class QbftBlockCreatorAdaptor implements QbftBlockCreator {
             initialExtraData.getValidators());
 
     final BlockHeader sealedHeader =
-        BlockHeaderBuilder.fromHeader(initialBesuHeader)
+        BlockHeaderBuilder.fromHeader(BlockUtil.toBesuBlockHeader(initialHeader))
             .extraData(bftExtraDataCodec.encode(sealedExtraData))
             .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
             .buildBlockHeader();

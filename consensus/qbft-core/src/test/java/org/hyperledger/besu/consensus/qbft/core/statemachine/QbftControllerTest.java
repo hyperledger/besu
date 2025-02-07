@@ -30,7 +30,6 @@ import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
@@ -44,11 +43,12 @@ import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockchain;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftNewChainHead;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
@@ -67,11 +67,11 @@ import org.mockito.quality.Strictness;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class QbftControllerTest {
-  @Mock private Blockchain blockChain;
+  @Mock private QbftBlockchain blockChain;
   @Mock private QbftFinalState qbftFinalState;
   @Mock private QbftBlockHeightManagerFactory blockHeightManagerFactory;
-  @Mock private BlockHeader chainHeadBlockHeader;
-  @Mock private BlockHeader nextBlock;
+  @Mock private QbftBlockHeader chainHeadBlockHeader;
+  @Mock private QbftBlockHeader nextBlock;
   @Mock private BaseQbftBlockHeightManager blockHeightManager;
 
   @Mock private Proposal proposal;
@@ -187,7 +187,7 @@ public class QbftControllerTest {
 
     constructQbftController();
     qbftController.start();
-    final NewChainHead newChainHead = new NewChainHead(nextBlock);
+    final QbftNewChainHead newChainHead = new QbftNewChainHead(nextBlock);
     qbftController.handleNewBlockEvent(newChainHead);
 
     verify(blockHeightManagerFactory).create(nextBlock);
@@ -210,11 +210,11 @@ public class QbftControllerTest {
     long chainHeadHeight = 4;
     when(nextBlock.getNumber()).thenReturn(chainHeadHeight);
     when(nextBlock.getHash()).thenReturn(Hash.ZERO);
-    final NewChainHead sameHeightBlock = new NewChainHead(nextBlock);
+    final QbftNewChainHead sameHeightBlock = new QbftNewChainHead(nextBlock);
     qbftController.handleNewBlockEvent(sameHeightBlock);
 
     when(nextBlock.getNumber()).thenReturn(chainHeadHeight - 1);
-    final NewChainHead priorBlock = new NewChainHead(nextBlock);
+    final QbftNewChainHead priorBlock = new QbftNewChainHead(nextBlock);
     qbftController.handleNewBlockEvent(priorBlock);
     verify(blockHeightManagerFactory, times(2)).create(any()); // 2 blocks created
   }

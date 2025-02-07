@@ -14,16 +14,19 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-
-/** Provides the extra data for a block. */
-public interface QbftExtraDataProvider {
+/** Minimal QBFT interface for reading data from the blockchain. */
+public interface QbftBlockchain {
+  /**
+   * Returns the chain head header.
+   *
+   * @return the header.
+   */
+  QbftBlockHeader getChainHeadHeader();
 
   /**
-   * Returns the extra data for the supplied block header.
+   * Returns the chain head block number.
    *
-   * @param header the block header to retrieve the extra data from
-   * @return the extra data
+   * @return the block number.
    */
-  BftExtraData getExtraData(QbftBlockHeader header);
+  long getChainHeadBlockNumber();
 }

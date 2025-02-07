@@ -14,16 +14,37 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 
-/** Provides the extra data for a block. */
-public interface QbftExtraDataProvider {
+/** Represents a block header in the context of the QBFT consensus mechanism. */
+public interface QbftBlockHeader {
 
   /**
-   * Returns the extra data for the supplied block header.
+   * Returns the block number of the block.
    *
-   * @param header the block header to retrieve the extra data from
-   * @return the extra data
+   * @return the block number.
    */
-  BftExtraData getExtraData(QbftBlockHeader header);
+  long getNumber();
+
+  /**
+   * Returns the timestamp of the block.
+   *
+   * @return the timestamp.
+   */
+  long getTimestamp();
+
+  /**
+   * Returns the coinbase of the block.
+   *
+   * @return the coinbase.
+   */
+  Address getCoinbase();
+
+  /**
+   * Returns the hash of the block.
+   *
+   * @return the hash.
+   */
+  Hash getHash();
 }
