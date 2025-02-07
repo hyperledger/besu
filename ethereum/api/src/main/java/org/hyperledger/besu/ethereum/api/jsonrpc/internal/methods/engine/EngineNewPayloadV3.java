@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -89,6 +90,11 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
-    return ForkSupportHelper.validateForkSupported(CANCUN, cancunMilestone, blockTimestamp);
+    return ForkSupportHelper.validateForkSupported(
+        CANCUN,
+        cancunMilestone,
+        PRAGUE,
+        protocolSchedule.flatMap(s -> s.milestoneFor(PRAGUE)),
+        blockTimestamp);
   }
 }
