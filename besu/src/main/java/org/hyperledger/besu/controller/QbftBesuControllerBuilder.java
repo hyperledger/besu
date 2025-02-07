@@ -23,6 +23,7 @@ import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
@@ -46,13 +47,18 @@ import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidator
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
+import org.hyperledger.besu.consensus.qbft.adaptor.BftEventHandlerAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHashingAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockchainAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorModeTransitionLoggerAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
@@ -62,16 +68,18 @@ import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
-import org.hyperledger.besu.consensus.qbft.core.validator.ValidatorModeTransitionLogger;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.qbft.protocol.Istanbul100SubProtocol;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorModeTransitionLogger;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -209,9 +217,11 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
+    final QbftValidatorProvider qbftValidatorProvider =
+        new QbftValidatorProviderAdaptor(validatorProvider);
 
     final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
-    final QbftContext qbftContext = new QbftContext(validatorProvider, qbftBlockInterface);
+    final QbftContext qbftContext = new QbftContext(qbftValidatorProvider, qbftBlockInterface);
     final ProtocolContext qbftProtocolContext =
         new ProtocolContext(
             blockchain,
@@ -267,27 +277,31 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey, blockEncoder);
 
+    QbftRoundFactory qbftRoundFactory =
+        new QbftRoundFactory(
+            finalState,
+            qbftProtocolContext,
+            qbftProtocolSchedule,
+            minedBlockObservers,
+            messageValidatorFactory,
+            messageFactory,
+            qbftExtraDataCodec,
+            new QbftExtraDataProviderAdaptor(qbftExtraDataCodec),
+            new QbftBlockHashingAdaptor(new BftBlockHashing(qbftExtraDataCodec)));
     QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory =
         new QbftBlockHeightManagerFactory(
             finalState,
-            new QbftRoundFactory(
-                finalState,
-                qbftProtocolContext,
-                qbftProtocolSchedule,
-                minedBlockObservers,
-                messageValidatorFactory,
-                messageFactory,
-                qbftExtraDataCodec,
-                new QbftExtraDataProviderAdaptor(qbftExtraDataCodec)),
+            qbftRoundFactory,
             messageValidatorFactory,
             messageFactory,
-            new ValidatorModeTransitionLogger(qbftForksSchedule));
+            new QbftValidatorModeTransitionLoggerAdaptor(
+                new ValidatorModeTransitionLogger(qbftForksSchedule)));
 
     qbftBlockHeightManagerFactory.isEarlyRoundChangeEnabled(isEarlyRoundChangeEnabled);
 
-    final BftEventHandler qbftController =
+    final QbftEventHandler qbftController =
         new QbftController(
-            blockchain,
+            new QbftBlockchainAdaptor(blockchain),
             finalState,
             qbftBlockHeightManagerFactory,
             gossiper,
@@ -295,14 +309,15 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             futureMessageBuffer,
             new EthSynchronizerUpdater(ethProtocolManager.ethContext().getEthPeers()),
             blockEncoder);
+    final BftEventHandler bftEventHandler = new BftEventHandlerAdaptor(qbftController);
 
-    final EventMultiplexer eventMultiplexer = new EventMultiplexer(qbftController);
+    final EventMultiplexer eventMultiplexer = new EventMultiplexer(bftEventHandler);
     final BftProcessor bftProcessor = new BftProcessor(bftEventQueue, eventMultiplexer);
 
     final MiningCoordinator miningCoordinator =
         new BftMiningCoordinator(
             bftExecutors,
-            qbftController,
+            bftEventHandler,
             bftProcessor,
             blockCreatorFactory,
             blockchain,

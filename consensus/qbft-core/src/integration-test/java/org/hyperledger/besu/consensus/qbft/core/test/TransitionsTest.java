@@ -20,10 +20,10 @@ import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
-import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftNewChainHead;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.Instant;
@@ -63,13 +63,13 @@ public class TransitionsTest {
 
     context
         .getController()
-        .handleNewBlockEvent(new NewChainHead(context.getBlockchain().getChainHeadHeader()));
+        .handleNewBlockEvent(new QbftNewChainHead(context.getBlockchain().getChainHeadHeader()));
     clock.stepMillis(20_000);
     context.getEventMultiplexer().handleBftEvent(bftEventQueue.poll(1, TimeUnit.SECONDS));
 
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader blockHeader1 = context.getBlockchain().getBlockHeader(1).get();
-    final BlockHeader blockHeader2 = context.getBlockchain().getBlockHeader(2).get();
+    final QbftBlockHeader genesisBlock = context.getBlockHeader(0);
+    final QbftBlockHeader blockHeader1 = context.getBlockHeader(1);
+    final QbftBlockHeader blockHeader2 = context.getBlockHeader(2);
 
     assertThat(blockHeader1.getTimestamp()).isEqualTo(genesisBlock.getTimestamp() + 10);
     assertThat(blockHeader2.getTimestamp()).isEqualTo(blockHeader1.getTimestamp() + 20);

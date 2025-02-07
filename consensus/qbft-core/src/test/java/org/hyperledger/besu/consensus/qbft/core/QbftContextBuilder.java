@@ -19,9 +19,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
-import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
@@ -35,11 +35,11 @@ public class QbftContextBuilder {
       final Collection<Address> validators,
       final QbftBlockInterface bftBlockInterface) {
     final T bftContext = mock(contextClazz, withSettings().strictness(Strictness.LENIENT));
-    final ValidatorProvider mockValidatorProvider =
-        mock(ValidatorProvider.class, withSettings().strictness(Strictness.LENIENT));
-    when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
+    final QbftValidatorProvider mockValidatorProvider =
+        mock(QbftValidatorProvider.class, withSettings().strictness(Strictness.LENIENT));
+    when(bftContext.validatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
-    when(bftContext.getBlockInterface()).thenReturn(bftBlockInterface);
+    when(bftContext.blockInterface()).thenReturn(bftBlockInterface);
     when(bftContext.as(any())).thenReturn(bftContext);
 
     return bftContext;

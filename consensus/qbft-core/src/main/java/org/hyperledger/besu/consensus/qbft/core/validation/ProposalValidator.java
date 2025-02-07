@@ -144,7 +144,7 @@ public class ProposalValidator {
         // Need to check that if we substitute the LatestPrepareCert round number into the supplied
         // block that we get the SAME hash as PreparedCert.
         final QbftBlockInterface bftBlockInterface =
-            protocolContext.getConsensusContext(QbftContext.class).getBlockInterface();
+            protocolContext.getConsensusContext(QbftContext.class).blockInterface();
         final QbftBlock currentBlockWithOldRound =
             bftBlockInterface.replaceRoundInBlock(
                 proposal.getBlock(), metadata.getPreparedRound(), QbftHashMode.COMMITTED_SEAL);
