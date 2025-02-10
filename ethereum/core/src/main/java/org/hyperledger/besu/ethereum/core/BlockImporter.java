@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
-import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.List;
@@ -63,29 +62,8 @@ public interface BlockImporter {
       HeaderValidationMode ommerValidationMode);
 
   /**
-   * Attempts to import the given block. Uses "fast" validation. Performs light validation using the
-   * block's receipts rather than processing all transactions and fully validating world state.
-   *
-   * @param context The context to attempt to update
-   * @param block The block
-   * @param receipts The receipts associated with this block.
-   * @param headerValidationMode Determines the validation to perform on this header.
-   * @param ommerValidationMode Determines the validation to perform on ommer headers.
-   * @return {@code BlockImportResult}
-   * @see BlockImportResult
-   */
-  BlockImportResult importBlockForSyncing(
-      ProtocolContext context,
-      Block block,
-      List<TransactionReceipt> receipts,
-      HeaderValidationMode headerValidationMode,
-      HeaderValidationMode ommerValidationMode,
-      BodyValidationMode bodyValidationMode);
-
-  /**
-   * Attempts to import the given syncBlock. Uses "fast" validation. Performs light validation using
-   * the syncBlock's receipts rather than processing all transactions and fully validating world
-   * state.
+   * Attempts to import the given syncBlock. No validation. Body and Receipts have already been
+   * validated against the header.
    *
    * @param context The context to attempt to update
    * @param syncBlock The syncBlock

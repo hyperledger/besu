@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -32,22 +31,15 @@ import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcesso
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class SyncBlockBodyTest {
 
@@ -98,8 +90,8 @@ public class SyncBlockBodyTest {
     }
 
     @Test
-    public void testEmptyMethod() {
-        final SyncBlockBody emptySBB = SyncBlockBody.empty(DEFAULT_PROTOCOL_SCHEDULE);
+    public void testEmptyWithNullWithrawalsMethod() {
+        final SyncBlockBody emptySBB = SyncBlockBody.emptyWithNullWithdrawals(DEFAULT_PROTOCOL_SCHEDULE);
 
         final Keccak.Digest256 keccak = new Keccak.Digest256();
 
@@ -111,18 +103,31 @@ public class SyncBlockBodyTest {
     }
 
     @Test
+    public void testEmptyWithEmptyWithdralsMethod() {
+        final SyncBlockBody emptySBB = SyncBlockBody.emptyWithEmptyWithdrawals(DEFAULT_PROTOCOL_SCHEDULE);
+
+        final Keccak.Digest256 keccak = new Keccak.Digest256();
+
+        assertThat(emptySBB.getTransactionCount()).isEqualTo(0);
+        assertThat(emptySBB.getOmmersHash()).isEqualTo(Hash.wrap(Bytes32.wrap(keccak.digest(Bytes.EMPTY.toArray()))));
+        assertThat(emptySBB.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
+        assertThat(emptySBB.getWithdrawalsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
+        assertThat(emptySBB.getEncodedTransactions()).isEqualTo(Collections.emptyList());
+    }
+
+    @Test
     public void testEmptyIsSameAsBlockBody() {
         final BlockBody emptyBB = BlockBody.empty();
         final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
         emptyBB.writeWrappedBodyTo(bytesValueRLPOutput);
         final Bytes emptyBBBytes = bytesValueRLPOutput.encoded();
-        final SyncBlockBody syncBlockBody = SyncBlockBody.empty(DEFAULT_PROTOCOL_SCHEDULE);
+        final SyncBlockBody syncBlockBody = SyncBlockBody.emptyWithNullWithdrawals(DEFAULT_PROTOCOL_SCHEDULE);
         assertThat(syncBlockBody.getRlp()).isEqualTo(emptyBBBytes);
     }
 
     @Test
     public void testEmptyIsSameAsBlockBody2() {
-        final SyncBlockBody syncBlockBody = SyncBlockBody.empty(DEFAULT_PROTOCOL_SCHEDULE);
+        final SyncBlockBody syncBlockBody = SyncBlockBody.emptyWithNullWithdrawals(DEFAULT_PROTOCOL_SCHEDULE);
         BytesValueRLPInput bytesValueRLPInput = new BytesValueRLPInput(syncBlockBody.getRlp(), false);
         final BlockBody emptyBB = BlockBody.readWrappedBodyFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions());
         assertThat(emptyBB).isEqualTo(BlockBody.empty());
@@ -135,7 +140,7 @@ public class SyncBlockBodyTest {
     @Test
     public void testEmptyBlockBodyFailsWhenAllowEmptyIsFalse() {
         final BytesValueRLPInput input = new BytesValueRLPInput(Bytes.fromHexString("0xc0"), false, true);
-        assertThat(SyncBlockBody.readWrappedBodyFrom(input, true, DEFAULT_PROTOCOL_SCHEDULE)).isEqualTo(SyncBlockBody.empty(DEFAULT_PROTOCOL_SCHEDULE));
+        assertThat(SyncBlockBody.readWrappedBodyFrom(input, true, DEFAULT_PROTOCOL_SCHEDULE)).isEqualTo(SyncBlockBody.emptyWithNullWithdrawals(DEFAULT_PROTOCOL_SCHEDULE));
     }
 
     private static Block getBlock() {

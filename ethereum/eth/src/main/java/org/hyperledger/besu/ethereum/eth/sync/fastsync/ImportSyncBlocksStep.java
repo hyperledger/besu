@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -47,8 +46,6 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   public ImportSyncBlocksStep(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final ValidationPolicy headerValidationPolicy,
-      final ValidationPolicy ommerValidationPolicy,
       final EthContext ethContext,
       final BlockHeader pivotHeader) {
     this.protocolSchedule = protocolSchedule;

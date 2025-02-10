@@ -546,8 +546,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     return blockHeader.getDifficulty().add(parentTotalDifficulty);
   }
 
-  @Override
-  public Difficulty calculateTotalDifficultyForSyncing(final BlockHeader blockHeader) {
+  private Difficulty calculateTotalDifficultyForSyncing(final BlockHeader blockHeader) {
     if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
       difficultyForSyncing = blockHeader.getDifficulty();
     } else if (difficultyForSyncing.equals(Difficulty.ZERO)) {
@@ -654,7 +653,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         newBlock.getBody().getEncodedTransactions().stream().map(Hash::hash).toList();
     indexTransactionsForBlock(updater, newBlockHash, listOfTxHashes);
     gasUsedCounter.inc(newBlock.getHeader().getGasUsed());
-    numberOfTransactionsCounter.inc(receipts.size());
+    numberOfTransactionsCounter.inc(newBlock.getBody().getTransactionCount());
 
     return BlockAddedEvent.createForSyncHeadAdvancement(
         newBlock.getHeader(),

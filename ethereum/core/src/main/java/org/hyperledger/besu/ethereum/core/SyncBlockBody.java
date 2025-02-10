@@ -28,12 +28,11 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SyncBlockBody {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SyncBlockBody.class);
+  private static final String EMPTY_BODY_RLP = "0xc2c0c0";
+  private static final String EMPTY_BODY_WITH_EMPTY_WITHDRAWALS_RLP = "0xc3c0c0c0";
 
   private final Bytes bytesOfWrappedRlpInput;
   private final List<Bytes> transactionBytes;
@@ -54,12 +53,21 @@ public class SyncBlockBody {
     this.blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 
-  public static SyncBlockBody empty(final ProtocolSchedule protocolSchedule) {
+  public static SyncBlockBody emptyWithNullWithdrawals(final ProtocolSchedule protocolSchedule) {
     return new SyncBlockBody(
-        Bytes.fromHexString("0xc2c0c0"),
+        Bytes.fromHexString(EMPTY_BODY_RLP),
         Collections.emptyList(),
         Bytes.EMPTY,
         null,
+        protocolSchedule);
+  }
+
+  public static SyncBlockBody emptyWithEmptyWithdrawals(final ProtocolSchedule protocolSchedule) {
+    return new SyncBlockBody(
+        Bytes.fromHexString(EMPTY_BODY_WITH_EMPTY_WITHDRAWALS_RLP),
+        Collections.emptyList(),
+        Bytes.EMPTY,
+        Collections.emptyList(),
         protocolSchedule);
   }
 
@@ -79,7 +87,7 @@ public class SyncBlockBody {
     if (input.isEndOfCurrentList() && allowEmptyBody) {
       // empty block [] -> Return empty body.
       input.leaveList();
-      return empty(protocolSchedule);
+      return emptyWithNullWithdrawals(protocolSchedule);
     }
     // get a list of Bytes for the transactions
     final ArrayList<Bytes> transactionBytes = new ArrayList<>();
@@ -141,7 +149,6 @@ public class SyncBlockBody {
 
   public Supplier<BlockBody> getBodySupplier() {
     return () -> {
-      LOG.info("STEFAN: Creating block body from sync block body");
       return BlockBody.readWrappedBodyFrom(
           new BytesValueRLPInput(bytesOfWrappedRlpInput, false), blockHeaderFunctions, false);
     };
