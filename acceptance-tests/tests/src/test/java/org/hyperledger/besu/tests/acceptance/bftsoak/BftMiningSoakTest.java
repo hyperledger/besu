@@ -212,6 +212,8 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     upgradeToLondon(
         minerNode1, minerNode2, minerNode3, minerNode4, lastChainHeight.intValue() + 120);
 
+    Thread.sleep(THREE_MINUTES);
+
     previousStepEndTime = Instant.now();
 
     chainHeight = minerNode1.execute(ethTransactions.blockNumber());
