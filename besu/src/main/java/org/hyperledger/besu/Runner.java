@@ -173,10 +173,10 @@ public class Runner implements AutoCloseable {
       LOG.info("Starting Ethereum main loop ... ");
       natService.start();
       networkRunner.start();
+      besuController.getMiningCoordinator().subscribe();
       if (networkRunner.getNetwork().isP2pEnabled()) {
         besuController.getSynchronizer().start();
       }
-      besuController.getMiningCoordinator().subscribe();
       besuController.getMiningCoordinator().start();
       transactionPoolEvictionService.start();
 

@@ -16,8 +16,8 @@ package org.hyperledger.besu.tests.acceptance;
 
 import static org.apache.logging.log4j.util.LoaderUtil.getClassLoader;
 
-import org.hyperledger.besu.tests.acceptance.bft.BftAcceptanceTestParameterization;
-import org.hyperledger.besu.tests.acceptance.bft.ParameterizedBftTestBase;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.File;
@@ -27,14 +27,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
 
-public class QuorumIBFTMigrationTest extends ParameterizedBftTestBase {
-
-  private static final Logger LOG = LoggerFactory.getLogger(QuorumIBFTMigrationTest.class);
+public class QuorumIBFTMigrationTest extends AcceptanceTestBase {
 
   public static void copyKeyFilesToNodeDataDirs(final BesuNode... nodes) throws IOException {
     for (BesuNode node : nodes) {
@@ -61,7 +56,7 @@ public class QuorumIBFTMigrationTest extends ParameterizedBftTestBase {
         new ProcessBuilder(
             "../../build/install/besu/bin/besu",
             "--genesis-file",
-            "src/test/resources/qbft/qbft.json",
+            "src/test/resources/qbft/qbft-migration.json",
             "--data-path",
             dataPath.toString(),
             "--data-storage-format",
@@ -82,24 +77,20 @@ public class QuorumIBFTMigrationTest extends ParameterizedBftTestBase {
     }
   }
 
-  @ParameterizedTest(name = "{index}: {0}")
-  @MethodSource("factoryFunctions")
-  public void shouldImportIBFTBlocksAndTransitionToQBFT(
-      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
-
-    if ("ibft2".equals(testName)) {
-      LOG.info("Skipping test: " + testName);
-      return;
-    }
-
-    setUp(testName, nodeFactory);
+  @Test
+  public void shouldImportIBFTBlocksAndTransitionToQBFT() throws Exception {
 
     // Create a mix of Bonsai and Forest DB nodes
-    final BesuNode minerNode1 = nodeFactory.createForestNodeFixedPort(besu, "miner1");
-    final BesuNode minerNode2 = nodeFactory.createForestNodeFixedPort(besu, "miner2");
-    final BesuNode minerNode3 = nodeFactory.createForestNodeFixedPort(besu, "miner3");
-    final BesuNode minerNode4 = nodeFactory.createForestNodeFixedPort(besu, "miner4");
-    final BesuNode minerNode5 = nodeFactory.createForestNodeFixedPort(besu, "miner5");
+    final BesuNode minerNode1 =
+        besu.createQbftMigrationNode("miner1", false, DataStorageFormat.FOREST);
+    final BesuNode minerNode2 =
+        besu.createQbftMigrationNode("miner2", false, DataStorageFormat.FOREST);
+    final BesuNode minerNode3 =
+        besu.createQbftMigrationNode("miner3", false, DataStorageFormat.FOREST);
+    final BesuNode minerNode4 =
+        besu.createQbftMigrationNode("miner4", false, DataStorageFormat.FOREST);
+    final BesuNode minerNode5 =
+        besu.createQbftMigrationNode("miner5", false, DataStorageFormat.FOREST);
 
     // Copy key files to the node datadirs
     // Use the key files saved in resources directory

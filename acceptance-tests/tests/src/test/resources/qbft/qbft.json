@@ -1,65 +1,39 @@
 {
+  "config": {
+    "chainId": 4,
+    "berlinBlock": 0,
+    "qbft": {
+      "blockperiodseconds": 1,
+      "epochlength": 30000,
+      "requesttimeoutseconds": 5,
+      "blockreward": "5000000000000000000"
+    }
+  },
   "nonce": "0x0",
   "timestamp": "0x58ee40ba",
-  "extraData": "0x0000000000000000000000000000000000000000000000000000000000000000f86df86994a18182ee8ca476f2f0fb8170a1d4620edb39c5e194065541903bf3bb8c088a18046b441f5d286288c994d1e106d68cac92668b100f6f43791ddcb2c7588094d156777a1e1539fe654fc82266f41fd5d4aa548494efbbd8900222d7b2f75d081c3e7446a1f4fe10ce80c0",
-  "gasLimit": "700000000",
-  "gasUsed": "0x0",
-  "number": "0x0",
+  "extraData": "%extraData%",
+  "gasLimit": "0x47b760",
   "difficulty": "0x1",
-  "coinbase": "0x0000000000000000000000000000000000000000",
   "mixHash": "0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365",
-  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "config": {
-    "chainId": 1337,
-    "homesteadBlock": 10,
-    "eip150Block": 20,
-    "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-    "eip155Block": 25,
-    "eip158Block": 30,
-    "byzantiumBlock": 50,
-    "constantinopleBlock": 60,
-    "petersburgBlock": 70,
-    "istanbulBlock": 80,
-    "ibft": {
-      "epochlength": 100,
-      "blockperiodseconds": 5,
-      "requesttimeoutseconds": 10,
-      "policy": 0,
-      "ceil2Nby3Block": 0,
-      "validatorcontractaddress": "0x0000000000000000000000000000000000000000"
-    },
-    "qbft": {
-      "epochLength": 30000,
-      "blockPeriodSeconds" : 1,
-      "requestTimeoutSeconds": 10,
-      "startBlock": 101
-    },
-    "txnSizeLimit": 64,
-    "maxCodeSize": 0,
-    "maxCodeSizeConfig": [
-      {
-        "block": 0,
-        "size": 64
-      }
-    ],
-    "isMPS": false
-
-  },
+  "coinbase": "0x0000000000000000000000000000000000000000",
   "alloc": {
-    "0xde8e2ae09f2ee2c6c282c054b2384f8b5f9debee": {
-      "balance": "1000000000000000000000000000"
+    "fe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+      "privateKey": "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+      "comment": "private key and this comment are ignored.  In a real chain, the private key should NOT be stored",
+      "balance": "0xad78ebc5ac6200000"
     },
-    "0x23bcbca17fc4978909ab44ac82559c7d379aa006": {
-      "balance": "1000000000000000000000000000"
+    "627306090abaB3A6e1400e9345bC60c78a8BEf57": {
+      "privateKey": "c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3",
+      "comment": "private key and this comment are ignored.  In a real chain, the private key should NOT be stored",
+      "balance": "90000000000000000000000"
     },
-    "0x870276532cca9f33e66273cfa494cf41e04b5a66": {
-      "balance": "1000000000000000000000000000"
-    },
-    "0x7d7fc9fdfa49e2db22fc6ebab593dcf3aeffbde8": {
-      "balance": "1000000000000000000000000000"
-    },
-    "0x4df76ad0678513846699056e0070c5f587580eb5": {
-      "balance": "1000000000000000000000000000"
+    "f17f52151EbEF6C7334FAD080c5704D77216b732": {
+      "privateKey": "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f",
+      "comment": "private key and this comment are ignored.  In a real chain, the private key should NOT be stored",
+      "balance": "90000000000000000000000"
     }
-  }
+  },
+  "number": "0x0",
+  "gasUsed": "0x0",
+  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
 }

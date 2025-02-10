@@ -154,6 +154,9 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
 
   @Override
   public void subscribe() {
+    if (syncState == null) {
+      return;
+    }
     syncState.subscribeSyncStatus(
         syncStatus -> {
           if (syncState.syncTarget().isPresent()) {
