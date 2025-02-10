@@ -81,8 +81,6 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
     } else if (flatDbMode == FlatDbMode.ARCHIVE) {
       return new BonsaiArchiveFlatDbStrategy(metricsSystem, codeStorageStrategy);
     } else {
-      System.out.println("Loading partial flat DB strategy. Not going to work.");
-      new Exception().printStackTrace();
       return new BonsaiPartialFlatDbStrategy(metricsSystem, codeStorageStrategy);
     }
   }

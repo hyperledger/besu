@@ -63,8 +63,8 @@ public interface SegmentedKeyValueStorage extends Closeable {
    *     if found.
    * @throws StorageException If an error occurs during the retrieval process.
    */
-  Optional<NearestKeyValue> getNearestBeforeMod(final SegmentIdentifier segmentIdentifier, Bytes key)
-          throws StorageException;
+  Optional<NearestKeyValue> getNearestBeforeMatchLength(
+      final SegmentIdentifier segmentIdentifier, Bytes key) throws StorageException;
 
   /**
    * Finds the key and corresponding value that is "nearest after" the specified key. "Nearest

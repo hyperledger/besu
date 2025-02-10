@@ -63,7 +63,6 @@ public class WorldStateProofProvider {
       final Address accountAddress,
       final List<UInt256> accountStorageKeys) {
 
-    // System.out.println("Requesting proof assuming world-state root of " + worldStateRoot.toHexString());
     if (!worldStateStorageCoordinator.isWorldStateAvailable(worldStateRoot, null)) {
       return Optional.empty();
     } else {

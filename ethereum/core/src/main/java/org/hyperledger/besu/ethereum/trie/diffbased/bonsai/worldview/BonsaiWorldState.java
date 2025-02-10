@@ -177,7 +177,6 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       final MerkleTrie<Bytes, Bytes> accountTrie) {
     for (final Map.Entry<Address, DiffBasedValue<BonsaiAccount>> accountUpdate :
         worldStateUpdater.getAccountsToUpdate().entrySet()) {
-      // System.out.println("UPDATE ACCOUNT " + accountUpdate.getKey().toHexString() + " to " + accountUpdate.getValue());
       final Bytes accountKey = accountUpdate.getKey();
       final DiffBasedValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
@@ -394,16 +393,6 @@ public class BonsaiWorldState extends DiffBasedWorldState {
     return getWorldStateStorage().getAccountStateTrieNode(location, nodeHash);
   }
 
-  /*
-    private void writeTrieNode(
-        final SegmentIdentifier segmentId,
-        final SegmentedKeyValueStorageTransaction tx,
-        final Bytes location,
-        final Bytes value) {
-      System.out.println("Writing Bonsai account state trie node - location = " + Bytes.wrap(location).toHexString() + ", node = " + Bytes.wrap(value).toHexString());
-      tx.put(segmentId, location.toArrayUnsafe(), value.toArrayUnsafe());
-    }
-  */
   protected Optional<Bytes> getStorageTrieNode(
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
     return getWorldStateStorage().getAccountStorageTrieNode(accountHash, location, nodeHash);

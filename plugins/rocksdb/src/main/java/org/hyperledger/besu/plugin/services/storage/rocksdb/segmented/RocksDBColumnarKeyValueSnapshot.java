@@ -88,20 +88,17 @@ public class RocksDBColumnarKeyValueSnapshot
   }
 
   @Override
-  public Optional<NearestKeyValue> getNearestBeforeMod(final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
-    //System.out.println("Doing mod snapshot version");
+  public Optional<NearestKeyValue> getNearestBeforeMatchLength(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
     try (final RocksIterator rocksIterator = snapTx.getIterator(segmentIdentifier)) {
       rocksIterator.seekForPrev(key.toArrayUnsafe());
 
-      //System.out.println("Snapshot search key size: " + key.size() + ", iterator key size: " + rocksIterator.key().length + ", iterator value = " + Bytes.wrap(rocksIterator.key()).toHexString());
       while (rocksIterator.isValid() && key.size() != rocksIterator.key().length) {
-        //System.out.println("Snapshot found key didn't match, size was " + rocksIterator.key().length + ", looking for previous one");
         rocksIterator.prev();
       }
-      //System.out.println("Snapshot iterator still valid? " + rocksIterator.isValid());
       return Optional.of(rocksIterator)
-              .filter(AbstractRocksIterator::isValid)
-              .map(it -> new NearestKeyValue(Bytes.of(it.key()), Optional.of(it.value())));
+          .filter(AbstractRocksIterator::isValid)
+          .map(it -> new NearestKeyValue(Bytes.of(it.key()), Optional.of(it.value())));
     }
   }
 

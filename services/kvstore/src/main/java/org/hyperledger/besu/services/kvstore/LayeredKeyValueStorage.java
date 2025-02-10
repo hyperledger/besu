@@ -112,13 +112,13 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   }
 
   @Override
-  public Optional<NearestKeyValue> getNearestBeforeMod(
-          final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+  public Optional<NearestKeyValue> getNearestBeforeMatchLength(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
     return getNearest(
-            key,
-            k -> super.getNearestBeforeMod(segmentIdentifier, k),
-            k -> parent.getNearestBeforeMod(segmentIdentifier, k),
-            false);
+        key,
+        k -> super.getNearestBeforeMatchLength(segmentIdentifier, k),
+        k -> parent.getNearestBeforeMatchLength(segmentIdentifier, k),
+        false);
   }
 
   @Override

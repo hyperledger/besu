@@ -112,7 +112,6 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
           .addArgument(blockHeader::toLogString)
           .addArgument(worldStateRootHash::toShortHexString)
           .log();
-//       new Exception().printStackTrace();
       if (forWorldState.isModifyingHeadWorldState()) {
         cachedWorldStatesByHash.put(
             blockHeader.getHash(),

@@ -373,7 +373,6 @@ public class QbftRound {
     LOG.trace("Importing proposed block with extraData={}", extraData);
     final BlockImporter blockImporter =
         protocolSchedule.getByBlockHeader(blockToImport.getHeader()).getBlockImporter();
-    // System.out.println("Importing QBFT block. After this completes, state should be up to date?");
     final BlockImportResult result =
         blockImporter.importBlock(protocolContext, blockToImport, HeaderValidationMode.FULL);
     if (!result.isImported()) {

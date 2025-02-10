@@ -176,7 +176,10 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     return composedWorldStateStorage
         .get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)
         .map(Bytes32::wrap)
-        .map(hash -> hash.equals(rootHash) || (blockHash != null && trieLogStorage.containsKey(blockHash.toArrayUnsafe())))
+        .map(
+            hash ->
+                hash.equals(rootHash)
+                    || (blockHash != null && trieLogStorage.containsKey(blockHash.toArrayUnsafe())))
         .orElse(false);
   }
 

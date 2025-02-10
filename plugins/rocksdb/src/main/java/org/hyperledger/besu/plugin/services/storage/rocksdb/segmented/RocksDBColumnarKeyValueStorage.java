@@ -397,25 +397,20 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
     }
   }
 
-
   @Override
-  public Optional<NearestKeyValue> getNearestBeforeMod(
-          final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+  public Optional<NearestKeyValue> getNearestBeforeMatchLength(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
 
-    //System.out.println("Doing mod version");
     try (final RocksIterator rocksIterator =
-                 getDB().newIterator(safeColumnHandle(segmentIdentifier))) {
+        getDB().newIterator(safeColumnHandle(segmentIdentifier))) {
       rocksIterator.seekForPrev(key.toArrayUnsafe());
-      //System.out.println("Search key size: " + key.size() + ", iterator key size: " + rocksIterator.key().length + ", iterator value = " + Bytes.wrap(rocksIterator.key()).toHexString());
       while (rocksIterator.isValid() && key.size() != rocksIterator.key().length) {
-        //System.out.println("Found key didn't match, size was " + rocksIterator.key().length + ", looking for previous one");
         rocksIterator.prev();
       }
-      //System.out.println("Iterator still valid? " + rocksIterator.isValid());
-      Optional<NearestKeyValue> s = Optional.of(rocksIterator)
+      Optional<NearestKeyValue> s =
+          Optional.of(rocksIterator)
               .filter(AbstractRocksIterator::isValid)
               .map(it -> new NearestKeyValue(Bytes.of(it.key()), Optional.of(it.value())));
-      //System.out.println("Returning this from storage: " + s + " (is present = " + s.isPresent() + ", key = " + Bytes.wrap(rocksIterator.key()));
       return s;
     }
   }
