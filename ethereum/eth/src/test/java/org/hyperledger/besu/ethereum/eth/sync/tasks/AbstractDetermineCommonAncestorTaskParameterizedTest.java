@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -49,31 +50,28 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
-public class DetermineCommonAncestorTaskParameterizedTest {
+public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
   private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private static Block genesisBlock;
   private static MutableBlockchain localBlockchain;
-  private static final int chainHeight = 50;
+  protected static final int chainHeight = 50;
 
   private MutableBlockchain remoteBlockchain;
   private PeerTaskExecutor peerTaskExecutor;
@@ -98,19 +96,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
   @BeforeEach
   public void setup() {
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
-    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
-  }
-
-  public static Stream<Arguments> parameters() throws IOException {
-    final int[] requestSizes = {5, 12, chainHeight, chainHeight * 2};
-    final Stream.Builder<Arguments> builder = Stream.builder();
-    for (final int requestSize : requestSizes) {
-      for (int i = 0; i <= chainHeight; i++) {
-        builder.add(Arguments.of(requestSize, i, true));
-        builder.add(Arguments.of(requestSize, i, false));
-      }
-    }
-    return builder.build();
+    peerTaskExecutor = mock(PeerTaskExecutor.class);
   }
 
   @ParameterizedTest(name = "requestSize={0}, commonAncestor={1}, isPeerTaskSystemEnabled={2}")
@@ -187,10 +173,8 @@ public class DetermineCommonAncestorTaskParameterizedTest {
                 .build(),
             metricsSystem);
 
-    Mockito.when(
-            peerTaskExecutor.executeAgainstPeer(
-                Mockito.any(GetHeadersFromPeerTask.class),
-                Mockito.eq(respondingEthPeer.getEthPeer())))
+    when(peerTaskExecutor.executeAgainstPeer(
+            Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(respondingEthPeer.getEthPeer())))
         .thenAnswer(
             (invocationOnMock) -> {
               GetHeadersFromPeerTask getHeadersTask =
@@ -205,7 +189,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
                 headers.add(remoteBlockchain.getBlockHeader(i).get());
               }
 
-              return new PeerTaskExecutorResult<List<BlockHeader>>(
+              return new PeerTaskExecutorResult<>(
                   Optional.of(headers),
                   PeerTaskExecutorResponseCode.SUCCESS,
                   Optional.of(respondingEthPeer.getEthPeer()));
