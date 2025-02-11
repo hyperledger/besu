@@ -81,7 +81,7 @@ public class ApiConfigurationOptions {
       names = {"--rpc-gas-cap"},
       description =
           "Specifies the gasLimit cap for transaction simulation RPC methods. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
-  private final Long rpcGasCap = 0L;
+  private final Long rpcGasCap = ApiConfiguration.DEFAULT_GAS_CAP;
 
   @CommandLine.Option(
       names = {"--rpc-max-trace-filter-range"},

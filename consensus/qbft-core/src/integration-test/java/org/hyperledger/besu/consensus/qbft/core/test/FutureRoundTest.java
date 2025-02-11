@@ -28,8 +28,8 @@ import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.ethereum.core.Block;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -64,7 +64,7 @@ public class FutureRoundTest {
 
   @Test
   public void messagesForFutureRoundAreNotActionedUntilRoundIsActive() {
-    final Block futureBlock =
+    final QbftBlock futureBlock =
         context.createBlockForProposalFromChainHead(60, peers.getProposer().getNodeAddress());
     final int quorum = BftHelpers.calculateRequiredValidatorQuorum(NETWORK_SIZE);
     final ConsensusRoundIdentifier subsequentRoundId = new ConsensusRoundIdentifier(1, 6);
@@ -104,7 +104,7 @@ public class FutureRoundTest {
     // following 1 more prepare, a commit msg will be sent
     futurePeers.getNonProposing(quorum - 2).injectPrepare(futureRoundId, futureBlock.getHash());
 
-    final Block commitBlock =
+    final QbftBlock commitBlock =
         createCommitBlockFromProposalBlock(futureBlock, futureRoundId.getRoundNumber());
     final SECPSignature commitSeal =
         context.getLocalNodeParams().getNodeKey().sign(commitBlock.getHash());
@@ -120,9 +120,9 @@ public class FutureRoundTest {
 
   @Test
   public void priorRoundsCannotBeCompletedAfterReceptionOfNewRound() {
-    final Block initialBlock =
+    final QbftBlock initialBlock =
         context.createBlockForProposalFromChainHead(30, peers.getProposer().getNodeAddress());
-    final Block futureBlock =
+    final QbftBlock futureBlock =
         context.createBlockForProposalFromChainHead(60, peers.getProposer().getNodeAddress());
 
     peers.getProposer().injectProposal(roundId, initialBlock);

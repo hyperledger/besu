@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
@@ -71,7 +70,7 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
    */
   private boolean transactionCurrentPriceBelowMin(
       final TransactionEvaluationContext evaluationContext) {
-    final PendingTransaction pendingTransaction = evaluationContext.getPendingTransaction();
+    final var pendingTransaction = evaluationContext.getPendingTransaction();
     // Priority txs are exempt from this check
     if (!pendingTransaction.hasPriority()) {
 

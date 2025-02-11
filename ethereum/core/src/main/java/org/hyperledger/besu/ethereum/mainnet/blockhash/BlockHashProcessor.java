@@ -15,13 +15,12 @@
 package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockContextProcessor;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 
-public interface BlockHashProcessor {
-
-  void processBlockHashes(MutableWorldState worldState, ProcessableBlockHeader currentBlockHeader);
+public interface BlockHashProcessor extends BlockContextProcessor<Void, BlockProcessingContext> {
 
   BlockHashLookup createBlockHashLookup(Blockchain blockchain, ProcessableBlockHeader blockHeader);
 }

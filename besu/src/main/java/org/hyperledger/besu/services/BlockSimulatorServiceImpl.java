@@ -60,7 +60,11 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
     this.blockchain = blockchain;
     blockSimulator =
         new BlockSimulator(
-            worldStateArchive, protocolSchedule, transactionSimulator, miningConfiguration);
+            worldStateArchive,
+            protocolSchedule,
+            transactionSimulator,
+            miningConfiguration,
+            blockchain);
     this.worldStateArchive = worldStateArchive;
   }
 
