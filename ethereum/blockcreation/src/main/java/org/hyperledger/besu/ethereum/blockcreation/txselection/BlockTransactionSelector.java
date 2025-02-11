@@ -287,9 +287,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     selectorsStateManager.blockSelectionStarted();
 
-    transactions.stream()
-        .map(PendingTransaction.Local.Priority::new)
-        .forEach(this::evaluateTransaction);
+    transactions.forEach(
+        transaction -> evaluateTransaction(new PendingTransaction.Local.Priority(transaction)));
     return transactionSelectionResults;
   }
 

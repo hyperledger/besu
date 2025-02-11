@@ -15,8 +15,8 @@
 package org.hyperledger.besu.plugin.services.txselection;
 
 /**
- * This class represents an abstract plugin transaction selector which provides manage the selector
- * state.
+ * This class represents an abstract plugin transaction selector which provides methods to manage
+ * the selector state.
  *
  * @param <S> The type of the state used by the selector
  */
@@ -41,7 +41,7 @@ public abstract class AbstractStatefulPluginTransactionSelector<S>
 
   /**
    * Get the working state for this selector. A working state contains changes that have not yet
-   * commited
+   * committed
    *
    * @return the working state of this selector
    */
