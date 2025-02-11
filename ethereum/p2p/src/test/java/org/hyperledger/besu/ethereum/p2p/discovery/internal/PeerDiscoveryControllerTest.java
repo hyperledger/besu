@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -61,7 +61,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -368,14 +367,15 @@ public class PeerDiscoveryControllerTest {
     // Setup ping to be sent to discoPeer
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
     Clock fixedClock = Clock.fixed(Instant.ofEpochSecond(123), ZoneId.of("UTC"));
-    PingPacketDataFactory pingPacketDataFactory = new PingPacketDataFactory(new EndpointValidator(), new ExpiryValidator(fixedClock), fixedClock);
+    PingPacketDataFactory pingPacketDataFactory =
+        new PingPacketDataFactory(
+            new EndpointValidator(), new ExpiryValidator(fixedClock), fixedClock);
     final PingPacketData pingPacketData =
-            pingPacketDataFactory
-            .create(
-                Optional.ofNullable(localEndpoint),
-                discoPeer.getEndpoint(),
-                    fixedClock.instant().getEpochSecond() + 1,
-                UInt64.ONE);
+        pingPacketDataFactory.create(
+            Optional.ofNullable(localEndpoint),
+            discoPeer.getEndpoint(),
+            fixedClock.instant().getEpochSecond() + 1,
+            UInt64.ONE);
     final Packet discoPeerPing =
         packetPackage.packetFactory().create(PacketType.PING, pingPacketData, nodeKeys.getFirst());
     mockPingPacketCreation(discoPeer, discoPeerPing);
