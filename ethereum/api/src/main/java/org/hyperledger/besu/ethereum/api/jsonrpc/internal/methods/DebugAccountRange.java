@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import com.google.common.base.Suppliers;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -37,6 +35,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class DebugAccountRange implements JsonRpcMethod {
 
