@@ -24,10 +24,16 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketPackage;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.findneighbors.FindNeighborsPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.findneighbors.FindNeighborsPacketDataFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.neighbors.NeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.pong.PongPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.validation.ExpiryValidator;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.validation.TargetValidator;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -77,8 +83,10 @@ class MockPacketDataFactory {
         Bytes.fromHexString(
             "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40");
 
+    Clock fixedClock = Clock.fixed(Instant.ofEpochSecond(exparationMs - 1), ZoneId.of("UTC"));
+    FindNeighborsPacketDataFactory findNeighborsPacketDataFactory = new FindNeighborsPacketDataFactory(new TargetValidator(), new ExpiryValidator(fixedClock), fixedClock);
     final FindNeighborsPacketData packetData =
-        PACKET_PACKAGE.findNeighborsPacketDataFactory().create(target, exparationMs);
+            findNeighborsPacketDataFactory.create(target, exparationMs);
     when(packet.getPacketData(any())).thenReturn(Optional.of(packetData));
     final Bytes id = from.getId();
     when(packet.getNodeId()).thenReturn(id);

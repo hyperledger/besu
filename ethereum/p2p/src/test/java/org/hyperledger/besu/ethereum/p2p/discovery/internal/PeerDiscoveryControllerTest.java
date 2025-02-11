@@ -48,7 +48,10 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.enrresponse.E
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.findneighbors.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.neighbors.NeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.ping.PingPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.ping.PingPacketDataFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.pong.PongPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.validation.EndpointValidator;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.validation.ExpiryValidator;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
@@ -57,8 +60,10 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -362,15 +367,15 @@ public class PeerDiscoveryControllerTest {
 
     // Setup ping to be sent to discoPeer
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
+    Clock fixedClock = Clock.fixed(Instant.ofEpochSecond(123), ZoneId.of("UTC"));
+    PingPacketDataFactory pingPacketDataFactory = new PingPacketDataFactory(new EndpointValidator(), new ExpiryValidator(fixedClock), fixedClock);
     final PingPacketData pingPacketData =
-        packetPackage
-            .pingPacketDataFactory()
+            pingPacketDataFactory
             .create(
                 Optional.ofNullable(localEndpoint),
                 discoPeer.getEndpoint(),
-                Instant.now().getEpochSecond() + 1,
+                    fixedClock.instant().getEpochSecond() + 1,
                 UInt64.ONE);
-    Thread.sleep(Duration.ofSeconds(2));
     final Packet discoPeerPing =
         packetPackage.packetFactory().create(PacketType.PING, pingPacketData, nodeKeys.getFirst());
     mockPingPacketCreation(discoPeer, discoPeerPing);
@@ -1073,9 +1078,7 @@ public class PeerDiscoveryControllerTest {
         .send(eq(discoPeer), matchPacketOfType(PacketType.FIND_NEIGHBORS));
 
     final Packet findNeighborsPacket =
-        MockPacketDataFactory.mockFindNeighborsPacket(
-            discoPeer, Instant.now().getEpochSecond() + 1);
-    Thread.sleep(Duration.ofSeconds(2));
+        MockPacketDataFactory.mockFindNeighborsPacket(discoPeer, 123);
     controller.onMessage(findNeighborsPacket, discoPeer);
 
     verify(outboundMessageHandler, times(0))
