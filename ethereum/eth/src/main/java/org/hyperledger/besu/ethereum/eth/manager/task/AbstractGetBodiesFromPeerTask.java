@@ -106,17 +106,15 @@ public abstract class AbstractGetBodiesFromPeerTask<T, B> extends AbstractPeerRe
     }
 
     final List<T> blocks = new ArrayList<>(headers.size());
-    int i = 0;
-    for (final B body : bodies) {
-      final BlockHeader blockHeader = headers.get(i++);
+    for (int i = 0; i < bodies.size(); i++) {
+      final B body = bodies.get(i);
+      final BlockHeader blockHeader = headers.get(i);
       if (!bodyMatchesHeader(body, blockHeader)) {
         // This message contains unrelated bodies - exit
         LOG.debug("This message contains unrelated bodies. Peer: {}", peer);
         return Optional.empty();
       }
-      headers.forEach(h -> blocks.add(getBlock(h, body)));
-      // Clear processed headers
-      headers.clear();
+      blocks.add(getBlock(blockHeader, body));
     }
     LOG.atTrace()
         .setMessage("Associated {} bodies with {} headers to get {} blocks with these hashes: {}")
