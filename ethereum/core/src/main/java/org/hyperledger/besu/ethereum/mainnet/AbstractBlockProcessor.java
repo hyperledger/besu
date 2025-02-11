@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
@@ -29,8 +30,9 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
-import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -125,10 +127,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     long currentBlobGasUsed = 0;
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
-
-    protocolSpec.getBlockHashProcessor().processBlockHashes(worldState, blockHeader);
     final BlockHashLookup blockHashLookup =
         protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader);
+    final BlockProcessingContext blockProcessingContext =
+        new BlockProcessingContext(
+            blockHeader, worldState, protocolSpec, blockHashLookup, OperationTracer.NO_TRACING);
+    protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
 
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
@@ -191,6 +195,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
 
       blockUpdater.commit();
+      blockUpdater.markTransactionBoundary();
 
       currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
       if (transaction.getVersionedHashes().isPresent()) {
@@ -238,16 +243,22 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         protocolSpec.getRequestProcessorCoordinator();
     Optional<List<Request>> maybeRequests = Optional.empty();
     if (requestProcessor.isPresent()) {
-      ProcessRequestContext context =
-          new ProcessRequestContext(
-              blockHeader,
-              worldState,
-              protocolSpec,
-              receipts,
-              blockHashLookup,
-              OperationTracer.NO_TRACING);
+      RequestProcessingContext requestProcessingContext =
+          new RequestProcessingContext(blockProcessingContext, receipts);
+      maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
+    }
 
-      maybeRequests = Optional.of(requestProcessor.get().process(context));
+    if (maybeRequests.isPresent() && blockHeader.getRequestsHash().isPresent()) {
+      Hash calculatedRequestHash = BodyValidation.requestsHash(maybeRequests.get());
+      Hash headerRequestsHash = blockHeader.getRequestsHash().get();
+      if (!calculatedRequestHash.equals(headerRequestsHash)) {
+        return new BlockProcessingResult(
+            Optional.empty(),
+            "Requests hash mismatch, calculated: "
+                + calculatedRequestHash.toHexString()
+                + " header: "
+                + headerRequestsHash.toHexString());
+      }
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {

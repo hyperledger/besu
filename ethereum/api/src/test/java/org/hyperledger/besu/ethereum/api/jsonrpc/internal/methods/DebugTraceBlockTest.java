@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -144,10 +144,10 @@ public class DebugTraceBlockTest {
     when(blockchain.getBlockByHash(block.getHeader().getParentHash()))
         .thenReturn(Optional.of(parentBlock));
 
-    DebugTraceTransactionResult result1 = mock(DebugTraceTransactionResult.class);
-    DebugTraceTransactionResult result2 = mock(DebugTraceTransactionResult.class);
+    DebugTraceTransactionDetails result1 = mock(DebugTraceTransactionDetails.class);
+    DebugTraceTransactionDetails result2 = mock(DebugTraceTransactionDetails.class);
 
-    List<DebugTraceTransactionResult> resultList = Arrays.asList(result1, result2);
+    List<DebugTraceTransactionDetails> resultList = Arrays.asList(result1, result2);
 
     try (MockedStatic<Tracer> mockedTracer = mockStatic(Tracer.class)) {
       mockedTracer
@@ -163,7 +163,7 @@ public class DebugTraceBlockTest {
       assertThat(jsonRpcResponse).isInstanceOf(JsonRpcSuccessResponse.class);
       JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) jsonRpcResponse;
 
-      final Collection<DebugTraceTransactionResult> traceResult = getResult(response);
+      final Collection<DebugTraceTransactionDetails> traceResult = getResult(response);
       assertThat(traceResult).isNotEmpty();
       assertThat(traceResult).isInstanceOf(Collection.class).hasSize(2);
       assertThat(traceResult).containsExactly(result1, result2);
@@ -171,8 +171,9 @@ public class DebugTraceBlockTest {
   }
 
   @SuppressWarnings("unchecked")
-  private Collection<DebugTraceTransactionResult> getResult(final JsonRpcSuccessResponse response) {
-    return (Collection<DebugTraceTransactionResult>) response.getResult();
+  private Collection<DebugTraceTransactionDetails> getResult(
+      final JsonRpcSuccessResponse response) {
+    return (Collection<DebugTraceTransactionDetails>) response.getResult();
   }
 
   @Test

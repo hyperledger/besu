@@ -85,14 +85,15 @@ public class ProcessingResultTransactionSelector extends AbstractTransactionSele
       final ValidationResult<TransactionInvalidReason> invalidReasonValidationResult) {
 
     final TransactionInvalidReason invalidReason = invalidReasonValidationResult.getInvalidReason();
-    // If the invalid reason is transient, then leave the transaction in the pool and continue
+    // If the invalid reason is transient, then penalize but leave the transaction in the pool and
+    // continue
     if (isTransientValidationError(invalidReason)) {
       LOG.atTrace()
-          .setMessage("Transient validation error {} for transaction {} keeping it in the pool")
+          .setMessage("Transient validation error {} for transaction {}, penalize it in the pool")
           .addArgument(invalidReason)
           .addArgument(transaction::toTraceLog)
           .log();
-      return TransactionSelectionResult.invalidTransient(invalidReason.name());
+      return TransactionSelectionResult.invalidPenalized(invalidReason.name());
     }
     // If the transaction was invalid for any other reason, delete it, and continue.
     LOG.atTrace()
