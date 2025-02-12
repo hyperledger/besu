@@ -18,8 +18,11 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionCon
 import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 
 /**
- * This class represents an abstract transaction selector which provides methods to evaluate
- * transactions.
+ * This class represents an abstract transaction selector which provides methods to access and set
+ * the selector working state.
+ *
+ * @param <S> The type of state specified by the implementing selector, not to be confused with the
+ *     world state.
  */
 public abstract class AbstractStatefulTransactionSelector<S> extends AbstractTransactionSelector {
   private final SelectorsStateManager selectorsStateManager;
@@ -34,10 +37,20 @@ public abstract class AbstractStatefulTransactionSelector<S> extends AbstractTra
     selectorsStateManager.createSelectorState(this, initialState, stateDuplicator);
   }
 
+  /**
+   * Get the working state specific to this selector.
+   *
+   * @return the working state of the selector
+   */
   protected S getWorkingState() {
     return selectorsStateManager.getSelectorWorkingState(this);
   }
 
+  /**
+   * Set the working state specific to this selector.
+   *
+   * @param newState the new state of the selector
+   */
   protected void setWorkingState(final S newState) {
     selectorsStateManager.setSelectorWorkingState(this, newState);
   }
