@@ -17,7 +17,10 @@
     - Fast Sync
 - Transaction indexing will be disabled by default in a future release for snap sync and checkpoint sync modes. This will break RPCs that use transaction hash for historical queries.
 ### Additions and Improvements
+- Add TLS/mTLS options and configure the GraphQL HTTP service[#7910](https://github.com/hyperledger/besu/pull/7910)
 ### Bug fixes
+- Upgrade Netty to version 4.1.118 to fix CVE-2025-24970 [#8275](https://github.com/hyperledger/besu/pull/8275)
+- Add missing RPC method `debug_accountRange` to `RpcMethod.java` and implemented its handler. [#8153](https://github.com/hyperledger/besu/issues/8153)
 
 ## 25.2.0
 
@@ -38,6 +41,7 @@
 ### Additions and Improvements
 - Add a tx selector to skip txs from the same sender after the first not selected [#8216](https://github.com/hyperledger/besu/pull/8216)
 - `rpc-gas-cap` default value has changed from 0 (unlimited) to 50M [#8251](https://github.com/hyperledger/besu/issues/8251)
+
 
 #### Prague
 - Add timestamps to enable Prague hardfork on Sepolia and Holesky test networks [#8163](https://github.com/hyperledger/besu/pull/8163)
