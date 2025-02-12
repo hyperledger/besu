@@ -96,8 +96,6 @@ dependencies {
     api 'info.picocli:picocli-codegen:4.7.6'
 
     api 'io.kubernetes:client-java:21.0.1-legacy'
-    // Temporarily locking in to avoid https://github.com/netplex/json-smart-v2/issues/240
-    api 'net.minidev:json-smart:2.4.2'
 
     api 'io.opentelemetry.instrumentation:opentelemetry-okhttp-3.0:2.9.0-alpha'
     api 'io.opentelemetry.proto:opentelemetry-proto:1.3.2-alpha'
