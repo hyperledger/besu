@@ -178,7 +178,7 @@ dependencies {
 
     api 'tech.pegasys:jc-kzg-4844:1.0.0'
 
-    api 'tech.pegasys.discovery:discovery:24.9.1'
+    api 'tech.pegasys.discovery:discovery:25.2.0'
   }
 }
 
