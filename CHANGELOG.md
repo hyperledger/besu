@@ -78,7 +78,7 @@
 - Retrieve all transaction receipts for a block in one request [#6646](https://github.com/hyperledger/besu/pull/6646)
 - Implement EIP-7840: Add blob schedule to config files [#8042](https://github.com/hyperledger/besu/pull/8042)
 - Allow gasPrice (legacy) and 1559 gasPrice params to be specified simultaneously for `eth_call`, `eth_createAccessList`, and `eth_estimateGas` [#8059](https://github.com/hyperledger/besu/pull/8059)
-- Improve debug_traceBlock calls performance and reduce output size [#8076](https://github.com/hyperledger/besu/pull/8076)
+- Improve debug_traceBlock calls performance and reduce output size [#8103](https://github.com/hyperledger/besu/pull/8103)
 - Add support for EIP-7702 transaction in the txpool [#8018](https://github.com/hyperledger/besu/pull/8018) [#7984](https://github.com/hyperledger/besu/pull/7984)
 - Add support for `movePrecompileToAddress` in `StateOverrides` (`eth_call`)[8115](https://github.com/hyperledger/besu/pull/8115)
 - Default target-gas-limit to 36M for holesky [#8125](https://github.com/hyperledger/besu/pull/8125)
@@ -86,7 +86,7 @@
 - Add nonce to transaction call object [#8139](https://github.com/hyperledger/besu/pull/8139)
 
 ### Bug fixes
-- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
+- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8024](https://github.com/hyperledger/besu/pull/8024)
 - Revise the approach for setting level_compaction_dynamic_level_bytes RocksDB configuration option [#8037](https://github.com/hyperledger/besu/pull/8037)
 - Fix possible incomplete txpool restore from dump file [#7991](https://github.com/hyperledger/besu/pull/7991)
 
@@ -97,14 +97,14 @@ This is an optional hotfix to address serialization of state overrides parameter
 There is no need to upgrade from 24.12.0 (or 24.12.1) to this release if you are not yet using this functionality.
 
 ### Bug fixes
-- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
+- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8024](https://github.com/hyperledger/besu/pull/8024)
 
 ## 24.12.1 Hotfix
 
 This is a hotfix to address publishing besu maven artifacts.  There are no issues with 24.12.0 other than incomplete artifact publishing, and there is no functional difference between 24.12.0 and 24.12.1 release binaries.
 
 ### Bug fixes
-- Fix BOM pom publication to Artifactory [#8201](https://github.com/hyperledger/besu/pull/8021)
+- Fix BOM pom publication to Artifactory [#8021](https://github.com/hyperledger/besu/pull/8021)
 
 ## 24.12.0
 
