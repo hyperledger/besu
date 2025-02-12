@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.UNSUPPORTED_FORK;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -30,7 +33,10 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV3;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
@@ -84,6 +90,76 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
   @Test
   public void shouldReturnExpectedMethodName() {
     assertThat(method.getName()).isEqualTo("engine_getPayloadV3");
+  }
+
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsBeforeCancunMilestone() {
+    BlockHeader shanghaiHeader =
+        new BlockHeaderTestFixture()
+            .prevRandao(Bytes32.random())
+            .timestamp(cancunHardfork.milestone() - 1)
+            .excessBlobGas(BlobGas.of(10L))
+            .buildHeader();
+
+    PayloadIdentifier shanghaiPid =
+        PayloadIdentifier.forPayloadParams(
+            Hash.ZERO,
+            cancunHardfork.milestone() - 1,
+            Bytes32.random(),
+            Address.fromHexString("0x42"),
+            Optional.empty(),
+            Optional.empty());
+
+    BlockWithReceipts shanghaiBlock =
+        new BlockWithReceipts(
+            new Block(
+                shanghaiHeader, new BlockBody(emptyList(), emptyList(), Optional.of(emptyList()))),
+            emptyList());
+    PayloadWrapper payloadShanghai =
+        new PayloadWrapper(shanghaiPid, shanghaiBlock, Optional.empty());
+
+    when(mergeContext.retrievePayloadById(shanghaiPid)).thenReturn(Optional.of(payloadShanghai));
+
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V3.getMethodName(), shanghaiPid);
+
+    assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
+    assertThat(((JsonRpcErrorResponse) resp).getErrorType())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
+  }
+
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterPragueMilestone() {
+    BlockHeader pragueHeader =
+        new BlockHeaderTestFixture()
+            .prevRandao(Bytes32.random())
+            .timestamp(pragueHardfork.milestone())
+            .excessBlobGas(BlobGas.of(10L))
+            .buildHeader();
+
+    PayloadIdentifier postCancunPid =
+        PayloadIdentifier.forPayloadParams(
+            Hash.ZERO,
+            cancunHardfork.milestone(),
+            Bytes32.random(),
+            Address.fromHexString("0x42"),
+            Optional.empty(),
+            Optional.empty());
+
+    BlockWithReceipts pragueBlock =
+        new BlockWithReceipts(
+            new Block(
+                pragueHeader, new BlockBody(emptyList(), emptyList(), Optional.of(emptyList()))),
+            emptyList());
+    PayloadWrapper payloadPostCancun =
+        new PayloadWrapper(postCancunPid, pragueBlock, Optional.empty());
+
+    when(mergeContext.retrievePayloadById(postCancunPid))
+        .thenReturn(Optional.of(payloadPostCancun));
+
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V3.getMethodName(), postCancunPid);
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Override

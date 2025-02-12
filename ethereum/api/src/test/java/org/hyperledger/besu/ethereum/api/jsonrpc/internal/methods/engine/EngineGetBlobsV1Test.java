@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -32,7 +33,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -255,13 +255,5 @@ public class EngineGetBlobsV1Test {
     final ArrayList<BlobAndProofV1> blobAndProofV1s = new ArrayList<>();
     list.forEach(obj -> blobAndProofV1s.add((BlobAndProofV1) obj));
     return blobAndProofV1s;
-  }
-
-  private RpcErrorType fromErrorResp(final JsonRpcResponse resp) {
-    assertThat(resp.getType()).isEqualTo(RpcResponseType.ERROR);
-    return Optional.of(resp)
-        .map(JsonRpcErrorResponse.class::cast)
-        .map(JsonRpcErrorResponse::getErrorType)
-        .get();
   }
 }

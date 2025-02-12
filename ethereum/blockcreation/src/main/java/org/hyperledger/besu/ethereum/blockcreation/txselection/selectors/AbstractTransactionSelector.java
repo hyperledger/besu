@@ -25,7 +25,7 @@ import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
  * transactions.
  */
 public abstract class AbstractTransactionSelector {
-  final BlockSelectionContext context;
+  protected final BlockSelectionContext context;
 
   public AbstractTransactionSelector(final BlockSelectionContext context) {
     this.context = context;
@@ -55,4 +55,24 @@ public abstract class AbstractTransactionSelector {
       final TransactionEvaluationContext evaluationContext,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult);
+
+  /**
+   * Method called when a transaction is selected to be added to a block.
+   *
+   * @param evaluationContext The current selection context
+   * @param processingResult The result of processing the selected transaction.
+   */
+  public void onTransactionSelected(
+      final TransactionEvaluationContext evaluationContext,
+      final TransactionProcessingResult processingResult) {}
+
+  /**
+   * Method called when a transaction is not selected to be added to a block.
+   *
+   * @param evaluationContext The current selection context
+   * @param transactionSelectionResult The transaction selection result
+   */
+  public void onTransactionNotSelected(
+      final TransactionEvaluationContext evaluationContext,
+      final TransactionSelectionResult transactionSelectionResult) {}
 }
