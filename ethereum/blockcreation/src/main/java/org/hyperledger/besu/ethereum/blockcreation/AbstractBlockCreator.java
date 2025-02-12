@@ -55,8 +55,8 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
-import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
+import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 
 import java.util.List;
 import java.util.Optional;
@@ -213,11 +213,15 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final PluginTransactionSelector pluginTransactionSelector =
-          miningConfiguration.getTransactionSelectionService().createPluginTransactionSelector();
-
-      final BlockAwareOperationTracer operationTracer =
-          pluginTransactionSelector.getOperationTracer();
+      final var selectorsStateManager = new SelectorsStateManager();
+      final var pluginTransactionSelector =
+          miningConfiguration
+              .getTransactionSelectionService()
+              .createPluginTransactionSelector(selectorsStateManager);
+      final var operationTracer = pluginTransactionSelector.getOperationTracer();
+      pluginTransactionSelector
+          .getOperationTracer()
+          .traceStartBlock(processableBlockHeader, miningBeneficiary);
 
       operationTracer.traceStartBlock(processableBlockHeader, miningBeneficiary);
       BlockProcessingContext blockProcessingContext =
@@ -240,6 +244,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               miningBeneficiary,
               newProtocolSpec,
               pluginTransactionSelector,
+              selectorsStateManager,
               parentHeader);
       transactionResults.logSelectionStats();
       timings.register("txsSelection");
@@ -362,6 +367,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Address miningBeneficiary,
       final ProtocolSpec protocolSpec,
       final PluginTransactionSelector pluginTransactionSelector,
+      final SelectorsStateManager selectorsStateManager,
       final BlockHeader parentHeader)
       throws RuntimeException {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
@@ -391,7 +397,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             protocolSpec.getGasLimitCalculator(),
             protocolSpec.getBlockHashProcessor(),
             pluginTransactionSelector,
-            ethScheduler);
+            ethScheduler,
+            selectorsStateManager);
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());
