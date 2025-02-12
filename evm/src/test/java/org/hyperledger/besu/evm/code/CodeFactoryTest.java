@@ -482,7 +482,7 @@ class CodeFactoryTest {
   }
 
   @Test
-  void invalidComboEOFCretateReturn() {
+  void invalidComboEOFCreateReturn() {
     invalidCode(
         """
             0x # EOF
