@@ -117,7 +117,7 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
 
     currentRound = roundFactory.createNewRound(parentHeader, 0);
     if (finalState.isLocalNodeProposerForRound(currentRound.getRoundIdentifier())) {
-      blockTimer.startTimer(currentRound.getRoundIdentifier(), parentHeader);
+      blockTimer.startTimer(currentRound.getRoundIdentifier(), parentHeader::getTimestamp);
     }
   }
 

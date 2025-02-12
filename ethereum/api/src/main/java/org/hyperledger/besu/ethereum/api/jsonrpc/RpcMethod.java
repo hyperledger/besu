@@ -33,6 +33,7 @@ public enum RpcMethod {
   CLIQUE_PROPOSE("clique_propose"),
   CLIQUE_GET_SIGNER_METRICS("clique_getSignerMetrics"),
   DEBUG_ACCOUNT_AT("debug_accountAt"),
+  DEBUG_ACCOUNT_RANGE("debug_accountRange"),
   DEBUG_METRICS("debug_metrics"),
   DEBUG_RESYNC_WORLDSTATE("debug_resyncWorldState"),
   DEBUG_SET_HEAD("debug_setHead"),
