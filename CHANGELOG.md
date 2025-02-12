@@ -2,9 +2,9 @@
 
 ## Unreleased
 ### Breaking Changes
+- k8s (KUBERNETES) Nat method is removed. Use docker or none instead. 
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
-- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release. Use docker or none instead.
 - `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated, use `--Xbonsai-full-flat-db-enabled` instead.
 - `--Xbonsai-limit-trie-logs-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
 - `--Xbonsai-trie-log-pruning-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
