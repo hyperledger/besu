@@ -17,6 +17,7 @@
 ### Additions and Improvements
 ### Bug fixes
 - Upgrade Netty to version 4.1.118 to fix CVE-2025-24970 [#8275](https://github.com/hyperledger/besu/pull/8275)
+- Added missing RPC method `debug_accountRange` to `RpcMethod.java` and implemented its handler. [#8153](https://github.com/hyperledger/besu/issues/8153)
 
 ## 25.2.0
 
