@@ -2,7 +2,6 @@
 
 ## Unreleased
 ### Breaking Changes
-- Transaction indexing is now disabled by default for snap sync and checkpoint sync modes. This will break RPCs that use transaction hash for historical queries. To enable transaction indexing use the `--snapshot-transaction-index-enabled=true`.
 
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
@@ -16,6 +15,7 @@
     - Smart-contract-based (onchain) permissioning
     - Proof of Work consensus
     - Fast Sync
+- Transaction indexing will be disabled by default in a future release for snap sync and checkpoint sync modes. This will break RPCs that use transaction hash for historical queries.
 ### Additions and Improvements
 ### Bug fixes
 
