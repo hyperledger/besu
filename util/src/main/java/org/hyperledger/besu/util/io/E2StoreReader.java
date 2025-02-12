@@ -6,6 +6,7 @@ import org.hyperledger.besu.util.e2.E2SignedBeaconBlock;
 import org.hyperledger.besu.util.e2.E2SlotIndex;
 import org.hyperledger.besu.util.e2.E2StoreReaderListener;
 import org.hyperledger.besu.util.e2.E2Type;
+import org.hyperledger.besu.util.snappy.SnappyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xerial.snappy.SnappyFramedInputStream;
@@ -26,16 +27,23 @@ public class E2StoreReader {
     private static final int SLOT_INDEX_LENGTH = 8;
     private static final int SLOT_INDEX_COUNT_LENGTH = 8;
 
+    private final SnappyFactory snappyFactory;
+
+    public E2StoreReader(final SnappyFactory snappyFactory) {
+        this.snappyFactory = snappyFactory;
+    }
+
     public void read(final InputStream inputStream, final E2StoreReaderListener listener) throws IOException {
+        int slot = 0;
         while (inputStream.available() > 0) {
             E2Type type = E2Type.getForTypeCode(inputStream.readNBytes(TYPE_LENGTH));
             int length = (int)convertLittleEndianBytesToLong(inputStream.readNBytes(LENGTH_LENGTH));
-            int slot = 0;
             switch (type) {
                 case VERSION -> {
                     //do nothing
                 }
                 case EMPTY -> {
+                    //skip the bytes that were indicated to be empty
                     inputStream.skipNBytes(length);
                 }
                 case SLOT_INDEX -> {
@@ -53,13 +61,13 @@ public class E2StoreReader {
                 }
                 case COMPRESSED_BEACON_STATE -> {
                     byte[] compressedBeaconStateArray = inputStream.readNBytes(length);
-                    try (SnappyFramedInputStream decompressionStream = new SnappyFramedInputStream(new ByteArrayInputStream(compressedBeaconStateArray))) {
+                    try (SnappyFramedInputStream decompressionStream = snappyFactory.createFramedInputStream(compressedBeaconStateArray)) {
                         listener.handleBeaconState(new E2BeaconState(decompressionStream.readAllBytes(), slot++));
                     }
                 } case COMPRESSED_SIGNED_BEACON_BLOCK -> {
                     byte[] compressedSignedBeaconBlockArray = inputStream.readNBytes(length);
-                    try (SnappyFramedInputStream decompressionStream = new SnappyFramedInputStream(new ByteArrayInputStream(compressedSignedBeaconBlockArray))) {
-                        listener.handleSignedBeaconSlot(new E2SignedBeaconBlock(decompressionStream.readAllBytes(), slot++));
+                    try (SnappyFramedInputStream decompressionStream = snappyFactory.createFramedInputStream(compressedSignedBeaconBlockArray)) {
+                        listener.handleSignedBeaconBlock(new E2SignedBeaconBlock(decompressionStream.readAllBytes(), slot++));
                     }
                 }
             }
