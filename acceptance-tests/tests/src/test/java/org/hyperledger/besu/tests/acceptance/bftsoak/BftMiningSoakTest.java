@@ -95,7 +95,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     } catch (RuntimeException e) {
       assertThat(e.getMessage())
           .contains(
-              "Revert reason: 'Transaction processing could not be completed due to an exception'");
+              "Revert reason: 'Transaction processing could not be completed due to an exception (Invalid opcode: 0x5f)'");
     }
 
     // Should initially be set to 0

@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.blockcreation;
+package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,8 +22,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.MinPriorityFeePerGasTransactionSelector;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -85,8 +83,7 @@ public class MinPriorityFeePerGasTransactionSelectorTest {
   private void assertSelectionResult(
       final TransactionEvaluationContext evaluationContext,
       final TransactionSelectionResult expectedResult) {
-    var actualResult =
-        transactionSelector.evaluateTransactionPreProcessing(evaluationContext, null);
+    var actualResult = transactionSelector.evaluateTransactionPreProcessing(evaluationContext);
     assertThat(actualResult).isEqualTo(expectedResult);
   }
 

@@ -14,33 +14,25 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 
-/** Holds the QBFT specific mutable state. */
-public class QbftContext implements ConsensusContext {
-
-  private final ValidatorProvider validatorProvider;
-  private final QbftBlockInterface blockInterface;
-
-  /**
-   * Instantiates a new Bft context.
-   *
-   * @param validatorProvider the validator provider
-   * @param blockInterface the block interface
-   */
-  public QbftContext(
-      final ValidatorProvider validatorProvider, final QbftBlockInterface blockInterface) {
-    this.validatorProvider = validatorProvider;
-    this.blockInterface = blockInterface;
-  }
+/**
+ * Holds the QBFT specific mutable state.
+ *
+ * @param validatorProvider the validator provider
+ * @param blockInterface the block interface
+ */
+public record QbftContext(
+    QbftValidatorProvider validatorProvider, QbftBlockInterface blockInterface)
+    implements ConsensusContext {
 
   /**
    * Gets validator provider.
    *
    * @return the validator provider
    */
-  public ValidatorProvider getValidatorProvider() {
+  @Override
+  public QbftValidatorProvider validatorProvider() {
     return validatorProvider;
   }
 
@@ -49,7 +41,8 @@ public class QbftContext implements ConsensusContext {
    *
    * @return the block interface
    */
-  public QbftBlockInterface getBlockInterface() {
+  @Override
+  public QbftBlockInterface blockInterface() {
     return blockInterface;
   }
 

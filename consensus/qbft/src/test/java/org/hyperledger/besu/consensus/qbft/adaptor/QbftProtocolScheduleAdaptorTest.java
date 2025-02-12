@@ -17,10 +17,12 @@ package org.hyperledger.besu.consensus.qbft.adaptor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -34,15 +36,17 @@ class QbftProtocolScheduleAdaptorTest {
   @Mock private ProtocolSchedule besuProtocolSchedule;
   @Mock private ProtocolSpec besuProtocolSpec;
   @Mock private ProtocolContext besuProtocolContext;
-  @Mock private BlockHeader blockHeader;
 
   @Test
   void createsAProtocolSpecUsingBesuProtocolSpec() {
-    when(besuProtocolSchedule.getByBlockHeader(blockHeader)).thenReturn(besuProtocolSpec);
+    final BlockHeader besuHeader = new BlockHeaderTestFixture().number(1).buildHeader();
+    final QbftBlockHeader qbftHeader = new QbftBlockHeaderAdaptor(besuHeader);
+
+    when(besuProtocolSchedule.getByBlockHeader(besuHeader)).thenReturn(besuProtocolSpec);
 
     final QbftProtocolSchedule qbftProtocolSchedule =
         new QbftProtocolScheduleAdaptor(besuProtocolSchedule, besuProtocolContext);
-    final QbftProtocolSpec protocolSpec = qbftProtocolSchedule.getByBlockHeader(blockHeader);
+    final QbftProtocolSpec protocolSpec = qbftProtocolSchedule.getByBlockHeader(qbftHeader);
     assertThat(protocolSpec).hasFieldOrPropertyWithValue("besuProtocolSpec", besuProtocolSpec);
   }
 }

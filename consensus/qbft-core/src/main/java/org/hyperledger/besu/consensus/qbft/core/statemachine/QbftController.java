@@ -20,11 +20,9 @@ import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Authored;
-import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
@@ -32,9 +30,11 @@ import org.hyperledger.besu.consensus.qbft.core.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockchain;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftNewChainHead;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
@@ -45,10 +45,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The Qbft controller. */
-public class QbftController implements BftEventHandler {
+public class QbftController implements QbftEventHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(QbftController.class);
-  private final Blockchain blockchain;
+  private final QbftBlockchain blockchain;
   private final QbftFinalState finalState;
   private final FutureMessageBuffer futureMessageBuffer;
   private final Gossiper gossiper;
@@ -72,7 +72,7 @@ public class QbftController implements BftEventHandler {
    * @param blockEncoder the block encoder
    */
   public QbftController(
-      final Blockchain blockchain,
+      final QbftBlockchain blockchain,
       final QbftFinalState finalState,
       final QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory,
       final Gossiper gossiper,
@@ -131,7 +131,7 @@ public class QbftController implements BftEventHandler {
     }
   }
 
-  private void createNewHeightManager(final BlockHeader parentHeader) {
+  private void createNewHeightManager(final QbftBlockHeader parentHeader) {
     currentHeightManager = qbftBlockHeightManagerFactory.create(parentHeader);
   }
 
@@ -187,9 +187,9 @@ public class QbftController implements BftEventHandler {
   }
 
   @Override
-  public void handleNewBlockEvent(final NewChainHead newChainHead) {
-    final BlockHeader newBlockHeader = newChainHead.getNewChainHeadHeader();
-    final BlockHeader currentMiningParent = getCurrentHeightManager().getParentBlockHeader();
+  public void handleNewBlockEvent(final QbftNewChainHead newChainHead) {
+    final QbftBlockHeader newBlockHeader = newChainHead.newChainHeadHeader();
+    final QbftBlockHeader currentMiningParent = getCurrentHeightManager().getParentBlockHeader();
     LOG.debug(
         "New chain head detected (block number={})," + " currently mining on top of {}.",
         newBlockHeader.getNumber(),
@@ -251,7 +251,7 @@ public class QbftController implements BftEventHandler {
     }
   }
 
-  private void startNewHeightManager(final BlockHeader parentHeader) {
+  private void startNewHeightManager(final QbftBlockHeader parentHeader) {
     createNewHeightManager(parentHeader);
     final long newChainHeight = getCurrentHeightManager().getChainHeight();
     futureMessageBuffer.retrieveMessagesForHeight(newChainHeight).forEach(this::handleMessage);

@@ -19,7 +19,6 @@ import static org.hyperledger.besu.consensus.qbft.core.support.IntegrationTestHe
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
@@ -28,6 +27,7 @@ import org.hyperledger.besu.consensus.qbft.core.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftNewChainHead;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -94,7 +94,7 @@ public class FutureHeightTest {
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
     context
         .getController()
-        .handleNewBlockEvent(new NewChainHead(signedCurrentHeightBlock.getHeader()));
+        .handleNewBlockEvent(new QbftNewChainHead(signedCurrentHeightBlock.getHeader()));
 
     final Prepare expectedPrepareMessage =
         localNodeMessageFactory.createPrepare(futureHeightRoundId, futureHeightBlock.getHash());
@@ -132,7 +132,7 @@ public class FutureHeightTest {
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
     context
         .getController()
-        .handleNewBlockEvent(new NewChainHead(signedCurrentHeightBlock.getHeader()));
+        .handleNewBlockEvent(new QbftNewChainHead(signedCurrentHeightBlock.getHeader()));
 
     // Inject prepares and commits from all peers for the 'previous' round (i.e. the height
     // from before the block arrived).
@@ -156,7 +156,7 @@ public class FutureHeightTest {
 
     context
         .getController()
-        .handleNewBlockEvent(new NewChainHead(context.getBlockchain().getChainHeadHeader()));
+        .handleNewBlockEvent(new QbftNewChainHead(context.getBlockchain().getChainHeadHeader()));
 
     // Should only require 1 more prepare to close it out
     peers.getNonProposing(1).injectPrepare(roundId, currentHeightBlock.getHash());
@@ -201,7 +201,7 @@ public class FutureHeightTest {
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
     context
         .getController()
-        .handleNewBlockEvent(new NewChainHead(signedCurrentHeightBlock.getHeader()));
+        .handleNewBlockEvent(new QbftNewChainHead(signedCurrentHeightBlock.getHeader()));
 
     peers.verifyNoMessagesReceived();
     peers.getProposer().injectProposal(nextHeightRoundId, nextHeightBlock);
@@ -221,7 +221,7 @@ public class FutureHeightTest {
     assertThat(context.getCurrentChainHeight()).isEqualTo(2);
     context
         .getController()
-        .handleNewBlockEvent(new NewChainHead(signedNextHeightBlock.getHeader()));
+        .handleNewBlockEvent(new QbftNewChainHead(signedNextHeightBlock.getHeader()));
 
     final Prepare expectedFuturePrepareMessage =
         localNodeMessageFactory.createPrepare(futureHeightRoundId, futureHeightBlock.getHash());
