@@ -45,10 +45,10 @@ public class ReturnDataLoadOperation extends AbstractOperation {
 
     final int offset = clampedToInt(frame.popStackItem());
     Bytes returnData = frame.getReturnData();
-    int retunDataSize = returnData.size();
+    int returnDataSize = returnData.size();
 
     Bytes value;
-    if (offset > retunDataSize) {
+    if (offset > returnDataSize) {
       value = Bytes.EMPTY;
     } else if (offset + 32 >= returnData.size()) {
       value = Bytes32.rightPad(returnData.slice(offset));
