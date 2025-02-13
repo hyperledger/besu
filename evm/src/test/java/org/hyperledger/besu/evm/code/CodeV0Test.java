@@ -59,7 +59,7 @@ class CodeV0Test {
 
     OperationResult result = operation.execute(frame, evm);
     assertNull(result.getHaltReason());
-    Mockito.verify(getsCached, times(1)).calculateJumpDests(0, 3);
+    Mockito.verify(getsCached, times(1)).calculateJumpDest(0);
 
     // do it again to prove we don't recalculate, and we hit the cache
 
@@ -67,7 +67,7 @@ class CodeV0Test {
 
     result = operation.execute(frame, evm);
     assertNull(result.getHaltReason());
-    Mockito.verify(getsCached, times(1)).calculateJumpDests(0, 3);
+    Mockito.verify(getsCached, times(1)).calculateJumpDest(0);
   }
 
   @Nonnull

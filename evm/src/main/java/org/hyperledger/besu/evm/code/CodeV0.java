@@ -166,7 +166,7 @@ public class CodeV0 implements Code {
     return Bytes.EMPTY;
   }
 
-  private long calculateJumpDest(final int entryPos) {
+  long calculateJumpDest(final int entryPos) {
     final byte[] rawCode = bytes.toArrayUnsafe();
     final int length = rawCode.length;
 

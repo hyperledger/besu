@@ -21,6 +21,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.testfuzz.javafuzz.Fuzzer;
 
@@ -216,7 +218,7 @@ public class EofContainerSubCommand implements Runnable {
                 new File(
                     initialCorpus,
                     f.toPath().getFileName() + "_" + (index++) + "_" + vector.getKey()))) {
-          Bytes codeBytes = Bytes.fromHexString(vector.getValue().code());
+          Bytecode codeBytes = FullBytecode.fromHexString(vector.getValue().code());
           evm.getCodeUncached(codeBytes);
           fos.write(codeBytes.toArrayUnsafe());
         } catch (IOException e) {
