@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -173,43 +174,6 @@ public class EthGetLogsTest {
   }
 
   @Test
-  public void shouldQueryWrappedNumeric() {
-    final long fromBlock = 50L;
-    final long toBlock = 100L;
-    final JsonRpcRequestContext request =
-        buildRequest(String.valueOf(fromBlock), String.valueOf(toBlock));
-
-    when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
-        .thenReturn(new ArrayList<>());
-
-    final JsonRpcResponse response = method.response(request);
-    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
-
-    verify(blockchainQueries).matchingLogs(eq(fromBlock), eq(toBlock), any(), any());
-    verify(blockchainQueries, never()).finalizedBlockHeader();
-    verify(blockchainQueries, never()).headBlockNumber();
-    verify(blockchainQueries, never()).safeBlockHeader();
-  }
-
-  @Test
-  public void shouldQueryWrappedNumericToNumeric() {
-    final long fromBlock = 50L;
-    final long toBlock = 100L;
-    final JsonRpcRequestContext request = buildRequest(String.valueOf(fromBlock), toBlock);
-
-    when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
-        .thenReturn(new ArrayList<>());
-
-    final JsonRpcResponse response = method.response(request);
-    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
-
-    verify(blockchainQueries).matchingLogs(eq(fromBlock), eq(toBlock), any(), any());
-    verify(blockchainQueries, never()).finalizedBlockHeader();
-    verify(blockchainQueries, never()).headBlockNumber();
-    verify(blockchainQueries, never()).safeBlockHeader();
-  }
-
-  @Test
   public void shouldQueryEarliestToLatest() {
     final long genesisBlock = 0L;
     final long latestBlock = 50L;
@@ -286,14 +250,18 @@ public class EthGetLogsTest {
 
   private JsonRpcRequestContext buildRequest(final long fromBlock, final long toBlock) {
     final FilterParameter filterParameter =
-        buildFilterParameter(new BlockParameter(fromBlock), new BlockParameter(toBlock));
+        buildFilterParameter(
+            new BlockParameter(UInt256.valueOf(fromBlock).toHexString()),
+            new BlockParameter(UInt256.valueOf(toBlock).toHexString()));
     return new JsonRpcRequestContext(
         new JsonRpcRequest("2.0", "eth_getLogs", new Object[] {filterParameter}));
   }
 
   private JsonRpcRequestContext buildRequest(final String fromBlock, final long toBlock) {
     final FilterParameter filterParameter =
-        buildFilterParameter(new BlockParameter(fromBlock), new BlockParameter(toBlock));
+        buildFilterParameter(
+            new BlockParameter(fromBlock),
+            new BlockParameter(UInt256.valueOf(toBlock).toShortHexString()));
     return new JsonRpcRequestContext(
         new JsonRpcRequest("2.0", "eth_getLogs", new Object[] {filterParameter}));
   }

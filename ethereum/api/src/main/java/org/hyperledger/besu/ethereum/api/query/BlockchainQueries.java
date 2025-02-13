@@ -795,7 +795,7 @@ public class BlockchainQueries {
    * @param toBlockNumber The block number defining the last block in the search range (inclusive).
    * @param query Constraints on required topics by topic index. For a given index if the set of
    *     topics is non-empty, the topic at this index must match one of the values in the set.
-   * @param isQueryAlive Whether or not the backend query should stay alive.
+   * @param isQueryAlive Whether the backend query should stay alive.
    * @return The set of logs matching the given constraints.
    */
   public List<LogWithMetadata> matchingLogs(

@@ -2,6 +2,8 @@
 
 ## Unreleased
 ### Breaking Changes
+- BlockParameter now enforces hex 0x prefix for numerical values
+
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
 - k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release. Use docker or none instead.
