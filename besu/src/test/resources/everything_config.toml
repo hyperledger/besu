@@ -109,6 +109,12 @@ graphql-http-enabled=false
 graphql-http-host="6.7.8.9"
 graphql-http-port=6789
 graphql-http-cors-origins=["none"]
+graphql-tls-enabled=false
+graphql-tls-keystore-file="none.pfx"
+graphql-tls-keystore-password-file="none.passwd"
+graphql-mtls-enabled=false
+graphql-tls-truststore-file="none.pfx"
+graphql-tls-truststore-password-file="none.passwd"
 
 # WebSockets API
 rpc-ws-enabled=false

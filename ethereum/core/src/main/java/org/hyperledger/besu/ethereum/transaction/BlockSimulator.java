@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StateOverride;
 import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -44,6 +45,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
@@ -69,16 +71,19 @@ public class BlockSimulator {
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
   private final MiningConfiguration miningConfiguration;
+  private final Blockchain blockchain;
 
   public BlockSimulator(
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final TransactionSimulator transactionSimulator,
-      final MiningConfiguration miningConfiguration) {
+      final MiningConfiguration miningConfiguration,
+      final Blockchain blockchain) {
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
     this.miningConfiguration = miningConfiguration;
     this.transactionSimulator = transactionSimulator;
+    this.blockchain = blockchain;
   }
 
   /**
@@ -149,8 +154,12 @@ public class BlockSimulator {
     MiningBeneficiaryCalculator miningBeneficiaryCalculator =
         getMiningBeneficiaryCalculator(blockOverrides, newProtocolSpec);
 
+    BlockHashLookup blockHashLookup =
+        createBlockHashLookup(blockOverrides, newProtocolSpec, blockHeader);
+
     List<TransactionSimulatorResult> transactionSimulatorResults =
-        processTransactions(blockHeader, blockStateCall, ws, miningBeneficiaryCalculator);
+        processTransactions(
+            blockHeader, blockStateCall, ws, miningBeneficiaryCalculator, blockHashLookup);
 
     return finalizeBlock(
         blockHeader, blockStateCall, ws, newProtocolSpec, transactionSimulatorResults);
@@ -161,7 +170,8 @@ public class BlockSimulator {
       final BlockHeader blockHeader,
       final BlockStateCall blockStateCall,
       final MutableWorldState ws,
-      final MiningBeneficiaryCalculator miningBeneficiaryCalculator) {
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
+      final BlockHashLookup blockHashLookup) {
 
     List<TransactionSimulatorResult> transactionSimulations = new ArrayList<>();
 
@@ -176,7 +186,8 @@ public class BlockSimulator {
               OperationTracer.NO_TRACING,
               blockHeader,
               transactionUpdater,
-              miningBeneficiaryCalculator);
+              miningBeneficiaryCalculator,
+              blockHashLookup);
 
       if (transactionSimulatorResult.isEmpty()) {
         throw new BlockSimulationException("Transaction simulator result is empty");
@@ -408,5 +419,29 @@ public class BlockSimulator {
     public ParsedExtraData parseExtraData(final BlockHeader header) {
       return blockHeaderFunctions.parseExtraData(header);
     }
+  }
+
+  /**
+   * Creates a BlockHashLookup for the block simulation. If a BlockHashLookup is provided in the
+   * BlockOverrides, it is used. Otherwise, the default BlockHashLookup is created.
+   *
+   * @param blockOverrides The BlockOverrides to use.
+   * @param newProtocolSpec The ProtocolSpec for the block.
+   * @param blockHeader The block header for the simulation.
+   * @return The BlockHashLookup for the block simulation.
+   */
+  private BlockHashLookup createBlockHashLookup(
+      final BlockOverrides blockOverrides,
+      final ProtocolSpec newProtocolSpec,
+      final BlockHeader blockHeader) {
+    return blockOverrides
+        .getBlockHashLookup()
+        .<BlockHashLookup>map(
+            blockHashLookup -> (frame, blockNumber) -> blockHashLookup.apply(blockNumber))
+        .orElseGet(
+            () ->
+                newProtocolSpec
+                    .getBlockHashProcessor()
+                    .createBlockHashLookup(blockchain, blockHeader));
   }
 }

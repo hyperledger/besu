@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-
 /**
  * Provides the ability to select the appropriate QbftProtocolSpec containing the validation and
  * import for the supplied block header.
@@ -28,5 +26,5 @@ public interface QbftProtocolSchedule {
    * @param header The block header to select the appropriate QbftProtocolSpec for
    * @return The QbftProtocolSpec for the supplied block header
    */
-  QbftProtocolSpec getByBlockHeader(BlockHeader header);
+  QbftProtocolSpec getByBlockHeader(QbftBlockHeader header);
 }

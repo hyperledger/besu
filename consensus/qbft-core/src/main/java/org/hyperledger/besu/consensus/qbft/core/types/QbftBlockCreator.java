@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.core.types;
 
 import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
 
@@ -29,7 +28,7 @@ public interface QbftBlockCreator {
    * @param parentHeader the parent header
    * @return the block
    */
-  QbftBlock createBlock(long headerTimeStampSeconds, BlockHeader parentHeader);
+  QbftBlock createBlock(long headerTimeStampSeconds, QbftBlockHeader parentHeader);
 
   /**
    * Create sealed block.

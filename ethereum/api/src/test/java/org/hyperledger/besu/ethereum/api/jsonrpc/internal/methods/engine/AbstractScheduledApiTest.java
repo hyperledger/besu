@@ -44,9 +44,9 @@ public class AbstractScheduledApiTest {
   protected final ScheduledProtocolSpec.Hardfork cancunHardfork =
       new ScheduledProtocolSpec.Hardfork("Cancun", 30);
   protected final ScheduledProtocolSpec.Hardfork pragueHardfork =
-      new ScheduledProtocolSpec.Hardfork("Prague", 40);
+      new ScheduledProtocolSpec.Hardfork("Prague", 50);
   protected final ScheduledProtocolSpec.Hardfork experimentalHardfork =
-      new ScheduledProtocolSpec.Hardfork("ExperimentalEips", 50);
+      new ScheduledProtocolSpec.Hardfork("ExperimentalEips", 70);
 
   @Mock protected DefaultProtocolSchedule protocolSchedule;
 

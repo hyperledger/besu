@@ -34,14 +34,13 @@ import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator.ValidationResult;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -109,8 +108,8 @@ public class RoundChangeMessageValidatorTest {
             validators.getNodeAddresses(),
             protocolSchedule);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         createPreparedCertificate(
@@ -134,8 +133,8 @@ public class RoundChangeMessageValidatorTest {
             validators.getNodeAddresses(),
             protocolSchedule);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         createPreparedCertificate(
@@ -161,8 +160,8 @@ public class RoundChangeMessageValidatorTest {
             validators.getNodeAddresses(),
             protocolSchedule);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         createPreparedCertificate(
@@ -202,8 +201,8 @@ public class RoundChangeMessageValidatorTest {
             validators.getNodeAddresses(),
             protocolSchedule);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         createPreparedCertificate(
@@ -229,8 +228,8 @@ public class RoundChangeMessageValidatorTest {
 
     final QbftNode nonValidator = QbftNode.create(blockEncoder);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         createPreparedCertificate(
@@ -254,8 +253,8 @@ public class RoundChangeMessageValidatorTest {
             validators.getNodeAddresses(),
             protocolSchedule);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         new PreparedCertificate(
@@ -287,8 +286,8 @@ public class RoundChangeMessageValidatorTest {
             validators.getNodeAddresses(),
             protocolSchedule);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         new PreparedCertificate(
@@ -322,8 +321,8 @@ public class RoundChangeMessageValidatorTest {
             validators.getNodeAddresses(),
             protocolSchedule);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         new PreparedCertificate(
@@ -357,8 +356,8 @@ public class RoundChangeMessageValidatorTest {
             validators.getNodeAddresses(),
             protocolSchedule);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         createPreparedCertificate(
@@ -387,8 +386,8 @@ public class RoundChangeMessageValidatorTest {
             validators.getNodeAddresses(),
             protocolSchedule);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
 
     final RoundChangePayload payload = new RoundChangePayload(targetRound, Optional.empty());
@@ -415,8 +414,8 @@ public class RoundChangeMessageValidatorTest {
             validators.getNodeAddresses(),
             protocolSchedule);
 
-    final BlockHeader header =
-        new BlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
 
     final RoundChangePayload payload =
