@@ -50,14 +50,10 @@ public class EpochManager {
     if (blockNumber < 0) {
       throw new IllegalArgumentException("Block number must be 0 or greater.");
     }
-    if (startBlock == 0) {
-      return (blockNumber % epochLengthInBlocks) == 0;
-    } else {
-      if (blockNumber < (startBlock - 1)) {
-        return false;
-      }
-      return ((blockNumber - (startBlock - 1)) % epochLengthInBlocks) == 0;
+    if (blockNumber < startBlock - 1) {
+      return false;
     }
+    return (blockNumber - (startBlock == 0 ? 0 : startBlock - 1)) % epochLengthInBlocks == 0;
   }
 
   /**
