@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -143,7 +144,7 @@ class TransactionCollisionDetectorTest {
     final Address address = Address.fromHexString("0x1");
     final BonsaiAccount priorAccountValue = createAccount(address);
     final BonsaiAccount nextAccountValue = new BonsaiAccount(priorAccountValue, worldState, true);
-    nextAccountValue.setCode(Bytes.repeat((byte) 0x01, 10));
+    nextAccountValue.setCode(FullBytecode.wrap(Bytes.repeat((byte) 0x01, 10)));
 
     // Simulate that the address was already modified in the block
     bonsaiUpdater

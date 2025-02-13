@@ -53,13 +53,13 @@ class CodeV0Test {
   @Test
   void shouldReuseJumpDestMap() {
     final JumpOperation operation = new JumpOperation(evm.getGasCalculator());
-    final Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
+    final Bytecode jumpBytes = FullBytecode.fromHexString("0x6003565b00");
     final CodeV0 getsCached = (CodeV0) spy(evm.getCodeUncached(jumpBytes));
     MessageFrame frame = createJumpFrame(getsCached);
 
     OperationResult result = operation.execute(frame, evm);
     assertNull(result.getHaltReason());
-    Mockito.verify(getsCached, times(1)).calculateJumpDests();
+    Mockito.verify(getsCached, times(1)).calculateJumpDests(0, 3);
 
     // do it again to prove we don't recalculate, and we hit the cache
 
@@ -67,7 +67,7 @@ class CodeV0Test {
 
     result = operation.execute(frame, evm);
     assertNull(result.getHaltReason());
-    Mockito.verify(getsCached, times(1)).calculateJumpDests();
+    Mockito.verify(getsCached, times(1)).calculateJumpDests(0, 3);
   }
 
   @Nonnull

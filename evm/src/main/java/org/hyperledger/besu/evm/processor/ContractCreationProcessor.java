@@ -19,6 +19,8 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.contractvalidation.ContractValidationRule;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -29,7 +31,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,9 +124,10 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
 
   @Override
   public void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
-    final Bytes contractCode =
-        frame.getCreatedCode() == null ? frame.getOutputData() : frame.getCreatedCode().getBytes();
-
+    final Bytecode contractCode =
+        frame.getCreatedCode() == null
+            ? FullBytecode.wrap(frame.getOutputData())
+            : frame.getCreatedCode().getBytes();
     final long depositFee = evm.getGasCalculator().codeDepositGasCost(contractCode.size());
 
     if (frame.getRemainingGas() < depositFee) {

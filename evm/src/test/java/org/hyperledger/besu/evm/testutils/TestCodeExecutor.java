@@ -20,6 +20,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -55,7 +57,7 @@ public class TestCodeExecutor {
       final String codeHexString, final long gasLimit, final WorldUpdater worldUpdater) {
     final MessageCallProcessor messageCallProcessor =
         new MessageCallProcessor(evm, new PrecompileContractRegistry());
-    final Bytes codeBytes = Bytes.fromHexString(codeHexString.replaceAll("\\s", ""));
+    final Bytecode codeBytes = FullBytecode.fromHexString(codeHexString.replaceAll("\\s", ""));
     final Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
 
     final MessageFrame initialFrame =
@@ -87,7 +89,7 @@ public class TestCodeExecutor {
 
     contract.setNonce(0);
     contract.clearStorage();
-    contract.setCode(Bytes.fromHexStringLenient(codeHexString));
+    contract.setCode(FullBytecode.fromHexString(codeHexString));
     updater.commit();
   }
 

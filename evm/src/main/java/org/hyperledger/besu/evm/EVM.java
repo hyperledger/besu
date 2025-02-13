@@ -19,6 +19,8 @@ import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.Bytecode.RawByteArray;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -207,14 +209,14 @@ public class EVM {
     evmSpecVersion.maybeWarnVersion();
 
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
-    byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+    RawByteArray code = frame.getCode().getBytes().getRawByteArray();
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
       int opcode;
       int pc = frame.getPC();
       try {
-        opcode = code[pc] & 0xff;
+        opcode = code.get(pc) & 0xff;
         currentOperation = operationArray[opcode];
       } catch (ArrayIndexOutOfBoundsException aiiobe) {
         opcode = 0;
@@ -373,7 +375,7 @@ public class EVM {
    * @param codeBytes the code bytes
    * @return the code
    */
-  public Code getCode(final Hash codeHash, final Bytes codeBytes) {
+  public Code getCode(final Hash codeHash, final Bytecode codeBytes) {
     checkNotNull(codeHash);
     Code result = codeCache.getIfPresent(codeHash);
     if (result == null) {
@@ -389,7 +391,7 @@ public class EVM {
    * @param codeBytes the code bytes
    * @return the code
    */
-  public Code getCodeUncached(final Bytes codeBytes) {
+  public Code getCodeUncached(final Bytecode codeBytes) {
     return codeFactory.createCode(codeBytes);
   }
 
@@ -399,7 +401,7 @@ public class EVM {
    * @param codeBytes the code bytes
    * @return the code
    */
-  public Code getCodeForCreation(final Bytes codeBytes) {
+  public Code getCodeForCreation(final Bytecode codeBytes) {
     return codeFactory.createCode(codeBytes, true);
   }
 
@@ -409,7 +411,7 @@ public class EVM {
    * @param bytes the bytes to parse
    * @return an EOF layout represented by they byte-stream.
    */
-  public EOFLayout parseEOF(final Bytes bytes) {
+  public EOFLayout parseEOF(final Bytecode bytes) {
     return EOFLayout.parseEOF(bytes, true);
   }
 }

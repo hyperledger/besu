@@ -32,6 +32,8 @@ import org.hyperledger.besu.ethereum.trie.TrieIterator.State;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.util.io.RollingFileWriter;
 
 import java.io.IOException;
@@ -243,7 +245,8 @@ public class StateBackupService {
     final PmtStateTrieAccountValue account =
         PmtStateTrieAccountValue.readFrom(new BytesValueRLPInput(nodeValue, false));
 
-    final Bytes code = worldStateKeyValueStorage.getCode(account.getCodeHash()).orElse(Bytes.EMPTY);
+    final Bytecode code =
+        worldStateKeyValueStorage.getCode(account.getCodeHash()).orElse(FullBytecode.EMPTY);
     backupStatus.codeSize.addAndGet(code.size());
 
     final BytesValueRLPOutput accountOutput = new BytesValueRLPOutput();

@@ -27,6 +27,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.fluent.EVMExecutor;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
@@ -105,8 +107,8 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
       14: {"pc":23,"op":243,"gas":"0x2540b92a4","gasCost":"0x0","memory":"0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b00000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000","memSize":96,"stack":["0x1","0x40"],"returnStack":[],"returnData":"0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b","depth":1,"refund":0,"opName":"RETURN","error":""}
       15: {"stateRoot":"2eef130ec61805516c1f050720b520619787704a5dd826a39aeefb850f83acfd", "output":"40","gasUsed":"0x515c","time":350855}
     */
-    final Bytes codeBytes =
-        Bytes.fromHexString("0x604080536040604055604060006040600060025afa6040f3");
+    final Bytecode codeBytes =
+        FullBytecode.fromHexString("0x604080536040604055604060006040600060025afa6040f3");
     executor.execute(codeBytes, Bytes.EMPTY, Wei.ZERO, Address.ZERO);
 
     final List<ContextTracer.TRACE_TYPE> expectedTraces =

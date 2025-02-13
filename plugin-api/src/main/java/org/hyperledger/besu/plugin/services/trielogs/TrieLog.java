@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.evm.code.Bytecode;
 
 import java.util.Map;
 import java.util.Objects;
@@ -63,7 +64,7 @@ public interface TrieLog {
    * @param <U> the type of LogTuple representing the code changes
    * @return a map of addresses to their code changes
    */
-  <U extends LogTuple<Bytes>> Map<Address, U> getCodeChanges();
+  <U extends LogTuple<Bytecode>> Map<Address, U> getCodeChanges();
 
   /**
    * Gets a map of addresses to their storage changes.
@@ -96,7 +97,7 @@ public interface TrieLog {
    * @param address the address to get the code for
    * @return an Optional containing the code if available, otherwise an empty Optional
    */
-  Optional<Bytes> getCode(final Address address);
+  Optional<Bytecode> getCode(final Address address);
 
   /**
    * Gets the prior storage value for a specific address and storage slot key, if available.

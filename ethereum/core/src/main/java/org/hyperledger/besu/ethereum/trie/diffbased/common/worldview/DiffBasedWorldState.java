@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManage
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -42,7 +43,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -380,7 +380,7 @@ public abstract class DiffBasedWorldState
       final Address address, final StorageSlotKey storageSlotKey);
 
   @Override
-  public abstract Optional<Bytes> getCode(@Nonnull final Address address, final Hash codeHash);
+  public abstract Optional<Bytecode> getCode(@Nonnull final Address address, final Hash codeHash);
 
   protected abstract Hash calculateRootHash(
       final Optional<DiffBasedWorldStateKeyValueStorage.Updater> maybeStateUpdater,

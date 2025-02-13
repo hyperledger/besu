@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
@@ -112,7 +114,7 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
         writeRlp(accountChange, output, (o, sta) -> sta.writeTo(o));
       }
 
-      final TrieLog.LogTuple<Bytes> codeChange = layer.getCodeChanges().get(address);
+      final TrieLog.LogTuple<Bytecode> codeChange = layer.getCodeChanges().get(address);
       if (codeChange == null || codeChange.isUnchanged()) {
         output.writeNull();
       } else {
@@ -175,8 +177,10 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
         input.skipNext();
       } else {
         input.enterList();
-        final Bytes oldCode = nullOrValue(input, RLPInput::readBytes);
-        final Bytes newCode = nullOrValue(input, RLPInput::readBytes);
+        final Bytecode oldCode =
+            nullOrValue(input, rlpInput -> FullBytecode.wrap(rlpInput.readBytes()));
+        final Bytecode newCode =
+            nullOrValue(input, rlpInput -> FullBytecode.wrap(rlpInput.readBytes()));
         final boolean isCleared = getOptionalIsCleared(input);
         input.leaveList();
         newLayer.getCodeChanges().put(address, new DiffBasedValue<>(oldCode, newCode, isCleared));

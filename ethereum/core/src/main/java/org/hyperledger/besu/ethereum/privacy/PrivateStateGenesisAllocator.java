@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
@@ -80,7 +81,10 @@ public class PrivateStateGenesisAllocator {
 
                 account.setNonce(genesisAccount.getNonce());
                 account.setBalance(Wei.fromQuantity(genesisAccount.getBalance()));
-                account.setCode(genesisAccount.getCode());
+                account.setCode(
+                    genesisAccount.getCode() == null
+                        ? null
+                        : FullBytecode.wrap(genesisAccount.getCode()));
 
                 genesisAccount.getStorage().forEach(account::setStorageValue);
               });

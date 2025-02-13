@@ -23,13 +23,14 @@ import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -55,8 +56,8 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   private long nonce;
   private Wei balance;
 
-  @Nullable private Bytes updatedCode; // Null if the underlying code has not been updated.
-  private final Bytes oldCode;
+  @Nullable private Bytecode updatedCode; // Null if the underlying code has not been updated.
+  private final Bytecode oldCode;
   @Nullable private Hash updatedCodeHash;
   private final Hash oldCodeHash;
 
@@ -80,8 +81,8 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     this.nonce = 0;
     this.balance = Wei.ZERO;
 
-    this.updatedCode = Bytes.EMPTY;
-    this.oldCode = Bytes.EMPTY;
+    this.updatedCode = FullBytecode.EMPTY;
+    this.oldCode = FullBytecode.EMPTY;
     this.oldCodeHash = Hash.EMPTY;
     this.updatedStorage = new TreeMap<>();
   }
@@ -191,7 +192,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   }
 
   @Override
-  public Bytes getCode() {
+  public Bytecode getCode() {
     // Note that we set code for new account, so it's only null if account isn't.
     return updatedCode == null ? oldCode : updatedCode;
   }
@@ -218,7 +219,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   }
 
   @Override
-  public void setCode(final Bytes code) {
+  public void setCode(final Bytecode code) {
     if (immutable) {
       throw new ModificationNotAllowedException();
     }

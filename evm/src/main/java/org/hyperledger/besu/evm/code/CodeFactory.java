@@ -19,8 +19,6 @@ import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
 
 import javax.annotation.Nonnull;
 
-import org.apache.tuweni.bytes.Bytes;
-
 /** The Code factory. */
 public class CodeFactory {
 
@@ -55,7 +53,7 @@ public class CodeFactory {
    * @param bytes the bytes
    * @return the code
    */
-  public Code createCode(final Bytes bytes) {
+  public Code createCode(final Bytecode bytes) {
     return createCode(bytes, false);
   }
 
@@ -66,7 +64,7 @@ public class CodeFactory {
    * @param createTransaction This is in a create transaction, allow dangling data
    * @return the code
    */
-  public Code createCode(final Bytes bytes, final boolean createTransaction) {
+  public Code createCode(final Bytecode bytes, final boolean createTransaction) {
     return switch (maxEofVersion) {
       case 0 -> new CodeV0(bytes);
       case 1 -> createV1Code(bytes, createTransaction);
@@ -74,7 +72,7 @@ public class CodeFactory {
     };
   }
 
-  private @Nonnull Code createV1Code(final Bytes bytes, final boolean createTransaction) {
+  private @Nonnull Code createV1Code(final Bytecode bytes, final boolean createTransaction) {
     int codeSize = bytes.size();
     if (codeSize > 0 && bytes.get(0) == EOF_LEAD_BYTE) {
       if (codeSize < 3) {

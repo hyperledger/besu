@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.List;
@@ -52,7 +54,7 @@ public class PrivateWorldStateReaderTest {
   private final String PRIVACY_GROUP_ID = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private final Bytes32 PRIVACY_GROUP_ID_BYTES =
       Bytes32.wrap(Bytes.fromBase64String(PRIVACY_GROUP_ID));
-  private final Bytes contractCode = Bytes.fromBase64String("ZXhhbXBsZQ==");
+  private final Bytecode contractCode = FullBytecode.wrap(Bytes.fromBase64String("ZXhhbXBsZQ=="));
   private final Address contractAddress = Address.ZERO;
   private final Hash blockHash = Hash.ZERO;
   private final Hash stateRootHash = Hash.ZERO;

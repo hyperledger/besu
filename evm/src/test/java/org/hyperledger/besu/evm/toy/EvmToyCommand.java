@@ -20,6 +20,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
@@ -58,7 +60,7 @@ public class EvmToyCommand implements Runnable {
       names = {"--code"},
       paramLabel = "<code>",
       description = "Byte stream of code to be executed.")
-  private final Bytes codeBytes = Bytes.EMPTY;
+  private final Bytecode codeBytes = FullBytecode.EMPTY;
 
   @CommandLine.Option(
       names = {"--gas"},
@@ -144,6 +146,7 @@ public class EvmToyCommand implements Runnable {
     // add sub commands here
     commandLine.registerConverter(Address.class, Address::fromHexString);
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
+    commandLine.registerConverter(Bytecode.class, FullBytecode::fromHexString);
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
 
     commandLine.parseWithHandlers(resultHandler, exceptionHandler, args);

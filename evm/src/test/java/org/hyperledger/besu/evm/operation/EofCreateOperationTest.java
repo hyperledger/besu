@@ -29,7 +29,9 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.code.CodeInvalid;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -73,7 +75,7 @@ class EofCreateOperationTest {
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.getCode()).thenReturn(FullBytecode.EMPTY);
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
@@ -90,7 +92,7 @@ class EofCreateOperationTest {
 
   @Test
   void eofCreatePassesInCallData() {
-    Bytes outerContract = EOF_CREATE_CONTRACT;
+    Bytecode outerContract = EOF_CREATE_CONTRACT;
     final EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
 
     Code code = evm.getCodeUncached(outerContract);
@@ -107,7 +109,7 @@ class EofCreateOperationTest {
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.getCode()).thenReturn(FullBytecode.EMPTY);
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 

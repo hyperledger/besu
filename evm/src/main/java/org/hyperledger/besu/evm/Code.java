@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.code.CodeSection;
 
 import java.util.Optional;
@@ -52,7 +53,7 @@ public interface Code {
    *
    * @return container bytes.
    */
-  Bytes getBytes();
+  Bytecode getBytes();
 
   /**
    * Hash of the entire container

@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.account.MutableCodeDelegationDelegationAccount;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -51,11 +52,12 @@ public class CodeDelegationService {
       final MutableAccount account, final Address codeDelegationAddress) {
     // code delegation to zero address removes any delegated code
     if (codeDelegationAddress.equals(Address.ZERO)) {
-      account.setCode(Bytes.EMPTY);
+      account.setCode(FullBytecode.EMPTY);
       return;
     }
 
-    account.setCode(Bytes.concatenate(CODE_DELEGATION_PREFIX, codeDelegationAddress));
+    account.setCode(
+        FullBytecode.wrap(Bytes.concatenate(CODE_DELEGATION_PREFIX, codeDelegationAddress)));
   }
 
   /**

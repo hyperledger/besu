@@ -19,12 +19,12 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.code.Bytecode;
 
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -103,7 +103,7 @@ public interface WorldState extends WorldView, AutoCloseable {
     }
 
     @Override
-    public Bytes getCode() {
+    public Bytecode getCode() {
       return accountState.getCode();
     }
 

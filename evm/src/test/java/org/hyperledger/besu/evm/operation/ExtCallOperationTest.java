@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
@@ -46,11 +47,13 @@ public class ExtCallOperationTest {
   private final MutableAccount account = mock(MutableAccount.class);
   private static final EVM EOF_EVM = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
   public static final Code LEGACY_CODE =
-      EOF_EVM.getCodeUncached(Bytes.of(ExtCallOperation.OPCODE, 1));
+      EOF_EVM.getCodeUncached(FullBytecode.of(ExtCallOperation.OPCODE, 1));
   public static final Code SIMPLE_EOF =
-      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"));
+      EOF_EVM.getCodeUncached(
+          FullBytecode.fromHexString("0xEF00010100040200010001040000000080000000"));
   public static final Code INVALID_EOF =
-      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000023"));
+      EOF_EVM.getCodeUncached(
+          FullBytecode.fromHexString("0xEF00010100040200010001040000000080000023"));
   private static final Address CONTRACT_ADDRESS = Address.fromHexString("0xc0de");
 
   static Iterable<Arguments> data() {

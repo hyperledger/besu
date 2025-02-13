@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.code.Bytecode.RawByteArray;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -53,8 +54,8 @@ public class PushOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
-    return staticOperation(frame, code, frame.getPC(), length);
+    return staticOperation(
+        frame, frame.getCode().getBytes().getRawByteArray(), frame.getPC(), length);
   }
 
   /**
@@ -67,21 +68,19 @@ public class PushOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(
-      final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
+      final MessageFrame frame, final RawByteArray code, final int pc, final int pushSize) {
     final int copyStart = pc + 1;
     Bytes push;
-    if (code.length <= copyStart) {
+    if (code.size() <= copyStart) {
       push = Bytes.EMPTY;
     } else {
-      final int copyLength = Math.min(pushSize, code.length - pc - 1);
+      final int copyLength = Math.min(pushSize, code.size() - pc - 1);
       final int rightPad = pushSize - copyLength;
       if (rightPad == 0) {
-        push = Bytes.wrap(code, copyStart, copyLength);
+        push = Bytes.wrap(code.get(copyStart, copyLength));
       } else {
         // Right Pad the push with 0s up to pushSize if greater than the copyLength
-        var bytecodeLocal = new byte[pushSize];
-        System.arraycopy(code, copyStart, bytecodeLocal, 0, copyLength);
-        push = Bytes.wrap(bytecodeLocal);
+        push = Bytes.wrap(code.get(copyStart, copyLength, pushSize));
       }
     }
     frame.pushStackItem(push);

@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.HashMap;
@@ -49,7 +51,7 @@ class BonsaiWorldStateTest {
   @Mock Blockchain blockchain;
   @Mock BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage;
 
-  private static final Bytes CODE = Bytes.of(10);
+  private static final Bytecode CODE = FullBytecode.of(10);
   private static final Hash CODE_HASH = Hash.hash(CODE);
   private static final Hash ACCOUNT_HASH = Hash.hash(Address.ZERO);
   private static final Address ACCOUNT = Address.ZERO;
@@ -69,8 +71,8 @@ class BonsaiWorldStateTest {
   @ParameterizedTest
   @MethodSource("priorAndUpdatedEmptyAndNullBytes")
   void codeUpdateDoesNothingWhenMarkedAsDeletedButAlreadyDeleted(
-      final Bytes prior, final Bytes updated) {
-    final Map<Address, DiffBasedValue<Bytes>> codeToUpdate =
+      final Bytecode prior, final Bytecode updated) {
+    final Map<Address, DiffBasedValue<Bytecode>> codeToUpdate =
         Map.of(Address.ZERO, new DiffBasedValue<>(prior, updated));
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
@@ -80,7 +82,7 @@ class BonsaiWorldStateTest {
 
   @Test
   void codeUpdateDoesNothingWhenAddingSameAsExistingValue() {
-    final Map<Address, DiffBasedValue<Bytes>> codeToUpdate =
+    final Map<Address, DiffBasedValue<Bytecode>> codeToUpdate =
         Map.of(Address.ZERO, new DiffBasedValue<>(CODE, CODE));
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
@@ -90,8 +92,8 @@ class BonsaiWorldStateTest {
 
   @ParameterizedTest
   @MethodSource("emptyAndNullBytes")
-  void removesCodeWhenMarkedAsDeleted(final Bytes updated) {
-    final Map<Address, DiffBasedValue<Bytes>> codeToUpdate =
+  void removesCodeWhenMarkedAsDeleted(final Bytecode updated) {
+    final Map<Address, DiffBasedValue<Bytecode>> codeToUpdate =
         Map.of(Address.ZERO, new DiffBasedValue<>(CODE, updated));
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
@@ -101,8 +103,8 @@ class BonsaiWorldStateTest {
 
   @ParameterizedTest
   @MethodSource("codeValueAndEmptyAndNullBytes")
-  void addsCodeForNewCodeValue(final Bytes prior) {
-    final Map<Address, DiffBasedValue<Bytes>> codeToUpdate =
+  void addsCodeForNewCodeValue(final Bytecode prior) {
+    final Map<Address, DiffBasedValue<Bytecode>> codeToUpdate =
         Map.of(ACCOUNT, new DiffBasedValue<>(prior, CODE));
 
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
@@ -113,10 +115,10 @@ class BonsaiWorldStateTest {
 
   @Test
   void updateCodeForMultipleValues() {
-    final Map<Address, DiffBasedValue<Bytes>> codeToUpdate = new HashMap<>();
+    final Map<Address, DiffBasedValue<Bytecode>> codeToUpdate = new HashMap<>();
     codeToUpdate.put(Address.fromHexString("0x1"), new DiffBasedValue<>(null, CODE));
     codeToUpdate.put(Address.fromHexString("0x2"), new DiffBasedValue<>(CODE, null));
-    codeToUpdate.put(Address.fromHexString("0x3"), new DiffBasedValue<>(Bytes.of(9), CODE));
+    codeToUpdate.put(Address.fromHexString("0x3"), new DiffBasedValue<>(FullBytecode.of(9), CODE));
 
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
@@ -127,18 +129,18 @@ class BonsaiWorldStateTest {
   }
 
   private static Stream<Bytes> emptyAndNullBytes() {
-    return Stream.of(Bytes.EMPTY, null);
+    return Stream.of(FullBytecode.EMPTY, null);
   }
 
   private static Stream<Bytes> codeValueAndEmptyAndNullBytes() {
-    return Stream.of(Bytes.EMPTY, null);
+    return Stream.of(FullBytecode.EMPTY, null);
   }
 
   private static Stream<Arguments> priorAndUpdatedEmptyAndNullBytes() {
     return Stream.of(
-        Arguments.of(null, Bytes.EMPTY),
-        Arguments.of(Bytes.EMPTY, null),
+        Arguments.of(null, FullBytecode.EMPTY),
+        Arguments.of(FullBytecode.EMPTY, null),
         Arguments.of(null, null),
-        Arguments.of(Bytes.EMPTY, Bytes.EMPTY));
+        Arguments.of(FullBytecode.EMPTY, FullBytecode.EMPTY));
   }
 }

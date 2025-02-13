@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeInvalid;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -223,7 +224,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       Code outputCode =
           (childFrame.getCreatedCode() != null)
               ? childFrame.getCreatedCode()
-              : evm.getCodeForCreation(childFrame.getOutputData());
+              : evm.getCodeForCreation(FullBytecode.wrap(childFrame.getOutputData()));
       if (outputCode.isValid()) {
         Address createdAddress = childFrame.getContractAddress();
         frame.pushStackItem(Words.fromAddress(createdAddress));

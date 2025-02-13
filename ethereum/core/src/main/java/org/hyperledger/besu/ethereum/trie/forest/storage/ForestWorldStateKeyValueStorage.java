@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.trie.forest.storage;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -49,11 +51,11 @@ public class ForestWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     return DataStorageFormat.FOREST;
   }
 
-  public Optional<Bytes> getCode(final Hash codeHash) {
+  public Optional<Bytecode> getCode(final Hash codeHash) {
     if (codeHash.equals(Hash.EMPTY)) {
-      return Optional.of(Bytes.EMPTY);
+      return Optional.of(FullBytecode.EMPTY);
     } else {
-      return keyValueStorage.get(codeHash.toArrayUnsafe()).map(Bytes::wrap);
+      return keyValueStorage.get(codeHash.toArrayUnsafe()).map(FullBytecode::wrap);
     }
   }
 

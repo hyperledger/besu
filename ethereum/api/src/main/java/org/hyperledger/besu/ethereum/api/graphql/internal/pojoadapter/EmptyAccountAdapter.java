@@ -16,9 +16,10 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 
 import graphql.schema.DataFetchingEnvironment;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
@@ -58,8 +59,8 @@ public class EmptyAccountAdapter extends AccountAdapter {
   }
 
   @Override
-  public Bytes getCode(final DataFetchingEnvironment environment) {
-    return Bytes.EMPTY;
+  public Bytecode getCode(final DataFetchingEnvironment environment) {
+    return FullBytecode.EMPTY;
   }
 
   @Override

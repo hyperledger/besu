@@ -23,6 +23,7 @@ import static org.hyperledger.besu.evm.code.OpcodeInfo.V1_OPCODES;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
 
+import org.hyperledger.besu.evm.code.Bytecode.RawByteArray;
 import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
 import org.hyperledger.besu.evm.operation.CallFOperation;
 import org.hyperledger.besu.evm.operation.DataLoadNOperation;
@@ -48,8 +49,6 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Queue;
 import javax.annotation.Nullable;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /** Code V1 Validation */
 public class CodeV1Validation implements EOFValidator {
@@ -143,17 +142,18 @@ public class CodeV1Validation implements EOFValidator {
    * @return null if valid, otherwise a string containing an error reason.
    */
   String validateCode(
-      final Bytes code, final CodeSection thisCodeSection, final EOFLayout eofLayout) {
+      final Bytecode code, final CodeSection thisCodeSection, final EOFLayout eofLayout) {
     final int size = code.size();
+    System.out.println("code size " + code.size());
     final BitSet rjumpdests = new BitSet(size);
     final BitSet immediates = new BitSet(size);
-    final byte[] rawCode = code.toArrayUnsafe();
+    final RawByteArray rawCode = code.getRawByteArray();
     OpcodeInfo opcodeInfo = V1_OPCODES[0xfe];
     int pos = 0;
     EOFContainerMode eofContainerMode = eofLayout.containerMode().get();
     boolean hasReturningOpcode = false;
     while (pos < size) {
-      final int operationNum = rawCode[pos] & 0xff;
+      final int operationNum = rawCode.get(pos) & 0xff;
       opcodeInfo = V1_OPCODES[operationNum];
       if (!opcodeInfo.valid()) {
         // undefined instruction
@@ -227,6 +227,7 @@ public class CodeV1Validation implements EOFValidator {
           pcPostInstruction += 2;
           final int offset = readBigEndianI16(pos, rawCode);
           final int rjumpdest = pcPostInstruction + offset;
+          System.out.println(rjumpdest + " " + size);
           if (rjumpdest < 0 || rjumpdest >= size) {
             return "invalid_rjump_destination out of bounds";
           }
@@ -293,7 +294,7 @@ public class CodeV1Validation implements EOFValidator {
                 "truncated_instruction dangling immediate for %s at pc=%d",
                 opcodeInfo.name(), pos - opcodeInfo.pcAdvance());
           }
-          int subcontainerNum = rawCode[pos] & 0xff;
+          int subcontainerNum = rawCode.get(pos) & 0xff;
           if (subcontainerNum >= eofLayout.getSubcontainerCount()) {
             return format(
                 "invalid_container_section_index %s refers to non-existent subcontainer %d at pc=%d",
@@ -330,7 +331,7 @@ public class CodeV1Validation implements EOFValidator {
                 "truncated_instruction dangling immediate for %s at pc=%d",
                 opcodeInfo.name(), pos - opcodeInfo.pcAdvance());
           }
-          int returnedContractNum = rawCode[pos] & 0xff;
+          int returnedContractNum = rawCode.get(pos) & 0xff;
           if (returnedContractNum >= eofLayout.getSubcontainerCount()) {
             return format(
                 "invalid_container_section_index %s refers to non-existent subcontainer %d at pc=%d",

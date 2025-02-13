@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -147,7 +148,8 @@ class EVMExecutorTest {
     var result =
         EVMExecutor.evm(EvmSpecVersion.SHANGHAI)
             .worldUpdater(createSimpleWorld().updater())
-            .execute(Bytes.fromHexString("0x6001600255"), Bytes.EMPTY, Wei.ZERO, Address.ZERO);
+            .execute(
+                FullBytecode.fromHexString("0x6001600255"), Bytes.EMPTY, Wei.ZERO, Address.ZERO);
     assertThat(result).isNotNull();
   }
 
@@ -174,7 +176,7 @@ class EVMExecutorTest {
             .blobGasPrice(Wei.ONE)
             .callData(Bytes.fromHexString("0x12345678"))
             .ethValue(Wei.fromEth(1))
-            .code(Bytes.fromHexString("0x6001600255"))
+            .code(FullBytecode.fromHexString("0x6001600255"))
             .blockValues(new SimpleBlockValues())
             .difficulty(Bytes.ofUnsignedLong(1L))
             .mixHash(Bytes32.ZERO)
@@ -205,7 +207,7 @@ class EVMExecutorTest {
         EVMExecutor.evm(EvmSpecVersion.SHANGHAI)
             .worldUpdater(simpleWorld.updater())
             .messageFrameType(MessageFrame.Type.MESSAGE_CALL)
-            .code(Bytes.fromHexString("0x6001600255"))
+            .code(FullBytecode.fromHexString("0x6001600255"))
             .prevRandao(Bytes32.ZERO)
             .accessListWarmAddresses(Set.of())
             .accessListWarmStorage(MultimapBuilder.linkedHashKeys().arrayListValues().build())

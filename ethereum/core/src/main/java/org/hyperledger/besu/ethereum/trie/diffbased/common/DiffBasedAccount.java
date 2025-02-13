@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +39,7 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
   protected Hash codeHash;
   protected long nonce;
   protected Wei balance;
-  protected Bytes code;
+  protected Bytecode code;
 
   protected final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
 
@@ -100,7 +102,7 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
       final long nonce,
       final Wei balance,
       final Hash codeHash,
-      final Bytes code,
+      final Bytecode code,
       final boolean mutable) {
     this.context = context;
     this.address = address;
@@ -149,15 +151,15 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
   }
 
   @Override
-  public Bytes getCode() {
+  public Bytecode getCode() {
     if (code == null) {
-      code = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
+      code = context.getCode(address, codeHash).orElse(FullBytecode.EMPTY);
     }
     return code;
   }
 
   @Override
-  public void setCode(final Bytes code) {
+  public void setCode(final Bytecode code) {
     if (immutable) {
       throw new ModificationNotAllowedException();
     }

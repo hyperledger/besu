@@ -20,11 +20,12 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 
 import java.util.Optional;
 
 import graphql.schema.DataFetchingEnvironment;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -115,7 +116,7 @@ public class AccountAdapter extends AdapterBase {
    * @param environment the DataFetchingEnvironment
    * @return the code of the account
    */
-  public Bytes getCode(final DataFetchingEnvironment environment) {
+  public Bytecode getCode(final DataFetchingEnvironment environment) {
 
     if (account.get() instanceof BonsaiAccount) {
       final BlockchainQueries query = getBlockchainQueries(environment);
@@ -125,7 +126,7 @@ public class AccountAdapter extends AdapterBase {
               ws -> Optional.of(ws.get(account.get().getAddress()).getCode()))
           .get();
     } else {
-      return account.map(AccountState::getCode).orElse(Bytes.EMPTY);
+      return account.map(AccountState::getCode).orElse(FullBytecode.EMPTY);
     }
   }
 

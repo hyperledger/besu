@@ -33,8 +33,10 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV1;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -116,10 +118,10 @@ public class EvmToolCommand implements Runnable {
       paramLabel = "<code>",
       description = "Byte stream of code to be executed.")
   void setBytes(final String optionValue) {
-    codeBytes = Bytes.fromHexString(optionValue.replace(" ", ""));
+    codeBytes = FullBytecode.fromHexString(optionValue.replace(" ", ""));
   }
 
-  private Bytes codeBytes = Bytes.EMPTY;
+  private Bytecode codeBytes = FullBytecode.EMPTY;
 
   @Option(
       names = {"--gas"},

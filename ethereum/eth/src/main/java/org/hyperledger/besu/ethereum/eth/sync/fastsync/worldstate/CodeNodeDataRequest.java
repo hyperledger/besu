@@ -57,15 +57,17 @@ class CodeNodeDataRequest extends NodeDataRequest {
   @Override
   public Optional<Bytes> getExistingData(
       final WorldStateStorageCoordinator worldStateStorageCoordinator) {
-    return worldStateStorageCoordinator.applyForStrategy(
-        onBonsai -> {
-          return onBonsai
-              .getCode(getHash(), accountHash.orElse(Hash.EMPTY))
-              .filter(codeBytes -> Hash.hash(codeBytes).equals(getHash()));
-        },
-        onForest -> {
-          return onForest.getCode(getHash());
-        });
+    return worldStateStorageCoordinator
+        .applyForStrategy(
+            onBonsai -> {
+              return onBonsai
+                  .getCode(getHash(), accountHash.orElse(Hash.EMPTY))
+                  .filter(codeBytes -> Hash.hash(codeBytes).equals(getHash()));
+            },
+            onForest -> {
+              return onForest.getCode(getHash());
+            })
+        .map(bytecode -> Bytes.wrap(bytecode.toArrayUnsafe()));
   }
 
   public Optional<Hash> getAccountHash() {

@@ -26,6 +26,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.contractvalidation.ContractValidationRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
@@ -691,7 +692,7 @@ public class EVMExecutor {
    * @return the bytes
    */
   public Bytes execute(
-      final Bytes codeBytes, final Bytes inputData, final Wei value, final Address receiver) {
+      final Bytecode codeBytes, final Bytes inputData, final Wei value, final Address receiver) {
     this.code = evm.getCode(Hash.hash(codeBytes), codeBytes);
     this.callData = inputData;
     this.ethValue = value;
@@ -898,7 +899,7 @@ public class EVMExecutor {
    * @param codeBytes the code bytes
    * @return the evm executor
    */
-  public EVMExecutor code(final Bytes codeBytes) {
+  public EVMExecutor code(final Bytecode codeBytes) {
     return code(codeBytes, Hash.hash(codeBytes));
   }
 
@@ -909,7 +910,7 @@ public class EVMExecutor {
    * @param hash the hash
    * @return the evm executor
    */
-  public EVMExecutor code(final Bytes codeBytes, final Hash hash) {
+  public EVMExecutor code(final Bytecode codeBytes, final Hash hash) {
     this.code = evm.getCode(hash, codeBytes);
     return this;
   }

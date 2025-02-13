@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.referencetests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -42,7 +44,7 @@ public class EnvironmentInformation {
 
   private final Address callerAddress;
 
-  private final Bytes code;
+  private final Bytecode code;
 
   private final Bytes data;
 
@@ -83,7 +85,7 @@ public class EnvironmentInformation {
       @JsonProperty("origin") final String origin,
       @JsonProperty("value") final String value) {
     this(
-        code,
+        FullBytecode.wrap(code),
         0,
         account == null ? null : Address.fromHexString(account),
         balance == null ? Wei.ZERO : Wei.fromHexString(balance),
@@ -96,7 +98,7 @@ public class EnvironmentInformation {
   }
 
   private EnvironmentInformation(
-      final Bytes code,
+      final Bytecode code,
       final int depth,
       final Address accountAddress,
       final Wei accountBalance,
@@ -177,7 +179,7 @@ public class EnvironmentInformation {
    *
    * @return code to be executed.
    */
-  public Bytes getCode() {
+  public Bytecode getCode() {
     return code;
   }
 

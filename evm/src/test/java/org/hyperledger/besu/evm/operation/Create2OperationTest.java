@@ -29,6 +29,8 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
@@ -63,8 +65,8 @@ public class Create2OperationTest {
 
   private static final String TOPIC =
       "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // 32 FFs
-  private static final Bytes SIMPLE_CREATE =
-      Bytes.fromHexString(
+  private static final Bytecode SIMPLE_CREATE =
+      FullBytecode.fromHexString(
           "0x"
               + "7f" // push32
               + TOPIC
@@ -75,8 +77,8 @@ public class Create2OperationTest {
               + "6000" // PUSH1 0x00
               + "F3" // RETURN
           );
-  public static final Bytes SIMPLE_EOF =
-      Bytes.fromHexString("0xEF00010100040200010001040000000080000000");
+  public static final Bytecode SIMPLE_EOF =
+      FullBytecode.fromHexString("0xEF00010100040200010001040000000080000000");
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
   private static final int SHANGHAI_CREATE_GAS = 41240 + (0xc000 / 32) * 6;
 
@@ -137,7 +139,7 @@ public class Create2OperationTest {
   public void setUp(final String sender, final String salt, final String code) {
 
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final Bytes codeBytes = Bytes.fromHexString(code);
+    final Bytecode codeBytes = FullBytecode.fromHexString(code);
     final UInt256 memoryLength = UInt256.valueOf(codeBytes.size());
     messageFrame =
         MessageFrame.builder()
@@ -181,7 +183,7 @@ public class Create2OperationTest {
     setUp(sender, salt, code);
     final Address targetContractAddress =
         operation.generateTargetContractAddress(
-            messageFrame, evm.getCodeUncached(Bytes.fromHexString(code)));
+            messageFrame, evm.getCodeUncached(FullBytecode.fromHexString(code)));
     assertThat(targetContractAddress).isEqualTo(Address.fromHexString(expectedAddress));
   }
 
@@ -211,7 +213,7 @@ public class Create2OperationTest {
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.getCode()).thenReturn(FullBytecode.EMPTY);
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
@@ -240,7 +242,7 @@ public class Create2OperationTest {
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.getCode()).thenReturn(FullBytecode.EMPTY);
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 

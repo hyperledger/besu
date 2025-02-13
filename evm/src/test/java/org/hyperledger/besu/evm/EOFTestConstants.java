@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.evm;
 
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 
 public class EOFTestConstants {
 
-  public static final Bytes INNER_CONTRACT =
+  public static final Bytecode INNER_CONTRACT =
       bytesFromPrettyPrint(
           """
                    # EOF
@@ -58,7 +59,7 @@ public class EOFTestConstants {
                            00 # [0] STOP
                    """);
 
-  public static Bytes EOF_CREATE_CONTRACT =
+  public static Bytecode EOF_CREATE_CONTRACT =
       bytesFromPrettyPrint(
           String.format(
               """
@@ -89,7 +90,7 @@ public class EOFTestConstants {
                       """,
               INNER_CONTRACT.size(), INNER_CONTRACT.toUnprefixedHexString()));
 
-  public static Bytes bytesFromPrettyPrint(final String prettyPrint) {
-    return Bytes.fromHexString(prettyPrint.replaceAll("#.*?\n", "").replaceAll("\\s", ""));
+  public static Bytecode bytesFromPrettyPrint(final String prettyPrint) {
+    return FullBytecode.fromHexString(prettyPrint.replaceAll("#.*?\n", "").replaceAll("\\s", ""));
   }
 }

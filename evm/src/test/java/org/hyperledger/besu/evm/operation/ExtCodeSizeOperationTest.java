@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
@@ -94,7 +96,7 @@ class ExtCodeSizeOperationTest {
 
   @Test
   void shouldGetSizeOfAccountCodeWhenCodeIsPresent() {
-    final Bytes code = Bytes.fromHexString("0xabcdef");
+    final Bytecode code = FullBytecode.fromHexString("0xabcdef");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
     assertThat(executeOperation(REQUESTED_ADDRESS).toInt()).isEqualTo(3);
@@ -103,7 +105,7 @@ class ExtCodeSizeOperationTest {
   @Test
   void shouldZeroOutLeftMostBitsToGetAddress() {
     // If EXTCODESIZE of A is X, then EXTCODESIZE of A + 2**160 is X.
-    final Bytes code = Bytes.fromHexString("0xabcdef");
+    final Bytecode code = FullBytecode.fromHexString("0xabcdef");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
     final UInt256 value =
@@ -116,7 +118,7 @@ class ExtCodeSizeOperationTest {
 
   @Test
   void shouldGetNonEOFSize() {
-    final Bytes code = Bytes.fromHexString("0xEFF09f918bf09f9fa9");
+    final Bytecode code = FullBytecode.fromHexString("0xEFF09f918bf09f9fa9");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
     final UInt256 value =
@@ -138,7 +140,7 @@ class ExtCodeSizeOperationTest {
 
   @Test
   void shouldGetEOFSize() {
-    final Bytes code = Bytes.fromHexString("0xEF009f918bf09f9fa9");
+    final Bytecode code = FullBytecode.fromHexString("0xEF009f918bf09f9fa9");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
     final UInt256 value =

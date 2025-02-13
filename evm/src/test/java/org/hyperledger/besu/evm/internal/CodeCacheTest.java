@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -31,8 +33,9 @@ class CodeCacheTest {
   @Test
   void testScale() {
     EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
-    final Bytes contractBytes =
-        Bytes.fromHexString("0xDEAD" + op + "BEEF" + op + "B0B0" + op + "C0DE" + op + "FACE");
+    final Bytecode contractBytes =
+        FullBytecode.fromHexString(
+            "0xDEAD" + op + "BEEF" + op + "B0B0" + op + "C0DE" + op + "FACE");
     final CodeScale scale = new CodeScale();
     final Code contractCode = evm.getCodeUncached(contractBytes);
     final int weight = scale.weigh(contractCode.getCodeHash(), contractCode);

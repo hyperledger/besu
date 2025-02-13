@@ -43,6 +43,8 @@ import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -98,7 +100,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @MethodSource("flatDbMode")
   void getCode_returnsEmpty(final FlatDbMode flatDbMode) {
     setUp(flatDbMode);
-    assertThat(storage.getCode(Hash.EMPTY, Hash.EMPTY)).contains(Bytes.EMPTY);
+    assertThat(storage.getCode(Hash.EMPTY, Hash.EMPTY)).contains(FullBytecode.EMPTY);
   }
 
   @ParameterizedTest
@@ -124,14 +126,14 @@ public class BonsaiWorldStateKeyValueStorageTest {
   void getCode_saveAndGetSpecialValues(
       final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
     setUp(flatDbMode, accountHashCodeStorage);
-    storage
-        .updater()
-        .putCode(Hash.EMPTY, MerkleTrie.EMPTY_TRIE_NODE)
-        .putCode(Hash.EMPTY, Bytes.EMPTY)
-        .commit();
 
-    assertThat(storage.getCode(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), Hash.EMPTY))
-        .contains(MerkleTrie.EMPTY_TRIE_NODE);
+    final Bytes codeZero = Bytes.EMPTY;
+    final Bytes codeOne = Bytes.of(1);
+    final Hash accountHash = Hash.hash(Bytes.of(2));
+    storage.updater().putCode(accountHash, codeOne).putCode(accountHash, codeZero).commit();
+
+    assertThat(storage.getCode(Hash.hash(codeOne), accountHash))
+        .contains(FullBytecode.wrap(codeOne));
   }
 
   @ParameterizedTest
@@ -139,7 +141,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   void getCode_saveAndGetRegularValue(
       final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
     setUp(flatDbMode, accountHashCodeStorage);
-    final Bytes bytes = Bytes.fromHexString("0x123456");
+    final Bytecode bytes = FullBytecode.fromHexString("0x123456");
     storage.updater().putCode(Hash.EMPTY, bytes).commit();
 
     assertThat(storage.getCode(Hash.hash(bytes), Hash.EMPTY)).contains(bytes);
@@ -400,9 +402,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final Hash accountHashA = Address.fromHexString("0x1").addressHash();
     final Hash accountHashB = Address.fromHexString("0x2").addressHash();
     final Hash accountHashD = Address.fromHexString("0x4").addressHash();
-    final Bytes bytesA = Bytes.fromHexString("0x12");
-    final Bytes bytesB = Bytes.fromHexString("0x1234");
-    final Bytes bytesC = Bytes.fromHexString("0x123456");
+    final Bytecode bytesA = FullBytecode.fromHexString("0x12");
+    final Bytecode bytesB = FullBytecode.fromHexString("0x1234");
+    final Bytecode bytesC = FullBytecode.fromHexString("0x123456");
 
     final BonsaiWorldStateKeyValueStorage.Updater updaterA = storage.updater();
     final BonsaiWorldStateKeyValueStorage.Updater updaterB = storage.updater();

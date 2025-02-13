@@ -19,6 +19,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -40,7 +42,7 @@ public interface ReferenceTestWorldState extends MutableWorldState {
   class AccountMock {
     private final long nonce;
     private final Wei balance;
-    private final Bytes code;
+    private final Bytecode code;
     private final Map<UInt256, UInt256> storage;
 
     private static Map<UInt256, UInt256> parseStorage(final Map<String, String> values) {
@@ -58,7 +60,7 @@ public interface ReferenceTestWorldState extends MutableWorldState {
         @JsonProperty("code") final String code) {
       this.nonce = nonce == null ? 0 : Bytes.fromHexStringLenient(nonce).toLong();
       this.balance = balance == null ? Wei.ZERO : Wei.fromHexString(balance);
-      this.code = code == null ? Bytes.EMPTY : Bytes.fromHexString(code);
+      this.code = code == null ? FullBytecode.EMPTY : FullBytecode.fromHexString(code);
       this.storage = storage == null ? Map.of() : parseStorage(storage);
     }
 
@@ -70,7 +72,7 @@ public interface ReferenceTestWorldState extends MutableWorldState {
       return balance;
     }
 
-    public Bytes getCode() {
+    public Bytecode getCode() {
       return code;
     }
 

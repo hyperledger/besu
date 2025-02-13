@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
@@ -26,11 +28,11 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class AccountHashCodeStorageStrategy implements CodeStorageStrategy {
   @Override
-  public Optional<Bytes> getFlatCode(
+  public Optional<Bytecode> getFlatCode(
       final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
     return storage
         .get(CODE_STORAGE, accountHash.toArrayUnsafe())
-        .map(Bytes::wrap)
+        .map(FullBytecode::wrap)
         .filter(b -> Hash.hash(b).equals(codeHash));
   }
 

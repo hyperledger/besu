@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
@@ -135,7 +136,7 @@ class DataCopyOperationTest {
     String eofCode =
         "0xef0001010004020001001d04%04x000080000367%016x67%016x67%016xd300%s"
             .formatted(data.size(), dst, src, len, data.toUnprefixedHexString());
-    Code code = evm.getCodeUncached(Bytes.fromHexString(eofCode));
+    Code code = evm.getCodeUncached(FullBytecode.fromHexString(eofCode));
     assumeTrue(code.isValid());
 
     MessageFrame frame =
@@ -157,7 +158,7 @@ class DataCopyOperationTest {
   @Test
   void legacyCallFails() {
     DataCopyOperation subject = new DataCopyOperation(new PragueGasCalculator());
-    Code code = evm.getCodeUncached(Bytes.fromHexString("0x600460046004d3"));
+    Code code = evm.getCodeUncached(FullBytecode.fromHexString("0x600460046004d3"));
     assumeTrue(code.isValid());
 
     MessageFrame frame =

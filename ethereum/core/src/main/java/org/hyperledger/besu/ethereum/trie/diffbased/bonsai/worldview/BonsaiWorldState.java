@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
@@ -111,7 +112,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
   }
 
   @Override
-  public Optional<Bytes> getCode(@Nonnull final Address address, final Hash codeHash) {
+  public Optional<Bytecode> getCode(@Nonnull final Address address, final Hash codeHash) {
     return getWorldStateStorage().getCode(codeHash, address.addressHash());
   }
 
@@ -214,7 +215,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
     maybeStateUpdater.ifPresent(
         bonsaiUpdater -> {
-          for (final Map.Entry<Address, DiffBasedValue<Bytes>> codeUpdate :
+          for (final Map.Entry<Address, DiffBasedValue<Bytecode>> codeUpdate :
               worldStateUpdater.getCodeToUpdate().entrySet()) {
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
             final Hash accountHash = codeUpdate.getKey().addressHash();

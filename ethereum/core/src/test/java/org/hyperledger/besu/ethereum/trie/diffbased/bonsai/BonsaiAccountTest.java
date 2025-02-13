@@ -20,9 +20,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -43,7 +43,7 @@ public class BonsaiAccountTest {
             Hash.EMPTY_TRIE_HASH,
             Hash.EMPTY,
             true);
-    trackedAccount.setCode(Bytes.of(1));
+    trackedAccount.setCode(FullBytecode.of(1));
     final UpdateTrackingAccount<BonsaiAccount> bonsaiAccountUpdateTrackingAccount =
         new UpdateTrackingAccount<>(trackedAccount);
     bonsaiAccountUpdateTrackingAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
@@ -66,7 +66,7 @@ public class BonsaiAccountTest {
             Hash.EMPTY_TRIE_HASH,
             Hash.EMPTY,
             true);
-    account.setCode(Bytes.of(1));
+    account.setCode(FullBytecode.of(1));
     account.setStorageValue(UInt256.ONE, UInt256.ONE);
     assertThat(new BonsaiAccount(account, bonsaiWorldState, true))
         .isEqualToComparingFieldByField(account);

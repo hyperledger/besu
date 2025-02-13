@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.HashMap;
@@ -51,7 +52,7 @@ public class TrieLogLayer implements TrieLog {
     return accounts;
   }
 
-  Map<Address, DiffBasedValue<Bytes>> getCode() {
+  Map<Address, DiffBasedValue<Bytecode>> getCode() {
     return code;
   }
 
@@ -60,7 +61,7 @@ public class TrieLogLayer implements TrieLog {
   }
 
   protected final Map<Address, DiffBasedValue<AccountValue>> accounts;
-  protected final Map<Address, DiffBasedValue<Bytes>> code;
+  protected final Map<Address, DiffBasedValue<Bytecode>> code;
   protected final Map<Address, Map<StorageSlotKey, DiffBasedValue<UInt256>>> storage;
   protected boolean frozen = false;
 
@@ -107,7 +108,10 @@ public class TrieLogLayer implements TrieLog {
   }
 
   public TrieLogLayer addCodeChange(
-      final Address address, final Bytes oldValue, final Bytes newValue, final Hash blockHash) {
+      final Address address,
+      final Bytecode oldValue,
+      final Bytecode newValue,
+      final Hash blockHash) {
     checkState(!frozen, "Layer is Frozen");
     code.put(address, new DiffBasedValue<>(oldValue, newValue, newValue == null));
     return this;
@@ -131,7 +135,7 @@ public class TrieLogLayer implements TrieLog {
   }
 
   @Override
-  public Map<Address, DiffBasedValue<Bytes>> getCodeChanges() {
+  public Map<Address, DiffBasedValue<Bytecode>> getCodeChanges() {
     return code;
   }
 
@@ -155,7 +159,7 @@ public class TrieLogLayer implements TrieLog {
   }
 
   @Override
-  public Optional<Bytes> getCode(final Address address) {
+  public Optional<Bytecode> getCode(final Address address) {
     return Optional.ofNullable(code.get(address)).map(DiffBasedValue::getUpdated);
   }
 
@@ -199,7 +203,7 @@ public class TrieLogLayer implements TrieLog {
       }
     }
     sb.append("code").append("\n");
-    for (final Map.Entry<Address, DiffBasedValue<Bytes>> code : code.entrySet()) {
+    for (final Map.Entry<Address, DiffBasedValue<Bytecode>> code : code.entrySet()) {
       sb.append(" : ").append(code.getKey()).append("\n");
       if (Objects.equals(code.getValue().getPrior(), code.getValue().getUpdated())) {
         sb.append("   = ").append(code.getValue().getPrior()).append("\n");

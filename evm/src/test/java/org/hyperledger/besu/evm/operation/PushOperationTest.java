@@ -20,7 +20,9 @@ import static org.hyperledger.besu.evm.operation.PushOperation.staticOperation;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.toy.ToyBlockValues;
 import org.hyperledger.besu.evm.toy.ToyWorld;
@@ -34,7 +36,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class PushOperationTest {
 
-  private static final byte[] byteCode = new byte[] {0x00, 0x01, 0x02, 0x03};
+  private static final Bytecode byteCode = FullBytecode.of(new byte[] {0x00, 0x01, 0x02, 0x03});
   private static final MessageFrame frame =
       MessageFrame.builder()
           .worldUpdater(new ToyWorld())
@@ -59,25 +61,25 @@ public class PushOperationTest {
 
   @Test
   void unpaddedPushDoesntReachEndCode() {
-    staticOperation(frame, byteCode, 0, byteCode.length - 2);
+    staticOperation(frame, byteCode.getRawByteArray(), 0, byteCode.size() - 2);
     assertThat(frame.getStackItem(0).equals(Bytes.fromHexString("0x0102"))).isTrue();
   }
 
   @Test
   void unpaddedPushUpReachesEndCode() {
-    staticOperation(frame, byteCode, 0, byteCode.length - 1);
+    staticOperation(frame, byteCode.getRawByteArray(), 0, byteCode.size() - 1);
     assertThat(frame.getStackItem(0).equals(Bytes.fromHexString("0x010203"))).isTrue();
   }
 
   @Test
   void paddedPush() {
-    staticOperation(frame, byteCode, 1, byteCode.length - 1);
+    staticOperation(frame, byteCode.getRawByteArray(), 1, byteCode.size() - 1);
     assertThat(frame.getStackItem(0).equals(Bytes.fromHexString("0x020300"))).isTrue();
   }
 
   @Test
   void oobPush() {
-    staticOperation(frame, byteCode, byteCode.length, byteCode.length - 1);
+    staticOperation(frame, byteCode.getRawByteArray(), byteCode.size(), byteCode.size() - 1);
     assertThat(frame.getStackItem(0).equals(Bytes.EMPTY)).isTrue();
   }
 }

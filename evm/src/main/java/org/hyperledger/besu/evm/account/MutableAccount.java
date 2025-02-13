@@ -15,10 +15,10 @@
 package org.hyperledger.besu.evm.account;
 
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.code.Bytecode;
 
 import java.util.Map;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** A mutable world state account. */
@@ -84,7 +84,7 @@ public interface MutableAccount extends Account {
    *
    * @param code the code to set for the account.
    */
-  void setCode(Bytes code);
+  void setCode(Bytecode code);
 
   /**
    * Sets a particular key-value pair in the account storage.

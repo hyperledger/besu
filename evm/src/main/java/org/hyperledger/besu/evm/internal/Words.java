@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.internal;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.code.Bytecode.RawByteArray;
 
 import java.math.BigInteger;
 
@@ -196,6 +197,21 @@ public interface Words {
   }
 
   /**
+   * Reads a 16-bit unsigned integer (u16) in big-endian format from the bytecode.
+   *
+   * @param index the starting index of the 16-bit value.
+   * @param codeBytes the bytecode array .
+   * @return the 16-bit unsigned integer.
+   * @throws IndexOutOfBoundsException if the index or index + 1 is out of bounds.
+   */
+  static int readBigEndianU16(final int index, final RawByteArray codeBytes) {
+    if (index + 1 >= codeBytes.size()) {
+      throw new IndexOutOfBoundsException();
+    }
+    return ((codeBytes.get(index) << 8) & 0xff00) | (codeBytes.get(index + 1) & 0xff);
+  }
+
+  /**
    * Read big endian u16.
    *
    * @param index the index
@@ -207,6 +223,22 @@ public interface Words {
       throw new IndexOutOfBoundsException();
     }
     return ((array[index] << 8) & 0xff00) | (array[index + 1] & 0xff);
+  }
+
+  /**
+   * Reads a 16-bit integer (i16) in big endian format from a specific index in the byte array.
+   *
+   * @param index the index in the byte array where the 16-bit integer starts
+   * @param codeBytes the bytecode of the contract, from which the integer will be read
+   * @return the 16-bit integer value obtained from the bytecode at the given index
+   * @throws IndexOutOfBoundsException if the index is out of range for reading a 16-bit value
+   *     (index + 1 >= codeBytes.size())
+   */
+  static int readBigEndianI16(final int index, final RawByteArray codeBytes) {
+    if (index + 1 >= codeBytes.size()) {
+      throw new IndexOutOfBoundsException();
+    }
+    return (codeBytes.get(index) << 8) | (codeBytes.get(index + 1) & 0xff);
   }
 
   /**

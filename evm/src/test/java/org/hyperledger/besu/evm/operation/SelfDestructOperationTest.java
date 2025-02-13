@@ -26,6 +26,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
@@ -43,8 +45,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class SelfDestructOperationTest {
 
-  private static final Bytes SELFDESTRUCT_CODE =
-      Bytes.fromHexString(
+  private static final Bytecode SELFDESTRUCT_CODE =
+      FullBytecode.fromHexString(
           "6000" // PUSH1 0
               + "35" // CALLDATALOAD
               + "ff" // SELFDESTRUCT

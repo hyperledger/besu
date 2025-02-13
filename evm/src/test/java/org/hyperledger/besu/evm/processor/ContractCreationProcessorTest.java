@@ -23,6 +23,7 @@ import static org.hyperledger.besu.evm.frame.MessageFrame.State.EXCEPTIONAL_HALT
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.contractvalidation.EOFValidationCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
@@ -172,7 +173,7 @@ class ContractCreationProcessorTest
             1,
             Collections.emptyList());
     final Bytes contractCode = Bytes.fromHexString("6030602001");
-    final Bytes initCode = EOF_CREATE_CONTRACT;
+    final Bytecode initCode = EOF_CREATE_CONTRACT;
     final MessageFrame messageFrame =
         new TestMessageFrameBuilder().code(evm.getCodeForCreation(initCode)).build();
     messageFrame.setOutputData(contractCode);

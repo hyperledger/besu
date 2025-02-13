@@ -22,6 +22,8 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -68,7 +70,7 @@ public class Create2Operation extends AbstractCreateOperation {
   protected Code getInitCode(final MessageFrame frame, final EVM evm) {
     final long inputOffset = clampedToLong(frame.getStackItem(1));
     final long inputSize = clampedToLong(frame.getStackItem(2));
-    final Bytes inputData = frame.readMemory(inputOffset, inputSize);
+    final Bytecode inputData = FullBytecode.wrap(frame.readMemory(inputOffset, inputSize));
     // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
     // addresses disk loading delay, and we already have the code.
     return evm.getCodeUncached(inputData);

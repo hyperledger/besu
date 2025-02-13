@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -168,7 +169,7 @@ class LogRollingTests {
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
-    mutableAccount.setCode(Bytes.of(0, 1, 2));
+    mutableAccount.setCode(FullBytecode.of(0, 1, 2));
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
     worldState.persist(headerOne);
@@ -218,7 +219,7 @@ class LogRollingTests {
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
-    mutableAccount.setCode(Bytes.of(0, 1, 2));
+    mutableAccount.setCode(FullBytecode.of(0, 1, 2));
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
 
@@ -277,7 +278,7 @@ class LogRollingTests {
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
-    mutableAccount.setCode(Bytes.of(0, 1, 2));
+    mutableAccount.setCode(FullBytecode.of(0, 1, 2));
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
 
@@ -310,7 +311,7 @@ class LogRollingTests {
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =
         secondUpdater.createAccount(addressOne, 1, Wei.of(1L));
-    secondMutableAccount.setCode(Bytes.of(0, 1, 2));
+    secondMutableAccount.setCode(FullBytecode.of(0, 1, 2));
     secondMutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     secondUpdater.commit();
 

@@ -20,6 +20,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
@@ -95,7 +97,7 @@ class ExtCodeHashOperationTest {
 
   @Test
   void shouldGetHashOfAccountCodeWhenCodeIsPresent() {
-    final Bytes code = Bytes.fromHexString("0xabcdef");
+    final Bytecode code = FullBytecode.fromHexString("0xabcdef");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
     assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.hash(code));
@@ -104,7 +106,7 @@ class ExtCodeHashOperationTest {
   @Test
   void shouldZeroOutLeftMostBitsToGetAddress() {
     // If EXTCODEHASH of A is X, then EXTCODEHASH of A + 2**160 is X.
-    final Bytes code = Bytes.fromHexString("0xabcdef");
+    final Bytecode code = FullBytecode.fromHexString("0xabcdef");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
     final UInt256 value =
@@ -117,7 +119,7 @@ class ExtCodeHashOperationTest {
 
   @Test
   void shouldGetNonEOFHash() {
-    final Bytes code = Bytes.fromHexString("0xEFF09f918bf09f9fa9");
+    final Bytecode code = FullBytecode.fromHexString("0xEFF09f918bf09f9fa9");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
     final UInt256 value =
@@ -139,7 +141,7 @@ class ExtCodeHashOperationTest {
 
   @Test
   void shouldGetEOFHash() {
-    final Bytes code = Bytes.fromHexString("0xEF009f918bf09f9fa9");
+    final Bytecode code = FullBytecode.fromHexString("0xEF009f918bf09f9fa9");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
     final UInt256 value =

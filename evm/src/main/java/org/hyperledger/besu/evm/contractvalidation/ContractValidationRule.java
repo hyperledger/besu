@@ -15,12 +15,11 @@
 package org.hyperledger.besu.evm.contractvalidation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /** The interface Contract validation rule. */
 @FunctionalInterface
@@ -34,5 +33,5 @@ public interface ContractValidationRule {
    * @param evm the EVM against which the validation rule should be considered
    * @return the optional halt reason
    */
-  Optional<ExceptionalHaltReason> validate(Bytes contractCode, MessageFrame frame, EVM evm);
+  Optional<ExceptionalHaltReason> validate(Bytecode contractCode, MessageFrame frame, EVM evm);
 }

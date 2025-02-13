@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -182,7 +183,7 @@ public class BlockDataGenerator {
       final MutableAccount account = updater.getOrCreate(address());
       if (random.nextFloat() < percentContractAccounts) {
         // Some percentage of accounts are contract accounts
-        account.setCode(bytesValue(5, 50));
+        account.setCode(FullBytecode.wrap(bytesValue(5, 50)));
         if (random.nextFloat() < percentContractAccountsWithNonEmptyStorage) {
           // Add some storage for contract accounts
           final int storageValues = random.nextInt(20) + 10;

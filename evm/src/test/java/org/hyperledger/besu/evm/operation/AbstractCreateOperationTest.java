@@ -30,7 +30,9 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.code.CodeInvalid;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -58,23 +60,23 @@ class AbstractCreateOperationTest {
   private final FakeCreateOperation operation =
       new FakeCreateOperation(new ConstantinopleGasCalculator());
 
-  private static final Bytes SIMPLE_CREATE =
-      Bytes.fromHexString(
+  private static final Bytecode SIMPLE_CREATE =
+      FullBytecode.fromHexString(
           "0x"
               + "6000" // PUSH1 0x00
               + "6000" // PUSH1 0x00
               + "F3" // RETURN
           );
-  private static final Bytes POP_UNDERFLOW_CREATE =
-      Bytes.fromHexString(
+  private static final Bytecode POP_UNDERFLOW_CREATE =
+      FullBytecode.fromHexString(
           "0x"
               + "50" // POP (but empty stack)
               + "6000" // PUSH1 0x00
               + "6000" // PUSH1 0x00
               + "F3" // RETURN
           );
-  public static final Bytes INVALID_EOF =
-      Bytes.fromHexString(
+  public static final Bytecode INVALID_EOF =
+      FullBytecode.fromHexString(
           "0x"
               + "73EF00990100040200010001030000000000000000" // PUSH20 contract
               + "6000" // PUSH1 0x00
@@ -129,7 +131,7 @@ class AbstractCreateOperationTest {
     protected Code getInitCode(final MessageFrame frame, final EVM evm) {
       final long inputOffset = clampedToLong(frame.getStackItem(1));
       final long inputSize = clampedToLong(frame.getStackItem(2));
-      final Bytes inputData = frame.readMemory(inputOffset, inputSize);
+      final Bytecode inputData = FullBytecode.wrap(frame.readMemory(inputOffset, inputSize));
       return evm.getCodeUncached(inputData);
     }
 
@@ -187,7 +189,7 @@ class AbstractCreateOperationTest {
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.getCode()).thenReturn(FullBytecode.EMPTY);
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 

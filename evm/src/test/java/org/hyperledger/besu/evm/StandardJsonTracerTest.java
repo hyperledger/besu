@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.fluent.EVMExecutor;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 
@@ -39,7 +40,8 @@ class StandardJsonTracerTest {
     executor.tracer(tracer);
     executor.gas(10_000_000_000L);
 
-    var codeBytes = Bytes.fromHexString("0x604080536040604055604060006040600060025afa6040f3");
+    var codeBytes =
+        FullBytecode.fromHexString("0x604080536040604055604060006040600060025afa6040f3");
     executor.execute(codeBytes, Bytes.EMPTY, Wei.ZERO, Address.ZERO);
 
     // differences from the EIP-3155 test case
@@ -82,7 +84,8 @@ class StandardJsonTracerTest {
     executor.tracer(tracer);
     executor.gas(10_000_000_000L);
 
-    var codeBytes = Bytes.fromHexString("0x604080536040604055604060006040600060025afa6040f3");
+    var codeBytes =
+        FullBytecode.fromHexString("0x604080536040604055604060006040600060025afa6040f3");
     executor.execute(codeBytes, Bytes.EMPTY, Wei.ZERO, Address.ZERO);
 
     assertThat(baos)

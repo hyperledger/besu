@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
@@ -28,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A skeletal class for instantiating message processors.
@@ -235,7 +234,7 @@ public abstract class AbstractMessageProcessor {
    * @param codeBytes the code bytes
    * @return the code from evm
    */
-  public Code getCodeFromEVM(@Nonnull final Hash codeHash, final Bytes codeBytes) {
+  public Code getCodeFromEVM(@Nonnull final Hash codeHash, final Bytecode codeBytes) {
     return evm.getCode(codeHash, codeBytes);
   }
 
@@ -245,7 +244,7 @@ public abstract class AbstractMessageProcessor {
    * @param codeBytes the code bytes
    * @return the code from evm
    */
-  public Code getCodeFromEVMForCreation(final Bytes codeBytes) {
+  public Code getCodeFromEVMForCreation(final Bytecode codeBytes) {
     return evm.getCodeForCreation(codeBytes);
   }
 }

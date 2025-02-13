@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
@@ -59,7 +61,7 @@ public class ForestMutableWorldState implements MutableWorldState {
 
   private final MerkleTrie<Bytes32, Bytes> accountStateTrie;
   private final Map<Address, MerkleTrie<Bytes32, Bytes>> updatedStorageTries = new HashMap<>();
-  private final Map<Address, Bytes> updatedAccountCode = new HashMap<>();
+  private final Map<Address, Bytecode> updatedAccountCode = new HashMap<>();
   private final Map<Bytes32, UInt256> newStorageKeyPreimages = new HashMap<>();
   private final Map<Bytes32, Address> newAccountKeyPreimages = new HashMap<>();
 
@@ -275,17 +277,17 @@ public class ForestMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public Bytes getCode() {
-      final Bytes updatedCode = updatedAccountCode.get(address);
+    public Bytecode getCode() {
+      final Bytecode updatedCode = updatedAccountCode.get(address);
       if (updatedCode != null) {
         return updatedCode;
       }
       // No code is common, save the KV-store lookup.
       final Hash codeHash = getCodeHash();
       if (codeHash.equals(Hash.EMPTY)) {
-        return Bytes.EMPTY;
+        return FullBytecode.EMPTY;
       }
-      return worldStateKeyValueStorage.getCode(codeHash).orElse(Bytes.EMPTY);
+      return worldStateKeyValueStorage.getCode(codeHash).orElse(FullBytecode.EMPTY);
     }
 
     @Override

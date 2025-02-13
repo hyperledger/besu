@@ -16,12 +16,12 @@ package org.hyperledger.besu.evm.account;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes;
 
 abstract class AbstractCodeDelegationAccount implements Account {
   private final WorldUpdater worldUpdater;
@@ -45,7 +45,7 @@ abstract class AbstractCodeDelegationAccount implements Account {
    * @return the delegated code.
    */
   @Override
-  public Optional<Bytes> getCodeDelegationTargetCode() {
+  public Optional<Bytecode> getCodeDelegationTargetCode() {
     return resolveCodeDelegationTargetCode();
   }
 
@@ -78,11 +78,11 @@ abstract class AbstractCodeDelegationAccount implements Account {
     return Optional.ofNullable(worldUpdater.getAccount(codeDelegationAddress));
   }
 
-  private Optional<Bytes> resolveCodeDelegationTargetCode() {
+  private Optional<Bytecode> resolveCodeDelegationTargetCode() {
     final Optional<Account> maybeDelegatedAccount = getDelegatedAccount();
 
     if (gasCalculator.isPrecompile(codeDelegationAddress) || maybeDelegatedAccount.isEmpty()) {
-      return Optional.of(Bytes.EMPTY);
+      return Optional.of(FullBytecode.EMPTY);
     }
 
     return Optional.of(maybeDelegatedAccount.get().getCode());

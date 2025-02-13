@@ -22,10 +22,12 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedul
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV1;
 import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.BufferedReader;
@@ -38,7 +40,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
-import org.apache.tuweni.bytes.Bytes;
 import org.web3j.utils.Strings;
 import picocli.CommandLine;
 import picocli.CommandLine.ParentCommand;
@@ -153,14 +154,14 @@ public class CodeValidateSubCommand implements Runnable {
    *     hexadecimal string representation of each code section
    */
   public String considerCode(final String hexCode) {
-    Bytes codeBytes;
+    Bytecode codeBytes;
     try {
       String strippedString =
           hexCode.replaceAll("(^|\n)#[^\n]*($|\n)", "").replaceAll("[^0-9A-Za-z]", "");
       if (Strings.isEmpty(strippedString)) {
         return "";
       }
-      codeBytes = Bytes.fromHexString(strippedString);
+      codeBytes = FullBytecode.fromHexString(strippedString);
     } catch (RuntimeException re) {
       return "err: hex string -" + re;
     }

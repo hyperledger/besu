@@ -65,8 +65,8 @@ public class CodeV1 implements Code {
   }
 
   @Override
-  public Bytes getBytes() {
-    return eofLayout.container();
+  public Bytecode getBytes() {
+    return FullBytecode.wrap(eofLayout.container());
   }
 
   @Override
@@ -111,7 +111,7 @@ public class CodeV1 implements Code {
       codeToLoad = subcontainerLayout.container();
     }
 
-    Code subContainerCode = evm.getCodeUncached(codeToLoad);
+    Code subContainerCode = evm.getCodeUncached(FullBytecode.wrap(codeToLoad));
 
     return subContainerCode.isValid() && subContainerCode.getEofVersion() > 0
         ? Optional.of(subContainerCode)

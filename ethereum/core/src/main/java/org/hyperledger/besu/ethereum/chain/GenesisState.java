@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -170,7 +171,8 @@ public final class GenesisState {
           final MutableAccount account = updater.createAccount(genesisAccount.address());
           account.setNonce(genesisAccount.nonce());
           account.setBalance(genesisAccount.balance());
-          account.setCode(genesisAccount.code());
+          account.setCode(
+              genesisAccount.code() == null ? null : FullBytecode.wrap(genesisAccount.code()));
           genesisAccount.storage().forEach(account::setStorageValue);
         });
     updater.commit();

@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
@@ -51,111 +53,112 @@ class ExtCodeCopyOperationTest {
         new Object[][] {
           {
             "Copy after, no overlap",
-            Bytes.fromHexString("0123456789abcdef000000000000000000000000000000000000000000000000"),
+            FullBytecode.fromHexString(
+                "0123456789abcdef000000000000000000000000000000000000000000000000"),
             32,
             0,
             8,
-            Bytes.fromHexString(
+            FullBytecode.fromHexString(
                 "00000000000000000000000000000000000000000000000000000000000000000123456789abcdef"),
             false,
             2609L
           },
           {
             "copy from uninitialized memory",
-            Bytes.EMPTY,
+            FullBytecode.EMPTY,
             0,
             24,
             16,
-            Bytes.fromHexString(
+            FullBytecode.fromHexString(
                 "0x000000000000000000000000000000000000000000000000000000000000000000"),
             false,
             2606L
           },
           {
             "copy from initialized + uninitialized memory",
-            Bytes.fromHexString(
+            FullBytecode.fromHexString(
                 "0x0000000000000000000000000000000000000000000000000123456789abcdef"),
             64,
             24,
             16,
-            Bytes.fromHexString(
+            FullBytecode.fromHexString(
                 "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000123456789abcdef000000000000000000000000000000000000000000000000"),
             false,
             2612L
           },
           {
             "overlapping src < dst",
-            Bytes.fromHexString(
+            FullBytecode.fromHexString(
                 "0x0123456789abcdef000000000000000000000000000000000000000000000000"),
             4,
             0,
             8,
-            Bytes.fromHexString(
+            FullBytecode.fromHexString(
                 "0x000000000123456789abcdef0000000000000000000000000000000000000000"),
             false,
             2606L
           },
           {
             "overlapping src > dst",
-            Bytes.fromHexString(
+            FullBytecode.fromHexString(
                 "0x00112233445566778899aabbccddeeff00000000000000000000000000000000"),
             0,
             4,
             8,
-            Bytes.fromHexString(
+            FullBytecode.fromHexString(
                 "0x445566778899aabb000000000000000000000000000000000000000000000000"),
             false,
             2606L
           },
           {
             "overlapping src == dst",
-            Bytes.fromHexString(
+            FullBytecode.fromHexString(
                 "0x00112233445566778899aabbccddeeff00000000000000000000000000000000"),
             4,
             4,
             8,
-            Bytes.fromHexString(
+            FullBytecode.fromHexString(
                 "0x00000000445566778899aabb0000000000000000000000000000000000000000"),
             false,
             2606L
           },
           {
             "EOF-reserved pre-eof",
-            Bytes.fromHexString("0xEF009f918bf09f9fa9"),
+            FullBytecode.fromHexString("0xEF009f918bf09f9fa9"),
             0,
             0,
             9,
-            Bytes.fromHexString("0xEF009f918bf09f9fa9"),
+            FullBytecode.fromHexString("0xEF009f918bf09f9fa9"),
             false,
             2606L
           },
           {
             "EOF-reserved post-epf",
-            Bytes.fromHexString("0xEF009f918bf09f9fa9"),
+            FullBytecode.fromHexString("0xEF009f918bf09f9fa9"),
             0,
             0,
             9,
-            Bytes.fromHexString("0xEF000000000000000000"),
+            FullBytecode.fromHexString("0xEF000000000000000000"),
             true,
             2606L
           },
           {
             "EF-reserved pre-epf",
-            Bytes.fromHexString("0xEFF09f918bf09f9fa9"),
+            FullBytecode.fromHexString("0xEFF09f918bf09f9fa9"),
             0,
             0,
             9,
-            Bytes.fromHexString("0xEFF09f918bf09f9fa9"),
+            FullBytecode.fromHexString("0xEFF09f918bf09f9fa9"),
             false,
             2606L
           },
           {
             "EOF-reserved post-eof",
-            Bytes.fromHexString("0xEFF09f918bf09f9fa9"),
+            FullBytecode.fromHexString("0xEFF09f918bf09f9fa9"),
             0,
             0,
             9,
-            Bytes.fromHexString("0xEFF09f918bf09f9fa9"),
+            FullBytecode.fromHexString("0xEFF09f918bf09f9fa9"),
             true,
             2606L
           }
@@ -167,11 +170,11 @@ class ExtCodeCopyOperationTest {
   @MethodSource("extCodeCopyTestVector")
   void testExtCodeCopy(
       final String name,
-      final Bytes code,
+      final Bytecode code,
       final long dst,
       final long src,
       final long len,
-      final Bytes expected,
+      final Bytecode expected,
       final boolean eof,
       final long gasCost) {
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
@@ -197,7 +200,7 @@ class ExtCodeCopyOperationTest {
   @Test
   void testExtCodeCopyCold() {
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
-    Bytes code = Bytes.fromHexString("0xEFF09f918bf09f9fa9");
+    Bytecode code = FullBytecode.fromHexString("0xEFF09f918bf09f9fa9");
     account.setCode(code);
 
     ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator(), false);
@@ -221,7 +224,7 @@ class ExtCodeCopyOperationTest {
   @Test
   void testExtCodeEOFDirtyMemory() {
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
-    Bytes code = Bytes.fromHexString("0xEF009f918bf09f9fa9");
+    Bytecode code = FullBytecode.fromHexString("0xEF009f918bf09f9fa9");
     account.setCode(code);
 
     ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator(), true);

@@ -21,14 +21,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.Code;
-
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 
 public class OperationsTestUtils {
 
   public static Code mockCode(final String codeString) {
     Code mockCode = mock(Code.class);
-    final Bytes codeBytes = Bytes.fromHexString(codeString);
+    final Bytecode codeBytes = FullBytecode.fromHexString(codeString);
     when(mockCode.getBytes()).thenReturn(codeBytes);
     when(mockCode.getEofVersion()).thenReturn(1);
     when(mockCode.readBigEndianI16(anyInt()))

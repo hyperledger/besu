@@ -33,6 +33,8 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -84,9 +86,9 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     return flatDbStrategyProvider.getFlatDbMode();
   }
 
-  public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
+  public Optional<Bytecode> getCode(final Hash codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
-      return Optional.of(Bytes.EMPTY);
+      return Optional.of(FullBytecode.EMPTY);
     } else {
       return getFlatDbStrategy().getFlatCode(codeHash, accountHash, composedWorldStateStorage);
     }

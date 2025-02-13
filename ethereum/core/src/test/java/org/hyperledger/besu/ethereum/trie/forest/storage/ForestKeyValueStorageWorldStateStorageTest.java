@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage.Updater;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -30,7 +32,7 @@ public class ForestKeyValueStorageWorldStateStorageTest {
   @Test
   public void getCode_returnsEmpty() {
     final ForestWorldStateKeyValueStorage storage = emptyStorage();
-    assertThat(storage.getCode(Hash.EMPTY)).contains(Bytes.EMPTY);
+    assertThat(storage.getCode(Hash.EMPTY)).contains(FullBytecode.EMPTY);
   }
 
   @Test
@@ -63,16 +65,18 @@ public class ForestKeyValueStorageWorldStateStorageTest {
   @Test
   public void getCode_saveAndGetSpecialValues() {
     final ForestWorldStateKeyValueStorage storage = emptyStorage();
-    storage.updater().putCode(MerkleTrie.EMPTY_TRIE_NODE).putCode(Bytes.EMPTY).commit();
 
-    assertThat(storage.getCode(Hash.EMPTY_TRIE_HASH)).contains(MerkleTrie.EMPTY_TRIE_NODE);
+    final Bytes codeZero = Bytes.of(0);
+    final Bytes codeOne = Bytes.of(1);
+    storage.updater().putCode(codeOne).putCode(codeZero).commit();
 
-    assertThat(storage.getCode(Hash.EMPTY)).contains(Bytes.EMPTY);
+    assertThat(storage.getCode(Hash.hash(codeOne))).contains(FullBytecode.wrap(codeOne));
+    assertThat(storage.getCode(Hash.hash(codeZero))).contains(FullBytecode.wrap(codeZero));
   }
 
   @Test
   public void getCode_saveAndGetRegularValue() {
-    final Bytes bytes = Bytes.fromHexString("0x123456");
+    final Bytecode bytes = FullBytecode.fromHexString("0x123456");
     final ForestWorldStateKeyValueStorage storage = emptyStorage();
     storage.updater().putCode(bytes).commit();
 
@@ -152,9 +156,9 @@ public class ForestKeyValueStorageWorldStateStorageTest {
 
   @Test
   public void reconcilesNonConflictingUpdaters() {
-    final Bytes bytesA = Bytes.fromHexString("0x12");
-    final Bytes bytesB = Bytes.fromHexString("0x1234");
-    final Bytes bytesC = Bytes.fromHexString("0x123456");
+    final Bytecode bytesA = FullBytecode.fromHexString("0x12");
+    final Bytecode bytesB = FullBytecode.fromHexString("0x1234");
+    final Bytecode bytesC = FullBytecode.fromHexString("0x123456");
 
     final ForestWorldStateKeyValueStorage storage = emptyStorage();
     final Updater updaterA = storage.updater();

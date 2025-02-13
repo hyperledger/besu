@@ -16,11 +16,11 @@ package org.hyperledger.besu.evm.account;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.code.Bytecode;
 
 import java.util.NavigableMap;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -73,14 +73,14 @@ public interface AccountState {
    *
    * @return the account code (which can be empty).
    */
-  Bytes getCode();
+  Bytecode getCode();
 
   /**
    * The optional EVM bytecode if the account has set a 7702 code delegation.
    *
    * @return the code of the target account that this account delegates to (which may be empty).
    */
-  default Optional<Bytes> getCodeDelegationTargetCode() {
+  default Optional<Bytecode> getCodeDelegationTargetCode() {
     return Optional.empty();
   }
 

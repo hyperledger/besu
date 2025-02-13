@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.account;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -24,7 +25,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -82,7 +82,7 @@ public class MutableCodeDelegationDelegationAccount extends AbstractCodeDelegati
   }
 
   @Override
-  public Bytes getCode() {
+  public Bytecode getCode() {
     return wrappedAccount.getCode();
   }
 
@@ -128,7 +128,7 @@ public class MutableCodeDelegationDelegationAccount extends AbstractCodeDelegati
   }
 
   @Override
-  public void setCode(final Bytes code) {
+  public void setCode(final Bytecode code) {
     wrappedAccount.setCode(code);
   }
 

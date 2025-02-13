@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
@@ -213,7 +214,7 @@ public class BlockSimulatorTest {
 
     verify(mutableAccount).setNonce(anyLong());
     verify(mutableAccount).setBalance(any(Wei.class));
-    verify(mutableAccount).setCode(any(Bytes.class));
+    verify(mutableAccount).setCode(any(Bytecode.class));
     verify(mutableAccount).setStorageValue(any(UInt256.class), any(UInt256.class));
   }
 

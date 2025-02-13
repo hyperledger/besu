@@ -32,7 +32,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class CodeInvalid implements Code {
 
   private final Supplier<Hash> codeHash;
-  private final Bytes codeBytes;
+  private final Bytecode codeBytes;
 
   private final String invalidReason;
 
@@ -42,7 +42,7 @@ public class CodeInvalid implements Code {
    * @param codeBytes the code bytes
    * @param invalidReason the invalid reason
    */
-  public CodeInvalid(final Bytes codeBytes, final String invalidReason) {
+  public CodeInvalid(final Bytecode codeBytes, final String invalidReason) {
     this.codeBytes = codeBytes;
     this.codeHash = Suppliers.memoize(() -> Hash.hash(codeBytes));
     this.invalidReason = invalidReason;
@@ -73,7 +73,7 @@ public class CodeInvalid implements Code {
   }
 
   @Override
-  public Bytes getBytes() {
+  public Bytecode getBytes() {
     return codeBytes;
   }
 
@@ -124,17 +124,17 @@ public class CodeInvalid implements Code {
 
   @Override
   public int readBigEndianI16(final int index) {
-    return Words.readBigEndianI16(index, codeBytes.toArrayUnsafe());
+    return Words.readBigEndianI16(index, codeBytes.getRawByteArray());
   }
 
   @Override
   public int readBigEndianU16(final int index) {
-    return Words.readBigEndianU16(index, codeBytes.toArrayUnsafe());
+    return Words.readBigEndianU16(index, codeBytes.getRawByteArray());
   }
 
   @Override
   public int readU8(final int index) {
-    return codeBytes.toArrayUnsafe()[index] & 0xff;
+    return codeBytes.getRawByteArray().get(index) & 0xff;
   }
 
   @Override

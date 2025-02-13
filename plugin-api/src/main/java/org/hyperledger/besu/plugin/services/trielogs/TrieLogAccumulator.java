@@ -17,10 +17,10 @@ package org.hyperledger.besu.plugin.services.trielogs;
 import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.evm.code.Bytecode;
 
 import java.util.Map;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Accumulator interface for providing trie updates for creating TrieLogs. */
@@ -38,7 +38,7 @@ public interface TrieLogAccumulator {
    *
    * @return the code to update
    */
-  Map<Address, ? extends TrieLog.LogTuple<Bytes>> getCodeToUpdate();
+  Map<Address, ? extends TrieLog.LogTuple<Bytecode>> getCodeToUpdate();
 
   /**
    * Returns storage which has been updated.

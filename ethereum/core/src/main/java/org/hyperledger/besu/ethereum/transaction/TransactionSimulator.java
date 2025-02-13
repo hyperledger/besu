@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -489,7 +490,7 @@ public class TransactionSimulator {
     LOG.debug("applying overrides to state for account {}", account.getAddress());
     override.getNonce().ifPresent(account::setNonce);
     override.getBalance().ifPresent(account::setBalance);
-    override.getCode().ifPresent(code -> account.setCode(Bytes.fromHexString(code)));
+    override.getCode().ifPresent(code -> account.setCode(FullBytecode.fromHexString(code)));
     override
         .getState()
         .ifPresent(
