@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCalculator {
 
@@ -25,8 +25,10 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
   private final long maxBlobGasPerBlock;
 
   public CancunTargetingGasLimitCalculator(
-      final long londonForkBlock, final BaseFeeMarket feeMarket) {
-    this(londonForkBlock, feeMarket, DEFAULT_MAX_BLOBS_PER_BLOCK_CANCUN);
+      final long londonForkBlock,
+      final BaseFeeMarket feeMarket,
+      final GasCalculator gasCalculator) {
+    this(londonForkBlock, feeMarket, gasCalculator, DEFAULT_MAX_BLOBS_PER_BLOCK_CANCUN);
   }
 
   /**
@@ -34,10 +36,12 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
    * 131072 * 6 = 786432 = 0xC0000
    */
   public CancunTargetingGasLimitCalculator(
-      final long londonForkBlock, final BaseFeeMarket feeMarket, final int maxBlobsPerBlock) {
+      final long londonForkBlock,
+      final BaseFeeMarket feeMarket,
+      final GasCalculator gasCalculator,
+      final int maxBlobsPerBlock) {
     super(londonForkBlock, feeMarket);
-    final CancunGasCalculator cancunGasCalculator = new CancunGasCalculator();
-    this.maxBlobGasPerBlock = cancunGasCalculator.getBlobGasPerBlob() * maxBlobsPerBlock;
+    this.maxBlobGasPerBlock = gasCalculator.getBlobGasPerBlob() * maxBlobsPerBlock;
   }
 
   @Override
