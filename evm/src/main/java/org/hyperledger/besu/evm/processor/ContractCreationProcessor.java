@@ -99,9 +99,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
 
       Address contractAddress = frame.getContractAddress();
 
-      final MutableAccount contract = frame.getWorldUpdater().getOrCreate(contractAddress);
-      long statelessGasCost =
-          evm.getGasCalculator().proofOfAbsenceCost(frame, contract.getAddress());
+      long statelessGasCost = evm.getGasCalculator().proofOfAbsenceCost(frame, contractAddress);
       if (handleInsufficientGas(
           frame,
           statelessGasCost,
@@ -112,6 +110,8 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         return;
       }
       frame.decrementRemainingGas(statelessGasCost);
+
+      final MutableAccount contract = frame.getWorldUpdater().getOrCreate(contractAddress);
 
       if (accountExists(contract)) {
         LOG.trace(
