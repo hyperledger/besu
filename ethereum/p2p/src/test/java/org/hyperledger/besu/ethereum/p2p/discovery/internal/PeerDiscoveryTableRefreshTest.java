@@ -28,6 +28,12 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.DaggerPacketPackage;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.Packet;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketPackage;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.findneighbors.FindNeighborsPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.ping.PingPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.pong.PongPacketData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -41,11 +47,18 @@ import java.util.function.Consumer;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class PeerDiscoveryTableRefreshTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
+  private PacketPackage packetPackage;
+
+  @BeforeEach
+  public void beforeTest() {
+    packetPackage = DaggerPacketPackage.create();
+  }
 
   @Test
   public void tableRefreshSingleNode() {
@@ -79,9 +92,12 @@ public class PeerDiscoveryTableRefreshTest {
     controller.start();
 
     final PingPacketData mockPing =
-        PingPacketData.create(
-            Optional.ofNullable(localPeer.getEndpoint()), remotePeer.getEndpoint(), UInt64.ONE);
-    final Packet mockPingPacket = Packet.create(PacketType.PING, mockPing, localKeyPair);
+        packetPackage
+            .pingPacketDataFactory()
+            .create(
+                Optional.ofNullable(localPeer.getEndpoint()), remotePeer.getEndpoint(), UInt64.ONE);
+    final Packet mockPingPacket =
+        packetPackage.packetFactory().create(PacketType.PING, mockPing, localKeyPair);
 
     doAnswer(
             invocation -> {
@@ -94,15 +110,21 @@ public class PeerDiscoveryTableRefreshTest {
 
     // Send a PING, so as to add a Peer in the controller.
     final PingPacketData ping =
-        PingPacketData.create(
-            Optional.ofNullable(remotePeer.getEndpoint()), localPeer.getEndpoint(), UInt64.ONE);
-    final Packet pingPacket = Packet.create(PacketType.PING, ping, remoteKeyPair);
+        packetPackage
+            .pingPacketDataFactory()
+            .create(
+                Optional.ofNullable(remotePeer.getEndpoint()), localPeer.getEndpoint(), UInt64.ONE);
+    final Packet pingPacket =
+        packetPackage.packetFactory().create(PacketType.PING, ping, remoteKeyPair);
     controller.onMessage(pingPacket, remotePeer);
 
     // Answer localPeer PING to complete bonding
     final PongPacketData pong =
-        PongPacketData.create(localPeer.getEndpoint(), mockPingPacket.getHash(), UInt64.ONE);
-    final Packet pongPacket = Packet.create(PacketType.PONG, pong, remoteKeyPair);
+        packetPackage
+            .pongPacketDataFactory()
+            .create(localPeer.getEndpoint(), mockPingPacket.getHash(), UInt64.ONE);
+    final Packet pongPacket =
+        packetPackage.packetFactory().create(PacketType.PONG, pong, remoteKeyPair);
     controller.onMessage(pongPacket, remotePeer);
 
     // Wait until the controller has added the newly found peer.
