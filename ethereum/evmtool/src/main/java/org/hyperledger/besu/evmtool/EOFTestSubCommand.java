@@ -26,8 +26,10 @@ import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec.TestResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.EOFLayout;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.BufferedReader;
@@ -42,7 +44,6 @@ import java.util.Map;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
 /** A PicoCli annotated command for running EOF validation reference tests. */
@@ -215,10 +216,10 @@ public class EOFTestSubCommand implements Runnable {
    * @return The result of the EOF validation test.
    */
   public TestResult considerCode(final String hexCode) {
-    Bytes codeBytes;
+    Bytecode codeBytes;
     try {
       codeBytes =
-          Bytes.fromHexString(
+          FullBytecode.fromHexString(
               hexCode.replaceAll("(^|\n)#[^\n]*($|\n)", "").replaceAll("[^0-9A-Za-z]", ""));
     } catch (RuntimeException re) {
       return failed(re.getMessage());

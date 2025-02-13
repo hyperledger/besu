@@ -40,13 +40,14 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -211,7 +212,7 @@ class DebugAccountAtTest {
 
     final String codeString =
         "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063b27b880414610030575b";
-    final Bytes code = Bytes.fromHexString(codeString);
+    final Bytecode code = FullBytecode.fromHexString(codeString);
     final long nonce = MAX_NONCE - 1;
     final String balanceString = "0xffff";
     final Wei balance = Wei.fromHexString(balanceString);

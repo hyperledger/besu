@@ -37,9 +37,7 @@ public abstract class Bytecode extends AbstractBytes {
   public abstract RawByteArray getRawByteArray();
 
   @Override
-  public Bytecode copy() {
-    throw new UnsupportedOperationException("cannot create a copy of bytecode");
-  }
+  public abstract Bytecode copy();
 
   @Override
   public MutableBytes mutableCopy() {

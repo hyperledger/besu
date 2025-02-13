@@ -20,14 +20,15 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.EOFLayout;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.util.LogConfigurator;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
 /**
@@ -89,9 +90,9 @@ public class PrettyPrintSubCommand implements Runnable {
     LogConfigurator.setLevel("", "OFF");
 
     for (var hexCode : codeList) {
-      Bytes container;
+      Bytecode container;
       try {
-        container = Bytes.fromHexString(hexCode);
+        container = FullBytecode.fromHexString(hexCode);
       } catch (IllegalArgumentException e) {
         parentCommand.out.println("Invalid hex string: " + e.getMessage());
         continue;

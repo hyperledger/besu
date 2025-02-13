@@ -46,6 +46,11 @@ public class FullBytecode extends Bytecode {
   }
 
   @Override
+  public Bytecode copy() {
+    return new FullBytecode(bytes.copy());
+  }
+
+  @Override
   public Bytecode slice(final int i, final int length) {
     return new SlicedBytecode(this, i, length);
   }

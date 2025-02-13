@@ -33,9 +33,11 @@ import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec.TestResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV1;
 import org.hyperledger.besu.evm.code.EOFLayout;
+import org.hyperledger.besu.evm.code.FullBytecode;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 public class EOFReferenceTestTools {
@@ -59,7 +61,7 @@ public class EOFReferenceTestTools {
                 for (final Map.Entry<String, EOFTestCaseSpec.TestVector> entry :
                     eofSpec.getVector().entrySet()) {
                   final String name = entry.getKey();
-                  final Bytes code = Bytes.fromHexString(entry.getValue().code());
+                  final Bytecode code = FullBytecode.fromHexString(entry.getValue().code());
                   final String containerKind = entry.getValue().containerKind();
                   for (final Entry<String, TestResult> result :
                       entry.getValue().results().entrySet()) {
@@ -100,7 +102,7 @@ public class EOFReferenceTestTools {
   public static void executeTest(
       final String name,
       final String fork,
-      final Bytes code,
+      final Bytecode code,
       final String containerKind,
       final EOFTestCaseSpec.TestResult expected) {
     EVM evm = ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork).getEvm();

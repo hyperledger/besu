@@ -50,6 +50,11 @@ public class SlicedBytecode extends Bytecode {
   }
 
   @Override
+  public Bytecode copy() {
+    return new SlicedBytecode(parent.copy(), sliceOffset, sliceLength);
+  }
+
+  @Override
   public Bytecode slice(final int offset, final int length) {
     // Just compose the offset again relative to the parent
     // offset is relative to this sliced view
