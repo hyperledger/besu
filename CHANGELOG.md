@@ -15,7 +15,11 @@
     - Proof of Work consensus
     - Fast Sync
 ### Additions and Improvements
+- Add TLS/mTLS options and configure the GraphQL HTTP service[#7910](https://github.com/hyperledger/besu/pull/7910)
+- Allow plugins to propose transactions during block creation [#8268](https://github.com/hyperledger/besu/pull/8268)
 ### Bug fixes
+- Upgrade Netty to version 4.1.118 to fix CVE-2025-24970 [#8275](https://github.com/hyperledger/besu/pull/8275)
+- Add missing RPC method `debug_accountRange` to `RpcMethod.java` and implemented its handler. [#8153](https://github.com/hyperledger/besu/issues/8153)
 
 ## 25.2.0
 
@@ -36,6 +40,7 @@
 ### Additions and Improvements
 - Add a tx selector to skip txs from the same sender after the first not selected [#8216](https://github.com/hyperledger/besu/pull/8216)
 - `rpc-gas-cap` default value has changed from 0 (unlimited) to 50M [#8251](https://github.com/hyperledger/besu/issues/8251)
+
 
 #### Prague
 - Add timestamps to enable Prague hardfork on Sepolia and Holesky test networks [#8163](https://github.com/hyperledger/besu/pull/8163)
@@ -74,7 +79,7 @@
 - Retrieve all transaction receipts for a block in one request [#6646](https://github.com/hyperledger/besu/pull/6646)
 - Implement EIP-7840: Add blob schedule to config files [#8042](https://github.com/hyperledger/besu/pull/8042)
 - Allow gasPrice (legacy) and 1559 gasPrice params to be specified simultaneously for `eth_call`, `eth_createAccessList`, and `eth_estimateGas` [#8059](https://github.com/hyperledger/besu/pull/8059)
-- Improve debug_traceBlock calls performance and reduce output size [#8076](https://github.com/hyperledger/besu/pull/8076)
+- Improve debug_traceBlock calls performance and reduce output size [#8103](https://github.com/hyperledger/besu/pull/8103)
 - Add support for EIP-7702 transaction in the txpool [#8018](https://github.com/hyperledger/besu/pull/8018) [#7984](https://github.com/hyperledger/besu/pull/7984)
 - Add support for `movePrecompileToAddress` in `StateOverrides` (`eth_call`)[8115](https://github.com/hyperledger/besu/pull/8115)
 - Default target-gas-limit to 36M for holesky [#8125](https://github.com/hyperledger/besu/pull/8125)
@@ -82,7 +87,7 @@
 - Add nonce to transaction call object [#8139](https://github.com/hyperledger/besu/pull/8139)
 
 ### Bug fixes
-- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
+- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8024](https://github.com/hyperledger/besu/pull/8024)
 - Revise the approach for setting level_compaction_dynamic_level_bytes RocksDB configuration option [#8037](https://github.com/hyperledger/besu/pull/8037)
 - Fix possible incomplete txpool restore from dump file [#7991](https://github.com/hyperledger/besu/pull/7991)
 
@@ -93,14 +98,14 @@ This is an optional hotfix to address serialization of state overrides parameter
 There is no need to upgrade from 24.12.0 (or 24.12.1) to this release if you are not yet using this functionality.
 
 ### Bug fixes
-- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8204](https://github.com/hyperledger/besu/pull/8024)
+- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8024](https://github.com/hyperledger/besu/pull/8024)
 
 ## 24.12.1 Hotfix
 
 This is a hotfix to address publishing besu maven artifacts.  There are no issues with 24.12.0 other than incomplete artifact publishing, and there is no functional difference between 24.12.0 and 24.12.1 release binaries.
 
 ### Bug fixes
-- Fix BOM pom publication to Artifactory [#8201](https://github.com/hyperledger/besu/pull/8021)
+- Fix BOM pom publication to Artifactory [#8021](https://github.com/hyperledger/besu/pull/8021)
 
 ## 24.12.0
 

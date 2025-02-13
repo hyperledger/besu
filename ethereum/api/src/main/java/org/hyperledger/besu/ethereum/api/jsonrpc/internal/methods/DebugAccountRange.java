@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
@@ -52,9 +53,7 @@ public class DebugAccountRange implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    // TODO(shemnon) 5229b899 is the last stable commit of retesteth, after this they rename the
-    //  method to just "debug_accountRange".  Once the tool is stable we will support the new name.
-    return "debug_accountRange";
+    return RpcMethod.DEBUG_ACCOUNT_RANGE.getMethodName();
   }
 
   @Override
