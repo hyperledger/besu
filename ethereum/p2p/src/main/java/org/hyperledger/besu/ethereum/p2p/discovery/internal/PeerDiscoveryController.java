@@ -23,6 +23,23 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.DaggerPacketPackage;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.Packet;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketPackage;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.enrrequest.EnrRequestPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.enrrequest.EnrRequestPacketDataFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.enrresponse.EnrResponsePacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.enrresponse.EnrResponsePacketDataFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.findneighbors.FindNeighborsPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.findneighbors.FindNeighborsPacketDataFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.neighbors.NeighborsPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.neighbors.NeighborsPacketDataFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.ping.PingPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.ping.PingPacketDataFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.pong.PongPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.pong.PongPacketDataFactory;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
@@ -147,7 +164,15 @@ public class PeerDiscoveryController {
   private RecursivePeerRefreshState recursivePeerRefreshState;
   private final boolean includeBootnodesOnPeerRefresh;
 
-  private PeerDiscoveryController(
+  private final PacketFactory packetFactory;
+  private final PingPacketDataFactory pingPacketDataFactory;
+  private final PongPacketDataFactory pongPacketDataFactory;
+  private final FindNeighborsPacketDataFactory findNeighborsPacketDataFactory;
+  private final NeighborsPacketDataFactory neighborsPacketDataFactory;
+  private final EnrRequestPacketDataFactory enrRequestPacketDataFactory;
+  private final EnrResponsePacketDataFactory enrResponsePacketDataFactory;
+
+  PeerDiscoveryController(
       final NodeKey nodeKey,
       final DiscoveryPeer localPeer,
       final PeerTable peerTable,
@@ -163,7 +188,14 @@ public class PeerDiscoveryController {
       final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests,
       final boolean filterOnEnrForkId,
       final RlpxAgent rlpxAgent,
-      final boolean includeBootnodesOnPeerRefresh) {
+      final boolean includeBootnodesOnPeerRefresh,
+      final PacketFactory packetFactory,
+      final PingPacketDataFactory pingPacketDataFactory,
+      final PongPacketDataFactory pongPacketDataFactory,
+      final FindNeighborsPacketDataFactory findNeighborsPacketDataFactory,
+      final NeighborsPacketDataFactory neighborsPacketDataFactory,
+      final EnrRequestPacketDataFactory enrRequestPacketDataFactory,
+      final EnrResponsePacketDataFactory enrResponsePacketDataFactory) {
     this.timerUtil = timerUtil;
     this.nodeKey = nodeKey;
     this.localPeer = localPeer;
@@ -178,6 +210,14 @@ public class PeerDiscoveryController {
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
     this.rlpxAgent = rlpxAgent;
     this.includeBootnodesOnPeerRefresh = includeBootnodesOnPeerRefresh;
+
+    this.packetFactory = packetFactory;
+    this.pingPacketDataFactory = pingPacketDataFactory;
+    this.pongPacketDataFactory = pongPacketDataFactory;
+    this.findNeighborsPacketDataFactory = findNeighborsPacketDataFactory;
+    this.neighborsPacketDataFactory = neighborsPacketDataFactory;
+    this.enrRequestPacketDataFactory = enrRequestPacketDataFactory;
+    this.enrResponsePacketDataFactory = enrResponsePacketDataFactory;
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.NETWORK,
@@ -377,8 +417,8 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
-                  final Optional<ENRResponsePacketData> packetData =
-                      packet.getPacketData(ENRResponsePacketData.class);
+                  final Optional<EnrResponsePacketData> packetData =
+                      packet.getPacketData(EnrResponsePacketData.class);
                   final NodeRecord enr = packetData.get().getEnr();
                   peer.setNodeRecord(enr);
                 });
@@ -389,7 +429,7 @@ public class PeerDiscoveryController {
   private void processEnrRequest(final DiscoveryPeer peer, final Packet packet) {
     LOG.trace("ENR_REQUEST received from bonded peer Id: {}", peer.getId());
     packet
-        .getPacketData(ENRRequestPacketData.class)
+        .getPacketData(EnrRequestPacketData.class)
         .ifPresent(p -> respondToENRRequest(p, packet.getHash(), peer));
   }
 
@@ -526,7 +566,7 @@ public class PeerDiscoveryController {
     final Consumer<PeerInteractionState> action =
         interaction -> {
           final PingPacketData data =
-              PingPacketData.create(
+              pingPacketDataFactory.create(
                   Optional.of(localPeer.getEndpoint()),
                   peer.getEndpoint(),
                   localPeer.getNodeRecord().map(NodeRecord::getSeq).orElse(null));
@@ -564,7 +604,7 @@ public class PeerDiscoveryController {
   void requestENR(final DiscoveryPeer peer) {
     final Consumer<PeerInteractionState> action =
         interaction -> {
-          final ENRRequestPacketData data = ENRRequestPacketData.create();
+          final EnrRequestPacketData data = enrRequestPacketDataFactory.create();
           createPacket(
               PacketType.ENR_REQUEST,
               data,
@@ -575,7 +615,7 @@ public class PeerDiscoveryController {
                 final Predicate<Packet> newFilter =
                     packet ->
                         packet
-                            .getPacketData(ENRResponsePacketData.class)
+                            .getPacketData(EnrResponsePacketData.class)
                             .map(enr -> enr.getRequestHash().equals(enrHash))
                             .orElse(false);
                 interaction.updateFilter(newFilter);
@@ -610,7 +650,7 @@ public class PeerDiscoveryController {
     // Creating packets is quite expensive because they have to be cryptographically signed
     // So ensure the work is done on a worker thread to avoid blocking the vertx event thread.
     workerExecutor
-        .execute(() -> Packet.create(type, data, nodeKey))
+        .execute(() -> packetFactory.create(type, data, nodeKey))
         .thenAccept(handler)
         .exceptionally(
             error -> {
@@ -628,7 +668,7 @@ public class PeerDiscoveryController {
   private void findNodes(final DiscoveryPeer peer, final Bytes target) {
     final Consumer<PeerInteractionState> action =
         interaction -> {
-          final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
+          final FindNeighborsPacketData data = findNeighborsPacketDataFactory.create(target);
           sendPacket(peer, PacketType.FIND_NEIGHBORS, data);
         };
     final PeerInteractionState interaction =
@@ -665,7 +705,7 @@ public class PeerDiscoveryController {
     }
     // We don't care about the `from` field of the ping, we pong to the `sender`
     final PongPacketData data =
-        PongPacketData.create(
+        pongPacketDataFactory.create(
             sender.getEndpoint(),
             pingHash,
             localPeer.getNodeRecord().map(NodeRecord::getSeq).orElse(null));
@@ -684,17 +724,17 @@ public class PeerDiscoveryController {
     // 88 * 13 = 1144 bytes
     // To fit under 1280 bytes, we must return just 13 peers maximum.
     final List<DiscoveryPeer> peers = peerTable.nearestBondedPeers(packetData.getTarget(), 13);
-    final PacketData data = NeighborsPacketData.create(peers);
+    final PacketData data = neighborsPacketDataFactory.create(peers);
     sendPacket(sender, PacketType.NEIGHBORS, data);
   }
 
   private void respondToENRRequest(
-      final ENRRequestPacketData enrRequestPacketData,
+      final EnrRequestPacketData enrRequestPacketData,
       final Bytes requestHash,
       final DiscoveryPeer sender) {
     if (enrRequestPacketData.getExpiration() >= Instant.now().getEpochSecond()) {
-      final ENRResponsePacketData data =
-          ENRResponsePacketData.create(requestHash, localPeer.getNodeRecord().orElse(null));
+      final EnrResponsePacketData data =
+          enrResponsePacketDataFactory.create(requestHash, localPeer.getNodeRecord().orElse(null));
       sendPacket(sender, PacketType.ENR_RESPONSE, data);
     }
   }
@@ -850,6 +890,20 @@ public class PeerDiscoveryController {
         CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build();
     private RlpxAgent rlpxAgent;
 
+    // set defaults for all PacketPackage classes, allowing calling code to override if needed
+    private final PacketPackage packetPackage = DaggerPacketPackage.create();
+    private PacketFactory packetFactory = packetPackage.packetFactory();
+    private PingPacketDataFactory pingPacketDataFactory = packetPackage.pingPacketDataFactory();
+    private PongPacketDataFactory pongPacketDataFactory = packetPackage.pongPacketDataFactory();
+    private FindNeighborsPacketDataFactory findNeighborsPacketDataFactory =
+        packetPackage.findNeighborsPacketDataFactory();
+    private NeighborsPacketDataFactory neighborsPacketDataFactory =
+        packetPackage.neighborsPacketDataFactory();
+    private EnrRequestPacketDataFactory enrRequestPacketDataFactory =
+        packetPackage.enrRequestPacketDataFactory();
+    private EnrResponsePacketDataFactory enrResponsePacketDataFactory =
+        packetPackage.enrResponsePacketDataFactory();
+
     private Builder() {}
 
     public PeerDiscoveryController build() {
@@ -871,7 +925,14 @@ public class PeerDiscoveryController {
           Optional.of(cachedEnrRequests),
           filterOnEnrForkId,
           rlpxAgent,
-          includeBootnodesOnPeerRefresh);
+          includeBootnodesOnPeerRefresh,
+          packetFactory,
+          pingPacketDataFactory,
+          pongPacketDataFactory,
+          findNeighborsPacketDataFactory,
+          neighborsPacketDataFactory,
+          enrRequestPacketDataFactory,
+          enrResponsePacketDataFactory);
     }
 
     private void validate() {
@@ -978,6 +1039,45 @@ public class PeerDiscoveryController {
 
     public Builder includeBootnodesOnPeerRefresh(final boolean includeBootnodesOnPeerRefresh) {
       this.includeBootnodesOnPeerRefresh = includeBootnodesOnPeerRefresh;
+      return this;
+    }
+
+    public Builder setPacketFactory(final PacketFactory packetFactory) {
+      this.packetFactory = packetFactory;
+      return this;
+    }
+
+    public Builder setPingPacketDataFactory(final PingPacketDataFactory pingPacketDataFactory) {
+      this.pingPacketDataFactory = pingPacketDataFactory;
+      return this;
+    }
+
+    public Builder setPongPacketDataFactory(final PongPacketDataFactory pongPacketDataFactory) {
+      this.pongPacketDataFactory = pongPacketDataFactory;
+      return this;
+    }
+
+    public Builder setFindNeighborsPacketDataFactory(
+        final FindNeighborsPacketDataFactory findNeighborsPacketDataFactory) {
+      this.findNeighborsPacketDataFactory = findNeighborsPacketDataFactory;
+      return this;
+    }
+
+    public Builder setNeighborsPacketDataFactory(
+        final NeighborsPacketDataFactory neighborsPacketDataFactory) {
+      this.neighborsPacketDataFactory = neighborsPacketDataFactory;
+      return this;
+    }
+
+    public Builder setEnrRequestPacketDataFactory(
+        final EnrRequestPacketDataFactory enrRequestPacketDataFactory) {
+      this.enrRequestPacketDataFactory = enrRequestPacketDataFactory;
+      return this;
+    }
+
+    public Builder setEnrResponsePacketDataFactory(
+        final EnrResponsePacketDataFactory enrResponsePacketDataFactory) {
+      this.enrResponsePacketDataFactory = enrResponsePacketDataFactory;
       return this;
     }
   }

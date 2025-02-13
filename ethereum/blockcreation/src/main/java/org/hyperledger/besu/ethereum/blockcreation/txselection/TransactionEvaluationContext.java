@@ -14,16 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
+import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 import com.google.common.base.Stopwatch;
 
 public class TransactionEvaluationContext
-    implements org.hyperledger.besu.plugin.services.txselection.TransactionEvaluationContext<
-        PendingTransaction> {
+    implements org.hyperledger.besu.plugin.services.txselection.TransactionEvaluationContext {
   private final ProcessableBlockHeader pendingBlockHeader;
   private final PendingTransaction pendingTransaction;
   private final Stopwatch evaluationTimer;
@@ -44,7 +43,9 @@ public class TransactionEvaluationContext
   }
 
   public Transaction getTransaction() {
-    return pendingTransaction.getTransaction();
+    // ToDo: can we avoid this cast? either by always using the interface
+    //  or moving our Transaction implementation in the datatypes package
+    return (Transaction) pendingTransaction.getTransaction();
   }
 
   @Override

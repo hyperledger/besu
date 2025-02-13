@@ -19,11 +19,9 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.payload.ProposalPayload;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.BlockValidator;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -37,8 +35,7 @@ public class ProposalPayloadValidator {
   private static final Logger LOG = LoggerFactory.getLogger(ProposalPayloadValidator.class);
   private final Address expectedProposer;
   private final ConsensusRoundIdentifier targetRound;
-  private final BlockValidator blockValidator;
-  private final ProtocolContext protocolContext;
+  private final QbftBlockValidator blockValidator;
 
   /**
    * Instantiates a new Proposal payload validator.
@@ -46,18 +43,15 @@ public class ProposalPayloadValidator {
    * @param expectedProposer the expected proposer
    * @param targetRound the target round
    * @param blockValidator the block validator
-   * @param protocolContext the protocol context
    */
   @VisibleForTesting
   public ProposalPayloadValidator(
       final Address expectedProposer,
       final ConsensusRoundIdentifier targetRound,
-      final BlockValidator blockValidator,
-      final ProtocolContext protocolContext) {
+      final QbftBlockValidator blockValidator) {
     this.expectedProposer = expectedProposer;
     this.targetRound = targetRound;
     this.blockValidator = blockValidator;
-    this.protocolContext = protocolContext;
   }
 
   /**
@@ -80,7 +74,7 @@ public class ProposalPayloadValidator {
       return false;
     }
 
-    final Block block = payload.getProposedBlock();
+    final QbftBlock block = payload.getProposedBlock();
     if (!validateBlock(block)) {
       return false;
     }
@@ -93,18 +87,16 @@ public class ProposalPayloadValidator {
     return true;
   }
 
-  private boolean validateBlock(final Block block) {
+  private boolean validateBlock(final QbftBlock block) {
     checkState(blockValidator != null, "block validation not possible, no block validator.");
 
-    final var validationResult =
-        blockValidator.validateAndProcessBlock(
-            protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL, false);
+    final var validationResult = blockValidator.validateBlock(block);
 
-    if (!validationResult.isSuccessful()) {
+    if (!validationResult.success()) {
       LOG.info(
           "{}: block did not pass validation. Reason {}",
           ERROR_PREFIX,
-          validationResult.errorMessage);
+          validationResult.errorMessage());
       return false;
     }
 
