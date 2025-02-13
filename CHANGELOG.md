@@ -18,6 +18,7 @@
 - Transaction indexing will be disabled by default in a future release for snap sync and checkpoint sync modes. This will break RPCs that use transaction hash for historical queries.
 ### Additions and Improvements
 - Add TLS/mTLS options and configure the GraphQL HTTP service[#7910](https://github.com/hyperledger/besu/pull/7910)
+- Allow plugins to propose transactions during block creation [#8268](https://github.com/hyperledger/besu/pull/8268)
 ### Bug fixes
 - Upgrade Netty to version 4.1.118 to fix CVE-2025-24970 [#8275](https://github.com/hyperledger/besu/pull/8275)
 - Add missing RPC method `debug_accountRange` to `RpcMethod.java` and implemented its handler. [#8153](https://github.com/hyperledger/besu/issues/8153)
