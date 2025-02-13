@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 public class OsakaTargetingGasLimitCalculator extends PragueTargetingGasLimitCalculator {
 
@@ -22,8 +23,10 @@ public class OsakaTargetingGasLimitCalculator extends PragueTargetingGasLimitCal
   private static final int DEFAULT_MAX_BLOBS_PER_BLOCK_OSAKA = 12;
 
   public OsakaTargetingGasLimitCalculator(
-      final long londonForkBlock, final BaseFeeMarket feeMarket) {
-    super(londonForkBlock, feeMarket, DEFAULT_MAX_BLOBS_PER_BLOCK_OSAKA);
+      final long londonForkBlock,
+      final BaseFeeMarket feeMarket,
+      final GasCalculator gasCalculator) {
+    super(londonForkBlock, feeMarket, gasCalculator, DEFAULT_MAX_BLOBS_PER_BLOCK_OSAKA);
   }
 
   /**
@@ -31,7 +34,10 @@ public class OsakaTargetingGasLimitCalculator extends PragueTargetingGasLimitCal
    * CancunGasCalculator.BLOB_GAS_PER_BLOB * 12 blobs = 131072 * 12 = 1572864 = 0x180000
    */
   public OsakaTargetingGasLimitCalculator(
-      final long londonForkBlock, final BaseFeeMarket feeMarket, final int maxBlobsPerBlock) {
-    super(londonForkBlock, feeMarket, maxBlobsPerBlock);
+      final long londonForkBlock,
+      final BaseFeeMarket feeMarket,
+      final GasCalculator gasCalculator,
+      final int maxBlobsPerBlock) {
+    super(londonForkBlock, feeMarket, gasCalculator, maxBlobsPerBlock);
   }
 }
