@@ -47,7 +47,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   /** Default constructor */
   public IbftLegacyBesuControllerBuilder() {
     LOG.warn(
-        "IBFT1 is deprecated. This class should be used only while migrating to another consensus mechanism.");
+        "IBFT1 is deprecated. This consensus configuration should be used only while migrating to another consensus mechanism.");
     this.blockInterface = new IbftLegacyBlockInterface(new IbftExtraDataCodec());
   }
 
