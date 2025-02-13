@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
+import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +28,12 @@ import org.slf4j.LoggerFactory;
  * evaluating transactions based on blobs size. It checks if a transaction supports blobs, and if
  * so, checks that there is enough remaining blob gas in the block to fit the blobs of the tx.
  */
-public class BlobSizeTransactionSelector extends AbstractTransactionSelector {
+public class BlobSizeTransactionSelector extends AbstractStatefulTransactionSelector<Long> {
   private static final Logger LOG = LoggerFactory.getLogger(BlobSizeTransactionSelector.class);
 
-  public BlobSizeTransactionSelector(final BlockSelectionContext context) {
-    super(context);
+  public BlobSizeTransactionSelector(
+      final BlockSelectionContext context, final SelectorsStateManager selectorsStateManager) {
+    super(context, selectorsStateManager, 0L, SelectorsStateManager.StateDuplicator::duplicateLong);
   }
 
   /**
@@ -43,21 +44,19 @@ public class BlobSizeTransactionSelector extends AbstractTransactionSelector {
    * number of blobs or not.
    *
    * @param evaluationContext The current selection session data.
-   * @param transactionSelectionResults The results of other transaction evaluations in the same
-   *     block.
    * @return The result of the transaction selection.
    */
   @Override
   public TransactionSelectionResult evaluateTransactionPreProcessing(
-      final TransactionEvaluationContext evaluationContext,
-      final TransactionSelectionResults transactionSelectionResults) {
+      final TransactionEvaluationContext evaluationContext) {
 
     final var tx = evaluationContext.getTransaction();
     if (tx.getType().supportsBlob()) {
 
+      final var cumulativeBlobGasUsed = getWorkingState();
+
       final var remainingBlobGas =
-          context.gasLimitCalculator().currentBlobGasLimit()
-              - transactionSelectionResults.getCumulativeBlobGasUsed();
+          context.gasLimitCalculator().currentBlobGasLimit() - cumulativeBlobGasUsed;
 
       if (remainingBlobGas == 0) {
         LOG.atTrace()
@@ -88,9 +87,11 @@ public class BlobSizeTransactionSelector extends AbstractTransactionSelector {
   @Override
   public TransactionSelectionResult evaluateTransactionPostProcessing(
       final TransactionEvaluationContext evaluationContext,
-      final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {
-    // All necessary checks were done in the pre-processing method, so nothing to do here.
+    final var tx = evaluationContext.getTransaction();
+    if (tx.getType().supportsBlob()) {
+      setWorkingState(getWorkingState() + context.gasCalculator().blobGasCost(tx.getBlobCount()));
+    }
     return TransactionSelectionResult.SELECTED;
   }
 }
