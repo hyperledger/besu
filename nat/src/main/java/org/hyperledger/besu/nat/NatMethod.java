@@ -22,8 +22,6 @@ public enum NatMethod {
   UPNPP2PONLY,
   /** Docker nat method. */
   DOCKER,
-  /** Kubernetes nat method. */
-  KUBERNETES,
   /** Auto nat method. */
   AUTO,
   /** None nat method. */
