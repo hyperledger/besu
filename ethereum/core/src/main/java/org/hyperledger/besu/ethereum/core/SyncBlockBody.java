@@ -39,6 +39,7 @@ public class SyncBlockBody {
   private final Bytes ommersListBytes;
   private final Optional<List<Bytes>> withdrawalBytes;
   private final BlockHeaderFunctions blockHeaderFunctions;
+  private Hash withdrawalsRoot = null;
 
   public SyncBlockBody(
       final Bytes bytesOfWrappedRlpInput,
@@ -123,12 +124,12 @@ public class SyncBlockBody {
     return transactionBytes;
   }
 
-  public Hash getTransactionsRoot() {
-    return Util.getRootFromListOfBytes(transactionBytes);
-  }
-
   public int getTransactionCount() {
     return transactionBytes.size();
+  }
+
+  public Hash getTransactionsRoot() {
+    return Util.getRootFromListOfBytes(transactionBytes);
   }
 
   public Hash getOmmersHash() {
@@ -136,11 +137,7 @@ public class SyncBlockBody {
   }
 
   public Hash getWithdrawalsRoot() {
-    if (withdrawalBytes.isEmpty()) {
-      return null;
-    }
-    final List<Bytes> bytes = withdrawalBytes.get();
-    return Util.getRootFromListOfBytes(bytes);
+      return withdrawalBytes.map(Util::getRootFromListOfBytes).orElse(null);
   }
 
   public Bytes getRlp() {
@@ -148,10 +145,9 @@ public class SyncBlockBody {
   }
 
   public Supplier<BlockBody> getBodySupplier() {
-    return () -> {
-      return BlockBody.readWrappedBodyFrom(
-          new BytesValueRLPInput(bytesOfWrappedRlpInput, false), blockHeaderFunctions, false);
-    };
+    return () ->
+        BlockBody.readWrappedBodyFrom(
+            new BytesValueRLPInput(bytesOfWrappedRlpInput, false), blockHeaderFunctions, false);
   }
 
   @Override

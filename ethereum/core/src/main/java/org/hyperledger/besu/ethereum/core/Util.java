@@ -83,6 +83,9 @@ public class Util {
    * @return the root hash of the MPT
    */
   public static Hash getRootFromListOfBytes(final List<Bytes> bytes) {
+    if (bytes.isEmpty()) {
+      return Hash.EMPTY_TRIE_HASH;
+    }
     final MerkleTrie<Bytes, Bytes> trie = new SimpleMerklePatriciaTrie<>(b -> b);
     IntStream.range(0, bytes.size())
         .forEach(

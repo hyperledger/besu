@@ -60,15 +60,8 @@ public class GetSyncBlocksFromPeerTask
 
   @Override
   boolean bodyMatchesHeader(final SyncBlockBody body, final BlockHeader header) {
-    if ((header.getWithdrawalsRoot().isEmpty() && body.getWithdrawalsRoot() != null)
-        || (header.getWithdrawalsRoot().isPresent() && body.getWithdrawalsRoot() == null)) {
-      return false;
-    } else if ((header.getWithdrawalsRoot().isPresent()
-        && !header.getWithdrawalsRoot().get().equals(body.getWithdrawalsRoot()))) {
-      return false;
-    } else {
-      return body.getTransactionsRoot().equals(header.getTransactionsRoot())
-          && (body.getOmmersHash()).equals(header.getOmmersHash());
-    }
+    final BodyIdentifier headerId = new BodyIdentifier(header);
+    final BodyIdentifier bodyId = new BodyIdentifier(body);
+    return headerId.equals(bodyId);
   }
 }
