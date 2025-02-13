@@ -42,16 +42,19 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   private long accumulatedTime = 0L;
   private OptionalLong logStartBlock = OptionalLong.empty();
   private final BlockHeader pivotHeader;
+  private final boolean transactionIndexingEnabled;
 
   public ImportSyncBlocksStep(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final BlockHeader pivotHeader) {
+      final BlockHeader pivotHeader,
+      final boolean transactionIndexingEnabled) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.pivotHeader = pivotHeader;
+    this.transactionIndexingEnabled = transactionIndexingEnabled;
   }
 
   @Override
@@ -117,7 +120,10 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
         protocolSchedule.getByBlockHeader(blockWithReceipts.getHeader()).getBlockImporter();
     final BlockImportResult blockImportResult =
         importer.importSyncBlockForSyncing(
-            protocolContext, blockWithReceipts.getBlock(), blockWithReceipts.getReceipts());
+            protocolContext,
+            blockWithReceipts.getBlock(),
+            blockWithReceipts.getReceipts(),
+            transactionIndexingEnabled);
     return blockImportResult.isImported();
   }
 }

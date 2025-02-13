@@ -12,7 +12,10 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 406,
-    "result" : [ ]
+    "error" : {
+      "code": -32000,
+      "message": "Block not found"
+    }
   },
   "statusCode": 200
 }

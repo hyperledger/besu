@@ -68,11 +68,13 @@ public interface BlockImporter {
    * @param context The context to attempt to update
    * @param syncBlock The syncBlock
    * @param receipts The receipts associated with this syncBlock.
+   * @param importWithTxIndexing Whether to import the block with transaction indexing.
    * @return {@code BlockImportResult}
    * @see BlockImportResult
    */
   BlockImportResult importSyncBlockForSyncing(
       final ProtocolContext context,
       final SyncBlock syncBlock,
-      final List<TransactionReceipt> receipts);
+      final List<TransactionReceipt> receipts,
+      boolean importWithTxIndexing);
 }

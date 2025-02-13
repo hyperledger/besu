@@ -148,7 +148,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolSchedule,
             protocolContext,
             ethContext,
-            fastSyncState.getPivotBlockHeader().get());
+            fastSyncState.getPivotBlockHeader().get(),
+            syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",

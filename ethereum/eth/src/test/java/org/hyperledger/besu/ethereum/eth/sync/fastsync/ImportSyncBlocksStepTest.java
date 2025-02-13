@@ -64,7 +64,7 @@ public class ImportSyncBlocksStepTest {
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
 
     importSyncBlocksStep =
-        new ImportSyncBlocksStep(protocolSchedule, protocolContext, null, pivotHeader);
+        new ImportSyncBlocksStep(protocolSchedule, protocolContext, null, pivotHeader, false);
   }
 
   @Test
@@ -82,7 +82,10 @@ public class ImportSyncBlocksStepTest {
 
     for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       when(blockImporter.importSyncBlockForSyncing(
-              protocolContext, blockWithReceipts.getBlock(), blockWithReceipts.getReceipts()))
+              protocolContext,
+              blockWithReceipts.getBlock(),
+              blockWithReceipts.getReceipts(),
+              false))
           .thenReturn(new BlockImportResult(true));
     }
     importSyncBlocksStep.accept(blocksWithReceipts);

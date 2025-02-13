@@ -39,7 +39,6 @@ public class SyncBlockBody {
   private final Bytes ommersListBytes;
   private final Optional<List<Bytes>> withdrawalBytes;
   private final BlockHeaderFunctions blockHeaderFunctions;
-  private Hash withdrawalsRoot = null;
 
   public SyncBlockBody(
       final Bytes bytesOfWrappedRlpInput,
@@ -137,7 +136,7 @@ public class SyncBlockBody {
   }
 
   public Hash getWithdrawalsRoot() {
-      return withdrawalBytes.map(Util::getRootFromListOfBytes).orElse(null);
+    return withdrawalBytes.map(Util::getRootFromListOfBytes).orElse(null);
   }
 
   public Bytes getRlp() {

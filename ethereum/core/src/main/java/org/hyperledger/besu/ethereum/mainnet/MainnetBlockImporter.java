@@ -61,9 +61,14 @@ public class MainnetBlockImporter implements BlockImporter {
   public BlockImportResult importSyncBlockForSyncing(
       final ProtocolContext context,
       final SyncBlock syncBlock,
-      final List<TransactionReceipt> receipts) {
+      final List<TransactionReceipt> receipts,
+      final boolean importWithTxIndexing) {
 
-    context.getBlockchain().appendSyncBlock(syncBlock, receipts);
+    if (importWithTxIndexing) {
+      context.getBlockchain().appendSyncBlock(syncBlock, receipts);
+    } else {
+      context.getBlockchain().appendSyncBlockWithoutIndexingTransactions(syncBlock, receipts);
+    }
     return new BlockImportResult(true);
   }
 }
