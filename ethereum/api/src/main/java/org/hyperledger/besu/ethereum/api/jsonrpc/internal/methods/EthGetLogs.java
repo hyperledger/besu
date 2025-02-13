@@ -73,8 +73,18 @@ public class EthGetLogs implements JsonRpcMethod {
             .getBlockHash()
             .map(
                 blockHash ->
-                    blockchain.matchingLogs(
-                        blockHash, filter.getLogsQuery(), requestContext::isAlive))
+                    blockchain
+                        .getBlockHeaderByHash(blockHash)
+                        .map(
+                            blockHeader ->
+                                blockchain.matchingLogs(
+                                    blockHeader.getBlockHash(),
+                                    filter.getLogsQuery(),
+                                    requestContext::isAlive))
+                        .orElseThrow(
+                            () ->
+                                new InvalidJsonRpcParameters(
+                                    "Block not found", RpcErrorType.BLOCK_NOT_FOUND)))
             .orElseGet(
                 () -> {
                   final long fromBlockNumber;
