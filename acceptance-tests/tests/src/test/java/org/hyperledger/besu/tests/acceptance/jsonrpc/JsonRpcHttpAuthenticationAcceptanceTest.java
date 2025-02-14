@@ -25,6 +25,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -187,6 +188,7 @@ public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase 
     nodeUsingRsaJwtPublicKey.verify(login.disabled());
   }
 
+  @AfterEach
   @Override
   public void tearDownAcceptanceTestBase() {
     authenticatedCluster.stop();
