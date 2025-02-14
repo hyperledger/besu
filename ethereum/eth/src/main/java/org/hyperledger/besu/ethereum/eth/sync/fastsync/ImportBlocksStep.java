@@ -47,6 +47,7 @@ public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private OptionalLong logStartBlock = OptionalLong.empty();
   private final BlockHeader pivotHeader;
   private final BodyValidationMode bodyValidationMode;
+  private final boolean transactionIndexingEnabled;
 
   public ImportBlocksStep(
       final ProtocolSchedule protocolSchedule,
@@ -54,17 +55,19 @@ public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
       final ValidationPolicy headerValidationPolicy,
       final ValidationPolicy ommerValidationPolicy,
       final EthContext ethContext,
-      final BlockHeader pivotHeader) {
+      final BlockHeader pivotHeader,
+      final boolean transactionIndexingEnabled) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.headerValidationPolicy = headerValidationPolicy;
     this.ommerValidationPolicy = ommerValidationPolicy;
     this.ethContext = ethContext;
     this.pivotHeader = pivotHeader;
-    bodyValidationMode =
+    this.bodyValidationMode =
         protocolSchedule.anyMatch(scheduledProtocolSpec -> scheduledProtocolSpec.spec().isPoS())
             ? BodyValidationMode.NONE
             : BodyValidationMode.LIGHT;
+    this.transactionIndexingEnabled = transactionIndexingEnabled;
   }
 
   @Override
@@ -125,7 +128,8 @@ public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
             blockWithReceipts.getReceipts(),
             headerValidationPolicy.getValidationModeForNextBlock(),
             ommerValidationPolicy.getValidationModeForNextBlock(),
-            bodyValidationMode);
+            bodyValidationMode,
+            transactionIndexingEnabled);
     return blockImportResult.isImported();
   }
 }
