@@ -529,9 +529,12 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       return;
     }
 
-    LOG.info("Killing {} process, pid {}", name, process.pid());
-
-    process.destroy();
+    process
+        .descendants()
+        .peek(
+            processHandle ->
+                LOG.info("Killing {} process, pid {}", processHandle.info(), processHandle.pid()))
+        .forEach(ProcessHandle::destroy);
     try {
       process.waitFor(30, TimeUnit.SECONDS);
     } catch (final InterruptedException e) {
