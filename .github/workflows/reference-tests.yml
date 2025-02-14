@@ -1,12 +1,12 @@
 name: reference-tests
 on:
   workflow_dispatch:
+  merge_group:
   pull_request:
     branches:
       - main
       - release-*
       - verkle
-      - gh-readonly-queue/main/pr-*
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
