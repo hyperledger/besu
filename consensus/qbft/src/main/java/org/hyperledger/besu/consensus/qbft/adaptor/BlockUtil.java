@@ -15,7 +15,9 @@
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 /** Utility class to convert between Besu and QBFT blocks. */
 public class BlockUtil {
@@ -34,6 +36,20 @@ public class BlockUtil {
       return ((QbftBlockAdaptor) block).getBesuBlock();
     } else {
       throw new IllegalArgumentException("Unsupported block type");
+    }
+  }
+
+  /**
+   * Convert a QBFT block header to a Besu block header.
+   *
+   * @param header the QBFT block header
+   * @return the Besu block header
+   */
+  public static BlockHeader toBesuBlockHeader(final QbftBlockHeader header) {
+    if (header instanceof QbftBlockHeaderAdaptor) {
+      return ((QbftBlockHeaderAdaptor) header).getBesuBlockHeader();
+    } else {
+      throw new IllegalArgumentException("Unsupported block header type");
     }
   }
 }

@@ -23,7 +23,7 @@ import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 /** Interface for the transaction selector */
 @Unstable
-public interface PluginTransactionSelector {
+public interface PluginTransactionSelector extends TransactionSelector {
   /** Plugin transaction selector that unconditionally select every transaction */
   PluginTransactionSelector ACCEPT_ALL =
       new PluginTransactionSelector() {

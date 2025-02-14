@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
@@ -40,13 +39,11 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
    * minimum, it returns a selection result indicating the reason.
    *
    * @param evaluationContext The current selection session data.
-   * @param ignored The results of other transaction evaluations in the same block.
    * @return The result of the transaction selection.
    */
   @Override
   public TransactionSelectionResult evaluateTransactionPreProcessing(
-      final TransactionEvaluationContext evaluationContext,
-      final TransactionSelectionResults ignored) {
+      final TransactionEvaluationContext evaluationContext) {
     if (transactionCurrentPriceBelowMin(evaluationContext)) {
       return TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
     }
@@ -56,7 +53,6 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
   @Override
   public TransactionSelectionResult evaluateTransactionPostProcessing(
       final TransactionEvaluationContext evaluationContext,
-      final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {
     // All necessary checks were done in the pre-processing method, so nothing to do here.
     return TransactionSelectionResult.SELECTED;

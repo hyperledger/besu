@@ -90,6 +90,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 import org.hyperledger.besu.plugin.services.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -648,33 +649,41 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Transaction notSelectedInvalid = createTransaction(2, Wei.of(10), 21_000, SENDER2);
     ensureTransactionIsValid(notSelectedInvalid, 21_000, 0);
 
-    final PluginTransactionSelectorFactory transactionSelectorFactory =
-        () ->
-            new PluginTransactionSelector() {
-              @Override
-              public TransactionSelectionResult evaluateTransactionPreProcessing(
-                  final TransactionEvaluationContext evaluationContext) {
-                if (evaluationContext
-                    .getPendingTransaction()
-                    .getTransaction()
-                    .equals(notSelectedTransient))
-                  return PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID_TRANSIENT;
-                if (evaluationContext
-                    .getPendingTransaction()
-                    .getTransaction()
-                    .equals(notSelectedInvalid))
-                  return PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID;
-                return SELECTED;
-              }
+    final PluginTransactionSelector pluginTransactionSelector =
+        new PluginTransactionSelector() {
+          @Override
+          public TransactionSelectionResult evaluateTransactionPreProcessing(
+              final TransactionEvaluationContext evaluationContext) {
+            if (evaluationContext
+                .getPendingTransaction()
+                .getTransaction()
+                .equals(notSelectedTransient))
+              return PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID_TRANSIENT;
+            if (evaluationContext
+                .getPendingTransaction()
+                .getTransaction()
+                .equals(notSelectedInvalid))
+              return PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID;
+            return SELECTED;
+          }
 
-              @Override
-              public TransactionSelectionResult evaluateTransactionPostProcessing(
-                  final TransactionEvaluationContext evaluationContext,
-                  final org.hyperledger.besu.plugin.data.TransactionProcessingResult
-                      processingResult) {
-                return SELECTED;
-              }
-            };
+          @Override
+          public TransactionSelectionResult evaluateTransactionPostProcessing(
+              final TransactionEvaluationContext evaluationContext,
+              final org.hyperledger.besu.plugin.data.TransactionProcessingResult processingResult) {
+            return SELECTED;
+          }
+        };
+
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
+        new PluginTransactionSelectorFactory() {
+          @Override
+          public PluginTransactionSelector create(
+              final SelectorsStateManager selectorsStateManager) {
+            return pluginTransactionSelector;
+          }
+        };
+
     transactionSelectionService.registerPluginTransactionSelectorFactory(
         transactionSelectorFactory);
 
@@ -717,30 +726,35 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Transaction notSelected = createTransaction(1, Wei.of(10), 30_000);
     ensureTransactionIsValid(notSelected, maxGasUsedByTransaction + 1, 0);
 
-    final Transaction selected3 = createTransaction(3, Wei.of(10), 21_000);
-    ensureTransactionIsValid(selected3, maxGasUsedByTransaction, 0);
+    final PluginTransactionSelector pluginTransactionSelector =
+        new PluginTransactionSelector() {
+          @Override
+          public TransactionSelectionResult evaluateTransactionPreProcessing(
+              final TransactionEvaluationContext evaluationContext) {
+            return SELECTED;
+          }
+
+          @Override
+          public TransactionSelectionResult evaluateTransactionPostProcessing(
+              final TransactionEvaluationContext evaluationContext,
+              final org.hyperledger.besu.plugin.data.TransactionProcessingResult processingResult) {
+            // the transaction with max gas +1 should fail
+            if (processingResult.getEstimateGasUsedByTransaction() > maxGasUsedByTransaction) {
+              return PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID_TRANSIENT;
+            }
+            return SELECTED;
+          }
+        };
 
     final PluginTransactionSelectorFactory transactionSelectorFactory =
-        () ->
-            new PluginTransactionSelector() {
-              @Override
-              public TransactionSelectionResult evaluateTransactionPreProcessing(
-                  final TransactionEvaluationContext evaluationContext) {
-                return SELECTED;
-              }
+        new PluginTransactionSelectorFactory() {
+          @Override
+          public PluginTransactionSelector create(
+              final SelectorsStateManager selectorsStateManager) {
+            return pluginTransactionSelector;
+          }
+        };
 
-              @Override
-              public TransactionSelectionResult evaluateTransactionPostProcessing(
-                  final TransactionEvaluationContext evaluationContext,
-                  final org.hyperledger.besu.plugin.data.TransactionProcessingResult
-                      processingResult) {
-                // the transaction with max gas +1 should fail
-                if (processingResult.getEstimateGasUsedByTransaction() > maxGasUsedByTransaction) {
-                  return PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID_TRANSIENT;
-                }
-                return SELECTED;
-              }
-            };
     transactionSelectionService.registerPluginTransactionSelectorFactory(
         transactionSelectorFactory);
 
@@ -776,7 +790,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     PluginTransactionSelector transactionSelector = mock(PluginTransactionSelector.class);
     when(transactionSelector.evaluateTransactionPreProcessing(any())).thenReturn(SELECTED);
     when(transactionSelector.evaluateTransactionPostProcessing(any(), any())).thenReturn(SELECTED);
-    when(transactionSelectorFactory.create()).thenReturn(transactionSelector);
+    when(transactionSelectorFactory.create(any())).thenReturn(transactionSelector);
 
     transactionSelectionService.registerPluginTransactionSelectorFactory(
         transactionSelectorFactory);
@@ -1070,7 +1084,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final PluginTransactionSelectorFactory transactionSelectorFactory =
         mock(PluginTransactionSelectorFactory.class);
-    when(transactionSelectorFactory.create()).thenReturn(transactionSelector);
+    when(transactionSelectorFactory.create(any())).thenReturn(transactionSelector);
 
     transactionSelectionService.registerPluginTransactionSelectorFactory(
         transactionSelectorFactory);
@@ -1233,7 +1247,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final PluginTransactionSelectorFactory transactionSelectorFactory =
         mock(PluginTransactionSelectorFactory.class);
-    when(transactionSelectorFactory.create()).thenReturn(transactionSelector);
+    when(transactionSelectorFactory.create(any())).thenReturn(transactionSelector);
 
     transactionSelectionService.registerPluginTransactionSelectorFactory(
         transactionSelectorFactory);
@@ -1320,6 +1334,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final Wei blobGasPrice,
       final TransactionSelectionService transactionSelectionService) {
 
+    final var selectorsStateManager = new SelectorsStateManager();
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
             miningConfiguration,
@@ -1336,8 +1351,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
             protocolSchedule.getByBlockHeader(blockHeader).getBlockHashProcessor(),
-            transactionSelectionService.createPluginTransactionSelector(),
-            ethScheduler);
+            transactionSelectionService.createPluginTransactionSelector(selectorsStateManager),
+            ethScheduler,
+            selectorsStateManager);
 
     return selector;
   }

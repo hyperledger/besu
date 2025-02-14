@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
@@ -35,12 +36,13 @@ class QbftExtraDataProviderAdaptorTest {
     final BftExtraData bftExtraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, emptyList());
     final Bytes encoded = qbftExtraDataCodec.encode(bftExtraData);
-    final BlockHeader header =
+    final BlockHeader besuHeader =
         new BlockHeaderTestFixture().number(1).extraData(encoded).buildHeader();
+    final QbftBlockHeader qbftHeader = new QbftBlockHeaderAdaptor(besuHeader);
 
     final QbftExtraDataProviderAdaptor qbftExtraDataProvider =
         new QbftExtraDataProviderAdaptor(new QbftExtraDataCodec());
-    final BftExtraData retrievedExtraData = qbftExtraDataProvider.getExtraData(header);
+    final BftExtraData retrievedExtraData = qbftExtraDataProvider.getExtraData(qbftHeader);
     assertThat(retrievedExtraData).isEqualToComparingFieldByField(bftExtraData);
   }
 }

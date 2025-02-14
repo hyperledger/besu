@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
@@ -37,15 +36,12 @@ public class MinPriorityFeePerGasTransactionSelector extends AbstractTransaction
    * Evaluates a transaction before processing.
    *
    * @param evaluationContext The current selection session data.
-   * @param transactionSelectionResults The results of other transaction evaluations in the same
-   *     block.
    * @return TransactionSelectionResult. If the priority fee is below the minimum, it returns an
    *     invalid transient result. Otherwise, it returns a selected result.
    */
   @Override
   public TransactionSelectionResult evaluateTransactionPreProcessing(
-      final TransactionEvaluationContext evaluationContext,
-      final TransactionSelectionResults transactionSelectionResults) {
+      final TransactionEvaluationContext evaluationContext) {
     if (isPriorityFeePriceBelowMinimum(evaluationContext)) {
       return TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN;
     }
@@ -82,7 +78,6 @@ public class MinPriorityFeePerGasTransactionSelector extends AbstractTransaction
   @Override
   public TransactionSelectionResult evaluateTransactionPostProcessing(
       final TransactionEvaluationContext evaluationContext,
-      final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {
     return TransactionSelectionResult.SELECTED;
   }
