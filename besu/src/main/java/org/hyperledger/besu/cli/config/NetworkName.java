@@ -118,13 +118,4 @@ public enum NetworkName {
   public Optional<String> getDeprecationDate() {
     return Optional.ofNullable(deprecationDate);
   }
-
-  /**
-   * Is it a Ethereum testnet (Sepolia, Holesky or Ephemery).
-   *
-   * @return the boolean
-   */
-  public boolean isTestnet() {
-    return this == SEPOLIA || this == HOLESKY || this == EPHEMERY;
-  }
 }

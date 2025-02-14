@@ -2132,13 +2132,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
         .ifPresent(miningParameters::setBlockPeriodSeconds);
     initMiningParametersMetrics(miningParameters);
-    // if network is a testnet, set targetGasLimit to
-    // DEFAULT_TARGET_GAS_LIMIT_TESTNET unless otherwise specified
-    if (miningParameters.getTargetGasLimit().isEmpty() && network != null && network.isTestnet()) {
-      logger.info(
-          "Setting target gas limit: {}", MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_TESTNET);
-      miningParameters.setTargetGasLimit(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_TESTNET);
-    }
+
     return miningParameters;
   }
 

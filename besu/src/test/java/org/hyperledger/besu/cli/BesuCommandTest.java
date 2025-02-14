@@ -1786,8 +1786,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().getTargetGasLimit()).isPresent();
-    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
-        .isEqualTo(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_TESTNET);
+    assertThat(miningArg.getValue().getTargetGasLimit()).isEmpty();
 
     verify(mockLogger, never()).warn(contains("Sepolia is deprecated and will be shutdown"));
   }
@@ -1829,8 +1828,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
-    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
-        .isEqualTo(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_TESTNET);
+    assertThat(miningArg.getValue().getTargetGasLimit()).isEmpty();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
