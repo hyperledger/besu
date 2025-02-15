@@ -14,10 +14,13 @@
  */
 package org.hyperledger.besu.evm.gascalculator.stateless;
 
+import org.hyperledger.besu.datatypes.AccessEvent;
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -46,7 +49,8 @@ public class NoopAccessWitness implements AccessWitness {
       final Address caller,
       final Address target,
       final boolean isAccountCreation,
-      final long warmReadCost) {
+      final long warmReadCost,
+      final long remainingGas) {
     return 0;
   }
 
@@ -55,12 +59,14 @@ public class NoopAccessWitness implements AccessWitness {
       final Address caller,
       final Address target,
       final boolean isAccountCreation,
-      final long warmReadCost) {
+      final long warmReadCost,
+      final long remainingGas) {
     return 0;
   }
 
   @Override
-  public long touchAddressAndChargeRead(final Address address, final UInt256 leafKey) {
+  public long touchAddressAndChargeRead(
+      final Address address, final UInt256 leafKey, final long remainingGas) {
     return 0;
   }
 
@@ -68,28 +74,34 @@ public class NoopAccessWitness implements AccessWitness {
   public void touchBaseTx(final Address origin, final Optional<Address> target, final Wei value) {}
 
   @Override
-  public long touchAndChargeProofOfAbsence(final Address address) {
+  public long touchAndChargeProofOfAbsence(final Address address, final long remainingGas) {
     return 0;
   }
 
   @Override
-  public long touchAndChargeContractCreateCompleted(final Address address) {
+  public long touchAndChargeContractCreateCompleted(
+      final Address address, final long remainingGas) {
     return 0;
   }
 
   @Override
-  public long touchAndChargeStorageLoad(final Address address, final UInt256 storageKey) {
+  public long touchAndChargeStorageLoad(
+      final Address address, final UInt256 storageKey, final long remainingGas) {
     return 0;
   }
 
   @Override
   public long touchAndChargeStorageStore(
-      final Address address, final UInt256 storageKey, final boolean hasPreviousValue) {
+      final Address address,
+      final UInt256 storageKey,
+      final boolean hasPreviousValue,
+      final long remainingGas) {
     return 0;
   }
 
   @Override
-  public long touchCodeChunksUponContractCreation(final Address address, final long codeLength) {
+  public long touchCodeChunksUponContractCreation(
+      final Address address, final long codeLength, final long remainingGas) {
     return 0;
   }
 
@@ -99,7 +111,13 @@ public class NoopAccessWitness implements AccessWitness {
       final boolean isContractInDeployment,
       final long offset,
       final long readSize,
-      final long codeLength) {
+      final long codeLength,
+      final long remainingGas) {
     return 0;
+  }
+
+  @Override
+  public List<AccessEvent<?>> getLeafAccesses() {
+    return Collections.emptyList();
   }
 }

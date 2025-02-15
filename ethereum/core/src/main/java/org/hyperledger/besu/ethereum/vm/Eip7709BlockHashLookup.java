@@ -114,7 +114,10 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
   }
 
   private long lookupCost(final MessageFrame frame, final UInt256 slotKey) {
-    long gas = frame.getAccessWitness().touchAndChargeStorageLoad(contractAddress, slotKey);
+    long gas =
+        frame
+            .getAccessWitness()
+            .touchAndChargeStorageLoad(contractAddress, slotKey, frame.getRemainingGas());
 
     if (gas == 0) {
       return getWarmStorageReadCost();

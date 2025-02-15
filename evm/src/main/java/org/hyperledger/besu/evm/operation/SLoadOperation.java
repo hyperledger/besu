@@ -60,6 +60,7 @@ public class SLoadOperation extends AbstractOperation {
 
       final long cost = cost(frame, key, slotIsWarm);
       if (frame.getRemainingGas() < cost) {
+        frame.decrementRemainingGas(cost);
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
         frame.pushStackItem(account.getStorageValue(UInt256.fromBytes(key)));
