@@ -47,6 +47,7 @@ dependencies {
     api project(':consensus:clique')
     api project(':consensus:common')
     api project(':consensus:ibft')
+    api project(':consensus:ibftlegacy')
     api project(':consensus:merge')
     api project(':consensus:qbft')
     api project(':consensus:qbft-core')
