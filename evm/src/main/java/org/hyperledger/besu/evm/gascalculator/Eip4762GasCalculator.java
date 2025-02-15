@@ -56,7 +56,13 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
 
   @Override
   public long proofOfAbsenceCost(final MessageFrame frame, final Address address) {
-    return frame.getAccessWitness().touchAndChargeProofOfAbsence(address);
+    frame.getAccessWitness().enterWitness();
+    long gas = frame.getAccessWitness().touchAndChargeProofOfAbsence(address);
+
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
+    }
+    return gas;
   }
 
   @Override
@@ -112,6 +118,7 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
             false);
 
     if (!transferValue.isZero()) {
+      frame.getAccessWitness().enterWitness();
       gas =
           clampedAdd(
               gas,
@@ -119,6 +126,9 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
                   .getAccessWitness()
                   .touchAndChargeValueTransfer(
                       frame.getContractAddress(), to, recipient == null, getWarmStorageReadCost()));
+      if (frame.getRemainingGas() < gas) {
+        frame.getAccessWitness().revertWitnesses();
+      }
       return gas;
     }
 
@@ -126,13 +136,19 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
       return clampedAdd(gas, getWarmStorageReadCost());
     }
 
+    frame.getAccessWitness().enterWitness();
     long messageCallGas =
         frame.getAccessWitness().touchAddressAndChargeRead(to, BASIC_DATA_LEAF_KEY);
     if (messageCallGas == 0) {
-      messageCallGas = getWarmStorageReadCost();
+      return clampedAdd(gas, getWarmStorageReadCost());
     }
 
-    return clampedAdd(gas, messageCallGas);
+    gas = clampedAdd(gas, messageCallGas);
+
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
+    }
+    return gas;
   }
 
   @Override
@@ -147,9 +163,16 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
 
   @Override
   public long codeDepositGasCost(final MessageFrame frame, final int codeSize) {
-    return frame
-        .getAccessWitness()
-        .touchCodeChunksUponContractCreation(frame.getContractAddress(), codeSize);
+    frame.getAccessWitness().enterWitness();
+    long gas =
+        frame
+            .getAccessWitness()
+            .touchCodeChunksUponContractCreation(frame.getContractAddress(), codeSize);
+
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
+    }
+    return gas;
   }
 
   @Override
@@ -171,6 +194,7 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
       final long codeSize) {
     long gas = extCodeCopyOperationGasCost(frame, memOffset, readSize);
 
+    frame.getAccessWitness().enterWitness();
     gas =
         clampedAdd(
             gas,
@@ -178,17 +202,28 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
                 .getAccessWitness()
                 .touchCodeChunks(address, false, codeOffset, readSize, codeSize));
 
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
+      return gas;
+    }
+
     if (isPrecompile(address) || isSystemContract(address)) {
       return clampedAdd(gas, getWarmStorageReadCost());
     }
 
+    frame.getAccessWitness().enterWitness();
     long readTargetGas =
         frame.getAccessWitness().touchAddressAndChargeRead(address, BASIC_DATA_LEAF_KEY);
     if (readTargetGas == 0) {
-      readTargetGas = getWarmStorageReadCost();
+      return clampedAdd(gas, getWarmStorageReadCost());
     }
 
-    return clampedAdd(gas, readTargetGas);
+    gas = clampedAdd(gas, readTargetGas);
+
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
+    }
+    return gas;
   }
 
   @Override
@@ -200,6 +235,7 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
       final long codeSize) {
     long gas = super.dataCopyOperationGasCost(frame, memOffset, readSize);
 
+    frame.getAccessWitness().enterWitness();
     final Address contractAddress = frame.getContractAddress();
     gas =
         clampedAdd(
@@ -213,6 +249,9 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
                     readSize,
                     codeSize));
 
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
+    }
     return gas;
   }
 
@@ -227,6 +266,7 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
       return gas;
     }
 
+    frame.getAccessWitness().enterWitness();
     final Address contractAddress = frame.getContractAddress();
     gas =
         clampedAdd(
@@ -240,30 +280,49 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
                     readSize,
                     codeSize));
 
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
+    }
     return gas;
   }
 
   @Override
   public long balanceOperationGasCost(
       final MessageFrame frame, final boolean accountIsWarm, final Address address) {
+    frame.getAccessWitness().enterWitness();
     final long gas =
         frame.getAccessWitness().touchAddressAndChargeRead(address, BASIC_DATA_LEAF_KEY);
     if (gas == 0) {
       return getWarmStorageReadCost();
     }
+
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
+      return gas;
+    }
+
     return gas;
   }
 
   @Override
   public long extCodeHashOperationGasCost(
       final MessageFrame frame, final boolean accountIsWarm, final Address address) {
+    long gas = 0;
     if (isPrecompile(address) || isSystemContract(address)) {
       return getWarmStorageReadCost();
     }
 
-    long gas = frame.getAccessWitness().touchAddressAndChargeRead(address, CODE_HASH_LEAF_KEY);
-    if (gas == 0) {
+    frame.getAccessWitness().enterWitness();
+    long statelessGas =
+        frame.getAccessWitness().touchAddressAndChargeRead(address, CODE_HASH_LEAF_KEY);
+    if (statelessGas == 0) {
       return getWarmStorageReadCost();
+    }
+
+    gas = clampedAdd(gas, statelessGas);
+
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
     }
     return gas;
   }
@@ -271,13 +330,21 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
   @Override
   public long extCodeSizeOperationGasCost(
       final MessageFrame frame, final boolean accountIsWarm, final Address address) {
+    long gas = 0;
     if (isPrecompile(address) || isSystemContract(address)) {
       return getWarmStorageReadCost();
     }
-
-    long gas = frame.getAccessWitness().touchAddressAndChargeRead(address, BASIC_DATA_LEAF_KEY);
-    if (gas == 0) {
+    frame.getAccessWitness().enterWitness();
+    long statelessGas =
+        frame.getAccessWitness().touchAddressAndChargeRead(address, BASIC_DATA_LEAF_KEY);
+    if (statelessGas == 0) {
       return getWarmStorageReadCost();
+    }
+
+    gas = clampedAdd(gas, statelessGas);
+
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
     }
     return gas;
   }
@@ -297,6 +364,7 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
     long gas = 5000L;
 
     if (!value.isZero()) {
+      frame.getAccessWitness().enterWitness();
       gas =
           clampedAdd(
               gas,
@@ -307,8 +375,13 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
                       recipientAddress,
                       recipient == null,
                       getWarmStorageReadCost()));
+      if (frame.getRemainingGas() < gas) {
+        frame.getAccessWitness().revertWitnesses();
+        return gas;
+      }
     }
 
+    frame.getAccessWitness().enterWitness();
     // check if there's any balance in the originating account in search of value
     gas =
         clampedAdd(
@@ -316,6 +389,11 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
             frame
                 .getAccessWitness()
                 .touchAddressAndChargeRead(originatorAddress, BASIC_DATA_LEAF_KEY));
+
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
+      return gas;
+    }
 
     // TODO: REMOVE - if code removed below there's no point to check for this
     if (isPrecompile(recipientAddress) || isSystemContract(recipientAddress)) {
@@ -325,26 +403,34 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
     // TODO: Recheck only here to pass tests - after talking with Geth team this will be dropped in
     // future devnets. If there's no value transferred, there's no point in touching the beneficiary
     if (!recipientAddress.equals(originatorAddress)) {
+      frame.getAccessWitness().enterWitness();
       gas =
           clampedAdd(
               gas,
               frame
                   .getAccessWitness()
                   .touchAddressAndChargeRead(recipientAddress, BASIC_DATA_LEAF_KEY));
-    }
 
+      if (frame.getRemainingGas() < gas) {
+        frame.getAccessWitness().revertWitnesses();
+      }
+    }
     return gas;
   }
 
   @Override
   public long sloadOperationGasCost(
       final MessageFrame frame, final UInt256 key, final boolean slotIsWarm) {
+    frame.getAccessWitness().enterWitness();
     long gas = frame.getAccessWitness().touchAndChargeStorageLoad(frame.getContractAddress(), key);
 
     if (gas == 0) {
       return getWarmStorageReadCost();
     }
 
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
+    }
     return gas;
   }
 
@@ -356,6 +442,7 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {
 
+    frame.getAccessWitness().enterWitness();
     long gas =
         frame
             .getAccessWitness()
@@ -365,14 +452,22 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
       return SLOAD_GAS;
     }
 
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
+    }
     return gas;
   }
 
   @Override
   public long completedCreateContractGasCost(final MessageFrame frame) {
-    return frame
-        .getAccessWitness()
-        .touchAndChargeContractCreateCompleted(frame.getContractAddress());
+    frame.getAccessWitness().enterWitness();
+    long gas =
+        frame.getAccessWitness().touchAndChargeContractCreateCompleted(frame.getContractAddress());
+
+    if (frame.getRemainingGas() < gas) {
+      frame.getAccessWitness().revertWitnesses();
+    }
+    return gas;
   }
 
   private static boolean isSystemContract(final Address address) {

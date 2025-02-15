@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.datatypes;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -133,4 +134,10 @@ public interface AccessWitness {
    */
   long touchCodeChunks(
       Address address, boolean isContractInDeployment, long offset, long readSize, long codeLength);
+
+  void revertWitnesses();
+
+  void enterWitness();
+
+  List<AccessEvent<?>> getLeafAccesses();
 }

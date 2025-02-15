@@ -83,10 +83,10 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
     }
 
     final long cost = cost(frame, blockNumber);
-    frame.decrementRemainingGas(cost);
     if (frame.getRemainingGas() < cost) {
       return null;
     }
+    frame.decrementRemainingGas(cost);
 
     final Hash cachedHash = hashByNumber.get(blockNumber);
     if (cachedHash != null) {

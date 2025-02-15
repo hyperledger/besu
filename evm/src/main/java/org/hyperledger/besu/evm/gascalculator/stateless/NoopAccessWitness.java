@@ -14,10 +14,13 @@
  */
 package org.hyperledger.besu.evm.gascalculator.stateless;
 
+import org.hyperledger.besu.datatypes.AccessEvent;
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -101,5 +104,16 @@ public class NoopAccessWitness implements AccessWitness {
       final long readSize,
       final long codeLength) {
     return 0;
+  }
+
+  @Override
+  public void revertWitnesses() {}
+
+  @Override
+  public void enterWitness() {}
+
+  @Override
+  public List<AccessEvent<?>> getLeafAccesses() {
+    return Collections.emptyList();
   }
 }
