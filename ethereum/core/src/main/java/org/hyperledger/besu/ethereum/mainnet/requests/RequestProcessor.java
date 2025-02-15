@@ -17,5 +17,5 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.ethereum.core.Request;
 
 public interface RequestProcessor {
-  Request process(final ProcessRequestContext context);
+  Request process(final RequestProcessingContext context);
 }

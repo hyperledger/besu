@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -30,13 +31,14 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper.AgentBuilder;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent.IncomingPacket;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.NeighborsPacketData;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.DaggerPacketPackage;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.Packet;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketPackage;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.findneighbors.FindNeighborsPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.neighbors.NeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -45,6 +47,8 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +60,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class PeerDiscoveryAgentTest {
@@ -63,7 +68,14 @@ public class PeerDiscoveryAgentTest {
   private static final int BROADCAST_TCP_PORT = 30303;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
+  private PeerDiscoveryTestHelper helper;
+  private PacketPackage packetPackage;
+
+  @BeforeEach
+  public void beforeTest() {
+    helper = new PeerDiscoveryTestHelper();
+    packetPackage = DaggerPacketPackage.create();
+  }
 
   @Test
   public void createAgentWithInvalidBootnodes() {
@@ -174,8 +186,9 @@ public class PeerDiscoveryAgentTest {
 
     // Generate an out-of-band NEIGHBORS message.
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
-    final NeighborsPacketData data = NeighborsPacketData.create(peers);
-    final Packet packet = Packet.create(PacketType.NEIGHBORS, data, otherNode.getNodeKey());
+    final NeighborsPacketData data = packetPackage.neighborsPacketDataFactory().create(peers);
+    final Packet packet =
+        packetPackage.packetFactory().create(PacketType.NEIGHBORS, data, otherNode.getNodeKey());
     helper.sendMessageBetweenAgents(otherNode, agent, packet);
 
     assertThat(agent.streamDiscoveredPeers()).isEmpty();
@@ -207,16 +220,20 @@ public class PeerDiscoveryAgentTest {
     final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
 
     // Send a PING so we can exchange messages with the latter agent.
-    Packet packet = helper.createPingPacket(testAgent, agent);
+    Packet packet = helper.createPingPacket(testAgent, agent, packetPackage);
     helper.sendMessageBetweenAgents(testAgent, agent, packet);
 
     // Send a FIND_NEIGHBORS message.
     assertThat(otherAgents.get(0).getAdvertisedPeer().isPresent()).isTrue();
     packet =
-        Packet.create(
-            PacketType.FIND_NEIGHBORS,
-            FindNeighborsPacketData.create(otherAgents.get(0).getAdvertisedPeer().get().getId()),
-            testAgent.getNodeKey());
+        packetPackage
+            .packetFactory()
+            .create(
+                PacketType.FIND_NEIGHBORS,
+                packetPackage
+                    .findNeighborsPacketDataFactory()
+                    .create(otherAgents.get(0).getAdvertisedPeer().get().getId()),
+                testAgent.getNodeKey());
     helper.sendMessageBetweenAgents(testAgent, agent, packet);
 
     // Check response packet
@@ -235,7 +252,8 @@ public class PeerDiscoveryAgentTest {
         neighborsPacket.packet.getPacketData(NeighborsPacketData.class).get();
     assertThat(neighbors).isNotNull();
     assertThat(neighbors.getNodes()).hasSize(13);
-    assertThat(neighborsPacket.packet.encode().length()).isLessThanOrEqualTo(1280); // under max MTU
+    assertThat(packetPackage.packetSerializer().encode(neighborsPacket.packet).length())
+        .isLessThanOrEqualTo(1280); // under max MTU
 
     // Assert that after removing those 13 items we're left with either 7 or 8.
     // If we are left with 8, the test peer was returned as an item, assert that this is the case.
@@ -257,7 +275,7 @@ public class PeerDiscoveryAgentTest {
     final MockPeerDiscoveryAgent agent2 = helper.startDiscoveryAgent("192.168.0.1");
 
     // Send a PING so we can exchange messages
-    Packet packet = helper.createPingPacket(agent2, agent1);
+    Packet packet = helper.createPingPacket(agent2, agent1, packetPackage);
     helper.sendMessageBetweenAgents(agent2, agent1, packet);
 
     // Agent 1's peers should have endpoints that match the custom advertised value...
@@ -826,7 +844,7 @@ public class PeerDiscoveryAgentTest {
     final AgentBuilder agentBuilder = helper.agentBuilder().active(true);
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(agentBuilder);
 
-    assertThat(agent.isActive()).isTrue();
+    assertThat(agent.isEnabled()).isTrue();
   }
 
   @Test
@@ -834,7 +852,7 @@ public class PeerDiscoveryAgentTest {
     final AgentBuilder agentBuilder = helper.agentBuilder().active(false);
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(agentBuilder);
 
-    assertThat(agent.isActive()).isFalse();
+    assertThat(agent.isEnabled()).isFalse();
   }
 
   @Test
@@ -857,33 +875,41 @@ public class PeerDiscoveryAgentTest {
         when(mock(Packet.class).getPacketData(any()))
             .thenReturn(
                 Optional.of(
-                    PingPacketData.create(Optional.of(emptyIPv4), endpointLocal, UInt64.ONE)))
+                    packetPackage
+                        .pingPacketDataFactory()
+                        .create(Optional.of(emptyIPv4), endpointLocal, UInt64.ONE)))
             .getMock();
     Packet mockEmptyIPv6 =
         when(mock(Packet.class).getPacketData(any()))
             .thenReturn(
                 Optional.of(
-                    PingPacketData.create(Optional.of(emptyIPv6), endpointLocal, UInt64.ONE)))
+                    packetPackage
+                        .pingPacketDataFactory()
+                        .create(Optional.of(emptyIPv6), endpointLocal, UInt64.ONE)))
             .getMock();
     Packet mockLocal =
         when(mock(Packet.class).getPacketData(any()))
             .thenReturn(
                 Optional.of(
-                    PingPacketData.create(Optional.of(endpointLocal), endpointLocal, UInt64.ONE)))
+                    packetPackage
+                        .pingPacketDataFactory()
+                        .create(Optional.of(endpointLocal), endpointLocal, UInt64.ONE)))
             .getMock();
     Packet mockBroadcast =
         when(mock(Packet.class).getPacketData(any()))
             .thenReturn(
                 Optional.of(
-                    PingPacketData.create(
-                        Optional.of(endpointBroadcast), endpointLocal, UInt64.ONE)))
+                    packetPackage
+                        .pingPacketDataFactory()
+                        .create(Optional.of(endpointBroadcast), endpointLocal, UInt64.ONE)))
             .getMock();
     Packet mockWellFormed =
         when(mock(Packet.class).getPacketData(any()))
             .thenReturn(
                 Optional.of(
-                    PingPacketData.create(
-                        Optional.of(endpointRoutable), endpointLocal, UInt64.ONE)))
+                    packetPackage
+                        .pingPacketDataFactory()
+                        .create(Optional.of(endpointRoutable), endpointLocal, UInt64.ONE)))
             .getMock();
 
     // assert a pingpacketdata with empty ipv4 address reverts to the udp source host
@@ -898,16 +924,37 @@ public class PeerDiscoveryAgentTest {
     assertThat(PeerDiscoveryAgent.deriveHost(source, mockWellFormed)).isEqualTo(routableHost);
   }
 
+  @Test
+  void testFromEnodeWithDiscoveryDisabled() throws UnknownHostException {
+    EnodeURL enodeWithNoDiscovery = mock(EnodeURL.class);
+    when(enodeWithNoDiscovery.getDiscoveryPort()).thenReturn(Optional.empty());
+    when(enodeWithNoDiscovery.getListeningPort()).thenReturn(Optional.of(8545));
+
+    when(enodeWithNoDiscovery.getIp()).thenReturn(InetAddress.getLoopbackAddress());
+
+    Endpoint result = Endpoint.fromEnode(enodeWithNoDiscovery);
+
+    assertEquals("127.0.0.1", result.getHost());
+
+    assertEquals(EnodeURLImpl.DEFAULT_LISTENING_PORT, result.getUdpPort());
+
+    assertEquals(Optional.empty(), result.getTcpPort());
+  }
+
   protected void bondViaIncomingPing(
       final MockPeerDiscoveryAgent agent, final MockPeerDiscoveryAgent otherNode) {
-    final Packet pingPacket = helper.createPingPacket(otherNode, agent);
+    final Packet pingPacket = helper.createPingPacket(otherNode, agent, packetPackage);
     helper.sendMessageBetweenAgents(otherNode, agent, pingPacket);
   }
 
   protected void requestNeighbors(
       final MockPeerDiscoveryAgent fromAgent, final MockPeerDiscoveryAgent toAgent) {
-    final FindNeighborsPacketData data = FindNeighborsPacketData.create(Peer.randomId());
-    final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, fromAgent.getNodeKey());
+    final FindNeighborsPacketData data =
+        packetPackage.findNeighborsPacketDataFactory().create(Peer.randomId());
+    final Packet packet =
+        packetPackage
+            .packetFactory()
+            .create(PacketType.FIND_NEIGHBORS, data, fromAgent.getNodeKey());
     helper.sendMessageBetweenAgents(fromAgent, toAgent, packet);
   }
 }

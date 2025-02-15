@@ -1,0 +1,83 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.consensus.qbft.core.support;
+
+import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHashingAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
+import org.hyperledger.besu.consensus.qbft.core.payload.CommitPayload;
+import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+
+public class IntegrationTestHelpers {
+
+  public static SignedData<CommitPayload> createSignedCommitPayload(
+      final ConsensusRoundIdentifier roundId,
+      final QbftBlock block,
+      final NodeKey nodeKey,
+      final QbftBlockCodec blockEncoder) {
+
+    final QbftExtraDataCodec qbftExtraDataEncoder = new QbftExtraDataCodec();
+
+    final QbftBlock commitBlock =
+        createCommitBlockFromProposalBlock(block, roundId.getRoundNumber());
+    final QbftBlockHashing blockHashing =
+        new QbftBlockHashingAdaptor(new BftBlockHashing(qbftExtraDataEncoder));
+    final QbftExtraDataProvider extraDataProvider =
+        new QbftExtraDataProviderAdaptor(qbftExtraDataEncoder);
+    final SECPSignature commitSeal =
+        nodeKey.sign(
+            blockHashing.calculateDataHashForCommittedSeal(
+                commitBlock.getHeader(), extraDataProvider.getExtraData(commitBlock.getHeader())));
+
+    final MessageFactory messageFactory = new MessageFactory(nodeKey, blockEncoder);
+
+    return messageFactory.createCommit(roundId, block.getHash(), commitSeal).getSignedPayload();
+  }
+
+  public static PreparedCertificate createValidPreparedCertificate(
+      final TestContext context,
+      final ConsensusRoundIdentifier preparedRound,
+      final QbftBlock block) {
+    final RoundSpecificPeers peers = context.roundSpecificPeers(preparedRound);
+
+    return new PreparedCertificate(
+        block,
+        peers.createSignedPreparePayloadOfAllPeers(preparedRound, block.getHash()),
+        preparedRound.getRoundNumber());
+  }
+
+  public static QbftBlock createCommitBlockFromProposalBlock(
+      final QbftBlock proposalBlock, final int round) {
+    final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+    final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
+    final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
+    return qbftBlockInterface.replaceRoundInBlock(
+        proposalBlock, round, QbftHashMode.COMMITTED_SEAL);
+  }
+}

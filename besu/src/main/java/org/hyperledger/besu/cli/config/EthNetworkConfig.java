@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.config;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -33,13 +33,13 @@ import java.util.stream.Collectors;
 /**
  * The Eth network config.
  *
- * @param genesisConfigFile Genesis Config File
+ * @param genesisConfig Genesis Config File
  * @param networkId Network Id
  * @param bootNodes Boot Nodes
  * @param dnsDiscoveryUrl DNS Discovery URL
  */
 public record EthNetworkConfig(
-    GenesisConfigFile genesisConfigFile,
+    GenesisConfig genesisConfig,
     BigInteger networkId,
     List<EnodeURL> bootNodes,
     String dnsDiscoveryUrl) {
@@ -47,7 +47,7 @@ public record EthNetworkConfig(
   /**
    * Validate parameters on new record creation
    *
-   * @param genesisConfigFile the genesis config
+   * @param genesisConfig the genesis config
    * @param networkId the network id
    * @param bootNodes the boot nodes
    * @param dnsDiscoveryUrl the dns discovery url
@@ -55,7 +55,7 @@ public record EthNetworkConfig(
   @SuppressWarnings(
       "MethodInputParametersMustBeFinal") // needed since record constructors are not yet supported
   public EthNetworkConfig {
-    Objects.requireNonNull(genesisConfigFile);
+    Objects.requireNonNull(genesisConfig);
     Objects.requireNonNull(bootNodes);
   }
 
@@ -67,8 +67,8 @@ public record EthNetworkConfig(
    */
   public static EthNetworkConfig getNetworkConfig(final NetworkName networkName) {
     final URL genesisSource = jsonConfigSource(networkName.getGenesisFile());
-    final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromSource(genesisSource);
-    final GenesisConfigOptions genesisConfigOptions = genesisConfigFile.getConfigOptions();
+    final GenesisConfig genesisConfig = GenesisConfig.fromSource(genesisSource);
+    final GenesisConfigOptions genesisConfigOptions = genesisConfig.getConfigOptions();
     final Optional<List<String>> rawBootNodes =
         genesisConfigOptions.getDiscoveryOptions().getBootNodes();
     final List<EnodeURL> bootNodes =
@@ -79,7 +79,7 @@ public record EthNetworkConfig(
             .orElse(Collections.emptyList());
 
     return new EthNetworkConfig(
-        genesisConfigFile,
+        genesisConfig,
         networkName.getNetworkId(),
         bootNodes,
         genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl().orElse(null));
@@ -108,7 +108,7 @@ public record EthNetworkConfig(
   public static class Builder {
 
     private String dnsDiscoveryUrl;
-    private GenesisConfigFile genesisConfigFile;
+    private GenesisConfig genesisConfig;
     private BigInteger networkId;
     private List<EnodeURL> bootNodes;
 
@@ -118,7 +118,7 @@ public record EthNetworkConfig(
      * @param ethNetworkConfig the eth network config
      */
     public Builder(final EthNetworkConfig ethNetworkConfig) {
-      this.genesisConfigFile = ethNetworkConfig.genesisConfigFile;
+      this.genesisConfig = ethNetworkConfig.genesisConfig;
       this.networkId = ethNetworkConfig.networkId;
       this.bootNodes = ethNetworkConfig.bootNodes;
       this.dnsDiscoveryUrl = ethNetworkConfig.dnsDiscoveryUrl;
@@ -127,11 +127,11 @@ public record EthNetworkConfig(
     /**
      * Sets genesis config file.
      *
-     * @param genesisConfigFile the genesis config
+     * @param genesisConfig the genesis config
      * @return this builder
      */
-    public Builder setGenesisConfigFile(final GenesisConfigFile genesisConfigFile) {
-      this.genesisConfigFile = genesisConfigFile;
+    public Builder setGenesisConfig(final GenesisConfig genesisConfig) {
+      this.genesisConfig = genesisConfig;
       return this;
     }
 
@@ -174,7 +174,7 @@ public record EthNetworkConfig(
      * @return the eth network config
      */
     public EthNetworkConfig build() {
-      return new EthNetworkConfig(genesisConfigFile, networkId, bootNodes, dnsDiscoveryUrl);
+      return new EthNetworkConfig(genesisConfig, networkId, bootNodes, dnsDiscoveryUrl);
     }
   }
 }

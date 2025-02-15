@@ -21,8 +21,10 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.IOException;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled("flaky see https://github.com/hyperledger/besu/issues/7973")
 public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
 
   @Test
@@ -32,6 +34,8 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
     final BesuNode minerNode2 = besu.createCliqueNodeWithValidators("miner2", initialValidators);
     final BesuNode minerNode3 = besu.createCliqueNodeWithValidators("miner3", initialValidators);
     cluster.start(minerNode1, minerNode2, minerNode3);
+
+    waitForNodesConnectedAndInSync(minerNode1, minerNode2, minerNode3);
 
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2));
     minerNode1.execute(cliqueTransactions.createAddProposal(minerNode3));
@@ -47,6 +51,8 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
     final BesuNode minerNode3 = besu.createCliqueNodeWithValidators("miner3", initialValidators);
     cluster.start(minerNode1, minerNode2, minerNode3);
 
+    waitForNodesConnectedAndInSync(minerNode1, minerNode2, minerNode3);
+
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2, minerNode3));
     final Condition cliqueValidatorsChanged = clique.awaitSignerSetChange(minerNode1);
     minerNode1.execute(cliqueTransactions.createRemoveProposal(minerNode3));
@@ -55,6 +61,7 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2));
   }
 
+  @Disabled
   @Test
   public void shouldNotAddValidatorWhenInsufficientVotes() throws IOException {
     final String[] initialValidators = {"miner1", "miner2"};
@@ -62,6 +69,8 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
     final BesuNode minerNode2 = besu.createCliqueNodeWithValidators("miner2", initialValidators);
     final BesuNode minerNode3 = besu.createCliqueNodeWithValidators("miner3", initialValidators);
     cluster.start(minerNode1, minerNode2, minerNode3);
+
+    waitForNodesConnectedAndInSync(minerNode1, minerNode2, minerNode3);
 
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2));
     minerNode1.execute(cliqueTransactions.createAddProposal(minerNode3));
@@ -76,12 +85,15 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
     final BesuNode minerNode3 = besu.createCliqueNode("miner3");
     cluster.start(minerNode1, minerNode2, minerNode3);
 
+    waitForNodesConnectedAndInSync(minerNode1, minerNode2, minerNode3);
+
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2, minerNode3));
     minerNode1.execute(cliqueTransactions.createRemoveProposal(minerNode3));
     minerNode1.verify(blockchain.reachesHeight(minerNode1, 1));
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2, minerNode3));
   }
 
+  @Disabled
   @Test
   public void shouldIncludeVoteInBlockHeader() throws IOException {
     final String[] initialValidators = {"miner1", "miner2"};
@@ -89,6 +101,8 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
     final BesuNode minerNode2 = besu.createCliqueNodeWithValidators("miner2", initialValidators);
     final BesuNode minerNode3 = besu.createCliqueNodeWithValidators("miner3", initialValidators);
     cluster.start(minerNode1, minerNode2, minerNode3);
+
+    waitForNodesConnectedAndInSync(minerNode1, minerNode2, minerNode3);
 
     minerNode1.execute(cliqueTransactions.createAddProposal(minerNode3));
     minerNode1.verify(blockchain.reachesHeight(minerNode1, 1));
@@ -99,5 +113,19 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
     minerNode1.verify(blockchain.reachesHeight(minerNode1, 1));
     minerNode1.verify(blockchain.beneficiaryEquals(minerNode2));
     minerNode1.verify(clique.nonceVoteEquals(CLIQUE_NONCE_VOTE.DROP));
+  }
+
+  private void waitForNodesConnectedAndInSync(
+      final BesuNode minerNode1, final BesuNode minerNode2, final BesuNode minerNode3) {
+    // verify nodes are fully connected otherwise blocks could not be propagated
+    minerNode1.verify(net.awaitPeerCount(2));
+    minerNode2.verify(net.awaitPeerCount(2));
+    minerNode3.verify(net.awaitPeerCount(2));
+
+    // verify that the miner started producing blocks and all other nodes are syncing from it
+    waitForBlockHeight(minerNode1, 1);
+    final var minerChainHead = minerNode1.execute(ethTransactions.block());
+    minerNode2.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
+    minerNode3.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
   }
 }

@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -32,7 +34,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.worldstate.DelegatedCodeService;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -158,7 +159,6 @@ public class MainnetTransactionValidator implements TransactionValidator {
           "transaction code delegation transactions must have a to address");
     }
 
-    final BigInteger halfCurveOrder = SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
     final Optional<ValidationResult<TransactionInvalidReason>> validationResult =
         transaction
             .getCodeDelegationList()
@@ -171,17 +171,14 @@ public class MainnetTransactionValidator implements TransactionValidator {
                               + codeDelegation.chainId());
                     }
 
-                    if (codeDelegation.signature().getS().compareTo(halfCurveOrder) > 0) {
-                      return ValidationResult.invalid(
-                          TransactionInvalidReason.INVALID_SIGNATURE,
-                          "Invalid signature for code delegation. S value must be less or equal than the half curve order.");
+                    if (codeDelegation.r().compareTo(TWO_POW_256) >= 0) {
+                      throw new IllegalArgumentException(
+                          "Invalid 'r' value, should be < 2^256 but got " + codeDelegation.r());
                     }
 
-                    if (codeDelegation.signature().getRecId() != 0
-                        && codeDelegation.signature().getRecId() != 1) {
-                      return ValidationResult.invalid(
-                          TransactionInvalidReason.INVALID_SIGNATURE,
-                          "Invalid signature for code delegation. RecId value must be 0 or 1.");
+                    if (codeDelegation.s().compareTo(TWO_POW_256) >= 0) {
+                      throw new IllegalArgumentException(
+                          "Invalid 's' value, should be < 2^256 but got " + codeDelegation.s());
                     }
                   }
 
@@ -254,17 +251,22 @@ public class MainnetTransactionValidator implements TransactionValidator {
       }
     }
 
-    final long intrinsicGasCost =
-        gasCalculator.transactionIntrinsicGasCost(
-                transaction.getPayload(), transaction.isContractCreation())
-            + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L))
-            + gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
-    if (Long.compareUnsigned(intrinsicGasCost, transaction.getGasLimit()) > 0) {
+    final long baselineGas =
+        clampedAdd(
+            transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L),
+            gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize()));
+    final long intrinsicGasCostOrFloor =
+        Math.max(
+            gasCalculator.transactionIntrinsicGasCost(
+                transaction.getPayload(), transaction.isContractCreation(), baselineGas),
+            gasCalculator.transactionFloorCost(transaction.getPayload()));
+
+    if (Long.compareUnsigned(intrinsicGasCostOrFloor, transaction.getGasLimit()) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
           String.format(
               "intrinsic gas cost %s exceeds gas limit %s",
-              intrinsicGasCost, transaction.getGasLimit()));
+              intrinsicGasCostOrFloor, transaction.getGasLimit()));
     }
 
     if (transaction.calculateUpfrontGasCost(transaction.getMaxGasPrice(), Wei.ZERO, 0).bitLength()
@@ -331,8 +333,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
   }
 
   private static boolean canSendTransaction(final Account sender, final Hash codeHash) {
-    return codeHash.equals(Hash.EMPTY)
-        || DelegatedCodeService.hasDelegatedCode(sender.getUnprocessedCode());
+    return codeHash.equals(Hash.EMPTY) || hasCodeDelegation(sender.getCode());
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransactionSignature(

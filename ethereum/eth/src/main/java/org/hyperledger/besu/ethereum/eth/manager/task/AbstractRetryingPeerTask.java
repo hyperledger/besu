@@ -26,6 +26,7 @@ import org.hyperledger.besu.util.ExceptionUtils;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
@@ -129,13 +130,12 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
           "No useful peer found, wait max 5 seconds for new peer to connect: current peers {}",
           ethContext.getEthPeers().peerCount());
 
-      final WaitForPeerTask waitTask = WaitForPeerTask.create(ethContext, metricsSystem);
       executeSubTask(
           () ->
               ethContext
-                  .getScheduler()
-                  // wait for a new peer for up to 5 seconds
-                  .timeout(waitTask, Duration.ofSeconds(5))
+                  .getEthPeers()
+                  .waitForPeer(this::isSuitablePeer)
+                  .orTimeout(5, TimeUnit.SECONDS)
                   // execute the task again
                   .whenComplete((r, t) -> executeTaskTimed()));
       return;

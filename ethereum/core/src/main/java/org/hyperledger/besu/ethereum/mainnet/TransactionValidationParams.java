@@ -35,6 +35,15 @@ public interface TransactionValidationParams {
   TransactionValidationParams transactionSimulatorParams =
       ImmutableTransactionValidationParams.of(false, false, false, false, false, true);
 
+  TransactionValidationParams transactionSimulatorParamsAllowFutureNonce =
+      ImmutableTransactionValidationParams.of(true, false, false, false, false, true);
+
+  TransactionValidationParams transactionSimulatorAllowExceedingBalanceParams =
+      ImmutableTransactionValidationParams.of(false, true, false, false, false, true);
+
+  TransactionValidationParams transactionSimulatorAllowExceedingBalanceAndFutureNonceParams =
+      ImmutableTransactionValidationParams.of(true, true, false, false, false, true);
+
   @Value.Default
   default boolean isAllowFutureNonce() {
     return false;
@@ -67,6 +76,18 @@ public interface TransactionValidationParams {
 
   static TransactionValidationParams transactionSimulator() {
     return transactionSimulatorParams;
+  }
+
+  static TransactionValidationParams transactionSimulatorAllowFutureNonce() {
+    return transactionSimulatorParamsAllowFutureNonce;
+  }
+
+  static TransactionValidationParams transactionSimulatorAllowExceedingBalance() {
+    return transactionSimulatorAllowExceedingBalanceParams;
+  }
+
+  static TransactionValidationParams transactionSimulatorAllowExceedingBalanceAndFutureNonce() {
+    return transactionSimulatorAllowExceedingBalanceAndFutureNonceParams;
   }
 
   static TransactionValidationParams processingBlock() {
