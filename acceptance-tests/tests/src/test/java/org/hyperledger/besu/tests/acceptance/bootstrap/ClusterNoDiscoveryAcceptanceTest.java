@@ -20,6 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -44,6 +45,7 @@ public class ClusterNoDiscoveryAcceptanceTest extends AcceptanceTestBase {
     fullNode.verify(net.awaitPeerCount(0));
   }
 
+  @AfterEach
   @Override
   public void tearDownAcceptanceTestBase() {
     noDiscoveryCluster.stop();
