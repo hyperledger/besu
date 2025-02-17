@@ -118,8 +118,8 @@ dependencies {
 
     api 'net.java.dev.jna:jna:5.16.0'
 
-    api 'org.antlr:antlr4:4.13.2'
-    api 'org.antlr:antlr4-runtime:4.13.2'
+    api 'org.antlr:antlr4:4.11.1'
+    api 'org.antlr:antlr4-runtime:4.11.1'
 
     api 'org.apache.commons:commons-collections4:4.4'
     api 'org.apache.commons:commons-compress:1.27.1'
