@@ -26,7 +26,6 @@ security-module="localfile"
 identity="PegaSysEng"
 p2p-enabled=true
 nat-method="NONE"
-Xnat-kube-service-name="besu"
 Xnat-method-fallback-enabled=true
 discovery-enabled=false
 poa-discovery-retry-bootnodes=true
