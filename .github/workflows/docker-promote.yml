@@ -12,7 +12,7 @@ env:
 
 jobs:
   validate:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       RELEASE_VERSION: "${{ github.event.release.name }}"
     steps:
@@ -33,7 +33,7 @@ jobs:
     needs: [validate]
     env:
       RELEASE_VERSION: ${{ needs.validate.outputs.release_version }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -75,10 +75,10 @@ jobs:
         combination:
           - tag: latest-amd64
             platform: 'linux/amd64'
-            runner: ubuntu-22.04
+            runner: ubuntu-24.04
           - tag: latest
             platform: ''
-            runner: ubuntu-22.04
+            runner: ubuntu-24.04
           - tag: latest-arm64
             platform: ''
             runner: besu-arm64
