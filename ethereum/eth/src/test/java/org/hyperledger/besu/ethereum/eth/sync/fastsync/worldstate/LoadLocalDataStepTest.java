@@ -24,6 +24,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.pipeline.Pipe;
@@ -32,14 +34,13 @@ import org.hyperledger.besu.services.tasks.Task;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class LoadLocalDataStepTest {
 
-  private static final Bytes DATA = Bytes.of(1, 2, 3);
+  private static final Bytecode DATA = FullBytecode.of(1, 2, 3);
   private static final Hash HASH = Hash.hash(DATA);
   private final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
       mock(BonsaiWorldStateKeyValueStorage.class);

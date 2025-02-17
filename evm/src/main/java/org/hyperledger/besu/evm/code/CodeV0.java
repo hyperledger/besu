@@ -52,8 +52,18 @@ public class CodeV0 implements Code {
    * @param bytes The byte representation of the code.
    */
   CodeV0(final Bytecode bytes) {
+    this(bytes, new JumpDestinationChecker(bytes));
+  }
+
+  /**
+   * Public constructor.
+   *
+   * @param bytes The byte representation of the code.
+   * @param jumpDestinationChecker Class checking jump destination validity
+   */
+  public CodeV0(final Bytecode bytes, final JumpDestinationChecker jumpDestinationChecker) {
     this.bytes = bytes;
-    this.jumpDestinationChecker = new JumpDestinationChecker(bytes);
+    this.jumpDestinationChecker = jumpDestinationChecker;
     this.codeHash = Suppliers.memoize(() -> Hash.hash(bytes));
     this.codeSectionZero = new CodeSection(bytes.size(), 0, -1, -1, 0);
   }
@@ -121,10 +131,6 @@ public class CodeV0 implements Code {
   @Override
   public boolean isValid() {
     return true;
-  }
-
-  public JumpDestinationChecker getJumpDestinationChecker() {
-    return jumpDestinationChecker;
   }
 
   @Override

@@ -42,6 +42,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+@SuppressWarnings("MockNotUsedInProduction")
 class CodeV0Test {
 
   private static final int CURRENT_PC = 1;
@@ -56,10 +57,11 @@ class CodeV0Test {
   void shouldReuseJumpDestMap() {
     final JumpOperation operation = new JumpOperation(evm.getGasCalculator());
     final Bytecode jumpBytes = FullBytecode.fromHexString("0x6003565b00");
-    final CodeV0 getsCached = (CodeV0) evm.getCodeUncached(jumpBytes);
     final JumpDestinationChecker jumpDestinationChecker =
-        spy(getsCached.getJumpDestinationChecker());
-    MessageFrame frame = createJumpFrame(getsCached);
+        spy(new JumpDestinationChecker(jumpBytes));
+    final CodeV0 codeV0 = new CodeV0(jumpBytes, jumpDestinationChecker);
+
+    MessageFrame frame = createJumpFrame(codeV0);
 
     OperationResult result = operation.execute(frame, evm);
     assertNull(result.getHaltReason());
@@ -67,7 +69,7 @@ class CodeV0Test {
 
     // do it again to prove we don't recalculate, and we hit the cache
 
-    frame = createJumpFrame(getsCached);
+    frame = createJumpFrame(codeV0);
 
     result = operation.execute(frame, evm);
     assertNull(result.getHaltReason());
