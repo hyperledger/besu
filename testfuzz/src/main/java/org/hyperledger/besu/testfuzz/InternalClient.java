@@ -21,9 +21,9 @@ import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV1;
 import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-
-import org.apache.tuweni.bytes.Bytes;
 
 class InternalClient implements FuzzingClient {
   String name;
@@ -43,7 +43,7 @@ class InternalClient implements FuzzingClient {
   @SuppressWarnings("java:S2142")
   public String differentialFuzz(final String data) {
     try {
-      Bytes clientData = Bytes.fromHexString(data);
+      Bytecode clientData = FullBytecode.fromHexString(data);
       Code code = evm.getCodeUncached(clientData);
       if (code.getEofVersion() < 1) {
         return "err: legacy EVM";
