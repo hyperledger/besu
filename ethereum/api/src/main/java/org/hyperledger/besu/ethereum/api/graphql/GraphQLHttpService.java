@@ -51,6 +51,7 @@ import graphql.GraphQLError;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -60,6 +61,7 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.jackson.JacksonCodec;
 import io.vertx.core.net.HostAndPort;
+import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -147,13 +149,43 @@ public class GraphQLHttpService {
   public CompletableFuture<?> start() {
     LOG.info("Starting GraphQL HTTP service on {}:{}", config.getHost(), config.getPort());
     // Create the HTTP server and a router object.
-    httpServer =
-        vertx.createHttpServer(
-            new HttpServerOptions()
-                .setHost(config.getHost())
-                .setPort(config.getPort())
-                .setHandle100ContinueAutomatically(true)
-                .setCompressionSupported(true));
+    HttpServerOptions options =
+        new HttpServerOptions()
+            .setHost(config.getHost())
+            .setPort(config.getPort())
+            .setHandle100ContinueAutomatically(true)
+            .setCompressionSupported(true);
+
+    if (config.isTlsEnabled()) {
+      try {
+        options
+            .setSsl(true)
+            .setKeyCertOptions(
+                new JksOptions()
+                    .setPath(config.getTlsKeyStorePath())
+                    .setPassword(config.getTlsKeyStorePassword()));
+      } catch (Exception e) {
+        LOG.error("Failed to get TLS keystore password", e);
+        return CompletableFuture.failedFuture(e);
+      }
+
+      if (config.isMtlsEnabled()) {
+        try {
+          options
+              .setTrustOptions(
+                  new JksOptions()
+                      .setPath(config.getTlsTrustStorePath())
+                      .setPassword(config.getTlsTrustStorePassword()))
+              .setClientAuth(ClientAuth.REQUIRED);
+        } catch (Exception e) {
+          LOG.error("Failed to get TLS truststore password", e);
+          return CompletableFuture.failedFuture(e);
+        }
+      }
+    }
+
+    LOG.info("Options {}", options);
+    httpServer = vertx.createHttpServer(options);
 
     // Handle graphql http requests
     final Router router = Router.router(vertx);
@@ -303,7 +335,8 @@ public class GraphQLHttpService {
     if (httpServer == null) {
       return "";
     }
-    return NetworkUtility.urlForSocketAddress("http", socketAddress());
+    String scheme = config.isTlsEnabled() ? "https" : "http";
+    return NetworkUtility.urlForSocketAddress(scheme, socketAddress());
   }
 
   // Empty Get/Post requests to / will be redirected to /graphql using 308 Permanent Redirect

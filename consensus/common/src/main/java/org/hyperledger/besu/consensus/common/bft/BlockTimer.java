@@ -17,12 +17,12 @@ package org.hyperledger.besu.consensus.common.bft;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,10 +81,10 @@ public class BlockTimer {
    * Starts a timer for the supplied round cancelling any previously active block timer
    *
    * @param round The round identifier which this timer is tracking
-   * @param chainHeadHeader The header of the chain head
+   * @param headerTimestamp The timestamp from the of the chain head header
    */
   public synchronized void startTimer(
-      final ConsensusRoundIdentifier round, final BlockHeader chainHeadHeader) {
+      final ConsensusRoundIdentifier round, final Supplier<Long> headerTimestamp) {
     cancelTimer();
 
     final long expiryTime;
@@ -104,7 +104,7 @@ public class BlockTimer {
       final int currentBlockPeriodSeconds =
           forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
       final long minimumTimeBetweenBlocksMillis = currentBlockPeriodSeconds * 1000L;
-      expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
+      expiryTime = headerTimestamp.get() * 1_000 + minimumTimeBetweenBlocksMillis;
     }
 
     setBlockTimes(round);
@@ -115,14 +115,14 @@ public class BlockTimer {
   /**
    * Checks if the empty block timer is expired
    *
-   * @param chainHeadHeader The header of the chain head
+   * @param headerTimestamp Function to get the chain head timestamp
    * @param currentTimeInMillis The current time
    * @return a boolean value
    */
   public synchronized boolean checkEmptyBlockExpired(
-      final BlockHeader chainHeadHeader, final long currentTimeInMillis) {
+      final Supplier<Long> headerTimestamp, final long currentTimeInMillis) {
     final long emptyBlockPeriodExpiryTime =
-        (chainHeadHeader.getTimestamp() + emptyBlockPeriodSeconds) * 1000;
+        (headerTimestamp.get() + emptyBlockPeriodSeconds) * 1000;
 
     if (currentTimeInMillis > emptyBlockPeriodExpiryTime) {
       LOG.debug("Empty Block expired");
@@ -136,15 +136,15 @@ public class BlockTimer {
    * Resets the empty block timer
    *
    * @param roundIdentifier The current round identifier
-   * @param chainHeadHeader The header of the chain head
+   * @param headerTimestamp Function to get timestamp from the header of the chain head
    * @param currentTimeInMillis The current time
    */
   public void resetTimerForEmptyBlock(
       final ConsensusRoundIdentifier roundIdentifier,
-      final BlockHeader chainHeadHeader,
+      final Supplier<Long> headerTimestamp,
       final long currentTimeInMillis) {
     final long emptyBlockPeriodExpiryTime =
-        (chainHeadHeader.getTimestamp() + emptyBlockPeriodSeconds) * 1000;
+        (headerTimestamp.get() + emptyBlockPeriodSeconds) * 1000;
     final long nextBlockPeriodExpiryTime = currentTimeInMillis + blockPeriodSeconds * 1000;
 
     startTimer(roundIdentifier, Math.min(emptyBlockPeriodExpiryTime, nextBlockPeriodExpiryTime));

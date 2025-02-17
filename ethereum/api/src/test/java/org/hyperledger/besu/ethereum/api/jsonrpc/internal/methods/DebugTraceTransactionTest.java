@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
@@ -155,8 +155,8 @@ public class DebugTraceTransactionTest {
         .thenReturn(Optional.of(transactionTrace));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceTransaction.response(request);
-    final DebugTraceTransactionResult transactionResult =
-        (DebugTraceTransactionResult) response.getResult();
+    final DebugTraceTransactionDetails transactionResult =
+        (DebugTraceTransactionDetails) response.getResult();
 
     assertThat(transactionResult.getGas()).isEqualTo(73);
     assertThat(transactionResult.getReturnValue()).isEqualTo("1234");
@@ -165,10 +165,10 @@ public class DebugTraceTransactionTest {
     assertThat(transactionResult.getStructLogs().size()).isEqualTo(1);
     assertThat(transactionResult.getStructLogs().get(0).stack().length).isEqualTo(1);
     assertThat(transactionResult.getStructLogs().get(0).stack()[0])
-        .isEqualTo(stackBytes[0].toUnprefixedHexString());
+        .isEqualTo(StructLog.toCompactHex(stackBytes[0], true));
     assertThat(transactionResult.getStructLogs().get(0).memory().length).isEqualTo(1);
     assertThat(transactionResult.getStructLogs().get(0).memory()[0])
-        .isEqualTo(memoryBytes[0].toUnprefixedHexString());
+        .isEqualTo(StructLog.toCompactHex(memoryBytes[0], true));
   }
 
   @Test

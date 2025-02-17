@@ -83,7 +83,7 @@ public final class DefaultP2PNetworkTest {
 
   private final NetworkingConfiguration config =
       NetworkingConfiguration.create()
-          .setDiscovery(DiscoveryConfiguration.create().setActive(false))
+          .setDiscovery(DiscoveryConfiguration.create().setEnabled(false))
           .setRlpx(
               RlpxConfiguration.create()
                   .setBindPort(0)

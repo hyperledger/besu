@@ -16,15 +16,21 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,6 +42,8 @@ public class IntrinsicGasTest {
   public static Stream<Arguments> data() {
     final GasCalculator frontier = new FrontierGasCalculator();
     final GasCalculator istanbul = new IstanbulGasCalculator();
+    final GasCalculator shanghai = new ShanghaiGasCalculator();
+    final GasCalculator prague = new PragueGasCalculator();
     return Stream.of(
         // EnoughGAS
         Arguments.of(
@@ -81,16 +89,36 @@ public class IntrinsicGasTest {
         Arguments.of(
             istanbul,
             21116L,
-            "0xf87c80018261a894095e7baea6a6c7c4c2dfeb977efac326af552d870a9d00000000000000000000000000000000000000000000000000000000001ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"));
+            "0xf87c80018261a894095e7baea6a6c7c4c2dfeb977efac326af552d870a9d00000000000000000000000000000000000000000000000000000000001ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"),
+        // CallData Gas Increase
+        Arguments.of(
+            prague,
+            21116L,
+            "0xf87c80018261a894095e7baea6a6c7c4c2dfeb977efac326af552d870a9d00000000000000000000000000000000000000000000000000000000001ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"),
+        // AccessList
+        Arguments.of(
+            shanghai,
+            25300L,
+            "0x01f89a018001826a4094095e7baea6a6c7c4c2dfeb977efac326af552d878080f838f794a95e7baea6a6c7c4c2dfeb977efac326af552d87e1a0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff80a05cbd172231fc0735e0fb994dd5b1a4939170a260b36f0427a8a80866b063b948a07c230f7f578dd61785c93361b9871c0706ebfa6d06e3f4491dc9558c5202ed36"));
   }
 
   @ParameterizedTest
   @MethodSource("data")
   public void validateGasCost(
       final GasCalculator gasCalculator, final long expectedGas, final String txRlp) {
-    Transaction t = Transaction.readFrom(RLP.input(Bytes.fromHexString(txRlp)));
+    Bytes rlp = Bytes.fromHexString(txRlp);
+
+    // non-frontier transactions need to be opaque for parsing to work
+    if (rlp.get(0) > 0) {
+      final BytesValueRLPOutput output = new BytesValueRLPOutput();
+      output.writeBytes(rlp);
+      rlp = output.encoded();
+    }
+
+    Transaction t = Transaction.readFrom(RLP.input(rlp));
     Assertions.assertThat(
-            gasCalculator.transactionIntrinsicGasCost(t.getPayload(), t.isContractCreation()))
+            gasCalculator.transactionIntrinsicGasCost(
+                t.getPayload(), t.isContractCreation(), baselineGas(gasCalculator, t)))
         .isEqualTo(expectedGas);
   }
 
@@ -99,5 +127,22 @@ public class IntrinsicGasTest {
     assertThat(true)
         .withFailMessage("This test is here so gradle --dry-run executes this class")
         .isTrue();
+  }
+
+  long baselineGas(final GasCalculator gasCalculator, final Transaction transaction) {
+    final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
+
+    int accessListStorageCount = 0;
+    for (final var entry : accessListEntries) {
+      final List<Bytes32> storageKeys = entry.storageKeys();
+      accessListStorageCount += storageKeys.size();
+    }
+    final long accessListGas =
+        gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
+
+    final long codeDelegationGas =
+        gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
+
+    return accessListGas + codeDelegationGas;
   }
 }

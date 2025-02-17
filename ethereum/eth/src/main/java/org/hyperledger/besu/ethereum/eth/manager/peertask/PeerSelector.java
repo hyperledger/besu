@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 /** Selects the EthPeers for the PeerTaskExecutor */
@@ -30,6 +31,14 @@ public interface PeerSelector {
    * @return a peer matching the supplied conditions
    */
   Optional<EthPeer> getPeer(final Predicate<EthPeer> filter);
+
+  /**
+   * Waits for a peer matching the supplied filter
+   *
+   * @param filter a Predicate\<EthPeer\> matching desirable peers
+   * @return a CompletableFuture into which a peer will be placed
+   */
+  CompletableFuture<EthPeer> waitForPeer(final Predicate<EthPeer> filter);
 
   /**
    * Attempts to get the EthPeer identified by peerId

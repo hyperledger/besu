@@ -33,7 +33,6 @@ import io.vertx.core.dns.DnsClientOptions;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.crypto.SECP256K1;
-import org.apache.tuweni.devp2p.EthereumNodeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

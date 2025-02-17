@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP155
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 
 import java.util.Optional;
 
@@ -30,7 +29,7 @@ import org.junit.jupiter.api.Test;
 public class BaseFeeMarketBlockHeaderGasPriceValidationRuleTest {
 
   private static final long FORK_BLOCK = 800L;
-  private final BaseFeeMarket baseFeeMarket = new LondonFeeMarket(FORK_BLOCK);
+  private final BaseFeeMarket baseFeeMarket = FeeMarket.london(FORK_BLOCK);
   private BaseFeeMarketBlockHeaderGasPriceValidationRule validationRule;
   private final BaseFeeMarket feeMarket = FeeMarket.london(FORK_BLOCK);
 

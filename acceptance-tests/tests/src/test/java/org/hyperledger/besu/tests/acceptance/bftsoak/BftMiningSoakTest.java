@@ -30,6 +30,7 @@ import java.time.temporal.ChronoUnit;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -95,7 +96,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     } catch (RuntimeException e) {
       assertThat(e.getMessage())
           .contains(
-              "Revert reason: 'Transaction processing could not be completed due to an exception'");
+              "Revert reason: 'Transaction processing could not be completed due to an exception (Invalid opcode: 0x5f)'");
     }
 
     // Should initially be set to 0
@@ -344,6 +345,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     Thread.sleep(TEN_SECONDS);
   }
 
+  @AfterEach
   @Override
   public void tearDownAcceptanceTestBase() {
     cluster.stop();

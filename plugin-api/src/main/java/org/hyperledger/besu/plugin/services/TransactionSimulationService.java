@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.plugin.services;
 
-import org.hyperledger.besu.datatypes.AccountOverrideMap;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 import org.hyperledger.besu.plugin.data.TransactionSimulationResult;
 
 import java.util.Optional;
@@ -28,90 +29,48 @@ import java.util.Optional;
 public interface TransactionSimulationService extends BesuService {
 
   /**
+   * Return a simulation of what could be current pending block, it can also be passed to {@link
+   * #simulate(Transaction, Optional, ProcessableBlockHeader, OperationTracer, boolean, boolean)}
+   *
+   * @return the simulated pending block header
+   */
+  ProcessableBlockHeader simulatePendingBlockHeader();
+
+  /**
    * Simulate transaction execution at the block identified by the hash if present, otherwise on the
    * pending block, with optional state overrides that can be applied before the simulation.
    *
    * @param transaction tx
-   * @param accountOverrides state overrides to apply to this simulation
-   * @param maybeBlockHash optional hash of the block, empty to simulate on pending block
+   * @param stateOverrides state overrides to apply to this simulation
+   * @param blockHash hash of the block
    * @param operationTracer the tracer
    * @param isAllowExceedingBalance should ignore the sender balance during the simulation?
    * @return the result of the simulation
    */
   Optional<TransactionSimulationResult> simulate(
       Transaction transaction,
-      Optional<AccountOverrideMap> accountOverrides,
-      Optional<Hash> maybeBlockHash,
+      Optional<StateOverrideMap> stateOverrides,
+      Hash blockHash,
       OperationTracer operationTracer,
       boolean isAllowExceedingBalance);
 
   /**
    * Simulate transaction execution at the block identified by the hash if present, otherwise on the
-   * pending block
+   * pending block, with optional state overrides that can be applied before the simulation.
    *
    * @param transaction tx
-   * @param maybeBlockHash optional hash of the block, empty to simulate on pending block
+   * @param stateOverrides state overrides to apply to this simulation
+   * @param processableBlockHeader block header to simulate on pending block
    * @param operationTracer the tracer
    * @param isAllowExceedingBalance should ignore the sender balance during the simulation?
+   * @param isAllowFutureNonce should skip strict check on sequential nonce?
    * @return the result of the simulation
    */
-  default Optional<TransactionSimulationResult> simulate(
-      final Transaction transaction,
-      final Optional<Hash> maybeBlockHash,
-      final OperationTracer operationTracer,
-      final boolean isAllowExceedingBalance) {
-    return simulate(
-        transaction, Optional.empty(), maybeBlockHash, operationTracer, isAllowExceedingBalance);
-  }
-
-  /**
-   * Simulate transaction execution at the block identified by the hash
-   *
-   * @param transaction tx
-   * @param blockHash then hash of the block
-   * @param operationTracer the tracer
-   * @param isAllowExceedingBalance should ignore the sender balance during the simulation?
-   * @return the result of the simulation
-   * @deprecated use {@link #simulate(Transaction, Optional, OperationTracer, boolean)}
-   */
-  @Deprecated(since = "24.12", forRemoval = true)
-  default Optional<TransactionSimulationResult> simulate(
-      final Transaction transaction,
-      final Hash blockHash,
-      final OperationTracer operationTracer,
-      final boolean isAllowExceedingBalance) {
-    return simulate(
-        transaction,
-        Optional.empty(),
-        Optional.of(blockHash),
-        operationTracer,
-        isAllowExceedingBalance);
-  }
-
-  /**
-   * Simulate transaction execution at the block identified by the hash, with optional state
-   * overrides that can be applied before the simulation.
-   *
-   * @param transaction tx
-   * @param accountOverrides state overrides to apply to this simulation
-   * @param blockHash the hash of the block
-   * @param operationTracer the tracer
-   * @param isAllowExceedingBalance should ignore the sender balance during the simulation?
-   * @return the result of the simulation
-   * @deprecated use {@link #simulate(Transaction, Optional, Optional, OperationTracer, boolean)}
-   */
-  @Deprecated(since = "24.12", forRemoval = true)
-  default Optional<TransactionSimulationResult> simulate(
-      final Transaction transaction,
-      final Optional<AccountOverrideMap> accountOverrides,
-      final Hash blockHash,
-      final OperationTracer operationTracer,
-      final boolean isAllowExceedingBalance) {
-    return simulate(
-        transaction,
-        accountOverrides,
-        Optional.of(blockHash),
-        operationTracer,
-        isAllowExceedingBalance);
-  }
+  Optional<TransactionSimulationResult> simulate(
+      Transaction transaction,
+      Optional<StateOverrideMap> stateOverrides,
+      ProcessableBlockHeader processableBlockHeader,
+      OperationTracer operationTracer,
+      boolean isAllowExceedingBalance,
+      boolean isAllowFutureNonce);
 }

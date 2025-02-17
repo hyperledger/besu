@@ -24,10 +24,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.util.Map;
@@ -132,7 +134,12 @@ public class EthCallIntegrationTest {
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, RpcErrorType.INTRINSIC_GAS_EXCEEDS_LIMIT);
+        new JsonRpcErrorResponse(
+            null,
+            JsonRpcError.from(
+                ValidationResult.invalid(
+                    TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
+                    "intrinsic gas cost 21272 exceeds gas limit 0")));
 
     final JsonRpcResponse response = method.response(request);
 
@@ -152,7 +159,12 @@ public class EthCallIntegrationTest {
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+        new JsonRpcErrorResponse(
+            null,
+            JsonRpcError.from(
+                ValidationResult.invalid(
+                    TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
+                    "transaction up-front cost 0x2fefd80000000000000 exceeds transaction sender account balance 0x340ab63a0215af0d")));
 
     final JsonRpcResponse response = method.response(request);
 
@@ -192,7 +204,12 @@ public class EthCallIntegrationTest {
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+        new JsonRpcErrorResponse(
+            null,
+            JsonRpcError.from(
+                ValidationResult.invalid(
+                    TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
+                    "transaction up-front cost 0x2fefd80000000000000 exceeds transaction sender account balance 0x340ab63a0215af0d")));
 
     final JsonRpcResponse response = method.response(request);
 
@@ -231,7 +248,12 @@ public class EthCallIntegrationTest {
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+        new JsonRpcErrorResponse(
+            null,
+            JsonRpcError.from(
+                ValidationResult.invalid(
+                    TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
+                    "transaction up-front cost 0x2fefd80 exceeds transaction sender account balance 0x0")));
 
     final JsonRpcResponse response = method.response(request);
 

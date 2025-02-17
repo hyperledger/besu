@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -32,11 +34,15 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
   @Test
   public void ensureTruncateDoesNotCauseSegfault() {
 
-    var preTruncatedWorldState = archive.getMutable(genesisState.getBlock().getHeader(), false);
+    var preTruncatedWorldState =
+        archive.getWorldState(
+            withBlockHeaderAndNoUpdateNodeHead(genesisState.getBlock().getHeader()));
     assertThat(preTruncatedWorldState)
         .isPresent(); // really just assert that we have not segfaulted after truncating
     worldStateKeyValueStorage.clear();
-    var postTruncatedWorldState = archive.getMutable(genesisState.getBlock().getHeader(), false);
+    var postTruncatedWorldState =
+        archive.getWorldState(
+            withBlockHeaderAndNoUpdateNodeHead(genesisState.getBlock().getHeader()));
     assertThat(postTruncatedWorldState).isEmpty();
     // assert that trying to access pre-worldstate does not segfault after truncating
     preTruncatedWorldState.get().get(accounts.get(0).address());
@@ -47,14 +53,17 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
   public void testIsolatedFromHead_behindHead() {
     Address testAddress = Address.fromHexString("0xdeadbeef");
     // assert we can mutate head without mutating the isolated snapshot
-    var isolated = archive.getMutable(genesisState.getBlock().getHeader(), false);
+    var isolated =
+        archive.getWorldState(
+            withBlockHeaderAndNoUpdateNodeHead(genesisState.getBlock().getHeader()));
 
     var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
-    var res = executeBlock(archive.getMutable(), firstBlock);
+    var res = executeBlock(archive.getWorldState(), firstBlock);
 
-    var isolated2 = archive.getMutable(firstBlock.getHeader(), false);
+    var isolated2 =
+        archive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(firstBlock.getHeader()));
     var secondBlock = forTransactions(List.of(burnTransaction(sender1, 1L, testAddress)));
-    var res2 = executeBlock(archive.getMutable(), secondBlock);
+    var res2 = executeBlock(archive.getWorldState(), secondBlock);
 
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
@@ -62,8 +71,8 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
     assertThat(archive.getCachedWorldStorageManager().contains(firstBlock.getHash())).isTrue();
     assertThat(archive.getCachedWorldStorageManager().contains(secondBlock.getHash())).isTrue();
 
-    assertThat(archive.getMutable().get(testAddress)).isNotNull();
-    assertThat(archive.getMutable().get(testAddress).getBalance())
+    assertThat(archive.getWorldState().get(testAddress)).isNotNull();
+    assertThat(archive.getWorldState().get(testAddress).getBalance())
         .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
 
     assertThat(isolated.get().get(testAddress)).isNull();
@@ -89,13 +98,13 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
     Address testAddress = Address.fromHexString("0xdeadbeef");
 
     var block1 = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
-    var res = executeBlock(archive.getMutable(), block1);
+    var res = executeBlock(archive.getWorldState(), block1);
 
     var block2 = forTransactions(List.of(burnTransaction(sender1, 1L, testAddress)));
-    var res2 = executeBlock(archive.getMutable(), block2);
+    var res2 = executeBlock(archive.getWorldState(), block2);
 
     var block3 = forTransactions(List.of(burnTransaction(sender1, 2L, testAddress)));
-    var res3 = executeBlock(archive.getMutable(), block3);
+    var res3 = executeBlock(archive.getWorldState(), block3);
 
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
@@ -103,7 +112,8 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
 
     // roll chain and worldstate to block 2
     blockchain.rewindToBlock(2L);
-    var block1State = archive.getMutable(null, block2.getHash());
+    var block1State =
+        archive.getWorldState(withStateRootAndBlockHashAndUpdateNodeHead(null, block2.getHash()));
 
     // BonsaiWorldState should be at block 2
     assertThat(block1State.get().get(testAddress)).isNotNull();
@@ -111,7 +121,8 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
         .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
     assertThat(block1State.get().rootHash()).isEqualTo(block2.getHeader().getStateRoot());
 
-    var isolatedRollForward = archive.getMutable(block3.getHeader(), false);
+    var isolatedRollForward =
+        archive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(block3.getHeader()));
 
     // we should be at block 3, one block ahead of BonsaiPersistatedWorldState
     assertThat(isolatedRollForward.get().get(testAddress)).isNotNull();
@@ -120,7 +131,8 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
     assertThat(isolatedRollForward.get().rootHash()).isEqualTo(block3.getHeader().getStateRoot());
 
     // we should be at block 1, one block behind BonsaiPersistatedWorldState
-    var isolatedRollBack = archive.getMutable(block1.getHeader(), false);
+    var isolatedRollBack =
+        archive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(block1.getHeader()));
     assertThat(isolatedRollBack.get().get(testAddress)).isNotNull();
     assertThat(isolatedRollBack.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
@@ -138,10 +150,12 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
   public void assertCloseDisposesOfStateWithoutCommitting() {
     Address testAddress = Address.fromHexString("0xdeadbeef");
 
-    var head = archive.getMutable();
+    var head = archive.getWorldState();
 
     try (var shouldCloseSnapshot =
-        archive.getMutable(genesisState.getBlock().getHeader(), false).get()) {
+        archive
+            .getWorldState(withBlockHeaderAndNoUpdateNodeHead(genesisState.getBlock().getHeader()))
+            .get()) {
 
       var tx1 = burnTransaction(sender1, 0L, testAddress);
       Block oneTx = forTransactions(List.of(tx1));

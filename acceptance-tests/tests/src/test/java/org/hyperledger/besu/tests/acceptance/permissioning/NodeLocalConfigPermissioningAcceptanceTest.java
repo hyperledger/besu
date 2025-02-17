@@ -20,6 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -80,6 +81,7 @@ public class NodeLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBa
     permissionedNode.verify(net.awaitPeerCount(3));
   }
 
+  @AfterEach
   @Override
   public void tearDownAcceptanceTestBase() {
     permissionedCluster.stop();

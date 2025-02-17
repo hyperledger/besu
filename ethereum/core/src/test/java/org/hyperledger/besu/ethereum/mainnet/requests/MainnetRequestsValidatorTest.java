@@ -55,4 +55,21 @@ class MainnetRequestsValidatorTest {
             new Request(RequestType.CONSOLIDATION, Bytes.of(3)));
     assertTrue(validator.validate(Optional.of(requests)));
   }
+
+  @Test
+  void validateFalseForEmptyRequest() {
+    MainnetRequestsValidator validator = new MainnetRequestsValidator();
+    List<Request> requests = List.of(new Request(RequestType.DEPOSIT, Bytes.EMPTY));
+    assertFalse(validator.validate(Optional.of(requests)));
+  }
+
+  @Test
+  void validateFalseForDuplicatedRequests() {
+    MainnetRequestsValidator validator = new MainnetRequestsValidator();
+    List<Request> requests =
+        List.of(
+            new Request(RequestType.DEPOSIT, Bytes.of(1)),
+            new Request(RequestType.DEPOSIT, Bytes.of(1)));
+    assertFalse(validator.validate(Optional.of(requests)));
+  }
 }

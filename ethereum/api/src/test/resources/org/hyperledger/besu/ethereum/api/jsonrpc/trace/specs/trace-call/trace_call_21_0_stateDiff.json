@@ -8,8 +8,7 @@
       "gas" : "0x47b760",
       "gasPrice" : "0x1",
       "value" : "0x0",
-      "data" : "0x602af300",
-      "nonce" : "0x0"
+      "data" : "0x602af300"
     }, [ "stateDiff" ], "latest" ],
     "id" : 52
   },

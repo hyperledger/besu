@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauth
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 
+import java.util.Arrays;
+
 import io.opentelemetry.api.trace.Span;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -44,7 +46,8 @@ public class BaseJsonRpcProcessor implements JsonRpcProcessor {
       return method.response(request);
     } catch (final InvalidJsonRpcParameters e) {
       LOG.debug(
-          "Invalid Params for method: {}, error: {}",
+          "Invalid Params {} for method: {}, error: {}",
+          Arrays.toString(request.getRequest().getParams()),
           method.getName(),
           e.getRpcErrorType().getMessage(),
           e);

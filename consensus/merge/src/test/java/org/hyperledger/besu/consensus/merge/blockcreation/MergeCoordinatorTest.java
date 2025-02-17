@@ -73,7 +73,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
@@ -132,7 +132,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   @Mock EthScheduler ethScheduler;
 
-  private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
+  private final Address coinbase = genesisAllocations(getPosGenesisConfig()).findFirst().get();
 
   private MiningConfiguration miningConfiguration =
       ImmutableMiningConfiguration.builder()
@@ -148,7 +148,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   private final ProtocolSchedule protocolSchedule = spy(getMergeProtocolSchedule());
   private final GenesisState genesisState =
-      GenesisState.fromConfig(getPosGenesisConfigFile(), protocolSchedule);
+      GenesisState.fromConfig(getPosGenesisConfig(), protocolSchedule);
 
   private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
@@ -158,7 +158,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private final Address suggestedFeeRecipient = Address.ZERO;
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket =
-      new LondonFeeMarket(0, genesisState.getBlock().getHeader().getBaseFee());
+      FeeMarket.london(0, genesisState.getBlock().getHeader().getBaseFee());
 
   private final org.hyperledger.besu.metrics.StubMetricsSystem metricsSystem =
       new StubMetricsSystem();
@@ -189,7 +189,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     protocolContext =
         new ProtocolContext(blockchain, worldStateArchive, mergeContext, badBlockManager);
-    var mutable = worldStateArchive.getMutable();
+    var mutable = worldStateArchive.getWorldState();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
 

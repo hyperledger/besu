@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,8 @@ public class EngineNewPayloadV1Test extends AbstractEngineNewPayloadTest {
             protocolContext,
             mergeCoordinator,
             ethPeers,
-            engineCallListener);
+            engineCallListener,
+            new NoOpMetricsSystem());
   }
 
   @Override

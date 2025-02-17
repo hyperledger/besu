@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -39,11 +40,10 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoopBonsaiCache
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -88,7 +88,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
             new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
             new NoOpTrieLogManager(),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
     when(transactionCollisionDetector.hasCollision(any(), any(), any(), any())).thenReturn(false);
   }
 
@@ -110,7 +110,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
         0,
         transaction,
         miningBeneficiary,
-        (blockNumber) -> Hash.EMPTY,
+        (__, ___) -> Hash.EMPTY,
         blobGasPrice,
         privateMetadataUpdater);
 
@@ -121,7 +121,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
             eq(transaction),
             eq(miningBeneficiary),
             any(OperationTracer.class),
-            any(BlockHashOperation.BlockHashLookup.class),
+            any(BlockHashLookup.class),
             eq(true),
             eq(TransactionValidationParams.processingBlock()),
             eq(privateMetadataUpdater),
@@ -156,7 +156,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
         0,
         transaction,
         miningBeneficiary,
-        (blockNumber) -> Hash.EMPTY,
+        (__, ___) -> Hash.EMPTY,
         blobGasPrice,
         privateMetadataUpdater);
 
@@ -185,7 +185,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
         0,
         transaction,
         miningBeneficiary,
-        (blockNumber) -> Hash.EMPTY,
+        (__, ___) -> Hash.EMPTY,
         blobGasPrice,
         privateMetadataUpdater);
 
@@ -196,7 +196,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
             eq(transaction),
             eq(miningBeneficiary),
             any(OperationTracer.class),
-            any(BlockHashOperation.BlockHashLookup.class),
+            any(BlockHashLookup.class),
             eq(true),
             eq(TransactionValidationParams.processingBlock()),
             eq(privateMetadataUpdater),

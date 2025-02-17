@@ -22,6 +22,11 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.DaggerPacketPackage;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.Packet;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketDeserializer;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketPackage;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketSerializer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -45,6 +50,8 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   // The set of known agents operating on the network
   private final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork;
   private final Deque<IncomingPacket> incomingPackets = new ArrayDeque<>();
+  private final PacketSerializer packetSerializer;
+  private final PacketDeserializer packetDeserializer;
   private boolean isRunning = false;
 
   public MockPeerDiscoveryAgent(
@@ -66,12 +73,15 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
         rlpxAgent,
         new PeerTable(nodeKey.getPublicKey().getEncodedBytes()));
     this.agentNetwork = agentNetwork;
+    PacketPackage packetPackage = DaggerPacketPackage.create();
+    this.packetSerializer = packetPackage.packetSerializer();
+    this.packetDeserializer = packetPackage.packetDeserializer();
   }
 
   public void processIncomingPacket(final MockPeerDiscoveryAgent fromAgent, final Packet packet) {
     // Cycle packet through encode / decode to make clone of any data
     // This ensures that any data passed between agents is not shared
-    final Packet packetClone = Packet.decode(packet.encode());
+    final Packet packetClone = packetDeserializer.decode(packetSerializer.encode(packet));
     incomingPackets.add(new IncomingPacket(fromAgent, packetClone));
     handleIncomingPacket(fromAgent.getAdvertisedPeer().get().getEndpoint(), packetClone);
   }
@@ -155,7 +165,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
     LOG.warn(
         "Sending to peer {} failed, packet: {}, stacktrace: {}",
         peer,
-        wrapBuffer(packet.encode()),
+        wrapBuffer(packetSerializer.encode(packet)),
         err);
   }
 

@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.CancunFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.math.BigInteger;
@@ -148,7 +148,7 @@ public class EthMaxPriorityFeePerGasTest {
     final var genesisBlock = createFakeBlock(0, 0, genesisBaseFee);
     blocksByNumber.put(0L, genesisBlock);
 
-    final var baseFeeMarket = new CancunFeeMarket(0, Optional.empty());
+    final var baseFeeMarket = FeeMarket.cancun(0, Optional.empty());
 
     var baseFee = genesisBaseFee;
     for (long i = 1; i <= chainHeadBlockNumber; i++) {
@@ -202,7 +202,6 @@ public class EthMaxPriorityFeePerGasTest {
             baseFee,
             Hash.EMPTY,
             0,
-            null,
             null,
             null,
             null,

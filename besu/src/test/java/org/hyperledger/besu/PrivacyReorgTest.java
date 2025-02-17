@@ -27,7 +27,7 @@ import org.hyperledger.besu.components.EnclaveModule;
 import org.hyperledger.besu.components.MockBesuCommandModule;
 import org.hyperledger.besu.components.NoOpMetricsSystemModule;
 import org.hyperledger.besu.components.PrivacyTestModule;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -535,7 +535,7 @@ public class PrivacyReorgTest {
     @SuppressWarnings("CloseableProvides")
     BesuController provideBesuController(
         final PrivacyParameters privacyParameters,
-        final GenesisConfigFile genesisConfigFile,
+        final GenesisConfig genesisConfig,
         final PrivacyReorgTestComponent context,
         final @Named("dataDir") Path dataDir) {
 
@@ -543,7 +543,7 @@ public class PrivacyReorgTest {
       // named privacyReorgParams
       BesuController retval =
           new BesuController.Builder()
-              .fromGenesisFile(genesisConfigFile, SyncMode.FULL)
+              .fromGenesisFile(genesisConfig, SyncMode.FULL)
               .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
               .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .storageProvider(new InMemoryKeyValueStorageProvider())
@@ -568,8 +568,8 @@ public class PrivacyReorgTest {
   @Module
   static class PrivacyReorgTestGenesisConfigModule {
     @Provides
-    GenesisConfigFile providePrivacyReorgGenesisConfigFile() {
-      return GenesisConfigFile.fromResource("/privacy_reorg_genesis.json");
+    GenesisConfig providePrivacyReorgGenesisConfig() {
+      return GenesisConfig.fromResource("/privacy_reorg_genesis.json");
     }
   }
 }

@@ -31,6 +31,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -93,6 +94,7 @@ public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
     noDiscoveryCluster.verify(recipient.balanceEquals(5));
   }
 
+  @AfterEach
   @Override
   public void tearDownAcceptanceTestBase() {
     super.tearDownAcceptanceTestBase();

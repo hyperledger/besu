@@ -57,6 +57,36 @@ public class GraphQlOptions {
   private final CorsAllowedOriginsProperty graphQLHttpCorsAllowedOrigins =
       new CorsAllowedOriginsProperty();
 
+  @CommandLine.Option(
+      names = {"--graphql-tls-enabled"},
+      description = "Enable TLS for GraphQL HTTP service")
+  private Boolean graphqlTlsEnabled = false;
+
+  @CommandLine.Option(
+      names = {"--graphql-tls-keystore-file"},
+      description = "Path to the TLS keystore file for GraphQL HTTP service")
+  private String graphqlTlsKeystoreFile;
+
+  @CommandLine.Option(
+      names = {"--graphql-tls-keystore-password-file"},
+      description = "Path to the file containing the password for the TLS keystore")
+  private String graphqlTlsKeystorePasswordFile;
+
+  @CommandLine.Option(
+      names = {"--graphql-mtls-enabled"},
+      description = "Enable mTLS for GraphQL HTTP service")
+  private Boolean graphqlMtlsEnabled = false;
+
+  @CommandLine.Option(
+      names = {"--graphql-tls-truststore-file"},
+      description = "Path to the TLS truststore file for GraphQL HTTP service")
+  private String graphqlTlsTruststoreFile;
+
+  @CommandLine.Option(
+      names = {"--graphql-tls-truststore-password-file"},
+      description = "Path to the file containing the password for the TLS truststore")
+  private String graphqlTlsTruststorePasswordFile;
+
   /** Default constructor */
   public GraphQlOptions() {}
 
@@ -72,7 +102,28 @@ public class GraphQlOptions {
         commandLine,
         "--graphql-http-enabled",
         !isGraphQLHttpEnabled,
-        asList("--graphql-http-cors-origins", "--graphql-http-host", "--graphql-http-port"));
+        asList(
+            "--graphql-http-cors-origins",
+            "--graphql-http-host",
+            "--graphql-http-port",
+            "--graphql-tls-enabled"));
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--graphql-tls-enabled",
+        !graphqlTlsEnabled,
+        asList(
+            "--graphql-tls-keystore-file",
+            "--graphql-tls-keystore-password-file",
+            "--graphql-mtls-enabled"));
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--graphql-mtls-enabled",
+        !graphqlMtlsEnabled,
+        asList("--graphql-tls-truststore-file", "--graphql-tls-truststore-password-file"));
   }
 
   /**
@@ -93,6 +144,13 @@ public class GraphQlOptions {
     graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
     graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
     graphQLConfiguration.setHttpTimeoutSec(timoutSec);
+    graphQLConfiguration.setTlsEnabled(graphqlTlsEnabled);
+    graphQLConfiguration.setTlsKeyStorePath(graphqlTlsKeystoreFile);
+    graphQLConfiguration.setTlsKeyStorePasswordFile(graphqlTlsKeystorePasswordFile);
+    graphQLConfiguration.setMtlsEnabled(graphqlMtlsEnabled);
+    graphQLConfiguration.setTlsTrustStorePath(graphqlTlsTruststoreFile);
+    graphQLConfiguration.setTlsTrustStorePasswordFile(graphqlTlsTruststorePasswordFile);
+
     return graphQLConfiguration;
   }
 

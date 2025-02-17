@@ -124,7 +124,7 @@ public class BlockDataGenerator {
       final List<UInt256> storageKeys) {
     final List<Block> seq = new ArrayList<>(count);
 
-    final MutableWorldState worldState = worldStateArchive.getMutable();
+    final MutableWorldState worldState = worldStateArchive.getWorldState();
 
     long nextBlockNumber = nextBlock;
     Hash parentHash = parent;

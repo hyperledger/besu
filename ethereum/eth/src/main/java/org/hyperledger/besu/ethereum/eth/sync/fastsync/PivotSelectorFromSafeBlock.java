@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
@@ -129,7 +128,9 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
                               LOG.debug(
                                   "Downloading chain head block header by hash {}", headBlockHash);
                               try {
-                                return waitForPeers(1)
+                                return ethContext
+                                    .getEthPeers()
+                                    .waitForPeer((peer) -> true)
                                     .thenCompose(unused -> downloadBlockHeader(headBlockHash))
                                     .thenApply(
                                         blockHeader -> {
@@ -192,12 +193,5 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
                 .log();
           }
         });
-  }
-
-  private CompletableFuture<Void> waitForPeers(final int count) {
-
-    final WaitForPeersTask waitForPeersTask =
-        WaitForPeersTask.create(ethContext, count, metricsSystem);
-    return waitForPeersTask.run();
   }
 }

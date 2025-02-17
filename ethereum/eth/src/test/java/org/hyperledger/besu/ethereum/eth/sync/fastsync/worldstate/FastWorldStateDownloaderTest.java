@@ -201,7 +201,7 @@ class FastWorldStateDownloaderTest {
   void downloadAlreadyAvailableWorldState() {
     // Setup existing state
     final ForestWorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-    final MutableWorldState worldState = worldStateArchive.getMutable();
+    final MutableWorldState worldState = worldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     dataGen.createRandomAccounts(worldState, 20);
@@ -252,7 +252,7 @@ class FastWorldStateDownloaderTest {
 
     // Setup "remote" state
     final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     final List<Account> accounts = dataGen.createRandomAccounts(remoteWorldState, 20);
@@ -309,7 +309,7 @@ class FastWorldStateDownloaderTest {
   void doesNotRequestKnownCodeFromNetwork() {
     // Setup "remote" state
     final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     final List<Account> accounts =
@@ -397,7 +397,7 @@ class FastWorldStateDownloaderTest {
 
     // Setup "remote" state
     final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     dataGen.createRandomContractAccountsWithNonEmptyStorage(remoteWorldState, 20);
@@ -474,7 +474,7 @@ class FastWorldStateDownloaderTest {
             new WorldStateStorageCoordinator(remoteStorage),
             createPreimageStorage(),
             EvmConfiguration.DEFAULT);
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     final List<Account> accounts =
@@ -565,7 +565,7 @@ class FastWorldStateDownloaderTest {
             new WorldStateStorageCoordinator(remoteStorage),
             createPreimageStorage(),
             EvmConfiguration.DEFAULT);
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     final List<Account> accounts =
@@ -679,7 +679,7 @@ class FastWorldStateDownloaderTest {
             new WorldStateStorageCoordinator(remoteStorage),
             createPreimageStorage(),
             EvmConfiguration.DEFAULT);
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     dataGen.createRandomAccounts(remoteWorldState, 10);
@@ -743,7 +743,7 @@ class FastWorldStateDownloaderTest {
             new WorldStateStorageCoordinator(remoteStorage),
             createPreimageStorage(),
             EvmConfiguration.DEFAULT);
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     List<Account> accounts = dataGen.createRandomAccounts(remoteWorldState, 10);
@@ -886,7 +886,7 @@ class FastWorldStateDownloaderTest {
             new WorldStateStorageCoordinator(remoteStorage),
             createPreimageStorage(),
             EvmConfiguration.DEFAULT);
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     final List<Account> accounts = dataGen.createRandomAccounts(remoteWorldState, accountCount);

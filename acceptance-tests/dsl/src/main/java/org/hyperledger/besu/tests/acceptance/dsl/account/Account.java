@@ -78,7 +78,7 @@ public class Account {
     return new Account(eth, name, SIGNATURE_ALGORITHM.get().generateKeyPair());
   }
 
-  static Account fromPrivateKey(
+  public static Account fromPrivateKey(
       final EthTransactions eth, final String name, final String privateKey) {
     return new Account(
         eth,

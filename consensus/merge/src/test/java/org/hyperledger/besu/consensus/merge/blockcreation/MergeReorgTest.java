@@ -42,7 +42,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -67,10 +67,10 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
 
   private MergeCoordinator coordinator;
 
-  private final MergeContext mergeContext = PostMergeContext.get();
+  private final MergeContext mergeContext = new PostMergeContext();
   private final ProtocolSchedule mockProtocolSchedule = getMergeProtocolSchedule();
   private final GenesisState genesisState =
-      GenesisState.fromConfig(getPowGenesisConfigFile(), mockProtocolSchedule);
+      GenesisState.fromConfig(getPowGenesisConfig(), mockProtocolSchedule);
 
   private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
@@ -78,14 +78,14 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   private final ProtocolContext protocolContext =
       new ProtocolContext(blockchain, worldStateArchive, mergeContext, new BadBlockManager());
 
-  private final Address coinbase = genesisAllocations(getPowGenesisConfigFile()).findFirst().get();
+  private final Address coinbase = genesisAllocations(getPowGenesisConfig()).findFirst().get();
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket =
-      new LondonFeeMarket(0, genesisState.getBlock().getHeader().getBaseFee());
+      FeeMarket.london(0, genesisState.getBlock().getHeader().getBaseFee());
 
   @BeforeEach
   public void setUp() {
-    var mutable = worldStateArchive.getMutable();
+    var mutable = worldStateArchive.getWorldState();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
     mergeContext.setTerminalTotalDifficulty(Difficulty.of(1001));
@@ -132,7 +132,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     Difficulty tdd = blockchain.getTotalDifficultyByHash(ttdA.getHash()).get();
     assertThat(tdd.getAsBigInteger())
         .isGreaterThan(
-            getPosGenesisConfigFile()
+            getPosGenesisConfig()
                 .getConfigOptions()
                 .getTerminalTotalDifficulty()
                 .get()

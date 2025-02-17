@@ -34,7 +34,6 @@ import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt64;
 
 /** A utility class for building block headers. */
 public class BlockHeaderBuilder {
@@ -81,7 +80,6 @@ public class BlockHeaderBuilder {
   private Long blobGasUsed = null;
   private BlobGas excessBlobGas = null;
   private Bytes32 parentBeaconBlockRoot = null;
-  private UInt64 targetBlobsPerBlock = null;
 
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
@@ -130,8 +128,7 @@ public class BlockHeaderBuilder {
         .blobGasUsed(header.getBlobGasUsed().orElse(null))
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
-        .requestsHash(header.getRequestsHash().orElse(null))
-        .targetBlobsPerBlock(header.getTargetBlobsPerBlock().orElse(null));
+        .requestsHash(header.getRequestsHash().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -156,7 +153,6 @@ public class BlockHeaderBuilder {
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
             .requestsHash(fromBuilder.requestsHash)
-            .targetBlobsPerBlock(fromBuilder.targetBlobsPerBlock)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -236,7 +232,6 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        targetBlobsPerBlock,
         blockHeaderFunctions);
   }
 
@@ -252,8 +247,7 @@ public class BlockHeaderBuilder {
         timestamp,
         baseFee,
         mixHashOrPrevRandao,
-        parentBeaconBlockRoot,
-        targetBlobsPerBlock);
+        parentBeaconBlockRoot);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -279,8 +273,7 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestsHash,
-        targetBlobsPerBlock);
+        requestsHash);
   }
 
   private void validateBlockHeader() {
@@ -320,7 +313,6 @@ public class BlockHeaderBuilder {
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
     processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     processableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
-    processableBlockHeader.getTargetBlobsPerBlock().ifPresent(this::targetBlobsPerBlock);
     return this;
   }
 
@@ -346,7 +338,6 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     requestsHash(sealableBlockHeader.getRequestsHash().orElse(null));
-    sealableBlockHeader.getTargetBlobsPerBlock().ifPresent(this::targetBlobsPerBlock);
     return this;
   }
 
@@ -478,11 +469,6 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder parentBeaconBlockRoot(final Bytes32 parentBeaconBlockRoot) {
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
-    return this;
-  }
-
-  public BlockHeaderBuilder targetBlobsPerBlock(final UInt64 targetBlobsPerBlock) {
-    this.targetBlobsPerBlock = targetBlobsPerBlock;
     return this;
   }
 }

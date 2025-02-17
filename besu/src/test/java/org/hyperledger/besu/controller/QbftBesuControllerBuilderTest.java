@@ -47,7 +47,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuilderTest {
 
   @Override
-  public void setupBftGenesisConfigFile() throws JsonProcessingException {
+  public void setupBftGenesisConfig() throws JsonProcessingException {
 
     // qbft prepForBuild setup
     lenient()
@@ -71,7 +71,7 @@ public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
         .thenReturn(new TransitionsConfigOptions(jsonTransitions));
 
     lenient()
-        .when(genesisConfigFile.getExtraData())
+        .when(genesisConfig.getExtraData())
         .thenReturn(
             QbftExtraDataCodec.createGenesisExtraDataString(List.of(Address.fromHexString("1"))));
   }

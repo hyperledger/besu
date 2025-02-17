@@ -37,7 +37,7 @@ public class EntriesFromIntegrationTest {
   @Test
   @SuppressWarnings("MathAbsoluteRandom")
   public void shouldCollectStateEntries() {
-    final MutableWorldState worldState = createInMemoryWorldStateArchive().getMutable();
+    final MutableWorldState worldState = createInMemoryWorldStateArchive().getWorldState();
     final WorldUpdater updater = worldState.updater();
     MutableAccount account = updater.getOrCreate(Address.fromHexString("0x56"));
     final Map<Bytes32, AccountStorageEntry> expectedValues = new TreeMap<>();

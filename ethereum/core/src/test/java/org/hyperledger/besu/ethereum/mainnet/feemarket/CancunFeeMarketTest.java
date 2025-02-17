@@ -30,7 +30,7 @@ class CancunFeeMarketTest {
 
   @Test
   void dataPricePerGas() {
-    CancunFeeMarket cancunFeeMarket = new CancunFeeMarket(0, Optional.empty());
+    final BaseFeeMarket cancunFeeMarket = FeeMarket.cancun(0, Optional.empty());
     // when no excess blob gas, data price per gas is 1
     assertEquals(1, cancunFeeMarket.blobGasPricePerGas(BlobGas.ZERO).getAsBigInteger().intValue());
 

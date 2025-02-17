@@ -16,7 +16,7 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 4,
-    "error":{"code":-32602,"message":"Invalid transaction type"}
+    "error":{"code":-32602,"message":"Invalid transaction type (transaction blob transactions must have a to address)"}
   },
   "statusCode": 200
 }

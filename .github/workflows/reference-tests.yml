@@ -1,6 +1,7 @@
 name: reference-tests
 on:
   workflow_dispatch:
+  merge_group:
   pull_request:
     branches:
       - main
@@ -9,7 +10,7 @@ on:
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
-  total-runners: 8
+  total-runners: 4
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -25,7 +26,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        runner_index: [1,2,3,4,5,6,7,8]
+        runner_index: [1,2,3,4]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11

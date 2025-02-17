@@ -21,7 +21,7 @@ public class LegacyFeeMarket implements FeeMarket {
 
   private final TransactionPriceCalculator txPriceCalculator;
 
-  public LegacyFeeMarket() {
+  LegacyFeeMarket() {
     this.txPriceCalculator = TransactionPriceCalculator.frontier();
   }
 

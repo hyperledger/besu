@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor;
 
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -49,11 +51,12 @@ public class PrivateTracer {
           final MutableWorldState disposablePrivateState =
               privacyParameters
                   .getPrivateWorldStateArchive()
-                  .getMutable(
-                      privacyController
-                          .getStateRootByBlockNumber(privacyGroupId, enclaveKey, blockNumber)
-                          .get(),
-                      parentHash)
+                  .getWorldState(
+                      withStateRootAndBlockHashAndUpdateNodeHead(
+                          privacyController
+                              .getStateRootByBlockNumber(privacyGroupId, enclaveKey, blockNumber)
+                              .get(),
+                          parentHash))
                   .get();
 
           return blockchainQueries.getAndMapWorldState(

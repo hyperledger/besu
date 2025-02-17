@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
@@ -147,7 +147,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionMiningConfiguration,
                 syncState,
                 transitionBackwardsSyncContext,
-                ethProtocolManager.ethContext().getScheduler()));
+                ethProtocolManager.ethContext().getScheduler()),
+            mergeBesuControllerBuilder.getPostMergeContext());
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
   }
@@ -185,7 +186,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         new TransitionProtocolSchedule(
             preMergeBesuControllerBuilder.createProtocolSchedule(),
             mergeBesuControllerBuilder.createProtocolSchedule(),
-            PostMergeContext.get());
+            mergeBesuControllerBuilder.getPostMergeContext());
     return transitionProtocolSchedule;
   }
 
@@ -255,7 +256,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   private void initTransitionWatcher(
       final ProtocolContext protocolContext, final TransitionCoordinator composedCoordinator) {
 
-    PostMergeContext postMergeContext = protocolContext.getConsensusContext(PostMergeContext.class);
+    PostMergeContext postMergeContext = mergeBesuControllerBuilder.getPostMergeContext();
     postMergeContext.observeNewIsPostMergeState(
         (isPoS, priorState, difficultyStoppedAt) -> {
           if (isPoS) {
@@ -290,7 +291,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     final BesuController controller = super.build();
-    PostMergeContext.get().setSyncState(controller.getSyncState());
+    mergeBesuControllerBuilder.getPostMergeContext().setSyncState(controller.getSyncState());
     return controller;
   }
 
@@ -301,9 +302,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
-    super.genesisConfigFile(genesisConfig);
-    return propagateConfig(z -> z.genesisConfigFile(genesisConfig));
+  public BesuControllerBuilder genesisConfig(final GenesisConfig genesisConfig) {
+    super.genesisConfig(genesisConfig);
+    return propagateConfig(z -> z.genesisConfig(genesisConfig));
   }
 
   @Override

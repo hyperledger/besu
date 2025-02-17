@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.Packet;
 
 @FunctionalInterface
 public interface OutboundMessageHandler {

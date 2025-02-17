@@ -73,12 +73,20 @@ public class BftContextBuilder {
       final Class<T> contextClazz,
       final Collection<Address> validators,
       final BftExtraDataCodec bftExtraDataCodec) {
+    return setupContextWithBftBlockInterface(
+        contextClazz, validators, new BftBlockInterface(bftExtraDataCodec));
+  }
+
+  public static <T extends BftContext> T setupContextWithBftBlockInterface(
+      final Class<T> contextClazz,
+      final Collection<Address> validators,
+      final BftBlockInterface bftBlockInterface) {
     final T bftContext = mock(contextClazz, withSettings().strictness(Strictness.LENIENT));
     final ValidatorProvider mockValidatorProvider =
         mock(ValidatorProvider.class, withSettings().strictness(Strictness.LENIENT));
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
-    when(bftContext.getBlockInterface()).thenReturn(new BftBlockInterface(bftExtraDataCodec));
+    when(bftContext.getBlockInterface()).thenReturn(bftBlockInterface);
     when(bftContext.as(any())).thenReturn(bftContext);
 
     return bftContext;

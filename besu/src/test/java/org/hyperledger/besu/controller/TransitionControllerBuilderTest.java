@@ -21,7 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.consensus.clique.BlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.common.EpochManager;
@@ -98,9 +98,9 @@ public class TransitionControllerBuilderTest {
                 preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext));
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     cliqueBuilder.nodeKey(NodeKeyUtils.generate());
-    cliqueBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
-    powBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
-    postMergeBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
+    cliqueBuilder.genesisConfig(GenesisConfig.DEFAULT);
+    powBuilder.genesisConfig(GenesisConfig.DEFAULT);
+    postMergeBuilder.genesisConfig(GenesisConfig.DEFAULT);
     postMergeBuilder.storageProvider(storageProvider);
     lenient().when(protocolContext.getBlockchain()).thenReturn(mockBlockchain);
     lenient()
@@ -267,7 +267,7 @@ public class TransitionControllerBuilderTest {
   TransitionCoordinator buildTransitionCoordinator(
       final BesuControllerBuilder preMerge, final MergeBesuControllerBuilder postMerge) {
     var builder = new TransitionBesuControllerBuilder(preMerge, postMerge);
-    builder.genesisConfigFile(GenesisConfigFile.mainnet());
+    builder.genesisConfig(GenesisConfig.mainnet());
     builder.storageProvider(storageProvider);
     builder.metricsSystem(new NoOpMetricsSystem());
     var coordinator =

@@ -16,7 +16,6 @@ package org.hyperledger.besu.plugin.services.txselection;
 
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 
-import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
@@ -24,19 +23,19 @@ import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 /** Interface for the transaction selector */
 @Unstable
-public interface PluginTransactionSelector {
+public interface PluginTransactionSelector extends TransactionSelector {
   /** Plugin transaction selector that unconditionally select every transaction */
   PluginTransactionSelector ACCEPT_ALL =
       new PluginTransactionSelector() {
         @Override
         public TransactionSelectionResult evaluateTransactionPreProcessing(
-            TransactionEvaluationContext<? extends PendingTransaction> evaluationContext) {
+            TransactionEvaluationContext evaluationContext) {
           return SELECTED;
         }
 
         @Override
         public TransactionSelectionResult evaluateTransactionPostProcessing(
-            TransactionEvaluationContext<? extends PendingTransaction> evaluationContext,
+            TransactionEvaluationContext evaluationContext,
             TransactionProcessingResult processingResult) {
           return SELECTED;
         }
@@ -60,7 +59,7 @@ public interface PluginTransactionSelector {
    * @return TransactionSelectionResult that indicates whether to include the transaction
    */
   TransactionSelectionResult evaluateTransactionPreProcessing(
-      TransactionEvaluationContext<? extends PendingTransaction> evaluationContext);
+      TransactionEvaluationContext evaluationContext);
 
   /**
    * Method called to decide whether a processed transaction is added to a block. The result can
@@ -71,8 +70,7 @@ public interface PluginTransactionSelector {
    * @return TransactionSelectionResult that indicates whether to include the transaction
    */
   TransactionSelectionResult evaluateTransactionPostProcessing(
-      TransactionEvaluationContext<? extends PendingTransaction> evaluationContext,
-      TransactionProcessingResult processingResult);
+      TransactionEvaluationContext evaluationContext, TransactionProcessingResult processingResult);
 
   /**
    * Method called when a transaction is selected to be added to a block.
@@ -81,7 +79,7 @@ public interface PluginTransactionSelector {
    * @param processingResult The result of processing the selected transaction.
    */
   default void onTransactionSelected(
-      final TransactionEvaluationContext<? extends PendingTransaction> evaluationContext,
+      final TransactionEvaluationContext evaluationContext,
       final TransactionProcessingResult processingResult) {}
 
   /**
@@ -91,6 +89,6 @@ public interface PluginTransactionSelector {
    * @param transactionSelectionResult The transaction selection result
    */
   default void onTransactionNotSelected(
-      final TransactionEvaluationContext<? extends PendingTransaction> evaluationContext,
+      final TransactionEvaluationContext evaluationContext,
       final TransactionSelectionResult transactionSelectionResult) {}
 }

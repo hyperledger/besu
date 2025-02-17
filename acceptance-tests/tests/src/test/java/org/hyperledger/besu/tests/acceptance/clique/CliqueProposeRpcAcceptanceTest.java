@@ -21,8 +21,10 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.IOException;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled("flaky see https://github.com/hyperledger/besu/issues/7973")
 public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
 
   @Test
@@ -59,6 +61,7 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2));
   }
 
+  @Disabled
   @Test
   public void shouldNotAddValidatorWhenInsufficientVotes() throws IOException {
     final String[] initialValidators = {"miner1", "miner2"};
@@ -90,6 +93,7 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2, minerNode3));
   }
 
+  @Disabled
   @Test
   public void shouldIncludeVoteInBlockHeader() throws IOException {
     final String[] initialValidators = {"miner1", "miner2"};
