@@ -31,7 +31,6 @@ import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.cryptoservices.KeyPairSecurityModule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
@@ -480,7 +479,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
           .clock(Clock.systemUTC())
           .storageProvider(storageProvider)
-          .gasLimitCalculator(GasLimitCalculator.constant())
           .evmConfiguration(EvmConfiguration.DEFAULT)
           .maxPeers(25)
           .maxRemotelyInitiatedPeers(15)

@@ -24,7 +24,6 @@ import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -388,12 +387,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final boolean isParallelTxProcessingEnabled) {
     super.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled);
     return propagateConfig(z -> z.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled));
-  }
-
-  @Override
-  public BesuControllerBuilder gasLimitCalculator(final GasLimitCalculator gasLimitCalculator) {
-    super.gasLimitCalculator(gasLimitCalculator);
-    return propagateConfig(z -> z.gasLimitCalculator(gasLimitCalculator));
   }
 
   @Override

@@ -37,6 +37,13 @@ import org.slf4j.LoggerFactory;
 public class SystemCallProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(SystemCallProcessor.class);
 
+  /**
+   * The gas limit as defined in <a
+   * href="https://eips.ethereum.org/EIPS/eip-2935#block-processing">EIP-2935</a> This value is
+   * independent of the gas limit of the block
+   */
+  private static final long SYSTEM_CALL_GAS_LIMIT = 30_000_000L;
+
   /** The system address */
   static final Address SYSTEM_ADDRESS =
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
@@ -108,7 +115,7 @@ public class SystemCallProcessor {
     return MessageFrame.builder()
         .maxStackSize(DEFAULT_MAX_STACK_SIZE)
         .worldUpdater(worldUpdater)
-        .initialGas(30_000_000L)
+        .initialGas(SYSTEM_CALL_GAS_LIMIT)
         .originator(SYSTEM_ADDRESS)
         .gasPrice(Wei.ZERO)
         .blobGasPrice(Wei.ZERO)
