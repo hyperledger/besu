@@ -147,7 +147,7 @@ public class ParallelizedConcurrentTransactionProcessor {
           (BonsaiWorldState)
               protocolContext
                   .getWorldStateArchive()
-                  .getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader))
+                  .getWorldState(withBlockHeaderAndNoUpdateNodeHead(chainHeadHeader))
                   .orElse(null)) {
         if (ws != null) {
           ws.disableCacheMerkleTrieLoader();
