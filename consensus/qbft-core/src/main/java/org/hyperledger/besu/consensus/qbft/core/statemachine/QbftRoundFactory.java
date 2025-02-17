@@ -20,7 +20,6 @@ import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
@@ -42,7 +41,6 @@ public class QbftRoundFactory {
   private final MessageFactory messageFactory;
   private final BftExtraDataCodec bftExtraDataCodec;
   private final QbftExtraDataProvider qbftExtraDataProvider;
-  private final QbftBlockHashing blockHashing;
 
   /**
    * Instantiates a new Qbft round factory.
@@ -55,7 +53,6 @@ public class QbftRoundFactory {
    * @param messageFactory the message factory
    * @param bftExtraDataCodec the bft extra data codec
    * @param qbftExtraDataProvider the bft extra data codec
-   * @param blockHashing the block hashing
    */
   public QbftRoundFactory(
       final QbftFinalState finalState,
@@ -65,8 +62,7 @@ public class QbftRoundFactory {
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,
       final BftExtraDataCodec bftExtraDataCodec,
-      final QbftExtraDataProvider qbftExtraDataProvider,
-      final QbftBlockHashing blockHashing) {
+      final QbftExtraDataProvider qbftExtraDataProvider) {
     this.finalState = finalState;
     this.blockCreatorFactory = finalState.getBlockCreatorFactory();
     this.protocolContext = protocolContext;
@@ -76,7 +72,6 @@ public class QbftRoundFactory {
     this.messageFactory = messageFactory;
     this.bftExtraDataCodec = bftExtraDataCodec;
     this.qbftExtraDataProvider = qbftExtraDataProvider;
-    this.blockHashing = blockHashing;
   }
 
   /**
@@ -128,7 +123,6 @@ public class QbftRoundFactory {
         finalState.getRoundTimer(),
         bftExtraDataCodec,
         qbftExtraDataProvider,
-        blockHashing,
         parentHeader);
   }
 }
