@@ -116,26 +116,26 @@ dependencies {
     api 'io.tmio:tuweni-toml:2.4.2'
     api 'io.tmio:tuweni-units:2.4.2'
 
-    api 'net.java.dev.jna:jna:5.15.0'
+    api 'net.java.dev.jna:jna:5.16.0'
 
-    api 'org.antlr:antlr4:4.11.1'
-    api 'org.antlr:antlr4-runtime:4.11.1'
+    api 'org.antlr:antlr4:4.13.2'
+    api 'org.antlr:antlr4-runtime:4.13.2'
 
     api 'org.apache.commons:commons-collections4:4.4'
     api 'org.apache.commons:commons-compress:1.27.1'
     api 'org.apache.commons:commons-lang3:3.17.0'
-    api 'org.apache.commons:commons-text:1.12.0'
+    api 'org.apache.commons:commons-text:1.13.0'
 
     api 'org.apache.maven:maven-artifact:3.9.9'
 
     api 'org.awaitility:awaitility:4.2.2'
 
-    api 'org.bouncycastle:bcpkix-jdk18on:1.78.1'
-    api 'org.bouncycastle:bcprov-jdk18on:1.78.1'
+    api 'org.bouncycastle:bcpkix-jdk18on:1.80'
+    api 'org.bouncycastle:bcprov-jdk18on:1.80'
 
     api 'org.fusesource.jansi:jansi:2.4.1'
 
-    api 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
+    api 'org.hibernate.validator:hibernate-validator:8.0.2.Final'
 
     api 'org.hyperledger.besu:arithmetic:1.1.2'
     api 'org.hyperledger.besu:blake2bf:1.1.2'
@@ -149,10 +149,10 @@ dependencies {
     api 'org.jacoco:org.jacoco.agent:0.8.12'
     api 'org.jacoco:org.jacoco.core:0.8.12'
 
-    api 'org.junit.platform:junit-platform-runner:1.9.2'
+    api 'org.junit.platform:junit-platform-runner:1.11.4'
 
-    api 'org.jupnp:org.jupnp:3.0.2'
-    api 'org.jupnp:org.jupnp.support:3.0.2'
+    api 'org.jupnp:org.jupnp:3.0.3'
+    api 'org.jupnp:org.jupnp.support:3.0.3'
 
     api 'org.openjdk.jmh:jmh-core:1.37'
     api 'org.openjdk.jmh:jmh-generator-annprocess:1.37'
@@ -163,9 +163,9 @@ dependencies {
 
     api 'org.rocksdb:rocksdbjni:9.7.3'
 
-    api 'org.springframework.security:spring-security-crypto:6.3.3'
+    api 'org.springframework.security:spring-security-crypto:6.4.2'
 
-    api 'org.wiremock:wiremock:3.9.1'
+    api 'org.wiremock:wiremock:3.12.0'
 
     api 'org.web3j:abi:4.12.2'
     api 'org.web3j:besu:4.12.2'
