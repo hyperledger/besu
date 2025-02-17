@@ -31,6 +31,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -79,6 +80,7 @@ public class ClusterThreadNodeRunnerAcceptanceTest extends AcceptanceTestBase {
     miner.verify(recipient.balanceEquals(2));
   }
 
+  @AfterEach
   @Override
   public void tearDownAcceptanceTestBase() {
     noDiscoveryCluster.stop();

@@ -23,7 +23,6 @@ import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
@@ -51,7 +50,6 @@ import org.hyperledger.besu.consensus.qbft.adaptor.BftEventHandlerAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryAdaptor;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHashingAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockchainAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
@@ -286,8 +284,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             messageValidatorFactory,
             messageFactory,
             qbftExtraDataCodec,
-            new QbftExtraDataProviderAdaptor(qbftExtraDataCodec),
-            new QbftBlockHashingAdaptor(new BftBlockHashing(qbftExtraDataCodec)));
+            new QbftExtraDataProviderAdaptor(qbftExtraDataCodec));
     QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory =
         new QbftBlockHeightManagerFactory(
             finalState,

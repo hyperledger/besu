@@ -48,7 +48,6 @@ import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
@@ -120,7 +119,6 @@ public class QbftBlockHeightManagerTest {
   @Mock private QbftValidatorProvider validatorProvider;
   @Mock private QbftProtocolSpec protocolSpec;
   @Mock private QbftBlockImporter blockImporter;
-  @Mock private QbftBlockHashing blockHashing;
 
   @Captor private ArgumentCaptor<MessageData> sentMessageArgCaptor;
 
@@ -178,7 +176,6 @@ public class QbftBlockHeightManagerTest {
                   roundTimer,
                   bftExtraDataCodec,
                   qbftExtraDataProvider,
-                  blockHashing,
                   parentHeader);
             });
 
@@ -198,7 +195,6 @@ public class QbftBlockHeightManagerTest {
                   roundTimer,
                   bftExtraDataCodec,
                   qbftExtraDataProvider,
-                  blockHashing,
                   parentHeader);
             });
 
@@ -410,7 +406,6 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getQuorum()).thenReturn(1);
     when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2), any()))
         .thenReturn(createdBlock);
-    when(blockHashing.calculateDataHashForCommittedSeal(any(), any())).thenReturn(Hash.ZERO);
     when(blockCreator.createSealedBlock(any(), any(), anyInt(), any())).thenReturn(createdBlock);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
@@ -461,7 +456,6 @@ public class QbftBlockHeightManagerTest {
     when(blockTimer.checkEmptyBlockExpired(any(), eq(0L))).thenReturn(true);
     when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(0), any()))
         .thenReturn(createdBlock);
-    when(blockHashing.calculateDataHashForCommittedSeal(any(), any())).thenReturn(Hash.ZERO);
     when(blockCreator.createSealedBlock(any(), any(), anyInt(), any())).thenReturn(createdBlock);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
