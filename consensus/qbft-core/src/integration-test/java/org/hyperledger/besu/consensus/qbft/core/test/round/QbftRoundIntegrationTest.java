@@ -39,7 +39,6 @@ import org.hyperledger.besu.consensus.qbft.core.statemachine.RoundState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
@@ -103,7 +102,6 @@ public class QbftRoundIntegrationTest {
   @Mock private QbftBlockHeader parentHeader;
   @Mock private QbftBlockCodec blockEncoder;
   @Mock private QbftExtraDataProvider qbftExtraDataProvider;
-  @Mock private QbftBlockHashing blockHashing;
 
   private QbftBlock proposedBlock;
 
@@ -168,7 +166,6 @@ public class QbftRoundIntegrationTest {
             roundTimer,
             bftExtraDataCodec,
             qbftExtraDataProvider,
-            blockHashing,
             parentHeader);
 
     round.handleProposalMessage(
@@ -209,7 +206,6 @@ public class QbftRoundIntegrationTest {
             roundTimer,
             bftExtraDataCodec,
             qbftExtraDataProvider,
-            blockHashing,
             parentHeader);
 
     // inject a block first, then a prepare on it.
