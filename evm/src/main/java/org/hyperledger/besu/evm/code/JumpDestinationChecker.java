@@ -30,10 +30,21 @@ public class JumpDestinationChecker {
   /** Used to cache valid jump destinations. */
   private long[] validJumpDestinations;
 
+  /**
+   * Construct a jump destination checker for the corresponding bytecode
+   *
+   * @param bytecode to check
+   */
   public JumpDestinationChecker(final Bytecode bytecode) {
     this.rawByteCode = bytecode.getRawByteArray();
   }
 
+  /**
+   * Checks whether the given jump destination offset is invalid within the raw bytecode.
+   *
+   * @param jumpDestination the offset in the bytecode to check
+   * @return {@code true} if the jump destination is invalid, or {@code false} if it is valid
+   */
   public boolean isJumpDestInvalid(final int jumpDestination) {
     if (jumpDestination < 0 || jumpDestination >= rawByteCode.size()) {
       return true;
