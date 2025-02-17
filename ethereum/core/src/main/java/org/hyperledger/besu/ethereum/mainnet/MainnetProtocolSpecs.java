@@ -718,7 +718,10 @@ public abstract class MainnetProtocolSpecs {
         .gasLimitCalculatorBuilder(
             feeMarket ->
                 new CancunTargetingGasLimitCalculator(
-                    londonForkBlockNumber, (BaseFeeMarket) feeMarket, cancunBlobSchedule.getMax()))
+                    londonForkBlockNumber,
+                    (BaseFeeMarket) feeMarket,
+                    cancunGasCalcSupplier.get(),
+                    cancunBlobSchedule.getMax()))
         // EVM changes to support EIP-1153: TSTORE and EIP-5656: MCOPY
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -855,7 +858,10 @@ public abstract class MainnetProtocolSpecs {
         .gasLimitCalculatorBuilder(
             feeMarket ->
                 new PragueTargetingGasLimitCalculator(
-                    londonForkBlockNumber, (BaseFeeMarket) feeMarket, pragueBlobSchedule.getMax()))
+                    londonForkBlockNumber,
+                    (BaseFeeMarket) feeMarket,
+                    pragueGasCalcSupplier.get(),
+                    pragueBlobSchedule.getMax()))
         // EIP-3074 AUTH and AUTHCALL
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -951,7 +957,10 @@ public abstract class MainnetProtocolSpecs {
         .gasLimitCalculatorBuilder(
             feeMarket ->
                 new OsakaTargetingGasLimitCalculator(
-                    londonForkBlockNumber, (BaseFeeMarket) feeMarket, maxBlobsPerBlock))
+                    londonForkBlockNumber,
+                    (BaseFeeMarket) feeMarket,
+                    osakaGasCalcSupplier.get(),
+                    maxBlobsPerBlock))
         // EIP-7692 EOF v1 EVM and opcodes
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->

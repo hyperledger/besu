@@ -25,7 +25,6 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.worldstate.DelegateCodeHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -94,8 +93,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     }
 
     final Account account = frame.getWorldUpdater().get(address);
-
-    final Bytes code = getCode(account);
+    final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
     if (enableEIP3540
         && code.size() >= 2
@@ -107,15 +105,5 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     }
 
     return new OperationResult(cost, null);
-  }
-
-  private static Bytes getCode(final Account account) {
-    if (account == null) {
-      return Bytes.EMPTY;
-    }
-
-    return account.hasDelegatedCode()
-        ? DelegateCodeHelper.getDelegatedCodeForRead()
-        : account.getCode();
   }
 }

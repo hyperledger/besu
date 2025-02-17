@@ -25,7 +25,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.worldstate.DelegateCodeHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -86,7 +85,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
       if (account == null || account.isEmpty()) {
         frame.pushStackItem(Bytes.EMPTY);
       } else {
-        final Bytes code = getCode(account);
+        final Bytes code = account.getCode();
         if (enableEIP3540
             && code.size() >= 2
             && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
@@ -103,13 +102,5 @@ public class ExtCodeHashOperation extends AbstractOperation {
     } catch (final OverflowException ofe) {
       return new OperationResult(cost(true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
-  }
-
-  private static Bytes getCode(final Account account) {
-    if (!account.hasDelegatedCode()) {
-      return account.getCode();
-    }
-
-    return DelegateCodeHelper.getDelegatedCodeForRead();
   }
 }

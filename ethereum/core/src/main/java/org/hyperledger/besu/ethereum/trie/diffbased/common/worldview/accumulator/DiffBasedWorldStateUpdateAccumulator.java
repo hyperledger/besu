@@ -348,11 +348,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   }
 
   @Override
-  public void revert() {
-    super.reset();
-  }
-
-  @Override
   public void commit() {
     this.isAccumulatorStateChanged = true;
 
@@ -513,8 +508,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                 tracked.setStorageWasCleared(false); // storage already cleared for this transaction
               }
             });
-    getUpdatedAccounts().clear();
-    getDeletedAccounts().clear();
   }
 
   @Override
@@ -612,8 +605,23 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     return results;
   }
 
+  /**
+   * Marks the boundary of a transaction by clearing tracking collections.
+   *
+   * <p>These tracking collections store changes made during the transaction. After committing the
+   * transaction, they become unnecessary and can be safely cleared.
+   *
+   * <p>Note: If the transaction is not committed before this method is called, any uncommitted
+   * changes will be lost.
+   */
   @Override
-  public boolean isPersisted() {
+  public void markTransactionBoundary() {
+    getUpdatedAccounts().clear();
+    getDeletedAccounts().clear();
+  }
+
+  @Override
+  public boolean isModifyingHeadWorldState() {
     return true;
   }
 
@@ -876,6 +884,25 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     isAccumulatorStateChanged = false;
   }
 
+  /**
+   * Reverts all changes that have not yet been committed.
+   *
+   * <p>This method calls the `reset` method of the superclass, which cancels all changes that have
+   * not yet been committed. This effectively reverts the state to the last committed state.
+   */
+  @Override
+  public void revert() {
+    super.reset();
+  }
+
+  /**
+   * Resets the accumulator by clearing all changes, including those that have been committed.
+   *
+   * <p>This method clears all internal maps and data structures that track changes. This includes
+   * clearing the storage to clear, storage to update, code to update, accounts to update, and other
+   * related data structures. This effectively removes all changes, even those that have been
+   * committed in the accumulator.
+   */
   @Override
   public void reset() {
     storageToClear.clear();

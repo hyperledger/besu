@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 import org.hyperledger.besu.ethereum.transaction.BlockStateCall;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
@@ -59,7 +60,11 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
     this.blockchain = blockchain;
     blockSimulator =
         new BlockSimulator(
-            worldStateArchive, protocolSchedule, transactionSimulator, miningConfiguration);
+            worldStateArchive,
+            protocolSchedule,
+            transactionSimulator,
+            miningConfiguration,
+            blockchain);
     this.worldStateArchive = worldStateArchive;
   }
 
@@ -135,8 +140,13 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
   }
 
   private MutableWorldState getWorldState(final BlockHeader header, final boolean isPersisting) {
+    final WorldStateQueryParams worldStateQueryParams =
+        WorldStateQueryParams.newBuilder()
+            .withBlockHeader(header)
+            .withShouldWorldStateUpdateHead(isPersisting)
+            .build();
     return worldStateArchive
-        .getMutable(header, isPersisting)
+        .getWorldState(worldStateQueryParams)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(

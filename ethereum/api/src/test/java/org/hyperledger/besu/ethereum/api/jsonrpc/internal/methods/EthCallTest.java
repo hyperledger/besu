@@ -125,6 +125,27 @@ public class EthCallTest {
   }
 
   @Test
+  public void stateOverridesWithState() {
+    StateOverrideMap expectedOverrides = new StateOverrideMap();
+    StateOverride override =
+        new StateOverride.Builder().withState(Map.of("0x1234", "0x5678")).build();
+    final Address address = Address.fromHexString("0xd9c9cd5f6779558b6e0ed4e6acf6b1947e7fa1f3");
+    expectedOverrides.put(address, override);
+
+    final JsonRpcRequestContext request =
+        ethCallRequestWithStateOverrides(callParameter(), "latest", expectedOverrides);
+
+    Optional<StateOverrideMap> maybeOverrideMap = method.getAddressStateOverrideMap(request);
+    assertThat(maybeOverrideMap.isPresent()).isTrue();
+    StateOverrideMap overrideMap = maybeOverrideMap.get();
+    assertThat(overrideMap.keySet()).hasSize(1);
+    assertThat(overrideMap.values()).hasSize(1);
+
+    assertThat(overrideMap).containsKey(address);
+    assertThat(overrideMap).containsValue(override);
+  }
+
+  @Test
   public void fullStateOverrides() {
     StateOverrideMap suppliedOverrides = new StateOverrideMap();
     StateOverride override =
@@ -278,7 +299,7 @@ public class EthCallTest {
     final JsonRpcErrorResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
 
     assertThat(expectedResponse.getError().getMessage())
-        .isEqualTo("Execution reverted: ABI decode error");
+        .isEqualTo("Execution reverted (ABI decode error)");
 
     mockTransactionProcessorSuccessResult(expectedResponse);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -304,7 +325,7 @@ public class EthCallTest {
 
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
-        .isEqualTo("Execution reverted: ABI decode error");
+        .isEqualTo("Execution reverted (ABI decode error)");
   }
 
   @Test
@@ -319,7 +340,7 @@ public class EthCallTest {
     final JsonRpcErrorResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
 
     assertThat(expectedResponse.getError().getMessage())
-        .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
+        .isEqualTo("Execution reverted (ERC20: transfer from the zero address)");
 
     mockTransactionProcessorSuccessResult(expectedResponse);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -347,7 +368,7 @@ public class EthCallTest {
 
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
-        .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
+        .isEqualTo("Execution reverted (ERC20: transfer from the zero address)");
   }
 
   @Test
@@ -493,6 +514,7 @@ public class EthCallTest {
         ImmutableTransactionValidationParams.builder()
             .from(TransactionValidationParams.transactionSimulator())
             .isAllowExceedingBalance(isAllowedExceedingBalance)
+            .isAllowFutureNonce(true)
             .build();
 
     verify(transactionSimulator)

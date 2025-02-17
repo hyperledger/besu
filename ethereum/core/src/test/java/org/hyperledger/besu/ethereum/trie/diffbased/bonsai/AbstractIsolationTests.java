@@ -171,7 +171,7 @@ public abstract class AbstractIsolationTests {
             null,
             EvmConfiguration.DEFAULT,
             throwingWorldStateHealerSupplier());
-    var ws = archive.getMutable();
+    var ws = archive.getWorldState();
     genesisState.writeStateTo(ws);
     protocolContext =
         new ProtocolContext(

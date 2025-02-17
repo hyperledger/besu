@@ -18,18 +18,18 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
-import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.time.Clock;
@@ -57,17 +57,18 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
   private final QbftRoundFactory roundFactory;
   private final RoundChangeManager roundChangeManager;
-  private final BlockHeader parentHeader;
+  private final QbftBlockHeader parentHeader;
   private final QbftMessageTransmitter transmitter;
   private final MessageFactory messageFactory;
   private final Map<Integer, RoundState> futureRoundStateBuffer = Maps.newHashMap();
   private final FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   private final Clock clock;
   private final Function<ConsensusRoundIdentifier, RoundState> roundStateCreator;
-  private final BftFinalState finalState;
+  private final QbftFinalState finalState;
 
   private Optional<PreparedCertificate> latestPreparedCertificate = Optional.empty();
   private Optional<QbftRound> currentRound = Optional.empty();
+  private boolean isEarlyRoundChangeEnabled = false;
 
   /**
    * Instantiates a new Qbft block height manager.
@@ -81,8 +82,8 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
    * @param messageFactory the message factory
    */
   public QbftBlockHeightManager(
-      final BlockHeader parentHeader,
-      final BftFinalState finalState,
+      final QbftBlockHeader parentHeader,
+      final QbftFinalState finalState,
       final RoundChangeManager roundChangeManager,
       final QbftRoundFactory qbftRoundFactory,
       final Clock clock,
@@ -112,7 +113,40 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(nextBlockHeight, 0);
 
-    finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader);
+    finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader::getTimestamp);
+  }
+
+  /**
+   * Instantiates a new Qbft block height manager. Secondary constructor with early round change
+   * option.
+   *
+   * @param parentHeader the parent header
+   * @param finalState the final state
+   * @param roundChangeManager the round change manager
+   * @param qbftRoundFactory the qbft round factory
+   * @param clock the clock
+   * @param messageValidatorFactory the message validator factory
+   * @param messageFactory the message factory
+   * @param isEarlyRoundChangeEnabled enable round change when f+1 RC messages are received
+   */
+  public QbftBlockHeightManager(
+      final QbftBlockHeader parentHeader,
+      final QbftFinalState finalState,
+      final RoundChangeManager roundChangeManager,
+      final QbftRoundFactory qbftRoundFactory,
+      final Clock clock,
+      final MessageValidatorFactory messageValidatorFactory,
+      final MessageFactory messageFactory,
+      final boolean isEarlyRoundChangeEnabled) {
+    this(
+        parentHeader,
+        finalState,
+        roundChangeManager,
+        qbftRoundFactory,
+        clock,
+        messageValidatorFactory,
+        messageFactory);
+    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
   }
 
   @Override
@@ -155,19 +189,19 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     }
 
     final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
-    final Block block = qbftRound.createBlock(headerTimeStampSeconds);
-    final boolean blockHasTransactions = !block.getBody().getTransactions().isEmpty();
-    if (blockHasTransactions) {
+    final QbftBlock block = qbftRound.createBlock(headerTimeStampSeconds);
+    if (!block.isEmpty()) {
       LOG.trace(
-          "Block has transactions and this node is a proposer so it will send a proposal: "
+          "Block is not empty and this node is a proposer so it will send a proposal: "
               + roundIdentifier);
       qbftRound.updateStateWithProposalAndTransmit(block);
-
     } else {
       // handle the block times period
       final long currentTimeInMillis = finalState.getClock().millis();
       boolean emptyBlockExpired =
-          finalState.getBlockTimer().checkEmptyBlockExpired(parentHeader, currentTimeInMillis);
+          finalState
+              .getBlockTimer()
+              .checkEmptyBlockExpired(parentHeader::getTimestamp, currentTimeInMillis);
       if (emptyBlockExpired) {
         LOG.trace(
             "Block has no transactions and this node is a proposer so it will send a proposal: "
@@ -179,7 +213,8 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
                 + roundIdentifier);
         finalState
             .getBlockTimer()
-            .resetTimerForEmptyBlock(roundIdentifier, parentHeader, currentTimeInMillis);
+            .resetTimerForEmptyBlock(
+                roundIdentifier, parentHeader::getTimestamp, currentTimeInMillis);
         finalState.getRoundTimer().cancelTimer();
         currentRound = Optional.empty();
       }
@@ -227,23 +262,36 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       return;
     }
 
+    doRoundChange(qbftRound.getRoundIdentifier().getRoundNumber() + 1);
+  }
+
+  private synchronized void doRoundChange(final int newRoundNumber) {
+
+    if (currentRound.isPresent()
+        && currentRound.get().getRoundIdentifier().getRoundNumber() >= newRoundNumber) {
+      return;
+    }
     LOG.debug(
-        "Round has expired, creating PreparedCertificate and notifying peers. round={}",
-        qbftRound.getRoundIdentifier());
+        "Round has expired or changing based on RC quorum, creating PreparedCertificate and notifying peers. round={}",
+        currentRound.get().getRoundIdentifier());
     final Optional<PreparedCertificate> preparedCertificate =
-        qbftRound.constructPreparedCertificate();
+        currentRound.get().constructPreparedCertificate();
 
     if (preparedCertificate.isPresent()) {
       latestPreparedCertificate = preparedCertificate;
     }
 
-    startNewRound(qbftRound.getRoundIdentifier().getRoundNumber() + 1);
-    qbftRound = currentRound.get();
+    startNewRound(newRoundNumber);
+    if (currentRound.isEmpty()) {
+      LOG.info("Failed to start round ");
+      return;
+    }
+    QbftRound qbftRoundNew = currentRound.get();
 
     try {
       final RoundChange localRoundChange =
           messageFactory.createRoundChange(
-              qbftRound.getRoundIdentifier(), latestPreparedCertificate);
+              qbftRoundNew.getRoundIdentifier(), latestPreparedCertificate);
 
       // Its possible the locally created RoundChange triggers the transmission of a NewRound
       // message - so it must be handled accordingly.
@@ -252,7 +300,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       LOG.warn("Failed to create signed RoundChange message.", e);
     }
 
-    transmitter.multicastRoundChange(qbftRound.getRoundIdentifier(), latestPreparedCertificate);
+    transmitter.multicastRoundChange(qbftRoundNew.getRoundIdentifier(), latestPreparedCertificate);
   }
 
   @Override
@@ -333,23 +381,54 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     final Optional<Collection<RoundChange>> result =
         roundChangeManager.appendRoundChangeMessage(message);
 
-    if (result.isPresent()) {
-      LOG.debug(
-          "Received sufficient RoundChange messages to change round to targetRound={}",
-          targetRound);
-      if (messageAge == MessageAge.FUTURE_ROUND) {
-        startNewRound(targetRound.getRoundNumber());
-      }
-
-      final RoundChangeArtifacts roundChangeMetadata = RoundChangeArtifacts.create(result.get());
-
-      if (finalState.isLocalNodeProposerForRound(targetRound)) {
-        if (currentRound.isEmpty()) {
-          startNewRound(0);
+    if (!isEarlyRoundChangeEnabled) {
+      if (result.isPresent()) {
+        LOG.debug(
+            "Received sufficient RoundChange messages to change round to targetRound={}",
+            targetRound);
+        if (messageAge == MessageAge.FUTURE_ROUND) {
+          startNewRound(targetRound.getRoundNumber());
         }
+
+        final RoundChangeArtifacts roundChangeMetadata = RoundChangeArtifacts.create(result.get());
+
+        if (finalState.isLocalNodeProposerForRound(targetRound)) {
+          if (currentRound.isEmpty()) {
+            startNewRound(0);
+          }
+          currentRound
+              .get()
+              .startRoundWith(roundChangeMetadata, TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
+        }
+      }
+    } else {
+
+      if (currentRound.isEmpty()) {
+        startNewRound(0);
+      }
+      int currentRoundNumber = currentRound.get().getRoundIdentifier().getRoundNumber();
+      // If this node is proposer for the current round, check if quorum is achieved for RC messages
+      // aiming this round
+      if (targetRound.getRoundNumber() == currentRoundNumber
+          && finalState.isLocalNodeProposerForRound(targetRound)
+          && result.isPresent()) {
+
+        final RoundChangeArtifacts roundChangeMetadata = RoundChangeArtifacts.create(result.get());
+
         currentRound
             .get()
             .startRoundWith(roundChangeMetadata, TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
+      }
+
+      // check if f+1 RC messages for future rounds are received
+      QbftRound qbftRound = currentRound.get();
+      Optional<Integer> nextHigherRound =
+          roundChangeManager.futureRCQuorumReceived(qbftRound.getRoundIdentifier());
+      if (nextHigherRound.isPresent()) {
+        LOG.info(
+            "Received sufficient RoundChange messages to change round to targetRound={}",
+            nextHigherRound.get());
+        doRoundChange(nextHigherRound.get());
       }
     }
   }
@@ -376,7 +455,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   }
 
   @Override
-  public BlockHeader getParentBlockHeader() {
+  public QbftBlockHeader getParentBlockHeader() {
     return parentHeader;
   }
 
