@@ -40,8 +40,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.Bytecode;
-import org.hyperledger.besu.evm.code.FullBytecode;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collections;

@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.code.Bytecode;
-import org.hyperledger.besu.evm.code.FullBytecode;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;

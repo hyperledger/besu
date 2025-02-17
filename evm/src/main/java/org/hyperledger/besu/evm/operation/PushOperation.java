@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.code.Bytecode.RawByteArray;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode.RawByteArray;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evm.internal;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.code.Bytecode.RawByteArray;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode.RawByteArray;
 
 import java.math.BigInteger;
 

@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.code;
 
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
 
 import javax.annotation.Nonnull;
 

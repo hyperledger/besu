@@ -16,7 +16,7 @@ package org.hyperledger.besu.evm.contractvalidation;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
-import org.hyperledger.besu.evm.code.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;

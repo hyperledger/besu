@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm.code;
+package org.hyperledger.besu.evm.code.bytecode;
 
 import java.util.Arrays;
 

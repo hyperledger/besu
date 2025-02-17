@@ -23,8 +23,9 @@ import static org.hyperledger.besu.evm.code.OpcodeInfo.V1_OPCODES;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
 
-import org.hyperledger.besu.evm.code.Bytecode.RawByteArray;
 import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode.RawByteArray;
 import org.hyperledger.besu.evm.operation.CallFOperation;
 import org.hyperledger.besu.evm.operation.DataLoadNOperation;
 import org.hyperledger.besu.evm.operation.DupNOperation;

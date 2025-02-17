@@ -25,6 +25,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -54,12 +56,14 @@ class CodeV0Test {
   void shouldReuseJumpDestMap() {
     final JumpOperation operation = new JumpOperation(evm.getGasCalculator());
     final Bytecode jumpBytes = FullBytecode.fromHexString("0x6003565b00");
-    final CodeV0 getsCached = (CodeV0) spy(evm.getCodeUncached(jumpBytes));
+    final CodeV0 getsCached = (CodeV0) evm.getCodeUncached(jumpBytes);
+    final JumpDestinationChecker jumpDestinationChecker =
+        spy(getsCached.getJumpDestinationChecker());
     MessageFrame frame = createJumpFrame(getsCached);
 
     OperationResult result = operation.execute(frame, evm);
     assertNull(result.getHaltReason());
-    Mockito.verify(getsCached, times(1)).calculateJumpDest(0);
+    Mockito.verify(jumpDestinationChecker, times(1)).calculateJumpDests();
 
     // do it again to prove we don't recalculate, and we hit the cache
 
@@ -67,7 +71,7 @@ class CodeV0Test {
 
     result = operation.execute(frame, evm);
     assertNull(result.getHaltReason());
-    Mockito.verify(getsCached, times(1)).calculateJumpDest(0);
+    Mockito.verify(jumpDestinationChecker, times(1)).calculateJumpDests();
   }
 
   @Nonnull

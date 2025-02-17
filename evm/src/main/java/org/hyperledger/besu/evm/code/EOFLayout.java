@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.code;
 
 import static org.hyperledger.besu.evm.code.OpcodeInfo.V1_OPCODES;
 
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
 import org.hyperledger.besu.evm.operation.ExchangeOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;

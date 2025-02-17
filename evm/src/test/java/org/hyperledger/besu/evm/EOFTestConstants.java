@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.evm;
 
-import org.hyperledger.besu.evm.code.Bytecode;
-import org.hyperledger.besu.evm.code.FullBytecode;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
 
 public class EOFTestConstants {
 

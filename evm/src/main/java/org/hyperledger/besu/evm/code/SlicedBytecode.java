@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.code;
 
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+
 /**
  * Represents a partial view (slice) of a larger bytecode. The slice is defined by a starting offset
  * and length within the parent bytecode. This class allows accessing and manipulating a specific

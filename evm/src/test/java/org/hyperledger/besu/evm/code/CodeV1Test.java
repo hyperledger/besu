@@ -16,6 +16,9 @@ package org.hyperledger.besu.evm.code;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;

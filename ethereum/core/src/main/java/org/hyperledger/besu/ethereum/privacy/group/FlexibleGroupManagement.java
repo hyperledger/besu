@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy.group;
 
-import org.hyperledger.besu.evm.code.Bytecode;
-import org.hyperledger.besu.evm.code.FullBytecode;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
 
 import org.apache.tuweni.bytes.Bytes;
 

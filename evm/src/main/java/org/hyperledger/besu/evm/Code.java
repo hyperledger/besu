@@ -15,8 +15,8 @@
 package org.hyperledger.besu.evm;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.code.Bytecode;
 import org.hyperledger.besu.evm.code.CodeSection;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
 
 import java.util.Optional;
 
