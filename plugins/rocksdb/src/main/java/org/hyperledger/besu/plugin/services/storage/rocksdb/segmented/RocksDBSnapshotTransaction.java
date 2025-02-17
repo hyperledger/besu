@@ -100,7 +100,7 @@ public class RocksDBSnapshotTransaction
     throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
-      return Optional.ofNullable(snapTx.get(columnFamilyMapper.apply(segmentId), readOptions, key));
+      return Optional.ofNullable(snapTx.get(readOptions, columnFamilyMapper.apply(segmentId), key));
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
