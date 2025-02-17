@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.processingBlockParams;
+import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.blockProcessingParams;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionPoolParams;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
@@ -75,7 +75,7 @@ public class MainnetTransactionValidatorTest {
   protected static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
   private static final TransactionValidationParams transactionValidationParams =
-      processingBlockParams;
+      blockProcessingParams;
 
   @Mock protected GasCalculator gasCalculator;
 
@@ -189,7 +189,7 @@ public class MainnetTransactionValidatorTest {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
-    assertThat(validator.validateForSender(basicTransaction, null, processingBlockParams))
+    assertThat(validator.validateForSender(basicTransaction, null, blockProcessingParams))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE));
   }
 
@@ -200,7 +200,7 @@ public class MainnetTransactionValidatorTest {
             gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
 
     final Account account = accountWithNonce(basicTransaction.getNonce() + 1);
-    assertThat(validator.validateForSender(basicTransaction, account, processingBlockParams))
+    assertThat(validator.validateForSender(basicTransaction, account, blockProcessingParams))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
   }
 
@@ -212,7 +212,7 @@ public class MainnetTransactionValidatorTest {
             gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
 
     final Account account = accountWithNonce(basicTransaction.getNonce() - 1);
-    assertThat(validator.validateForSender(basicTransaction, account, processingBlockParams))
+    assertThat(validator.validateForSender(basicTransaction, account, blockProcessingParams))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_HIGH));
   }
 
@@ -238,7 +238,7 @@ public class MainnetTransactionValidatorTest {
         new TransactionTestFixture().nonce(11).createTransaction(senderKeys);
     final Account account = accountWithNonce(5);
 
-    assertThat(validator.validateForSender(transaction, account, processingBlockParams))
+    assertThat(validator.validateForSender(transaction, account, blockProcessingParams))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_HIGH));
   }
 
@@ -255,7 +255,7 @@ public class MainnetTransactionValidatorTest {
 
     assertThat(
             validator.validateForSender(
-                builder.createTransaction(senderKeyPair), null, processingBlockParams))
+                builder.createTransaction(senderKeyPair), null, blockProcessingParams))
         .isEqualTo(ValidationResult.valid());
   }
 
@@ -271,7 +271,7 @@ public class MainnetTransactionValidatorTest {
             .thenReturn(Hash.fromHexStringLenient("0xdeadbeef"))
             .getMock();
 
-    assertThat(validator.validateForSender(basicTransaction, invalidEOA, processingBlockParams))
+    assertThat(validator.validateForSender(basicTransaction, invalidEOA, blockProcessingParams))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED));
   }
 

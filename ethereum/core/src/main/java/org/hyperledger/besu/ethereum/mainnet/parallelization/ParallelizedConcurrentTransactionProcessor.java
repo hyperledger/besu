@@ -173,7 +173,7 @@ public class ParallelizedConcurrentTransactionProcessor {
               },
               blockHashLookup,
               true,
-              TransactionValidationParams.processingBlock(),
+              TransactionValidationParams.parallelBlockProcessing(),
               privateMetadataUpdater,
               blobGasPrice);
 
