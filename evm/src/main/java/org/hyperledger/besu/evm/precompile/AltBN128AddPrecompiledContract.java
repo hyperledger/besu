@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 
@@ -33,12 +35,15 @@ import org.apache.tuweni.bytes.MutableBytes;
 public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 128;
+  private static final String PRECOMPILE_NAME = "AltBN128Add";
 
   private final long gasCost;
+  private static final Cache<Integer, PrecompileInputResultTuple> bnAddCache =
+      Caffeine.newBuilder().maximumSize(1000).build();
 
   private AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(
-        "AltBN128Add",
+        PRECOMPILE_NAME,
         gasCalculator,
         LibGnarkEIP196.EIP196_ADD_OPERATION_RAW_VALUE,
         PARAMETER_LENGTH);
@@ -74,11 +79,33 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
-    if (useNative) {
-      return computeNative(input, messageFrame);
-    } else {
-      return computeDefault(input);
+
+    PrecompileInputResultTuple res;
+    Integer cacheKey = null;
+
+    if (enableResultCaching) {
+      cacheKey = Arrays.hashCode(input.toArrayUnsafe());
+      res = bnAddCache.getIfPresent(cacheKey);
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
+      }
     }
+    if (useNative) {
+      res = new PrecompileInputResultTuple(input, computeNative(input, messageFrame));
+    } else {
+      res = new PrecompileInputResultTuple(input, computeDefault(input));
+    }
+    if (cacheKey != null) {
+      bnAddCache.put(cacheKey, res);
+    }
+    return res.cachedResult();
   }
 
   private static PrecompileContractResult computeDefault(final Bytes input) {

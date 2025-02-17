@@ -26,16 +26,24 @@ import java.math.BigInteger;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The ECREC precompiled contract. */
 public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ECRECPrecompiledContract.class);
   private static final int V_BASE = 27;
   final SignatureAlgorithm signatureAlgorithm;
+  private static final String PRECOMPILE_NAME = "ECREC";
+  private static final Cache<Integer, PrecompileInputResultTuple> ecrecCache =
+      Caffeine.newBuilder().maximumSize(1000).build();
 
   /**
    * Instantiates a new ECREC precompiled contract with the default signature algorithm.
@@ -54,7 +62,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
    */
   public ECRECPrecompiledContract(
       final GasCalculator gasCalculator, final SignatureAlgorithm signatureAlgorithm) {
-    super("ECREC", gasCalculator);
+    super(PRECOMPILE_NAME, gasCalculator);
     this.signatureAlgorithm = signatureAlgorithm;
   }
 
@@ -68,6 +76,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final int size = input.size();
+    final Bytes nonMutatedInput = input.copy();
     final Bytes d = size >= 128 ? input : Bytes.wrap(input, MutableBytes.create(128 - size));
     final Bytes32 h = Bytes32.wrap(d, 0);
     // Note that the Yellow Paper defines v as the next 32 bytes (so 32..63). Yet, v is a simple
@@ -76,6 +85,28 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     // to check the rest of the bytes are zero though.
     if (!d.slice(32, 31).isZero()) {
       return PrecompileContractResult.success(Bytes.EMPTY);
+    }
+
+    PrecompileInputResultTuple res;
+
+    if (enableResultCaching) {
+      res = ecrecCache.getIfPresent(nonMutatedInput.hashCode());
+
+      if (res != null) {
+        if (res.cachedInput().equals(nonMutatedInput)) {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          LOG.info(
+              "false positive ecrec {}, cached hash {}, input hash: {}",
+              input.getClass().getSimpleName(),
+              res.cachedInput().hashCode(),
+              h.hashCode());
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
+      }
     }
 
     final int recId = d.get(63) - V_BASE;
@@ -97,13 +128,22 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
       final Optional<SECPPublicKey> recovered =
           signatureAlgorithm.recoverPublicKeyFromSignature(h, signature);
       if (recovered.isEmpty()) {
-        return PrecompileContractResult.success(Bytes.EMPTY);
+        res =
+            new PrecompileInputResultTuple(
+                nonMutatedInput, PrecompileContractResult.success(Bytes.EMPTY));
+        ecrecCache.put(nonMutatedInput.hashCode(), res);
+        return res.cachedResult();
       }
 
       final Bytes32 hashed = Hash.keccak256(recovered.get().getEncodedBytes());
       final MutableBytes32 result = MutableBytes32.create();
       hashed.slice(12).copyTo(result, 12);
-      return PrecompileContractResult.success(result);
+      res =
+          new PrecompileInputResultTuple(nonMutatedInput, PrecompileContractResult.success(result));
+      if (enableResultCaching) {
+        ecrecCache.put(nonMutatedInput.hashCode(), res);
+      }
+      return res.cachedResult();
     } catch (final IllegalArgumentException e) {
       return PrecompileContractResult.success(Bytes.EMPTY);
     }
