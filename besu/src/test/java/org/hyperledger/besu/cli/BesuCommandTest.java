@@ -1785,7 +1785,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(miningArg.getValue().getTargetGasLimit()).isPresent();
     assertThat(miningArg.getValue().getTargetGasLimit()).isEmpty();
 
     verify(mockLogger, never()).warn(contains("Sepolia is deprecated and will be shutdown"));
@@ -1797,14 +1796,18 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+      ArgumentCaptor.forClass(MiningConfiguration.class);
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(HOLESKY));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(miningArg.getValue().getTargetGasLimit()).isEmpty();
 
     verify(mockLogger, never()).warn(contains("Holesky is deprecated and will be shutdown"));
   }
