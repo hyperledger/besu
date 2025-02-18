@@ -19,11 +19,18 @@ import java.util.Objects;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
- * Manages access events that are done to the AccessWitness. An access mode is passed to the witness
- * representing the type of access being done on the verkle trie leaf node: read, write to an
- * existing leaf (reset) or write to a non-existent leaf (set). The access mode is then evaluated
- * against structures that tracks previous access events, to avoid double charging. What results is
- * the **new** access event schedule that is then used for gas charging.
+ * Manages access events that are done to the stateless AccessWitness. An access mode is passed to
+ * the witness representing the type of access being done on the verkle trie leaf node: read, write
+ * to an existing leaf (reset) or write to a non-existent leaf (set). The access mode is then
+ * evaluated against structures that track previous access events, to avoid double charging of a
+ * warm account or slot. What results is the **new** access event schedule that is then used for gas
+ * charging.
+ *
+ * <p>This class can represent a leaf or a branch access event. Each leaf access event has a
+ * reference to its corresponding branch event, so that accesses to leaves and branches can be
+ * reverted synchronously.
+ *
+ * @param <T> key type for the access event
  */
 public abstract class AccessEvent<T> {
 
@@ -60,14 +67,20 @@ public abstract class AccessEvent<T> {
 
   private final UInt256 index;
 
-  /** These are values for the event, they are not instance differentiators. */
-  private int accessCounter;
+  /** These are the actual values for the event, they are not to be used in equals and hashcode. */
+  private long accessCounter;
 
   private int accessFlags = NONE;
 
   private int hash;
   private boolean hashIsZero = false;
 
+  /**
+   * AccessEvent only constructor.
+   *
+   * @param key to be used for the access event to distinguish access events.
+   * @param index the index in the stateless trie used to distinguish between access events.
+   */
   public AccessEvent(final T key, final UInt256 index) {
     this.key = key;
     this.index = index;
@@ -265,7 +278,7 @@ public abstract class AccessEvent<T> {
    *
    * @return the current access counter of this event.
    */
-  public int rollbackAccessAndGet() {
+  public long rollbackAccessAndGet() {
     return --accessCounter;
   }
 

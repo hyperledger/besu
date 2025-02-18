@@ -55,6 +55,7 @@ public class Eip4762AccessWitness implements AccessWitness {
    * Instantiates a new EIP-4762 access witness.
    *
    * @param accesses Collection the controls access to branches and leaves in the trie.
+   * @param revertableEvents access events that can be reverted.
    */
   public Eip4762AccessWitness(
       final Map<AccessEvent<?>, AccessEvent<?>> accesses,
@@ -351,18 +352,10 @@ public class Eip4762AccessWitness implements AccessWitness {
     accesses.put(currentAccess, currentAccess);
   }
 
-  private LeafAccessEvent bootstrapLeafEvent(final LeafAccessEvent accessEvent) {
-    AccessEvent<?> currentEvent = accesses.get(accessEvent.getBranchEvent());
-    if (currentEvent instanceof BranchAccessEvent currentBranchEvent) {
-      return new LeafAccessEvent(currentBranchEvent, accessEvent.getIndex());
-    }
-    return accessEvent;
-  }
-
   private void touchAddressForLeaf(final LeafAccessEvent accessEvent, final int accessMode) {
     AccessEvent<?> currentAccess = accesses.putIfAbsent(accessEvent, accessEvent);
     if (currentAccess == null) {
-      currentAccess = bootstrapLeafEvent(accessEvent);
+      currentAccess = accessEvent;
       accessEvent.leafRead();
     }
 

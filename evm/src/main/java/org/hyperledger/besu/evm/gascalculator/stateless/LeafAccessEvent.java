@@ -31,13 +31,12 @@ final class LeafAccessEvent extends AccessEvent<AccessEvent<Address>> {
 
   @Override
   public String toShortString() {
-    return String.format("{addr=%s, treeIndex=%s, subIndex=%s}", key, key.getIndex(), getIndex());
+    return String.format("{%s,subIndex=%s}", key.toShortString(), getIndex().toShortHexString());
   }
 
   @Override
   public String toString() {
-    return String.format(
-        "LeafAccessEvent { key=%s, index=%s, subIndex=%s }", key, key.getIndex(), getIndex());
+    return String.format("LeafAccessEvent { %s, subIndex=%s }", key, getIndex().toShortHexString());
   }
 
   @Override

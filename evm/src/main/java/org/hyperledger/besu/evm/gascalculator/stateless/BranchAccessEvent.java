@@ -32,12 +32,13 @@ final class BranchAccessEvent extends AccessEvent<Address> {
 
   @Override
   public String toShortString() {
-    return String.format("{addr=%s, treeIndex=%s}", key, getIndex());
+    return String.format("{addr=%s,treeIndex=%s}", key, getIndex().toShortHexString());
   }
 
   @Override
   public String toString() {
-    return String.format("BranchAccessEvent { key=%s, index=%s }", key, getIndex());
+    return String.format(
+        "BranchAccessEvent { key=%s, index=%s }", key, getIndex().toShortHexString());
   }
 
   @Override

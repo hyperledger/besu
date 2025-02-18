@@ -135,9 +135,21 @@ public interface AccessWitness {
   long touchCodeChunks(
       Address address, boolean isContractInDeployment, long offset, long readSize, long codeLength);
 
+  /**
+   * Revert this access witness and rollback all of its accesses from the previously set checkpoint.
+   */
   void revertWitnesses();
 
+  /**
+   * Marks the checkpoint from where an access witness can be reverted and all its accesses thereon
+   * can be rolled back.
+   */
   void enterWitness();
 
+  /**
+   * Get all of the access events that constitute accesses to leaves.
+   *
+   * @return list of leaf access events.
+   */
   List<AccessEvent<?>> getLeafAccesses();
 }
