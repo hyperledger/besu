@@ -1797,7 +1797,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     final ArgumentCaptor<MiningConfiguration> miningArg =
-      ArgumentCaptor.forClass(MiningConfiguration.class);
+        ArgumentCaptor.forClass(MiningConfiguration.class);
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
