@@ -32,7 +32,6 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
@@ -65,7 +64,6 @@ import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.qbft.adaptor.BftEventHandlerAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryAdaptor;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHashingAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockchainAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
@@ -80,7 +78,6 @@ import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftBlockHeightMana
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
@@ -565,8 +562,6 @@ public class TestContextBuilder {
             blockChain.getChainHeadBlockNumber());
     final QbftExtraDataProvider qbftExtraDataProvider =
         new QbftExtraDataProviderAdaptor(BFT_EXTRA_DATA_ENCODER);
-    final QbftBlockHashing blockHashing =
-        new QbftBlockHashingAdaptor(new BftBlockHashing(BFT_EXTRA_DATA_ENCODER));
     final QbftValidatorModeTransitionLoggerAdaptor validatorModeTransitionLogger =
         new QbftValidatorModeTransitionLoggerAdaptor(
             new ValidatorModeTransitionLogger(forksSchedule));
@@ -585,8 +580,7 @@ public class TestContextBuilder {
                     messageValidatorFactory,
                     messageFactory,
                     BFT_EXTRA_DATA_ENCODER,
-                    qbftExtraDataProvider,
-                    blockHashing),
+                    qbftExtraDataProvider),
                 messageValidatorFactory,
                 messageFactory,
                 validatorModeTransitionLogger),
