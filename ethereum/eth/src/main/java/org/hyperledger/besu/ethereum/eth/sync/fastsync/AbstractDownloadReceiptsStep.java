@@ -60,7 +60,6 @@ public abstract class AbstractDownloadReceiptsStep<B, BWR>
           .getScheduler()
           .scheduleServiceTask(() -> getReceiptsWithPeerTaskSystem(headers))
           .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts));
-
     } else {
       return GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem)
           .run()

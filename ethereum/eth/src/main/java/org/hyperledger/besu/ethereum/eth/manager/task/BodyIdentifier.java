@@ -26,7 +26,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-class BodyIdentifier {
+public class BodyIdentifier {
   private final Bytes32 transactionsRoot;
   private final Bytes32 ommersHash;
   private final Bytes32 withdrawalsRoot;
@@ -36,14 +36,6 @@ class BodyIdentifier {
     this.transactionsRoot = transactionsRoot;
     this.ommersHash = ommersHash;
     this.withdrawalsRoot = withdrawalsRoot;
-  }
-
-  public BodyIdentifier(final BlockBody body) {
-    this(body.getTransactions(), body.getOmmers(), body.getWithdrawals());
-  }
-
-  public BodyIdentifier(final SyncBlockBody syncBody) {
-    this(syncBody.getTransactionsRoot(), syncBody.getOmmersHash(), syncBody.getWithdrawalsRoot());
   }
 
   public BodyIdentifier(
@@ -61,6 +53,14 @@ class BodyIdentifier {
         header.getTransactionsRoot(),
         header.getOmmersHash(),
         header.getWithdrawalsRoot().orElse(null));
+  }
+
+  public BodyIdentifier(final BlockBody body) {
+    this(body.getTransactions(), body.getOmmers(), body.getWithdrawals());
+  }
+
+  public BodyIdentifier(final SyncBlockBody syncBody) {
+    this(syncBody.getTransactionsRoot(), syncBody.getOmmersHash(), syncBody.getWithdrawalsRoot());
   }
 
   @Override
