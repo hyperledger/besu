@@ -30,7 +30,6 @@ import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
@@ -81,7 +80,6 @@ public class QbftRound {
   /** The Bft extra data provider */
   protected final QbftExtraDataProvider qbftExtraDataProvider;
 
-  private final QbftBlockHashing blockHashing;
   private final QbftBlockHeader parentHeader;
 
   /**
@@ -98,7 +96,6 @@ public class QbftRound {
    * @param roundTimer the round timer
    * @param bftExtraDataCodec the bft extra data codec
    * @param qbftExtraDataProvider the qbft extra data provider
-   * @param blockHashing the block hashing
    * @param parentHeader the parent header
    */
   public QbftRound(
@@ -113,7 +110,6 @@ public class QbftRound {
       final RoundTimer roundTimer,
       final BftExtraDataCodec bftExtraDataCodec,
       final QbftExtraDataProvider qbftExtraDataProvider,
-      final QbftBlockHashing blockHashing,
       final QbftBlockHeader parentHeader) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
@@ -125,7 +121,6 @@ public class QbftRound {
     this.transmitter = transmitter;
     this.bftExtraDataCodec = bftExtraDataCodec;
     this.qbftExtraDataProvider = qbftExtraDataProvider;
-    this.blockHashing = blockHashing;
     this.parentHeader = parentHeader;
     roundTimer.startTimer(getRoundIdentifier());
   }
@@ -395,10 +390,7 @@ public class QbftRound {
 
   private SECPSignature createCommitSeal(final QbftBlock block) {
     final QbftBlock commitBlock = createCommitBlock(block);
-    final QbftBlockHeader proposedHeader = commitBlock.getHeader();
-    final BftExtraData extraData = qbftExtraDataProvider.getExtraData(proposedHeader);
-    final Hash commitHash =
-        blockHashing.calculateDataHashForCommittedSeal(proposedHeader, extraData);
+    final Hash commitHash = commitBlock.getHash();
     return nodeKey.sign(commitHash);
   }
 
