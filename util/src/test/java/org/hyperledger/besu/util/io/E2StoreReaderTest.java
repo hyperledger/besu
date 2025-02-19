@@ -291,13 +291,13 @@ public class E2StoreReaderTest {
 
     Mockito.when(inputStream.available()).thenReturn(15, 0);
     Mockito.when(inputStream.readNBytes(2))
-            .thenReturn(E2Type.COMPRESSED_EXECUTION_BLOCK_BODY.getTypeCode());
+        .thenReturn(E2Type.COMPRESSED_EXECUTION_BLOCK_BODY.getTypeCode());
     Mockito.when(inputStream.readNBytes(6))
-            .thenReturn(new byte[] {0x07, 0x00, 0x00, 0x00, 0x00, 0x00});
+        .thenReturn(new byte[] {0x07, 0x00, 0x00, 0x00, 0x00, 0x00});
     byte[] compressedExecutionBlockBody = new byte[] {1, 2, 3, 4, 5, 6, 7};
     Mockito.when(inputStream.readNBytes(7)).thenReturn(compressedExecutionBlockBody);
     Mockito.when(snappyFactory.createFramedInputStream(compressedExecutionBlockBody))
-            .thenReturn(snappyFramedInputStream);
+        .thenReturn(snappyFramedInputStream);
     byte[] executionBlockBody = new byte[] {10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
     Mockito.when(snappyFramedInputStream.readAllBytes()).thenReturn(executionBlockBody);
 
@@ -310,9 +310,8 @@ public class E2StoreReaderTest {
     Mockito.verify(snappyFactory).createFramedInputStream(compressedExecutionBlockBody);
     Mockito.verify(snappyFramedInputStream).readAllBytes();
     ArgumentCaptor<E2ExecutionBlockBody> executionBlockBodyArgumentCaptor =
-            ArgumentCaptor.forClass(E2ExecutionBlockBody.class);
-    Mockito.verify(listener)
-            .handleExecutionBlockBody(executionBlockBodyArgumentCaptor.capture());
+        ArgumentCaptor.forClass(E2ExecutionBlockBody.class);
+    Mockito.verify(listener).handleExecutionBlockBody(executionBlockBodyArgumentCaptor.capture());
     Mockito.verifyNoMoreInteractions(listener);
 
     E2ExecutionBlockBody e2ExecutionBlockBody = executionBlockBodyArgumentCaptor.getValue();
@@ -328,13 +327,13 @@ public class E2StoreReaderTest {
 
     Mockito.when(inputStream.available()).thenReturn(15, 0);
     Mockito.when(inputStream.readNBytes(2))
-            .thenReturn(E2Type.COMPRESSED_EXECUTION_BLOCK_RECEIPTS.getTypeCode());
+        .thenReturn(E2Type.COMPRESSED_EXECUTION_BLOCK_RECEIPTS.getTypeCode());
     Mockito.when(inputStream.readNBytes(6))
-            .thenReturn(new byte[] {0x07, 0x00, 0x00, 0x00, 0x00, 0x00});
+        .thenReturn(new byte[] {0x07, 0x00, 0x00, 0x00, 0x00, 0x00});
     byte[] compressedExecutionBlockReceipts = new byte[] {1, 2, 3, 4, 5, 6, 7};
     Mockito.when(inputStream.readNBytes(7)).thenReturn(compressedExecutionBlockReceipts);
     Mockito.when(snappyFactory.createFramedInputStream(compressedExecutionBlockReceipts))
-            .thenReturn(snappyFramedInputStream);
+        .thenReturn(snappyFramedInputStream);
     byte[] executionBlockReceipts = new byte[] {10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
     Mockito.when(snappyFramedInputStream.readAllBytes()).thenReturn(executionBlockReceipts);
 
@@ -347,12 +346,13 @@ public class E2StoreReaderTest {
     Mockito.verify(snappyFactory).createFramedInputStream(compressedExecutionBlockReceipts);
     Mockito.verify(snappyFramedInputStream).readAllBytes();
     ArgumentCaptor<E2ExecutionBlockReceipts> executionBlockReceiptsArgumentCaptor =
-            ArgumentCaptor.forClass(E2ExecutionBlockReceipts.class);
+        ArgumentCaptor.forClass(E2ExecutionBlockReceipts.class);
     Mockito.verify(listener)
-            .handleExecutionBlockReceipts(executionBlockReceiptsArgumentCaptor.capture());
+        .handleExecutionBlockReceipts(executionBlockReceiptsArgumentCaptor.capture());
     Mockito.verifyNoMoreInteractions(listener);
 
-    E2ExecutionBlockReceipts e2ExecutionBlockReceipts = executionBlockReceiptsArgumentCaptor.getValue();
+    E2ExecutionBlockReceipts e2ExecutionBlockReceipts =
+        executionBlockReceiptsArgumentCaptor.getValue();
     Assertions.assertEquals(executionBlockReceipts, e2ExecutionBlockReceipts.getReceipts());
     Assertions.assertEquals(0, e2ExecutionBlockReceipts.getSlot());
   }
@@ -365,14 +365,14 @@ public class E2StoreReaderTest {
     Mockito.when(inputStream.available()).thenReturn(40, 0);
     Mockito.when(inputStream.readNBytes(2)).thenReturn(E2Type.BLOCK_INDEX.getTypeCode());
     Mockito.when(inputStream.readNBytes(6))
-            .thenReturn(new byte[] {0x20, 0x00, 0x00, 0x00, 0x00, 0x00});
+        .thenReturn(new byte[] {0x20, 0x00, 0x00, 0x00, 0x00, 0x00});
     Mockito.when(inputStream.readNBytes(32))
-            .thenReturn(
-                    new byte[] {
-                            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x00, 0x00
-                    });
+        .thenReturn(
+            new byte[] {
+              0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
+              0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+              0x00, 0x00, 0x00, 0x00
+            });
 
     reader.read(inputStream, listener);
 
@@ -382,7 +382,7 @@ public class E2StoreReaderTest {
     Mockito.verify(inputStream).readNBytes(6);
     Mockito.verify(inputStream).readNBytes(32);
     ArgumentCaptor<E2BlockIndex> blockIndexArgumentCaptor =
-            ArgumentCaptor.forClass(E2BlockIndex.class);
+        ArgumentCaptor.forClass(E2BlockIndex.class);
     Mockito.verify(listener).handleBlockIndex(blockIndexArgumentCaptor.capture());
     Mockito.verifyNoMoreInteractions(listener);
 
