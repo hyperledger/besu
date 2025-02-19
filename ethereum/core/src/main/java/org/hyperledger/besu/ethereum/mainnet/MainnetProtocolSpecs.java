@@ -26,6 +26,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
@@ -140,16 +141,17 @@ public abstract class MainnetProtocolSpecs {
                 transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new MainnetTransactionProcessor(
-                    gasCalculator,
-                    transactionValidatorFactory,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    new NotClearEmptyAccount(),
-                    false,
-                    evmConfiguration.evmStackSize(),
-                    FeeMarket.legacy(),
-                    CoinbaseFeePriceCalculator.frontier()))
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidatorFactory)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccountStrategy(new NotClearEmptyAccount())
+                    .warmCoinbase(false)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(FeeMarket.legacy())
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
+                    .build())
         .privateTransactionProcessorBuilder(
             (transactionValidatorFactory,
                 contractCreationProcessor,
@@ -301,16 +303,17 @@ public abstract class MainnetProtocolSpecs {
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new MainnetTransactionProcessor(
-                    gasCalculator,
-                    transactionValidator,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    new ClearEmptyAccount(),
-                    false,
-                    evmConfiguration.evmStackSize(),
-                    feeMarket,
-                    CoinbaseFeePriceCalculator.frontier()))
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidator)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccountStrategy(new ClearEmptyAccount())
+                    .warmCoinbase(false)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(feeMarket)
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
+                    .build())
         .name("SpuriousDragon");
   }
 
@@ -507,16 +510,17 @@ public abstract class MainnetProtocolSpecs {
                 transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new MainnetTransactionProcessor(
-                    gasCalculator,
-                    transactionValidatorFactory,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    new ClearEmptyAccount(),
-                    false,
-                    evmConfiguration.evmStackSize(),
-                    feeMarket,
-                    CoinbaseFeePriceCalculator.eip1559()))
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidatorFactory)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccountStrategy(new ClearEmptyAccount())
+                    .warmCoinbase(false)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(feeMarket)
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
+                    .build())
         .contractCreationProcessorBuilder(
             evm ->
                 new ContractCreationProcessor(
@@ -641,16 +645,17 @@ public abstract class MainnetProtocolSpecs {
                 transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new MainnetTransactionProcessor(
-                    gasCalculator,
-                    transactionValidatorFactory,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    clearEmptyAccountStrategy,
-                    true,
-                    evmConfiguration.evmStackSize(),
-                    feeMarket,
-                    CoinbaseFeePriceCalculator.eip1559()))
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidatorFactory)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccountStrategy(clearEmptyAccountStrategy)
+                    .warmCoinbase(true)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(feeMarket)
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
+                    .build())
         // Contract creation rules for EIP-3860 Limit and meter intitcode
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -679,6 +684,13 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+
+    final var cancunBlobSchedule =
+        genesisConfigOptions
+            .getBlobScheduleOptions()
+            .flatMap(BlobScheduleOptions::getCancun)
+            .orElse(BlobScheduleOptions.BlobSchedule.CANCUN_DEFAULT);
+
     final BaseFeeMarket cancunFeeMarket;
     if (genesisConfigOptions.isZeroBaseFee()) {
       cancunFeeMarket = FeeMarket.zeroBaseFee(londonForkBlockNumber);
@@ -688,14 +700,11 @@ public abstract class MainnetProtocolSpecs {
               londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
     } else {
       cancunFeeMarket =
-          FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+          FeeMarket.cancun(
+              londonForkBlockNumber,
+              genesisConfigOptions.getBaseFeePerGas(),
+              cancunBlobSchedule.getBaseFeeUpdateFraction());
     }
-
-    final var cancunBlobSchedule =
-        genesisConfigOptions
-            .getBlobScheduleOptions()
-            .flatMap(BlobScheduleOptions::getCancun)
-            .orElse(BlobScheduleOptions.BlobSchedule.CANCUN_DEFAULT);
 
     final java.util.function.Supplier<GasCalculator> cancunGasCalcSupplier =
         () -> new CancunGasCalculator(cancunBlobSchedule.getTarget());
@@ -715,7 +724,10 @@ public abstract class MainnetProtocolSpecs {
         .gasLimitCalculatorBuilder(
             feeMarket ->
                 new CancunTargetingGasLimitCalculator(
-                    londonForkBlockNumber, (BaseFeeMarket) feeMarket, cancunBlobSchedule.getMax()))
+                    londonForkBlockNumber,
+                    (BaseFeeMarket) feeMarket,
+                    cancunGasCalcSupplier.get(),
+                    cancunBlobSchedule.getMax()))
         // EVM changes to support EIP-1153: TSTORE and EIP-5656: MCOPY
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -728,18 +740,20 @@ public abstract class MainnetProtocolSpecs {
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new MainnetTransactionProcessor(
-                    gasCalculator,
-                    transactionValidator,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    new ClearEmptyAccount(),
-                    true,
-                    evmConfiguration.evmStackSize(),
-                    feeMarket,
-                    CoinbaseFeePriceCalculator.eip1559(),
-                    new CodeDelegationProcessor(
-                        chainId, SIGNATURE_ALGORITHM.get().getHalfCurveOrder())))
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidator)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccountStrategy(new ClearEmptyAccount())
+                    .warmCoinbase(true)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(feeMarket)
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
+                    .codeDelegationProcessor(
+                        new CodeDelegationProcessor(
+                            chainId, SIGNATURE_ALGORITHM.get().getHalfCurveOrder()))
+                    .build())
         // change to check for max blob gas per block for EIP-4844
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -821,6 +835,21 @@ public abstract class MainnetProtocolSpecs {
     final java.util.function.Supplier<GasCalculator> pragueGasCalcSupplier =
         () -> new PragueGasCalculator(pragueBlobSchedule.getTarget());
 
+    final BaseFeeMarket pragueFeeMarket;
+    if (genesisConfigOptions.isZeroBaseFee()) {
+      pragueFeeMarket = FeeMarket.zeroBaseFee(londonForkBlockNumber);
+    } else if (genesisConfigOptions.isFixedBaseFee()) {
+      pragueFeeMarket =
+          FeeMarket.fixedBaseFee(
+              londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
+    } else {
+      pragueFeeMarket =
+          FeeMarket.prague(
+              londonForkBlockNumber,
+              genesisConfigOptions.getBaseFeePerGas(),
+              pragueBlobSchedule.getBaseFeeUpdateFraction());
+    }
+
     return cancunDefinition(
             chainId,
             enableRevertReason,
@@ -829,12 +858,16 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
+        .feeMarket(pragueFeeMarket)
         .gasCalculator(pragueGasCalcSupplier)
         // EIP-7840 Blob schedule | EIP-7691 6/9 blob increase
         .gasLimitCalculatorBuilder(
             feeMarket ->
                 new PragueTargetingGasLimitCalculator(
-                    londonForkBlockNumber, (BaseFeeMarket) feeMarket, pragueBlobSchedule.getMax()))
+                    londonForkBlockNumber,
+                    (BaseFeeMarket) feeMarket,
+                    pragueGasCalcSupplier.get(),
+                    pragueBlobSchedule.getMax()))
         // EIP-3074 AUTH and AUTHCALL
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -848,7 +881,6 @@ public abstract class MainnetProtocolSpecs {
         .requestsValidator(new MainnetRequestsValidator())
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestProcessorCoordinator(pragueRequestsProcessors(requestContractAddresses))
-
         // change to accept EIP-7702 transactions
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -930,7 +962,10 @@ public abstract class MainnetProtocolSpecs {
         .gasLimitCalculatorBuilder(
             feeMarket ->
                 new OsakaTargetingGasLimitCalculator(
-                    londonForkBlockNumber, (BaseFeeMarket) feeMarket, maxBlobsPerBlock))
+                    londonForkBlockNumber,
+                    (BaseFeeMarket) feeMarket,
+                    osakaGasCalcSupplier.get(),
+                    maxBlobsPerBlock))
         // EIP-7692 EOF v1 EVM and opcodes
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -980,16 +1015,17 @@ public abstract class MainnetProtocolSpecs {
                 transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new MainnetTransactionProcessor(
-                    gasCalculator,
-                    transactionValidatorFactory,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    clearEmptyAccountStrategy,
-                    true,
-                    evmConfiguration.evmStackSize(),
-                    feeMarket,
-                    CoinbaseFeePriceCalculator.eip1559()))
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidatorFactory)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccountStrategy(clearEmptyAccountStrategy)
+                    .warmCoinbase(true)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(feeMarket)
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
+                    .build())
         .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
         .executionWitnessValidator(new ExecutionWitnessValidator.AllowedExecutionWitness())
         .blockHashProcessor(new Eip7709BlockHashProcessor())
@@ -1119,6 +1155,7 @@ public abstract class MainnetProtocolSpecs {
 
     @Override
     public BlockProcessingResult processBlock(
+        final ProtocolContext protocolContext,
         final Blockchain blockchain,
         final MutableWorldState worldState,
         final BlockHeader blockHeader,
@@ -1128,6 +1165,7 @@ public abstract class MainnetProtocolSpecs {
         final PrivateMetadataUpdater privateMetadataUpdater) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
+          protocolContext,
           blockchain,
           worldState,
           blockHeader,

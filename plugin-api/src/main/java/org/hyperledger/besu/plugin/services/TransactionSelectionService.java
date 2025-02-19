@@ -15,8 +15,11 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
+import org.hyperledger.besu.plugin.services.txselection.BlockTransactionSelectionService;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 
 /** Transaction selection service interface */
 @Unstable
@@ -25,9 +28,23 @@ public interface TransactionSelectionService extends BesuService {
   /**
    * Create a transaction selector plugin
    *
+   * @param selectorsStateManager the selectors state manager
    * @return the transaction selector plugin
    */
-  PluginTransactionSelector createPluginTransactionSelector();
+  PluginTransactionSelector createPluginTransactionSelector(
+      SelectorsStateManager selectorsStateManager);
+
+  /**
+   * Called during the block creation to allow plugins to propose their own pending transactions for
+   * block inclusion
+   *
+   * @param blockTransactionSelectionService the service used by the plugin to evaluate pending
+   *     transactions and commit or rollback changes
+   * @param pendingBlockHeader the header of the block being created
+   */
+  void selectPendingTransactions(
+      BlockTransactionSelectionService blockTransactionSelectionService,
+      final ProcessableBlockHeader pendingBlockHeader);
 
   /**
    * Registers the transaction selector factory with the service

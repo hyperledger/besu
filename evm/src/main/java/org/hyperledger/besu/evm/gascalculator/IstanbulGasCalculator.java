@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.function.Supplier;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Istanbul gas calculator. */
@@ -27,7 +28,6 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
 
   private static final long TX_DATA_ZERO_COST = 4L;
   private static final long ISTANBUL_TX_DATA_NON_ZERO_COST = 16L;
-  private static final long TX_BASE_COST = 21_000L;
 
   private static final long SLOAD_GAS = 800L;
   private static final long BALANCE_OPERATION_GAS_COST = 700L;
@@ -45,19 +45,9 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   public IstanbulGasCalculator() {}
 
   @Override
-  public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreation) {
-    int zeros = 0;
-    for (int i = 0; i < payload.size(); i++) {
-      if (payload.get(i) == 0) {
-        ++zeros;
-      }
-    }
-    final int nonZeros = payload.size() - zeros;
-
-    final long cost =
-        TX_BASE_COST + (TX_DATA_ZERO_COST * zeros) + (ISTANBUL_TX_DATA_NON_ZERO_COST * nonZeros);
-
-    return isContractCreation ? (cost + txCreateExtraGasCost()) : cost;
+  protected long callDataCost(final long payloadSize, final long zeroBytes) {
+    return clampedAdd(
+        ISTANBUL_TX_DATA_NON_ZERO_COST * (payloadSize - zeroBytes), TX_DATA_ZERO_COST * zeroBytes);
   }
 
   @Override
@@ -143,10 +133,5 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   public long extCodeHashOperationGasCost(
       final MessageFrame frame, final boolean accountIsWarm, final Address address) {
     return EXTCODE_HASH_COST;
-  }
-
-  @Override
-  public long getMaximumTransactionCost(final int size) {
-    return TX_BASE_COST + (ISTANBUL_TX_DATA_NON_ZERO_COST * size);
   }
 }

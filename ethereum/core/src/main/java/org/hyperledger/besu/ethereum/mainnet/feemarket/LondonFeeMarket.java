@@ -39,16 +39,15 @@ public class LondonFeeMarket implements BaseFeeMarket {
   private final TransactionPriceCalculator txPriceCalculator;
   private final Wei baseFeeFloor;
 
-  public LondonFeeMarket(final long londonForkBlockNumber) {
+  LondonFeeMarket(final long londonForkBlockNumber) {
     this(londonForkBlockNumber, Optional.empty());
   }
 
-  public LondonFeeMarket(
-      final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
+  LondonFeeMarket(final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
     this(TransactionPriceCalculator.eip1559(), londonForkBlockNumber, baseFeePerGasOverride);
   }
 
-  protected LondonFeeMarket(
+  LondonFeeMarket(
       final TransactionPriceCalculator txPriceCalculator,
       final long londonForkBlockNumber,
       final Optional<Wei> baseFeePerGasOverride) {

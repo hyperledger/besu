@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
-import org.hyperledger.besu.datatypes.AccountOverrideMap;
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
 import java.util.ArrayList;
@@ -27,19 +27,19 @@ public class BlockStateCall {
 
   private final List<? extends CallParameter> calls;
 
-  private final AccountOverrideMap accountOverrides;
+  private final StateOverrideMap stateOverrideMap;
 
   private final boolean validation;
 
   public BlockStateCall(
       final List<? extends CallParameter> calls,
       final BlockOverrides blockOverrides,
-      final AccountOverrideMap accountOverrides,
+      final StateOverrideMap stateOverrideMap,
       final boolean validation) {
     this.calls = calls != null ? calls : new ArrayList<>();
     this.blockOverrides =
         blockOverrides != null ? blockOverrides : BlockOverrides.builder().build();
-    this.accountOverrides = accountOverrides;
+    this.stateOverrideMap = stateOverrideMap;
     this.validation = validation;
   }
 
@@ -51,8 +51,8 @@ public class BlockStateCall {
     return blockOverrides;
   }
 
-  public Optional<AccountOverrideMap> getAccountOverrides() {
-    return Optional.ofNullable(accountOverrides);
+  public Optional<StateOverrideMap> getStateOverrideMap() {
+    return Optional.ofNullable(stateOverrideMap);
   }
 
   public List<? extends CallParameter> getCalls() {

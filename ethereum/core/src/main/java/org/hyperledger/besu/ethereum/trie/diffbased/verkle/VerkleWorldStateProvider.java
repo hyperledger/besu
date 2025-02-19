@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.VerkleCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
@@ -43,11 +43,9 @@ public class VerkleWorldStateProvider extends DiffBasedWorldStateProvider {
         maxLayersToLoad,
         pluginContext);
     provideCachedWorldStorageManager(
-        new VerkleCachedWorldStorageManager(
-            this, worldStateKeyValueStorage, this::cloneBonsaiWorldStateConfig));
-    loadPersistedState(
-        new VerkleWorldState(
-            this, worldStateKeyValueStorage, evmConfiguration, defaultWorldStateConfig));
+        new VerkleCachedWorldStorageManager(this, worldStateKeyValueStorage, worldStateConfig));
+    loadHeadWorldState(
+        new VerkleWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));
   }
 
   @VisibleForTesting
@@ -59,8 +57,7 @@ public class VerkleWorldStateProvider extends DiffBasedWorldStateProvider {
       final EvmConfiguration evmConfiguration) {
     super(worldStateKeyValueStorage, blockchain, trieLogManager);
     provideCachedWorldStorageManager(cachedWorldStorageManager);
-    loadPersistedState(
-        new VerkleWorldState(
-            this, worldStateKeyValueStorage, evmConfiguration, defaultWorldStateConfig));
+    loadHeadWorldState(
+        new VerkleWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));
   }
 }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -24,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,9 +42,16 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EthPeers ethPeers,
-      final EngineCallListener engineCallListener) {
+      final EngineCallListener engineCallListener,
+      final MetricsSystem metricsSystem) {
     super(
-        vertx, timestampSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
+        vertx,
+        timestampSchedule,
+        protocolContext,
+        mergeCoordinator,
+        ethPeers,
+        engineCallListener,
+        metricsSystem);
     this.cancunMilestone = timestampSchedule.milestoneFor(CANCUN);
   }
 
@@ -70,6 +79,10 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,
           "Missing parent beacon block root field");
+    } else if (maybeRequestsParam.isPresent()) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS,
+          "Unexpected execution requests field present");
     } else {
       return ValidationResult.valid();
     }
@@ -77,6 +90,11 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
-    return ForkSupportHelper.validateForkSupported(CANCUN, cancunMilestone, blockTimestamp);
+    return ForkSupportHelper.validateForkSupported(
+        CANCUN,
+        cancunMilestone,
+        PRAGUE,
+        protocolSchedule.flatMap(s -> s.milestoneFor(PRAGUE)),
+        blockTimestamp);
   }
 }

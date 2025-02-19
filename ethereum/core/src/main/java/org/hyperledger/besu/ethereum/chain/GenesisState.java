@@ -48,7 +48,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt64;
 
 public final class GenesisState {
 
@@ -217,12 +216,6 @@ public final class GenesisState {
         .parentBeaconBlockRoot(
             (isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
         .requestsHash(isPragueAtGenesis(genesis) ? Hash.EMPTY_REQUESTS_HASH : null)
-        .targetBlobsPerBlock(
-            isPragueAtGenesis(genesis)
-                // TODO SLD EIP-7742 Currently defaulting to null due to dependency on web3j
-                // BlockHeader in CodeDelegationTransactionAcceptanceTest
-                ? genesis.getTargetBlobsPerBlock().map(UInt64::fromHexString).orElse(null)
-                : null)
         .buildBlockHeader();
   }
 

@@ -18,15 +18,18 @@
     "blobSchedule": {
       "cancun": {
         "target": 3,
-        "max": 6
+        "max": 6,
+        "baseFeeUpdateFraction": 3338477
       },
       "prague": {
         "target": 6,
-        "max": 9
+        "max": 9,
+        "baseFeeUpdateFraction": 5007716
       },
       "osaka": {
         "target": 9,
-        "max": 12
+        "max": 12,
+        "baseFeeUpdateFraction": 5007716
       }
     },
     "clique": {
@@ -53,6 +56,13 @@
       "comment": "This account has signed a authorization for contract 0x0000000000000000000000000000000000009999 to send a 7702 transaction",
       "privateKey": "11f2e7b6a734ab03fa682450e0d4681d18a944f8b83c99bf7b9b4de6c0f35ea1",
       "balance": "90000000000000000000000"
+    },
+    "0x0000000000000000000000000000000000000666": {
+      "comment": "Contract reverts immediately when called",
+      "balance": "0",
+      "code": "5F5FFD",
+      "codeDecompiled": "PUSH0 PUSH0 REVERT",
+      "storage": {}
     },
     "0x0000000000000000000000000000000000009999": {
       "comment": "Contract sends all its Ether to the address provided as a call data.",

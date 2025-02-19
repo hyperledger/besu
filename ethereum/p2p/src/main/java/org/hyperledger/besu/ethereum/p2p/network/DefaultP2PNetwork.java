@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemon;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemonListener;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -82,7 +83,6 @@ import io.vertx.core.Future;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.devp2p.EthereumNodeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -366,9 +366,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
         final EnodeURL enodeURL =
             EnodeURLImpl.builder()
                 .ipAddress(enr.ip())
-                .nodeId(enr.publicKey().bytes())
-                .discoveryPort(Optional.ofNullable(enr.udp()))
-                .listeningPort(Optional.ofNullable(enr.tcp()))
+                .nodeId(enr.publicKey())
+                .discoveryPort(enr.udp())
+                .listeningPort(enr.tcp())
                 .build();
         final DiscoveryPeer peer = DiscoveryPeer.fromEnode(enodeURL);
         peers.add(peer);
@@ -464,7 +464,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public boolean isDiscoveryEnabled() {
-    return peerDiscoveryAgent.isActive();
+    return peerDiscoveryAgent.isEnabled();
+  }
+
+  @Override
+  public boolean isStopped() {
+    return peerDiscoveryAgent.isStopped();
   }
 
   @Override
@@ -580,7 +585,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final ForkIdManager forkIdManager =
           new ForkIdManager(blockchain, blockNumberForks, timestampForks, this.legacyForkIdEnabled);
 
-      return new VertxPeerDiscoveryAgent(
+      return VertxPeerDiscoveryAgent.create(
           vertx,
           nodeKey,
           config.getDiscovery(),

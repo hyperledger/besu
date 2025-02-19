@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 public class Eip7709BlockHashLookup implements BlockHashLookup {
   private static final Logger LOG = LoggerFactory.getLogger(Eip7709BlockHashLookup.class);
   private static final long BLOCKHASH_SERVE_WINDOW = 256L;
+  private static final long HISTORY_SERVE_WINDOW = 8191;
   private static final long WARM_STORAGE_READ_COST = 100L;
 
   private final Address contractAddress;
@@ -48,10 +49,9 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
    * Constructs a Eip7709BlockHashLookup.
    *
    * @param contractAddress the address of the contract storing the history.
-   * @param historyServeWindow the number of blocks for which history should be saved.
    */
-  public Eip7709BlockHashLookup(final Address contractAddress, final long historyServeWindow) {
-    this(contractAddress, historyServeWindow, BLOCKHASH_SERVE_WINDOW);
+  public Eip7709BlockHashLookup(final Address contractAddress) {
+    this(contractAddress, HISTORY_SERVE_WINDOW, BLOCKHASH_SERVE_WINDOW);
   }
 
   /**
@@ -75,23 +75,15 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
 
   @Override
   public Hash apply(final MessageFrame frame, final Long blockNumber) {
-    final long currentBlockNumber = frame.getBlockValues().getNumber();
-    final long minBlockServe = Math.max(0, currentBlockNumber - blockHashServeWindow);
-    if (blockNumber >= currentBlockNumber || blockNumber < minBlockServe) {
-      LOG.trace("failed to read hash from system account for block {}", blockNumber);
-      return ZERO;
-    }
-
-    final long cost = cost(frame, blockNumber);
-    frame.decrementRemainingGas(cost);
-    if (frame.getRemainingGas() < cost) {
-      return null;
-    }
-
     final Hash cachedHash = hashByNumber.get(blockNumber);
     if (cachedHash != null) {
       return cachedHash;
     }
+
+    final UInt256 slot = UInt256.valueOf(blockNumber % historyServeWindow);
+
+    final long lookupCost = lookupCost(frame, slot);
+    frame.decrementRemainingGas(lookupCost);
 
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     Account account = worldUpdater.get(contractAddress);
@@ -100,7 +92,6 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
       return ZERO;
     }
 
-    UInt256 slot = UInt256.valueOf(blockNumber % historyServeWindow);
     final UInt256 value = account.getStorageValue(slot);
     LOG.atTrace()
         .log(
@@ -113,9 +104,17 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
     return blockHash;
   }
 
-  private long cost(final MessageFrame frame, final long blockNumber) {
-    final UInt256 key = UInt256.valueOf(blockNumber % BLOCKHASH_SERVE_WINDOW);
-    long gas = frame.getAccessWitness().touchAndChargeStorageLoad(contractAddress, key);
+  public Address getContractAddress() {
+    return contractAddress;
+  }
+
+  @Override
+  public long getLookback() {
+    return blockHashServeWindow;
+  }
+
+  private long lookupCost(final MessageFrame frame, final UInt256 slotKey) {
+    long gas = frame.getAccessWitness().touchAndChargeStorageLoad(getContractAddress(), slotKey);
 
     if (gas == 0) {
       return getWarmStorageReadCost();
@@ -124,7 +123,7 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
     return gas;
   }
 
-  protected long getWarmStorageReadCost() {
+  private long getWarmStorageReadCost() {
     return WARM_STORAGE_READ_COST;
   }
 }
