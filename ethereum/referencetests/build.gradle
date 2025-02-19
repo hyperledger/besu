@@ -357,4 +357,3 @@ def generateTestFiles(
     testFile.newWriter().withWriter { w -> w << testFileContents }
   }
 }
-

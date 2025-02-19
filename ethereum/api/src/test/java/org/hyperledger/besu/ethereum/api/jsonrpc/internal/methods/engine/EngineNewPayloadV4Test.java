@@ -164,7 +164,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.empty());
-    final EnginePayloadParameter payload = mockEnginePayload(mockHeader, emptyList(), null);
+    final EnginePayloadParameter payload = mockEnginePayload(mockHeader, emptyList());
 
     ValidationResult<RpcErrorType> res =
         method.validateParameters(
@@ -182,7 +182,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.empty());
-    final EnginePayloadParameter payload = mockEnginePayload(mockHeader, emptyList(), null);
+    final EnginePayloadParameter payload = mockEnginePayload(mockHeader, emptyList());
 
     ValidationResult<RpcErrorType> res =
         method.validateParameters(
