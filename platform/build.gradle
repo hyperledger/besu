@@ -165,8 +165,6 @@ dependencies {
 
     api 'org.springframework.security:spring-security-crypto:6.3.3'
 
-    api 'org.wiremock:wiremock:3.9.1'
-
     api 'org.web3j:abi:4.12.2'
     api 'org.web3j:besu:4.12.2'
     api 'org.web3j:core:4.12.2'

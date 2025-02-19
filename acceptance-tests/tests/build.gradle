@@ -80,7 +80,6 @@ dependencies {
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
   testImplementation 'org.web3j:core'
-  testImplementation 'org.wiremock:wiremock'
   testImplementation 'com.google.dagger:dagger'
   testAnnotationProcessor 'com.google.dagger:dagger-compiler'
   testImplementation project(path: ':acceptance-tests:tests:shanghai')
