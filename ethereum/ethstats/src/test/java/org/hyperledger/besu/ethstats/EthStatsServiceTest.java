@@ -44,11 +44,11 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.WebSocket;
+import io.vertx.core.http.WebSocketClient;
 import io.vertx.core.http.WebSocketConnectOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,7 +74,7 @@ public class EthStatsServiceTest {
   @Mock private P2PNetwork p2PNetwork;
   @Mock private EthContext ethContext;
   @Mock private EthScheduler ethScheduler;
-  @Mock private HttpClient httpClient;
+  @Mock private WebSocketClient webSocketClient;
   @Mock private WebSocket webSocket;
 
   final EthStatsConnectOptions ethStatsConnectOptions =
@@ -101,7 +101,7 @@ public class EthStatsServiceTest {
   public void initMocks() {
     when(ethProtocolManager.ethContext()).thenReturn(ethContext);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    when(vertx.createHttpClient(any(HttpClientOptions.class))).thenReturn(httpClient);
+    when(vertx.createWebSocketClient()).thenReturn(webSocketClient);
     when(genesisConfigOptions.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
     when(ethProtocolManager.getSupportedCapabilities())
         .thenReturn(List.of(Capability.create("eth64", 1)));
@@ -142,16 +142,14 @@ public class EthStatsServiceTest {
             p2PNetwork);
     when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
 
-    final ArgumentCaptor<Handler<AsyncResult<WebSocket>>> webSocketCaptor =
-        ArgumentCaptor.forClass(Handler.class);
+    Future<WebSocket> succeededFuture = Future.succeededFuture(webSocket);
+    when(webSocketClient.connect(any(WebSocketConnectOptions.class))).thenReturn(succeededFuture);
 
     ethStatsService.start();
 
-    verify(httpClient, times(1))
-        .webSocket(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
-    webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
+    verify(webSocketClient, times(1)).connect(any(WebSocketConnectOptions.class));
 
-    final ArgumentCaptor<String> helloMessageCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> helloMessageCaptor = ArgumentCaptor.forClass(String.class);
     verify(webSocket, times(1)).writeTextMessage(helloMessageCaptor.capture(), any(Handler.class));
 
     assertThat(helloMessageCaptor.getValue().contains(EthStatsRequest.Type.HELLO.getValue()))
@@ -175,15 +173,12 @@ public class EthStatsServiceTest {
             p2PNetwork);
     when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
 
+    Future<WebSocket> succeededFuture = Future.succeededFuture(webSocket);
+    when(webSocketClient.connect(any(WebSocketConnectOptions.class))).thenReturn(succeededFuture);
+
     ethStatsService.start();
 
-    final ArgumentCaptor<Handler<AsyncResult<WebSocket>>> webSocketCaptor =
-        ArgumentCaptor.forClass(Handler.class);
-    verify(httpClient, times(1))
-        .webSocket(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
-    webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
-
-    final ArgumentCaptor<Handler<AsyncResult<Void>>> helloMessageCaptor =
+    ArgumentCaptor<Handler<AsyncResult<Void>>> helloMessageCaptor =
         ArgumentCaptor.forClass(Handler.class);
     verify(webSocket, times(1)).writeTextMessage(anyString(), helloMessageCaptor.capture());
     helloMessageCaptor.getValue().handle(failedWebSocketEvent(Optional.empty()));
@@ -207,16 +202,12 @@ public class EthStatsServiceTest {
             p2PNetwork);
     when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
 
-    final ArgumentCaptor<Handler<AsyncResult<WebSocket>>> webSocketCaptor =
-        ArgumentCaptor.forClass(Handler.class);
+    Future<WebSocket> succeededFuture = Future.succeededFuture(webSocket);
+    when(webSocketClient.connect(any(WebSocketConnectOptions.class))).thenReturn(succeededFuture);
 
     ethStatsService.start();
 
-    verify(httpClient, times(1))
-        .webSocket(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
-    webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
-
-    final ArgumentCaptor<Handler<String>> textMessageHandlerCaptor =
+    ArgumentCaptor<Handler<String>> textMessageHandlerCaptor =
         ArgumentCaptor.forClass(Handler.class);
     verify(webSocket, times(1)).textMessageHandler(textMessageHandlerCaptor.capture());
 
