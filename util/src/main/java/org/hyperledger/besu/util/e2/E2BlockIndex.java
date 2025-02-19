@@ -14,20 +14,22 @@
  */
 package org.hyperledger.besu.util.e2;
 
-public class E2BeaconState {
-  private final byte[] beaconState;
-  private final int slot;
+import java.util.List;
 
-  public E2BeaconState(final byte[] beaconState, final int slot) {
-    this.beaconState = beaconState;
-    this.slot = slot;
+public class E2BlockIndex {
+  private final long startingSlot;
+  private final List<Long> indexes;
+
+  public E2BlockIndex(final long startingSlot, final List<Long> indexes) {
+    this.startingSlot = startingSlot;
+    this.indexes = indexes;
   }
 
-  public byte[] getBeaconState() {
-    return beaconState;
+  public long getStartingSlot() {
+    return startingSlot;
   }
 
-  public int getSlot() {
-    return slot;
+  public List<Long> getIndexes() {
+    return indexes;
   }
 }

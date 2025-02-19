@@ -14,17 +14,17 @@
  */
 package org.hyperledger.besu.util.e2;
 
-public class E2BeaconState {
-  private final byte[] beaconState;
+public class E2ExecutionBlockHeader {
+  private final byte[] header;
   private final int slot;
 
-  public E2BeaconState(final byte[] beaconState, final int slot) {
-    this.beaconState = beaconState;
+  public E2ExecutionBlockHeader(final byte[] header, final int slot) {
+    this.header = header;
     this.slot = slot;
   }
 
-  public byte[] getBeaconState() {
-    return beaconState;
+  public byte[] getHeader() {
+    return header;
   }
 
   public int getSlot() {
