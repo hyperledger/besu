@@ -26,6 +26,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
@@ -874,7 +875,6 @@ public abstract class MainnetProtocolSpecs {
         .requestsValidator(new MainnetRequestsValidator())
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestProcessorCoordinator(pragueRequestsProcessors(requestContractAddresses))
-
         // change to accept EIP-7702 transactions
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -1101,6 +1101,7 @@ public abstract class MainnetProtocolSpecs {
 
     @Override
     public BlockProcessingResult processBlock(
+        final ProtocolContext protocolContext,
         final Blockchain blockchain,
         final MutableWorldState worldState,
         final BlockHeader blockHeader,
@@ -1110,6 +1111,7 @@ public abstract class MainnetProtocolSpecs {
         final PrivateMetadataUpdater privateMetadataUpdater) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
+          protocolContext,
           blockchain,
           worldState,
           blockHeader,

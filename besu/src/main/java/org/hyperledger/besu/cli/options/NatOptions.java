@@ -14,20 +14,10 @@
  */
 package org.hyperledger.besu.cli.options;
 
-import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
-
 import picocli.CommandLine;
 
 /** The Nat Cli options. */
 public class NatOptions {
-
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @CommandLine.Option(
-      hidden = true,
-      names = {"--Xnat-kube-service-name"},
-      description =
-          "Specify the name of the service that will be used by the nat manager in Kubernetes. (default: ${DEFAULT-VALUE})")
-  private String natManagerServiceName = DEFAULT_BESU_SERVICE_NAME_FILTER;
 
   @CommandLine.Option(
       hidden = true,
@@ -47,15 +37,6 @@ public class NatOptions {
    */
   public static NatOptions create() {
     return new NatOptions();
-  }
-
-  /**
-   * Gets nat manager service name.
-   *
-   * @return the nat manager service name
-   */
-  public String getNatManagerServiceName() {
-    return natManagerServiceName;
   }
 
   /**

@@ -24,11 +24,11 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-/** The Return data copy operation. */
+/** The Return data load operation. */
 public class ReturnDataLoadOperation extends AbstractOperation {
 
   /**
-   * Instantiates a new Return data copy operation.
+   * Instantiates a new Return data load operation.
    *
    * @param gasCalculator the gas calculator
    */
@@ -45,10 +45,10 @@ public class ReturnDataLoadOperation extends AbstractOperation {
 
     final int offset = clampedToInt(frame.popStackItem());
     Bytes returnData = frame.getReturnData();
-    int retunDataSize = returnData.size();
+    int returnDataSize = returnData.size();
 
     Bytes value;
-    if (offset > retunDataSize) {
+    if (offset > returnDataSize) {
       value = Bytes.EMPTY;
     } else if (offset + 32 >= returnData.size()) {
       value = Bytes32.rightPad(returnData.slice(offset));

@@ -26,7 +26,6 @@ import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
-import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
@@ -102,7 +101,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
@@ -121,7 +119,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.FrontierTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
@@ -279,7 +276,6 @@ import picocli.CommandLine.ParameterException;
       "%nMore info and other profiles at https://besu.hyperledger.org%n"
     })
 public class BesuCommand implements DefaultCommandValues, Runnable {
-
   @SuppressWarnings("PrivateStaticFinalLoggers")
   // non-static for testing
   private final Logger logger;
@@ -1509,22 +1505,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings("ConstantConditions")
   private void validateNatParams() {
-    if (natMethod.equals(NatMethod.KUBERNETES)) {
-      logger.warn("Kubernetes NAT method is deprecated. Please use Docker or UPNP");
-    }
-    if (!unstableNatOptions.getNatManagerServiceName().equals(DEFAULT_BESU_SERVICE_NAME_FILTER)) {
-      logger.warn(
-          "`--Xnat-kube-service-name` and Kubernetes NAT method are deprecated. Please use Docker or UPNP");
-    }
-    if (!(natMethod.equals(NatMethod.AUTO) || natMethod.equals(NatMethod.KUBERNETES))
-        && !unstableNatOptions
-            .getNatManagerServiceName()
-            .equals(DEFAULT_BESU_SERVICE_NAME_FILTER)) {
-      throw new ParameterException(
-          this.commandLine,
-          "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name"
-              + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
-    }
     if (natMethod.equals(NatMethod.AUTO) && !unstableNatOptions.getNatMethodFallbackEnabled()) {
       throw new ParameterException(
           this.commandLine,
@@ -1822,10 +1802,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .isRevertReasonEnabled(isRevertReasonEnabled)
             .storageProvider(storageProvider)
             .isEarlyRoundChangeEnabled(unstableQbftOptions.isEarlyRoundChangeEnabled())
-            .gasLimitCalculator(
-                miningParametersSupplier.get().getTargetGasLimit().isPresent()
-                    ? new FrontierTargetingGasLimitCalculator()
-                    : GasLimitCalculator.constant())
             .requiredBlocks(requiredBlocks)
             .reorgLoggingThreshold(reorgLoggingThreshold)
             .evmConfiguration(unstableEvmOptions.toDomainObject())
@@ -2156,13 +2132,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
         .ifPresent(miningParameters::setBlockPeriodSeconds);
     initMiningParametersMetrics(miningParameters);
-    // if network = holesky, set targetGasLimit to 36,000,000 unless otherwise specified
-    if (miningParameters.getTargetGasLimit().isEmpty() && NetworkName.HOLESKY.equals(network)) {
-      logger.info(
-          "Setting target gas limit for holesky: {}",
-          MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_HOLESKY);
-      miningParameters.setTargetGasLimit(MiningConfiguration.DEFAULT_TARGET_GAS_LIMIT_HOLESKY);
-    }
+
     return miningParameters;
   }
 
@@ -2264,7 +2234,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .besuController(controller)
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
-            .natManagerServiceName(unstableNatOptions.getNatManagerServiceName())
             .natMethodFallbackEnabled(unstableNatOptions.getNatMethodFallbackEnabled())
             .discoveryEnabled(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
