@@ -216,30 +216,6 @@ public class EthStatsServiceTest {
     verify(ethScheduler, times(1)).scheduleFutureTaskWithFixedDelay(any(), any(), any());
   }
 
-  private <T> AsyncResult<T> succeededWebSocketEvent(final Optional<T> object) {
-    return new AsyncResult<>() {
-      @Override
-      public T result() {
-        return object.orElse(null);
-      }
-
-      @Override
-      public Throwable cause() {
-        return null;
-      }
-
-      @Override
-      public boolean succeeded() {
-        return true;
-      }
-
-      @Override
-      public boolean failed() {
-        return false;
-      }
-    };
-  }
-
   private AsyncResult<Void> failedWebSocketEvent(final Optional<Throwable> cause) {
     return new AsyncResult<>() {
       @Override
