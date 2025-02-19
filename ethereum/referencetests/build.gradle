@@ -13,15 +13,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-configurations {
-  referenceTestAnnotationProcessor.extendsFrom testAnnotationProcessor
-  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
-  tarConfig.extendsFrom referenceTestImplementation
-  tarConfig {
-    canBeResolved = true
-    canBeConsumed = false
-  }
-}
 
 def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
   final referenceTestsPath = 'src/reference-test/external-resources/BlockchainTests'
@@ -207,7 +198,7 @@ dependencies {
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
   // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:3.0.0:fixtures_stable@tar.gz'
+  referenceTestImplementation 'ethereum:execution-spec-tests:4.0.0:fixtures_develop@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'io.tmio:tuweni-bytes'
@@ -238,7 +229,7 @@ tasks.register('validateReferenceTestSubmodule') {
     def expectedHash = '9201075490807f58811078e9bb5ec895b4ac01a5'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
-      exec {
+      providers.exec {
         commandLine 'git', 'submodule', 'status', submodulePath
         standardOutput = result
         errorOutput = result
@@ -302,5 +293,15 @@ def generateTestFiles(
       .replaceAll("%%TESTS_NAME%%", namePrefix + "_" + idx)
       .replaceAll("%%PACKAGE_NAME%%", packageString)
     testFile.newWriter().withWriter { w -> w << testFileContents }
+  }
+}
+
+configurations {
+  referenceTestAnnotationProcessor.extendsFrom testAnnotationProcessor
+  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
+  tarConfig.extendsFrom referenceTestImplementation
+  tarConfig {
+    canBeResolved = true
+    canBeConsumed = false
   }
 }
