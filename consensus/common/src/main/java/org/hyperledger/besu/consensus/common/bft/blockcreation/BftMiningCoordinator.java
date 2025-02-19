@@ -115,7 +115,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
         LOG.debug("Interrupted while waiting for BftProcessor to stop.", e);
         Thread.currentThread().interrupt();
       }
-      eventHandler.stop();
+      eventHandler.reset();
       bftExecutors.stop();
     }
   }
