@@ -96,7 +96,7 @@ public class SyncBlockBody {
       if (input.nextIsList()) {
         transactionBytes.add(input.currentListAsBytesNoCopy(true));
       } else {
-        transactionBytes.add(input.readBytes());
+        throw new RuntimeException("Expected a list of transactions. RLP: " + bytesCurrentBody);
       }
     }
     input.leaveList();
@@ -112,10 +112,10 @@ public class SyncBlockBody {
       }
       input.leaveList();
     }
+    input.leaveList();
     final SyncBlockBody body =
         new SyncBlockBody(
             bytesCurrentBody, transactionBytes, ommersListBytes, withdrawalBytes, protocolSchedule);
-    input.leaveList();
     return body;
   }
 

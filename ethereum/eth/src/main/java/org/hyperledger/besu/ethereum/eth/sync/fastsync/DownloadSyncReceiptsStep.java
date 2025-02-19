@@ -23,13 +23,19 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DownloadSyncReceiptsStep
     extends AbstractDownloadReceiptsStep<SyncBlock, SyncBlockWithReceipts> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DownloadSyncReceiptsStep.class);
 
   public DownloadSyncReceiptsStep(
       final ProtocolSchedule protocolSchedule,
@@ -54,6 +60,20 @@ public class DownloadSyncReceiptsStep
               final List<TransactionReceipt> receipts =
                   receiptsByHeader.getOrDefault(block.getHeader(), emptyList());
               if (block.getBody().getTransactionCount() != receipts.size()) {
+                LOG.atTrace()
+                    .setMessage(
+                        "PeerTask response code was success, but incorrect number of receipts returned. Header hash: {}, Transactions: {}, receipts: {}")
+                    .addArgument(block.getHeader().getHash())
+                    .addArgument(block.getBody().getTransactionCount())
+                    .addArgument(receipts.size())
+                    .log();
+                final BytesValueRLPOutput headerRlpOutput = new BytesValueRLPOutput();
+                block.getHeader().writeTo(headerRlpOutput);
+                LOG.atTrace()
+                    .setMessage("Header RLP: {}")
+                    .addArgument(headerRlpOutput.encoded())
+                    .log();
+                LOG.atTrace().setMessage("Body: {}").addArgument(block.getBody().getRlp()).log();
                 throw new IllegalStateException(
                     "PeerTask response code was success, but incorrect number of receipts returned. Header hash: "
                         + block.getHeader().getHash()

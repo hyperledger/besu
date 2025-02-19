@@ -27,14 +27,20 @@ import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public abstract class AbstractDownloadReceiptsStep<B, BWR>
     implements Function<List<B>, CompletableFuture<List<BWR>>> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractDownloadReceiptsStep.class);
 
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
@@ -74,6 +80,7 @@ public abstract class AbstractDownloadReceiptsStep<B, BWR>
 
   private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>>
       getReceiptsWithPeerTaskSystem(final List<BlockHeader> headers) {
+    final ArrayList<BlockHeader> originalBlockHeaders = new ArrayList<>(headers);
     Map<BlockHeader, List<TransactionReceipt>> getReceipts = new HashMap<>();
     do {
       GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(headers, protocolSchedule);
@@ -98,6 +105,16 @@ public abstract class AbstractDownloadReceiptsStep<B, BWR>
       }
       // repeat until all headers have receipts
     } while (!headers.isEmpty());
+    if (LOG.isTraceEnabled()) {
+      for (BlockHeader blockHeader : originalBlockHeaders) {
+        final List<TransactionReceipt> transactionReceipts = getReceipts.get(blockHeader);
+        LOG.atTrace()
+            .setMessage("{} receipts received for header {}")
+            .addArgument(transactionReceipts == null ? 0 : transactionReceipts.size())
+            .addArgument(blockHeader.getBlockHash())
+            .log();
+      }
+    }
     return CompletableFuture.completedFuture(getReceipts);
   }
 }
