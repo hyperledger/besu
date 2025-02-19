@@ -29,8 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
 
   public static final Address HISTORY_STORAGE_ADDRESS =
-      Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
-  // should be 0x0000f90827f1c53a10cb7a02335b175320002935
+      Address.fromHexString("0x0000f90827f1c53a10cb7a02335b175320002935");
 
   protected final Address historyStorageAddress;
 

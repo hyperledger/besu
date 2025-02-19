@@ -995,7 +995,7 @@ public abstract class MainnetProtocolSpecs {
       final MetricsSystem metricsSystem) {
     final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
         new ClearEmptyAccountStrategy.ClearEmptyAccountWithException(
-            List.of(PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS));
+            List.of(Eip7709BlockHashProcessor.EIP_7709_HISTORY_STORAGE_ADDRESS));
     return shanghaiDefinition(
             chainId,
             enableRevertReason,
