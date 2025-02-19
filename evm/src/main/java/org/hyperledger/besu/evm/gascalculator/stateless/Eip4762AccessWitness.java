@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.LongSupplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -64,59 +65,84 @@ public class Eip4762AccessWitness implements AccessWitness {
     this.revertableEvents = revertableEvents;
   }
 
-  @Override
-  public long touchAddressAndChargeRead(final Address address, final UInt256 leafKey) {
-    return touchAddressOnReadAndComputeGas(address, zeroTreeIndex, leafKey);
+  private long touchAddressAtomic(final LongSupplier gasSupplier, final long remainingGas) {
+    enterWitness();
+    long gas = gasSupplier.getAsLong();
+    if (remainingGas < gas) {
+      revertWitnesses();
+    }
+    return gas;
   }
 
+  @Override
+  public long touchAddressAndChargeRead(
+      final Address address, final UInt256 leafKey, final long remainingGas) {
+    return touchAddressAtomic(
+        () -> touchAddressOnReadAndComputeGas(address, zeroTreeIndex, leafKey), remainingGas);
+  }
+
+  @SuppressWarnings("MethodInputParametersMustBeFinal")
   @Override
   public long touchAndChargeValueTransfer(
       final Address caller,
       final Address target,
       final boolean isAccountCreation,
-      final long warmReadCost) {
+      final long warmReadCost,
+      long remainingGas) {
 
-    long gas = 0;
-
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteResetAndComputeGas(caller, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+    long gas =
+        touchAddressAtomic(
+            () -> touchAddressOnWriteResetAndComputeGas(caller, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+            remainingGas);
+    remainingGas -= gas;
 
     if (isAccountCreation) {
       gas =
           clampedAdd(
-              gas, touchAddressOnWriteSetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-      gas =
-          clampedAdd(
-              gas, touchAddressOnWriteSetAndComputeGas(target, zeroTreeIndex, CODE_HASH_LEAF_KEY));
+              gas,
+              touchAddressAtomic(
+                  () ->
+                      clampedAdd(
+                          touchAddressOnWriteSetAndComputeGas(
+                              target, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+                          touchAddressOnWriteSetAndComputeGas(
+                              target, zeroTreeIndex, CODE_HASH_LEAF_KEY)),
+                  remainingGas));
       return gas;
     }
 
     long readTargetStatelessGas =
-        touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY);
+        touchAddressAtomic(
+            () -> touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+            remainingGas);
     if (readTargetStatelessGas == 0) {
       readTargetStatelessGas = clampedAdd(readTargetStatelessGas, warmReadCost);
     }
+    remainingGas -= readTargetStatelessGas;
 
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteResetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+    gas = clampedAdd(gas, readTargetStatelessGas);
 
-    return clampedAdd(gas, readTargetStatelessGas);
+    return clampedAdd(
+        gas,
+        touchAddressAtomic(
+            () -> touchAddressOnWriteResetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+            remainingGas));
   }
 
+  @SuppressWarnings("MethodInputParametersMustBeFinal")
   @Override
   public long touchAndChargeValueTransferSelfDestruct(
       final Address caller,
       final Address target,
       final boolean isAccountCreation,
-      final long warmReadCost) {
+      final long warmReadCost,
+      long remainingGas) {
 
-    long gas = 0;
-
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteResetAndComputeGas(caller, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+    long gas =
+        touchAddressAtomic(
+            () -> touchAddressOnWriteResetAndComputeGas(caller, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+            remainingGas);
+    remainingGas -= gas;
 
     if (caller.equals(target)) {
       return gas;
@@ -125,55 +151,55 @@ public class Eip4762AccessWitness implements AccessWitness {
     if (isAccountCreation) {
       gas =
           clampedAdd(
-              gas, touchAddressOnWriteSetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-      gas =
-          clampedAdd(
-              gas, touchAddressOnWriteSetAndComputeGas(target, zeroTreeIndex, CODE_HASH_LEAF_KEY));
+              gas,
+              touchAddressAtomic(
+                  () ->
+                      clampedAdd(
+                          touchAddressOnWriteSetAndComputeGas(
+                              target, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+                          touchAddressOnWriteSetAndComputeGas(
+                              target, zeroTreeIndex, CODE_HASH_LEAF_KEY)),
+                  remainingGas));
       return gas;
     }
 
     long readTargetStatelessGas =
-        touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY);
+        touchAddressAtomic(
+            () -> touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+            remainingGas);
     if (readTargetStatelessGas == 0) {
       readTargetStatelessGas = clampedAdd(readTargetStatelessGas, warmReadCost);
     }
+    remainingGas -= readTargetStatelessGas;
 
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteResetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+    gas = clampedAdd(gas, readTargetStatelessGas);
 
-    return clampedAdd(gas, readTargetStatelessGas);
+    return clampedAdd(
+        gas,
+        touchAddressAtomic(
+            () -> touchAddressOnWriteResetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+            remainingGas));
   }
 
   @Override
-  public long touchAndChargeProofOfAbsence(final Address address) {
-    long gas = 0;
-
-    gas =
-        clampedAdd(
-            gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-
-    gas =
-        clampedAdd(
-            gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY));
-
-    return gas;
+  public long touchAndChargeProofOfAbsence(final Address address, final long remainingGas) {
+    return touchAddressAtomic(
+        () ->
+            clampedAdd(
+                touchAddressOnReadAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+                touchAddressOnReadAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY)),
+        remainingGas);
   }
 
   @Override
-  public long touchAndChargeContractCreateCompleted(final Address address) {
-
-    long gas = 0;
-
-    gas =
-        clampedAdd(
-            gas,
-            touchAddressOnWriteResetAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteResetAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY));
-
-    return gas;
+  public long touchAndChargeContractCreateCompleted(
+      final Address address, final long remainingGas) {
+    return touchAddressAtomic(
+        () ->
+            clampedAdd(
+                touchAddressOnWriteResetAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+                touchAddressOnWriteResetAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY)),
+        remainingGas);
   }
 
   @Override
@@ -204,28 +230,37 @@ public class Eip4762AccessWitness implements AccessWitness {
     touchAddressOnWriteResetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY);
   }
 
+  @SuppressWarnings("MethodInputParametersMustBeFinal")
   @Override
-  public long touchCodeChunksUponContractCreation(final Address address, final long codeLength) {
+  public long touchCodeChunksUponContractCreation(
+      final Address address, final long codeLength, long remainingGas) {
     long gas = 0;
     for (long i = 0; i < (codeLength + 30) / 31; i++) {
-      gas =
-          clampedAdd(
-              gas,
-              touchAddressOnWriteSetAndComputeGas(
-                  address,
-                  CODE_OFFSET.add(i).divide(VERKLE_NODE_WIDTH),
-                  CODE_OFFSET.add(i).mod(VERKLE_NODE_WIDTH)));
+      final long temp_i = i;
+      final long statelessGas =
+          touchAddressAtomic(
+              () ->
+                  touchAddressOnWriteSetAndComputeGas(
+                      address,
+                      CODE_OFFSET.add(temp_i).divide(VERKLE_NODE_WIDTH),
+                      CODE_OFFSET.add(temp_i).mod(VERKLE_NODE_WIDTH)),
+              remainingGas);
+      remainingGas -= statelessGas;
+
+      gas = clampedAdd(gas, statelessGas);
     }
     return gas;
   }
 
+  @SuppressWarnings("MethodInputParametersMustBeFinal")
   @Override
   public long touchCodeChunks(
       final Address contractAddress,
       final boolean isContractInDeployment,
       final long startPc,
       final long readSize,
-      final long codeLength) {
+      final long codeLength,
+      long remainingGas) {
     long gas = 0;
 
     if (isContractInDeployment || readSize == 0 || startPc >= codeLength) {
@@ -235,16 +270,49 @@ public class Eip4762AccessWitness implements AccessWitness {
     // last byte read is limited by code length, and it is an index, hence the decrement
     long endPc = Math.min(startPc + readSize, codeLength) - 1L;
     for (long i = startPc / 31L; i <= endPc / 31L; i++) {
-      gas =
-          clampedAdd(
-              gas,
-              touchAddressOnReadAndComputeGas(
-                  contractAddress,
-                  CODE_OFFSET.add(i).divide(VERKLE_NODE_WIDTH),
-                  CODE_OFFSET.add(i).mod(VERKLE_NODE_WIDTH)));
+      final long temp_i = i;
+      final long statelessGas =
+          touchAddressAtomic(
+              () ->
+                  touchAddressOnReadAndComputeGas(
+                      contractAddress,
+                      CODE_OFFSET.add(temp_i).divide(VERKLE_NODE_WIDTH),
+                      CODE_OFFSET.add(temp_i).mod(VERKLE_NODE_WIDTH)),
+              remainingGas);
+      remainingGas -= statelessGas;
+
+      gas = clampedAdd(gas, statelessGas);
     }
 
     return gas;
+  }
+
+  @Override
+  public long touchAndChargeStorageLoad(
+      final Address address, final UInt256 storageKey, final long remainingGas) {
+    List<UInt256> treeIndexes = getStorageSlotTreeIndexes(storageKey);
+    return touchAddressAtomic(
+        () -> touchAddressOnReadAndComputeGas(address, treeIndexes.getFirst(), treeIndexes.get(1)),
+        remainingGas);
+  }
+
+  @Override
+  public long touchAndChargeStorageStore(
+      final Address address,
+      final UInt256 storageKey,
+      final boolean hasPreviousValue,
+      final long remainingGas) {
+    List<UInt256> treeIndexes = getStorageSlotTreeIndexes(storageKey);
+    return touchAddressAtomic(
+        () -> {
+          if (!hasPreviousValue) {
+            return touchAddressOnWriteSetAndComputeGas(
+                address, treeIndexes.get(0), treeIndexes.get(1));
+          }
+          return touchAddressOnWriteResetAndComputeGas(
+              address, treeIndexes.get(0), treeIndexes.get(1));
+        },
+        remainingGas);
   }
 
   private long touchAddressOnWriteResetAndComputeGas(
@@ -267,22 +335,6 @@ public class Eip4762AccessWitness implements AccessWitness {
     return List.of(
         UInt256.fromBytes(TrieKeyUtils.getStorageKeyTrieIndex(storageKey)),
         UInt256.fromBytes(TrieKeyUtils.getStorageKeySuffix(storageKey)));
-  }
-
-  @Override
-  public long touchAndChargeStorageLoad(final Address address, final UInt256 storageKey) {
-    List<UInt256> treeIndexes = getStorageSlotTreeIndexes(storageKey);
-    return touchAddressOnReadAndComputeGas(address, treeIndexes.get(0), treeIndexes.get(1));
-  }
-
-  @Override
-  public long touchAndChargeStorageStore(
-      final Address address, final UInt256 storageKey, final boolean hasPreviousValue) {
-    List<UInt256> treeIndexes = getStorageSlotTreeIndexes(storageKey);
-    if (!hasPreviousValue) {
-      return touchAddressOnWriteSetAndComputeGas(address, treeIndexes.get(0), treeIndexes.get(1));
-    }
-    return touchAddressOnWriteResetAndComputeGas(address, treeIndexes.get(0), treeIndexes.get(1));
   }
 
   private long touchAddressAndChargeGas(
@@ -374,8 +426,7 @@ public class Eip4762AccessWitness implements AccessWitness {
     accesses.put(currentAccess, currentAccess);
   }
 
-  @Override
-  public void revertWitnesses() {
+  private void revertWitnesses() {
     revertableEvents.forEach(
         key -> {
           if (accesses.containsKey(key)) {
@@ -394,8 +445,7 @@ public class Eip4762AccessWitness implements AccessWitness {
     accesses.remove(key);
   }
 
-  @Override
-  public void enterWitness() {
+  private void enterWitness() {
     revertableEvents.clear();
   }
 

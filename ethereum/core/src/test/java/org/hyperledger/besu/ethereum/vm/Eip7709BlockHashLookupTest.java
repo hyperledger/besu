@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
@@ -116,14 +117,14 @@ public class Eip7709BlockHashLookupTest {
   @SuppressWarnings("ReturnValueIgnored")
   void shouldDecrementRemainingGasFromFrame() {
     AccessWitness accessWitness = mock(AccessWitness.class);
-    when(accessWitness.touchAndChargeStorageLoad(any(), any())).thenReturn(100L);
+    when(accessWitness.touchAndChargeStorageLoad(any(), any(), anyLong())).thenReturn(100L);
     frame = createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, 200L);
     when(frame.getAccessWitness()).thenReturn(accessWitness);
     lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L);
     verify(frame).decrementRemainingGas(eq(100L));
     verify(frame).getBlockValues();
     verify(frame).getAccessWitness();
-    verify(frame).getRemainingGas();
+    verify(frame, times(2)).getRemainingGas();
     verify(frame).getWorldUpdater();
     verifyNoMoreInteractions(frame);
   }
@@ -132,7 +133,7 @@ public class Eip7709BlockHashLookupTest {
   void insufficientGasReturnsNullBlockHash() {
     worldUpdater = new SimpleWorld();
     AccessWitness accessWitness = mock(AccessWitness.class);
-    when(accessWitness.touchAndChargeStorageLoad(any(), any())).thenReturn(100L);
+    when(accessWitness.touchAndChargeStorageLoad(any(), any(), anyLong())).thenReturn(100L);
     frame = createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, 1L);
     when(frame.getAccessWitness()).thenReturn(accessWitness);
     final Hash blockHash = lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L);
