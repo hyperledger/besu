@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -483,5 +485,22 @@ public class QbftControllerTest {
     when(roundChangeMessageData.getCode()).thenReturn(QbftV1.ROUND_CHANGE);
     when(roundChangeMessageData.decode(blockEncoder)).thenReturn(roundChange);
     roundChangeMessage = new DefaultMessage(null, roundChangeMessageData);
+  }
+
+  @Test
+  public void heightManagerCanOnlyBeStartedOnceWithoutReset() {
+    constructQbftController();
+    qbftController.start();
+    assertThatThrownBy(() -> qbftController.start())
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Attempt to start new height manager without resetting");
+  }
+
+  @Test
+  public void heightManagerCanBeRestartedIfReset() {
+    constructQbftController();
+    qbftController.start();
+    qbftController.reset();
+    assertThatNoException().isThrownBy(() -> qbftController.start());
   }
 }

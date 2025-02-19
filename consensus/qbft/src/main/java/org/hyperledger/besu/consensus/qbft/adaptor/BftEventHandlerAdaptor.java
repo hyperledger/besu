@@ -43,7 +43,7 @@ public class BftEventHandlerAdaptor implements BftEventHandler {
 
   @Override
   public void reset() {
-    // Not implemented
+    qbftEventHandler.reset();
   }
 
   @Override

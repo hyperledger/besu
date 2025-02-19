@@ -53,6 +53,12 @@ class BftEventHandlerAdaptorTest {
   }
 
   @Test
+  void resetDelegatesToQbftEventHandler() {
+    handler.reset();
+    verify(qbftEventHandler).reset();
+  }
+
+  @Test
   void handleMessageEventDelegatesToQbftEventHandler() {
     handler.handleMessageEvent(bftReceivedMessageEvent);
     verify(qbftEventHandler).handleMessageEvent(bftReceivedMessageEvent);
