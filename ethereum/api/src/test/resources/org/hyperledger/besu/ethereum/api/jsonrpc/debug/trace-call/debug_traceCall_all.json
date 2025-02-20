@@ -12,7 +12,7 @@
       "nonce" : "0x0"
     }, "latest",
     {
-      "disableMemory": true, "disableStack": true,  "disableStorage": true
+      "disableMemory": true, "disableStack": true,  "disableStorage": true, "disableStatelessWitness": true
     } ],
     "id" : 1
   },
@@ -32,6 +32,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 2,
@@ -42,6 +43,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 4,
@@ -52,6 +54,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 6,
@@ -62,6 +65,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 7,
@@ -72,6 +76,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 8,
@@ -82,6 +87,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 9,
@@ -92,6 +98,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 11,
@@ -102,6 +109,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 13,
@@ -112,6 +120,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 14,
@@ -122,6 +131,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 16,
@@ -132,6 +142,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 17,
@@ -142,6 +153,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 19,
@@ -152,6 +164,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 20,
@@ -162,6 +175,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 21,
@@ -172,6 +186,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 0,
@@ -182,6 +197,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 2,
@@ -192,6 +208,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 3,
@@ -202,6 +219,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 5,
@@ -212,6 +230,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 6,
@@ -222,6 +241,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 8,
@@ -232,6 +252,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 9,
@@ -242,6 +263,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 11,
@@ -252,6 +274,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 13,
@@ -262,6 +285,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 22,
@@ -272,6 +296,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 24,
@@ -282,6 +307,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       }, {
         "pc" : 26,
@@ -292,6 +318,7 @@
         "stack" : null,
         "memory" : null,
         "storage" : null,
+        "statelessWitness" : null,
         "reason" : null
       } ]
     }

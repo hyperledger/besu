@@ -104,6 +104,7 @@ public class DebugTraceBlockByHashTest {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
             null,
             Optional.empty(),
             Optional.empty(),

@@ -33,6 +33,7 @@
           "stack": null,
           "memory": null,
           "storage": null,
+          "statelessWitness" : [ ],
           "reason": null
         }
       ]

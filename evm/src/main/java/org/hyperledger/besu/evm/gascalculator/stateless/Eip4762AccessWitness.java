@@ -22,6 +22,8 @@ import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BranchAccessKey;
+import org.hyperledger.besu.datatypes.LeafAccessKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
 
@@ -419,7 +421,8 @@ public class Eip4762AccessWitness implements AccessWitness {
     return "AccessWitness{" + "leaves=" + leaves + ", branches=" + branches + '}';
   }
 
-  record BranchAccessKey(Address address, UInt256 treeIndex) {}
-
-  record LeafAccessKey(BranchAccessKey branchAccessKey, UInt256 leafIndex) {}
+  @Override
+  public List<LeafAccessKey> getLeafAccesses() {
+    return leaves.keySet().stream().toList();
+  }
 }

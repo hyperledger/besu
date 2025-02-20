@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.datatypes.LeafAccessKey;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
 import java.util.Arrays;
@@ -27,7 +28,17 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-@JsonPropertyOrder({"pc", "op", "gas", "gasCost", "depth", "stack", "memory", "storage"})
+@JsonPropertyOrder({
+  "pc",
+  "op",
+  "gas",
+  "gasCost",
+  "depth",
+  "stack",
+  "memory",
+  "storage",
+  "statelessWitness"
+})
 public class StructLog {
 
   private final int depth;
@@ -38,6 +49,7 @@ public class StructLog {
   private final int pc;
   private final String[] stack;
   private final Object storage;
+  private final String[] statelessWitness;
   private final String reason;
   static final String bytes32ZeroString = Bytes32.ZERO.toUnprefixedHexString();
 
@@ -49,6 +61,11 @@ public class StructLog {
         traceFrame
             .getMemory()
             .map(a -> Arrays.stream(a).map(Bytes::toUnprefixedHexString).toArray(String[]::new))
+            .orElse(null);
+    statelessWitness =
+        traceFrame
+            .getStatelessWitness()
+            .map(list -> list.stream().map(LeafAccessKey::toJsonObject).toArray(String[]::new))
             .orElse(null);
     op = traceFrame.getOpcode();
     pc = traceFrame.getPc();
@@ -122,6 +139,11 @@ public class StructLog {
     return storage;
   }
 
+  @JsonGetter("statelessWitness")
+  public String[] statelessWitness() {
+    return statelessWitness;
+  }
+
   @JsonGetter("reason")
   public String reason() {
     return reason;
@@ -143,7 +165,8 @@ public class StructLog {
         && Arrays.equals(memory, structLog.memory)
         && Objects.equals(op, structLog.op)
         && Arrays.equals(stack, structLog.stack)
-        && Objects.equals(storage, structLog.storage);
+        && Objects.equals(storage, structLog.storage)
+        && Arrays.equals(statelessWitness, structLog.statelessWitness);
   }
 
   @Override
@@ -151,6 +174,7 @@ public class StructLog {
     int result = Objects.hash(depth, gas, gasCost, op, pc, storage);
     result = 31 * result + Arrays.hashCode(memory);
     result = 31 * result + Arrays.hashCode(stack);
+    result = 31 * result + Arrays.hashCode(statelessWitness);
     return result;
   }
 }
