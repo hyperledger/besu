@@ -75,15 +75,19 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
 
   @Override
   public Hash apply(final MessageFrame frame, final Long blockNumber) {
-    final Hash cachedHash = hashByNumber.get(blockNumber);
-    if (cachedHash != null) {
-      return cachedHash;
-    }
 
     final UInt256 slot = UInt256.valueOf(blockNumber % historyServeWindow);
 
     final long lookupCost = lookupCost(frame, slot);
     frame.decrementRemainingGas(lookupCost);
+    if (frame.getRemainingGas() < lookupCost) {
+      return null;
+    }
+
+    final Hash cachedHash = hashByNumber.get(blockNumber);
+    if (cachedHash != null) {
+      return cachedHash;
+    }
 
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     Account account = worldUpdater.get(contractAddress);
