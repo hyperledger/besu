@@ -79,10 +79,10 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
     final UInt256 slot = UInt256.valueOf(blockNumber % historyServeWindow);
 
     final long lookupCost = lookupCost(frame, slot);
-    frame.decrementRemainingGas(lookupCost);
     if (frame.getRemainingGas() < lookupCost) {
       return null;
     }
+    frame.decrementRemainingGas(lookupCost);
 
     final Hash cachedHash = hashByNumber.get(blockNumber);
     if (cachedHash != null) {
