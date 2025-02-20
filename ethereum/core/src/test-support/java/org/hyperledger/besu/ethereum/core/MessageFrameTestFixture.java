@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.hyperledger.besu.evm.frame.MessageFrame.DEFAULT_MAX_STACK_SIZE;
 
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -56,6 +57,7 @@ public class MessageFrameTestFixture {
   private Optional<BlockHeader> blockHeader = Optional.empty();
   private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
   private ExecutionContextTestFixture executionContextTestFixture;
+  private AccessWitness accessWitness;
 
   public MessageFrameTestFixture parentFrame(final MessageFrame parentFrame) {
     this.parentFrame = parentFrame;
@@ -153,6 +155,11 @@ public class MessageFrameTestFixture {
     return this;
   }
 
+  public MessageFrameTestFixture accessWitness(final AccessWitness accessWitness) {
+    this.accessWitness = accessWitness;
+    return this;
+  }
+
   public MessageFrame build() {
     final Blockchain localBlockchain = this.blockchain.orElseGet(this::createDefaultBlockchain);
     final BlockHeader localBlockHeader =
@@ -185,6 +192,7 @@ public class MessageFrameTestFixture {
                             .getBlockHashProcessor()
                             .createBlockHashLookup(localBlockchain, localBlockHeader)))
             .maxStackSize(maxStackSize)
+            .accessWitness(accessWitness)
             .build();
     stackItems.forEach(frame::pushStackItem);
     return frame;

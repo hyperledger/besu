@@ -98,7 +98,7 @@ public class TransactionTracer {
     final boolean showMemory =
         transactionTraceParams
             .map(TransactionTraceParams::traceOptions)
-            .map(TraceOptions::isMemoryEnabled)
+            .map(TraceOptions::traceMemory)
             .orElse(true);
 
     if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {
@@ -135,7 +135,7 @@ public class TransactionTracer {
                             stackedUpdater,
                             transaction,
                             transactionProcessor,
-                            new StandardJsonTracer(out, showMemory, true, true, false),
+                            new StandardJsonTracer(out, showMemory, true, true, false, true),
                             blobGasPrice);
                     out.println(
                         summaryTrace(
