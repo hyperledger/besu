@@ -58,7 +58,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   private Wei balance;
 
   private final Supplier<Bytes> oldCode;
-  private final Supplier<Integer> oldCodeSize;
   private final Hash oldCodeHash;
   @Nullable private Bytes updatedCode; // Null if the underlying code has not been updated.
   @Nullable private Hash updatedCodeHash;
@@ -85,7 +84,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
     this.oldCode = Suppliers.memoize(() -> Bytes.EMPTY);
     this.oldCodeHash = Hash.EMPTY;
-    this.oldCodeSize = Suppliers.memoize(() -> 0);
 
     this.updatedCode = Bytes.EMPTY;
     this.updatedStorage = new TreeMap<>();
@@ -111,7 +109,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
     this.oldCode = Suppliers.memoize(account::getCode);
     this.oldCodeHash = account.getCodeHash();
-    this.oldCodeSize = Suppliers.memoize(() -> oldCode.get().size());
 
     this.updatedStorage = new TreeMap<>();
   }
