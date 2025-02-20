@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xerial.snappy.SnappyFramedInputStream;
 
+/** Reads E2 store file such a .era and .era1 */
 public class E2StoreReader {
   private static final Logger LOG = LoggerFactory.getLogger(E2StoreReader.class);
   private static final int TYPE_LENGTH = 2;
@@ -48,10 +49,24 @@ public class E2StoreReader {
 
   private final SnappyFactory snappyFactory;
 
+  /**
+   * Creates a new E2StoreReader with the supplied SnappyFactory
+   *
+   * @param snappyFactory A factory to provide objects for snappy decompression
+   */
   public E2StoreReader(final SnappyFactory snappyFactory) {
     this.snappyFactory = snappyFactory;
   }
 
+  /**
+   * Reads the entire supplied InputStream, calling appropriate methods on the supplied
+   * E2StoreReaderListener as different parts of the file are read
+   *
+   * @param inputStream The InputStream
+   * @param listener the E2StoreReaderListener
+   * @throws IOException If there are any problems reading from the InputStream, or creating and
+   *     using other streams, such as a SnappyFramedInputStream
+   */
   public void read(final InputStream inputStream, final E2StoreReaderListener listener)
       throws IOException {
     int slot = 0;

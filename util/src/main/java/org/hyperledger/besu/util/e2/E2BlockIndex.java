@@ -16,20 +16,10 @@ package org.hyperledger.besu.util.e2;
 
 import java.util.List;
 
-public class E2BlockIndex {
-  private final long startingSlot;
-  private final List<Long> indexes;
-
-  public E2BlockIndex(final long startingSlot, final List<Long> indexes) {
-    this.startingSlot = startingSlot;
-    this.indexes = indexes;
-  }
-
-  public long getStartingSlot() {
-    return startingSlot;
-  }
-
-  public List<Long> getIndexes() {
-    return indexes;
-  }
-}
+/**
+ * Represents a block index in an E2 file
+ *
+ * @param startingSlot The first slot number indexed by this block index
+ * @param indexes The indexes of the blocks indexed by this block index
+ */
+public record E2BlockIndex(long startingSlot, List<Long> indexes) {}

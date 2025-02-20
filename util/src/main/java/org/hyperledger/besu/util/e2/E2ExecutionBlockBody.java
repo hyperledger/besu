@@ -14,20 +14,10 @@
  */
 package org.hyperledger.besu.util.e2;
 
-public class E2ExecutionBlockBody {
-  private final byte[] block;
-  private final int slot;
-
-  public E2ExecutionBlockBody(final byte[] block, final int slot) {
-    this.block = block;
-    this.slot = slot;
-  }
-
-  public byte[] getBlock() {
-    return block;
-  }
-
-  public int getSlot() {
-    return slot;
-  }
-}
+/**
+ * Represents an execution block body in an E2 file
+ *
+ * @param block The execution block
+ * @param slot The slot number
+ */
+public record E2ExecutionBlockBody(byte[] block, int slot) {}

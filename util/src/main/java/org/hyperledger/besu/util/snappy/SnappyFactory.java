@@ -19,8 +19,19 @@ import java.io.IOException;
 
 import org.xerial.snappy.SnappyFramedInputStream;
 
+/** A Factory for producing objects related to handling snappy compressed data */
 public class SnappyFactory {
 
+  /** Creates a SnappyFactory */
+  public SnappyFactory() {}
+
+  /**
+   * Creates a SnappyFramedInputStream reading from the supplied compressedData
+   *
+   * @param compressedData The data for the SnappyFramedInputStream to read
+   * @return a SnappyFramedInputStream reading from the supplied compressedData
+   * @throws IOException if the SnappyFramedInputStream is unable to be created
+   */
   public SnappyFramedInputStream createFramedInputStream(final byte[] compressedData)
       throws IOException {
     return new SnappyFramedInputStream(new ByteArrayInputStream(compressedData));

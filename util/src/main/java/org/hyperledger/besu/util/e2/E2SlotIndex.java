@@ -16,20 +16,10 @@ package org.hyperledger.besu.util.e2;
 
 import java.util.List;
 
-public class E2SlotIndex {
-  private final long startingSlot;
-  private final List<Long> indexes;
-
-  public E2SlotIndex(final long startingSlot, final List<Long> indexes) {
-    this.startingSlot = startingSlot;
-    this.indexes = indexes;
-  }
-
-  public long getStartingSlot() {
-    return startingSlot;
-  }
-
-  public List<Long> getIndexes() {
-    return indexes;
-  }
-}
+/**
+ * Represents a slot index in an E2 file
+ *
+ * @param startingSlot The first slot number indexed by this slot index
+ * @param indexes The indexes of the slots indexed by this slot index
+ */
+public record E2SlotIndex(long startingSlot, List<Long> indexes) {}

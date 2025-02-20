@@ -14,20 +14,10 @@
  */
 package org.hyperledger.besu.util.e2;
 
-public class E2ExecutionBlockReceipts {
-  private final byte[] receipts;
-  private final int slot;
-
-  public E2ExecutionBlockReceipts(final byte[] receipts, final int slot) {
-    this.receipts = receipts;
-    this.slot = slot;
-  }
-
-  public byte[] getReceipts() {
-    return receipts;
-  }
-
-  public int getSlot() {
-    return slot;
-  }
-}
+/**
+ * Represents an execution block's transaction receipts in an E2 file
+ *
+ * @param receipts The execution block's transaction receipts
+ * @param slot The slot number
+ */
+public record E2ExecutionBlockReceipts(byte[] receipts, int slot) {}

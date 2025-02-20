@@ -120,8 +120,8 @@ public class E2StoreReaderTest {
     Mockito.verifyNoMoreInteractions(listener);
 
     E2SlotIndex slotIndex = slotIndexArgumentCaptor.getValue();
-    Assertions.assertEquals(1, slotIndex.getStartingSlot());
-    Assertions.assertEquals(List.of(2L, 3L), slotIndex.getIndexes());
+    Assertions.assertEquals(1, slotIndex.startingSlot());
+    Assertions.assertEquals(List.of(2L, 3L), slotIndex.indexes());
   }
 
   @Test
@@ -156,8 +156,8 @@ public class E2StoreReaderTest {
     Mockito.verifyNoMoreInteractions(listener);
 
     E2BeaconState e2BeaconState = beaconStateArgumentCaptor.getValue();
-    Assertions.assertEquals(beaconState, e2BeaconState.getBeaconState());
-    Assertions.assertEquals(0, e2BeaconState.getSlot());
+    Assertions.assertEquals(beaconState, e2BeaconState.beaconState());
+    Assertions.assertEquals(0, e2BeaconState.slot());
   }
 
   @Test
@@ -203,11 +203,11 @@ public class E2StoreReaderTest {
     List<E2BeaconState> e2BeaconStates = beaconStateArgumentCaptor.getAllValues();
     Assertions.assertEquals(2, e2BeaconStates.size());
     E2BeaconState e2BeaconState1 = e2BeaconStates.getFirst();
-    Assertions.assertEquals(beaconState, e2BeaconState1.getBeaconState());
-    Assertions.assertEquals(0, e2BeaconState1.getSlot());
+    Assertions.assertEquals(beaconState, e2BeaconState1.beaconState());
+    Assertions.assertEquals(0, e2BeaconState1.slot());
     E2BeaconState e2BeaconState2 = e2BeaconStates.getLast();
-    Assertions.assertEquals(beaconState, e2BeaconState2.getBeaconState());
-    Assertions.assertEquals(1, e2BeaconState2.getSlot());
+    Assertions.assertEquals(beaconState, e2BeaconState2.beaconState());
+    Assertions.assertEquals(1, e2BeaconState2.slot());
   }
 
   @Test
@@ -242,8 +242,8 @@ public class E2StoreReaderTest {
     Mockito.verifyNoMoreInteractions(listener);
 
     E2SignedBeaconBlock e2SignedBeaconBlock = signedBeaconBlockArgumentCaptor.getValue();
-    Assertions.assertEquals(signedBeaconBlock, e2SignedBeaconBlock.getSignedBeaconBlock());
-    Assertions.assertEquals(0, e2SignedBeaconBlock.getSlot());
+    Assertions.assertEquals(signedBeaconBlock, e2SignedBeaconBlock.signedBeaconBlock());
+    Assertions.assertEquals(0, e2SignedBeaconBlock.slot());
   }
 
   @Test
@@ -279,8 +279,8 @@ public class E2StoreReaderTest {
     Mockito.verifyNoMoreInteractions(listener);
 
     E2ExecutionBlockHeader e2ExecutionBlockHeader = executionBlockHeaderArgumentCaptor.getValue();
-    Assertions.assertEquals(executionBlockHeader, e2ExecutionBlockHeader.getHeader());
-    Assertions.assertEquals(0, e2ExecutionBlockHeader.getSlot());
+    Assertions.assertEquals(executionBlockHeader, e2ExecutionBlockHeader.header());
+    Assertions.assertEquals(0, e2ExecutionBlockHeader.slot());
   }
 
   @Test
@@ -315,8 +315,8 @@ public class E2StoreReaderTest {
     Mockito.verifyNoMoreInteractions(listener);
 
     E2ExecutionBlockBody e2ExecutionBlockBody = executionBlockBodyArgumentCaptor.getValue();
-    Assertions.assertEquals(executionBlockBody, e2ExecutionBlockBody.getBlock());
-    Assertions.assertEquals(0, e2ExecutionBlockBody.getSlot());
+    Assertions.assertEquals(executionBlockBody, e2ExecutionBlockBody.block());
+    Assertions.assertEquals(0, e2ExecutionBlockBody.slot());
   }
 
   @Test
@@ -353,8 +353,8 @@ public class E2StoreReaderTest {
 
     E2ExecutionBlockReceipts e2ExecutionBlockReceipts =
         executionBlockReceiptsArgumentCaptor.getValue();
-    Assertions.assertEquals(executionBlockReceipts, e2ExecutionBlockReceipts.getReceipts());
-    Assertions.assertEquals(0, e2ExecutionBlockReceipts.getSlot());
+    Assertions.assertEquals(executionBlockReceipts, e2ExecutionBlockReceipts.receipts());
+    Assertions.assertEquals(0, e2ExecutionBlockReceipts.slot());
   }
 
   @Test
@@ -387,7 +387,7 @@ public class E2StoreReaderTest {
     Mockito.verifyNoMoreInteractions(listener);
 
     E2BlockIndex blockIndex = blockIndexArgumentCaptor.getValue();
-    Assertions.assertEquals(1, blockIndex.getStartingSlot());
-    Assertions.assertEquals(List.of(2L, 3L), blockIndex.getIndexes());
+    Assertions.assertEquals(1, blockIndex.startingSlot());
+    Assertions.assertEquals(List.of(2L, 3L), blockIndex.indexes());
   }
 }

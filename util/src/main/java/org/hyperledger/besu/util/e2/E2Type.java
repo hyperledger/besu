@@ -16,17 +16,29 @@ package org.hyperledger.besu.util.e2;
 
 import java.util.HexFormat;
 
+/** An enumeration of known sections of e2 store files */
 public enum E2Type {
+  /** An empty section */
   EMPTY(new byte[] {0x00, 0x00}),
+  /** A snappy compressed, SSZ encoded, signed beacon block */
   COMPRESSED_SIGNED_BEACON_BLOCK(new byte[] {0x01, 0x00}),
+  /** A snappy compressed, SSZ encoded, beacon state */
   COMPRESSED_BEACON_STATE(new byte[] {0x02, 0x00}),
+  /** A snappy compressed execution block header */
   COMPRESSED_EXECUTION_BLOCK_HEADER(new byte[] {0x03, 0x00}),
+  /** A snappy compressed execution block body */
   COMPRESSED_EXECUTION_BLOCK_BODY(new byte[] {0x04, 0x00}),
+  /** A snappy compressed list of execution block transaction receipts */
   COMPRESSED_EXECUTION_BLOCK_RECEIPTS(new byte[] {0x05, 0x00}),
+  /** The total difficulty */
   TOTAL_DIFFICULTY(new byte[] {0x06, 0x00}),
+  /** The accumulator */
   ACCUMULATOR(new byte[] {0x07, 0x00}),
+  /** A version section */
   VERSION(new byte[] {0x65, 0x32}),
+  /** An execution block index */
   BLOCK_INDEX(new byte[] {0x66, 0x32}),
+  /** A slot index */
   SLOT_INDEX(new byte[] {0x69, 0x32}),
   ;
   private final byte[] typeCode;
@@ -35,10 +47,22 @@ public enum E2Type {
     this.typeCode = typeCode;
   }
 
+  /**
+   * Gets the type code
+   *
+   * @return the type code
+   */
   public byte[] getTypeCode() {
     return typeCode;
   }
 
+  /**
+   * Gets the E2Type corresponding to the supplied typeCode
+   *
+   * @param typeCode the typeCode to find the corresponding E2Type for
+   * @return the E2Type corresponding to the supplied typeCode
+   * @throws IllegalArgumentException if there is no E2Type corresponding to the supplied typeCode
+   */
   public static E2Type getForTypeCode(final byte[] typeCode) {
     if (typeCode == null || typeCode.length != 2) {
       throw new IllegalArgumentException("typeCode must be 2 bytes");
