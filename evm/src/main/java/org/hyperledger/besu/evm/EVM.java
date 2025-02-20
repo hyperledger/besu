@@ -227,7 +227,8 @@ public class EVM {
                     frame.wasCreatedInTransaction(contractAddress),
                     frame.getPC(),
                     1,
-                    code.length);
+                    code.length,
+                    frame.getRemainingGas());
         frame.decrementRemainingGas(statelessGas);
 
       } catch (ArrayIndexOutOfBoundsException aiiobe) {
