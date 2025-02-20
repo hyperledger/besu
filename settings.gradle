@@ -17,10 +17,6 @@
 pluginManagement {
   repositories {
     gradlePluginPortal()
-    maven {
-      url 'https://artifacts.consensys.net/public/maven/maven/'
-      content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
-    }
   }
 }
 
