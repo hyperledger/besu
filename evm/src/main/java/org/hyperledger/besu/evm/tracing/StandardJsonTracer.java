@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
+import org.hyperledger.besu.datatypes.LeafAccessKey;
 import org.hyperledger.besu.evm.code.OpcodeInfo;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -40,6 +41,7 @@ public class StandardJsonTracer implements OperationTracer {
   private final boolean showStack;
   private final boolean showReturnData;
   private final boolean showStorage;
+  private final boolean showStatelessWitness;
   private int pc;
   private int section;
   private List<String> stack;
@@ -58,18 +60,21 @@ public class StandardJsonTracer implements OperationTracer {
    * @param showStack show the stack in trace lines
    * @param showReturnData show return data in trace lines
    * @param showStorage show the updated storage
+   * @param showStatelessWitness show accesses to the stateless witness
    */
   public StandardJsonTracer(
       final PrintWriter out,
       final boolean showMemory,
       final boolean showStack,
       final boolean showReturnData,
-      final boolean showStorage) {
+      final boolean showStorage,
+      final boolean showStatelessWitness) {
     this.out = out;
     this.showMemory = showMemory;
     this.showStack = showStack;
     this.showReturnData = showReturnData;
     this.showStorage = showStorage;
+    this.showStatelessWitness = showStatelessWitness;
   }
 
   /**
@@ -80,19 +85,22 @@ public class StandardJsonTracer implements OperationTracer {
    * @param showStack show the stack in trace lines
    * @param showReturnData show return data in trace lines
    * @param showStorage show updated storage
+   * @param showStatelessWitness show accesses to the stateless witness
    */
   public StandardJsonTracer(
       final PrintStream out,
       final boolean showMemory,
       final boolean showStack,
       final boolean showReturnData,
-      final boolean showStorage) {
+      final boolean showStorage,
+      final boolean showStatelessWitness) {
     this(
         new PrintWriter(out, true, StandardCharsets.UTF_8),
         showMemory,
         showStack,
         showReturnData,
-        showStorage);
+        showStorage,
+        showStatelessWitness);
   }
 
   /**
@@ -224,6 +232,14 @@ public class StandardJsonTracer implements OperationTracer {
       sb.append(",\"error\":\"")
           .append(messageFrame.getRevertReason().get().toHexString())
           .append("\"");
+    }
+
+    if (showStatelessWitness) {
+      sb.append(",\"witness\": ")
+          .append(
+              messageFrame.getAccessWitness().getLeafAccesses().stream()
+                  .map(LeafAccessKey::toJsonObject)
+                  .toList());
     }
 
     sb.append(storageString).append("}");

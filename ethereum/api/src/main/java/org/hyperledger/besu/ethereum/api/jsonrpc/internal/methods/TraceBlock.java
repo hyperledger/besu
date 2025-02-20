@@ -127,7 +127,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
               TransactionSource transactionSource = new TransactionSource(block);
               DebugOperationTracer debugOperationTracer =
-                  new DebugOperationTracer(new TraceOptions(false, false, true), false);
+                  new DebugOperationTracer(new TraceOptions(false, false, true, false), false);
               ExecuteTransactionStep executeTransactionStep =
                   new ExecuteTransactionStep(
                       chainUpdater,

@@ -18,6 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.AccessWitness;
+import org.hyperledger.besu.datatypes.BranchAccessKey;
+import org.hyperledger.besu.datatypes.LeafAccessKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -31,12 +34,14 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.stateless.Eip4762AccessWitness;
 import org.hyperledger.besu.evm.operation.AbstractOperation;
 import org.hyperledger.besu.evm.operation.CallOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.TreeMap;
@@ -114,7 +119,8 @@ class DebugOperationTracerTest {
     frame.pushStackItem(stackItem1);
     frame.pushStackItem(stackItem2);
     frame.pushStackItem(stackItem3);
-    final TraceFrame traceFrame = traceFrame(frame, new TraceOptions(false, false, true), false);
+    final TraceFrame traceFrame =
+        traceFrame(frame, new TraceOptions(false, false, true, false), false);
     assertThat(traceFrame.getStack()).isPresent();
     assertThat(traceFrame.getStack().get()).containsExactly(stackItem1, stackItem2, stackItem3);
   }
@@ -122,7 +128,7 @@ class DebugOperationTracerTest {
   @Test
   void shouldNotRecordStackWhenDisabled() {
     final TraceFrame traceFrame =
-        traceFrame(validMessageFrame(), new TraceOptions(false, false, false), false);
+        traceFrame(validMessageFrame(), new TraceOptions(false, false, false, false), false);
     assertThat(traceFrame.getStack()).isEmpty();
   }
 
@@ -135,7 +141,8 @@ class DebugOperationTracerTest {
     frame.writeMemory(0, 32, word1);
     frame.writeMemory(32, 32, word2);
     frame.writeMemory(64, 32, word3);
-    final TraceFrame traceFrame = traceFrame(frame, new TraceOptions(false, true, false), false);
+    final TraceFrame traceFrame =
+        traceFrame(frame, new TraceOptions(false, true, false, false), false);
     assertThat(traceFrame.getMemory()).isPresent();
     assertThat(traceFrame.getMemory().get()).containsExactly(word1, word2, word3);
   }
@@ -143,7 +150,7 @@ class DebugOperationTracerTest {
   @Test
   void shouldNotRecordMemoryWhenDisabled() {
     final TraceFrame traceFrame =
-        traceFrame(validMessageFrame(), new TraceOptions(false, false, false), false);
+        traceFrame(validMessageFrame(), new TraceOptions(false, false, false, false), false);
     assertThat(traceFrame.getMemory()).isEmpty();
   }
 
@@ -151,7 +158,8 @@ class DebugOperationTracerTest {
   void shouldRecordStorageWhenEnabled() {
     final MessageFrame frame = validMessageFrame();
     final Map<UInt256, UInt256> updatedStorage = setupStorageForCapture(frame);
-    final TraceFrame traceFrame = traceFrame(frame, new TraceOptions(true, false, false), false);
+    final TraceFrame traceFrame =
+        traceFrame(frame, new TraceOptions(true, false, false, false), false);
     assertThat(traceFrame.getStorage()).isPresent();
     assertThat(traceFrame.getStorage()).contains(updatedStorage);
   }
@@ -159,30 +167,53 @@ class DebugOperationTracerTest {
   @Test
   void shouldNotRecordStorageWhenDisabled() {
     final TraceFrame traceFrame =
-        traceFrame(validMessageFrame(), new TraceOptions(false, false, false), false);
+        traceFrame(validMessageFrame(), new TraceOptions(false, false, false, false), false);
     assertThat(traceFrame.getStorage()).isEmpty();
+  }
+
+  @Test
+  void shouldRecordStatelessWitnessWhenEnabled() {
+    AccessWitness accessWitness = new Eip4762AccessWitness();
+    final MessageFrame frame = validMessageFrame(accessWitness);
+    accessWitness.touchAddressAndChargeRead(frame.getSenderAddress(), UInt256.ZERO);
+    LeafAccessKey expectedLeafKey =
+        new LeafAccessKey(
+            new BranchAccessKey(frame.getSenderAddress(), UInt256.ZERO), UInt256.ZERO);
+    final TraceFrame traceFrame =
+        traceFrame(frame, new TraceOptions(false, false, false, true), false);
+    assertThat(traceFrame.getStatelessWitness()).hasValue(List.of(expectedLeafKey));
+  }
+
+  @Test
+  void shouldNotRecordStatelessWitnessWhenDisabled() {
+    AccessWitness accessWitness = new Eip4762AccessWitness();
+    final MessageFrame frame = validMessageFrame(accessWitness);
+    accessWitness.touchAddressAndChargeRead(frame.getSenderAddress(), UInt256.ZERO);
+    final TraceFrame traceFrame =
+        traceFrame(validMessageFrame(), new TraceOptions(false, false, false, false), false);
+    assertThat(traceFrame.getStatelessWitness()).isEmpty();
   }
 
   @Test
   void shouldNotAddGasWhenDisabled() {
     final TraceFrame traceFrame =
-        traceFrame(validCallFrame(), new TraceOptions(false, false, false), false);
+        traceFrame(validCallFrame(), new TraceOptions(false, false, false, false), false);
     assertThat(traceFrame.getGasCost()).isEqualTo(OptionalLong.of(20));
   }
 
   @Test
   void shouldAddGasWhenEnabled() {
     final TraceFrame traceFrame =
-        traceFrame(validCallFrame(), new TraceOptions(false, false, false), true);
+        traceFrame(validCallFrame(), new TraceOptions(false, false, false, false), true);
     assertThat(traceFrame.getGasCost()).isEqualTo(OptionalLong.of(1020L));
   }
 
   @Test
   void childGasFlagDoesNotMatterForNonCallOperations() {
     final TraceFrame flagDisabledTracer =
-        traceFrame(validMessageFrame(), new TraceOptions(false, false, false), false);
+        traceFrame(validMessageFrame(), new TraceOptions(false, false, false, false), false);
     final TraceFrame flagEnabledTracer =
-        traceFrame(validMessageFrame(), new TraceOptions(false, false, false), true);
+        traceFrame(validMessageFrame(), new TraceOptions(false, false, false, false), true);
 
     assertThat(flagEnabledTracer.getGasCost()).isEqualTo(flagDisabledTracer.getGasCost());
   }
@@ -193,7 +224,7 @@ class DebugOperationTracerTest {
     final Map<UInt256, UInt256> updatedStorage = setupStorageForCapture(frame);
 
     final DebugOperationTracer tracer =
-        new DebugOperationTracer(new TraceOptions(true, true, true), false);
+        new DebugOperationTracer(new TraceOptions(true, true, true, false), false);
     tracer.tracePostExecution(
         frame, new OperationResult(50L, ExceptionalHaltReason.INSUFFICIENT_GAS));
 
@@ -204,7 +235,7 @@ class DebugOperationTracerTest {
   }
 
   private TraceFrame traceFrame(final MessageFrame frame) {
-    return traceFrame(frame, new TraceOptions(false, false, false), false);
+    return traceFrame(frame, new TraceOptions(false, false, false, false), false);
   }
 
   private TraceFrame traceFrame(
@@ -223,6 +254,13 @@ class DebugOperationTracerTest {
     return frame;
   }
 
+  private MessageFrame validMessageFrame(final AccessWitness accessWitness) {
+    final MessageFrame frame = validMessageFrameBuilder().accessWitness(accessWitness).build();
+    frame.setCurrentOperation(anOperation);
+    frame.setPC(10);
+    return frame;
+  }
+
   private MessageFrame validCallFrame() {
     final MessageFrame frame = validMessageFrameBuilder().build();
     frame.setCurrentOperation(callOperation);
@@ -232,7 +270,7 @@ class DebugOperationTracerTest {
 
   private TraceFrame getOnlyTraceFrame(final DebugOperationTracer tracer) {
     Assertions.assertThat(tracer.getTraceFrames()).hasSize(1);
-    return tracer.getTraceFrames().get(0);
+    return tracer.getTraceFrames().getFirst();
   }
 
   private MessageFrameTestFixture validMessageFrameBuilder() {
