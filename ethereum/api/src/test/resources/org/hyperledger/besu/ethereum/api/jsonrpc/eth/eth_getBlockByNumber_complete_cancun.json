@@ -52,6 +52,7 @@
           "type": "0x3",
           "value": "0x0",
           "yParity": "0x0",
+          "v" : "0x0",
           "r": "0x6ae0612cfda43a9b464b10b4881c6fc2e4c24533cf89bbe07934da65c3ae49ce",
           "s": "0x125387aeb222ec51130cf99cbdabf24bd4a881914faed69f254e4a3f4bc507fc",
           "blobVersionedHashes": [

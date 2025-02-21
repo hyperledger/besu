@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -29,7 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.StemPreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.trielog.VerkleTrieLogFactoryImpl;
@@ -104,9 +104,8 @@ class LogRollingTests {
           null,
           null,
           null,
-          null,
-          null,
-          new MainnetBlockHeaderFunctions());
+          new MainnetBlockHeaderFunctions(),
+          null);
   private static final BlockHeader headerTwo =
       new BlockHeader(
           headerOne.getHash(),
@@ -130,9 +129,8 @@ class LogRollingTests {
           null,
           null,
           null,
-          null,
-          null,
-          new MainnetBlockHeaderFunctions());
+          new MainnetBlockHeaderFunctions(),
+          null);
   private static final BlockHeader headerThree =
       new BlockHeader(
           headerOne.getHash(),
@@ -156,9 +154,8 @@ class LogRollingTests {
           null,
           null,
           null,
-          null,
-          null,
-          new MainnetBlockHeaderFunctions());
+          new MainnetBlockHeaderFunctions(),
+          null);
 
   private static final BlockHeader headerFour =
       new BlockHeader(
@@ -183,9 +180,8 @@ class LogRollingTests {
           null,
           null,
           null,
-          null,
-          null,
-          new MainnetBlockHeaderFunctions());
+          new MainnetBlockHeaderFunctions(),
+          null);
 
   @BeforeEach
   void createStorage() {
@@ -229,7 +225,7 @@ class LogRollingTests {
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount contract =
@@ -260,7 +256,7 @@ class LogRollingTests {
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -278,7 +274,7 @@ class LogRollingTests {
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
     final VerkleWorldStateUpdateAccumulator secondUpdater =
         (VerkleWorldStateUpdateAccumulator) secondWorldState.updater();
 
@@ -314,7 +310,7 @@ class LogRollingTests {
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -340,7 +336,7 @@ class LogRollingTests {
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
     final VerkleWorldStateUpdateAccumulator secondUpdater =
         (VerkleWorldStateUpdateAccumulator) secondWorldState.updater();
 
@@ -377,7 +373,7 @@ class LogRollingTests {
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -410,7 +406,7 @@ class LogRollingTests {
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =
@@ -444,7 +440,7 @@ class LogRollingTests {
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -489,7 +485,7 @@ class LogRollingTests {
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -563,7 +559,7 @@ class LogRollingTests {
                 DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));

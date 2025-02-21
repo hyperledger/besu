@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.hyperledger.besu.ethereum.core.BlockHeaderBuilder.createPending;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
@@ -47,14 +48,15 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
-import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
-import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
+import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 
 import java.util.List;
 import java.util.Optional;
@@ -209,19 +211,30 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
 
-      newProtocolSpec
-          .getBlockHashProcessor()
-          .processBlockHashes(disposableWorldState, processableBlockHeader);
-
       throwIfStopped();
 
-      final PluginTransactionSelector pluginTransactionSelector =
-          miningConfiguration.getTransactionSelectionService().createPluginTransactionSelector();
+      final var selectorsStateManager = new SelectorsStateManager();
+      final var pluginTransactionSelector =
+          miningConfiguration
+              .getTransactionSelectionService()
+              .createPluginTransactionSelector(selectorsStateManager);
+      final var operationTracer = pluginTransactionSelector.getOperationTracer();
+      pluginTransactionSelector
+          .getOperationTracer()
+          .traceStartBlock(processableBlockHeader, miningBeneficiary);
 
-      final BlockAwareOperationTracer operationTracer =
-          pluginTransactionSelector.getOperationTracer();
+      operationTracer.traceStartBlock(processableBlockHeader, miningBeneficiary);
+      BlockProcessingContext blockProcessingContext =
+          new BlockProcessingContext(
+              processableBlockHeader,
+              disposableWorldState,
+              newProtocolSpec,
+              newProtocolSpec
+                  .getBlockHashProcessor()
+                  .createBlockHashLookup(protocolContext.getBlockchain(), processableBlockHeader),
+              operationTracer);
+      newProtocolSpec.getBlockHashProcessor().process(blockProcessingContext);
 
-      operationTracer.traceStartBlock(processableBlockHeader);
       timings.register("preTxsSelection");
       final TransactionSelectionResults transactionResults =
           selectTransactions(
@@ -231,6 +244,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               miningBeneficiary,
               newProtocolSpec,
               pluginTransactionSelector,
+              selectorsStateManager,
               parentHeader);
       transactionResults.logSelectionStats();
       timings.register("txsSelection");
@@ -251,20 +265,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       // EIP-7685: process EL requests
       final Optional<RequestProcessorCoordinator> requestProcessor =
           newProtocolSpec.getRequestProcessorCoordinator();
-
-      ProcessRequestContext context =
-          new ProcessRequestContext(
-              processableBlockHeader,
-              disposableWorldState,
-              newProtocolSpec,
-              transactionResults.getReceipts(),
-              newProtocolSpec
-                  .getBlockHashProcessor()
-                  .createBlockHashLookup(protocolContext.getBlockchain(), processableBlockHeader),
-              operationTracer);
+      RequestProcessingContext requestProcessingContext =
+          new RequestProcessingContext(blockProcessingContext, transactionResults.getReceipts());
 
       Optional<List<Request>> maybeRequests =
-          requestProcessor.map(processor -> processor.process(context));
+          requestProcessor.map(processor -> processor.process(requestProcessingContext));
 
       throwIfStopped();
 
@@ -362,6 +367,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Address miningBeneficiary,
       final ProtocolSpec protocolSpec,
       final PluginTransactionSelector pluginTransactionSelector,
+      final SelectorsStateManager selectorsStateManager,
       final BlockHeader parentHeader)
       throws RuntimeException {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
@@ -391,7 +397,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             protocolSpec.getGasLimitCalculator(),
             protocolSpec.getBlockHashProcessor(),
             pluginTransactionSelector,
-            ethScheduler);
+            ethScheduler,
+            selectorsStateManager);
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());
@@ -404,7 +411,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final Hash parentStateRoot = parentHeader.getStateRoot();
     return protocolContext
         .getWorldStateArchive()
-        .getMutable(parentHeader, false)
+        .getWorldState(withBlockHeaderAndNoUpdateNodeHead(parentHeader))
         .orElseThrow(
             () -> {
               LOG.info("Unable to create block because world state is not available");

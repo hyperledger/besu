@@ -145,8 +145,11 @@ configure(allprojects - project(':platform')) {
   tasks.build {
     dependsOn 'javadoc'
   }
-  sourceCompatibility = 21
-  targetCompatibility = 21
+
+  java {
+    sourceCompatibility = 21
+    targetCompatibility = 21
+  }
 
   repositories {
     maven {
@@ -644,32 +647,34 @@ subprojects {
 jar { enabled = false }
 
 apply plugin: 'application'
-mainClassName = 'org.hyperledger.besu.Besu'
-applicationDefaultJvmArgs = [
-  '-Dvertx.disableFileCPResolving=true',
-  // BESU_HOME is replaced by a doFirst block in the run task.
-  '-Dbesu.home=BESU_HOME',
-  // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
-  // happens during shutdown is not logged.
-  '-Dlog4j.shutdownHookEnabled=false',
-  // Disable JNI lookups in log4j messages to improve security
-  '-Dlog4j2.formatMsgNoLookups=true',
-  // Redirect java.util.logging loggers to use log4j2.
-  '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager',
-  // Suppress Java JPMS warnings.  Document the reason for each suppression.
-  // Bouncy Castle needs access to sun.security.provider, which is not open by default.
-  '--add-opens',
-  'java.base/sun.security.provider=ALL-UNNAMED',
-  // Jackson likes to access java.util.OptionalLong's constructor
-  '--add-opens',
-  'java.base/java.util=ALL-UNNAMED',
-  // suppress netty specific module warnings in debug
-  "-Dio.netty.tryReflectionSetAccessible=true",
-  "--add-exports",
-  "java.base/jdk.internal.misc=ALL-UNNAMED",
-  "--add-opens",
-  "java.base/java.nio=ALL-UNNAMED"
-]
+application {
+  mainClass = 'org.hyperledger.besu.Besu'
+  applicationDefaultJvmArgs = [
+    '-Dvertx.disableFileCPResolving=true',
+    // BESU_HOME is replaced by a doFirst block in the run task.
+    '-Dbesu.home=BESU_HOME',
+    // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
+    // happens during shutdown is not logged.
+    '-Dlog4j.shutdownHookEnabled=false',
+    // Disable JNI lookups in log4j messages to improve security
+    '-Dlog4j2.formatMsgNoLookups=true',
+    // Redirect java.util.logging loggers to use log4j2.
+    '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager',
+    // Suppress Java JPMS warnings.  Document the reason for each suppression.
+    // Bouncy Castle needs access to sun.security.provider, which is not open by default.
+    '--add-opens',
+    'java.base/sun.security.provider=ALL-UNNAMED',
+    // Jackson likes to access java.util.OptionalLong's constructor
+    '--add-opens',
+    'java.base/java.util=ALL-UNNAMED',
+    // suppress netty specific module warnings in debug
+    "-Dio.netty.tryReflectionSetAccessible=true",
+    "--add-exports",
+    "java.base/jdk.internal.misc=ALL-UNNAMED",
+    "--add-opens",
+    "java.base/java.nio=ALL-UNNAMED"
+  ]
+}
 
 run {
   args project.hasProperty("besu.run.args") ? project.property("besu.run.args").toString().split("\\s+") : []
@@ -697,7 +702,7 @@ def tweakStartScript(createScriptTask) {
 }
 
 startScripts {
-  defaultJvmOpts = applicationDefaultJvmArgs + [
+  defaultJvmOpts = application.applicationDefaultJvmArgs + [
     "-XX:G1ConcRefinementThreads=2",
     "-XX:G1HeapWastePercent=15",
     "-XX:MaxGCPauseMillis=100",
@@ -714,7 +719,6 @@ task untunedStartScripts(type: CreateStartScripts) {
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'besu-untuned'
-  defaultJvmOpts = applicationDefaultJvmArgs
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(untunedStartScripts) }
@@ -823,7 +827,7 @@ task distDocker {
       from file("${projectDir}/docker/Dockerfile")
       into(dockerBuildDir)
     }
-    exec {
+    providers.exec {
       def image = "${dockerImageName}:${dockerBuildVersion}"
       def dockerPlatform = ""
       if (project.hasProperty('docker-platform')){
@@ -847,7 +851,7 @@ task testDocker {
   }
 
   doLast {
-    exec {
+    providers.exec {
       def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
       workingDir "${projectDir}/docker"
       executable shell
@@ -871,7 +875,7 @@ task dockerUpload {
   }
 
   doLast {
-    exec {
+    providers.exec {
       def archVariantImage = "${image}-${architecture}"
       def cmd = "docker tag '${image}' '${archVariantImage}' && docker push '${archVariantImage}'"
       println "Executing '${cmd}'"
@@ -888,13 +892,13 @@ task dockerUploadRelease {
   doLast {
     for (def architecture in archs) {
 
-      exec {
+      providers.exec {
         def cmd = "docker pull '${image}-${architecture}' && docker tag '${image}-${architecture}' '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
         args "-c", cmd
       }
-      exec {
+      providers.exec {
         def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
@@ -902,14 +906,14 @@ task dockerUploadRelease {
       }
 
 
-      exec {
+      providers.exec {
         def archImage = "${image}-${architecture}"
         def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
         args "-c", cmd
       }
-      exec {
+      providers.exec {
         def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
@@ -925,7 +929,7 @@ task manifestDocker {
     "arm64",
     "amd64"] //TODO: this assumes dockerUpload task has already been run on 2 different archs!
   doLast {
-    exec {
+    providers.exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${image}-${arch}' " }
       def cmd = "docker manifest create '${image}' ${targets}"
@@ -933,7 +937,7 @@ task manifestDocker {
       executable shell
       args "-c", cmd
     }
-    exec {
+    providers.exec {
       def cmd = "docker manifest push '${image}'"
       println "Executing '${cmd}'"
       executable shell
@@ -948,7 +952,7 @@ task manifestDockerRelease {
 
   doLast {
 
-    exec {
+    providers.exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
       def cmd = "docker manifest create '${baseTag}' ${targets} --amend"
@@ -956,7 +960,7 @@ task manifestDockerRelease {
       executable shell
       args "-c", cmd
     }
-    exec {
+    providers.exec {
       def cmd = "docker manifest push '${baseTag}'"
       println "Executing '${cmd}'"
       executable shell

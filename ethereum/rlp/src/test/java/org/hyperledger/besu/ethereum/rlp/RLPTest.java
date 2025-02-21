@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.util.RLPTestUtil;
 import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class RLPTest {
@@ -166,6 +167,17 @@ public class RLPTest {
     assertThatThrownBy(() -> RLP.calculateSize(h("0xBB7FFFFFFB")))
         .isInstanceOf(RLPException.class)
         .hasMessageContaining("RLP item exceeds max supported size of 2147483647: 2147483648");
+  }
+
+  @Test
+  public void testValidateWithListEndingAtStartOfList() {
+    // The structue of the RLP is as shown below
+    // [
+    //  ["0x01"],
+    //  ["0x02"]
+    // ]
+    Bytes validRlp = Bytes.fromHexString("c4c101c102");
+    Assertions.assertThatCode(() -> RLP.validate(validRlp)).doesNotThrowAnyException();
   }
 
   private static Bytes h(final String hex) {

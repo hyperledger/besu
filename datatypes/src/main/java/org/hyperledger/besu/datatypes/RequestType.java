@@ -52,8 +52,25 @@ public enum RequestType {
       case 0x01 -> WITHDRAWAL;
       case 0x02 -> CONSOLIDATION;
       default ->
-          throw new IllegalArgumentException(
+          throw new InvalidRequestTypeException(
               String.format("Unsupported request type: 0x%02X", serializedTypeValue));
     };
+  }
+
+  /**
+   * Exception thrown when an invalid request type is encountered.
+   *
+   * <p>This exception is thrown when a serialized type value does not correspond to any {@link
+   * RequestType}.
+   */
+  public static class InvalidRequestTypeException extends IllegalArgumentException {
+    /**
+     * Constructs an {@link InvalidRequestTypeException} with the specified detail message.
+     *
+     * @param message the detail message.
+     */
+    public InvalidRequestTypeException(final String message) {
+      super(message);
+    }
   }
 }

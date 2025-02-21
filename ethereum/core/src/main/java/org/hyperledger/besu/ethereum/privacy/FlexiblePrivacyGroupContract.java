@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIV
 import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.CAN_EXECUTE_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.GET_VERSION_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -107,7 +108,11 @@ public class FlexiblePrivacyGroupContract {
 
           final Bytes privacyGroupId = Bytes.fromBase64String(base64privacyGroupId);
           final MutableWorldState localMutableState =
-              privateWorldStateArchive.getMutable(disposablePrivateState.rootHash(), null).get();
+              privateWorldStateArchive
+                  .getWorldState(
+                      withStateRootAndBlockHashAndUpdateNodeHead(
+                          disposablePrivateState.rootHash(), null))
+                  .get();
           final WorldUpdater updater = localMutableState.updater();
           final PrivateTransaction privateTransaction =
               buildTransaction(privacyGroupId, privateWorldStateUpdater, callData);

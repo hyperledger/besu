@@ -42,12 +42,10 @@ import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayDeque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -315,8 +313,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   @Override
   public void selectTransactions(final PendingTransactions.TransactionSelector selector) {
-    final Set<Address> skipSenders = new HashSet<>();
-
     final Map<Byte, List<SenderPendingTransactions>> candidateTxsByScore;
     synchronized (this) {
       // since selecting transactions for block creation is a potential long operation
@@ -332,50 +328,39 @@ public class LayeredPendingTransactions implements PendingTransactions {
       for (final var senderTxs : entry.getValue()) {
         LOG.trace("Evaluating sender txs {}", senderTxs);
 
-        if (!skipSenders.contains(senderTxs.sender())) {
+        for (final var candidatePendingTx : senderTxs.pendingTransactions()) {
+          final var selectionResult = selector.evaluateTransaction(candidatePendingTx);
 
-          for (final var candidatePendingTx : senderTxs.pendingTransactions()) {
-            final var selectionResult = selector.evaluateTransaction(candidatePendingTx);
+          LOG.atTrace()
+              .setMessage("Selection result {} for transaction {}")
+              .addArgument(selectionResult)
+              .addArgument(candidatePendingTx::toTraceLog)
+              .log();
 
+          if (selectionResult.discard()) {
+            ethScheduler.scheduleTxWorkerTask(
+                () -> {
+                  synchronized (this) {
+                    prioritizedTransactions.remove(candidatePendingTx, INVALIDATED);
+                  }
+                });
+            logDiscardedTransaction(candidatePendingTx, selectionResult);
+          } else if (selectionResult.penalize()) {
+            ethScheduler.scheduleTxWorkerTask(
+                () -> {
+                  synchronized (this) {
+                    prioritizedTransactions.penalize(candidatePendingTx);
+                  }
+                });
             LOG.atTrace()
-                .setMessage("Selection result {} for transaction {}")
-                .addArgument(selectionResult)
+                .setMessage("Transaction {} penalized")
                 .addArgument(candidatePendingTx::toTraceLog)
                 .log();
+          }
 
-            if (selectionResult.discard()) {
-              ethScheduler.scheduleTxWorkerTask(
-                  () -> {
-                    synchronized (this) {
-                      prioritizedTransactions.remove(candidatePendingTx, INVALIDATED);
-                    }
-                  });
-              logDiscardedTransaction(candidatePendingTx, selectionResult);
-            } else if (selectionResult.penalize()) {
-              ethScheduler.scheduleTxWorkerTask(
-                  () -> {
-                    synchronized (this) {
-                      prioritizedTransactions.penalize(candidatePendingTx);
-                    }
-                  });
-              LOG.atTrace()
-                  .setMessage("Transaction {} penalized")
-                  .addArgument(candidatePendingTx::toTraceLog)
-                  .log();
-            }
-
-            if (selectionResult.stop()) {
-              LOG.trace("Stopping selection");
-              break selection;
-            }
-
-            if (!selectionResult.selected()) {
-              // avoid processing other txs from this sender if this one is skipped
-              // since the following will not be selected due to the nonce gap
-              LOG.trace("Skipping remaining txs for sender {}", candidatePendingTx.getSender());
-              skipSenders.add(candidatePendingTx.getSender());
-              break;
-            }
+          if (selectionResult.stop()) {
+            LOG.trace("Stopping selection");
+            break selection;
           }
         }
       }
@@ -433,7 +418,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   @Override
-  public synchronized void manageBlockAdded(
+  public void manageBlockAdded(
       final BlockHeader blockHeader,
       final List<Transaction> confirmedTransactions,
       final List<Transaction> reorgTransactions,
@@ -447,19 +432,21 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     final var reorgNonceRangeBySender = nonceRangeBySender(reorgTransactions);
 
-    try {
-      prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
-    } catch (final Throwable throwable) {
-      LOG.warn(
-          "Unexpected error {} when managing added block {}, maxNonceBySender {}, reorgNonceRangeBySender {}",
-          throwable,
-          blockHeader.toLogString(),
-          maxConfirmedNonceBySender,
-          reorgTransactions);
-      LOG.warn("Stack trace", throwable);
-    }
+    synchronized (this) {
+      try {
+        prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
+      } catch (final Throwable throwable) {
+        LOG.warn(
+            "Unexpected error {} when managing added block {}, maxNonceBySender {}, reorgNonceRangeBySender {}",
+            throwable,
+            blockHeader.toLogString(),
+            maxConfirmedNonceBySender,
+            reorgTransactions);
+        LOG.warn("Stack trace", throwable);
+      }
 
-    logBlockHeaderForReplay(blockHeader, maxConfirmedNonceBySender, reorgNonceRangeBySender);
+      logBlockHeaderForReplay(blockHeader, maxConfirmedNonceBySender, reorgNonceRangeBySender);
+    }
   }
 
   private void logBlockHeaderForReplay(
@@ -498,10 +485,25 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   private Map<Address, Long> maxNonceBySender(final List<Transaction> confirmedTransactions) {
+    record SenderNonce(Address sender, long nonce) {}
+
     return confirmedTransactions.stream()
+        .<SenderNonce>mapMulti(
+            (transaction, consumer) -> {
+              // always consider the sender
+              consumer.accept(new SenderNonce(transaction.getSender(), transaction.getNonce()));
+
+              // and if a code delegation tx also the authorities
+              if (transaction.getType().supportsDelegateCode()) {
+                transaction.getCodeDelegationList().get().stream()
+                    .map(cd -> cd.authorizer().map(address -> new SenderNonce(address, cd.nonce())))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .forEach(consumer);
+              }
+            })
         .collect(
-            groupingBy(
-                Transaction::getSender, mapping(Transaction::getNonce, reducing(0L, Math::max))));
+            groupingBy(SenderNonce::sender, mapping(SenderNonce::nonce, reducing(0L, Math::max))));
   }
 
   private Map<Address, LongRange> nonceRangeBySender(

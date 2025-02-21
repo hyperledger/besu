@@ -250,7 +250,7 @@ dependencies {
   // the following will be resolved via custom ivy repository declared in root build.gradle
   executionRefTestImplementation dependencies.create('ethereum:execution-spec-tests') {
     version {
-      strictly 'v3.0.0'
+      strictly 'v4.0.0'
     }
     artifact {
       name = 'fixtures'
@@ -291,7 +291,7 @@ tasks.register('validateReferenceTestSubmodule') {
     def expectedHash = '9201075490807f58811078e9bb5ec895b4ac01a5'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
-      exec {
+      providers.exec {
         commandLine 'git', 'submodule', 'status', submodulePath
         standardOutput = result
         errorOutput = result

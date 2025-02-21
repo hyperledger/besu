@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -51,6 +51,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.math.BigInteger;
 import java.nio.file.Path;
@@ -84,7 +85,7 @@ public class JsonRpcTestMethodsFactory {
     this.importer = importer;
     this.blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
     this.stateArchive = createInMemoryWorldStateArchive();
-    this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
+    this.importer.getGenesisState().writeStateTo(stateArchive.getWorldState());
     this.context =
         new ProtocolContext(
             blockchain, stateArchive, mock(ConsensusContext.class), new BadBlockManager());
@@ -228,6 +229,7 @@ public class JsonRpcTestMethodsFactory {
             Vertx.vertx(new VertxOptions().setWorkerPoolSize(1)),
             ImmutableApiConfiguration.builder().build(),
             Optional.empty(),
-            transactionSimulator);
+            transactionSimulator,
+            new DeterministicEthScheduler());
   }
 }

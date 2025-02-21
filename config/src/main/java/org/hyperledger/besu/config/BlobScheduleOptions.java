@@ -82,15 +82,16 @@ public class BlobScheduleOptions {
   public static class BlobSchedule {
     private final int target;
     private final int max;
+    private final int baseFeeUpdateFraction;
 
     /** The constant CANCUN_DEFAULT. */
-    public static final BlobSchedule CANCUN_DEFAULT = new BlobSchedule(3, 6);
+    public static final BlobSchedule CANCUN_DEFAULT = new BlobSchedule(3, 6, 3338477);
 
     /** The constant PRAGUE_DEFAULT. */
-    public static final BlobSchedule PRAGUE_DEFAULT = new BlobSchedule(6, 9);
+    public static final BlobSchedule PRAGUE_DEFAULT = new BlobSchedule(6, 9, 5007716);
 
     /** The constant OSAKA_DEFAULT. */
-    public static final BlobSchedule OSAKA_DEFAULT = new BlobSchedule(9, 12);
+    public static final BlobSchedule OSAKA_DEFAULT = new BlobSchedule(9, 12, 5007716);
 
     /**
      * Instantiates a new Blob schedule.
@@ -100,11 +101,14 @@ public class BlobScheduleOptions {
     public BlobSchedule(final ObjectNode blobScheduleConfigRoot) {
       this.target = JsonUtil.getInt(blobScheduleConfigRoot, "target").orElseThrow();
       this.max = JsonUtil.getInt(blobScheduleConfigRoot, "max").orElseThrow();
+      this.baseFeeUpdateFraction =
+          JsonUtil.getInt(blobScheduleConfigRoot, "basefeeupdatefraction").orElseThrow();
     }
 
-    private BlobSchedule(final int target, final int max) {
+    private BlobSchedule(final int target, final int max, final int baseFeeUpdateFraction) {
       this.target = target;
       this.max = max;
+      this.baseFeeUpdateFraction = baseFeeUpdateFraction;
     }
 
     /**
@@ -126,12 +130,21 @@ public class BlobScheduleOptions {
     }
 
     /**
+     * Gets base fee update fraction.
+     *
+     * @return the base fee update fraction
+     */
+    public int getBaseFeeUpdateFraction() {
+      return baseFeeUpdateFraction;
+    }
+
+    /**
      * As map.
      *
      * @return the map
      */
     Map<String, Object> asMap() {
-      return Map.of("target", target, "max", max);
+      return Map.of("target", target, "max", max, "baseFeeUpdateFraction", baseFeeUpdateFraction);
     }
   }
 }

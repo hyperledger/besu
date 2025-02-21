@@ -40,15 +40,15 @@ dependencies {
   implementation project(':util')
 
   implementation 'com.google.guava:guava'
+  annotationProcessor 'com.google.dagger:dagger-compiler'
+  implementation 'com.google.dagger:dagger'
   implementation 'dnsjava:dnsjava'
   implementation 'io.netty:netty-transport-native-unix-common'
   implementation 'io.vertx:vertx-core'
+  implementation 'javax.inject:javax.inject'
 
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-crypto'
-  implementation('io.tmio:tuweni-devp2p') {
-    exclude group:'ch.qos.logback', module:'logback-classic'
-  }
   implementation 'io.tmio:tuweni-io'
   implementation 'io.tmio:tuweni-rlp'
   implementation 'io.tmio:tuweni-units'

@@ -120,9 +120,8 @@ public class BlockchainQueriesLogCacheTest {
             null,
             null,
             null,
-            null,
-            null,
-            new MainnetBlockHeaderFunctions());
+            new MainnetBlockHeaderFunctions(),
+            null);
     testHash = fakeHeader.getHash();
     final BlockBody fakeBody = new BlockBody(Collections.emptyList(), Collections.emptyList());
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(testHash));

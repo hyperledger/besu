@@ -108,9 +108,8 @@ public class TransactionLogBloomCacherTest {
             null,
             null,
             null,
-            null,
-            null,
-            new MainnetBlockHeaderFunctions());
+            new MainnetBlockHeaderFunctions(),
+            null);
     testHash = fakeHeader.getHash();
     when(blockchain.getBlockHeader(anyLong())).thenReturn(Optional.of(fakeHeader));
     when(scheduler.scheduleFutureTask(any(Supplier.class), any(Duration.class)))
@@ -285,9 +284,8 @@ public class TransactionLogBloomCacherTest {
             null,
             null,
             null,
-            null,
-            null,
-            new MainnetBlockHeaderFunctions());
+            new MainnetBlockHeaderFunctions(),
+            null);
     testHash = fakeHeader.getHash();
     when(blockchain.getBlockHeader(number)).thenReturn(Optional.of(fakeHeader));
     return fakeHeader;

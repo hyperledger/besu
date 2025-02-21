@@ -105,9 +105,10 @@ public class FlexiblePrivacyPrecompiledContractTest {
   @BeforeEach
   public void setUp() {
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
+    when(mutableWorldState.rootHash()).thenReturn(Hash.EMPTY);
     when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));
-    when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
-    when(worldStateArchive.getMutable(any(), any())).thenReturn(Optional.of(mutableWorldState));
+    when(worldStateArchive.getWorldState()).thenReturn(mutableWorldState);
+    when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(mutableWorldState));
 
     final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
     when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))

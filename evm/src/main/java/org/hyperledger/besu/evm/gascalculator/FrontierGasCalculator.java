@@ -21,6 +21,7 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import static org.hyperledger.besu.evm.internal.Words.numWords;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -38,7 +39,8 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long TX_DATA_NON_ZERO_COST = 68L;
 
-  private static final long TX_BASE_COST = 21_000L;
+  /** Minimum base cost that every transaction needs to pay */
+  protected static final long TX_BASE_COST = 21_000L;
 
   private static final long TX_CREATE_EXTRA_COST = 0L;
 
@@ -128,18 +130,82 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreate) {
+  public long transactionIntrinsicGasCost(
+      final Bytes payload, final boolean isContractCreation, final long baselineGas) {
+    final long dynamicIntrinsicGasCost =
+        dynamicIntrinsicGasCost(payload, isContractCreation, baselineGas);
+
+    if (dynamicIntrinsicGasCost == Long.MIN_VALUE || dynamicIntrinsicGasCost == Long.MAX_VALUE) {
+      return dynamicIntrinsicGasCost;
+    }
+    return clampedAdd(getMinimumTransactionCost(), dynamicIntrinsicGasCost);
+  }
+
+  /**
+   * Calculates the dynamic part of the intrinsic gas cost
+   *
+   * @param payload the call data payload
+   * @param isContractCreation whether the transaction is a contract creation
+   * @param baselineGas how much gas is used by access lists and code delegations
+   * @return the dynamic part of the intrinsic gas cost
+   */
+  protected long dynamicIntrinsicGasCost(
+      final Bytes payload, final boolean isContractCreation, final long baselineGas) {
+    final int payloadSize = payload.size();
+    final long zeroBytes = zeroBytes(payload);
+    long cost = clampedAdd(callDataCost(payloadSize, zeroBytes), baselineGas);
+
+    if (cost == Long.MIN_VALUE || cost == Long.MAX_VALUE) {
+      return cost;
+    }
+
+    if (isContractCreation) {
+      cost = clampedAdd(cost, contractCreationCost(payloadSize));
+
+      if (cost == Long.MIN_VALUE || cost == Long.MAX_VALUE) {
+        return cost;
+      }
+    }
+
+    return cost;
+  }
+
+  /**
+   * Calculates the cost of the call data
+   *
+   * @param payloadSize the total size of the payload
+   * @param zeroBytes the number of zero bytes in the payload
+   * @return the cost of the call data
+   */
+  protected long callDataCost(final long payloadSize, final long zeroBytes) {
+    return clampedAdd(
+        TX_DATA_NON_ZERO_COST * (payloadSize - zeroBytes), TX_DATA_ZERO_COST * zeroBytes);
+  }
+
+  /**
+   * Counts the zero bytes in the payload
+   *
+   * @param payload the payload
+   * @return the number of zero bytes in the payload
+   */
+  protected static long zeroBytes(final Bytes payload) {
     int zeros = 0;
     for (int i = 0; i < payload.size(); i++) {
       if (payload.get(i) == 0) {
-        ++zeros;
+        zeros += 1;
       }
     }
-    final int nonZeros = payload.size() - zeros;
+    return zeros;
+  }
 
-    final long cost = TX_BASE_COST + TX_DATA_ZERO_COST * zeros + TX_DATA_NON_ZERO_COST * nonZeros;
-
-    return isContractCreate ? (cost + txCreateExtraGasCost()) : cost;
+  /**
+   * Returns the gas cost for contract creation transactions
+   *
+   * @param ignored the size of the contract creation code (ignored in Frontier)
+   * @return the gas cost for contract creation transactions
+   */
+  protected long contractCreationCost(final int ignored) {
+    return txCreateExtraGasCost();
   }
 
   /**
@@ -149,6 +215,11 @@ public class FrontierGasCalculator implements GasCalculator {
    */
   protected long txCreateExtraGasCost() {
     return TX_CREATE_EXTRA_COST;
+  }
+
+  @Override
+  public long transactionFloorCost(final Bytes payload) {
+    return 0L;
   }
 
   @Override
@@ -627,12 +698,29 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getMaximumTransactionCost(final int size) {
-    return TX_BASE_COST + TX_DATA_NON_ZERO_COST * size;
+  public long getMinimumTransactionCost() {
+    return TX_BASE_COST;
   }
 
   @Override
-  public long getMinimumTransactionCost() {
-    return TX_BASE_COST;
+  public long calculateGasRefund(
+      final Transaction transaction,
+      final MessageFrame initialFrame,
+      final long ignoredCodeDelegationRefund) {
+
+    final long refundAllowance = calculateRefundAllowance(transaction, initialFrame);
+
+    return initialFrame.getRemainingGas() + refundAllowance;
+  }
+
+  private long calculateRefundAllowance(
+      final Transaction transaction, final MessageFrame initialFrame) {
+    final long selfDestructRefund =
+        getSelfDestructRefundAmount() * initialFrame.getSelfDestructs().size();
+    final long executionRefund = initialFrame.getGasRefund() + selfDestructRefund;
+    // Integer truncation takes care of the floor calculation needed after the divide.
+    final long maxRefundAllowance =
+        (transaction.getGasLimit() - initialFrame.getRemainingGas()) / getMaxRefundQuotient();
+    return Math.min(executionRefund, maxRefundAllowance);
   }
 }

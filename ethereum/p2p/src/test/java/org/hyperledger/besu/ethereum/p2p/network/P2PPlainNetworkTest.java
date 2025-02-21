@@ -66,7 +66,7 @@ public class P2PPlainNetworkTest {
   private final Vertx vertx = Vertx.vertx();
   private final NetworkingConfiguration config =
       NetworkingConfiguration.create()
-          .setDiscovery(DiscoveryConfiguration.create().setActive(false))
+          .setDiscovery(DiscoveryConfiguration.create().setEnabled(false))
           .setRlpx(
               RlpxConfiguration.create()
                   .setBindPort(0)
@@ -141,7 +141,7 @@ public class P2PPlainNetworkTest {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     final NetworkingConfiguration listenerConfig =
         NetworkingConfiguration.create()
-            .setDiscovery(DiscoveryConfiguration.create().setActive(false))
+            .setDiscovery(DiscoveryConfiguration.create().setEnabled(false))
             .setRlpx(
                 RlpxConfiguration.create()
                     .setBindPort(0)

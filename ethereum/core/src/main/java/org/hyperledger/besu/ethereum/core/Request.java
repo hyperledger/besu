@@ -29,4 +29,13 @@ public record Request(RequestType type, Bytes data)
   public Bytes getData() {
     return data();
   }
+
+  /**
+   * Gets the serialized form of the concatenated type and data.
+   *
+   * @return the serialized request as a byte.
+   */
+  public Bytes getEncodedRequest() {
+    return Bytes.concatenate(Bytes.of(getType().ordinal()), getData());
+  }
 }

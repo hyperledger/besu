@@ -86,6 +86,33 @@ public interface ExceptionalHaltReason {
    */
   String getDescription();
 
+  /**
+   * Creates an ExceptionalHaltReason for an invalid operation .
+   *
+   * @see org.hyperledger.besu.evm.operation.InvalidOperation
+   *     <p>Includes the problematic opcode in the description.
+   * @param opcode The invalid opcode.
+   * @return An ExceptionalHaltReason instance with the opcode details.
+   */
+  static ExceptionalHaltReason newInvalidOperation(final long opcode) {
+    return new ExceptionalHaltReason() {
+      @Override
+      public String name() {
+        return INVALID_OPERATION.name();
+      }
+
+      @Override
+      public String getDescription() {
+        return "Invalid opcode: 0x%02x".formatted(opcode);
+      }
+
+      @Override
+      public String toString() {
+        return name();
+      }
+    };
+  }
+
   /** The enum Default exceptional halt reason. */
   enum DefaultExceptionalHaltReason implements ExceptionalHaltReason {
     /** None default exceptional halt reason. */

@@ -57,7 +57,7 @@ public class BytesTrieSet<E extends Bytes> extends AbstractSet<E> {
       if (leafObject == null) sb.append("null");
       else {
         sb.append('[');
-        System.out.println(leafObject.toHexString());
+        sb.append(leafObject.toHexString());
         sb.append(']');
       }
       sb.append(", children=");

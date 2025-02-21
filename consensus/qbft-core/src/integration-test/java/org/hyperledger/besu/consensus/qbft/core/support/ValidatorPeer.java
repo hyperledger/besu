@@ -33,9 +33,9 @@ import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collections;
 import java.util.List;
@@ -54,7 +54,7 @@ public class ValidatorPeer extends DefaultValidatorPeer {
     this.messageFactory = messageFactory;
   }
 
-  public Proposal injectProposal(final ConsensusRoundIdentifier rId, final Block block) {
+  public Proposal injectProposal(final ConsensusRoundIdentifier rId, final QbftBlock block) {
     return injectProposalForFutureRound(
         rId, Collections.emptyList(), Collections.emptyList(), block);
   }
@@ -65,8 +65,8 @@ public class ValidatorPeer extends DefaultValidatorPeer {
     return payload;
   }
 
-  public Commit injectCommit(final ConsensusRoundIdentifier rId, final Block block) {
-    final Block commitBlock = createCommitBlockFromProposalBlock(block, rId.getRoundNumber());
+  public Commit injectCommit(final ConsensusRoundIdentifier rId, final QbftBlock block) {
+    final QbftBlock commitBlock = createCommitBlockFromProposalBlock(block, rId.getRoundNumber());
     final SECPSignature commitSeal = nodeKey.sign(commitBlock.getHash());
     return injectCommit(rId, block.getHash(), commitSeal);
   }
@@ -82,7 +82,7 @@ public class ValidatorPeer extends DefaultValidatorPeer {
       final ConsensusRoundIdentifier rId,
       final List<SignedData<RoundChangePayload>> roundChanges,
       final List<SignedData<PreparePayload>> prepares,
-      final Block blockToPropose) {
+      final QbftBlock blockToPropose) {
 
     final Proposal payload =
         messageFactory.createProposal(rId, blockToPropose, roundChanges, prepares);

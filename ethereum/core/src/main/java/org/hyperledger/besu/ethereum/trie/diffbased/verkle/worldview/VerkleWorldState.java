@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCached
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.LeafBuilder;
@@ -73,13 +73,13 @@ public class VerkleWorldState extends DiffBasedWorldState {
       final VerkleWorldStateProvider archive,
       final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration,
-      final DiffBasedWorldStateConfig diffBasedWorldStateConfig) {
+      final WorldStateConfig worldStateConfig) {
     this(
         worldStateKeyValueStorage,
         archive.getCachedWorldStorageManager(),
         archive.getTrieLogManager(),
         evmConfiguration,
-        diffBasedWorldStateConfig);
+        worldStateConfig);
   }
 
   public VerkleWorldState(
@@ -87,12 +87,8 @@ public class VerkleWorldState extends DiffBasedWorldState {
       final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration,
-      final DiffBasedWorldStateConfig diffBasedWorldStateConfig) {
-    super(
-        worldStateKeyValueStorage,
-        cachedWorldStorageManager,
-        trieLogManager,
-        diffBasedWorldStateConfig);
+      final WorldStateConfig worldStateConfig) {
+    super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager, worldStateConfig);
     this.verklePreloader = new VerklePreloader(worldStateKeyValueStorage.getStemPreloader());
     this.setAccumulator(
         new VerkleWorldStateUpdateAccumulator(
@@ -401,8 +397,8 @@ public class VerkleWorldState extends DiffBasedWorldState {
   }
 
   @Override
-  public MutableWorldState freeze() {
-    this.worldStateConfig.setFrozen(true);
+  public MutableWorldState freezeStorage() {
+    this.isStorageFrozen = true;
     this.worldStateKeyValueStorage =
         new VerkleLayeredWorldStateKeyValueStorage(getWorldStateStorage());
     return this;

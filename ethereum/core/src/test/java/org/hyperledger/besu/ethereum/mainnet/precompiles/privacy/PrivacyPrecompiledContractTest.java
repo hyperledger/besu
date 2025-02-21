@@ -113,8 +113,8 @@ public class PrivacyPrecompiledContractTest {
   public void setUp() {
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));
-    when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
-    when(worldStateArchive.getMutable(any(), any())).thenReturn(Optional.of(mutableWorldState));
+    when(worldStateArchive.getWorldState()).thenReturn(mutableWorldState);
+    when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(mutableWorldState));
 
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());

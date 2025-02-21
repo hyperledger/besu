@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.network;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.payload.Authored;
@@ -23,6 +22,7 @@ import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.RoundChangeMessageData;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -35,18 +35,17 @@ import com.google.common.collect.Lists;
 public class QbftGossip implements Gossiper {
 
   private final ValidatorMulticaster multicaster;
-  private final BftExtraDataCodec bftExtraDataCodec;
+  private final QbftBlockCodec blockEncoder;
 
   /**
    * Constructor that attaches gossip logic to a set of multicaster
    *
    * @param multicaster Network connections to the remote validators
-   * @param bftExtraDataCodec Codec used when decoding MessageData
+   * @param blockEncoder the block encoder
    */
-  public QbftGossip(
-      final ValidatorMulticaster multicaster, final BftExtraDataCodec bftExtraDataCodec) {
+  public QbftGossip(final ValidatorMulticaster multicaster, final QbftBlockCodec blockEncoder) {
     this.multicaster = multicaster;
-    this.bftExtraDataCodec = bftExtraDataCodec;
+    this.blockEncoder = blockEncoder;
   }
 
   /**
@@ -57,25 +56,18 @@ public class QbftGossip implements Gossiper {
   @Override
   public void send(final Message message) {
     final MessageData messageData = message.getData();
-    final Authored decodedMessage;
-    switch (messageData.getCode()) {
-      case QbftV1.PROPOSAL:
-        decodedMessage = ProposalMessageData.fromMessageData(messageData).decode(bftExtraDataCodec);
-        break;
-      case QbftV1.PREPARE:
-        decodedMessage = PrepareMessageData.fromMessageData(messageData).decode();
-        break;
-      case QbftV1.COMMIT:
-        decodedMessage = CommitMessageData.fromMessageData(messageData).decode();
-        break;
-      case QbftV1.ROUND_CHANGE:
-        decodedMessage =
-            RoundChangeMessageData.fromMessageData(messageData).decode(bftExtraDataCodec);
-        break;
-      default:
-        throw new IllegalArgumentException(
-            "Received message does not conform to any recognised QBFT message structure.");
-    }
+    final Authored decodedMessage =
+        switch (messageData.getCode()) {
+          case QbftV1.PROPOSAL ->
+              ProposalMessageData.fromMessageData(messageData).decode(blockEncoder);
+          case QbftV1.PREPARE -> PrepareMessageData.fromMessageData(messageData).decode();
+          case QbftV1.COMMIT -> CommitMessageData.fromMessageData(messageData).decode();
+          case QbftV1.ROUND_CHANGE ->
+              RoundChangeMessageData.fromMessageData(messageData).decode(blockEncoder);
+          default ->
+              throw new IllegalArgumentException(
+                  "Received message does not conform to any recognised QBFT message structure.");
+        };
     final List<Address> excludeAddressesList =
         Lists.newArrayList(
             message.getConnection().getPeerInfo().getAddress(), decodedMessage.getAuthor());

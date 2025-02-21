@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.DISCOVERY_DISABLED;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
@@ -45,6 +48,10 @@ public class AdminAddPeer extends AdminModifyPeer {
 
   @Override
   protected JsonRpcResponse performOperation(final Object id, final String enode) {
+    if (peerNetwork.isStopped()) {
+      LOG.debug("Discovery is disabled, not adding ({}) to peers", enode);
+      return new JsonRpcErrorResponse(id, DISCOVERY_DISABLED);
+    }
     LOG.debug("Adding ({}) to peers", enode);
     final EnodeURL enodeURL =
         this.enodeDnsConfiguration.isEmpty()

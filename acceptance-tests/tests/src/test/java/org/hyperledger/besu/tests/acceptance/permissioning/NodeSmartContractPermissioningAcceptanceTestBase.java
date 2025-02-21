@@ -28,6 +28,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.NodeSmartContr
 
 import java.io.IOException;
 
+import org.junit.jupiter.api.AfterEach;
+
 class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBase {
 
   private final NodeSmartContractPermissioningTransactions smartContractNodePermissioning;
@@ -97,6 +99,7 @@ class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBas
     }
   }
 
+  @AfterEach
   @Override
   public void tearDownAcceptanceTestBase() {
     permissionedCluster.stop();

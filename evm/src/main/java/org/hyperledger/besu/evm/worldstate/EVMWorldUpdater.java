@@ -26,11 +26,11 @@ import java.util.Optional;
 
 /**
  * The EVM world updater. This class is a wrapper around a WorldUpdater that provides an
- * AuthorizedCodeService to manage the authorized code for accounts.
+ * CodeDelegationService to manage the code delegations for accounts.
  */
 public class EVMWorldUpdater implements WorldUpdater {
   private final WorldUpdater rootWorldUpdater;
-  private final DelegatedCodeService delegatedCodeService;
+  private final CodeDelegationService codeDelegationService;
 
   /**
    * Instantiates a new EVM world updater.
@@ -39,49 +39,49 @@ public class EVMWorldUpdater implements WorldUpdater {
    * @param gasCalculator the gas calculator to check for precompiles.
    */
   public EVMWorldUpdater(final WorldUpdater rootWorldUpdater, final GasCalculator gasCalculator) {
-    this(rootWorldUpdater, new DelegatedCodeService(gasCalculator));
+    this(rootWorldUpdater, new CodeDelegationService(gasCalculator));
   }
 
   private EVMWorldUpdater(
-      final WorldUpdater rootWorldUpdater, final DelegatedCodeService delegatedCodeService) {
+      final WorldUpdater rootWorldUpdater, final CodeDelegationService codeDelegationService) {
     this.rootWorldUpdater = rootWorldUpdater;
-    this.delegatedCodeService = delegatedCodeService;
+    this.codeDelegationService = codeDelegationService;
   }
 
   /**
-   * Authorized code service.
+   * Code delegation service.
    *
-   * @return the authorized code service
+   * @return the code delegation service
    */
-  public DelegatedCodeService authorizedCodeService() {
-    return delegatedCodeService;
+  public CodeDelegationService codeDelegationService() {
+    return codeDelegationService;
   }
 
   @Override
   public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    return delegatedCodeService.processMutableAccount(
+    return codeDelegationService.processMutableAccount(
         this, rootWorldUpdater.createAccount(address, nonce, balance));
   }
 
   @Override
   public MutableAccount getAccount(final Address address) {
-    return delegatedCodeService.processMutableAccount(this, rootWorldUpdater.getAccount(address));
+    return codeDelegationService.processMutableAccount(this, rootWorldUpdater.getAccount(address));
   }
 
   @Override
   public MutableAccount getOrCreate(final Address address) {
-    return delegatedCodeService.processMutableAccount(this, rootWorldUpdater.getOrCreate(address));
+    return codeDelegationService.processMutableAccount(this, rootWorldUpdater.getOrCreate(address));
   }
 
   @Override
   public MutableAccount getOrCreateSenderAccount(final Address address) {
-    return delegatedCodeService.processMutableAccount(
+    return codeDelegationService.processMutableAccount(
         this, rootWorldUpdater.getOrCreateSenderAccount(address));
   }
 
   @Override
   public MutableAccount getSenderAccount(final MessageFrame frame) {
-    return delegatedCodeService.processMutableAccount(
+    return codeDelegationService.processMutableAccount(
         this, rootWorldUpdater.getSenderAccount(frame));
   }
 
@@ -114,17 +114,17 @@ public class EVMWorldUpdater implements WorldUpdater {
   public Optional<WorldUpdater> parentUpdater() {
     return rootWorldUpdater.parentUpdater().isPresent()
         ? Optional.of(
-            new EVMWorldUpdater(rootWorldUpdater.parentUpdater().get(), delegatedCodeService))
+            new EVMWorldUpdater(rootWorldUpdater.parentUpdater().get(), codeDelegationService))
         : Optional.empty();
   }
 
   @Override
   public WorldUpdater updater() {
-    return new EVMWorldUpdater(rootWorldUpdater.updater(), delegatedCodeService);
+    return new EVMWorldUpdater(rootWorldUpdater.updater(), codeDelegationService);
   }
 
   @Override
   public Account get(final Address address) {
-    return delegatedCodeService.processAccount(this, rootWorldUpdater.get(address));
+    return codeDelegationService.processAccount(this, rootWorldUpdater.get(address));
   }
 }

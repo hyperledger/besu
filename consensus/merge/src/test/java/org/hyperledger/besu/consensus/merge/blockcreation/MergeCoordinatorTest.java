@@ -25,6 +25,7 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -73,23 +74,26 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
+import java.math.BigInteger;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
@@ -97,6 +101,10 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -158,7 +166,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private final Address suggestedFeeRecipient = Address.ZERO;
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket =
-      new LondonFeeMarket(0, genesisState.getBlock().getHeader().getBaseFee());
+      FeeMarket.london(0, genesisState.getBlock().getHeader().getBaseFee());
 
   private final org.hyperledger.besu.metrics.StubMetricsSystem metricsSystem =
       new StubMetricsSystem();
@@ -189,7 +197,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     protocolContext =
         new ProtocolContext(blockchain, worldStateArchive, mergeContext, badBlockManager);
-    var mutable = worldStateArchive.getMutable();
+    var mutable = worldStateArchive.getWorldState();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
 
@@ -967,6 +975,39 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     assertThat(res.getErrorMessage().isEmpty()).isTrue();
 
     verify(blockchain, never()).rewindToBlock(any());
+  }
+
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("getGasLimits")
+  public void shouldSetCorrectTargetGasLimit(final ArgumentsAccessor argumentsAccessor) {
+    final long chainId = argumentsAccessor.getLong(1);
+    final long expectedTargetGasLimit = argumentsAccessor.getLong(2);
+
+    final MiningConfiguration mockMiningConfiguration = mock(MiningConfiguration.class);
+    when(mockMiningConfiguration.getTargetGasLimit()).thenReturn(OptionalLong.empty());
+    when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.valueOf(chainId)));
+    doNothing().when(backwardSyncContext).subscribeBadChainListener(any());
+
+    MergeCoordinator testTargetGasLimitCoordinator =
+        new MergeCoordinator(
+            protocolContext,
+            protocolSchedule,
+            ethScheduler,
+            transactionPool,
+            mockMiningConfiguration,
+            backwardSyncContext,
+            Optional.empty());
+
+    assertThat(testTargetGasLimitCoordinator).isNotNull();
+    verify(mockMiningConfiguration).setTargetGasLimit(expectedTargetGasLimit);
+  }
+
+  public static Stream<Arguments> getGasLimits() {
+    return Stream.of(
+        Arguments.of("mainnet", 1L, 36_000_000L),
+        Arguments.of("holesky", 17_000L, 36_000_000L),
+        Arguments.of("sepolia", 11_155_111L, 36_000_000L),
+        Arguments.of("ephemery", 39_438_135L, 36_000_000L));
   }
 
   private void sendNewPayloadAndForkchoiceUpdate(

@@ -61,9 +61,8 @@ public class ChainForTestCreator {
         null,
         null,
         null,
-        null,
-        null,
-        new MainnetBlockHeaderFunctions());
+        new MainnetBlockHeaderFunctions(),
+        null);
   }
 
   public static BlockHeader prepareWrongParentHash(final BlockHeader blockHeader) {
@@ -91,9 +90,8 @@ public class ChainForTestCreator {
         blockHeader.getExcessBlobGas().orElse(null),
         blockHeader.getParentBeaconBlockRoot().orElse(null),
         blockHeader.getRequestsHash().orElse(null),
-        blockHeader.getTargetBlobsPerBlock().orElse(null),
-        blockHeader.getExecutionWitness().orElse(null),
-        new MainnetBlockHeaderFunctions());
+        new MainnetBlockHeaderFunctions(),
+        blockHeader.getExecutionWitness().orElse(null));
   }
 
   public static List<Block> prepareChain(final int elements, final long height) {
@@ -143,8 +141,7 @@ public class ChainForTestCreator {
         null,
         null,
         null,
-        null,
-        null,
-        new MainnetBlockHeaderFunctions());
+        new MainnetBlockHeaderFunctions(),
+        null);
   }
 }

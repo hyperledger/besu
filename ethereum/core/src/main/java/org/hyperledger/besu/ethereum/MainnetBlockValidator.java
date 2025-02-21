@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.ArrayList;
@@ -115,7 +116,7 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
-      final boolean shouldPersist,
+      final boolean shouldUpdateHead,
       final boolean shouldRecordBadBlock) {
 
     final BlockHeader header = block.getHeader();
@@ -148,8 +149,14 @@ public class MainnetBlockValidator implements BlockValidator {
       handleFailedBlockProcessing(block, retval, false);
       return retval;
     }
+
+    final WorldStateQueryParams worldStateQueryParams =
+        WorldStateQueryParams.newBuilder()
+            .withBlockHeader(parentHeader)
+            .withShouldWorldStateUpdateHead(shouldUpdateHead)
+            .build();
     try (final var worldState =
-        context.getWorldStateArchive().getMutable(parentHeader, shouldPersist).orElse(null)) {
+        context.getWorldStateArchive().getWorldState(worldStateQueryParams).orElse(null)) {
 
       if (worldState == null) {
         var retval =
@@ -184,7 +191,7 @@ public class MainnetBlockValidator implements BlockValidator {
 
         return new BlockProcessingResult(
             Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)),
-            result.getNbParallelizedTransations());
+            result.getNbParallelizedTransactions());
       }
     } catch (MerkleTrieException ex) {
       context.getWorldStateArchive().heal(ex.getMaybeAddress(), ex.getLocation());
@@ -241,7 +248,7 @@ public class MainnetBlockValidator implements BlockValidator {
   protected BlockProcessingResult processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
 
-    return blockProcessor.processBlock(context.getBlockchain(), worldState, block);
+    return blockProcessor.processBlock(context, context.getBlockchain(), worldState, block);
   }
 
   @Override

@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -163,14 +162,9 @@ public class PendingStateAdapter extends AdapterBase {
     final CallParameter param =
         new CallParameter(from, to, gasParam, gasPriceParam, valueParam, data);
 
-    ImmutableTransactionValidationParams.Builder transactionValidationParams =
-        ImmutableTransactionValidationParams.builder()
-            .from(TransactionValidationParams.transactionSimulator());
-    transactionValidationParams.isAllowExceedingBalance(true);
-
     return transactionSimulator.process(
         param,
-        transactionValidationParams.build(),
+        TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce(),
         OperationTracer.NO_TRACING,
         (mutableWorldState, transactionSimulatorResult) ->
             transactionSimulatorResult.map(

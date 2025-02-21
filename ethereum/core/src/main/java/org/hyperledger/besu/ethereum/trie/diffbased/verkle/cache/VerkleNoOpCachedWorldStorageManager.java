@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 
 import java.util.Optional;
@@ -27,7 +27,7 @@ public class VerkleNoOpCachedWorldStorageManager extends VerkleCachedWorldStorag
 
   public VerkleNoOpCachedWorldStorageManager(
       final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage) {
-    super(null, verkleWorldStateKeyValueStorage, DiffBasedWorldStateConfig::new);
+    super(null, verkleWorldStateKeyValueStorage, WorldStateConfig.createStatefulConfigWithTrie());
   }
 
   @Override

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -41,8 +40,7 @@ public class ProcessingResultTransactionSelector extends AbstractTransactionSele
 
   @Override
   public TransactionSelectionResult evaluateTransactionPreProcessing(
-      final TransactionEvaluationContext evaluationContext,
-      final TransactionSelectionResults blockTransactionResults) {
+      final TransactionEvaluationContext evaluationContext) {
     // All checks depend on processingResult and will be done in the post-processing method, so
     // nothing to do here.
     return TransactionSelectionResult.SELECTED;
@@ -54,14 +52,12 @@ public class ProcessingResultTransactionSelector extends AbstractTransactionSele
    * result.
    *
    * @param evaluationContext The current selection session data.
-   * @param blockTransactionResults The results of other transaction evaluations in the same block.
    * @param processingResult The processing result of the transaction.
    * @return The result of the transaction selection.
    */
   @Override
   public TransactionSelectionResult evaluateTransactionPostProcessing(
       final TransactionEvaluationContext evaluationContext,
-      final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {
 
     if (processingResult.isInvalid()) {
@@ -85,14 +81,15 @@ public class ProcessingResultTransactionSelector extends AbstractTransactionSele
       final ValidationResult<TransactionInvalidReason> invalidReasonValidationResult) {
 
     final TransactionInvalidReason invalidReason = invalidReasonValidationResult.getInvalidReason();
-    // If the invalid reason is transient, then leave the transaction in the pool and continue
+    // If the invalid reason is transient, then penalize but leave the transaction in the pool and
+    // continue
     if (isTransientValidationError(invalidReason)) {
       LOG.atTrace()
-          .setMessage("Transient validation error {} for transaction {} keeping it in the pool")
+          .setMessage("Transient validation error {} for transaction {}, penalize it in the pool")
           .addArgument(invalidReason)
           .addArgument(transaction::toTraceLog)
           .log();
-      return TransactionSelectionResult.invalidTransient(invalidReason.name());
+      return TransactionSelectionResult.invalidPenalized(invalidReason.name());
     }
     // If the transaction was invalid for any other reason, delete it, and continue.
     LOG.atTrace()

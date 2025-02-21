@@ -78,7 +78,7 @@ public class ExecutionContextTestFixture {
     this.protocolContext =
         new ProtocolContext(
             blockchain, stateArchive, new ConsensusContextFixture(), new BadBlockManager());
-    genesisState.writeStateTo(stateArchive.getMutable());
+    genesisState.writeStateTo(stateArchive.getWorldState());
   }
 
   public static ExecutionContextTestFixture create() {

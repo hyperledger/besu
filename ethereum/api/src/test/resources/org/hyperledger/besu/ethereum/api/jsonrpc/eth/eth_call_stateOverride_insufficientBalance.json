@@ -27,7 +27,7 @@
     "id": 3,
     "error" : {
       "code" : -32004,
-      "message" : "Upfront cost exceeds account balance"
+      "message" : "Upfront cost exceeds account balance (transaction up-front cost 0x2 exceeds transaction sender account balance 0x1)"
     }
   },
   "statusCode": 200

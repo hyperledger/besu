@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
+import org.hyperledger.besu.config.BlobScheduleOptions;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -25,12 +26,24 @@ import org.slf4j.LoggerFactory;
 
 public class CancunFeeMarket extends LondonFeeMarket {
   private static final Logger LOG = LoggerFactory.getLogger(CancunFeeMarket.class);
-  private static final BigInteger BLOB_GAS_PRICE = BigInteger.ONE;
-  private static final BigInteger BLOB_GAS_PRICE_UPDATE_FRACTION = BigInteger.valueOf(3338477);
+  protected static final BigInteger BLOB_GAS_PRICE = BigInteger.ONE;
 
-  public CancunFeeMarket(
-      final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
+  private final BigInteger baseFeeUpdateFraction;
+
+  CancunFeeMarket(
+      final long londonForkBlockNumber,
+      final Optional<Wei> baseFeePerGasOverride,
+      final long baseFeeUpdateFraction) {
     super(londonForkBlockNumber, baseFeePerGasOverride);
+
+    this.baseFeeUpdateFraction = BigInteger.valueOf(baseFeeUpdateFraction);
+  }
+
+  CancunFeeMarket(final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
+    this(
+        londonForkBlockNumber,
+        baseFeePerGasOverride,
+        BlobScheduleOptions.BlobSchedule.CANCUN_DEFAULT.getBaseFeeUpdateFraction());
   }
 
   @Override
@@ -42,8 +55,7 @@ public class CancunFeeMarket extends LondonFeeMarket {
   public Wei blobGasPricePerGas(final BlobGas excessBlobGas) {
     final var blobGasPrice =
         Wei.of(
-            fakeExponential(
-                BLOB_GAS_PRICE, excessBlobGas.toBigInteger(), BLOB_GAS_PRICE_UPDATE_FRACTION));
+            fakeExponential(BLOB_GAS_PRICE, excessBlobGas.toBigInteger(), baseFeeUpdateFraction));
     LOG.atTrace()
         .setMessage("parentExcessBlobGas: {} blobGasPrice: {}")
         .addArgument(excessBlobGas::toShortHexString)
@@ -53,7 +65,7 @@ public class CancunFeeMarket extends LondonFeeMarket {
     return blobGasPrice;
   }
 
-  private BigInteger fakeExponential(
+  protected BigInteger fakeExponential(
       final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
     int i = 1;
     BigInteger output = BigInteger.ZERO;
@@ -66,5 +78,9 @@ public class CancunFeeMarket extends LondonFeeMarket {
       ++i;
     }
     return output.divide(denominator);
+  }
+
+  protected BigInteger getBaseFeeUpdateFraction() {
+    return baseFeeUpdateFraction;
   }
 }

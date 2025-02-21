@@ -131,7 +131,7 @@ public class WorldStateDownloaderBenchmark {
   private Hash createExistingWorldState() {
     // Setup existing state
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-    final MutableWorldState worldState = worldStateArchive.getMutable();
+    final MutableWorldState worldState = worldStateArchive.getWorldState();
 
     dataGen.createRandomAccounts(worldState, 10000);
 

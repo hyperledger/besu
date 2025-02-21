@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
@@ -34,11 +35,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalP
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +54,10 @@ import org.mockito.quality.Strictness;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
+
+  protected Set<ScheduledProtocolSpec.Hardfork> supportedHardforks() {
+    return Set.of(shanghaiHardfork);
+  }
 
   public EngineNewPayloadV2Test() {}
 
@@ -64,7 +72,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
             protocolContext,
             mergeCoordinator,
             ethPeers,
-            engineCallListener);
+            engineCallListener,
+            new NoOpMetricsSystem());
   }
 
   @Override
@@ -174,7 +183,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterCancunMilestone() {
-    // Cancun starte at timestamp 30
+    // Cancun started at timestamp 30
     final long blockTimestamp = 31L;
     BlockHeader blockHeader =
         createBlockHeaderFixture(Optional.of(Collections.emptyList()))

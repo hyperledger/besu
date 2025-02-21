@@ -14,21 +14,16 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -58,41 +53,6 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
     this.mergeContext = mergeContext;
     transitionUtils =
         new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
-  }
-
-  /**
-   * Create a Proof-of-Stake protocol schedule from a config object
-   *
-   * @param genesisConfigOptions {@link GenesisConfigOptions} containing the config options for the
-   *     milestone starting points
-   * @param miningConfiguration the mining parameters
-   * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
-   * @return an initialised TransitionProtocolSchedule using post-merge defaults
-   */
-  public static TransitionProtocolSchedule fromConfig(
-      final GenesisConfigOptions genesisConfigOptions,
-      final MiningConfiguration miningConfiguration,
-      final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
-    ProtocolSchedule preMergeProtocolSchedule =
-        MainnetProtocolSchedule.fromConfig(
-            genesisConfigOptions,
-            miningConfiguration,
-            badBlockManager,
-            isParallelTxProcessingEnabled,
-            metricsSystem);
-    ProtocolSchedule postMergeProtocolSchedule =
-        MergeProtocolSchedule.create(
-            genesisConfigOptions,
-            false,
-            miningConfiguration,
-            badBlockManager,
-            isParallelTxProcessingEnabled,
-            metricsSystem);
-    return new TransitionProtocolSchedule(
-        preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
   }
 
   /**

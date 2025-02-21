@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -125,7 +126,9 @@ public class PrivateGroupRehydrationBlockProcessor {
             privateStateRootResolver.resolveLastStateRoot(privacyGroupId, metadataUpdater);
 
         final MutableWorldState disposablePrivateState =
-            privateWorldStateArchive.getMutable(lastRootHash, null).get();
+            privateWorldStateArchive
+                .getWorldState(withStateRootAndUpdateNodeHead(lastRootHash))
+                .get();
         final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
         if (lastRootHash.equals(EMPTY_ROOT_HASH)) {

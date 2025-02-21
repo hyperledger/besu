@@ -155,7 +155,7 @@ public final class RunnerBuilderTest {
             .p2pListenPort(p2pListenPort)
             .p2pAdvertisedHost(p2pAdvertisedHost)
             .p2pEnabled(true)
-            .discovery(false)
+            .discoveryEnabled(false)
             .besuController(besuController)
             .ethNetworkConfig(mock(EthNetworkConfig.class))
             .metricsSystem(mock(ObservableMetricsSystem.class))
@@ -196,7 +196,7 @@ public final class RunnerBuilderTest {
     when(protocolContext.getBlockchain()).thenReturn(inMemoryBlockchain);
     final Runner runner =
         new RunnerBuilder()
-            .discovery(true)
+            .discoveryEnabled(true)
             .p2pListenInterface("0.0.0.0")
             .p2pListenPort(p2pListenPort)
             .p2pAdvertisedHost(p2pAdvertisedHost)
@@ -255,7 +255,7 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .discovery(true)
+            .discoveryEnabled(true)
             .p2pListenInterface("0.0.0.0")
             .p2pListenPort(30303)
             .p2pAdvertisedHost("127.0.0.1")
@@ -299,7 +299,7 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .discovery(true)
+            .discoveryEnabled(true)
             .p2pListenInterface("0.0.0.0")
             .p2pListenPort(30303)
             .p2pAdvertisedHost("127.0.0.1")
@@ -342,7 +342,7 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .discovery(true)
+            .discoveryEnabled(true)
             .p2pListenInterface("0.0.0.0")
             .p2pListenPort(30303)
             .p2pAdvertisedHost("127.0.0.1")
@@ -387,7 +387,7 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .discovery(true)
+            .discoveryEnabled(true)
             .p2pListenInterface("0.0.0.0")
             .p2pListenPort(30303)
             .p2pAdvertisedHost("127.0.0.1")

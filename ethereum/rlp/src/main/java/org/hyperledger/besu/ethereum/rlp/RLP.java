@@ -187,10 +187,11 @@ public abstract class RLP {
   public static void validate(final Bytes encodedValue) {
     final RLPInput in = input(encodedValue);
     while (!in.isDone()) {
+      while (in.isEndOfCurrentList()) {
+        in.leaveList();
+      }
       if (in.nextIsList()) {
         in.enterList();
-      } else if (in.isEndOfCurrentList()) {
-        in.leaveList();
       } else {
         // Skip does as much validation as can be done in general, without allocating anything.
         in.skipNext();

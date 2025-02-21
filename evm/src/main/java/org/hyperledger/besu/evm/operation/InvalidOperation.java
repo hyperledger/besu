@@ -29,9 +29,6 @@ public class InvalidOperation extends AbstractOperation {
   public static final OperationResult INVALID_RESULT =
       new OperationResult(0, ExceptionalHaltReason.INVALID_OPERATION);
 
-  /** The Invalid operation result. */
-  protected final OperationResult invalidResult;
-
   /**
    * Instantiates a new Invalid operation.
    *
@@ -49,11 +46,20 @@ public class InvalidOperation extends AbstractOperation {
    */
   public InvalidOperation(final int opcode, final GasCalculator gasCalculator) {
     super(opcode, "INVALID", -1, -1, gasCalculator);
-    invalidResult = new OperationResult(0L, ExceptionalHaltReason.INVALID_OPERATION);
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    return invalidResult;
+    return invalidOperationResult(getOpcode());
+  }
+
+  /**
+   * Creates an {@link OperationResult} for an invalid opcode.
+   *
+   * @param opcode the invalid opcode encountered
+   * @return an {@link OperationResult} with zero gas cost and a description of the invalid opcode
+   */
+  public static OperationResult invalidOperationResult(final int opcode) {
+    return new OperationResult(0, ExceptionalHaltReason.newInvalidOperation(opcode));
   }
 }

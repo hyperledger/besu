@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PER
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
@@ -43,6 +44,8 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
+import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -78,9 +81,9 @@ public class MainnetTransactionProcessor {
 
   protected final TransactionValidatorFactory transactionValidatorFactory;
 
-  private final AbstractMessageProcessor contractCreationProcessor;
+  private final ContractCreationProcessor contractCreationProcessor;
 
-  private final AbstractMessageProcessor messageCallProcessor;
+  private final MessageCallProcessor messageCallProcessor;
 
   private final int maxStackSize;
 
@@ -93,34 +96,11 @@ public class MainnetTransactionProcessor {
 
   private final Optional<CodeDelegationProcessor> maybeCodeDelegationProcessor;
 
-  public MainnetTransactionProcessor(
+  private MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
       final TransactionValidatorFactory transactionValidatorFactory,
-      final AbstractMessageProcessor contractCreationProcessor,
-      final AbstractMessageProcessor messageCallProcessor,
-      final ClearEmptyAccountStrategy clearEmptyAccountStrategy,
-      final boolean warmCoinbase,
-      final int maxStackSize,
-      final FeeMarket feeMarket,
-      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
-    this(
-        gasCalculator,
-        transactionValidatorFactory,
-        contractCreationProcessor,
-        messageCallProcessor,
-        clearEmptyAccountStrategy,
-        warmCoinbase,
-        maxStackSize,
-        feeMarket,
-        coinbaseFeePriceCalculator,
-        null);
-  }
-
-  public MainnetTransactionProcessor(
-      final GasCalculator gasCalculator,
-      final TransactionValidatorFactory transactionValidatorFactory,
-      final AbstractMessageProcessor contractCreationProcessor,
-      final AbstractMessageProcessor messageCallProcessor,
+      final ContractCreationProcessor contractCreationProcessor,
+      final MessageCallProcessor messageCallProcessor,
       final ClearEmptyAccountStrategy clearEmptyAccountStrategy,
       final boolean warmCoinbase,
       final int maxStackSize,
@@ -381,22 +361,23 @@ public class MainnetTransactionProcessor {
       if (warmCoinbase) {
         warmAddressList.add(miningBeneficiary);
       }
-      final long intrinsicGas =
-          gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(), transaction.isContractCreation());
+
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
       final long codeDelegationGas =
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
-      final long gasAvailable =
-          transaction.getGasLimit() - intrinsicGas - accessListGas - codeDelegationGas;
+      final long intrinsicGas =
+          gasCalculator.transactionIntrinsicGasCost(
+              transaction.getPayload(),
+              transaction.isContractCreation(),
+              clampedAdd(accessListGas, codeDelegationGas));
+
+      final long gasAvailable = transaction.getGasLimit() - intrinsicGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - codeDelegation)",
+          "Gas available for execution {} = {} - {} (limit - intrinsic)",
           gasAvailable,
           transaction.getGasLimit(),
-          intrinsicGas,
-          accessListGas,
-          codeDelegationGas);
+          intrinsicGas);
 
       final AccessWitness accessWitness = gasCalculator.newAccessWitness();
       accessWitness.touchBaseTx(
@@ -462,7 +443,7 @@ public class MainnetTransactionProcessor {
         final Optional<Account> maybeContract = Optional.ofNullable(evmWorldUpdater.get(to));
 
         if (maybeContract.isPresent() && maybeContract.get().hasDelegatedCode()) {
-          warmAddressList.add(maybeContract.get().delegatedCodeAddress().get());
+          warmAddressList.add(maybeContract.get().codeDelegationAddress().get());
         }
 
         initialFrame =
@@ -473,7 +454,17 @@ public class MainnetTransactionProcessor {
                 .inputData(transaction.getPayload())
                 .code(
                     maybeContract
-                        .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
+                        .map(
+                            c -> {
+                              if (c.hasDelegatedCode()) {
+                                return messageCallProcessor.getCodeFromEVM(
+                                    c.getCodeDelegationTargetHash().get(),
+                                    c.getCodeDelegationTargetCode().get());
+                              }
+
+                              return messageCallProcessor.getCodeFromEVM(
+                                  c.getCodeHash(), c.getCode());
+                            })
                         .orElse(CodeV0.EMPTY_CODE))
                 .accessListWarmAddresses(warmAddressList)
                 .build();
@@ -501,10 +492,11 @@ public class MainnetTransactionProcessor {
           validationResult =
               ValidationResult.invalid(
                   TransactionInvalidReason.EXECUTION_HALTED,
-                  initialFrame.getExceptionalHaltReason().get().toString());
+                  initialFrame.getExceptionalHaltReason().get().getDescription());
         }
       }
 
+      // TODO SLD are the log correct following EIP-7623?
       if (LOG.isTraceEnabled()) {
         LOG.trace(
             "Gas used by transaction: {}, by message call/contract creation: {}",
@@ -514,11 +506,8 @@ public class MainnetTransactionProcessor {
 
       // Refund the sender by what we should and pay the miner fee (note that we're doing them one
       // after the other so that if it is the same account somehow, we end up with the right result)
-      final long selfDestructRefund =
-          gasCalculator.getSelfDestructRefundAmount() * initialFrame.getSelfDestructs().size();
-      final long baseRefundGas =
-          initialFrame.getGasRefund() + selfDestructRefund + codeDelegationRefund;
-      final long refundedGas = refunded(transaction, initialFrame.getRemainingGas(), baseRefundGas);
+      final long refundedGas =
+          gasCalculator.calculateGasRefund(transaction, initialFrame, codeDelegationRefund);
       final Wei refundedWei = transactionGasPrice.multiply(refundedGas);
       final Wei balancePriorToRefund = sender.getBalance();
       sender.incrementBalance(refundedWei);
@@ -685,13 +674,8 @@ public class MainnetTransactionProcessor {
     };
   }
 
-  protected long refunded(
-      final Transaction transaction, final long gasRemaining, final long gasRefund) {
-    // Integer truncation takes care of the floor calculation needed after the divide.
-    final long maxRefundAllowance =
-        (transaction.getGasLimit() - gasRemaining) / gasCalculator.getMaxRefundQuotient();
-    final long refundAllowance = Math.min(maxRefundAllowance, gasRefund);
-    return gasRemaining + refundAllowance;
+  public MessageCallProcessor getMessageCallProcessor() {
+    return messageCallProcessor;
   }
 
   private String printableStackTraceFromThrowable(final RuntimeException re) {
@@ -702,5 +686,105 @@ public class MainnetTransactionProcessor {
     }
 
     return builder.toString();
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+    private GasCalculator gasCalculator;
+    private TransactionValidatorFactory transactionValidatorFactory;
+    private ContractCreationProcessor contractCreationProcessor;
+    private MessageCallProcessor messageCallProcessor;
+    private ClearEmptyAccountStrategy clearEmptyAccountStrategy;
+    private boolean warmCoinbase;
+    private int maxStackSize;
+    private FeeMarket feeMarket;
+    private CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
+    private CodeDelegationProcessor codeDelegationProcessor;
+
+    public Builder gasCalculator(final GasCalculator gasCalculator) {
+      this.gasCalculator = gasCalculator;
+      return this;
+    }
+
+    public Builder transactionValidatorFactory(
+        final TransactionValidatorFactory transactionValidatorFactory) {
+      this.transactionValidatorFactory = transactionValidatorFactory;
+      return this;
+    }
+
+    public Builder contractCreationProcessor(
+        final ContractCreationProcessor contractCreationProcessor) {
+      this.contractCreationProcessor = contractCreationProcessor;
+      return this;
+    }
+
+    public Builder messageCallProcessor(final MessageCallProcessor messageCallProcessor) {
+      this.messageCallProcessor = messageCallProcessor;
+      return this;
+    }
+
+    public Builder clearEmptyAccountStrategy(
+        final ClearEmptyAccountStrategy clearEmptyAccountStrategy) {
+      this.clearEmptyAccountStrategy = clearEmptyAccountStrategy;
+      return this;
+    }
+
+    public Builder warmCoinbase(final boolean warmCoinbase) {
+      this.warmCoinbase = warmCoinbase;
+      return this;
+    }
+
+    public Builder maxStackSize(final int maxStackSize) {
+      this.maxStackSize = maxStackSize;
+      return this;
+    }
+
+    public Builder feeMarket(final FeeMarket feeMarket) {
+      this.feeMarket = feeMarket;
+      return this;
+    }
+
+    public Builder coinbaseFeePriceCalculator(
+        final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
+      this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
+      return this;
+    }
+
+    public Builder codeDelegationProcessor(
+        final CodeDelegationProcessor maybeCodeDelegationProcessor) {
+      this.codeDelegationProcessor = maybeCodeDelegationProcessor;
+      return this;
+    }
+
+    public Builder populateFrom(final MainnetTransactionProcessor processor) {
+      this.gasCalculator = processor.gasCalculator;
+      this.transactionValidatorFactory = processor.transactionValidatorFactory;
+      this.contractCreationProcessor = processor.contractCreationProcessor;
+      this.messageCallProcessor = processor.messageCallProcessor;
+      this.clearEmptyAccountStrategy = processor.clearEmptyAccountStrategy;
+      this.warmCoinbase = processor.warmCoinbase;
+      this.maxStackSize = processor.maxStackSize;
+      this.feeMarket = processor.feeMarket;
+      this.coinbaseFeePriceCalculator = processor.coinbaseFeePriceCalculator;
+      this.codeDelegationProcessor = processor.maybeCodeDelegationProcessor.orElse(null);
+      return this;
+    }
+
+    public MainnetTransactionProcessor build() {
+      return new MainnetTransactionProcessor(
+          gasCalculator,
+          transactionValidatorFactory,
+          contractCreationProcessor,
+          messageCallProcessor,
+          clearEmptyAccountStrategy,
+          warmCoinbase,
+          maxStackSize,
+          feeMarket,
+          coinbaseFeePriceCalculator,
+          codeDelegationProcessor);
+    }
   }
 }

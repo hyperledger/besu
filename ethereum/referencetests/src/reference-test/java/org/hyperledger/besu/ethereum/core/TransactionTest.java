@@ -192,10 +192,13 @@ public class TransactionTest {
 
       assertThat(transaction.getSender()).isEqualTo(expected.getSender());
       assertThat(transaction.getHash()).isEqualTo(expected.getHash());
-      final long intrinsicGasCost =
-          gasCalculator.transactionIntrinsicGasCost(
-                  transaction.getPayload(), transaction.isContractCreation())
-              + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L));
+      final long baselineGas =
+        transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L) +
+          gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
+      final long intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(
+        transaction.getPayload(),
+        transaction.isContractCreation(),
+        baselineGas);
       assertThat(intrinsicGasCost).isEqualTo(expected.getIntrinsicGas());
     } catch (final Exception e) {
       if (expected.isSucceeds()) {

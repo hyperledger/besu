@@ -108,7 +108,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     parseCommand("--config-file", toml.toString());
 
-    verify(mockRunnerBuilder).discovery(eq(false));
+    verify(mockRunnerBuilder).discoveryEnabled(eq(false));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("1.2.3.4"));
     verify(mockRunnerBuilder).p2pListenPort(eq(1234));
@@ -161,7 +161,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     final MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
 
-    verify(mockRunnerBuilder).discovery(eq(true));
+    verify(mockRunnerBuilder).discoveryEnabled(eq(true));
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(

@@ -250,7 +250,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             ethScheduler);
 
     final MutableWorldState mutableWorldState =
-        executionContextTestFixture.getStateArchive().getMutable();
+        executionContextTestFixture.getStateArchive().getWorldState();
     assertThat(mutableWorldState.get(BLOCK_1_COINBASE)).isNull();
 
     final ProcessableBlockHeader header =
@@ -327,7 +327,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             ethScheduler);
 
     final MutableWorldState mutableWorldState =
-        executionContextTestFixture.getStateArchive().getMutable();
+        executionContextTestFixture.getStateArchive().getWorldState();
     assertThat(mutableWorldState.get(BLOCK_1_COINBASE)).isNull();
 
     final ProcessableBlockHeader header =

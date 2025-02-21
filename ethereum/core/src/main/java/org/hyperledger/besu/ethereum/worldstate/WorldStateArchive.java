@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.io.Closeable;
@@ -34,11 +35,26 @@ public interface WorldStateArchive extends Closeable {
 
   boolean isWorldStateAvailable(Hash rootHash, Hash blockHash);
 
-  Optional<MutableWorldState> getMutable(BlockHeader blockHeader, boolean isPersistingState);
+  /**
+   * Gets a mutable world state based on the provided query parameters.
+   *
+   * <p>This method retrieves the mutable world state using the provided query parameters. The query
+   * parameters can specify various conditions and filters to determine the specific world state to
+   * be retrieved.
+   *
+   * @param worldStateQueryParams the query parameters
+   * @return the mutable world state, if available
+   */
+  Optional<MutableWorldState> getWorldState(WorldStateQueryParams worldStateQueryParams);
 
-  Optional<MutableWorldState> getMutable(Hash rootHash, Hash blockHash);
-
-  MutableWorldState getMutable();
+  /**
+   * Gets the head world state.
+   *
+   * <p>This method returns the head world state, which is the most recent state of the world.
+   *
+   * @return the head world state
+   */
+  MutableWorldState getWorldState();
 
   /**
    * Resetting the archive cache and adding the new pivot as the only entry

@@ -54,6 +54,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class ForkIdsNetworkConfigTest {
+  private static final PostMergeContext postMergeContext = new PostMergeContext();
 
   public static Collection<Object[]> parameters() {
     return List.of(
@@ -63,16 +64,18 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0xfe3366e7L), 1735371L),
               new ForkId(Bytes.ofUnsignedInt(0xb96cbd13L), 1677557088L),
               new ForkId(Bytes.ofUnsignedInt(0xf7f9bc08L), 1706655072L),
-              new ForkId(Bytes.ofUnsignedInt(0x88cf81d9L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x88cf81d9L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x88cf81d9L), 1741159776L),
+              new ForkId(Bytes.ofUnsignedInt(0xed88b5fdL), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0xed88b5fdL), 0L))
         },
         new Object[] {
           NetworkName.HOLESKY,
           List.of(
               new ForkId(Bytes.ofUnsignedInt(0xc61a6098L), 1696000704L),
               new ForkId(Bytes.ofUnsignedInt(0xfd4f016bL), 1707305664L),
-              new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 1740434112L),
+              new ForkId(Bytes.ofUnsignedInt(0xdfbd9bedL), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0xdfbd9bedL), 0L))
         },
         new Object[] {
           NetworkName.MAINNET,
@@ -201,10 +204,10 @@ public class ForkIdsNetworkConfigTest {
     public MilestoneStreamingTransitionProtocolSchedule(
         final MilestoneStreamingProtocolSchedule preMergeProtocolSchedule,
         final MilestoneStreamingProtocolSchedule postMergeProtocolSchedule) {
-      super(preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
+      super(preMergeProtocolSchedule, postMergeProtocolSchedule, postMergeContext);
       transitionUtils =
           new TransitionUtils<>(
-              preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
+              preMergeProtocolSchedule, postMergeProtocolSchedule, postMergeContext);
     }
 
     public Stream<Long> streamMilestoneBlocks() {

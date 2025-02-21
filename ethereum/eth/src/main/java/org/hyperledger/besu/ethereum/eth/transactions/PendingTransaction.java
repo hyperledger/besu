@@ -121,6 +121,7 @@ public abstract class PendingTransaction
     return addedAt;
   }
 
+  @Override
   public int memorySize() {
     if (memorySize == NOT_INITIALIZED) {
       memorySize = computeMemorySize();
@@ -291,6 +292,7 @@ public abstract class PendingTransaction
         + '}';
   }
 
+  @Override
   public String toTraceLog() {
     return "{sequence: "
         + sequence
@@ -421,8 +423,8 @@ public abstract class PendingTransaction
    * class changes its structure.
    */
   public interface MemorySize {
-    int FRONTIER_AND_ACCESS_LIST_SHALLOW_SIZE = 904;
-    int EIP1559_AND_EIP4844_SHALLOW_SIZE = 1016;
+    int FRONTIER_AND_ACCESS_LIST_SHALLOW_SIZE = 912;
+    int EIP1559_AND_EIP4844_SHALLOW_SIZE = 1024;
     int OPTIONAL_TO_SIZE = 112;
     int OPTIONAL_CHAIN_ID_SIZE = 80;
     int PAYLOAD_SHALLOW_SIZE = 32;
@@ -430,7 +432,7 @@ public abstract class PendingTransaction
     int ACCESS_LIST_ENTRY_SHALLOW_SIZE = 248;
     int OPTIONAL_ACCESS_LIST_SHALLOW_SIZE = 40;
     int OPTIONAL_CODE_DELEGATION_LIST_SHALLOW_SIZE = 40;
-    int CODE_DELEGATION_ENTRY_SIZE = 472;
+    int CODE_DELEGATION_ENTRY_SIZE = 520;
     int VERSIONED_HASH_SIZE = 96;
     int LIST_SHALLOW_SIZE = 48;
     int OPTIONAL_SHALLOW_SIZE = 16;

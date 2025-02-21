@@ -21,6 +21,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.encoding.CodeDelegationTransactionEncoder;
+import org.hyperledger.besu.ethereum.core.json.ChainIdDeserializer;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
@@ -28,10 +29,14 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
+// ignore `signer` field used in execution-spec-tests
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelegation {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -77,14 +82,23 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
    */
   @JsonCreator
   public static org.hyperledger.besu.datatypes.CodeDelegation createCodeDelegation(
-      @JsonProperty("chainId") final BigInteger chainId,
+      @JsonProperty("chainId") @JsonDeserialize(using = ChainIdDeserializer.class)
+          final BigInteger chainId,
       @JsonProperty("address") final Address address,
-      @JsonProperty("nonce") final long nonce,
-      @JsonProperty("v") final byte v,
-      @JsonProperty("r") final BigInteger r,
-      @JsonProperty("s") final BigInteger s) {
+      @JsonProperty("nonce") final String nonce,
+      @JsonProperty("v") final String v,
+      @JsonProperty("r") final String r,
+      @JsonProperty("s") final String s) {
     return new CodeDelegation(
-        chainId, address, nonce, SIGNATURE_ALGORITHM.get().createSignature(r, s, v));
+        chainId,
+        address,
+        Bytes.fromHexStringLenient(nonce).toLong(),
+        SIGNATURE_ALGORITHM
+            .get()
+            .createCodeDelegationSignature(
+                Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
+                Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
+                Bytes.fromHexStringLenient(v).get(0)));
   }
 
   @JsonProperty("chainId")
@@ -107,6 +121,12 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
 
   @Override
   public Optional<Address> authorizer() {
+    // recId needs to be between 0 and 3, otherwise the signature is invalid
+    // which means we can't recover the authorizer.
+    if (signature.getRecId() < 0 || signature.getRecId() > 3) {
+      return Optional.empty();
+    }
+
     return authorizerSupplier.get();
   }
 
@@ -257,5 +277,21 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
 
       return new CodeDelegation(chainId, address, nonce, signature);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "CodeDelegation{"
+        + "chainId="
+        + chainId
+        + ", address="
+        + address
+        + ", nonce="
+        + nonce
+        + ", signature="
+        + signature
+        + ", authorizerSupplier="
+        + authorizerSupplier
+        + '}';
   }
 }

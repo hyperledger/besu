@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.services;
 
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
+
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -25,7 +27,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.BlockBody;
@@ -109,7 +111,9 @@ public class SynchronizationServiceImpl implements SynchronizationService {
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
-    if (worldStateArchive.flatMap(archive -> archive.getMutable(coreHeader, true)).isPresent()) {
+    if (worldStateArchive
+        .flatMap(archive -> archive.getWorldState(withBlockHeaderAndUpdateNodeHead(coreHeader)))
+        .isPresent()) {
       if (coreHeader.getParentHash().equals(blockchain.getChainHeadHash())) {
         LOG.atDebug()
             .setMessage(
@@ -142,7 +146,7 @@ public class SynchronizationServiceImpl implements SynchronizationService {
     // TODO maybe find a best way in the future to delete and disable trie
     worldStateArchive.ifPresent(
         archive -> {
-          archive.getDefaultWorldStateConfig().setTrieDisabled(true);
+          archive.getWorldStateSharedSpec().setTrieDisabled(true);
           final DiffBasedWorldStateKeyValueStorage worldStateStorage =
               archive.getWorldStateKeyValueStorage();
           final Optional<Hash> worldStateBlockHash = worldStateStorage.getWorldStateBlockHash();

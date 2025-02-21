@@ -67,7 +67,7 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
       final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
-    final MutableWorldState worldState = worldStateArchive.getMutable();
+    final MutableWorldState worldState = worldStateArchive.getWorldState();
     final WorldUpdater updater = worldState.updater();
 
     for (final Map.Entry<String, ReferenceTestWorldState.AccountMock> entry : accounts.entrySet()) {
@@ -202,8 +202,6 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
           excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           requestsHash != null ? Hash.fromHexString(requestsHash) : null,
-          null, // TODO SLD EIP-7742 use targetBlobsPerBlock when reference tests are updated
-          null, // TODO MANAGE WITNESS FROM VERKLE
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -214,7 +212,8 @@ public class BlockchainReferenceTestCaseSpec implements BlockchainReferenceTestC
             public ParsedExtraData parseExtraData(final BlockHeader header) {
               return null;
             }
-          });
+          },
+          null); // TODO MANAGE WITNESS FROM VERKLE
     }
   }
 

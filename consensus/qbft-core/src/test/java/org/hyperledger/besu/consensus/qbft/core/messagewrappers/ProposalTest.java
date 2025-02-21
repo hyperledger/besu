@@ -15,24 +15,26 @@
 package org.hyperledger.besu.consensus.qbft.core.messagewrappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.core.QbftBlockTestFixture;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.core.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,22 +45,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class ProposalTest {
-  @Mock private BftExtraDataCodec bftExtraDataCodec;
+  @Mock private QbftBlockCodec blockEncoder;
 
-  private static final Block BLOCK =
-      new Block(
-          new BlockHeaderTestFixture().buildHeader(),
-          new BlockBody(
-              Collections.emptyList(),
-              Collections.emptyList(),
-              Optional.of(Collections.emptyList())));
+  private static final QbftBlock BLOCK = new QbftBlockTestFixture().build();
 
   @Test
   public void canRoundTripProposalMessage() {
+    when(blockEncoder.readFrom(any(), eq(QbftHashMode.COMMITTED_SEAL))).thenReturn(BLOCK);
+
     final NodeKey nodeKey = NodeKeyUtils.generate();
     final Address addr = Util.publicKeyToAddress(nodeKey.getPublicKey());
 
-    final ProposalPayload payload = new ProposalPayload(new ConsensusRoundIdentifier(1, 1), BLOCK);
+    final ProposalPayload payload =
+        new ProposalPayload(new ConsensusRoundIdentifier(1, 1), BLOCK, blockEncoder);
 
     final SignedData<ProposalPayload> signedPayload =
         SignedData.create(payload, nodeKey.sign(payload.hashForSignature()));
@@ -78,14 +77,14 @@ public class ProposalTest {
 
     final Proposal proposal = new Proposal(signedPayload, List.of(roundChange), List.of(prepare));
 
-    final Proposal decodedProposal = Proposal.decode(proposal.encode(), bftExtraDataCodec);
+    final Proposal decodedProposal = Proposal.decode(proposal.encode(), blockEncoder);
 
     assertThat(decodedProposal.getAuthor()).isEqualTo(addr);
     assertThat(decodedProposal.getMessageType()).isEqualTo(QbftV1.PROPOSAL);
     assertThat(decodedProposal.getPrepares()).hasSize(1);
-    assertThat(decodedProposal.getPrepares().get(0)).isEqualToComparingFieldByField(prepare);
+    assertThat(decodedProposal.getPrepares().getFirst()).isEqualToComparingFieldByField(prepare);
     assertThat(decodedProposal.getRoundChanges()).hasSize(1);
-    assertThat(decodedProposal.getRoundChanges().get(0))
+    assertThat(decodedProposal.getRoundChanges().getFirst())
         .isEqualToComparingFieldByField(roundChange);
     assertThat(decodedProposal.getSignedPayload().getPayload().getProposedBlock()).isEqualTo(BLOCK);
     assertThat(decodedProposal.getSignedPayload().getPayload().getRoundIdentifier())

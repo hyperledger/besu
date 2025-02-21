@@ -20,7 +20,7 @@ public class TraceOptions {
   private final boolean traceMemory;
   private final boolean traceStack;
 
-  public static final TraceOptions DEFAULT = new TraceOptions(true, true, true);
+  public static final TraceOptions DEFAULT = new TraceOptions(true, false, true);
 
   public TraceOptions(
       final boolean traceStorage, final boolean traceMemory, final boolean traceStack) {

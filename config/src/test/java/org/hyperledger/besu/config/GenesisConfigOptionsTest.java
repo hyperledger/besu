@@ -418,15 +418,18 @@ class GenesisConfigOptionsTest {
                     + "    \"blobSchedule\": {\n"
                     + "      \"cancun\": {\n"
                     + "        \"target\": 1,\n"
-                    + "        \"max\": 2\n"
+                    + "        \"max\": 2,\n"
+                    + "        \"baseFeeUpdateFraction\": 3\n"
                     + "      },\n"
                     + "      \"prague\": {\n"
-                    + "        \"target\": 3,\n"
-                    + "        \"max\": 4\n"
+                    + "        \"target\": 4,\n"
+                    + "        \"max\": 5,\n"
+                    + "        \"baseFeeUpdateFraction\": 6\n"
                     + "      },\n"
                     + "      \"osaka\": {\n"
-                    + "        \"target\": 4,\n"
-                    + "        \"max\": 5\n"
+                    + "        \"target\": 7,\n"
+                    + "        \"max\": 8,\n"
+                    + "        \"baseFeeUpdateFraction\": 9\n"
                     + "      }\n"
                     + "    }\n"
                     + "  }\n"
@@ -438,14 +441,14 @@ class GenesisConfigOptionsTest {
     final Map<String, Object> blobSchedule = (Map<String, Object>) map.get("blobSchedule");
     assertThat(blobSchedule).containsOnlyKeys("cancun", "prague", "osaka");
     assertThat((Map<String, Object>) blobSchedule.get("cancun"))
-        .containsOnlyKeys("target", "max")
-        .containsValues(1, 2);
+        .containsOnlyKeys("target", "max", "baseFeeUpdateFraction")
+        .containsValues(1, 2, 3);
     assertThat((Map<String, Object>) blobSchedule.get("prague"))
-        .containsOnlyKeys("target", "max")
-        .containsValues(3, 4);
+        .containsOnlyKeys("target", "max", "baseFeeUpdateFraction")
+        .containsValues(4, 5, 6);
     assertThat((Map<String, Object>) blobSchedule.get("osaka"))
-        .containsOnlyKeys("target", "max")
-        .containsValues(4, 5);
+        .containsOnlyKeys("target", "max", "baseFeeUpdateFraction")
+        .containsValues(7, 8, 9);
   }
 
   private GenesisConfigOptions fromConfigOptions(final Map<String, Object> configOptions) {

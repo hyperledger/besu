@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
-import org.apache.tuweni.devp2p.EthereumNodeRecord;
-
 // Adapted from https://github.com/tmio/tuweni and licensed under Apache 2.0
 /**
  * Reads ENR (Ethereum Node Records) entries passed in from DNS. The visitor may decide to stop the

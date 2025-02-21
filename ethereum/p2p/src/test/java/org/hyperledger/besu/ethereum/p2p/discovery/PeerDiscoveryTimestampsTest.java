@@ -18,26 +18,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.DaggerPacketPackage;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.Packet;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketPackage;
 
 import java.util.Collections;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class PeerDiscoveryTimestampsTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
+  private PacketPackage packetPackage;
+
+  @BeforeEach
+  public void beforeTest() {
+    packetPackage = DaggerPacketPackage.create();
+  }
 
   @Test
   public void lastSeenAndFirstDiscoveredTimestampsUpdatedOnMessage() {
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
     final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
-    final Packet testAgentPing = helper.createPingPacket(testAgent, agent);
+    final Packet testAgentPing = helper.createPingPacket(testAgent, agent, packetPackage);
     helper.sendMessageBetweenAgents(testAgent, agent, testAgentPing);
 
-    final Packet agentPing = helper.createPingPacket(agent, testAgent);
+    final Packet agentPing = helper.createPingPacket(agent, testAgent, packetPackage);
     helper.sendMessageBetweenAgents(agent, testAgent, agentPing);
 
-    final Packet pong = helper.createPongPacket(agent, Hash.hash(agentPing.getHash()));
+    final Packet pong =
+        helper.createPongPacket(agent, Hash.hash(agentPing.getHash()), packetPackage);
     helper.sendMessageBetweenAgents(testAgent, agent, pong);
 
     long firstDiscovered;

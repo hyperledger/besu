@@ -17,7 +17,7 @@
     "id": 4,
     "error" : {
       "code" : -32003,
-      "message" : "Intrinsic gas exceeds gas limit"
+      "message" : "Intrinsic gas exceeds gas limit (intrinsic gas cost 21000 exceeds gas limit 0)"
     }
   },
   "statusCode": 200

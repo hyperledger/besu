@@ -70,7 +70,7 @@ public class CodeDelegationProcessor {
         .get()
         .forEach(
             codeDelegation ->
-                processAuthorization(
+                processCodeDelegation(
                     evmWorldUpdater,
                     (org.hyperledger.besu.ethereum.core.CodeDelegation) codeDelegation,
                     result));
@@ -78,7 +78,7 @@ public class CodeDelegationProcessor {
     return result;
   }
 
-  private void processAuthorization(
+  private void processCodeDelegation(
       final EVMWorldUpdater evmWorldUpdater,
       final CodeDelegation codeDelegation,
       final CodeDelegationResult result) {
@@ -105,11 +105,6 @@ public class CodeDelegationProcessor {
       return;
     }
 
-    if (codeDelegation.signature().getRecId() != 0 && codeDelegation.signature().getRecId() != 1) {
-      LOG.trace("Invalid signature for code delegation. RecId must be 0 or 1.");
-      return;
-    }
-
     final Optional<Address> authorizer = codeDelegation.authorizer();
     if (authorizer.isEmpty()) {
       LOG.trace("Invalid signature for code delegation");
@@ -126,11 +121,15 @@ public class CodeDelegationProcessor {
     MutableAccount authority;
     boolean authorityDoesAlreadyExist = false;
     if (maybeAuthorityAccount.isEmpty()) {
+      // only create an account if nonce is valid
+      if (codeDelegation.nonce() != 0) {
+        return;
+      }
       authority = evmWorldUpdater.createAccount(authorizer.get());
     } else {
       authority = maybeAuthorityAccount.get();
 
-      if (!evmWorldUpdater.authorizedCodeService().canSetDelegatedCode(authority)) {
+      if (!evmWorldUpdater.codeDelegationService().canSetCodeDelegation(authority)) {
         return;
       }
 
@@ -146,12 +145,12 @@ public class CodeDelegationProcessor {
     }
 
     if (authorityDoesAlreadyExist) {
-      result.incremenentAlreadyExistingDelegators();
+      result.incrementAlreadyExistingDelegators();
     }
 
     evmWorldUpdater
-        .authorizedCodeService()
-        .processDelegatedCodeAuthorization(authority, codeDelegation.address());
+        .codeDelegationService()
+        .processCodeDelegation(authority, codeDelegation.address());
     authority.incrementNonce();
   }
 }

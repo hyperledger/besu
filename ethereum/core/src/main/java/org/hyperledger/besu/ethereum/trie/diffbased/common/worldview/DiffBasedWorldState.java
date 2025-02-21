@@ -60,13 +60,25 @@ public abstract class DiffBasedWorldState
 
   protected Hash worldStateRootHash;
   protected Hash worldStateBlockHash;
-  protected DiffBasedWorldStateConfig worldStateConfig;
+
+  // configuration parameters for the world state.
+  protected WorldStateConfig worldStateConfig;
+
+  /*
+   * Indicates whether the world state is in "frozen" mode.
+   *
+   * When `isStorageFrozen` is true:
+   * - Changes to accounts, code, or slots will not affect the underlying storage.
+   * - The state root can still be recalculated, and a trie log can be generated.
+   * - All modifications are temporary and will be lost once the world state is discarded.
+   */
+  protected boolean isStorageFrozen;
 
   protected DiffBasedWorldState(
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
-      final DiffBasedWorldStateConfig diffBasedWorldStateConfig) {
+      final WorldStateConfig worldStateConfig) {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.worldStateRootHash =
         Hash.wrap(
@@ -77,7 +89,8 @@ public abstract class DiffBasedWorldState
             Bytes32.wrap(worldStateKeyValueStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
     this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;
-    this.worldStateConfig = diffBasedWorldStateConfig;
+    this.worldStateConfig = worldStateConfig;
+    this.isStorageFrozen = false;
   }
 
   /**
@@ -108,12 +121,21 @@ public abstract class DiffBasedWorldState
     return worldStateRootHash;
   }
 
+  /**
+   * Determines whether the current world state is directly modifying the "head" state of the
+   * blockchain. A world state modifying the head directly updates the latest state of the node,
+   * while a world state derived from a snapshot or historical view (e.g., layered or snapshot world
+   * state) does not directly modify the head
+   *
+   * @return {@code true} if the current world state is modifying the head, {@code false} otherwise.
+   */
   @Override
-  public boolean isPersisted() {
-    return isPersisted(worldStateKeyValueStorage);
+  public boolean isModifyingHeadWorldState() {
+    return isModifyingHeadWorldState(worldStateKeyValueStorage);
   }
 
-  private boolean isPersisted(final WorldStateKeyValueStorage worldStateKeyValueStorage) {
+  private boolean isModifyingHeadWorldState(
+      final WorldStateKeyValueStorage worldStateKeyValueStorage) {
     return !(worldStateKeyValueStorage instanceof DiffBasedSnapshotWorldStateKeyValueStorage);
   }
 
@@ -140,8 +162,7 @@ public abstract class DiffBasedWorldState
       final BlockHeader blockHeader,
       final DiffBasedWorldStateKeyValueStorage.Updater stateUpdater) {
     // calling calculateRootHash in order to update the state
-    calculateRootHash(
-        worldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater), accumulator);
+    calculateRootHash(isStorageFrozen ? Optional.empty() : Optional.of(stateUpdater), accumulator);
     return blockHeader.getStateRoot();
   }
 
@@ -167,8 +188,7 @@ public abstract class DiffBasedWorldState
       if (blockHeader == null || !worldStateConfig.isTrieDisabled()) {
         calculatedRootHash =
             calculateRootHash(
-                worldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
-                accumulator);
+                isStorageFrozen ? Optional.empty() : Optional.of(stateUpdater), accumulator);
       } else {
         // if the trie is disabled, we cannot calculate the state root, so we directly use the root
         // of the block. It's important to understand that in all networks,
@@ -186,7 +206,7 @@ public abstract class DiffBasedWorldState
             () -> {
               trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
               // not save a frozen state in the cache
-              if (!worldStateConfig.isFrozen()) {
+              if (!isStorageFrozen) {
                 cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
               }
             };
@@ -234,7 +254,7 @@ public abstract class DiffBasedWorldState
 
   @Override
   public Hash rootHash() {
-    if (worldStateConfig.isFrozen() && accumulator.isAccumulatorStateChanged()) {
+    if (isStorageFrozen && accumulator.isAccumulatorStateChanged()) {
       worldStateRootHash = calculateRootHash(Optional.empty(), accumulator.copy());
       accumulator.resetAccumulatorStateChanged();
     }
@@ -307,9 +327,9 @@ public abstract class DiffBasedWorldState
   @Override
   public void close() {
     try {
-      if (!isPersisted()) {
+      if (!isModifyingHeadWorldState()) {
         this.worldStateKeyValueStorage.close();
-        if (worldStateConfig.isFrozen()) {
+        if (isStorageFrozen) {
           closeFrozenStorage();
         }
       }
@@ -322,7 +342,7 @@ public abstract class DiffBasedWorldState
     try {
       final DiffBasedLayeredWorldStateKeyValueStorage worldStateLayerStorage =
           (DiffBasedLayeredWorldStateKeyValueStorage) worldStateKeyValueStorage;
-      if (!isPersisted(worldStateLayerStorage.getParentWorldStateStorage())) {
+      if (!isModifyingHeadWorldState(worldStateLayerStorage.getParentWorldStateStorage())) {
         worldStateLayerStorage.getParentWorldStateStorage().close();
       }
     } catch (Exception e) {
@@ -333,8 +353,21 @@ public abstract class DiffBasedWorldState
   @Override
   public abstract Hash frontierRootHash();
 
+  /**
+   * Configures the current world state to operate in "frozen" mode.
+   *
+   * <p>In this mode: - Changes (to accounts, code, or slots) are isolated and not applied to the
+   * underlying storage. - The state root can be recalculated, and a trie log can be generated, but
+   * updates will not affect the world state storage. - All modifications are temporary and will be
+   * lost once the world state is discarded.
+   *
+   * <p>Use Cases: - Calculating the state root after updates without altering the storage. -
+   * Generating a trie log.
+   *
+   * @return The current world state in "frozen" mode.
+   */
   @Override
-  public abstract MutableWorldState freeze();
+  public abstract MutableWorldState freezeStorage();
 
   @Override
   public abstract Account get(final Address address);

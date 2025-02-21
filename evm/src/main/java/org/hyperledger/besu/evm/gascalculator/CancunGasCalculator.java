@@ -62,7 +62,7 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
 
   /**
    * The blob gas cost per blob. This is the gas cost for each blob of data that is added to the
-   * block.
+   * block. 1 << 17 = 131072 = 0x20000
    */
   private static final long BLOB_GAS_PER_BLOB = 1 << 17;
 

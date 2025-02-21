@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
+
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
@@ -42,6 +45,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,6 +67,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final String clientVersion;
   private final String commit;
   private final TransactionPool transactionPool;
+  private final MetricsSystem metricsSystem;
 
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
@@ -72,7 +77,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final Vertx consensusEngineServer,
       final String clientVersion,
       final String commit,
-      final TransactionPool transactionPool) {
+      final TransactionPool transactionPool,
+      final MetricsSystem metricsSystem) {
     this.mergeCoordinator =
         Optional.ofNullable(miningCoordinator)
             .filter(mc -> mc.isCompatibleWithEngineApi())
@@ -84,6 +90,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.clientVersion = clientVersion;
     this.commit = commit;
     this.transactionPool = transactionPool;
+    this.metricsSystem = metricsSystem;
   }
 
   @Override
@@ -117,21 +124,24 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                   protocolContext,
                   mergeCoordinator.get(),
                   ethPeers,
-                  engineQosTimer),
+                  engineQosTimer,
+                  metricsSystem),
               new EngineNewPayloadV6800( // TODO replaced for the verkle test
                   consensusEngineServer,
                   protocolSchedule,
                   protocolContext,
                   mergeCoordinator.get(),
                   ethPeers,
-                  engineQosTimer),
+                  engineQosTimer,
+                  metricsSystem),
               new EngineNewPayloadV3(
                   consensusEngineServer,
                   protocolSchedule,
                   protocolContext,
                   mergeCoordinator.get(),
                   ethPeers,
-                  engineQosTimer),
+                  engineQosTimer,
+                  metricsSystem),
               new EngineForkchoiceUpdatedV1(
                   consensusEngineServer,
                   protocolSchedule,
@@ -165,7 +175,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
               new EngineGetBlobsV1(
                   consensusEngineServer, protocolContext, engineQosTimer, transactionPool)));
 
-      if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("cancun"))) {
+      if (protocolSchedule.milestoneFor(CANCUN).isPresent()) {
         executionEngineApisSupported.add(
             new EngineGetPayloadV3(
                 consensusEngineServer,
@@ -176,7 +186,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 protocolSchedule));
       }
 
-      if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("prague"))) {
+      if (protocolSchedule.milestoneFor(PRAGUE).isPresent()) {
         executionEngineApisSupported.add(
             new EngineGetPayloadV4(
                 consensusEngineServer,
@@ -192,7 +202,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 protocolContext,
                 mergeCoordinator.get(),
                 ethPeers,
-                engineQosTimer));
+                engineQosTimer,
+                metricsSystem));
       }
 
       return mapOf(executionEngineApisSupported);

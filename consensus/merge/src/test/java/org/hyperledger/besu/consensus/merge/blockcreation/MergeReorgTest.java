@@ -42,7 +42,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -67,7 +67,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
 
   private MergeCoordinator coordinator;
 
-  private final MergeContext mergeContext = PostMergeContext.get();
+  private final MergeContext mergeContext = new PostMergeContext();
   private final ProtocolSchedule mockProtocolSchedule = getMergeProtocolSchedule();
   private final GenesisState genesisState =
       GenesisState.fromConfig(getPowGenesisConfig(), mockProtocolSchedule);
@@ -81,11 +81,11 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   private final Address coinbase = genesisAllocations(getPowGenesisConfig()).findFirst().get();
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket =
-      new LondonFeeMarket(0, genesisState.getBlock().getHeader().getBaseFee());
+      FeeMarket.london(0, genesisState.getBlock().getHeader().getBaseFee());
 
   @BeforeEach
   public void setUp() {
-    var mutable = worldStateArchive.getMutable();
+    var mutable = worldStateArchive.getWorldState();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
     mergeContext.setTerminalTotalDifficulty(Difficulty.of(1001));

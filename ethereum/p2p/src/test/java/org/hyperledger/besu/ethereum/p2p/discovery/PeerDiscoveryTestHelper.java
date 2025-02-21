@@ -27,10 +27,9 @@ import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PongPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.Packet;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketPackage;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
@@ -100,22 +99,34 @@ public class PeerDiscoveryTestHelper {
   }
 
   public Packet createPingPacket(
-      final MockPeerDiscoveryAgent fromAgent, final MockPeerDiscoveryAgent toAgent) {
-    return Packet.create(
-        PacketType.PING,
-        PingPacketData.create(
-            Optional.of(fromAgent.getAdvertisedPeer().get().getEndpoint()),
-            toAgent.getAdvertisedPeer().get().getEndpoint(),
-            UInt64.ONE),
-        fromAgent.getNodeKey());
+      final MockPeerDiscoveryAgent fromAgent,
+      final MockPeerDiscoveryAgent toAgent,
+      final PacketPackage packetPackage) {
+    return packetPackage
+        .packetFactory()
+        .create(
+            PacketType.PING,
+            packetPackage
+                .pingPacketDataFactory()
+                .create(
+                    Optional.of(fromAgent.getAdvertisedPeer().get().getEndpoint()),
+                    toAgent.getAdvertisedPeer().get().getEndpoint(),
+                    UInt64.ONE),
+            fromAgent.getNodeKey());
   }
 
-  public Packet createPongPacket(final MockPeerDiscoveryAgent toAgent, final Hash pingHash) {
-    return Packet.create(
-        PacketType.PONG,
-        PongPacketData.create(
-            toAgent.getAdvertisedPeer().get().getEndpoint(), pingHash, UInt64.ONE),
-        toAgent.getNodeKey());
+  public Packet createPongPacket(
+      final MockPeerDiscoveryAgent toAgent,
+      final Hash pingHash,
+      final PacketPackage packetPackage) {
+    return packetPackage
+        .packetFactory()
+        .create(
+            PacketType.PONG,
+            packetPackage
+                .pongPacketDataFactory()
+                .create(toAgent.getAdvertisedPeer().get().getEndpoint(), pingHash, UInt64.ONE),
+            toAgent.getNodeKey());
   }
 
   public AgentBuilder agentBuilder() {
@@ -220,7 +231,7 @@ public class PeerDiscoveryTestHelper {
     private final AtomicInteger nextAvailablePort;
 
     private List<EnodeURL> bootnodes = Collections.emptyList();
-    private boolean active = true;
+    private boolean enabled = true;
     private PeerPermissions peerPermissions = PeerPermissions.noop();
     private String advertisedHost = "127.0.0.1";
     private OptionalInt bindPort = OptionalInt.empty();
@@ -258,7 +269,7 @@ public class PeerDiscoveryTestHelper {
     }
 
     public AgentBuilder active(final boolean active) {
-      this.active = active;
+      this.enabled = active;
       return this;
     }
 
@@ -296,7 +307,7 @@ public class PeerDiscoveryTestHelper {
       config.setBootnodes(bootnodes);
       config.setAdvertisedHost(advertisedHost);
       config.setBindPort(port);
-      config.setActive(active);
+      config.setEnabled(enabled);
       config.setFilterOnEnrForkId(false);
 
       final ForkIdManager mockForkIdManager = mock(ForkIdManager.class);

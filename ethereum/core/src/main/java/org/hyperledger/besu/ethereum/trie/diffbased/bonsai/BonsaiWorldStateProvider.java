@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMer
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -64,11 +64,9 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     provideCachedWorldStorageManager(
-        new BonsaiCachedWorldStorageManager(
-            this, worldStateKeyValueStorage, this::cloneBonsaiWorldStateConfig));
-    loadPersistedState(
-        new BonsaiWorldState(
-            this, worldStateKeyValueStorage, evmConfiguration, defaultWorldStateConfig));
+        new BonsaiCachedWorldStorageManager(this, worldStateKeyValueStorage, worldStateConfig));
+    loadHeadWorldState(
+        new BonsaiWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));
   }
 
   @VisibleForTesting
@@ -84,9 +82,8 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     provideCachedWorldStorageManager(bonsaiCachedWorldStorageManager);
-    loadPersistedState(
-        new BonsaiWorldState(
-            this, worldStateKeyValueStorage, evmConfiguration, defaultWorldStateConfig));
+    loadHeadWorldState(
+        new BonsaiWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));
   }
 
   public BonsaiCachedMerkleTrieLoader getCachedMerkleTrieLoader() {
@@ -118,7 +115,7 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
               }
               return node;
             },
-            persistedState.getWorldStateRootHash(),
+            headWorldState.getWorldStateRootHash(),
             Function.identity(),
             Function.identity());
     try {

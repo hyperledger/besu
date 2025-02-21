@@ -14,39 +14,42 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.support;
 
-import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
-import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
 import org.hyperledger.besu.consensus.qbft.core.payload.CommitPayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.core.Block;
 
 public class IntegrationTestHelpers {
 
   public static SignedData<CommitPayload> createSignedCommitPayload(
-      final ConsensusRoundIdentifier roundId, final Block block, final NodeKey nodeKey) {
+      final ConsensusRoundIdentifier roundId,
+      final QbftBlock block,
+      final NodeKey nodeKey,
+      final QbftBlockCodec blockEncoder) {
 
-    final QbftExtraDataCodec qbftExtraDataEncoder = new QbftExtraDataCodec();
+    final QbftBlock commitBlock =
+        createCommitBlockFromProposalBlock(block, roundId.getRoundNumber());
+    final SECPSignature commitSeal = nodeKey.sign(commitBlock.getHash());
 
-    final Block commitBlock = createCommitBlockFromProposalBlock(block, roundId.getRoundNumber());
-    final SECPSignature commitSeal =
-        nodeKey.sign(
-            new BftBlockHashing(qbftExtraDataEncoder)
-                .calculateDataHashForCommittedSeal(commitBlock.getHeader()));
-
-    final MessageFactory messageFactory = new MessageFactory(nodeKey);
+    final MessageFactory messageFactory = new MessageFactory(nodeKey, blockEncoder);
 
     return messageFactory.createCommit(roundId, block.getHash(), commitSeal).getSignedPayload();
   }
 
   public static PreparedCertificate createValidPreparedCertificate(
-      final TestContext context, final ConsensusRoundIdentifier preparedRound, final Block block) {
+      final TestContext context,
+      final ConsensusRoundIdentifier preparedRound,
+      final QbftBlock block) {
     final RoundSpecificPeers peers = context.roundSpecificPeers(preparedRound);
 
     return new PreparedCertificate(
@@ -55,11 +58,12 @@ public class IntegrationTestHelpers {
         preparedRound.getRoundNumber());
   }
 
-  public static Block createCommitBlockFromProposalBlock(
-      final Block proposalBlock, final int round) {
+  public static QbftBlock createCommitBlockFromProposalBlock(
+      final QbftBlock proposalBlock, final int round) {
     final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
     final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
-    return bftBlockInterface.replaceRoundInBlock(
-        proposalBlock, round, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
+    final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
+    return qbftBlockInterface.replaceRoundInBlock(
+        proposalBlock, round, QbftHashMode.COMMITTED_SEAL);
   }
 }
