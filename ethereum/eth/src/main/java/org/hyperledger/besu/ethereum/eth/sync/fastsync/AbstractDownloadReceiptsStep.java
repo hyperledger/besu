@@ -61,6 +61,13 @@ public abstract class AbstractDownloadReceiptsStep<B, BWR>
   @Override
   public CompletableFuture<List<BWR>> apply(final List<B> blocks) {
     final List<BlockHeader> headers = blocks.stream().map(this::getBlockHeader).collect(toList());
+    LOG.atInfo()
+        .setMessage("Downloading receipts for block {}:{} to {}:{}")
+        .addArgument(headers.getFirst().getBlockHash())
+        .addArgument(headers.getFirst().getNumber())
+        .addArgument(headers.getLast().getBlockHash())
+        .addArgument(headers.getLast().getNumber())
+        .log();
     if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
       return ethContext
           .getScheduler()
@@ -81,7 +88,7 @@ public abstract class AbstractDownloadReceiptsStep<B, BWR>
   private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>>
       getReceiptsWithPeerTaskSystem(final List<BlockHeader> headers) {
     final ArrayList<BlockHeader> originalBlockHeaders = new ArrayList<>(headers);
-    Map<BlockHeader, List<TransactionReceipt>> getReceipts = new HashMap<>();
+    Map<BlockHeader, List<TransactionReceipt>> getReceipts = HashMap.newHashMap(headers.size());
     do {
       GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(headers, protocolSchedule);
       PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
