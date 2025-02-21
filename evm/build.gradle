@@ -45,7 +45,7 @@ dependencies {
   implementation 'io.consensys.protocols:tuweni-units'
   implementation 'org.hyperledger.besu:arithmetic'
   implementation'org.hyperledger.besu:gnark'
-  implementation 'tech.pegasys:jc-kzg-4844'
+  implementation 'io.consensys.protocols:jc-kzg-4844'
 
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
   compileOnly 'io.vertx:vertx-core'

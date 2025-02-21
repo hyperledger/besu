@@ -229,7 +229,7 @@ tasks.register('validateReferenceTestSubmodule') {
     def expectedHash = '9201075490807f58811078e9bb5ec895b4ac01a5'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
-      providers.exec {
+      exec {
         commandLine 'git', 'submodule', 'status', submodulePath
         standardOutput = result
         errorOutput = result

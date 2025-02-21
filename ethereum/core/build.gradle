@@ -63,7 +63,7 @@ dependencies {
   implementation 'io.consensys.protocols:tuweni-units'
   implementation 'io.consensys.protocols:tuweni-rlp'
   implementation 'org.immutables:value-annotations'
-  implementation 'tech.pegasys:jc-kzg-4844'
+  implementation 'io.consensys.protocols:jc-kzg-4844'
 
   implementation 'org.xerial.snappy:snappy-java'
 
