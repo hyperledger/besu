@@ -143,6 +143,18 @@ public class QbftController implements QbftEventHandler {
   public void start() {
     if (started.compareAndSet(false, true)) {
       startNewHeightManager(blockchain.getChainHeadHeader());
+    } else {
+      // In normal circumstances the height manager should only be started once. If the caller
+      // has stopped the height manager (e.g. while sync completes) they must call reset() before
+      // starting the height manager again.
+      throw new IllegalStateException("Attempt to start new height manager without resetting");
+    }
+  }
+
+  @Override
+  public void reset() {
+    if (started.compareAndSet(true, false)) {
+      LOG.debug("QBFT height manager reset");
     }
   }
 
