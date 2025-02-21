@@ -826,7 +826,7 @@ task distDocker {
       from file("${projectDir}/docker/Dockerfile")
       into(dockerBuildDir)
     }
-    providers.exec {
+    exec {
       def image = "${dockerImageName}:${dockerBuildVersion}"
       def dockerPlatform = ""
       if (project.hasProperty('docker-platform')){
@@ -850,7 +850,7 @@ task testDocker {
   }
 
   doLast {
-    providers.exec {
+    exec {
       def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
       workingDir "${projectDir}/docker"
       executable shell
@@ -874,7 +874,7 @@ task dockerUpload {
   }
 
   doLast {
-    providers.exec {
+    exec {
       def archVariantImage = "${image}-${architecture}"
       def cmd = "docker tag '${image}' '${archVariantImage}' && docker push '${archVariantImage}'"
       println "Executing '${cmd}'"
@@ -891,13 +891,13 @@ task dockerUploadRelease {
   doLast {
     for (def architecture in archs) {
 
-      providers.exec {
+      exec {
         def cmd = "docker pull '${image}-${architecture}' && docker tag '${image}-${architecture}' '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
         args "-c", cmd
       }
-      providers.exec {
+      exec {
         def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
@@ -905,14 +905,14 @@ task dockerUploadRelease {
       }
 
 
-      providers.exec {
+      exec {
         def archImage = "${image}-${architecture}"
         def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
         args "-c", cmd
       }
-      providers.exec {
+      exec {
         def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
@@ -928,7 +928,7 @@ task manifestDocker {
     "arm64",
     "amd64"] //TODO: this assumes dockerUpload task has already been run on 2 different archs!
   doLast {
-    providers.exec {
+    exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${image}-${arch}' " }
       def cmd = "docker manifest create '${image}' ${targets}"
@@ -936,7 +936,7 @@ task manifestDocker {
       executable shell
       args "-c", cmd
     }
-    providers.exec {
+    exec {
       def cmd = "docker manifest push '${image}'"
       println "Executing '${cmd}'"
       executable shell
@@ -951,7 +951,7 @@ task manifestDockerRelease {
 
   doLast {
 
-    providers.exec {
+    exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
       def cmd = "docker manifest create '${baseTag}' ${targets} --amend"
@@ -959,7 +959,7 @@ task manifestDockerRelease {
       executable shell
       args "-c", cmd
     }
-    providers.exec {
+    exec {
       def cmd = "docker manifest push '${baseTag}'"
       println "Executing '${cmd}'"
       executable shell
