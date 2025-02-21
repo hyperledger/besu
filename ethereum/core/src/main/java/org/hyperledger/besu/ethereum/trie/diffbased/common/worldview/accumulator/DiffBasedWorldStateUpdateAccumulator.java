@@ -126,7 +126,9 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                   diffBasedValue.getUpdated() != null
                       ? copyAccount(diffBasedValue.getUpdated(), this, true)
                       : null;
-              accountsToUpdate.put(address, new DiffBasedValue<>(copyPrior, copyUpdated));
+              accountsToUpdate.put(
+                  address,
+                  new DiffBasedValue<>(copyPrior, copyUpdated, diffBasedValue.isLastStepCleared()));
             });
     source
         .getCodeToUpdate()
@@ -134,7 +136,10 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
             (address, diffBasedValue) -> {
               codeToUpdate.put(
                   address,
-                  new DiffBasedValue<>(diffBasedValue.getPrior(), diffBasedValue.getUpdated()));
+                  new DiffBasedValue<>(
+                      diffBasedValue.getPrior(),
+                      diffBasedValue.getUpdated(),
+                      diffBasedValue.isLastStepCleared()));
             });
     source
         .getStorageToUpdate()
@@ -151,10 +156,13 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                     storageConsumingMap.put(
                         storageSlotKey,
                         new DiffBasedValue<>(
-                            uInt256DiffBasedValue.getPrior(), uInt256DiffBasedValue.getUpdated()));
+                            uInt256DiffBasedValue.getPrior(),
+                            uInt256DiffBasedValue.getUpdated(),
+                            uInt256DiffBasedValue.isLastStepCleared()));
                   });
             });
     storageToClear.addAll(source.storageToClear);
+    storageKeyHashLookup.putAll(source.storageKeyHashLookup);
 
     this.isAccumulatorStateChanged = true;
   }
@@ -213,6 +221,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                             uInt256DiffBasedValue.getPrior(), uInt256DiffBasedValue.getPrior()));
                   });
             });
+    storageKeyHashLookup.putAll(source.storageKeyHashLookup);
     this.isAccumulatorStateChanged = true;
   }
 

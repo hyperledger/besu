@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
@@ -61,7 +62,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldState extends DiffBasedWorldState {
 
-  protected final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
+  protected BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
@@ -75,18 +76,6 @@ public class BonsaiWorldState extends DiffBasedWorldState {
         archive.getTrieLogManager(),
         evmConfiguration,
         worldStateConfig);
-  }
-
-  public BonsaiWorldState(
-      final BonsaiWorldState worldState,
-      final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader) {
-    this(
-        new BonsaiWorldStateLayerStorage(worldState.getWorldStateStorage()),
-        cachedMerkleTrieLoader,
-        worldState.cachedWorldStorageManager,
-        worldState.trieLogManager,
-        worldState.accumulator.getEvmConfiguration(),
-        WorldStateConfig.newBuilder(worldState.worldStateConfig).build());
   }
 
   public BonsaiWorldState(
@@ -449,6 +438,10 @@ public class BonsaiWorldState extends DiffBasedWorldState {
     this.isStorageFrozen = true;
     this.worldStateKeyValueStorage = new BonsaiWorldStateLayerStorage(getWorldStateStorage());
     return this;
+  }
+
+  public void disableCacheMerkleTrieLoader() {
+    this.bonsaiCachedMerkleTrieLoader = new NoopBonsaiCachedMerkleTrieLoader();
   }
 
   private MerkleTrie<Bytes, Bytes> createTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {
