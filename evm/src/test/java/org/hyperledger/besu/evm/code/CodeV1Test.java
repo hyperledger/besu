@@ -16,6 +16,9 @@ package org.hyperledger.besu.evm.code;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,7 +50,8 @@ class CodeV1Test {
       final String code,
       final boolean returning,
       final int... codeSectionSizes) {
-    Bytes codeBytes = Bytes.fromHexString(code);
+    Bytecode codeBytes = FullBytecode.fromHexString(code);
+    System.out.println(codeBytes.size());
     for (int i : codeSectionSizes) {
       CodeSection[] codeSections = new CodeSection[i];
       Arrays.fill(codeSections, new CodeSection(1, 0, returning ? 0 : 0x80, 1, 1));
@@ -67,7 +71,7 @@ class CodeV1Test {
 
   private static void assertValidation(
       final String error,
-      final Bytes codeBytes,
+      final Bytecode codeBytes,
       final CodeSection thisCodeSection,
       final EOFLayout eofLayout) {
     CodeV1Validation validator = new CodeV1Validation(0xc000);
@@ -83,7 +87,8 @@ class CodeV1Test {
   void validCode() {
     String codeHex =
         "0xEF0001 01000C 020003 000b 0002 0008 040000 00 00800000 02010001 01000002 60016002e30001e30002f3 01e4 60005360106000e4";
-    final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex.replace(" ", "")));
+    final EOFLayout layout =
+        EOFLayout.parseEOF(FullBytecode.fromHexString(codeHex.replace(" ", "")));
     CodeV1Validation validator = new CodeV1Validation(0xc000);
     String validationError = validator.validateCode(layout);
 
@@ -94,7 +99,8 @@ class CodeV1Test {
   void invalidCode() {
     String codeHex =
         "0xEF0001 01000C 020003 000b 0002 0008 040000 00 00000000 02010001 01000002 60016002e30001e30002f3 01e4 60005360106000e4";
-    final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex.replace(" ", "")));
+    final EOFLayout layout =
+        EOFLayout.parseEOF(FullBytecode.fromHexString(codeHex.replace(" ", "")));
     CodeV1Validation validator = new CodeV1Validation(0xc000);
     String validationError = validator.validateCode(layout);
 
@@ -132,6 +138,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("testRjumpValidImmediateArguments")
   void testRjumpValidImmediate(final String code) {
+    System.out.println(code);
     assertValidation(null, code);
   }
 
@@ -383,11 +390,11 @@ class CodeV1Test {
   void testCallFValid(final String code) {
     var testContainer =
         EOFLayout.parseEOF(
-            Bytes.fromHexString(
+            FullBytecode.fromHexString(
                 "ef000101000c0200030001000100010400000000800000000000000000000000e4e4"));
 
     assertValidation(
-        null, Bytes.fromHexString(code), testContainer.getCodeSection(0), testContainer);
+        null, FullBytecode.fromHexString(code), testContainer.getCodeSection(0), testContainer);
   }
 
   @ParameterizedTest
@@ -473,7 +480,7 @@ class CodeV1Test {
             + typesData
             + codeData;
 
-    EOFLayout eofLayout = EOFLayout.parseEOF(Bytes.fromHexString(sb));
+    EOFLayout eofLayout = EOFLayout.parseEOF(FullBytecode.fromHexString(sb));
     CodeV1Validation validator = new CodeV1Validation(0xc000);
 
     String validation =
