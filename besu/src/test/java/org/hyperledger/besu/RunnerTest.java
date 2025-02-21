@@ -105,6 +105,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -163,6 +164,8 @@ public final class RunnerTest {
     syncFromGenesis(SyncMode.FULL, getFastSyncGenesis(), true);
   }
 
+  @Disabled(
+      "Fast sync is broken - https://github.com/hyperledger/besu/issues/7511 and deprecated, and this test is flaky")
   @Test
   public void fastSyncFromGenesis() throws Exception {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
@@ -171,6 +174,8 @@ public final class RunnerTest {
     syncFromGenesis(SyncMode.FAST, getFastSyncGenesis(), false);
   }
 
+  @Disabled(
+      "Fast sync is broken - https://github.com/hyperledger/besu/issues/7511 and deprecated, and this test is flaky")
   @Test
   public void fastSyncFromGenesisUsingPeerTaskSystem() throws Exception {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
