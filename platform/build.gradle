@@ -106,15 +106,15 @@ dependencies {
 
     api 'io.pkts:pkts-core:3.0.10'
 
-    api 'io.consensys.protocols:tuweni-bytes:25.2.0'
-    api 'io.consensys.protocols:tuweni-config:25.2.0'
-    api 'io.consensys.protocols:tuweni-concurrent:25.2.0'
-    api 'io.consensys.protocols:tuweni-crypto:25.2.0'
-    api 'io.consensys.protocols:tuweni-io:25.2.0'
-    api 'io.consensys.protocols:tuweni-net:25.2.0'
-    api 'io.consensys.protocols:tuweni-rlp:25.2.0'
-    api 'io.consensys.protocols:tuweni-toml:25.2.0'
-    api 'io.consensys.protocols:tuweni-units:25.2.0'
+    api 'io.consensys.protocols:tuweni-bytes:2.6.0'
+    api 'io.consensys.protocols:tuweni-config:2.6.0'
+    api 'io.consensys.protocols:tuweni-concurrent:2.6.0'
+    api 'io.consensys.protocols:tuweni-crypto:2.6.0'
+    api 'io.consensys.protocols:tuweni-io:2.6.0'
+    api 'io.consensys.protocols:tuweni-net:2.6.0'
+    api 'io.consensys.protocols:tuweni-rlp:2.6.0'
+    api 'io.consensys.protocols:tuweni-toml:2.6.0'
+    api 'io.consensys.protocols:tuweni-units:2.6.0'
 
     api 'net.java.dev.jna:jna:5.16.0'
 
