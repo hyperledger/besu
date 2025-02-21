@@ -34,6 +34,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public class Eip7709BlockHashProcessor extends PragueBlockHashProcessor {
 
+  // TODO we will have to use HISTORY_STORAGE_ADDRESS from PragueBlockHashProcessor in the future
   public static final Address EIP_7709_HISTORY_STORAGE_ADDRESS =
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
 

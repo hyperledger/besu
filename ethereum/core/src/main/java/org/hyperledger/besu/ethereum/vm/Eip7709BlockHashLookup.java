@@ -79,10 +79,10 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
     final UInt256 slot = UInt256.valueOf(blockNumber % historyServeWindow);
 
     final long lookupCost = lookupCost(frame, slot);
-    if (frame.getRemainingGas() < lookupCost) {
+    frame.decrementRemainingGas(lookupCost);
+    if (frame.getRemainingGas() < 0) {
       return null;
     }
-    frame.decrementRemainingGas(lookupCost);
 
     final Hash cachedHash = hashByNumber.get(blockNumber);
     if (cachedHash != null) {
@@ -108,17 +108,13 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
     return blockHash;
   }
 
-  public Address getContractAddress() {
-    return contractAddress;
-  }
-
   @Override
   public long getLookback() {
     return blockHashServeWindow;
   }
 
   private long lookupCost(final MessageFrame frame, final UInt256 slotKey) {
-    long gas = frame.getAccessWitness().touchAndChargeStorageLoad(getContractAddress(), slotKey);
+    long gas = frame.getAccessWitness().touchAndChargeStorageLoad(contractAddress, slotKey);
 
     if (gas == 0) {
       return getWarmStorageReadCost();

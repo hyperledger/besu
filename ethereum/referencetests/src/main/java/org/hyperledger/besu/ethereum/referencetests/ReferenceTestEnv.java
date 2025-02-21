@@ -147,8 +147,7 @@ public class ReferenceTestEnv extends BlockHeader {
         beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot),
         null, // requestsHash
         new MainnetBlockHeaderFunctions(),
-        null // execution witnesses
-        );
+        null); // execution witnesses
     this.parentDifficulty = parentDifficulty;
     this.parentBaseFee = parentBaseFee;
     this.parentGasUsed = parentGasUsed;
