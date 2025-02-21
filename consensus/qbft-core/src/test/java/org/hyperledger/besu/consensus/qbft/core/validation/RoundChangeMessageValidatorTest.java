@@ -17,41 +17,34 @@ package org.hyperledger.besu.consensus.qbft.core.validation;
 import static com.google.common.collect.Iterables.toArray;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 import static org.hyperledger.besu.consensus.qbft.core.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.hyperledger.besu.consensus.qbft.core.validation.ValidationTestHelpers.createPreparedCertificate;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.core.QbftBlockTestFixture;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator.ValidationResult;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.BlockValidator;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,17 +55,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class RoundChangeMessageValidatorTest {
 
   @Mock private RoundChangePayloadValidator payloadValidator;
-  @Mock private MutableBlockchain blockChain;
-  @Mock private WorldStateArchive worldStateArchive;
-  @Mock private BftProtocolSchedule protocolSchedule;
-  @Mock private BlockValidator blockValidator;
-  @Mock private ProtocolSpec protocolSpec;
-  @Mock private BftExtraDataCodec bftExtraDataCodec;
-  private ProtocolContext protocolContext;
+  @Mock private QbftProtocolSchedule protocolSchedule;
+  @Mock private QbftBlockValidator blockValidator;
+  @Mock private QbftProtocolSpec protocolSpec;
+  @Mock private QbftBlockCodec blockEncoder;
 
   private RoundChangeMessageValidator messageValidator;
+  private QbftNodeList validators;
   private static final int VALIDATOR_COUNT = 4;
-  private final QbftNodeList validators = QbftNodeList.createNodes(VALIDATOR_COUNT);
   private static final int CHAIN_HEIGHT = 3;
   private final ConsensusRoundIdentifier targetRound =
       new ConsensusRoundIdentifier(CHAIN_HEIGHT, 3);
@@ -81,15 +71,9 @@ public class RoundChangeMessageValidatorTest {
 
   @BeforeEach
   public void setup() {
-    protocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataCodec),
-            new BadBlockManager());
+    validators = QbftNodeList.createNodes(VALIDATOR_COUNT, blockEncoder);
 
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-
     lenient().when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
   }
 
@@ -102,7 +86,6 @@ public class RoundChangeMessageValidatorTest {
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
     for (int i = 0; i < VALIDATOR_COUNT; i++) {
@@ -115,22 +98,19 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void roundChangeWithValidPiggyBackDataIsValid() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
+    when(blockValidator.validateBlock(any()))
+        .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         createPreparedCertificate(
             block, roundIdentifier, toArray(validators.getNodes(), QbftNode.class));
@@ -143,22 +123,19 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void roundChangeWithBlockRoundMismatchingPreparesIsValid() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
+    when(blockValidator.validateBlock(any()))
+        .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         createPreparedCertificate(
             block,
@@ -173,19 +150,19 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void blockIsInvalidFailsValidation() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(BlockProcessingResult.FAILED);
+    when(blockValidator.validateBlock(any()))
+        .thenReturn(new ValidationResult(false, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), roundIdentifier);
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         createPreparedCertificate(
             block, roundIdentifier, toArray(validators.getNodes(), QbftNode.class));
@@ -204,7 +181,6 @@ public class RoundChangeMessageValidatorTest {
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
     final RoundChange message =
@@ -215,22 +191,19 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void insufficientPiggyBackedPrepareMessagesIsInvalid() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
+    when(blockValidator.validateBlock(any()))
+        .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         createPreparedCertificate(
             block, roundIdentifier, validators.getNode(0), validators.getNode(1));
@@ -243,24 +216,21 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void prepareFromNonValidatorFails() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
+    when(blockValidator.validateBlock(any()))
+        .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
-    final QbftNode nonValidator = QbftNode.create();
+    final QbftNode nonValidator = QbftNode.create(blockEncoder);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         createPreparedCertificate(
             block, roundIdentifier, validators.getNode(0), validators.getNode(1), nonValidator);
@@ -273,22 +243,19 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void validationFailsIfPreparedMetadataContainsDifferentRoundToBlock() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
+    when(blockValidator.validateBlock(any()))
+        .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         new PreparedCertificate(
             block,
@@ -309,22 +276,19 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void validationFailsIfPreparesContainsDifferentRoundToBlock() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
+    when(blockValidator.validateBlock(any()))
+        .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         new PreparedCertificate(
             block,
@@ -347,22 +311,19 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void validationFailsIfPreparesContainsWrongHeight() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
+    when(blockValidator.validateBlock(any()))
+        .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         new PreparedCertificate(
             block,
@@ -385,22 +346,19 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void validationFailsIfPreparesHaveDuplicateAuthors() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
+    when(blockValidator.validateBlock(any()))
+        .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(
-            Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final PreparedCertificate prepCert =
         createPreparedCertificate(
             block,
@@ -418,26 +376,27 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void validationFailsIfBlockExistsButNotPreparedMetadata() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(blockValidator.validateBlock(any()))
+        .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), roundIdentifier);
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
 
     final RoundChangePayload payload = new RoundChangePayload(targetRound, Optional.empty());
     final SECPSignature signature =
         validators.getNode(0).getNodeKey().sign(payload.hashForSignature());
 
     final RoundChange message =
-        new RoundChange(SignedData.create(payload, signature), Optional.of(block), emptyList());
+        new RoundChange(
+            SignedData.create(payload, signature), Optional.of(block), blockEncoder, emptyList());
 
     assertThat(messageValidator.validate(message)).isFalse();
   }
@@ -445,19 +404,19 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void validationFailsIfBlockHashDoesNotMatchPreparedMetadata() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
+    when(blockValidator.validateBlock(any()))
+        .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
             payloadValidator,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             CHAIN_HEIGHT,
             validators.getNodeAddresses(),
-            protocolContext,
             protocolSchedule);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), roundIdentifier);
+    final QbftBlockHeader header =
+        new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
+    final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
 
     final RoundChangePayload payload =
         new RoundChangePayload(
@@ -472,6 +431,7 @@ public class RoundChangeMessageValidatorTest {
         new RoundChange(
             SignedData.create(payload, signature),
             Optional.of(block),
+            blockEncoder,
             createPreparePayloads(
                 roundIdentifier, block.getHash(), toArray(validators.getNodes(), QbftNode.class)));
 

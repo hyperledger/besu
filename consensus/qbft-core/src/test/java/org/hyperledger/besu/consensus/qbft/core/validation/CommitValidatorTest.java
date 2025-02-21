@@ -19,21 +19,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class CommitValidatorTest {
 
   private static final int VALIDATOR_COUNT = 4;
 
-  private final QbftNodeList validators = QbftNodeList.createNodes(VALIDATOR_COUNT);
-  final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
-  final Hash expectedHash = Hash.fromHexStringLenient("0x1");
-  final Hash expectedCommitHash = Hash.fromHexStringLenient("0x1");
-  final CommitValidator validator =
-      new CommitValidator(validators.getNodeAddresses(), round, expectedHash, expectedCommitHash);
+  private final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
+  private final Hash expectedHash = Hash.fromHexStringLenient("0x1");
+  private final Hash expectedCommitHash = Hash.fromHexStringLenient("0x1");
+  private QbftNodeList validators;
+  private CommitValidator validator;
+  private @Mock QbftBlockCodec qbftBlockCodec;
+
+  @BeforeEach
+  public void setup() {
+    validators = QbftNodeList.createNodes(VALIDATOR_COUNT, qbftBlockCodec);
+    validator =
+        new CommitValidator(validators.getNodeAddresses(), round, expectedHash, expectedCommitHash);
+  }
 
   @Test
   public void commitIsValidIfItMatchesExpectedValues() {
@@ -47,7 +60,7 @@ public class CommitValidatorTest {
 
   @Test
   public void commitSignedByANonValidatorFails() {
-    final QbftNode nonValidator = QbftNode.create();
+    final QbftNode nonValidator = QbftNode.create(qbftBlockCodec);
     final SECPSignature commitSeal = nonValidator.getNodeKey().sign(expectedHash);
     final Commit msg =
         nonValidator.getMessageFactory().createCommit(round, expectedHash, commitSeal);

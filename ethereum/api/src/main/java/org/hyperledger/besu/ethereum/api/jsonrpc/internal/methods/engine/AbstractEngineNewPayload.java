@@ -153,6 +153,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           e);
     }
 
+    final ValidationResult<RpcErrorType> forkValidationResult =
+        validateForkSupported(blockParam.getTimestamp());
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(reqId, forkValidationResult);
+    }
+
     final ValidationResult<RpcErrorType> parameterValidationResult =
         validateParameters(
             blockParam,
@@ -161,12 +167,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             maybeRequestsParam);
     if (!parameterValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, parameterValidationResult);
-    }
-
-    final ValidationResult<RpcErrorType> forkValidationResult =
-        validateForkSupported(blockParam.getTimestamp());
-    if (!forkValidationResult.isValid()) {
-      return new JsonRpcErrorResponse(reqId, forkValidationResult);
     }
 
     final Optional<List<VersionedHash>> maybeVersionedHashes;
@@ -366,7 +366,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .mapToInt(List::size)
               .sum(),
           lastExecutionTime / 1000.0,
-          executionResult.getNbParallelizedTransations());
+          executionResult.getNbParallelizedTransactions());
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
       if (executionResult.causedBy().isPresent()) {
@@ -612,7 +612,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final Block block,
       final int blobCount,
       final double timeInS,
-      final Optional<Integer> nbParallelizedTransations) {
+      final Optional<Integer> nbParallelizedTransactions) {
     final StringBuilder message = new StringBuilder();
     final int nbTransactions = block.getBody().getTransactions().size();
     message.append("Imported #%,d  (%s)|%5d tx");
@@ -635,9 +635,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
             timeInS,
             mgasPerSec));
-    if (nbParallelizedTransations.isPresent()) {
+    if (nbParallelizedTransactions.isPresent()) {
       double parallelizedTxPercentage =
-          (double) (nbParallelizedTransations.get() * 100) / nbTransactions;
+          (double) (nbParallelizedTransactions.get() * 100) / nbTransactions;
       message.append("| parallel txs %5.1f%%");
       messageArgs.add(parallelizedTxPercentage);
     }

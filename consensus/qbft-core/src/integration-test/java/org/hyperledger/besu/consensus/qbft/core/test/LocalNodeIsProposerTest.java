@@ -19,7 +19,6 @@ import static org.hyperledger.besu.consensus.qbft.core.support.IntegrationTestHe
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
@@ -28,7 +27,8 @@ import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
-import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftNewChainHead;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -62,7 +62,7 @@ public class LocalNodeIsProposerTest {
 
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
 
-  private Block expectedProposedBlock;
+  private QbftBlock expectedProposedBlock;
   private Proposal expectedTxProposal;
   private Commit expectedTxCommit;
   private Prepare expectedTxPrepare;
@@ -80,7 +80,10 @@ public class LocalNodeIsProposerTest {
     expectedTxCommit =
         new Commit(
             createSignedCommitPayload(
-                roundId, expectedProposedBlock, context.getLocalNodeParams().getNodeKey()));
+                roundId,
+                expectedProposedBlock,
+                context.getLocalNodeParams().getNodeKey(),
+                context.getBlockEncoder()));
 
     // Trigger "block timer" to send proposal.
     context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));
@@ -135,7 +138,7 @@ public class LocalNodeIsProposerTest {
 
     context
         .getController()
-        .handleNewBlockEvent(new NewChainHead(expectedProposedBlock.getHeader()));
+        .handleNewBlockEvent(new QbftNewChainHead(expectedProposedBlock.getHeader()));
     peers.verifyNoMessagesReceived();
   }
 

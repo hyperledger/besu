@@ -121,7 +121,7 @@ interface GenesisReader {
       try {
         parser.nextToken();
         while (parser.nextToken() != JsonToken.END_OBJECT) {
-          if (ALLOCATION_FIELD.equals(parser.getCurrentName())) {
+          if (ALLOCATION_FIELD.equals(parser.currentName())) {
             parser.nextToken();
             parser.nextToken();
             break;

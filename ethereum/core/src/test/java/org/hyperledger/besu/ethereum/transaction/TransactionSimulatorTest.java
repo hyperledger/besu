@@ -37,6 +37,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter.JsonCallParameterBuilder;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
@@ -93,8 +94,9 @@ public class TransactionSimulatorTest {
       Address.fromHexString("0x0000000000000000000000000000000000000000");
   private static final long GAS_CAP = 500000L;
   private static final long TRANSFER_GAS_LIMIT = 21000L;
-  private TransactionSimulator transactionSimulator;
+  private TransactionSimulator uncappedTransactionSimulator;
   private TransactionSimulator cappedTransactionSimulator;
+  private TransactionSimulator defaultCappedTransactionSimulator;
 
   @Mock private Blockchain blockchain;
   @Mock private WorldStateArchive worldStateArchive;
@@ -107,12 +109,22 @@ public class TransactionSimulatorTest {
   @BeforeEach
   public void setUp() {
     final var miningConfiguration = MiningConfiguration.newDefault().setCoinbase(Address.ZERO);
-    this.transactionSimulator =
+    // rpc gas cap 0 means unlimited
+    this.uncappedTransactionSimulator =
         new TransactionSimulator(
             blockchain, worldStateArchive, protocolSchedule, miningConfiguration, 0);
+    // capped at a lower limit
     this.cappedTransactionSimulator =
         new TransactionSimulator(
             blockchain, worldStateArchive, protocolSchedule, miningConfiguration, GAS_CAP);
+    // capped at default limit
+    this.defaultCappedTransactionSimulator =
+        new TransactionSimulator(
+            blockchain,
+            worldStateArchive,
+            protocolSchedule,
+            miningConfiguration,
+            ApiConfiguration.DEFAULT_GAS_CAP);
   }
 
   @Test
@@ -121,7 +133,7 @@ public class TransactionSimulatorTest {
     when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM); // called from logging
     StateOverride.Builder builder = new StateOverride.Builder();
     StateOverride override = builder.build();
-    transactionSimulator.applyOverrides(mutableAccount, override);
+    TransactionSimulator.applyOverrides(mutableAccount, override);
     verify(mutableAccount).getAddress();
     verifyNoMoreInteractions(mutableAccount);
   }
@@ -132,7 +144,7 @@ public class TransactionSimulatorTest {
     when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM);
     StateOverride.Builder builder = new StateOverride.Builder().withBalance(Wei.of(99));
     StateOverride override = builder.build();
-    transactionSimulator.applyOverrides(mutableAccount, override);
+    TransactionSimulator.applyOverrides(mutableAccount, override);
     verify(mutableAccount).setBalance(eq(Wei.of(99)));
   }
 
@@ -145,7 +157,25 @@ public class TransactionSimulatorTest {
     StateOverride.Builder builder =
         new StateOverride.Builder().withStateDiff(Map.of(storageKey, storageValue));
     StateOverride override = builder.build();
-    transactionSimulator.applyOverrides(mutableAccount, override);
+    TransactionSimulator.applyOverrides(mutableAccount, override);
+    verify(mutableAccount)
+        .setStorageValue(
+            eq(UInt256.fromHexString(storageKey)), eq(UInt256.fromHexString(storageValue)));
+  }
+
+  @Test
+  public void testOverrides_whenStateOverrides_stateIsUpdated() {
+    MutableAccount mutableAccount = mock(MutableAccount.class);
+    when(mutableAccount.getAddress()).thenReturn(DEFAULT_FROM);
+    final String storageKey = "0x01a2";
+    final String storageValue = "0x00ff";
+    StateOverride.Builder builder =
+        new StateOverride.Builder().withState(Map.of(storageKey, storageValue));
+    StateOverride override = builder.build();
+    TransactionSimulator.applyOverrides(mutableAccount, override);
+
+    verify(mutableAccount).clearStorage();
+
     verify(mutableAccount)
         .setStorageValue(
             eq(UInt256.fromHexString(storageKey)), eq(UInt256.fromHexString(storageValue)));
@@ -156,7 +186,7 @@ public class TransactionSimulatorTest {
     when(blockchain.getBlockHeader(eq(1L))).thenReturn(Optional.empty());
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(legacyTransactionCallParameterBuilder().build(), 1L);
+        uncappedTransactionSimulator.process(legacyTransactionCallParameterBuilder().build(), 1L);
 
     assertThat(result.isPresent()).isFalse();
   }
@@ -185,7 +215,7 @@ public class TransactionSimulatorTest {
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter, 1L);
+        uncappedTransactionSimulator.process(callParameter, 1L);
 
     assertThat(result.get().isSuccessful()).isTrue();
     verifyTransactionWasProcessed(expectedTransaction);
@@ -216,12 +246,12 @@ public class TransactionSimulatorTest {
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.processOnPending(
+        uncappedTransactionSimulator.processOnPending(
             callParameter,
             Optional.empty(),
             TransactionValidationParams.transactionSimulator(),
             NO_TRACING,
-            transactionSimulator.simulatePendingBlockHeader());
+            uncappedTransactionSimulator.simulatePendingBlockHeader());
 
     assertThat(result.get().isSuccessful()).isTrue();
     verifyTransactionWasProcessed(expectedTransaction);
@@ -251,7 +281,7 @@ public class TransactionSimulatorTest {
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
-    transactionSimulator.process(
+    uncappedTransactionSimulator.process(
         callParameter,
         ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(true).build(),
         NO_TRACING,
@@ -288,7 +318,7 @@ public class TransactionSimulatorTest {
 
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
-    transactionSimulator.process(
+    uncappedTransactionSimulator.process(
         callParameter,
         ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(true).build(),
         NO_TRACING,
@@ -322,7 +352,7 @@ public class TransactionSimulatorTest {
 
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
-    transactionSimulator.process(
+    uncappedTransactionSimulator.process(
         callParameter,
         ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(false).build(),
         NO_TRACING,
@@ -358,7 +388,7 @@ public class TransactionSimulatorTest {
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
-    transactionSimulator.process(
+    uncappedTransactionSimulator.process(
         callParameter,
         ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(false).build(),
         NO_TRACING,
@@ -391,7 +421,7 @@ public class TransactionSimulatorTest {
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
-    transactionSimulator.process(callParameter, 1L);
+    uncappedTransactionSimulator.process(callParameter, 1L);
 
     verifyTransactionWasProcessed(expectedTransaction);
   }
@@ -420,7 +450,7 @@ public class TransactionSimulatorTest {
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
-    transactionSimulator.process(callParameter, 1L);
+    uncappedTransactionSimulator.process(callParameter, 1L);
 
     verifyTransactionWasProcessed(expectedTransaction);
   }
@@ -454,7 +484,7 @@ public class TransactionSimulatorTest {
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
-    transactionSimulator.process(callParameter, 1L);
+    uncappedTransactionSimulator.process(callParameter, 1L);
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
@@ -483,7 +513,7 @@ public class TransactionSimulatorTest {
     mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter, 1L);
+        uncappedTransactionSimulator.process(callParameter, 1L);
 
     assertThat(result.get().isSuccessful()).isFalse();
     verifyTransactionWasProcessed(expectedTransaction);
@@ -494,7 +524,8 @@ public class TransactionSimulatorTest {
     when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.empty());
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(legacyTransactionCallParameterBuilder().build(), Hash.ZERO);
+        uncappedTransactionSimulator.process(
+            legacyTransactionCallParameterBuilder().build(), Hash.ZERO);
 
     assertThat(result.isPresent()).isFalse();
   }
@@ -524,7 +555,7 @@ public class TransactionSimulatorTest {
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter, blockHeader.getBlockHash());
+        uncappedTransactionSimulator.process(callParameter, blockHeader.getBlockHash());
 
     assertThat(result.get().isSuccessful()).isTrue();
     verifyTransactionWasProcessed(expectedTransaction);
@@ -554,7 +585,7 @@ public class TransactionSimulatorTest {
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
-    transactionSimulator.process(callParameter, blockHeader.getBlockHash());
+    uncappedTransactionSimulator.process(callParameter, blockHeader.getBlockHash());
 
     verifyTransactionWasProcessed(expectedTransaction);
   }
@@ -583,7 +614,7 @@ public class TransactionSimulatorTest {
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
-    transactionSimulator.process(callParameter, blockHeader.getBlockHash());
+    uncappedTransactionSimulator.process(callParameter, blockHeader.getBlockHash());
 
     verifyTransactionWasProcessed(expectedTransaction);
   }
@@ -613,7 +644,7 @@ public class TransactionSimulatorTest {
     mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter, blockHeader.getBlockHash());
+        uncappedTransactionSimulator.process(callParameter, blockHeader.getBlockHash());
 
     assertThat(result.get().isSuccessful()).isFalse();
     verifyTransactionWasProcessed(expectedTransaction);
@@ -644,7 +675,7 @@ public class TransactionSimulatorTest {
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter, 1L);
+        uncappedTransactionSimulator.process(callParameter, 1L);
 
     assertThat(result.get().isSuccessful()).isTrue();
     verifyTransactionWasProcessed(expectedTransaction);
@@ -717,7 +748,7 @@ public class TransactionSimulatorTest {
   }
 
   @Test
-  public void shouldUseRpcGasCapWhenGasLimitNoPresent() {
+  public void shouldUseRpcGasCapWhenGasLimitNotPresent() {
     // generate call parameters that do not specify a gas limit,
     // expect the rpc gas cap to be used for simulation
 
@@ -752,6 +783,41 @@ public class TransactionSimulatorTest {
   }
 
   @Test
+  public void shouldUseDefaultRpcGasCapWhenGasLimitNotPresent() {
+    // generate call parameters that do not specify a gas limit,
+    // expect the default rpc gas cap to be used for simulation
+
+    final CallParameter callParameter =
+        eip1559TransactionCallParameterBuilder().withGas(-1L).build();
+
+    mockBlockchainAndWorldState(callParameter);
+    mockProtocolSpecForProcessWithWorldUpdater();
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.ONE)
+            .nonce(1L)
+            .gasLimit(callParameter.getGasLimit())
+            .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+            .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .gasLimit(ApiConfiguration.DEFAULT_GAS_CAP)
+            .build();
+
+    // call process with original transaction
+    defaultCappedTransactionSimulator.process(
+        callParameter, TransactionValidationParams.transactionSimulator(), NO_TRACING, 1L);
+
+    // expect transaction with the original gas limit to be processed
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  @Test
   public void shouldReturnSuccessfulResultWhenBlobTransactionProcessingIsSuccessful() {
     final CallParameter callParameter = blobTransactionCallParameter();
     mockBlockchainAndWorldState(callParameter);
@@ -762,7 +828,7 @@ public class TransactionSimulatorTest {
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter, 1L);
+        uncappedTransactionSimulator.process(callParameter, 1L);
 
     assertThat(result.get().isSuccessful()).isTrue();
     verifyTransactionWasProcessed(expectedTransaction);
@@ -779,7 +845,7 @@ public class TransactionSimulatorTest {
     mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter, 1L);
+        uncappedTransactionSimulator.process(callParameter, 1L);
 
     assertThat(result.get().isSuccessful()).isFalse();
     verifyTransactionWasProcessed(expectedTransaction);
@@ -962,7 +1028,7 @@ public class TransactionSimulatorTest {
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter, 1L);
+        uncappedTransactionSimulator.process(callParameter, 1L);
 
     verifyTransactionWasProcessed(expectedTransaction);
     assertThat(result.get().isSuccessful()).isTrue();

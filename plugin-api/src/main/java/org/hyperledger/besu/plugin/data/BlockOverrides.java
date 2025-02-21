@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -39,6 +40,7 @@ public class BlockOverrides {
   private final Optional<BigInteger> difficulty;
   private final Optional<Bytes> extraData;
   private final Optional<Hash> mixHashOrPrevRandao;
+  private final Optional<Function<Long, Hash>> blockHashLookup;
 
   /**
    * Constructs a new BlockOverrides instance.
@@ -81,6 +83,7 @@ public class BlockOverrides {
     this.difficulty = difficulty;
     this.extraData = extraData;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
+    this.blockHashLookup = Optional.empty();
   }
 
   /**
@@ -101,6 +104,7 @@ public class BlockOverrides {
     this.difficulty = Optional.ofNullable(builder.difficulty);
     this.extraData = Optional.ofNullable(builder.extraData);
     this.mixHashOrPrevRandao = Optional.ofNullable(builder.mixHashOrPrevRandao);
+    this.blockHashLookup = Optional.ofNullable(builder.blockHashLookup);
   }
 
   /**
@@ -212,6 +216,15 @@ public class BlockOverrides {
   }
 
   /**
+   * Gets the block hash lookup.
+   *
+   * @return the optional block hash lookup
+   */
+  public Optional<Function<Long, Hash>> getBlockHashLookup() {
+    return blockHashLookup;
+  }
+
+  /**
    * Creates a new Builder instance.
    *
    * @return a new Builder
@@ -234,6 +247,7 @@ public class BlockOverrides {
     private BigInteger difficulty;
     private Bytes extraData;
     private Hash mixHashOrPrevRandao;
+    private Function<Long, Hash> blockHashLookup;
 
     /** Constructs a new Builder instance. */
     public Builder() {}
@@ -367,6 +381,17 @@ public class BlockOverrides {
      */
     public Builder mixHashOrPrevRandao(final Hash mixHashOrPrevRandao) {
       this.mixHashOrPrevRandao = mixHashOrPrevRandao;
+      return this;
+    }
+
+    /**
+     * Sets the block hash lookup.
+     *
+     * @param blockHashLookup the block hash lookup to set
+     * @return the builder instance
+     */
+    public Builder blockHashLookup(final Function<Long, Hash> blockHashLookup) {
+      this.blockHashLookup = blockHashLookup;
       return this;
     }
 

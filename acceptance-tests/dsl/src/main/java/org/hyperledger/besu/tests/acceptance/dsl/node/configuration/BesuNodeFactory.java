@@ -83,7 +83,8 @@ public class BesuNodeFactory {
         config.getRunCommand(),
         config.getKeyPair(),
         config.isStrictTxReplayProtectionEnabled(),
-        config.getEnvironment());
+        config.getEnvironment(),
+        config.storageImplementation());
   }
 
   public BesuNode createMinerNode(
@@ -538,6 +539,12 @@ public class BesuNodeFactory {
 
   public BesuNode createCliqueNodeWithValidators(final String name, final String... validators)
       throws IOException {
+    return createCliqueNodeWithValidators(name, CliqueOptions.DEFAULT, validators);
+  }
+
+  public BesuNode createCliqueNodeWithValidators(
+      final String name, final CliqueOptions cliqueOptions, final String... validators)
+      throws IOException {
 
     return create(
         new BesuNodeConfigurationBuilder()
@@ -552,7 +559,9 @@ public class BesuNodeFactory {
                     node.createGenesisConfigForValidators(
                         asList(validators),
                         nodes,
-                        GenesisConfigurationFactory::createCliqueGenesisConfig))
+                        vs ->
+                            GenesisConfigurationFactory.createCliqueGenesisConfig(
+                                vs, cliqueOptions)))
             .build());
   }
 
