@@ -75,6 +75,17 @@ public class TestPermissioningPlugin implements BesuPlugin {
             }
             return true;
           });
+
+      service.registerTransactionPermissioningProvider(
+          transaction -> {
+            long configuredGasLimitThreshold = 12000L;
+            long gasLimit = transaction.getGasLimit();
+            LOG.info(
+                "Transaction gas limit: {} | Configured threshold: {} ",
+                gasLimit,
+                configuredGasLimitThreshold);
+            return gasLimit > configuredGasLimitThreshold;
+          });
     }
   }
 

@@ -19,15 +19,17 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.permissioning.account.TransactionPermissioningProvider;
+import org.hyperledger.besu.datatypes.Quantity;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -195,9 +197,13 @@ public class TransactionSmartContractPermissioningController
   private static Bytes encodeTransaction(final Transaction transaction) {
     return Bytes.concatenate(
         encodeAddress(transaction.getSender()),
-        encodeAddress(transaction.getTo()),
-        transaction.getValue(),
-        transaction.getGasPrice().map(BaseUInt256Value::toBytes).orElse(Bytes32.ZERO),
+        encodeAddress(transaction.getTo().map(Address.class::cast)),
+        convertQuantityToBytes(transaction.getValue()),
+        transaction
+            .getGasPrice()
+            .map(price -> (BaseUInt256Value<?>) price)
+            .map(BaseUInt256Value::toBytes)
+            .orElse(Bytes32.ZERO),
         encodeLong(transaction.getGasLimit()),
         encodeBytes(transaction.getPayload()));
   }
@@ -230,5 +236,17 @@ public class TransactionSmartContractPermissioningController
     final Bytes length = encodeLong(value.size());
     final Bytes padding = Bytes.wrap(new byte[(32 - (value.size() % 32))]);
     return Bytes.concatenate(dynamicParameterOffset, length, value, padding);
+  }
+
+  // Convert the Quantity value to Bytes
+  private static Bytes convertQuantityToBytes(final Quantity quantity) {
+    if (quantity == null) {
+      return Bytes32.ZERO;
+    }
+    if (quantity instanceof BaseUInt256Value) {
+      return ((BaseUInt256Value) quantity).toBytes();
+    }
+    BigInteger value = quantity.getAsBigInteger();
+    return Bytes.wrap(value.toByteArray());
   }
 }
